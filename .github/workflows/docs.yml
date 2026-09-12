@@ -8,6 +8,10 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    # The organisation defaults GITHUB_TOKEN to read-only, so the deploy to
+    # gh-pages needs this permission requested explicitly.
+    permissions:
+      contents: write
     steps:
       - name: Install Graphviz
         run: sudo apt-get install graphviz
