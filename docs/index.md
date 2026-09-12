@@ -1,7 +1,9 @@
 ---
-layout: page
-title: AddressBook Level 3
+  layout: default.md
+  title: ""
 ---
+
+# AddressBook Level-3
 
 [![CI Status](https://github.com/AY2627S1-CS2103T-T16-1/tp/workflows/Java%20CI/badge.svg)](https://github.com/AY2627S1-CS2103T-T16-1/tp/actions)
 [![codecov](https://codecov.io/gh/AY2627S1-CS2103T-T16-1/tp/branch/master/graph/badge.svg)](https://codecov.io/gh/AY2627S1-CS2103T-T16-1/tp)
