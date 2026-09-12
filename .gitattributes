@@ -1,1 +1,14 @@
+# The last matching pattern wins, so the blanket rule comes first and the
+# exceptions below override it.
+
+# Normalise all text to LF, both in the repository and in the working tree,
+# so that line endings do not depend on each contributor's core.autocrlf.
+* text=auto eol=lf
+
+# Binary files must never be line-ending converted.
 *.pdf binary
+*.png binary
+
+# Windows batch files need CRLF in the working tree. This affects checkout
+# only; the repository still stores LF.
+*.bat text eol=crlf
