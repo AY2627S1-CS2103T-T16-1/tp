@@ -22,8 +22,8 @@ src/test/data/sandbox/
 docs/_site/
 
 # AI Agents
-AGENTS.md
-CLAUDE.md
+# AGENTS.md and CLAUDE.md are tracked by team decision; per-member tool
+# state is not.
 /.claude/
 /.codex/
 

@@ -3,6 +3,9 @@
 Optional local hooks that check a commit against the same conventions CI and
 code review apply, so that problems surface before a push rather than after.
 
+The conventions themselves are written up in [AGENTS.md](../AGENTS.md); this
+file only covers the hooks that enforce them.
+
 ## Enabling
 
 Hooks are not active until you opt in, once per clone:
