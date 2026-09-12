@@ -158,6 +158,52 @@ minimise duplication.
 **Comment minimally, but sufficiently** — don't repeat the obvious, write for
 the reader, and explain WHAT and WHY, not HOW.
 
+## Issue tracker
+
+Every issue carries a `type.*` label. Bugs also carry a `severity.*` label,
+and anything scheduled carries a `priority.*` label and a milestone.
+
+**Type**
+
+| Label | Meaning |
+| --- | --- |
+| `type.Epic` | A big feature that breaks down into smaller stories, e.g. search |
+| `type.Story` | A user story |
+| `type.Enhancement` | An enhancement to an existing story |
+| `type.Task` | Something to be done that is not a story, bug or epic, e.g. moving test code into a new folder |
+| `type.Bug` | A bug |
+
+**Priority**
+
+| Label | Meaning |
+| --- | --- |
+| `priority.High` | Must do |
+| `priority.Medium` | Nice to have |
+| `priority.Low` | Unlikely to do |
+
+**Severity** (bugs only)
+
+| Label | Meaning |
+| --- | --- |
+| `severity.VeryLow` | Purely cosmetic, does not affect usage: typos, spacing, layout, colour, font. Cosmetic problems *only* |
+| `severity.Low` | Unlikely to affect normal operation. Appears only in rare situations and causes minor inconvenience |
+| `severity.Medium` | Causes occasional inconvenience to some users, but they can keep using the product |
+| `severity.High` | Affects most users and causes major problems. Reserve this for flaws that make the product almost unusable for most users |
+
+Severity is where teams drift, so two rules of thumb from the course:
+
+- Weigh the damage to the product's **credibility**, not just to the user. An
+  obvious, visible bug hurts credibility more than a subtle one, even when the
+  functional impact is similar.
+- For documentation bugs, read "user" as **reader**. Judge a DG bug by its
+  impact on a developer reading the DG, not on an end user of the app.
+
+`severity.High` and `severity.VeryLow` are both narrower than they look:
+High means *almost unusable for most users*, and VeryLow means *cosmetic only*.
+Most real bugs land in Low or Medium.
+
+**Milestones** — `v1.1` through `v1.6`.
+
 ## Documentation
 
 `docs/` is a Jekyll site. Follow the
