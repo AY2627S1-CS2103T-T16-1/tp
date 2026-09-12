@@ -1,0 +1,45 @@
+#!/bin/sh
+# Checks staged changes against the conventions enforced by CI, so that style
+# failures surface here rather than after a push.
+#
+# Enable with:  git config core.hooksPath .githooks   (see .githooks/README.md)
+# Bypass with:  git commit --no-verify
+# Skip the (slow) Checkstyle run with:  SKIP_CHECKSTYLE=1 git commit
+
+repo=$(git rev-parse --show-toplevel) || exit 1
+cd "$repo" || exit 1
+
+ret=0
+
+# Text hygiene: trailing whitespace, CRLF line endings, missing newline at EOF.
+# These read the staged index, so they check exactly what is being committed.
+if ! .github/run-checks.sh; then
+    ret=1
+fi
+
+# Checkstyle, only when Java sources are actually staged.
+staged_java=$(git diff --cached --name-only --diff-filter=ACMR -- '*.java')
+
+if [ -n "$staged_java" ] && [ -z "$SKIP_CHECKSTYLE" ]; then
+    echo "Running Checkstyle on staged Java changes..."
+
+    # Checkstyle inspects the working tree, not the index. Warn when the two
+    # differ for a staged file, since the result may not reflect the commit.
+    if ! git diff --quiet -- $staged_java; then
+        echo "WARN: some staged Java files have unstaged edits;"
+        echo "WARN: Checkstyle sees the working tree, not what you are committing."
+    fi
+
+    if ! ./gradlew --quiet checkstyleMain checkstyleTest; then
+        echo "ERROR: Checkstyle failed. Fix the reports under build/reports/checkstyle/,"
+        echo "ERROR: or re-run with SKIP_CHECKSTYLE=1 to defer it to CI."
+        ret=1
+    fi
+fi
+
+if [ "$ret" -ne 0 ]; then
+    echo
+    echo "Commit aborted by pre-commit hook. See .githooks/README.md."
+fi
+
+exit $ret

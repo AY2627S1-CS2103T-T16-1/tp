@@ -1,0 +1,121 @@
+#!/bin/sh
+# Checks the commit message against the se-edu Git conventions:
+# https://se-education.org/guides/conventions/git.html
+#
+# Enable with:  git config core.hooksPath .githooks   (see .githooks/README.md)
+# Bypass with:  git commit --no-verify
+#
+# Errors abort the commit; warnings are advisory and let it through.
+
+msgfile=$1
+[ -f "$msgfile" ] || exit 0
+
+# Drop comment lines and everything after a `commit -v` scissors line, so that
+# the diff git appends for review is not mistaken for the message body.
+body=$(sed -e '/^# *-\{1,\} >8 -\{1,\}/,$d' -e '/^#/d' "$msgfile")
+
+# Leave generated messages alone: merges, reverts, and autosquash commits.
+case $body in
+    Merge\ * | Revert\ * | fixup!\ * | squash!\ * | amend!\ *) exit 0 ;;
+esac
+
+subject=$(printf '%s\n' "$body" | sed -n '1p')
+errors=0
+
+fail() {
+    echo "ERROR: $1"
+    errors=$((errors + 1))
+}
+
+warn() {
+    echo "WARN:  $1"
+}
+
+# --- Subject line -----------------------------------------------------------
+
+if [ -z "$(printf '%s' "$subject" | tr -d '[:space:]')" ]; then
+    fail "the subject line is empty."
+    echo
+    echo "Conventions: https://se-education.org/guides/conventions/git.html"
+    exit 1
+fi
+
+len=${#subject}
+if [ "$len" -gt 72 ]; then
+    fail "subject is $len chars; the hard limit is 72."
+elif [ "$len" -gt 50 ]; then
+    warn "subject is $len chars; aim for 50 or fewer (72 is the hard limit)."
+fi
+
+case $subject in
+    *.) fail "subject ends with a period; drop it." ;;
+esac
+
+# A scope prefix may be lowercase ("bug fix: Add space after name"), so the
+# capitalisation and mood rules apply to the text after "<scope>: ".
+action=$subject
+case $subject in
+    *': '*) action=${subject#*': '} ;;
+esac
+
+case $action in
+    [A-Z]*) ;;
+    [a-z]*) fail "capitalise the first letter: \"$action\"." ;;
+esac
+
+# Imperative mood. Flag the common past / gerund / third-person forms rather
+# than guessing from word endings, which misfires on words like "Embed".
+first_word=$(printf '%s' "$action" | cut -d' ' -f1 | tr '[:upper:]' '[:lower:]')
+case $first_word in
+    added|adding|adds|fixed|fixing|fixes|updated|updating|updates|\
+    removed|removing|removes|changed|changing|changes|created|creating|creates|\
+    deleted|deleting|deletes|moved|moving|moves|renamed|renaming|renames|\
+    refactored|refactoring|refactors|implemented|implementing|implements|\
+    improved|improving|improves|resolved|resolving|resolves)
+        fail "use the imperative mood in the subject: \"$first_word\" should be a command (e.g. \"Add\", not \"Added\"/\"Adds\")."
+        ;;
+esac
+
+# --- Body -------------------------------------------------------------------
+
+line_count=$(printf '%s\n' "$body" | wc -l)
+
+if [ "$line_count" -gt 1 ]; then
+    second=$(printf '%s\n' "$body" | sed -n '2p')
+    if [ -n "$second" ]; then
+        fail "separate the subject from the body with a blank line."
+    fi
+fi
+
+body_report=$(printf '%s\n' "$body" | awk '
+    NR <= 2 { next }
+    {
+        if (length($0) > 72) {
+            # An over-long line with no spaces is an unbreakable token such as
+            # a URL; that is tolerated rather than rejected.
+            if ($0 ~ / /) {
+                print "ERROR: line " NR " is " length($0) " chars; wrap the body at 72."
+                ret = 1
+            } else {
+                print "WARN:  line " NR " is " length($0) " chars (unbreakable token, allowed)."
+            }
+        }
+        if ($0 ~ /[Cc]urrently|[Oo]riginally/) {
+            print "WARN:  line " NR " uses \"currently\"/\"originally\"; describe the present situation directly."
+        }
+    }
+    END { exit ret }
+')
+body_status=$?
+
+[ -n "$body_report" ] && printf '%s\n' "$body_report"
+[ "$body_status" -ne 0 ] && errors=$((errors + 1))
+
+if [ "$errors" -ne 0 ]; then
+    echo
+    echo "Commit aborted by commit-msg hook."
+    echo "Conventions: https://se-education.org/guides/conventions/git.html"
+    exit 1
+fi
+
+exit 0
