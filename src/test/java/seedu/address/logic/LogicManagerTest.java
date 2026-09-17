@@ -21,6 +21,7 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
@@ -68,6 +69,33 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_remarkCommand_savesRemark() throws Exception {
+        model.addPerson(AMY);
+        Person editedPerson = new PersonBuilder(AMY).withRemark("Likes baseball").build();
+        Model expectedModel = new ModelManager();
+        expectedModel.addPerson(editedPerson);
+
+        String expectedMessage = String.format(RemarkCommand.MESSAGE_ADD_REMARK_SUCCESS, Messages.format(editedPerson));
+        assertCommandSuccess("remark 1 r/Likes baseball", expectedMessage, expectedModel);
+
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(expectedModel.getAddressBook(), storage.readAddressBook().get());
+    }
+
+    @Test
+    public void execute_removeRemarkCommand_savesEmptyRemark() throws Exception {
+        model.addPerson(new PersonBuilder(AMY).withRemark("Likes baseball").build());
+        Model expectedModel = new ModelManager();
+        expectedModel.addPerson(AMY);
+
+        String expectedMessage = String.format(RemarkCommand.MESSAGE_DELETE_REMARK_SUCCESS, Messages.format(AMY));
+        assertCommandSuccess("remark 1 r/", expectedMessage, expectedModel);
+
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(expectedModel.getAddressBook(), storage.readAddressBook().get());
     }
 
     @Test
