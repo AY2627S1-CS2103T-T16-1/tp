@@ -159,6 +159,22 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Remark command
+
+`RemarkCommandParser` tokenizes the `r/` prefix and parses the displayed-list index using `ParserUtil`.
+An empty or omitted remark becomes an empty `Remark`. Repeated `r/` prefixes use the last value.
+
+`RemarkCommand` checks the index against `Model#getFilteredPersonList()` and creates a replacement `Person`
+with the new remark, preserving the other fields. It calls `Model#setPerson()` and resets the filter to show all persons.
+`Remark` is immutable, accepts any non-null string, and participates in `Person#equals()` and `Person#hashCode()`.
+It does not affect `Person#isSamePerson()`, which continues to compare names.
+
+The `add` command initializes an empty remark, and `edit` preserves the existing remark.
+`PersonCard` displays the remark using the label in `PersonListCard.fxml`.
+`JsonAdaptedPerson` saves and loads the remark as a string. Saved persons must include a `remark` field;
+use `"remark": ""` for a person without a remark. Data files from before this feature need that field added
+to each person before loading, or can be backed up and removed to start with sample data.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
