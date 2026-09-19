@@ -290,16 +290,83 @@ file locally, with every change undoable.
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
+| Priority | As a ...  | I want to ...  | So that I can... |
+|----------|---------|--------------|----------------|
+| `* * *` | teaching assistant who prefers a CLI | start the app from a terminal | begin working without leaving the keyboard |
+| `* * *` | teaching assistant who prefers a CLI | exit the app with a command | close it without reaching for the mouse |
+| `* * *` | teaching assistant | view a list of all my students | see everyone I am responsible for at a glance |
+| `* * *` | teaching assistant | view a student's name | identify the student |
+| `* * *` | teaching assistant | view a student's email | contact them via email for any emergency updates |
+| `* * *` | teaching assistant | view a student's tag | know which class the student is in |
+| `* * *` | teaching assistant | add records of a student | keep track of new students I have |
+| `* * *` | teaching assistant | delete a student's record | remove students who dropped my class from the student book |
+| `* * *` | teaching assistant | save the updates I made to various records | ensure my updates persist in future sessions |
+| `* * *` | teaching assistant who can type fast and prefers CLI | complete every task the app offers using only the keyboard | never break out of typing to reach for a mouse or trackpad |
+| `* * *` | teaching assistant in Singapore | save a name containing s/o, d/o, hyphens or apostrophes | record students under the name that appears on the official roster |
+| `* * *` | teaching assistant | flag a student as needing follow-up, and clear the flag once I have replied | keep an accurate list of who is still waiting on me |
+| `* * *` | teaching assistant | find students by part of any detail I remember, whatever the letter case | locate a student from a fragment, such as part of a name or a few digits of a phone number |
+| `* * *` | teaching assistant handling student data | use the app fully offline with data stored only on my own machine | comply with the expectation that student data stays off third-party services |
+| `* *` | forgetful or new user | see a summary of everything the app can do, from inside the app | learn or recall how to use it without leaving the keyboard |
+| `* *` | teaching assistant | edit a student's record | ensure a student's record reflect the latest information I know |
+| `* *` | teaching assistant | add a tag to a student without disturbing the tags already on their record | build up a student’s tags over the semester without losing earlier ones |
+| `* *` | teaching assistant | remove a single tag from a student | drop a student from one group without rebuilding the rest of their record |
+| `* *` | teaching assistant | add a student without an email address | record the students I only have partial details for, instead of inventing data |
+| `* *` | teaching assistant | know how long it has been since I marked a student for follow-up | know how stale our last interaction is |
+| `* *` | teaching assistant who hand-edits the data file | be told at startup that my saved data is unreadable, and where the problem is, instead of the app starting empty | repair it rather than silently lose everything |
+| `* *` | teaching assistant | view a student's phone number | call them directly when an urgent matter comes up |
+| `* *` | teaching assistant | undo my last command | revert a mistake before it makes trouble |
+| `* *` | teaching assistant | find students by a tag | focus on a single tutorial group |
+| `*` | teaching assistant | view a student's NUS ID | match a student's name to records on other digital platforms (e.g. attendance) |
+| `*` | teaching assistant | find students by a specific detail such as name, NUS ID, phone or email | go straight to the right record when I know one thing about the student |
+| `*` | teaching assistant who can type fast and prefers CLI | see a record whenever I make changes to it | confirm that the changes I made are correct |
+| `*` | teaching assistant with many students | import many students from a file and give them all the same tag at once | get a whole roster into the app without entering each student by hand |
+| `*` | teaching assistant with many students | edit records of many students en masse | update a whole group of students without repeating the same edit |
+| `*` | teaching assistant with many students | delete entire classes | remove a class I no longer teach at the end of a semester |
+| `*` | teaching assistant | define my own short alias for a tag I use constantly | label a whole roster with far fewer keystrokes |
+| `*` | teaching assistant | reset the aliases I have defined | clear shortcuts that no longer match the classes I teach |
+| `*` | teaching assistant with exchange students | save a phone number with a country code and spaces | contact students whose numbers are not local 8-digit numbers |
+| `*` | teaching assistant | be asked to confirm before all data is wiped | avoid destroying a semester of records with one mistyped command |
+| `*` | teaching assistant | view a student's remarks | recall important context such as special needs |
+| `*` | teaching assistant | add a remark to a student's record | note down requests or needs I should remember |
+| `*` | teaching assistant | redo an action I undid | restore a change I reverted by accident |
+| `*` | teaching assistant | be warned when a new student matches an existing record on phone, email or NUS ID | catch genuine duplicates even when the two names are spelled differently |
+| `*` | teaching assistant | merge two duplicate records after seeing how they differ | combine the information from both without losing either |
+| `*` | teaching assistant | find students who have no tag | spot students not yet assigned to a group |
+| `*` | teaching assistant | sort my list by a detail I choose, such as name, NUS ID, or when the student was added | read the list in the order that suits the task in front of me |
+| `*` | teaching assistant | group my students by tag | see the class composition at a glance |
+| `*` | teaching assistant | export my records to a file | share or print the list externally |
+| `*` | teaching assistant | clear all data | start fresh with a clean student book |
+| `*` | teaching assistant | reset the app to sample data | explore how the app works before entering real records |
+| `*` | teaching assistant | keep separate data files per course | avoid mixing contacts from different modules |
+| `*` | long-time teaching assistant | archive the records of students who graduated | keep past students for reference without cluttering my active list |
+| `*` | teaching assistant who can type fast | recall and reuse my recent commands | repeat the same command without retyping it |
+| `*` | teaching assistant who can type fast | auto-complete commands as I type | type common commands with fewer keystrokes |
+| `*` | teaching assistant | see a count of my students | quickly confirm nothing was lost after an import or delete |
+| `*` | teaching assistant | be told what was wrong with my input and which part of it caused the problem | correct it in one attempt instead of guessing |
+| `*` | teaching assistant who hand-edits the data file | reload the data file from disk without restarting the app | fix the file and carry on in the same sitting |
+| `*` | teaching assistant | list students I have not followed up with since a given date | make sure no one who needs help flies under the radar |
+| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS ID when deleting a record | avoid removing the wrong person when several students are listed |
+| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS ID when editing a record | avoid changing the wrong person’s details |
+| `*` | teaching assistant | record two students who genuinely have the same name | keep two different people as two different records |
+| `*` | teaching assistant who can type fast | be shown a likely correction when I mistype a command word | recover without looking up the syntax |
+| `*` | teaching assistant | look back at results I have already replaced | re-read earlier output without running the search again |
+| `*` | teaching assistant | start from my previous input when an entry is rejected | correct one detail instead of retyping everything |
+| `*` | teaching assistant on a 1920 × 1080 laptop | start the app with all of it already visible on my screen | begin working without resizing anything first |
 
-*{More to be added}*
+#### Considered and dropped
+
+These were raised during requirement gathering and left out of the product.
+
+| As a ... | I wanted to ... | Why it was dropped |
+|--------|---------------|--------------------|
+| teaching assistant | view a student's address | Cancelled, no need for address |
+| teaching assistant | send an email to a student | Not in the scope of the app, it is not a messaging app |
+| teaching assistant | send a Telegram message to a student | Not in the scope of the app, it is not a messaging app |
+| teaching assistant | send an SMS to a student | Not in the scope of the app, it is not a messaging app |
+| teaching assistant with many students | send a mass message to an entire class, by connecting to email | Not in the scope of the app, it is not a messaging app |
+| teaching assistant | record a student's attendance status per tutorial | Not in the scope of the app, it is not an attendance taking app. Other platforms already exist to serve this purpose. |
+| teaching assistant | view a student's attendance status | Not in the scope of the app, it is not an attendance taking app. Other platforms already exist to serve this purpose. |
+| teaching assistant | record grades for a student | Not in the scope of the app, it is not a gradebook. Other platforms already exist to serve this purpose. |
 
 ### Use cases
 
