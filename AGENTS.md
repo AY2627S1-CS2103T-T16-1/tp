@@ -50,7 +50,7 @@ the hooks entirely — use that sparingly, since CI applies the same rules.
 
 ## Git conventions
 
-Commit messages follow the
+Commit messages and branch names follow the
 [se-edu Git conventions](https://se-education.org/guides/conventions/git.html).
 
 **Subject line**
@@ -79,6 +79,16 @@ documentation.
 Let's point both badges at AY2627S1-CS2103T-T16-1/tp, and add the
 missing Codecov badge to README.md.
 ```
+
+**Branch names**
+- Kebab case, made of meaningful keywords: `refactor-ui-tests`
+- For a branch that addresses an issue, prefix the issue number:
+  `issueNumber-some-keywords-from-issue-title`, e.g. `13-add-dillion-photo`
+- Branch off the team repo's `master`, and send the PR from your own fork
+
+**Scope** — these conventions cover commit messages and branch names only.
+Issue titles and issue descriptions are not governed by them; write those so
+they read clearly.
 
 **Authorship** — commits are authored by the human contributor alone. Do not
 add `Co-Authored-By:` trailers for AI tools, and do not add tool session
