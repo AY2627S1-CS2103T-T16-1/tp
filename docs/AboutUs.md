@@ -16,6 +16,7 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 <img src="images/jxinnan.png" width="200px">
 
 [[github](http://github.com/jxinnan)]
+
 * Role: Developer
 * Responsibilities: Documentation
 
