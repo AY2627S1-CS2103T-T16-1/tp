@@ -21,15 +21,15 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Project Advisor
 
-### Dillion Lim
+### Jane Doe
 
-<img src="images/dillionlim.png" width="200px">
+<img src="images/johndoe.png" width="200px">
 
-[[homepage](https://dillionlim.github.io/)]
-[[github](https://github.com/dillionlim)]
+[[github](http://github.com/johndoe)]
+[[portfolio](team/johndoe.md)]
 
 * Role: Team Lead
-* Responsibilities: Deliverables and deadlines, Scheduling and tracking
+* Responsibilities: UI
 
 ### Johnny Doe
 
