@@ -86,6 +86,16 @@ missing Codecov badge to README.md.
   `issueNumber-some-keywords-from-issue-title`, e.g. `13-add-dillion-photo`
 - Branch off the team repo's `master`, and send the PR from your own fork
 
+**Branch lifecycle** — required by
+[Admin Appendix E](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixE-gitHub.html),
+not by se-edu:
+- Keep every branch after its PR merges. The course scripts inspect branches
+  to confirm that changes went through one, so deleting them destroys the
+  evidence being graded.
+- Sync a branch with `master` by merging, never by rebasing. A rebase
+  rewrites commit timestamps, which skews how the grading scripts track when
+  the work was done.
+
 **Scope** — these conventions cover commit messages and branch names only.
 Issue titles and issue descriptions are not governed by them; write those so
 they read clearly.
