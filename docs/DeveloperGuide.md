@@ -270,13 +270,20 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+An NUS School of Computing teaching assistant tutoring 2 to 3 tutorial or lab
+slots per semester. They are usually fast typists who prefer a CLI.
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+* has a need to manage 150 to 250 student contacts, sliced by slot, module,
+  project team, and follow-up status
+* prefers desktop apps to web or mobile apps
+* can type fast, and prefers typing to mouse interactions
+* is comfortable with CLI apps and with hand-editing plain-text data files
+* is expected to keep student contact data off third-party cloud services
+
+**Value proposition**: Manage a semester of students faster than a spreadsheet
+or a mouse-driven contact app. They can find anyone by any field, slice the list
+by tag, and see who is still awaiting a reply. Fully offline, in a plain-text
+file locally, with every change undoable.
 
 
 ### User stories
