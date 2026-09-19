@@ -31,14 +31,14 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Team Lead
 * Responsibilities: UI
 
-### Johnny Doe
+### Nguyen Phuc Thang
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/nguyen-phuc-thang.png" width="200px">
 
-[[github](http://github.com/johndoe)] [[portfolio](team/johndoe.md)]
+[[github](https://github.com/Nguyen-Phuc-Thang)]
 
 * Role: Developer
-* Responsibilities: Data
+* Responsibilities: Integration, Git expert
 
 ### Jean Doe
 
@@ -67,4 +67,4 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github]](https://github.com/cjbuzz)
 
 * Role: Developer
-* Responsibilities: Testing
+* Responsibilities: Testing, Parser Component
