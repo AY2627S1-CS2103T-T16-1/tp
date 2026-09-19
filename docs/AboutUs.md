@@ -19,7 +19,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](https://github.com/johndoe)]
 [[portfolio](team/johndoe.md)]
 
-- Role: Project Advisor
+* Role: Project Advisor
 
 ### Jane Doe
 
@@ -28,8 +28,8 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](http://github.com/johndoe)]
 [[portfolio](team/johndoe.md)]
 
-- Role: Team Lead
-- Responsibilities: UI
+* Role: Team Lead
+* Responsibilities: UI
 
 ### Nguyen Phuc Thang
 
@@ -37,8 +37,8 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github](https://github.com/Nguyen-Phuc-Thang)]
 
-- Role: Developer
-- Responsibilities: Integration, Git expert
+* Role: Developer
+* Responsibilities: Integration, Git expert
 
 ### Jean Doe
 
@@ -47,8 +47,8 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](http://github.com/johndoe)]
 [[portfolio](team/johndoe.md)]
 
-- Role: Developer
-- Responsibilities: Dev Ops + Threading
+* Role: Developer
+* Responsibilities: Dev Ops + Threading
 
 ### James Doe
 
@@ -57,5 +57,14 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](http://github.com/johndoe)]
 [[portfolio](team/johndoe.md)]
 
-- Role: Developer
-- Responsibilities: UI
+* Role: Developer
+* Responsibilities: UI
+
+### Ng See Jay
+
+<img src="images/cjbuzz.png" width="200px">
+
+[[github]](https://github.com/cjbuzz)
+
+* Role: Developer
+* Responsibilities: Testing, Parser Component
