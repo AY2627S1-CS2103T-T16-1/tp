@@ -1,0 +1,37 @@
+name: Close sub-issues
+
+# GitHub does not cascade a close down a sub-issue hierarchy, so an epic
+# can be closed while the stories under it stay open. This closes them.
+
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  issues: write
+
+jobs:
+  close-sub-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close every open sub-issue of the closed issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PARENT: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+
+          open_children=$(gh api "repos/$REPO/issues/$PARENT/sub_issues" --paginate \
+            --jq '.[] | select(.state == "open") | .number')
+
+          if [ -z "$open_children" ]; then
+            echo "#$PARENT has no open sub-issues."
+            exit 0
+          fi
+
+          echo "$open_children" | while read -r child; do
+            echo "Closing #$child"
+            gh issue close "$child" --repo "$REPO" \
+              --comment "Closed automatically because its parent #$PARENT was closed."
+          done
