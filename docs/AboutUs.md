@@ -7,19 +7,9 @@
 
 We are a team based in the [School of Computing, National University of Singapore](http://www.comp.nus.edu.sg).
 
-You can reach us at the email `seer[at]comp.nus.edu.sg`
+You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 ## Project team
-
-### John Doe
-
-<img src="images/johndoe.png" width="200px">
-
-[[homepage](http://www.comp.nus.edu.sg/~damithch)]
-[[github](https://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
-
-* Role: Project Advisor
 
 ### Dillion Lim
 
@@ -31,31 +21,38 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Team Lead
 * Responsibilities: Deliverables and deadlines, Scheduling and tracking
 
-### Johnny Doe
+### Jiang Xinnan
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/jxinnan.png" width="200px">
 
-[[github](http://github.com/johndoe)] [[portfolio](team/johndoe.md)]
-
-* Role: Developer
-* Responsibilities: Data
-
-### Jean Doe
-
-<img src="images/johndoe.png" width="200px">
-
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](http://github.com/jxinnan)]
 
 * Role: Developer
-* Responsibilities: Dev Ops + Threading
+* Responsibilities: Documentation
 
-### James Doe
+### Nguyen Phuc Thang
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/nguyen-phuc-thang.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/Nguyen-Phuc-Thang)]
 
 * Role: Developer
-* Responsibilities: UI
+* Responsibilities: Integration, Git expert
+
+### Ng See Jay
+
+<img src="images/cjbuzz.png" width="200px">
+
+[[github]](https://github.com/cjbuzz)
+
+* Role: Developer
+* Responsibilities: Testing, Parser Component
+
+### Rui Hong
+
+<img src="images/ruihongc.png" width="200px">
+
+[[github](https://github.com/ruihongc)]
+
+* Role: Developer
+* Responsibilities: Code Quality
