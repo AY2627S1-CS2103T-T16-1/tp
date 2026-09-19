@@ -59,3 +59,12 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Developer
 * Responsibilities: UI
+
+### Ng See Jay
+
+<img src="images/cjbuzz.png" width="200px">
+
+[[github]](https://github.com/cjbuzz)
+
+* Role: Developer
+* Responsibilities: Testing
