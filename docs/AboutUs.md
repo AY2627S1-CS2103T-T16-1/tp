@@ -38,7 +38,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](https://github.com/Nguyen-Phuc-Thang)]
 
 - Role: Developer
-- Responsibilities: Integration, Git Expert
+- Responsibilities: Integration, Git expert
 
 ### Jean Doe
 
