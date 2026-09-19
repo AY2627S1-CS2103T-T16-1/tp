@@ -37,3 +37,12 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Developer
 * Responsibilities: Testing, Parser Component
+
+### Rui Hong
+
+<img src="images/ruihongc.png" width="200px">
+
+[[github](https://github.com/ruihongc)]
+
+* Role: Developer
+* Responsibilities: Code Quality
