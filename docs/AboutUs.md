@@ -11,6 +11,16 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 ## Project team
 
+### Dillion Lim
+
+<img src="images/dillionlim.png" width="200px">
+
+[[homepage](https://dillionlim.github.io/)]
+[[github](https://github.com/dillionlim)]
+
+* Role: Team Lead
+* Responsibilities: Deliverables and deadlines, Scheduling and tracking
+
 ### Jiang Xinnan
 
 <img src="images/jxinnan.png" width="200px">
