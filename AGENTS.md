@@ -86,6 +86,16 @@ missing Codecov badge to README.md.
   `issueNumber-some-keywords-from-issue-title`, e.g. `13-add-dillion-photo`
 - Branch off the team repo's `master`, and send the PR from your own fork
 
+**Branch lifecycle** — required by
+[Admin Appendix E](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixE-gitHub.html),
+not by se-edu:
+- Keep every branch after its PR merges. The course scripts inspect branches
+  to confirm that changes went through one, so deleting them destroys the
+  evidence being graded.
+- Sync a branch with `master` by merging, never by rebasing. A rebase
+  rewrites commit timestamps, which skews how the grading scripts track when
+  the work was done.
+
 **Scope** — these conventions cover commit messages and branch names only.
 Issue titles and issue descriptions are not governed by them; write those so
 they read clearly.
@@ -167,6 +177,82 @@ minimise duplication.
 
 **Comment minimally, but sufficiently** — don't repeat the obvious, write for
 the reader, and explain WHAT and WHY, not HOW.
+
+## Prevent functionality bugs and feature flaws
+
+Apply the course guidance on
+[functionality bugs](https://nus-cs2103-ay2627-s1.github.io/website/schedule/week8/project.html#functionality-bugs)
+and
+[feature flaws](https://nus-cs2103-ay2627-s1.github.io/website/schedule/week8/project.html#feature-flaws)
+when designing, implementing and reviewing user-facing behaviour. Correctness
+includes usability and matching reasonable user expectations, not merely
+accepting values that fit a convenient data type.
+
+**Design from the user's point of view**
+- Before coding, define the normal use cases, plausible user mistakes and
+  harmful inputs. Deliberate sabotage need not be supported, but a likely
+  mistake must not crash the app, corrupt data or leave it unusable.
+- Prefer the simplest useful feature, but do not omit behaviour essential for
+  the app to be reasonably useful. If a clearly better user experience needs
+  little extra effort, implement it rather than declaring it out of scope.
+- Keep implementation, tests and the User Guide aligned. A mismatch is still
+  a bug regardless of whether the code or documentation is wrong.
+
+**Accept realistic data safely**
+- Do not impose arbitrary length, numeric or character restrictions merely to
+  simplify parsing or validation. Any limit must be justified by the product
+  domain and broad enough for realistic values.
+- Accept symbols and formats that legitimate real-world values need. In
+  particular, command delimiters must not make common names or other expected
+  values impossible to enter; improve parsing where practical.
+- Prefer warning to rejection for unusual but harmless values, such as a past
+  date or a richly annotated phone number. Block input only when accepting it
+  would hinder the software, make the data ambiguous or risk harm.
+- Handle boundary values and arithmetic overflow where they can arise from a
+  plausible mistake. Very long values must not break the layout or hide so much
+  content that the feature becomes unusable.
+
+**Make interaction forgiving and clear**
+- Error messages must identify the specific offending field/value and explain
+  the actual reason. Distinguish malformed input from a well-formed but invalid
+  value when practical; otherwise use an accurate combined message.
+- Keep commands quick to type and easy to remember. Avoid needless case
+  sensitivity, long mandatory keywords and awkward special characters; where
+  useful, support both a short alias and a descriptive form.
+- Match case sensitivity to the real-world concept. Names and search terms are
+  normally case-insensitive.
+- Make search useful when users remember only part of the target. Consider
+  whether OR semantics, partial matching or other forgiving behaviour better
+  serves the documented use case than exact or AND-only matching.
+- Keep terminal output presentable and non-alarming even though the GUI is the
+  primary interface; do not print misleading errors or stack traces during
+  normal operation.
+
+**Treat duplicate detection as uncertain**
+- Do not rely only on exact string equality when case or insignificant
+  whitespace can differ. Normalize values consistently and test likely
+  near-matches.
+- Prefer warning the user about a possible duplicate and letting them decide
+  when identity is ambiguous. State the detector's limitations clearly; never
+  imply that all duplicates are found when they are not.
+
+**Preserve the data contract**
+- Retain at least AB3's support for human-editable data files: correctly edited
+  files must load, malformed edits may be rejected with clear diagnostics, and
+  the format must remain reasonably editable by hand.
+- Do not silently discard or corrupt existing data after schema, parser or
+  validation changes. Add compatibility and malformed-data tests whenever a
+  change touches storage.
+
+**Test the user-visible boundaries**
+- For every new or changed feature, add tests for the happy path, plausible
+  typing mistakes, empty and whitespace variants, case variants, realistic
+  symbols, boundary lengths/numbers, duplicate-like values and malformed
+  persisted data where applicable.
+- Verify not only the returned result but also the exact user-facing error,
+  state after failure, persistence outcome and absence of unintended mutation.
+- Review restrictions and defaults explicitly: each one needs a user-centered
+  rationale and must be documented if users can observe it.
 
 ## Issue tracker
 
