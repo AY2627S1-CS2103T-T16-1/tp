@@ -76,6 +76,14 @@ public class StudentBuilder {
         return this;
     }
 
+    /**
+     * Leaves the {@code Student} that we are building without an email.
+     */
+    public StudentBuilder withoutEmail() {
+        this.email = null;
+        return this;
+    }
+
     public Student build() {
         return new Student(name, phone, email, tags);
     }
