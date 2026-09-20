@@ -75,6 +75,25 @@ public class MessagesTest {
     }
 
     @Test
+    public void getErrorMessageForDuplicateFlags_severalFlags_namesEachInTheOrderGiven() {
+        // a set would let the order vary between runs, which makes the message unpredictable
+        assertEquals("Multiple values specified for the following single-valued field(s): -p -e",
+                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE, FLAG_EMAIL));
+    }
+
+    @Test
+    public void getErrorMessageForDuplicateFlags_repeatedFlag_namesItOnce() {
+        assertEquals("Multiple values specified for the following single-valued field(s): -e",
+                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL, FLAG_EMAIL));
+    }
+
+    @Test
+    public void getErrorMessageForDuplicatePrefixes_severalPrefixes_namesEachInTheOrderGiven() {
+        assertEquals("Multiple values specified for the following single-valued field(s): n/ p/",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME, PREFIX_PHONE));
+    }
+
+    @Test
     public void getErrorMessageForDuplicateFlags_oneFlag_namesTheField() {
         assertEquals("Multiple values specified for the following single-valued field(s): -e",
                 Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));

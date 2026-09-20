@@ -1,6 +1,6 @@
 package seedu.tab.logic.parser;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,6 +27,9 @@ public class UserGuideExamplesTest {
     /** An `add ...` inside backticks, on a bullet or in the command summary. */
     private static final Pattern ADD_EXAMPLE = Pattern.compile("`(add [^`]+)`");
 
+    /** Enough that the guide has stopped showing the command if it drops below. */
+    private static final int MINIMUM_EXAMPLES = 5;
+
     private final AddCommandParser parser = new AddCommandParser();
 
     @Test
@@ -34,7 +37,7 @@ public class UserGuideExamplesTest {
         List<String> examples = findAddExamples();
 
         // a guide that stops showing the command at all would otherwise pass silently
-        assertEquals(true, examples.size() >= 5, "the User Guide shows no add examples");
+        assertTrue(examples.size() >= MINIMUM_EXAMPLES, "the User Guide shows too few add examples");
 
         for (String example : examples) {
             String arguments = example.substring(AddCommand.COMMAND_WORD.length());

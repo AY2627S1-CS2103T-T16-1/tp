@@ -1,6 +1,5 @@
 package seedu.tab.logic;
 
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,8 +24,7 @@ public class Messages {
     public static final String MESSAGE_FLAG_WITHOUT_VALUE =
             "%1$s needs a value after it. A value opening with a hyphen goes in double quotes.";
     public static final String MESSAGE_VALUE_AFTER_FLAGS =
-            "\"%1$s\" does not belong to any option. The name comes before the options, and any "
-            + "value holding spaces goes in double quotes.";
+            "\"%1$s\" does not belong to any option. A name holding spaces needs quotes around it.";
 
     /**
      * Returns an error message indicating the duplicate prefixes.
@@ -34,10 +32,13 @@ public class Messages {
     public static String getErrorMessageForDuplicatePrefixes(Prefix... duplicatePrefixes) {
         assert duplicatePrefixes.length > 0;
 
-        Set<String> duplicateFields =
-                Stream.of(duplicatePrefixes).map(Prefix::toString).collect(Collectors.toSet());
+        // distinct rather than a set, so that the fields are named in the order they were given
+        String duplicateFields = Stream.of(duplicatePrefixes)
+                .map(Prefix::toString)
+                .distinct()
+                .collect(Collectors.joining(" "));
 
-        return MESSAGE_DUPLICATE_FIELDS + String.join(" ", duplicateFields);
+        return MESSAGE_DUPLICATE_FIELDS + duplicateFields;
     }
 
     /**
@@ -46,10 +47,12 @@ public class Messages {
     public static String getErrorMessageForDuplicateFlags(Flag... duplicateFlags) {
         assert duplicateFlags.length > 0;
 
-        Set<String> duplicateFields =
-                Stream.of(duplicateFlags).map(Flag::toString).collect(Collectors.toSet());
+        String duplicateFields = Stream.of(duplicateFlags)
+                .map(Flag::toString)
+                .distinct()
+                .collect(Collectors.joining(" "));
 
-        return MESSAGE_DUPLICATE_FIELDS + String.join(" ", duplicateFields);
+        return MESSAGE_DUPLICATE_FIELDS + duplicateFields;
     }
 
     /**
