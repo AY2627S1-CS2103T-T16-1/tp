@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import seedu.tab.logic.parser.Flag;
 import seedu.tab.logic.parser.Prefix;
 import seedu.tab.model.student.Student;
 
@@ -20,6 +21,10 @@ public class Messages {
                 "Multiple values specified for the following single-valued field(s): ";
     public static final String MESSAGE_MISSING_FIELDS = "Missing required field(s): %1$s";
     public static final String MESSAGE_INVALID_VALUE = "%1$s \"%2$s\" is not valid: %3$s";
+    public static final String MESSAGE_UNKNOWN_FLAG = "There is no %1$s option.";
+    public static final String MESSAGE_FLAG_WITHOUT_VALUE = "%1$s needs a value after it.";
+    public static final String MESSAGE_VALUE_AFTER_FLAGS =
+            "\"%1$s\" does not belong to any option. A name holding spaces needs quotes around it.";
 
     /**
      * Returns an error message indicating the duplicate prefixes.
@@ -31,6 +36,31 @@ public class Messages {
                 Stream.of(duplicatePrefixes).map(Prefix::toString).collect(Collectors.toSet());
 
         return MESSAGE_DUPLICATE_FIELDS + String.join(" ", duplicateFields);
+    }
+
+    /**
+     * Returns an error message indicating the flags that were given more than once.
+     */
+    public static String getErrorMessageForDuplicateFlags(Flag... duplicateFlags) {
+        assert duplicateFlags.length > 0;
+
+        Set<String> duplicateFields =
+                Stream.of(duplicateFlags).map(Flag::toString).collect(Collectors.toSet());
+
+        return MESSAGE_DUPLICATE_FIELDS + String.join(" ", duplicateFields);
+    }
+
+    /**
+     * Returns an error message naming the fields that the command left out.
+     */
+    public static String getErrorMessageForMissingFlags(Flag... missingFlags) {
+        assert missingFlags.length > 0;
+
+        String missingFields = Stream.of(missingFlags)
+                .map(Flag::getLabel)
+                .collect(Collectors.joining(", "));
+
+        return String.format(MESSAGE_MISSING_FIELDS, missingFields);
     }
 
     /**
