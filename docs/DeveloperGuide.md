@@ -535,6 +535,51 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
+**Use case: UC04 - Import a roster**
+
+**MSS**
+
+1.  User requests to import a roster from a file, giving the file and the class tag to give every student in it
+2.  TAB reads the file and turns each row into a student record
+3.  TAB checks each record against the students it already holds
+4.  TAB saves the new students, tagged with the given class
+5.  TAB shows how many students were added, matched and skipped
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. TAB cannot find or read the file.
+
+    * 2a1. TAB reports the problem and leaves the records unchanged.
+
+      Use case ends.
+
+* 2b. A row is missing a required detail or is otherwise malformed.
+
+    * 2b1. TAB names the row and the reason, skips it, and carries on with the rest.
+
+      Use case resumes at step 3.
+
+* 3a. A student matches one TAB already holds, on NUS ID, email or phone.
+
+    * 3a1. TAB lists the matches and asks whether to update the existing records with the imported details.
+    * 3a2. User picks which matches, if any, to update.
+
+      Use case resumes at step 4.
+
+* 4a. TAB cannot write to the data file.
+
+    * 4a1. TAB reports that the import was not saved, and why.
+
+      Use case ends.
+
+* *a. At any time, User chooses to abandon the import.
+
+    * *a1. User clears the input.
+
+      Use case ends.
+
 *{More to be added}*
 
 
