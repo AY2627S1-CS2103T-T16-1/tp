@@ -159,6 +159,52 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Student names
+
+A name is displayed, split into words by the search, and compared as the
+identity of a student. `Name` therefore stores a normalized form rather than
+the raw input, so that two names which look identical cannot be searched
+differently or admitted as two students.
+
+**Normalizing.** On construction a name is
+
+* composed to Unicode form NFC, so that `Nguyễn` written as one code point and
+  as `e` plus two combining marks become the same string
+* stripped of the zero-width space and the byte order mark, which are invisible
+  and carry no meaning of their own
+* reduced to single ASCII spaces, with the ends trimmed, so that a
+  non-breaking space cannot hide a word from the search
+
+The zero-width joiner and non-joiner are deliberately kept, because scripts
+such as Sinhala and Arabic need them to shape correctly. Two names that differ
+only by a joiner are therefore still two students.
+
+**A name is valid** when something remains after normalizing: at least one
+letter or number, judged by Unicode category rather than by ASCII.
+
+| Accepted | Example |
+| --- | --- |
+| Slashes | `Ravi s/o Kumaran`, `Anita d/o Rajan` |
+| Hyphens and apostrophes | `Siti Nur-Aisyah`, `Ma Ying-jeou`, `Sean O'Brien` |
+| Other punctuation | `J. R. R. Tolkien`, `James&`, `-Ahmad` |
+| Ligatures and Roman numerals | `X Æ A-Xii`, `X Æ A-Ⅻ` |
+| Any script | Chinese, Japanese, Korean, Arabic, Tamil, Hebrew, Mongolian, Vietnamese |
+| Characters outside the basic plane | `𠮷田`, Adlam, Cuneiform |
+| Digits only | `12345` |
+
+| Rejected | Why |
+| --- | --- |
+| Empty, or whitespace only | nothing remains after normalizing |
+| Punctuation only, such as `---` | no letter or number |
+| An emoji, or a zero-width space, on its own | no letter or number |
+
+**A name that holds a command prefix still fails to parse.** The model accepts
+`Abdul a/l Rahman`, but `ArgumentTokenizer` reads the `a/` as the address
+prefix and rejects the command. A/L and A/P are ordinary components of a
+Malaysian name, so this is the same defect as the one `s/o` used to have, and
+it is fixed by replacing the prefix syntax with positional arguments and
+flags rather than by changing `Name`. `AddCommandParserTest` pins it.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
