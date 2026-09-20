@@ -51,6 +51,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "how-add-reads-its-arguments": "How add reads its arguments",
         "field-values": "Field values",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
