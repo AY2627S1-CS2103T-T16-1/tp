@@ -159,6 +159,42 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### How `add` reads its arguments
+
+`add` marks its fields with options, `NAME -p PHONE [-e EMAIL] [-t TAG]...`,
+where the other commands mark theirs with prefixes such as `p/`.
+
+A prefix has to be a sequence a value never contains, and no such sequence
+exists for a name. `s/o`, `d/o`, `a/l` and `a/p` are ordinary parts of
+Singaporean and Malaysian names, and `a/l` was in fact unreadable for as long
+as an address field was marked `a/`. Widening the prefixes would only move the
+collision somewhere else. Options move the problem out of the value entirely:
+an option is a whole token, so a name is read as a name however it is spelled.
+
+Parsing runs in two passes, the way a shell does it.
+
+`CommandTokenizer` splits the arguments on whitespace and lets double quotes
+group a value holding spaces. A token records whether a quote took part in it,
+because that is the only thing separating the value `-Ahmad` from the option
+`-e`. There is no escape, so a value cannot contain a double quote; no name we
+expect does.
+
+`FlagTokenizer` reads the tokens. Those before the first option are the name,
+joined with single spaces, so a name of several words needs no quotes unless it
+would otherwise be misread. Each option takes the token after it, and `-t`
+repeats. An unknown option, an option left without a value, and a token
+belonging to no option are each reported for what they are, rather than as one
+generic complaint.
+
+The shape of the command is settled before any field is read. An unclosed
+quote, an unknown option, or a single-valued option given twice all leave it
+unclear which field a value belongs to, so each is refused on its own instead
+of being collected with the field errors.
+
+`edit` still takes prefixes. Its fields are all optional and it has no
+positional value to protect, so it gains nothing from the change, but the two
+commands reading differently is a wart worth removing once `add` has settled.
+
 ### Field values
 
 `Name`, `Tag` and `Phone` each store the form returned by
@@ -269,7 +305,7 @@ Step 2. The user executes `delete 5` command to delete the 5th person in the add
 
 <puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
 
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
+Step 3. The user executes `add David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
 
 <puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
 
@@ -313,7 +349,7 @@ Step 5. The user then decides to execute the command `list`. Commands that do no
 
 <puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
 
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
+Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add David …` command. This is the behavior that most modern desktop applications follow.
 
 <puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
 

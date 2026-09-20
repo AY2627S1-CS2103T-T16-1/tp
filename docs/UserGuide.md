@@ -31,7 +31,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
    * `list` : Lists all contacts.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com` : Adds a student named `John Doe`.
+   * `add John Doe -p 98765432 -e johnd@example.com` : Adds a student named `John Doe`.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -50,16 +50,23 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 **Notes about the command format:**<br>
 
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
-  For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
+  For example, in `add NAME`, replace `NAME` with a value such as `John Doe`.
 
 * Items in square brackets are optional.<br>
-  For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
+  For example, `NAME [-t TAG]` can be used as `John Doe -t friend` or as `John Doe`.
 
 * Items followed by `...` can appear zero or more times.<br>
-  For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
+  For example, `[-t TAG]...` may be omitted, or written as `-t friend` or as
+  `-t friend -t family`.
 
 * Parameters can be in any order.<br>
-  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
+  For example, if the command specifies `-p PHONE_NUMBER -e EMAIL`,
+  `-e EMAIL -p PHONE_NUMBER` is also acceptable. A parameter given before any
+  option, such as the name in `add`, keeps its place at the front.
+
+* `add` marks its fields with options such as `-p`, while `edit` marks them
+  with prefixes such as `p/`. A value holding spaces goes in double quotes
+  after an option, and needs no quotes after a prefix.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -80,7 +87,7 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add n/NAME p/PHONE_NUMBER [e/EMAIL] [t/TAG]... `
+Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]...`
 
 <box type="tip" seamless>
 
@@ -110,19 +117,20 @@ hyphens, apostrophes, full stops, and any script. It only has to contain at
 least one letter or number, in any writing system.
 </box>
 
-<box type="warning" seamless>
+<box type="tip" seamless>
 
-**Known limitation:** a name containing `p/`, `e/` or `t/` followed by a space
-is read as the start of another field. Names containing `s/o`, `d/o`, `a/l` and
-`a/p` are unaffected.
+**Tip:** Put double quotes around any value holding spaces that TAB might
+otherwise read as the start of another field, and around a name opening with a
+hyphen. `add "Ravi s/o Kumaran" -p 91234567` and `add "-Ahmad" -p 84001122`
+both work. A value cannot itself contain a double quote.
 </box>
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com p/1234567 t/criminal`
-* `add n/Ravi s/o Kumaran p/91234567 e/e0923841@u.nus.edu`
-* `add n/Siti Nur-Aisyah p/84420917 e/e1147203@u.nus.edu`
-* `add n/陈伟明 p/98123344 e/e1077310@u.nus.edu`
+* `add John Doe -p 98765432 -e johnd@example.com`
+* `add "Betsy Crowe" -t friend -e betsycrowe@example.com -p 1234567 -t criminal`
+* `add "Ravi s/o Kumaran" -p 91234567 -e e0923841@u.nus.edu`
+* `add Siti Nur-Aisyah -p 84420917 -e e1147203@u.nus.edu -t T1 -t "Lab 3"`
+* `add 陈伟明 -p 98123344 -e e1077310@u.nus.edu`
 
 Leading and trailing spaces are removed, repeated spaces inside a name are
 collapsed to one, and invisible characters are discarded, so that a name is
@@ -132,7 +140,7 @@ If a field is rejected, TAB quotes the value it could not accept and says what
 is wrong with it, rather than restating the whole rule:
 
 ```
-> add n/John Doe p/98765432 e/e1234567
+> add John Doe -p 98765432 -e e1234567
 Email "e1234567" is not valid: an email needs an @ between the local part and the domain
 ```
 
@@ -141,8 +149,8 @@ before the command is refused, so a command with more than one mistake tells
 you about all of them at once:
 
 ```
-> add n/John Doe e/e1234567
-Missing required field(s): p/PHONE
+> add John Doe -e e1234567
+Missing required field(s): -p PHONE
 Email "e1234567" is not valid: an email needs an @ between the local part and the domain
 ```
 
@@ -250,7 +258,7 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER [e/EMAIL] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 t/friend t/colleague`
+**Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]...` <br> e.g., `add James Ho -p 22224444 -t friend -t colleague`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
