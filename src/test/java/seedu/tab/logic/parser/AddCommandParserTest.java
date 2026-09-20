@@ -189,7 +189,7 @@ public class AddCommandParserTest {
         assertParseFailure(parser, NAME_DESC_BOB + INVALID_PHONE_DESC + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
                 + TAG_DESC_HUSBAND + TAG_DESC_FRIEND,
                         Messages.getErrorMessageForInvalidValue("Phone",
-                                "911a", Phone.getFailureReason("911a")));
+                                "12", Phone.getFailureReason("12")));
 
         // invalid email
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + INVALID_EMAIL_DESC + ADDRESS_DESC_BOB
@@ -204,9 +204,8 @@ public class AddCommandParserTest {
 
         // invalid tag
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
-                + INVALID_TAG_DESC + VALID_TAG_FRIEND,
-                Messages.getErrorMessageForInvalidValue("Tag", "hubby*friend",
-                        Tag.getFailureReason("hubby*friend")));
+                + INVALID_TAG_DESC + TAG_DESC_FRIEND,
+                Messages.getErrorMessageForInvalidValue("Tag", "---", Tag.getFailureReason("---")));
 
         // two invalid values, only first invalid value reported
         assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + EMAIL_DESC_BOB + INVALID_ADDRESS_DESC,

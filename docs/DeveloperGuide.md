@@ -159,7 +159,25 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Student names
+### Field values
+
+`Name`, `Tag` and `Phone` follow one rule, because all three are displayed,
+split into words by the search, and compared, whether as the identity of a
+student or as a key in the set of tags. Each stores the form returned by
+`StringUtil.normalizeWhitespace`, so that two values which look identical
+cannot be searched differently or stored twice.
+
+* a **name** or a **tag** needs at least one letter or number, by Unicode
+  category rather than by ASCII
+* a **phone number** needs at least 3 digits, which is the shortest real
+  number a user might record
+
+Nothing else is rejected. A phone number may hold `+`, spaces, brackets and an
+extension; a tag may hold spaces, hyphens and any script. None of those
+characters can hinder the app, because none of these fields is parsed,
+dialled, or used to build a file path.
+
+#### Student names
 
 A name is displayed, split into words by the search, and compared as the
 identity of a student. `Name` therefore stores a normalized form rather than

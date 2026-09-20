@@ -3,14 +3,16 @@ package seedu.tab.model.tag;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.AppUtil.checkArgument;
 
+import seedu.tab.commons.util.StringUtil;
+
 /**
  * Represents a Tag in the student book.
  * Guarantees: immutable; name is valid as declared in {@link #isValidTagName(String)}
  */
 public class Tag {
 
-    public static final String MESSAGE_CONSTRAINTS = "Tag names should be alphanumeric";
-    public static final String VALIDATION_REGEX = "\\p{Alnum}+";
+    public static final String MESSAGE_CONSTRAINTS =
+            "Tags should contain at least one letter, character or number, from any writing system";
 
     public final String tagName;
 
@@ -22,14 +24,15 @@ public class Tag {
     public Tag(String tagName) {
         requireNonNull(tagName);
         checkArgument(isValidTagName(tagName), MESSAGE_CONSTRAINTS);
-        this.tagName = tagName;
+        this.tagName = StringUtil.normalizeWhitespace(tagName);
     }
 
     /**
      * Returns true if a given string is a valid tag name.
      */
     public static boolean isValidTagName(String test) {
-        return test.matches(VALIDATION_REGEX);
+        requireNonNull(test);
+        return StringUtil.hasLetterOrNumber(StringUtil.normalizeWhitespace(test));
     }
 
     @Override
@@ -57,10 +60,7 @@ public class Tag {
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);
-        if (test.isEmpty()) {
-            return "a tag may not be empty";
-        }
-        return "a tag may hold letters and digits only";
+        return "it holds no letter, character or number";
     }
 
     /**

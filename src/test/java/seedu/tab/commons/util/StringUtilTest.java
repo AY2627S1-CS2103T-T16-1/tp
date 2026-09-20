@@ -1,5 +1,6 @@
 package seedu.tab.commons.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
@@ -140,4 +141,42 @@ public class StringUtilTest {
         assertThrows(NullPointerException.class, () -> StringUtil.getDetails(null));
     }
 
+    //---------------- Tests for normalizeWhitespace -------------------------------------
+
+    @Test
+    public void normalizeWhitespace_reducesEveryKindOfWhitespaceToOneSpace() {
+        assertEquals("John Doe", StringUtil.normalizeWhitespace("John\tDoe"));
+        assertEquals("John Doe", StringUtil.normalizeWhitespace("John\u00A0Doe"));
+        assertEquals("John Doe", StringUtil.normalizeWhitespace("John\u3000Doe"));
+        assertEquals("John Doe", StringUtil.normalizeWhitespace("John  \n Doe"));
+        assertEquals("John Doe", StringUtil.normalizeWhitespace("  John Doe  "));
+    }
+
+    @Test
+    public void normalizeWhitespace_dropsZeroWidthCharactersButKeepsJoiners() {
+        assertEquals("John", StringUtil.normalizeWhitespace("\u200BJohn"));
+        assertEquals("John", StringUtil.normalizeWhitespace("John\uFEFF"));
+
+        // Sinhala needs the joiner to shape correctly
+        String sinhala = "\u0DC1\u0DCA\u200D\u0DBB\u0DD3";
+        assertEquals(sinhala, StringUtil.normalizeWhitespace(sinhala));
+    }
+
+    @Test
+    public void normalizeWhitespace_composesToNfc() {
+        assertEquals(StringUtil.normalizeWhitespace("Nguy\u1EC5n"),
+                StringUtil.normalizeWhitespace("Nguye\u0302\u0303n"));
+    }
+
+    //---------------- Tests for hasLetterOrNumber ---------------------------------------
+
+    @Test
+    public void hasLetterOrNumber() {
+        assertTrue(StringUtil.hasLetterOrNumber("a"));
+        assertTrue(StringUtil.hasLetterOrNumber("1"));
+        assertTrue(StringUtil.hasLetterOrNumber("\u9648")); // a logograph counts
+        assertFalse(StringUtil.hasLetterOrNumber(""));
+        assertFalse(StringUtil.hasLetterOrNumber("---"));
+        assertFalse(StringUtil.hasLetterOrNumber("\uD83D\uDE00")); // an emoji does not
+    }
 }

@@ -3,6 +3,10 @@ package seedu.tab.model.student;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.AppUtil.checkArgument;
 
+import java.util.regex.Pattern;
+
+import seedu.tab.commons.util.StringUtil;
+
 /**
  * Represents a Student's phone number in the student book.
  * Guarantees: immutable; is valid as declared in {@link #isValidPhone(String)}
@@ -10,9 +14,10 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
 public class Phone {
 
 
-    public static final String MESSAGE_CONSTRAINTS =
-            "Phone numbers should only contain digits, and should be at least 3 digits long";
-    public static final String VALIDATION_REGEX = "\\d{3,}";
+    public static final String MESSAGE_CONSTRAINTS = "Phone numbers should contain at least 3 digits";
+
+    private static final Pattern DIGIT = Pattern.compile("\\p{Nd}");
+    private static final int MINIMUM_DIGITS = 3;
     public final String value;
 
     /**
@@ -23,14 +28,19 @@ public class Phone {
     public Phone(String phone) {
         requireNonNull(phone);
         checkArgument(isValidPhone(phone), MESSAGE_CONSTRAINTS);
-        value = phone;
+        value = StringUtil.normalizeWhitespace(phone);
     }
 
     /**
      * Returns true if a given string is a valid phone number.
      */
     public static boolean isValidPhone(String test) {
-        return test.matches(VALIDATION_REGEX);
+        requireNonNull(test);
+        return countDigits(test) >= MINIMUM_DIGITS;
+    }
+
+    private static int countDigits(String test) {
+        return (int) DIGIT.matcher(test).results().count();
     }
 
     /**
@@ -39,10 +49,7 @@ public class Phone {
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);
-        if (!test.matches("\\d*")) {
-            return "a phone number may hold digits only";
-        }
-        return "a phone number needs at least 3 digits";
+        return "a phone number needs at least " + MINIMUM_DIGITS + " digits";
     }
 
     @Override

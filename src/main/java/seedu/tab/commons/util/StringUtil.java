@@ -5,12 +5,18 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.text.Normalizer;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 /**
  * Helper functions for handling strings.
  */
 public class StringUtil {
+
+    private static final Pattern ZERO_WIDTH = Pattern.compile("[\\u200B\\uFEFF]");
+    private static final Pattern WHITESPACE = Pattern.compile("(?U)\\s+");
+    private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
 
     /**
      * Returns true if the {@code sentence} contains the {@code word}.
@@ -46,6 +52,30 @@ public class StringUtil {
         StringWriter sw = new StringWriter();
         t.printStackTrace(new PrintWriter(sw));
         return t.getMessage() + "\n" + sw.toString();
+    }
+
+    /**
+     * Returns {@code raw} in the form a stored field holds: composed to Unicode form NFC,
+     * without the zero-width characters that would let two identical-looking values differ,
+     * and with every run of whitespace reduced to one ASCII space and the ends trimmed.
+     *
+     * The zero-width joiner and non-joiner are kept, because scripts such as Sinhala and
+     * Arabic need them to shape correctly.
+     */
+    public static String normalizeWhitespace(String raw) {
+        requireNonNull(raw);
+        String composed = Normalizer.normalize(raw, Normalizer.Form.NFC);
+        String visible = ZERO_WIDTH.matcher(composed).replaceAll("");
+        return WHITESPACE.matcher(visible).replaceAll(" ").trim();
+    }
+
+    /**
+     * Returns true if {@code s} holds at least one character that Unicode calls a letter or a
+     * number, which covers logographic scripts as well as alphabets.
+     */
+    public static boolean hasLetterOrNumber(String s) {
+        requireNonNull(s);
+        return HAS_LETTER_OR_NUMBER.matcher(s).find();
     }
 
     /**
