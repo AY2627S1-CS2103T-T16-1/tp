@@ -29,6 +29,7 @@ import static seedu.tab.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.tab.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.tab.testutil.Assert.assertThrows;
@@ -207,9 +208,12 @@ public class AddCommandParserTest {
                 + INVALID_TAG_DESC + TAG_DESC_FRIEND,
                 Messages.getErrorMessageForInvalidValue("Tag", "---", Tag.getFailureReason("---")));
 
-        // two invalid values, only first invalid value reported
+        // two invalid values, both reported
         assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + EMAIL_DESC_BOB + INVALID_ADDRESS_DESC,
-                Messages.getErrorMessageForInvalidValue("Name", "---", Name.getFailureReason("---")));
+                Messages.getErrorMessageForInvalidValue(Name.FIELD_NAME, "---", Name.getFailureReason("---"))
+                        + "\n"
+                        + Messages.getErrorMessageForInvalidValue(Address.FIELD_NAME, "",
+                                Address.getFailureReason("")));
 
         // non-empty preamble
         assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
@@ -241,5 +245,37 @@ public class AddCommandParserTest {
         String command = " " + PREFIX_NAME + "Abdul a/l Rahman" + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ADDRESS_DESC_BOB;
         assertThrows(ParseException.class, () -> parser.parse(command));
+    }
+
+    @Test
+    public void parse_severalInvalidValues_reportsEveryOne() {
+        // the point of the change: a user who mistyped four fields learns all four at once,
+        // rather than one per attempt
+        String expected = String.join("\n",
+                Messages.getErrorMessageForInvalidValue(Name.FIELD_NAME, "---", Name.getFailureReason("---")),
+                Messages.getErrorMessageForInvalidValue(Phone.FIELD_NAME, "12", Phone.getFailureReason("12")),
+                Messages.getErrorMessageForInvalidValue(Email.FIELD_NAME, "john@x",
+                        Email.getFailureReason("john@x")),
+                Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, "---", Tag.getFailureReason("---")));
+
+        assertParseFailure(parser, " " + PREFIX_NAME + "---" + " " + PREFIX_PHONE + "12"
+                + " " + PREFIX_EMAIL + "john@x" + ADDRESS_DESC_BOB + " " + PREFIX_TAG + "---", expected);
+    }
+
+    @Test
+    public void parse_missingFieldAndInvalidValue_reportsBoth() {
+        // a missing field and a bad value are different complaints and arrive together
+        String expected = Messages.getErrorMessageForMissingPrefixes(PREFIX_EMAIL)
+                + "\n"
+                + Messages.getErrorMessageForInvalidValue(Phone.FIELD_NAME, "12", Phone.getFailureReason("12"));
+
+        assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_PHONE + "12" + ADDRESS_DESC_BOB, expected);
+    }
+
+    @Test
+    public void parse_missingFieldIsNotAlsoReportedAsUnparseable() {
+        // a field that is absent is reported once, as missing, and not a second time as a value
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB,
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_EMAIL));
     }
 }
