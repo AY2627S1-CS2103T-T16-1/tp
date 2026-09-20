@@ -370,32 +370,52 @@ These were raised during requirement gathering and left out of the product.
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+(For all use cases below, the **System** is `TAB` and the **Actor** is the `user`, unless specified otherwise)
 
-**Use case: Delete a person**
+**Use case: UC01 - Add a student**
 
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1.  User requests to add a student, giving the name and whatever other details they have
+2.  TAB checks that each detail is in an acceptable form
+3.  TAB checks the student against the records it already holds
+4.  TAB saves the student
+5.  TAB shows the new record, including the tags it applied
 
     Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 2a. A detail is not in an acceptable form.
 
-  Use case ends.
+    * 2a1. TAB names the detail it rejected and the reason, and leaves the input in the command box.
+    * 2a2. User corrects that detail and submits again.
 
-* 3a. The given index is invalid.
+      Steps 2a1-2a2 are repeated until every detail is acceptable.
 
-    * 3a1. AddressBook shows an error message.
+      Use case resumes at step 3.
 
-      Use case resumes at step 2.
+* 3a. The student matches one TAB already holds, on NUS ID, email or phone.
+
+    * 3a1. TAB shows the matching student and asks whether to add the new one anyway.
+    * 3a2. User confirms that the two are different people.
+
+      Use case resumes at step 4.
+
+* 4a. TAB cannot write to the data file.
+
+    * 4a1. TAB reports that the student was not saved, and why.
+
+      Use case ends.
+
+* *a. At any time, User chooses to abandon the addition.
+
+    * *a1. TAB discards the input and leaves the records unchanged.
+
+      Use case ends.
 
 *{More to be added}*
+
 
 ### Non-Functional Requirements
 
