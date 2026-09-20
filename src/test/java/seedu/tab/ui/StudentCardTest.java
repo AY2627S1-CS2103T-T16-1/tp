@@ -47,7 +47,7 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_studentWithEmail_showsTheAddress() throws Exception {
+    public void constructor_studentWithEmail_showsTheEmail() throws Exception {
         Student student = new StudentBuilder().withEmail("alice@example.com").build();
         Label email = emailLabelOf(student);
 
@@ -67,7 +67,7 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_showsTheNameAndPhoneWhicheverWay() throws Exception {
+    public void constructor_nameAndPhoneHoldingSymbols_areShownAsGiven() throws Exception {
         Student student = new StudentBuilder().withName("Ravi s/o Kumaran").withPhone("+65 9123 4567")
                 .withoutEmail().build();
         StudentCard card = onFxThread(() -> new StudentCard(student, 7));
@@ -78,7 +78,7 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_tags_areShownInOrder() throws Exception {
+    public void constructor_severalTags_areShownInOrder() throws Exception {
         Student student = new StudentBuilder().withTags("T1", "Lab 3", "needs-followup").build();
         FlowPane tags = onFxThread(() -> (FlowPane) new StudentCard(student, 1).getRoot().lookup("#tags"));
 
