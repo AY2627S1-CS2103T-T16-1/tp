@@ -16,18 +16,20 @@ public class StringUtil {
 
     private static final Pattern ZERO_WIDTH = Pattern.compile("[\\u200B\\uFEFF]");
     private static final Pattern WHITESPACE = Pattern.compile("(?U)\\s+");
+    private static final Pattern WHITESPACE_CHARACTER = Pattern.compile("(?U)\\s");
     private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
 
     /**
      * Returns true if {@code character} separates one value from the next.
      *
-     * <p>{@code Character.isWhitespace} leaves out the non-breaking space, which a command
-     * pasted from a web page or a chat message carries. Matching it here keeps a caller that
-     * splits on whitespace agreeing with {@link #normalizeFieldValue}, whose pattern does
-     * match it.
+     * <p>The answer comes from the pattern {@link #normalizeFieldValue} collapses with, so a
+     * caller that splits on whitespace and the value it then stores cannot disagree. Naming
+     * the characters instead would leave gaps in both directions: {@code isWhitespace} misses
+     * the non-breaking space that a command pasted from a web page carries, and claims the
+     * file separator, which the pattern does not.
      */
     public static boolean isWhitespace(char character) {
-        return Character.isWhitespace(character) || Character.isSpaceChar(character);
+        return WHITESPACE_CHARACTER.matcher(String.valueOf(character)).matches();
     }
 
     /**
