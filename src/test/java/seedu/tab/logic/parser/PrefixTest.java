@@ -22,6 +22,10 @@ public class PrefixTest {
         // a prefix is identified by the characters that mark it, not by what it is called,
         // so naming the fields cannot change how the tokenizer matches them
         assertEquals(new Prefix("e/"), new Prefix("e/", "EMAIL"));
+    }
+
+    @Test
+    public void hashCode_sameMarkerDifferentFieldName_returnsSameHashCode() {
         assertEquals(new Prefix("e/", "EMAIL").hashCode(), new Prefix("e/", "MAIL").hashCode());
     }
 

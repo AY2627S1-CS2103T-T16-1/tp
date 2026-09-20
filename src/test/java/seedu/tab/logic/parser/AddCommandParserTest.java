@@ -142,22 +142,26 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_compulsoryFieldMissing_failure() {
-        // a missing field is named, rather than the whole usage block being printed
+        // a field is left out entirely, so that each case fails for one reason only
 
-        // missing phone prefix
-        assertParseFailure(parser, NAME_DESC_BOB + VALID_PHONE_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
+        // missing name
+        assertParseFailure(parser, PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_NAME));
+
+        // missing phone
+        assertParseFailure(parser, NAME_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
                 Messages.getErrorMessageForMissingPrefixes(PREFIX_PHONE));
 
-        // missing email prefix
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + VALID_EMAIL_BOB + ADDRESS_DESC_BOB,
+        // missing email
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB,
                 Messages.getErrorMessageForMissingPrefixes(PREFIX_EMAIL));
 
-        // missing address prefix
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + VALID_ADDRESS_BOB,
+        // missing address
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB,
                 Messages.getErrorMessageForMissingPrefixes(PREFIX_ADDRESS));
 
         // several fields missing -> every one of them is named, in the order of the format
-        assertParseFailure(parser, NAME_DESC_BOB + VALID_PHONE_BOB + VALID_EMAIL_BOB + ADDRESS_DESC_BOB,
+        assertParseFailure(parser, NAME_DESC_BOB + ADDRESS_DESC_BOB,
                 Messages.getErrorMessageForMissingPrefixes(PREFIX_PHONE, PREFIX_EMAIL));
 
         // nothing at all
