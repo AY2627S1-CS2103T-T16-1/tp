@@ -19,6 +19,20 @@ public class StringUtil {
     private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
 
     /**
+     * Returns true if {@code character} separates one value from the next.
+     *
+     * <p>The answer comes from the very pattern {@link #normalizeFieldValue} collapses with,
+     * so a caller that splits on whitespace and the value it then stores cannot disagree. On
+     * one character, matching one or more of them is the same as matching one. Naming the
+     * characters instead would leave gaps in both directions: {@code Character.isWhitespace}
+     * misses the non-breaking space that a command pasted from a web page carries, and claims
+     * the file separator, which the pattern does not.
+     */
+    public static boolean isWhitespace(char character) {
+        return WHITESPACE.matcher(String.valueOf(character)).matches();
+    }
+
+    /**
      * Returns true if the {@code sentence} contains the {@code word}.
      *   Ignores case, but a full word match is required.
      *   <br>examples:<pre>

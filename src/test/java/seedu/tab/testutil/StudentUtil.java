@@ -1,5 +1,8 @@
 package seedu.tab.testutil;
 
+import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
+import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
@@ -25,17 +28,23 @@ public class StudentUtil {
     }
 
     /**
-     * Returns the part of command string for the given {@code student}'s details.
+     * Returns the part of command string for the given {@code student}'s details. Every value
+     * is quoted, since a name, a tag and even a phone number may hold spaces.
      */
     public static String getStudentDetails(Student student) {
         StringBuilder sb = new StringBuilder();
-        sb.append(PREFIX_NAME + student.getName().fullName + " ");
-        sb.append(PREFIX_PHONE + student.getPhone().value + " ");
-        student.getEmail().ifPresent(email -> sb.append(PREFIX_EMAIL).append(email.value).append(" "));
-        student.getTags().stream().forEach(
-            s -> sb.append(PREFIX_TAG + s.tagName + " ")
-        );
+        sb.append(quoted(student.getName().fullName)).append(" ");
+        sb.append(FLAG_PHONE).append(" ").append(quoted(student.getPhone().value)).append(" ");
+        student.getEmail().ifPresent(email ->
+                sb.append(FLAG_EMAIL).append(" ").append(quoted(email.value)).append(" "));
+        student.getTags().forEach(tag ->
+                sb.append(FLAG_TAG).append(" ").append(quoted(tag.tagName)).append(" "));
         return sb.toString();
+    }
+
+    private static String quoted(String value) {
+        String escaped = value.replace("\\", "\\\\").replace("\"", "\\\"");
+        return "\"" + escaped + "\"";
     }
 
     /**

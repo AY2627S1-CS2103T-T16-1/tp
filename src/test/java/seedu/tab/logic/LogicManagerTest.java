@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.tab.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
-import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
-import static seedu.tab.logic.commands.CommandTestUtil.NAME_DESC_AMY;
-import static seedu.tab.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
+import static seedu.tab.logic.commands.CommandTestUtil.ADD_EMAIL_AMY;
+import static seedu.tab.logic.commands.CommandTestUtil.ADD_NAME_AMY;
+import static seedu.tab.logic.commands.CommandTestUtil.ADD_PHONE_AMY;
 import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalStudents.AMY;
 
@@ -194,8 +194,8 @@ public class LogicManagerTest {
         logic = new LogicManager(model, storage);
 
         // Triggers the saveStudentBook method by executing an add command
-        String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
-                + EMAIL_DESC_AMY;
+        String addCommand = AddCommand.COMMAND_WORD + ADD_NAME_AMY + ADD_PHONE_AMY
+                + ADD_EMAIL_AMY;
         Student expectedStudent = new StudentBuilder(AMY).withTags().build();
         ModelManager expectedModel = new ModelManager();
         expectedModel.addStudent(expectedStudent);

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.io.FileNotFoundException;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
@@ -189,4 +190,44 @@ public class StringUtilTest {
         assertFalse(StringUtil.hasLetterOrNumber("---"));
         assertFalse(StringUtil.hasLetterOrNumber("\uD83D\uDE00")); // an emoji does not
     }
+
+    //---------------- Tests for isWhitespace --------------------------------------
+
+    @Test
+    public void isWhitespace_ordinarySeparators_returnsTrue() {
+        assertTrue(StringUtil.isWhitespace(' '));
+        assertTrue(StringUtil.isWhitespace('\t'));
+        assertTrue(StringUtil.isWhitespace('\n'));
+    }
+
+    @Test
+    public void isWhitespace_unicodeSpaces_returnsTrue() {
+        // Character.isWhitespace leaves these out, yet normalizeFieldValue collapses them, so
+        // a caller splitting on whitespace has to agree with it
+        assertTrue(StringUtil.isWhitespace('\u00A0'), "non-breaking space");
+        assertTrue(StringUtil.isWhitespace('\u202F'), "narrow non-breaking space");
+        assertTrue(StringUtil.isWhitespace('\u3000'), "ideographic space");
+        assertTrue(StringUtil.isWhitespace('\u0085'), "next line");
+    }
+
+    @Test
+    public void isWhitespace_everyCharacter_agreesWithTheNormalizingPattern() {
+        // the two disagreed in both directions while the characters were named one by one
+        Pattern pattern = Pattern.compile("(?U)\\s");
+        for (int code = Character.MIN_VALUE; code <= Character.MAX_VALUE; code++) {
+            String character = String.valueOf((char) code);
+            assertEquals(pattern.matcher(character).matches(),
+                    StringUtil.isWhitespace(character.charAt(0)),
+                    "disagreed on U+" + Integer.toHexString(code));
+        }
+    }
+
+    @Test
+    public void isWhitespace_ordinaryCharacters_returnsFalse() {
+        assertFalse(StringUtil.isWhitespace('a'));
+        assertFalse(StringUtil.isWhitespace('-'));
+        assertFalse(StringUtil.isWhitespace('\u200B'), "a zero-width space separates nothing");
+        assertFalse(StringUtil.isWhitespace('\u001C'), "a file separator is not a space");
+    }
+
 }

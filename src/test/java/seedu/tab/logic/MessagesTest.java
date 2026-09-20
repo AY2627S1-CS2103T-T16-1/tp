@@ -1,6 +1,8 @@
 package seedu.tab.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
@@ -53,6 +55,48 @@ public class MessagesTest {
     public void getErrorMessageForMissingPrefixes_noPrefixes_throwsAssertionError() {
         // naming no fields at all would leave the user with "Missing required field(s): "
         assertThrows(AssertionError.class, () -> Messages.getErrorMessageForMissingPrefixes());
+    }
+
+    @Test
+    public void getErrorMessageForMissingFields_noFields_throwsAssertionError() {
+        // naming no fields at all would leave the user with "Missing required field(s): "
+        assertThrows(AssertionError.class, () -> Messages.getErrorMessageForMissingFields());
+    }
+
+    @Test
+    public void getErrorMessageForMissingFields_severalFields_namesEachInOrder() {
+        assertEquals("Missing required field(s): NAME, -p PHONE",
+                Messages.getErrorMessageForMissingFields("NAME", FLAG_PHONE.getLabel()));
+    }
+
+    @Test
+    public void getErrorMessageForDuplicateFlags_noFlags_throwsAssertionError() {
+        assertThrows(AssertionError.class, () -> Messages.getErrorMessageForDuplicateFlags());
+    }
+
+    @Test
+    public void getErrorMessageForDuplicateFlags_severalFlags_namesEachInTheOrderGiven() {
+        // a set would let the order vary between runs, which makes the message unpredictable
+        assertEquals("Multiple values specified for the following single-valued field(s): -p -e",
+                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE, FLAG_EMAIL));
+    }
+
+    @Test
+    public void getErrorMessageForDuplicateFlags_repeatedFlag_namesItOnce() {
+        assertEquals("Multiple values specified for the following single-valued field(s): -e",
+                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL, FLAG_EMAIL));
+    }
+
+    @Test
+    public void getErrorMessageForDuplicatePrefixes_severalPrefixes_namesEachInTheOrderGiven() {
+        assertEquals("Multiple values specified for the following single-valued field(s): n/ p/",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME, PREFIX_PHONE));
+    }
+
+    @Test
+    public void getErrorMessageForDuplicateFlags_oneFlag_namesTheField() {
+        assertEquals("Multiple values specified for the following single-valued field(s): -e",
+                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
     }
 
     @Test
