@@ -489,6 +489,60 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
+**Use case: UC02 - Find a student**
+
+**MSS**
+
+1.  User requests to find students by giving a generic search term, or a search term for a specific field like name, email or tag.
+2.  TAB filters students based on given search terms. 
+3.  TAB shows a list of students matching the search terms, displaying their identifying details
+
+    Use case ends.
+
+
+
+3.  User identifies the intended student in the list, distinguishing between similar records by their NUS ID, and requests an action on that student (such as editing or deleting their record)
+4.  TAB performs the requested action on the student
+5.  TAB saves the updated records
+6.  TAB shows the result of the action, including the affected record
+
+
+**Extensions**
+
+* 1a. The search terms are not in an acceptable form.
+
+    * 1a1. TAB reports the error and leaves the input in the command box.
+    * 1a2. User corrects the search terms and submits again.
+
+      Steps 1a1-1a2 are repeated until the search terms are acceptable.
+
+      Use case resumes at step 2.
+
+* 2a. No student matches the search terms.
+
+    * 2a1. TAB reports that no matching students were found.
+    * 2a2. User enters new search terms.
+
+      Use case resumes at step 2.
+
+* 3a. None of the listed students is the intended one.
+
+    * 2b1. User enters new search terms with different keywords or details.
+
+      Use case resumes at step 2.
+
+* 3b. User identifies the intended student(s) they are looking for.
+
+    * 3b1. User initiates an action, such as <u>deleting the student (UC06)</u>.
+
+      Use case ends.
+
+* *a. At any time, User chooses to abandon the action.
+
+    * *a1. TAB discards the input and leaves the records unchanged.
+
+      Use case ends.
+
 *{More to be added}*
 
 
