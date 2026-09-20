@@ -13,7 +13,8 @@ import seedu.tab.model.tag.Tag;
 
 /**
  * Represents a Student in the student book.
- * Guarantees: details are present and not null, field values are validated, immutable.
+ * Guarantees: field values are validated and immutable. Every detail but the email is
+ * present; a student may be held before an email address is known.
  */
 public class Student {
     // Identity fields

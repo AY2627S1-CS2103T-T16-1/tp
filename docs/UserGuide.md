@@ -141,9 +141,9 @@ before the command is refused, so a command with more than one mistake tells
 you about all of them at once:
 
 ```
-> add n/John Doe p/12
-Missing required field(s): e/EMAIL
-Phone "12" is not valid: a phone number needs at least 3 digits
+> add n/John Doe e/e1234567
+Missing required field(s): p/PHONE
+Email "e1234567" is not valid: an email needs an @ between the local part and the domain
 ```
 
 ### Listing all persons: `list`
