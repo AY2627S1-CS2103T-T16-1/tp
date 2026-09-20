@@ -107,7 +107,6 @@ public class JsonStudentBookStorageTest {
         Path filePath = testFolder.resolve("WidenedValues.json");
         Student student = new StudentBuilder().withName("Ravi s/o Kumaran")
                 .withPhone("+65 9123 4567").withEmail("e0923841@u.nus.edu")
-
                 .withTags("Lab 3", "needs-followup").build();
 
         StudentBook original = new StudentBook();
