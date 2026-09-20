@@ -2,6 +2,9 @@ package seedu.tab.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
+import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
@@ -46,6 +49,22 @@ public class CommandTestUtil {
     public static final String INVALID_PHONE_DESC = " " + PREFIX_PHONE + "12"; // fewer than 3 digits
     public static final String INVALID_EMAIL_DESC = " " + PREFIX_EMAIL + "bob!yahoo"; // missing '@' symbol
     public static final String INVALID_TAG_DESC = " " + PREFIX_TAG + "---"; // no letter or number in tag
+
+    // add takes a positional name and flagged fields, where edit still marks every field with
+    // a prefix, so the two commands need fixtures of their own
+    public static final String ADD_NAME_AMY = " \"" + VALID_NAME_AMY + "\"";
+    public static final String ADD_NAME_BOB = " \"" + VALID_NAME_BOB + "\"";
+    public static final String ADD_PHONE_AMY = " " + FLAG_PHONE + " " + VALID_PHONE_AMY;
+    public static final String ADD_PHONE_BOB = " " + FLAG_PHONE + " " + VALID_PHONE_BOB;
+    public static final String ADD_EMAIL_AMY = " " + FLAG_EMAIL + " " + VALID_EMAIL_AMY;
+    public static final String ADD_EMAIL_BOB = " " + FLAG_EMAIL + " " + VALID_EMAIL_BOB;
+    public static final String ADD_TAG_FRIEND = " " + FLAG_TAG + " " + VALID_TAG_FRIEND;
+    public static final String ADD_TAG_HUSBAND = " " + FLAG_TAG + " " + VALID_TAG_HUSBAND;
+
+    public static final String ADD_INVALID_NAME = " \"---\""; // no letter or number in name
+    public static final String ADD_INVALID_PHONE = " " + FLAG_PHONE + " 12"; // fewer than 3 digits
+    public static final String ADD_INVALID_EMAIL = " " + FLAG_EMAIL + " bob!yahoo"; // missing '@' symbol
+    public static final String ADD_INVALID_TAG = " " + FLAG_TAG + " ---"; // no letter or number in tag
 
     public static final String PREAMBLE_WHITESPACE = "\t  \r  \n";
     public static final String PREAMBLE_NON_EMPTY = "NonEmptyPreamble";

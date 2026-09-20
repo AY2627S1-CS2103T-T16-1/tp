@@ -51,16 +51,13 @@ public class Messages {
     }
 
     /**
-     * Returns an error message naming the fields that the command left out.
+     * Returns an error message naming the fields that the command left out. The fields are
+     * given as labels rather than flags, because a command may take one without a flag.
      */
-    public static String getErrorMessageForMissingFlags(Flag... missingFlags) {
-        assert missingFlags.length > 0;
+    public static String getErrorMessageForMissingFields(String... missingFields) {
+        assert missingFields.length > 0;
 
-        String missingFields = Stream.of(missingFlags)
-                .map(Flag::getLabel)
-                .collect(Collectors.joining(", "));
-
-        return String.format(MESSAGE_MISSING_FIELDS, missingFields);
+        return String.format(MESSAGE_MISSING_FIELDS, String.join(", ", missingFields));
     }
 
     /**

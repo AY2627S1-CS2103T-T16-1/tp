@@ -53,7 +53,7 @@ public class KeyboardAndOfflineRequirementTest {
     public void keyboardOnly_allCoreTasksExecutableViaCommandLine_success() throws Exception {
         // Add student using keyboard command
         CommandResult addResult = logic.execute(
-                AddCommand.COMMAND_WORD + " n/Amy Bee p/85355255 e/amy@gmail.com");
+                AddCommand.COMMAND_WORD + " \"Amy Bee\" -p 85355255 -e amy@gmail.com");
         assertTrue(addResult.getFeedbackToUser().contains("Amy Bee"));
         assertEquals(1, model.getFilteredStudentList().size());
 
@@ -107,7 +107,7 @@ public class KeyboardAndOfflineRequirementTest {
     @Test
     public void offlineUsage_operationsExecuteLocallyWithoutNetwork_success() throws Exception {
         // Execute add locally
-        logic.execute(AddCommand.COMMAND_WORD + " n/Bob Choo p/88889999 e/bob@example.com");
+        logic.execute(AddCommand.COMMAND_WORD + " \"Bob Choo\" -p 88889999 -e bob@example.com");
 
         // Verify data was written to local file
         Path localDataFile = storage.getStudentBookFilePath();

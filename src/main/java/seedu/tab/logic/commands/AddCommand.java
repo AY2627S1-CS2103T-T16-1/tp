@@ -1,14 +1,14 @@
 package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_TAG;
+import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
+import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
 import seedu.tab.commons.util.ToStringBuilder;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.exceptions.CommandException;
+import seedu.tab.logic.parser.CliFlags;
 import seedu.tab.model.Model;
 import seedu.tab.model.student.Student;
 
@@ -20,17 +20,16 @@ public class AddCommand extends Command {
     public static final String COMMAND_WORD = "add";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a student to the student book. "
-            + "Parameters: "
-            + PREFIX_NAME.getLabel() + " "
-            + PREFIX_PHONE.getLabel() + " "
-            + "[" + PREFIX_EMAIL.getLabel() + "] "
-            + "[" + PREFIX_TAG.getLabel() + "]...\n"
-            + "Example: " + COMMAND_WORD + " "
-            + PREFIX_NAME + "John Doe "
-            + PREFIX_PHONE + "98765432 "
-            + PREFIX_EMAIL + "johnd@example.com "
-            + PREFIX_TAG + "friends "
-            + PREFIX_TAG + "owesMoney";
+            + "Parameters: " + CliFlags.FIELD_NAME + " "
+            + FLAG_PHONE.getLabel() + " "
+            + "[" + FLAG_EMAIL.getLabel() + "] "
+            + "[" + FLAG_TAG.getLabel() + "]...\n"
+            + "A value holding spaces, or opening with a hyphen, goes in double quotes.\n"
+            + "Example: " + COMMAND_WORD + " \"Siti Nur-Aisyah\" "
+            + FLAG_PHONE + " 98765432 "
+            + FLAG_EMAIL + " e1147203@u.nus.edu "
+            + FLAG_TAG + " T1 "
+            + FLAG_TAG + " \"Lab 3\"";
 
     public static final String MESSAGE_SUCCESS = "New student added: %1$s";
     public static final String MESSAGE_DUPLICATE_STUDENT = "This student already exists in the student book.";
