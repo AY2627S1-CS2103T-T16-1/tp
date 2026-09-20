@@ -273,6 +273,33 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_severalInvalidTags_reportsEveryOne() {
+        String expected = Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, "---",
+                        Tag.getFailureReason("---"))
+                + "\n"
+                + Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, "***", Tag.getFailureReason("***"));
+
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
+                + " " + PREFIX_TAG + "---" + " " + PREFIX_TAG + "***", expected);
+    }
+
+    @Test
+    public void parse_valueBeforeTheFirstPrefix_isRefusedOnItsOwn() {
+        // the shape of the command is settled before any field is read, so a bad phone
+        // alongside a preamble is not collected with it
+        assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + " " + PREFIX_PHONE + "12"
+                        + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+    }
+
+    @Test
+    public void parse_repeatedSingleValuedPrefix_isRefusedOnItsOwn() {
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_AMY + PHONE_DESC_BOB
+                        + " " + PREFIX_EMAIL + "nope" + ADDRESS_DESC_BOB,
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE));
+    }
+
+    @Test
     public void parse_missingFieldIsNotAlsoReportedAsUnparseable() {
         // a field that is absent is reported once, as missing, and not a second time as a value
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB,
