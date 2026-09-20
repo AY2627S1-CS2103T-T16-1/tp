@@ -1,5 +1,6 @@
 package seedu.tab.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.tab.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.ADDRESS_DESC_BOB;
@@ -30,6 +31,7 @@ import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalStudents.AMY;
 import static seedu.tab.testutil.TypicalStudents.BOB;
 
@@ -37,6 +39,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.AddCommand;
+import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.Address;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
@@ -192,5 +195,31 @@ public class AddCommandParserTest {
         assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ADDRESS_DESC_BOB + TAG_DESC_HUSBAND + TAG_DESC_FRIEND,
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+    }
+
+    @Test
+    public void parse_nameWithSlash_succeeds() {
+        // s/ is not a command prefix, so these names survive tokenizing end to end
+        Student expected = new StudentBuilder().withName("Ravi s/o Kumaran").withPhone(VALID_PHONE_BOB)
+                .withEmail(VALID_EMAIL_BOB).withAddress(VALID_ADDRESS_BOB).withTags().build();
+        assertParseSuccess(parser, " " + PREFIX_NAME + "Ravi s/o Kumaran" + PHONE_DESC_BOB
+                + EMAIL_DESC_BOB + ADDRESS_DESC_BOB, new AddCommand(expected));
+
+        Student daughter = new StudentBuilder().withName("Anita d/o Rajan").withPhone(VALID_PHONE_BOB)
+                .withEmail(VALID_EMAIL_BOB).withAddress(VALID_ADDRESS_BOB).withTags().build();
+        assertParseSuccess(parser, " " + PREFIX_NAME + "Anita d/o Rajan" + PHONE_DESC_BOB
+                + EMAIL_DESC_BOB + ADDRESS_DESC_BOB, new AddCommand(daughter));
+    }
+
+    @Test
+    public void parse_nameContainingACommandPrefix_failsUntilTheTokenizerIsReplaced() {
+        // Malaysian names use A/L and A/P, which the tokenizer reads as the address prefix. The
+        // model accepts these names; the prefix syntax is what rejects them. Pinned here so that
+        // replacing the tokenizer with positional arguments and flags is seen to fix it.
+        assertTrue(Name.isValidName("Abdul a/l Rahman"));
+
+        String command = " " + PREFIX_NAME + "Abdul a/l Rahman" + PHONE_DESC_BOB + EMAIL_DESC_BOB
+                + ADDRESS_DESC_BOB;
+        assertThrows(ParseException.class, () -> parser.parse(command));
     }
 }

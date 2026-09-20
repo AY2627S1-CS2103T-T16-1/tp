@@ -87,9 +87,30 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
 **Tip:** A person can have any number of tags, including zero.
 </box>
 
+<box type="tip" seamless>
+
+**Tip:** A name may hold anything you would write on a roster: slashes,
+hyphens, apostrophes, full stops, and any script. It only has to contain at
+least one letter or number.
+</box>
+
+<box type="warning" seamless>
+
+**Known limitation:** a name containing `a/`, `p/`, `e/` or `t/` followed by a
+space is read as the start of another field, so `add n/Abdul a/l Rahman ...`
+is rejected. Names containing `s/o` and `d/o` are unaffected.
+</box>
+
 Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
 * `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+* `add n/Ravi s/o Kumaran p/91234567 e/e0923841@u.nus.edu a/Blk 30 Geylang Street 29`
+* `add n/Siti Nur-Aisyah p/84420917 e/e1147203@u.nus.edu a/Blk 54 Toa Payoh Lor 5`
+* `add n/陈伟明 p/98123344 e/e1077310@u.nus.edu a/Prince George's Park Residences`
+
+Leading and trailing spaces are removed, repeated spaces inside a name are
+collapsed to one, and invisible characters are discarded, so that a name is
+always stored the way it looks.
 
 ### Listing all persons: `list`
 

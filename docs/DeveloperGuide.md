@@ -161,42 +161,49 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Student names
 
-`Name` accepts almost anything. A name is stored and displayed but never
-parsed, compared as a key, or used to build a file path, so no character in it
-can hinder the app. The rule therefore rejects only strings that carry no
-identity at all.
+A name is displayed, split into words by the search, and compared as the
+identity of a student. `Name` therefore stores a normalized form rather than
+the raw input, so that two names which look identical cannot be searched
+differently or admitted as two students.
 
-**A name is valid when it**
+**Normalizing.** On construction a name is
 
-* contains at least one letter or number, judged by Unicode category
-  (`\p{L}` or `\p{N}`), not by ASCII
-* neither begins nor ends with whitespace, judged against all of Unicode
-  rather than the ASCII five
+* composed to Unicode form NFC, so that `Nguyễn` written as one code point and
+  as `e` plus two combining marks become the same string
+* stripped of the zero-width space and the byte order mark, which are invisible
+  and carry no meaning of their own
+* reduced to single ASCII spaces, with the ends trimmed, so that a
+  non-breaking space cannot hide a word from the search
 
-**Everything else is allowed**, including:
+The zero-width joiner and non-joiner are deliberately kept, because scripts
+such as Sinhala and Arabic need them to shape correctly. Two names that differ
+only by a joiner are therefore still two students.
+
+**A name is valid** when something remains after normalizing: at least one
+letter or number, judged by Unicode category rather than by ASCII.
 
 | Accepted | Example |
 | --- | --- |
 | Slashes | `Ravi s/o Kumaran`, `Anita d/o Rajan` |
 | Hyphens and apostrophes | `Siti Nur-Aisyah`, `Ma Ying-jeou`, `Sean O'Brien` |
-| Full stops and other punctuation | `J. R. R. Tolkien`, `James&` |
-| A leading hyphen | `-Ahmad` |
+| Other punctuation | `J. R. R. Tolkien`, `James&`, `-Ahmad` |
 | Ligatures and Roman numerals | `X Æ A-Xii`, `X Æ A-Ⅻ` |
 | Any script | Chinese, Japanese, Korean, Arabic, Tamil, Hebrew, Mongolian, Vietnamese |
 | Characters outside the basic plane | `𠮷田`, Adlam, Cuneiform |
-| Combining marks and format characters | Arabic harakat, Sinhala ZWJ |
 | Digits only | `12345` |
-
-**A name is rejected when it is**
 
 | Rejected | Why |
 | --- | --- |
-| Empty or whitespace only | no identity |
-| Punctuation only, such as `---` | no identity |
-| An emoji on its own | no letter or number |
-| A zero-width space on its own | would display as a blank name |
-| Arabic harakat with no base letters | no letter or number |
-| Surrounded by whitespace, including U+00A0 | trailing space is not part of a name |
+| Empty, or whitespace only | nothing remains after normalizing |
+| Punctuation only, such as `---` | no letter or number |
+| An emoji, or a zero-width space, on its own | no letter or number |
+
+**A name that holds a command prefix still fails to parse.** The model accepts
+`Abdul a/l Rahman`, but `ArgumentTokenizer` reads the `a/` as the address
+prefix and rejects the command. A/L and A/P are ordinary components of a
+Malaysian name, so this is the same defect as the one `s/o` used to have, and
+it is fixed by replacing the prefix syntax with positional arguments and
+flags rather than by changing `Name`. `AddCommandParserTest` pins it.
 
 ### \[Proposed\] Undo/redo feature
 

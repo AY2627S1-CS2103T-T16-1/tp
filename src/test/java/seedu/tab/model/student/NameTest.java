@@ -29,17 +29,18 @@ public class NameTest {
         assertFalse(Name.isValidName(" ")); // spaces only
         assertFalse(Name.isValidName("---")); // punctuation only
         assertFalse(Name.isValidName("^")); // a single symbol
-        assertFalse(Name.isValidName("😀")); // emoji only
-        assertFalse(Name.isValidName("​")); // zero-width space only
+        assertFalse(Name.isValidName("\uD83D\uDE00")); // emoji only
+        assertFalse(Name.isValidName("\u200B")); // zero-width space only
         assertFalse(Name.isValidName("َُِ")); // Arabic harakat with no base letters
     }
 
     @Test
-    public void isValidName_surroundingWhitespace_returnsFalse() {
-        assertFalse(Name.isValidName(" Peter")); // leading space
-        assertFalse(Name.isValidName("Peter ")); // trailing space
-        assertFalse(Name.isValidName(" Peter")); // leading non-breaking space
-        assertFalse(Name.isValidName("Peter ")); // trailing non-breaking space
+    public void isValidName_surroundingWhitespace_isTrimmed() {
+        assertTrue(Name.isValidName(" Peter")); // leading space
+        assertTrue(Name.isValidName("Peter ")); // trailing space
+        assertTrue(Name.isValidName("\u00A0Peter")); // leading non-breaking space
+        assertEquals("Peter", new Name(" Peter ").fullName);
+        assertEquals("Peter", new Name("\u00A0Peter\u00A0").fullName);
     }
 
     @Test
@@ -144,25 +145,33 @@ public class NameTest {
     }
 
     @Test
-    public void isValidName_composedAndDecomposedFormsBothAccepted() {
-        // The same Vietnamese name in the two Unicode normalisation forms. They render
-        // identically but are different strings, so duplicate detection cannot rely on
-        // string equality alone.
-        String composed = "Nguyễn Văn An";
-        String decomposed = "Nguyễn Văn An";
-        assertTrue(Name.isValidName(composed));
-        assertTrue(Name.isValidName(decomposed));
+    public void normalization_sameNameWrittenDifferently_comparesEqual() {
+        // A name is split into words by the search and compared as a student's identity, so it
+        // is stored in one canonical form. Without this, names that look identical would be
+        // searched differently and would be admitted as separate students.
+
+        // Unicode normalization forms: the same Vietnamese name composed and decomposed
+        String composed = "Nguy\u1EC5n V\u0103n An";
+        String decomposed = "Nguye\u0302\u0303n Va\u0306n An";
         assertNotEquals(composed, decomposed);
+        assertEquals(new Name(composed), new Name(decomposed));
+
+        // whitespace that is not an ASCII space
+        assertEquals(new Name("John Doe"), new Name("John\u00A0Doe"));
+
+        // runs of whitespace
+        assertEquals(new Name("X \u00C6 A-Xii"), new Name("X  \u00C6   A-Xii"));
+
+        // zero-width characters, which would otherwise hide a duplicate
+        assertEquals(new Name("John"), new Name("\u200BJohn"));
+        assertEquals(new Name("John"), new Name("John\uFEFF"));
     }
 
     @Test
-    public void isValidName_innerWhitespaceIsKept() {
-        // Inner runs of whitespace are accepted and stored verbatim. Two students whose names
-        // differ only by an extra inner space are therefore distinct today, which duplicate
-        // detection will have to account for.
-        String doubled = "X  Æ   A-Xii";
-        assertTrue(Name.isValidName(doubled));
-        assertEquals(doubled, new Name(doubled).fullName);
+    public void normalization_zeroWidthJoiner_isKept() {
+        // Sinhala needs the joiner to shape correctly, so it is not stripped.
+        String sinhala = "\u0DC1\u0DCA\u200D\u0DBB\u0DD3";
+        assertEquals(sinhala, new Name(sinhala).fullName);
     }
 
     @Test

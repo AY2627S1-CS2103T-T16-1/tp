@@ -45,9 +45,11 @@ public class StudentTest {
         Student editedBob = new StudentBuilder(BOB).withName(VALID_NAME_BOB.toLowerCase()).build();
         assertFalse(BOB.isSameStudent(editedBob));
 
-        // a name with trailing spaces cannot be built, so it can never reach this comparison
+        // name differs only by surrounding whitespace -> returns true, because Name stores a
+        // normalized form and an accidental extra space does not make a different student
         String nameWithTrailingSpaces = VALID_NAME_BOB + " ";
-        assertThrows(IllegalArgumentException.class, () -> new Name(nameWithTrailingSpaces));
+        editedBob = new StudentBuilder(BOB).withName(nameWithTrailingSpaces).build();
+        assertTrue(BOB.isSameStudent(editedBob));
     }
 
     @Test
