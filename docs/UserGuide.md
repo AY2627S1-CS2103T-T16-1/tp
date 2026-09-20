@@ -129,6 +129,16 @@ is wrong with it, rather than restating the whole rule:
 Email "e1234567" is not valid: an email needs an @ between the local part and the domain
 ```
 
+Once TAB can tell which value belongs to which field, every field is checked
+before the command is refused, so a command with more than one mistake tells
+you about all of them at once:
+
+```
+> add n/John Doe p/12 a/Blk 30
+Missing required field(s): e/EMAIL
+Phone "12" is not valid: a phone number needs at least 3 digits
+```
+
 ### Listing all persons: `list`
 
 Shows a list of all persons in the address book.
