@@ -71,6 +71,18 @@ public class FlagTokenizerTest {
     }
 
     @Test
+    public void tokenize_loneHyphen_isAValueRatherThanAFlag() throws Exception {
+        // a hyphen on its own marks no field, so it is read as part of what surrounds it
+        assertEquals("Jean - Luc", parse("Jean - Luc -t T1").getName());
+    }
+
+    @Test
+    public void tokenize_loneHyphenAfterTheFlagsBegan_belongsToNoOption() {
+        assertThrows(ParseException.class, String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "-"), () ->
+                parse("Jean -t T1 -"));
+    }
+
+    @Test
     public void tokenize_unknownFlag_saysThereIsNoSuchOption() {
         assertThrows(ParseException.class, String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-z"), () ->
                 parse("John -z something"));
