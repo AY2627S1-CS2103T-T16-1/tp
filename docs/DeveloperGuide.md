@@ -176,6 +176,19 @@ They normalize for different reasons, and the rule each one enforces differs.
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
 
+**The email may be absent.** A student is recorded before an email address is
+known rather than one being invented, so `Student` holds it as null and hands
+it out as `Optional<Email>`. The field is nullable rather than
+`Optional<Email>` because an `Optional` field neither serializes through
+Jackson nor survives a round trip, and returning one obliges a caller to decide
+what to do when there is none.
+
+A saved file simply carries no `email` key. One that holds a malformed address
+is still refused, rather than the address being quietly dropped.
+
+An email cannot be cleared once set. `edit` replaces a value and has no
+spelling for removing one, the way `t/` alone empties the tags.
+
 `Phone` is **not** an identity and **not** a key: two students may hold the
 same number, and `isSameStudent` does not read it. It is normalized only so
 that a number typed with an odd space is stored the way it looks.

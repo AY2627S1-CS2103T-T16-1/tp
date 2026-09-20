@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
@@ -19,6 +20,9 @@ import seedu.tab.model.tag.Tag;
 /**
  * Jackson-friendly version of {@link Student}.
  */
+// A student without an email leaves the key out of the file rather than writing a null, so that
+// the file stays as readable by hand as one written before the email became optional.
+@JsonInclude(JsonInclude.Include.NON_NULL)
 class JsonAdaptedStudent {
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Student's %s field is missing!";
 
@@ -48,7 +52,7 @@ class JsonAdaptedStudent {
     public JsonAdaptedStudent(Student source) {
         name = source.getName().fullName;
         phone = source.getPhone().value;
-        email = source.getEmail().value;
+        email = source.getEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -81,13 +85,12 @@ class JsonAdaptedStudent {
         }
         final Phone modelPhone = new Phone(phone);
 
-        if (email == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName()));
-        }
-        if (!Email.isValidEmail(email)) {
+        // A file may hold no email, either because the key is absent or because it is null.
+        // Anything else has to be a valid address; a broken one is not silently dropped.
+        if (email != null && !Email.isValidEmail(email)) {
             throw new IllegalValueException(Email.MESSAGE_CONSTRAINTS);
         }
-        final Email modelEmail = new Email(email);
+        final Email modelEmail = email == null ? null : new Email(email);
 
         final Set<Tag> modelTags = new HashSet<>(studentTags);
         return new Student(modelName, modelPhone, modelEmail, modelTags);

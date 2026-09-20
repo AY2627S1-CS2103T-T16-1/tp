@@ -1,12 +1,14 @@
 package seedu.tab.ui;
 
 import java.util.Comparator;
+import java.util.Optional;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
 
 /**
@@ -48,7 +50,14 @@ public class StudentCard extends UiPart<Region> {
         id.setText(displayedIndex + ". ");
         name.setText(student.getName().fullName);
         phone.setText(student.getPhone().value);
-        email.setText(student.getEmail().value);
+        Optional<Email> studentEmail = student.getEmail();
+        if (studentEmail.isPresent()) {
+            email.setText(studentEmail.get().value);
+        } else {
+            // an unmanaged row takes no space, so the card does not keep a blank line for it
+            email.setManaged(false);
+            email.setVisible(false);
+        }
         student.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));

@@ -50,7 +50,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         ParseProblems problems = new ParseProblems();
 
         Prefix[] missingPrefixes = findMissingPrefixes(argMultimap,
-                PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL);
+                PREFIX_NAME, PREFIX_PHONE);
         if (missingPrefixes.length > 0) {
             problems.add(Messages.getErrorMessageForMissingPrefixes(missingPrefixes));
         }
@@ -84,8 +84,8 @@ public class AddCommandParser implements Parser<AddCommand> {
 
     /**
      * Parses the value supplied for {@code prefix}, recording why if it is rejected. A prefix
-     * the command left out yields null without a second complaint, because it is already
-     * reported as missing.
+     * the command left out yields null without a complaint, because an optional field is
+     * entitled to be absent and a required one is reported separately.
      */
     private static <T> T parseIfPresent(ParseProblems problems, ArgumentMultimap argMultimap,
             Prefix prefix, ParseProblems.ValueParser<T> parser) {

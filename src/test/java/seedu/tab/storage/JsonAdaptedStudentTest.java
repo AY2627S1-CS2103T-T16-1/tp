@@ -7,6 +7,7 @@ import static seedu.tab.testutil.TypicalStudents.BENSON;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ public class JsonAdaptedStudentTest {
 
     private static final String VALID_NAME = BENSON.getName().toString();
     private static final String VALID_PHONE = BENSON.getPhone().toString();
-    private static final String VALID_EMAIL = BENSON.getEmail().toString();
+    private static final String VALID_EMAIL = BENSON.getEmail().orElseThrow().toString();
     private static final List<JsonAdaptedTag> VALID_TAGS = BENSON.getTags().stream()
             .map(JsonAdaptedTag::new)
             .collect(Collectors.toList());
@@ -33,6 +34,12 @@ public class JsonAdaptedStudentTest {
     public void toModelType_validStudentDetails_returnsStudent() throws Exception {
         JsonAdaptedStudent student = new JsonAdaptedStudent(BENSON);
         assertEquals(BENSON, student.toModelType());
+    }
+
+    @Test
+    public void toModelType_validEmail_buildsStudentHoldingIt() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_TAGS);
+        assertEquals(Optional.of(new Email(VALID_EMAIL)), student.toModelType().getEmail());
     }
 
     @Test
@@ -74,10 +81,9 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
-    public void toModelType_nullEmail_throwsIllegalValueException() {
+    public void toModelType_nullEmail_buildsStudentWithoutOne() throws Exception {
         JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, null, VALID_TAGS);
-        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName());
-        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+        assertEquals(Optional.empty(), student.toModelType().getEmail());
     }
 
     @Test

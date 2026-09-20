@@ -23,7 +23,7 @@ public class AddCommand extends Command {
             + "Parameters: "
             + PREFIX_NAME.getLabel() + " "
             + PREFIX_PHONE.getLabel() + " "
-            + PREFIX_EMAIL.getLabel() + " "
+            + "[" + PREFIX_EMAIL.getLabel() + "] "
             + "[" + PREFIX_TAG.getLabel() + "]...\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_NAME + "John Doe "

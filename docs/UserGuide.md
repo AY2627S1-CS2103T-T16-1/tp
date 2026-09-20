@@ -80,7 +80,14 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL [t/TAG]... `
+Format: `add n/NAME p/PHONE_NUMBER [e/EMAIL] [t/TAG]... `
+
+<box type="tip" seamless>
+
+**Tip:** The email is optional. Record a student you only have a phone number
+for, rather than inventing an address to satisfy the command. An email cannot
+be removed once set, only replaced.
+</box>
 
 <box type="tip" seamless>
 
@@ -134,9 +141,9 @@ before the command is refused, so a command with more than one mistake tells
 you about all of them at once:
 
 ```
-> add n/John Doe p/12
-Missing required field(s): e/EMAIL
-Phone "12" is not valid: a phone number needs at least 3 digits
+> add n/John Doe e/e1234567
+Missing required field(s): p/PHONE
+Email "e1234567" is not valid: an email needs an @ between the local part and the domain
 ```
 
 ### Listing all persons: `list`
@@ -243,7 +250,7 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com t/friend t/colleague`
+**Add**    | `add n/NAME p/PHONE_NUMBER [e/EMAIL] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 t/friend t/colleague`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`

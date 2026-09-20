@@ -9,8 +9,10 @@ import static seedu.tab.testutil.TypicalStudents.IDA;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -76,6 +78,21 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_handEditedNullEmail_loadsWithoutOne() throws Exception {
+        // a file edited by hand may spell an absent email either way, and both have to load
+        ReadOnlyStudentBook loaded = readStudentBook("nullEmailStudentBook.json").get();
+
+        Student explicitNull = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withTags("friends").withoutEmail().build();
+        Student keyLeftOut = new StudentBuilder().withName("Benson Meier").withPhone("98765432")
+                .withTags("owesMoney").withoutEmail().build();
+
+        assertEquals(2, loaded.getStudentList().size());
+        assertEquals(explicitNull, loaded.getStudentList().get(0));
+        assertEquals(keyLeftOut, loaded.getStudentList().get(1));
+    }
+
+    @Test
     public void readAndSaveStudentBook_allInOrder_success() throws Exception {
         Path filePath = testFolder.resolve("TempStudentBook.json");
         StudentBook original = getTypicalStudentBook();
@@ -122,6 +139,26 @@ public class JsonStudentBookStorageTest {
         assertEquals("+65 9123 4567", loaded.getPhone().value);
         assertEquals("Ravi s/o Kumaran", loaded.getName().fullName);
         assertEquals(student.getTags(), loaded.getTags());
+    }
+
+    @Test
+    public void readAndSaveStudentBook_studentWithoutEmail_roundTripsAndLeavesTheKeyOut() throws Exception {
+        Path filePath = testFolder.resolve("NoEmail.json");
+        Student student = new StudentBuilder().withName("Wong Mei Ling").withPhone("91234567")
+                .withTags("Lab 3").withoutEmail().build();
+
+        StudentBook original = new StudentBook();
+        original.addStudent(student);
+
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+        storage.saveStudentBook(original, filePath);
+
+        // the file is meant to stay editable by hand, so an absent email is an absent key
+        assertFalse(Files.readString(filePath).contains("email"));
+
+        ReadOnlyStudentBook readBack = storage.readStudentBook(filePath).get();
+        assertEquals(original, new StudentBook(readBack));
+        assertEquals(Optional.empty(), readBack.getStudentList().get(0).getEmail());
     }
 
     @Test

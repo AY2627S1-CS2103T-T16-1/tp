@@ -40,7 +40,7 @@ public class StudentBuilder {
     public StudentBuilder(Student studentToCopy) {
         name = studentToCopy.getName();
         phone = studentToCopy.getPhone();
-        email = studentToCopy.getEmail();
+        email = studentToCopy.getEmail().orElse(null);
         tags = new HashSet<>(studentToCopy.getTags());
     }
 
@@ -73,6 +73,14 @@ public class StudentBuilder {
      */
     public StudentBuilder withEmail(String email) {
         this.email = new Email(email);
+        return this;
+    }
+
+    /**
+     * Leaves the {@code Student} that we are building without an email.
+     */
+    public StudentBuilder withoutEmail() {
+        this.email = null;
         return this;
     }
 
