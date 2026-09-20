@@ -1,6 +1,7 @@
 package seedu.tab.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
@@ -14,6 +15,7 @@ import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
+import seedu.tab.model.student.Student;
 
 public class StorageManagerTest {
 
@@ -65,4 +67,50 @@ public class StorageManagerTest {
         assertNotNull(storageManager.getStudentBookFilePath());
     }
 
+    @Test
+    public void getUserPrefsFilePath() {
+        assertNotNull(storageManager.getUserPrefsFilePath());
+    }
+
+    @Test
+    public void studentBook_deleteAndPersistAcrossSessions_success() throws Exception {
+        StudentBook sessionOneBook = getTypicalStudentBook();
+        Student studentToDelete = sessionOneBook.getStudentList().get(0);
+        sessionOneBook.removeStudent(studentToDelete);
+        storageManager.saveStudentBook(sessionOneBook);
+
+        StorageManager sessionTwoStorage = new StorageManager(
+                new JsonStudentBookStorage(getTempFilePath("ab")),
+                new JsonUserPrefsStorage(getTempFilePath("prefs")));
+        ReadOnlyStudentBook sessionTwoBook = sessionTwoStorage.readStudentBook().get();
+        assertFalse(sessionTwoBook.getStudentList().contains(studentToDelete));
+        assertEquals(sessionOneBook.getStudentList().size(), sessionTwoBook.getStudentList().size());
+
+        StudentBook sessionTwoMutableBook = new StudentBook(sessionTwoBook);
+        Student nextStudentToDelete = sessionTwoMutableBook.getStudentList().get(0);
+        sessionTwoMutableBook.removeStudent(nextStudentToDelete);
+        sessionTwoStorage.saveStudentBook(sessionTwoMutableBook);
+
+        StorageManager sessionThreeStorage = new StorageManager(
+                new JsonStudentBookStorage(getTempFilePath("ab")),
+                new JsonUserPrefsStorage(getTempFilePath("prefs")));
+        ReadOnlyStudentBook sessionThreeBook = sessionThreeStorage.readStudentBook().get();
+        assertFalse(sessionThreeBook.getStudentList().contains(studentToDelete));
+        assertFalse(sessionThreeBook.getStudentList().contains(nextStudentToDelete));
+        assertEquals(sessionTwoMutableBook.getStudentList().size(), sessionThreeBook.getStudentList().size());
+    }
+
+    @Test
+    public void userPrefs_guiSettingsPersistAcrossSessions_success() throws Exception {
+        UserPrefs sessionOnePrefs = new UserPrefs();
+        GuiSettings customGuiSettings = new GuiSettings(1440, 900, 50, 100);
+        sessionOnePrefs.setGuiSettings(customGuiSettings);
+        storageManager.saveUserPrefs(sessionOnePrefs);
+
+        StorageManager sessionTwoStorage = new StorageManager(
+                new JsonStudentBookStorage(getTempFilePath("ab")),
+                new JsonUserPrefsStorage(getTempFilePath("prefs")));
+        UserPrefs sessionTwoPrefs = sessionTwoStorage.readUserPrefs().get();
+        assertEquals(customGuiSettings, sessionTwoPrefs.getGuiSettings());
+    }
 }
