@@ -485,7 +485,7 @@ These were raised during requirement gathering and left out of the product.
 
 * *a. At any time, User chooses to abandon the addition.
 
-    * *a1. TAB discards the input and leaves the records unchanged.
+    * *a1. User clears the input.
 
       Use case ends.
 
@@ -531,7 +531,7 @@ These were raised during requirement gathering and left out of the product.
 
 * *a. At any time, User chooses to abandon the action.
 
-    * *a1. TAB discards the input and leaves the records unchanged.
+    * *a1. User clears the input.
 
       Use case ends.
 
