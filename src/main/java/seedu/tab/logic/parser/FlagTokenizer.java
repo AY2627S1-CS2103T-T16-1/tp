@@ -14,8 +14,8 @@ import seedu.tab.logic.parser.CommandTokenizer.Token;
 import seedu.tab.logic.parser.exceptions.ParseException;
 
 /**
- * Reads the arguments of a command as a name followed by flagged fields, the way a shell reads
- * an operand followed by options.
+ * Reads the arguments of a command as a preamble followed by flagged fields, the way a shell
+ * reads an operand followed by options.
  *
  * <p>The tokens before the first flag are the preamble, joined back together with single
  * spaces, which each command reads as whatever it takes in that position. Every flag after it
@@ -91,7 +91,7 @@ public class FlagTokenizer {
 
     /**
      * Returns true if {@code token} marks a field rather than being a value. A quoted token is
-     * always a value, which is how a name opening with the flag marker is given.
+     * always a value, which is how a value opening with the flag marker is given.
      */
     private static boolean isFlag(Token token) {
         return !token.isQuoted()
