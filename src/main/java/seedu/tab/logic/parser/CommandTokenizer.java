@@ -21,6 +21,7 @@ public class CommandTokenizer {
             "A quoted value is never closed. Add the closing \" or remove the opening one.";
 
     private static final char QUOTE = '"';
+    private static final char ESCAPE = '\\';
 
     private CommandTokenizer() {} // this class only splits arguments
 
@@ -50,7 +51,11 @@ public class CommandTokenizer {
 
         for (int i = 0; i < arguments.length(); i++) {
             char current = arguments.charAt(i);
-            if (current == QUOTE) {
+            if (current == ESCAPE && i + 1 < arguments.length() && isEscapable(arguments.charAt(i + 1))) {
+                value.append(arguments.charAt(i + 1));
+                hasToken = true;
+                i++;
+            } else if (current == QUOTE) {
                 isQuoted = !isQuoted;
                 wasQuoted = true;
                 hasToken = true;
@@ -74,5 +79,14 @@ public class CommandTokenizer {
             tokens.add(new Token(value.toString(), wasQuoted));
         }
         return tokens;
+    }
+
+    /**
+     * Returns true if {@code character} is one a backslash may escape. Only the two characters
+     * that mean something to the tokenizer are escapable, so a backslash before anything else
+     * stays in the value rather than quietly disappearing.
+     */
+    private static boolean isEscapable(char character) {
+        return character == QUOTE || character == ESCAPE;
     }
 }

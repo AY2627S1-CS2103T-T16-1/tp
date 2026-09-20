@@ -83,6 +83,30 @@ public class CommandTokenizerTest {
     }
 
     @Test
+    public void tokenize_escapes_yieldTheCharacterAfterThem() throws Exception {
+        assertEquals(List.of("say \"hi\""), valuesOf("\"say \\\"hi\\\"\""));
+        assertEquals(List.of("a\\b"), valuesOf("a\\\\b"));
+    }
+
+    @Test
+    public void tokenize_backslashBeforeAnythingElse_staysInTheValue() throws Exception {
+        // only a quote and a backslash are escapable, so nothing else quietly disappears
+        assertEquals(List.of("a\\nb"), valuesOf("a\\nb"));
+    }
+
+    @Test
+    public void tokenize_trailingBackslash_staysInTheValue() throws Exception {
+        // there is nothing after it to escape, so it is an ordinary character
+        assertEquals(List.of("a\\"), valuesOf("a\\"));
+    }
+
+    @Test
+    public void tokenize_escapedQuote_doesNotOpenAQuotedRun() throws Exception {
+        // were the escape missed, the rest of the line would be swallowed as one quoted value
+        assertEquals(List.of("a\"b", "-t", "T1"), valuesOf("a\\\"b -t T1"));
+    }
+
+    @Test
     public void tokenize_unclosedQuote_throwsParseException() {
         assertThrows(ParseException.class, CommandTokenizer.MESSAGE_UNCLOSED_QUOTE, () ->
                 valuesOf("\"John -t T1"));

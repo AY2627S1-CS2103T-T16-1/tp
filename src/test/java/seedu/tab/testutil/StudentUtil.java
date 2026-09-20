@@ -43,7 +43,8 @@ public class StudentUtil {
     }
 
     private static String quoted(String value) {
-        return "\"" + value + "\"";
+        String escaped = value.replace("\\", "\\\\").replace("\"", "\\\"");
+        return "\"" + escaped + "\"";
     }
 
     /**
