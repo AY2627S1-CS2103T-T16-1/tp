@@ -489,6 +489,45 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
+**Use case: UC07 - Archive last semester's students**
+
+**MSS**
+
+1.  User requests to archive a past class, giving its class tag and the semester
+2.  TAB shows the students that would be archived
+3.  TAB asks for confirmation
+4.  User confirms
+5.  TAB moves those students into the archive, out of the active list
+6.  TAB shows how many students were archived
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. No student is tagged with that class for that semester.
+
+    * 2a1. TAB reports that there is nothing to archive.
+
+      Use case ends.
+
+* 3a. User chooses not to archive the students.
+
+    * 3a1. TAB leaves the records unchanged.
+
+      Use case ends.
+
+* 5a. TAB cannot write to the data file or the archive.
+
+    * 5a1. TAB reports that the archiving was not saved, and why.
+
+      Use case ends.
+
+* *a. At any time, User chooses to abandon the archiving.
+
+    * *a1. User clears the input.
+
+      Use case ends.
+
 *{More to be added}*
 
 
