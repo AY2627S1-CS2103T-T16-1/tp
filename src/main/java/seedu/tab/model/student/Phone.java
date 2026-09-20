@@ -33,6 +33,18 @@ public class Phone {
         return test.matches(VALIDATION_REGEX);
     }
 
+    /**
+     * Returns why {@code test} does not hold a phone number. The answer is only meaningful
+     * when {@link #isValidPhone(String)} rejects it.
+     */
+    public static String getFailureReason(String test) {
+        requireNonNull(test);
+        if (!test.matches("\\d*")) {
+            return "a phone number may hold digits only";
+        }
+        return "a phone number needs at least 3 digits";
+    }
+
     @Override
     public String toString() {
         return value;

@@ -52,6 +52,18 @@ public class Tag {
     }
 
     /**
+     * Returns why {@code test} does not hold a tag. The answer is only meaningful when
+     * {@link #isValidTagName(String)} rejects it.
+     */
+    public static String getFailureReason(String test) {
+        requireNonNull(test);
+        if (test.isEmpty()) {
+            return "a tag may not be empty";
+        }
+        return "a tag may hold letters and digits only";
+    }
+
+    /**
      * Formats state as text for viewing.
      */
     public String toString() {

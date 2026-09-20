@@ -1,5 +1,6 @@
 package seedu.tab.model.student;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
@@ -84,5 +85,20 @@ public class EmailTest {
 
         // different values -> returns false
         assertFalse(email.equals(new Email("other.valid@email")));
+    }
+
+    @Test
+    public void getFailureReason_namesThePartAtFault() {
+        assertEquals("an email needs an @ between the local part and the domain",
+                Email.getFailureReason("e1234567"));
+        assertEquals("an email may hold only one @", Email.getFailureReason("a@@b.com"));
+        assertEquals("there is nothing before the @", Email.getFailureReason("@u.nus.edu"));
+        assertEquals("there is nothing after the @", Email.getFailureReason("john@"));
+        assertEquals("the last part of the domain needs at least 2 characters",
+                Email.getFailureReason("john@x"));
+        assertEquals("the part before the @ may hold letters and digits, joined by any of +_.-",
+                Email.getFailureReason("john doe@x.com"));
+        assertEquals("the domain may hold letters and digits in labels separated by dots, "
+                + "with hyphens allowed inside a label", Email.getFailureReason("john@x_y.com"));
     }
 }

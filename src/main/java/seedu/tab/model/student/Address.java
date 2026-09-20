@@ -37,6 +37,15 @@ public class Address {
         return test.matches(VALIDATION_REGEX);
     }
 
+    /**
+     * Returns why {@code test} does not hold an address. The answer is only meaningful when
+     * {@link #isValidAddress(String)} rejects it.
+     */
+    public static String getFailureReason(String test) {
+        requireNonNull(test);
+        return "an address may not be empty or begin with a space";
+    }
+
     @Override
     public String toString() {
         return value;

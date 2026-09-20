@@ -1,5 +1,6 @@
 package seedu.tab.model.student;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
@@ -56,5 +57,13 @@ public class PhoneTest {
 
         // different values -> returns false
         assertFalse(phone.equals(new Phone("995")));
+    }
+
+    @Test
+    public void getFailureReason_separatesTheTwoWaysAPhoneCanFail() {
+        assertEquals("a phone number may hold digits only", Phone.getFailureReason("+65 9123 4567"));
+        assertEquals("a phone number may hold digits only", Phone.getFailureReason("911a"));
+        assertEquals("a phone number needs at least 3 digits", Phone.getFailureReason("12"));
+        assertEquals("a phone number needs at least 3 digits", Phone.getFailureReason(""));
     }
 }

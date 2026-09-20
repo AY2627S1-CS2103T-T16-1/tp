@@ -51,6 +51,43 @@ public class Email {
         return test.matches(VALIDATION_REGEX);
     }
 
+    /**
+     * Returns why {@code test} does not hold an email address, naming the part of it that is
+     * at fault. The answer is only meaningful when {@link #isValidEmail(String)} rejects it.
+     */
+    public static String getFailureReason(String test) {
+        requireNonNull(test);
+
+        int at = test.indexOf('@');
+        if (at < 0) {
+            return "an email needs an @ between the local part and the domain";
+        }
+        if (test.indexOf('@', at + 1) >= 0) {
+            return "an email may hold only one @";
+        }
+
+        String localPart = test.substring(0, at);
+        String domain = test.substring(at + 1);
+
+        if (localPart.isEmpty()) {
+            return "there is nothing before the @";
+        }
+        if (!localPart.matches(LOCAL_PART_REGEX)) {
+            return "the part before the @ may hold letters and digits, joined by any of "
+                    + SPECIAL_CHARACTERS;
+        }
+        if (domain.isEmpty()) {
+            return "there is nothing after the @";
+        }
+
+        String lastLabel = domain.substring(domain.lastIndexOf('.') + 1);
+        if (lastLabel.length() < 2) {
+            return "the last part of the domain needs at least 2 characters";
+        }
+        return "the domain may hold letters and digits in labels separated by dots, "
+                + "with hyphens allowed inside a label";
+    }
+
     @Override
     public String toString() {
         return value;

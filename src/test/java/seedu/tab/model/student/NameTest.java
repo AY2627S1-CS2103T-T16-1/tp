@@ -212,4 +212,10 @@ public class NameTest {
         // different values -> returns false
         assertFalse(name.equals(new Name("Other Valid Name")));
     }
+
+    @Test
+    public void getFailureReason_explainsTheOnlyWayANameCanFail() {
+        assertEquals("it holds no letter, character or number", Name.getFailureReason("---"));
+        assertEquals("it holds no letter, character or number", Name.getFailureReason(""));
+    }
 }

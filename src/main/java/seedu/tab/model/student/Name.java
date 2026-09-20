@@ -64,6 +64,15 @@ public class Name {
         return WHITESPACE.matcher(visible).replaceAll(" ").trim();
     }
 
+    /**
+     * Returns why {@code test} does not hold a name. The answer is only meaningful when
+     * {@link #isValidName(String)} rejects it.
+     */
+    public static String getFailureReason(String test) {
+        requireNonNull(test);
+        return "it holds no letter, character or number";
+    }
+
     @Override
     public String toString() {
         return fullName;

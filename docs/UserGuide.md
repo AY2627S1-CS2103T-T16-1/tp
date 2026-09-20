@@ -112,6 +112,14 @@ Leading and trailing spaces are removed, repeated spaces inside a name are
 collapsed to one, and invisible characters are discarded, so that a name is
 always stored the way it looks.
 
+If a field is rejected, TAB quotes the value it could not accept and says what
+is wrong with it, rather than restating the whole rule:
+
+```
+> add n/John Doe p/98765432 e/e1234567 a/Blk 30
+Email "e1234567" is not valid: an email needs an @ between the local part and the domain
+```
+
 ### Listing all persons: `list`
 
 Shows a list of all persons in the address book.
