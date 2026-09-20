@@ -176,8 +176,14 @@ Parsing runs in two passes, the way a shell does it.
 `CommandTokenizer` splits the arguments on whitespace and lets double quotes
 group a value holding spaces. A token records whether a quote took part in it,
 because that is the only thing separating the value `-Ahmad` from the option
-`-e`. There is no escape, so a value cannot contain a double quote; no name we
-expect does.
+`-e`. A backslash escapes a quote or another backslash, so a value may hold
+either; a backslash before anything else stays in the value, so nothing a user
+typed disappears without being asked for.
+
+An option appearing where a value is expected is read as the option before it
+having been left empty, rather than as a value. `add John -p 123 -t -e` reports
+that `-t` needs a value instead of storing `-e` as a tag. A value that really
+does open with a hyphen is given in quotes.
 
 `FlagTokenizer` reads the tokens. Those before the first option are the name,
 joined with single spaces, so a name of several words needs no quotes unless it
@@ -191,9 +197,13 @@ quote, an unknown option, or a single-valued option given twice all leave it
 unclear which field a value belongs to, so each is refused on its own instead
 of being collected with the field errors.
 
-`edit` still takes prefixes. Its fields are all optional and it has no
-positional value to protect, so it gains nothing from the change, but the two
-commands reading differently is a wart worth removing once `add` has settled.
+`edit` still takes prefixes, and that is a known limitation rather than a
+considered design. The collision the options remove from `add` is still present
+in `edit`: `edit 1 n/John p/ Smith` reads `Smith` as a phone number, so a name
+that `add` now accepts cannot be typed into `edit`. The two commands reading
+differently is a second problem on top of the first. Converting `edit` is
+tracked as issue #105, and was kept out of the change that introduced the options
+so that the new parsing could be reviewed on its own.
 
 ### Field values
 

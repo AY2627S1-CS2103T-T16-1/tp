@@ -119,10 +119,13 @@ least one letter or number, in any writing system.
 
 <box type="tip" seamless>
 
-**Tip:** Put double quotes around any value holding spaces that TAB might
-otherwise read as the start of another field, and around a name opening with a
-hyphen. `add "Ravi s/o Kumaran" -p 91234567` and `add "-Ahmad" -p 84001122`
-both work. A value cannot itself contain a double quote.
+**Tip:** The name comes first and may hold spaces as it is. Put double quotes
+around any other value holding spaces, and around any value opening with a
+hyphen, so that TAB does not read it as an option. `add "Ravi s/o Kumaran" -p
+91234567 -t "Lab 3"` and `add "-Ahmad" -p 84001122` both work.
+
+To put a double quote or a backslash inside a value, write `\"` or `\\`:
+`add Dwayne \"The Rock\" Johnson -p 91234567`.
 </box>
 
 Examples:
@@ -165,6 +168,14 @@ Format: `list`
 Edits an existing person in the address book.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [t/TAG]... `
+
+<box type="warning" seamless>
+
+**Known limitation:** `edit` still marks its fields with prefixes, so a value
+containing `p/`, `e/` or `t/` followed by a space is read as the start of
+another field. A name that `add` accepts may therefore be impossible to type
+into `edit`. Add the student afresh if you hit this.
+</box>
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
