@@ -580,6 +580,45 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
+**Use case: UC05 - Recover from an unreadable data file**
+
+**MSS**
+
+1.  User starts TAB
+2.  TAB reads its data file and finds a record it cannot understand
+3.  TAB names the record and the reason, keeps the file untouched, and loads the records it can still read
+4.  User repairs the file and asks TAB to load it again
+5.  TAB loads the records, reporting anything still unreadable
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. TAB cannot read the file at all, for example because it is not a TAB data file.
+
+    * 2a1. TAB reports why and leaves the file untouched.
+    * 2a2. User repairs or replaces the file, or decides to start with a fresh one.
+
+      Use case resumes at step 5.
+
+* 4a. Records are still unreadable after the repair.
+
+    * 4a1. User repairs or asks TAB to drop each remaining record.
+
+      Use case resumes at step 5.
+
+* 5a. TAB cannot write its changes back to the file.
+
+    * 5a1. TAB reports that the repair was not saved, and why.
+
+      Use case ends.
+
+* *a. At any time, User chooses to abandon the recovery.
+
+    * *a1. TAB leaves the file as it found it and continues with the readable records.
+
+      Use case ends.
+
 *{More to be added}*
 
 
