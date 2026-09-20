@@ -28,7 +28,7 @@ public class Phone {
     public Phone(String phone) {
         requireNonNull(phone);
         checkArgument(isValidPhone(phone), MESSAGE_CONSTRAINTS);
-        value = StringUtil.normalizeWhitespace(phone);
+        value = StringUtil.normalizeFieldValue(phone);
     }
 
     /**

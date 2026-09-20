@@ -28,8 +28,8 @@ public class TagTest {
 
     @Test
     public void getFailureReason_explainsTheOnlyWayATagCanFail() {
-        assertEquals("it holds no letter, character or number", Tag.getFailureReason(""));
-        assertEquals("it holds no letter, character or number", Tag.getFailureReason("---"));
+        assertEquals("it holds no letter or number", Tag.getFailureReason(""));
+        assertEquals("it holds no letter or number", Tag.getFailureReason("---"));
     }
 
     @Test
@@ -56,5 +56,6 @@ public class TagTest {
         assertEquals("Lab 3", new Tag("Lab  3").tagName);
         assertEquals("Lab 3", new Tag(" Lab 3 ").tagName);
         assertEquals(new Tag("Lab 3"), new Tag("Lab\u00A03"));
+        assertEquals(new Tag("caf\u00E9"), new Tag("cafe\u200B\u0301"));
     }
 }

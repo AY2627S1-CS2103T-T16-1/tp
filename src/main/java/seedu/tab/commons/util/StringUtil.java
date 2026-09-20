@@ -55,23 +55,28 @@ public class StringUtil {
     }
 
     /**
-     * Returns {@code raw} in the form a stored field holds: composed to Unicode form NFC,
-     * without the zero-width characters that would let two identical-looking values differ,
-     * and with every run of whitespace reduced to one ASCII space and the ends trimmed.
+     * Returns {@code raw} in the form a stored field holds: without the zero-width characters
+     * that would let two identical-looking values differ, with every run of whitespace reduced
+     * to one ASCII space, the ends trimmed, and the result composed to Unicode form NFC.
+     *
+     * Composing happens last. A zero-width character sitting between a base letter and its
+     * combining mark blocks the two from composing, so {@code e\u200B\u0301} would otherwise
+     * be stored decomposed and compare unequal to {@code \u00E9}, which looks the same.
      *
      * The zero-width joiner and non-joiner are kept, because scripts such as Sinhala and
      * Arabic need them to shape correctly.
      */
-    public static String normalizeWhitespace(String raw) {
+    public static String normalizeFieldValue(String raw) {
         requireNonNull(raw);
-        String composed = Normalizer.normalize(raw, Normalizer.Form.NFC);
-        String visible = ZERO_WIDTH.matcher(composed).replaceAll("");
-        return WHITESPACE.matcher(visible).replaceAll(" ").trim();
+        String visible = ZERO_WIDTH.matcher(raw).replaceAll("");
+        String spaced = WHITESPACE.matcher(visible).replaceAll(" ").trim();
+        return Normalizer.normalize(spaced, Normalizer.Form.NFC);
     }
 
     /**
      * Returns true if {@code s} holds at least one character that Unicode calls a letter or a
-     * number, which covers logographic scripts as well as alphabets.
+     * number. Logographic scripts such as Chinese count: Han characters are letters to Unicode,
+     * even though a reader would not call them letters.
      */
     public static boolean hasLetterOrNumber(String s) {
         requireNonNull(s);

@@ -100,7 +100,7 @@ spaces, hyphens and any script, so `Lab 3`, `needs-followup` and
 
 **Tip:** A name may hold anything you would write on a roster: slashes,
 hyphens, apostrophes, full stops, and any script. It only has to contain at
-least one letter or number.
+least one letter or number, in any writing system.
 </box>
 
 <box type="warning" seamless>

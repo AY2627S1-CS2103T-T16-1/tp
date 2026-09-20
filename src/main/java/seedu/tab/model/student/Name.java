@@ -12,31 +12,32 @@ import seedu.tab.commons.util.StringUtil;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should contain at least one letter, character or number, from any writing system";
+            "Names should contain at least one letter or number, in any writing system";
 
     public final String fullName;
 
     /**
      * Constructs a {@code Name}, storing the form described by
-     * {@link StringUtil#normalizeWhitespace(String)}.
+     * {@link StringUtil#normalizeFieldValue(String)}.
      *
      * @param name A valid name.
      */
     public Name(String name) {
         requireNonNull(name);
         checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
-        fullName = StringUtil.normalizeWhitespace(name);
+        fullName = StringUtil.normalizeFieldValue(name);
     }
 
     /**
      * Returns true if a given string holds a name. A name is stored and displayed, but it is
      * also split into words by the search and compared as the identity of a student, so the
      * only requirement is that something remains once it is normalized: one character
-     * that Unicode calls a letter or a number.
+     * that Unicode calls a letter or a number, which covers logographic scripts such as
+     * Chinese as well as alphabets.
      */
     public static boolean isValidName(String test) {
         requireNonNull(test);
-        return StringUtil.hasLetterOrNumber(StringUtil.normalizeWhitespace(test));
+        return StringUtil.hasLetterOrNumber(StringUtil.normalizeFieldValue(test));
     }
 
     /**
@@ -45,7 +46,7 @@ public class Name {
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);
-        return "it holds no letter, character or number";
+        return "it holds no letter or number";
     }
 
     @Override

@@ -12,7 +12,7 @@ import seedu.tab.commons.util.StringUtil;
 public class Tag {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Tags should contain at least one letter, character or number, from any writing system";
+            "Tags should contain at least one letter or number, in any writing system";
 
     public final String tagName;
 
@@ -24,7 +24,7 @@ public class Tag {
     public Tag(String tagName) {
         requireNonNull(tagName);
         checkArgument(isValidTagName(tagName), MESSAGE_CONSTRAINTS);
-        this.tagName = StringUtil.normalizeWhitespace(tagName);
+        this.tagName = StringUtil.normalizeFieldValue(tagName);
     }
 
     /**
@@ -32,7 +32,7 @@ public class Tag {
      */
     public static boolean isValidTagName(String test) {
         requireNonNull(test);
-        return StringUtil.hasLetterOrNumber(StringUtil.normalizeWhitespace(test));
+        return StringUtil.hasLetterOrNumber(StringUtil.normalizeFieldValue(test));
     }
 
     @Override
@@ -60,7 +60,7 @@ public class Tag {
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);
-        return "it holds no letter, character or number";
+        return "it holds no letter or number";
     }
 
     /**

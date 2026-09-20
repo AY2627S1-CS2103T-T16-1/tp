@@ -141,37 +141,47 @@ public class StringUtilTest {
         assertThrows(NullPointerException.class, () -> StringUtil.getDetails(null));
     }
 
-    //---------------- Tests for normalizeWhitespace -------------------------------------
+    //---------------- Tests for normalizeFieldValue -------------------------------------
 
     @Test
-    public void normalizeWhitespace_reducesEveryKindOfWhitespaceToOneSpace() {
-        assertEquals("John Doe", StringUtil.normalizeWhitespace("John\tDoe"));
-        assertEquals("John Doe", StringUtil.normalizeWhitespace("John\u00A0Doe"));
-        assertEquals("John Doe", StringUtil.normalizeWhitespace("John\u3000Doe"));
-        assertEquals("John Doe", StringUtil.normalizeWhitespace("John  \n Doe"));
-        assertEquals("John Doe", StringUtil.normalizeWhitespace("  John Doe  "));
+    public void normalizeFieldValue_reducesEveryKindOfWhitespaceToOneSpace() {
+        assertEquals("John Doe", StringUtil.normalizeFieldValue("John\tDoe"));
+        assertEquals("John Doe", StringUtil.normalizeFieldValue("John\u00A0Doe"));
+        assertEquals("John Doe", StringUtil.normalizeFieldValue("John\u3000Doe"));
+        assertEquals("John Doe", StringUtil.normalizeFieldValue("John  \n Doe"));
+        assertEquals("John Doe", StringUtil.normalizeFieldValue("  John Doe  "));
     }
 
     @Test
-    public void normalizeWhitespace_dropsZeroWidthCharactersButKeepsJoiners() {
-        assertEquals("John", StringUtil.normalizeWhitespace("\u200BJohn"));
-        assertEquals("John", StringUtil.normalizeWhitespace("John\uFEFF"));
+    public void normalizeFieldValue_dropsZeroWidthCharactersButKeepsJoiners() {
+        assertEquals("John", StringUtil.normalizeFieldValue("\u200BJohn"));
+        assertEquals("John", StringUtil.normalizeFieldValue("John\uFEFF"));
 
         // Sinhala needs the joiner to shape correctly
         String sinhala = "\u0DC1\u0DCA\u200D\u0DBB\u0DD3";
-        assertEquals(sinhala, StringUtil.normalizeWhitespace(sinhala));
+        assertEquals(sinhala, StringUtil.normalizeFieldValue(sinhala));
     }
 
     @Test
-    public void normalizeWhitespace_composesToNfc() {
-        assertEquals(StringUtil.normalizeWhitespace("Nguy\u1EC5n"),
-                StringUtil.normalizeWhitespace("Nguye\u0302\u0303n"));
+    public void normalizeFieldValue_composesToNfc() {
+        assertEquals(StringUtil.normalizeFieldValue("Nguy\u1EC5n"),
+                StringUtil.normalizeFieldValue("Nguye\u0302\u0303n"));
+    }
+
+    @Test
+    public void normalizeFieldValue_zeroWidthBetweenBaseAndMark_stillComposes() {
+        // A zero-width character sitting between a base letter and its combining mark blocks
+        // the two from composing, so the deletion has to happen before the composition.
+        assertEquals("\u00E9", StringUtil.normalizeFieldValue("e\u200B\u0301"));
+        assertEquals(StringUtil.normalizeFieldValue("\u00E9"),
+                StringUtil.normalizeFieldValue("e\u200B\u0301"));
+        assertEquals("Nguy\u1EC5n", StringUtil.normalizeFieldValue("Nguye\u200B\u0302\u0303n"));
     }
 
     //---------------- Tests for hasLetterOrNumber ---------------------------------------
 
     @Test
-    public void hasLetterOrNumber() {
+    public void hasLetterOrNumber_variousCharacters_returnsExpectedResult() {
         assertTrue(StringUtil.hasLetterOrNumber("a"));
         assertTrue(StringUtil.hasLetterOrNumber("1"));
         assertTrue(StringUtil.hasLetterOrNumber("\u9648")); // a logograph counts

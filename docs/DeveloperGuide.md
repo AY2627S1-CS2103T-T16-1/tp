@@ -161,21 +161,32 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Field values
 
-`Name`, `Tag` and `Phone` follow one rule, because all three are displayed,
-split into words by the search, and compared, whether as the identity of a
-student or as a key in the set of tags. Each stores the form returned by
-`StringUtil.normalizeWhitespace`, so that two values which look identical
-cannot be searched differently or stored twice.
+`Name`, `Tag` and `Phone` each store the form returned by
+`StringUtil.normalizeFieldValue`: without zero-width characters, with runs of
+whitespace reduced to one ASCII space, the ends trimmed, and the result
+composed to Unicode NFC. Composing happens last, because a zero-width
+character between a base letter and its combining mark blocks the two from
+composing.
 
-* a **name** or a **tag** needs at least one letter or number, by Unicode
-  category rather than by ASCII
-* a **phone number** needs at least 3 digits, which is the shortest real
-  number a user might record
+They normalize for different reasons, and the rule each one enforces differs.
 
-Nothing else is rejected. A phone number may hold `+`, spaces, brackets and an
-extension; a tag may hold spaces, hyphens and any script. None of those
-characters can hinder the app, because none of these fields is parsed,
-dialled, or used to build a file path.
+| Field | Why it is normalized | What it must hold |
+| --- | --- | --- |
+| `Name` | it is the identity a student is compared by, and the only field the search reads | at least one letter or number |
+| `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
+| `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
+
+`Phone` is **not** an identity and **not** a key: two students may hold the
+same number, and `isSameStudent` does not read it. It is normalized only so
+that a number typed with an odd space is stored the way it looks.
+
+Only `Name` is searched. `NameContainsKeywordsPredicate` reads `getName()`
+alone, so a tag or a phone number cannot be found by `find` today.
+
+Nothing else is rejected in any of the three. A phone number may hold `+`,
+spaces, brackets and an extension; a tag may hold spaces, hyphens and any
+script. None of those characters can hinder the app, because none of these
+fields is parsed, dialled, or used to build a file path.
 
 #### Student names
 
