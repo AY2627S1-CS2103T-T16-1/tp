@@ -78,6 +78,21 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_handEditedNullEmail_loadsWithoutOne() throws Exception {
+        // a file edited by hand may spell an absent email either way, and both have to load
+        ReadOnlyStudentBook loaded = readStudentBook("nullEmailStudentBook.json").get();
+
+        Student explicitNull = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withTags("friends").withoutEmail().build();
+        Student keyLeftOut = new StudentBuilder().withName("Benson Meier").withPhone("98765432")
+                .withTags("owesMoney").withoutEmail().build();
+
+        assertEquals(2, loaded.getStudentList().size());
+        assertEquals(explicitNull, loaded.getStudentList().get(0));
+        assertEquals(keyLeftOut, loaded.getStudentList().get(1));
+    }
+
+    @Test
     public void readAndSaveStudentBook_allInOrder_success() throws Exception {
         Path filePath = testFolder.resolve("TempStudentBook.json");
         StudentBook original = getTypicalStudentBook();
