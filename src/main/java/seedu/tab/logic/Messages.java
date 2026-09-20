@@ -61,10 +61,9 @@ public class Messages {
         final StringBuilder builder = new StringBuilder();
         builder.append(student.getName())
                 .append("; Phone: ")
-                .append(student.getPhone())
-                .append("; Email: ")
-                .append(student.getEmail())
-                .append("; Tags: ");
+                .append(student.getPhone());
+        student.getEmail().ifPresent(email -> builder.append("; Email: ").append(email));
+        builder.append("; Tags: ");
         student.getTags().forEach(builder::append);
         return builder.toString();
     }

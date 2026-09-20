@@ -48,7 +48,7 @@ class JsonAdaptedStudent {
     public JsonAdaptedStudent(Student source) {
         name = source.getName().fullName;
         phone = source.getPhone().value;
-        email = source.getEmail().value;
+        email = source.getEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -81,13 +81,12 @@ class JsonAdaptedStudent {
         }
         final Phone modelPhone = new Phone(phone);
 
-        if (email == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName()));
-        }
-        if (!Email.isValidEmail(email)) {
+        // A file may hold no email, either because the key is absent or because it is null.
+        // Anything else has to be a valid address; a broken one is not silently dropped.
+        if (email != null && !Email.isValidEmail(email)) {
             throw new IllegalValueException(Email.MESSAGE_CONSTRAINTS);
         }
-        final Email modelEmail = new Email(email);
+        final Email modelEmail = email == null ? null : new Email(email);
 
         final Set<Tag> modelTags = new HashSet<>(studentTags);
         return new Student(modelName, modelPhone, modelEmail, modelTags);

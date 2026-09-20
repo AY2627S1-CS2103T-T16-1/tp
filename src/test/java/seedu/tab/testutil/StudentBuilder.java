@@ -40,7 +40,7 @@ public class StudentBuilder {
     public StudentBuilder(Student studentToCopy) {
         name = studentToCopy.getName();
         phone = studentToCopy.getPhone();
-        email = studentToCopy.getEmail();
+        email = studentToCopy.getEmail().orElse(null);
         tags = new HashSet<>(studentToCopy.getTags());
     }
 

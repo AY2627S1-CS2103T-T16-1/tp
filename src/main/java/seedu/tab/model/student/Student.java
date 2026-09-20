@@ -5,6 +5,7 @@ import static seedu.tab.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.tab.commons.util.ToStringBuilder;
@@ -18,16 +19,19 @@ public class Student {
     // Identity fields
     private final Name name;
     private final Phone phone;
+
+    /** Null when the teaching assistant has not recorded one. */
     private final Email email;
 
     // Data fields
     private final Set<Tag> tags = new HashSet<>();
 
     /**
-     * Every field must be present and not null.
+     * Every field but the email must be present and not null. A student may be recorded before
+     * an email address is known, rather than the address being invented to satisfy the command.
      */
     public Student(Name name, Phone phone, Email email, Set<Tag> tags) {
-        requireAllNonNull(name, phone, email, tags);
+        requireAllNonNull(name, phone, tags);
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -42,8 +46,8 @@ public class Student {
         return phone;
     }
 
-    public Email getEmail() {
-        return email;
+    public Optional<Email> getEmail() {
+        return Optional.ofNullable(email);
     }
 
     /**
@@ -84,7 +88,7 @@ public class Student {
 
         return name.equals(otherStudent.name)
                 && phone.equals(otherStudent.phone)
-                && email.equals(otherStudent.email)
+                && Objects.equals(email, otherStudent.email)
                 && tags.equals(otherStudent.tags);
     }
 

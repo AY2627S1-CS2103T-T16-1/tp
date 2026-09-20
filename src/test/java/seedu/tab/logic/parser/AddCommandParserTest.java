@@ -134,17 +134,13 @@ public class AddCommandParserTest {
         assertParseFailure(parser, NAME_DESC_BOB + EMAIL_DESC_BOB,
                 Messages.getErrorMessageForMissingPrefixes(PREFIX_PHONE));
 
-        // missing email
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB,
-                Messages.getErrorMessageForMissingPrefixes(PREFIX_EMAIL));
-
         // several fields missing -> every one of them is named, in the order of the format
-        assertParseFailure(parser, NAME_DESC_BOB,
-                Messages.getErrorMessageForMissingPrefixes(PREFIX_PHONE, PREFIX_EMAIL));
+        assertParseFailure(parser, " " + PREFIX_TAG + "T1",
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_NAME, PREFIX_PHONE));
 
         // nothing at all
         assertParseFailure(parser, " ",
-                Messages.getErrorMessageForMissingPrefixes(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL));
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_NAME, PREFIX_PHONE));
     }
 
     @Test
@@ -238,11 +234,12 @@ public class AddCommandParserTest {
     @Test
     public void parse_missingFieldAndInvalidValue_reportsBoth() {
         // a missing field and a bad value are different complaints and arrive together
-        String expected = Messages.getErrorMessageForMissingPrefixes(PREFIX_EMAIL)
+        String expected = Messages.getErrorMessageForMissingPrefixes(PREFIX_PHONE)
                 + "\n"
-                + Messages.getErrorMessageForInvalidValue(Phone.FIELD_NAME, "12", Phone.getFailureReason("12"));
+                + Messages.getErrorMessageForInvalidValue(Email.FIELD_NAME, "nope",
+                        Email.getFailureReason("nope"));
 
-        assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_PHONE + "12", expected);
+        assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_EMAIL + "nope", expected);
     }
 
     @Test
@@ -275,7 +272,7 @@ public class AddCommandParserTest {
     @Test
     public void parse_missingFieldIsNotAlsoReportedAsUnparseable() {
         // a field that is absent is reported once, as missing, and not a second time as a value
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB,
-                Messages.getErrorMessageForMissingPrefixes(PREFIX_EMAIL));
+        assertParseFailure(parser, NAME_DESC_BOB + EMAIL_DESC_BOB,
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_PHONE));
     }
 }

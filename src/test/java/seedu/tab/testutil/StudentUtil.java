@@ -31,7 +31,7 @@ public class StudentUtil {
         StringBuilder sb = new StringBuilder();
         sb.append(PREFIX_NAME + student.getName().fullName + " ");
         sb.append(PREFIX_PHONE + student.getPhone().value + " ");
-        sb.append(PREFIX_EMAIL + student.getEmail().value + " ");
+        student.getEmail().ifPresent(email -> sb.append(PREFIX_EMAIL).append(email.value).append(" "));
         student.getTags().stream().forEach(
             s -> sb.append(PREFIX_TAG + s.tagName + " ")
         );

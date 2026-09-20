@@ -7,6 +7,7 @@ import static seedu.tab.testutil.TypicalStudents.BENSON;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -74,10 +75,16 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
-    public void toModelType_nullEmail_throwsIllegalValueException() {
+    public void toModelType_nullEmail_buildsStudentWithoutOne() throws Exception {
         JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, null, VALID_TAGS);
-        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName());
-        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+        assertEquals(Optional.empty(), student.toModelType().getEmail());
+    }
+
+    @Test
+    public void toModelType_invalidEmailInFile_throwsIllegalValueException() {
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, INVALID_EMAIL, VALID_TAGS);
+        assertThrows(IllegalValueException.class, Email.MESSAGE_CONSTRAINTS, student::toModelType);
     }
 
     @Test

@@ -50,7 +50,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         ParseProblems problems = new ParseProblems();
 
         Prefix[] missingPrefixes = findMissingPrefixes(argMultimap,
-                PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL);
+                PREFIX_NAME, PREFIX_PHONE);
         if (missingPrefixes.length > 0) {
             problems.add(Messages.getErrorMessageForMissingPrefixes(missingPrefixes));
         }
