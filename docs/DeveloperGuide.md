@@ -499,14 +499,6 @@ These were raised during requirement gathering and left out of the product.
 
     Use case ends.
 
-
-
-3.  User identifies the intended student in the list, distinguishing between similar records by their NUS ID, and requests an action on that student (such as editing or deleting their record)
-4.  TAB performs the requested action on the student
-5.  TAB saves the updated records
-6.  TAB shows the result of the action, including the affected record
-
-
 **Extensions**
 
 * 1a. The search terms are not in an acceptable form.
