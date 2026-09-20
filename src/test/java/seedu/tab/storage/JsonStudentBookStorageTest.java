@@ -63,6 +63,19 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_fileHoldingTheRemovedAddressField_loadsWithoutIt() throws Exception {
+        // Every data file written before the address field was removed still holds an
+        // "address" key. Those files have to keep loading, with the key ignored.
+        ReadOnlyStudentBook loaded = readStudentBook("withAddressFieldStudentBook.json").get();
+
+        Student expected = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withEmail("alice@example.com").withTags("friends").build();
+
+        assertEquals(1, loaded.getStudentList().size());
+        assertEquals(expected, loaded.getStudentList().get(0));
+    }
+
+    @Test
     public void readAndSaveStudentBook_allInOrder_success() throws Exception {
         Path filePath = testFolder.resolve("TempStudentBook.json");
         StudentBook original = getTypicalStudentBook();
@@ -85,7 +98,6 @@ public class JsonStudentBookStorageTest {
         jsonStudentBookStorage.saveStudentBook(original); // file path not specified
         readBack = jsonStudentBookStorage.readStudentBook().get(); // file path not specified
         assertEquals(original, new StudentBook(readBack));
-
     }
 
     @Test
@@ -95,7 +107,6 @@ public class JsonStudentBookStorageTest {
         Path filePath = testFolder.resolve("WidenedValues.json");
         Student student = new StudentBuilder().withName("Ravi s/o Kumaran")
                 .withPhone("+65 9123 4567").withEmail("e0923841@u.nus.edu")
-                .withAddress("Blk 30 Geylang Street 29")
                 .withTags("Lab 3", "needs-followup").build();
 
         StudentBook original = new StudentBook();

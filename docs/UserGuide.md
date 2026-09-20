@@ -31,7 +31,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
    * `list` : Lists all contacts.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
+   * `add n/John Doe p/98765432 e/johnd@example.com` : Adds a student named `John Doe`.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -80,7 +80,7 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL [t/TAG]... `
 
 <box type="tip" seamless>
 
@@ -105,17 +105,17 @@ least one letter or number, in any writing system.
 
 <box type="warning" seamless>
 
-**Known limitation:** a name containing `a/`, `p/`, `e/` or `t/` followed by a
-space is read as the start of another field, so `add n/Abdul a/l Rahman ...`
-is rejected. Names containing `s/o` and `d/o` are unaffected.
+**Known limitation:** a name containing `p/`, `e/` or `t/` followed by a space
+is read as the start of another field. Names containing `s/o`, `d/o`, `a/l` and
+`a/p` are unaffected.
 </box>
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
-* `add n/Ravi s/o Kumaran p/91234567 e/e0923841@u.nus.edu a/Blk 30 Geylang Street 29`
-* `add n/Siti Nur-Aisyah p/84420917 e/e1147203@u.nus.edu a/Blk 54 Toa Payoh Lor 5`
-* `add n/陈伟明 p/98123344 e/e1077310@u.nus.edu a/Prince George's Park Residences`
+* `add n/John Doe p/98765432 e/johnd@example.com`
+* `add n/Betsy Crowe t/friend e/betsycrowe@example.com p/1234567 t/criminal`
+* `add n/Ravi s/o Kumaran p/91234567 e/e0923841@u.nus.edu`
+* `add n/Siti Nur-Aisyah p/84420917 e/e1147203@u.nus.edu`
+* `add n/陈伟明 p/98123344 e/e1077310@u.nus.edu`
 
 Leading and trailing spaces are removed, repeated spaces inside a name are
 collapsed to one, and invisible characters are discarded, so that a name is
@@ -125,7 +125,7 @@ If a field is rejected, TAB quotes the value it could not accept and says what
 is wrong with it, rather than restating the whole rule:
 
 ```
-> add n/John Doe p/98765432 e/e1234567 a/Blk 30
+> add n/John Doe p/98765432 e/e1234567
 Email "e1234567" is not valid: an email needs an @ between the local part and the domain
 ```
 
@@ -134,7 +134,7 @@ before the command is refused, so a command with more than one mistake tells
 you about all of them at once:
 
 ```
-> add n/John Doe p/12 a/Blk 30
+> add n/John Doe p/12
 Missing required field(s): e/EMAIL
 Phone "12" is not valid: a phone number needs at least 3 digits
 ```
@@ -149,7 +149,7 @@ Format: `list`
 
 Edits an existing person in the address book.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [t/TAG]... `
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
@@ -243,10 +243,10 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com t/friend t/colleague`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Help**   | `help`

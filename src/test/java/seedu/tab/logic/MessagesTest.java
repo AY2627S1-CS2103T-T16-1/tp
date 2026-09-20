@@ -1,7 +1,6 @@
 package seedu.tab.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
@@ -19,9 +18,8 @@ public class MessagesTest {
 
     @Test
     public void getErrorMessageForMissingPrefixes_severalPrefixes_namesEachInOrder() {
-        assertEquals("Missing required field(s): n/NAME, p/PHONE, e/EMAIL, a/ADDRESS",
-                Messages.getErrorMessageForMissingPrefixes(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                        PREFIX_ADDRESS));
+        assertEquals("Missing required field(s): n/NAME, p/PHONE, e/EMAIL",
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL));
     }
 
     @Test
