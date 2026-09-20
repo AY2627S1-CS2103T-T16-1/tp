@@ -96,6 +96,50 @@ public class FlagTokenizerTest {
     }
 
     @Test
+    public void tokenize_knownFlagInTheValuePosition_saysTheFirstNeedsAValue() {
+        // -t is empty here; storing "-e" as a tag would be the wrong reading of a plain mistake
+        assertThrows(ParseException.class,
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_TAG.getLabel()), () ->
+                    parse("John -p 123 -t -e"));
+
+        assertThrows(ParseException.class,
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_PHONE.getLabel()), () ->
+                    parse("John -p -e john@example.com"));
+    }
+
+    @Test
+    public void tokenize_unknownFlagInTheValuePosition_saysTheFirstNeedsAValue() {
+        // an unknown option is still an option, so it does not become the value of the one before
+        assertThrows(ParseException.class,
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_TAG.getLabel()), () ->
+                    parse("John -p 123 -t -z"));
+    }
+
+    @Test
+    public void tokenize_quotedValueOpeningWithAHyphen_isTakenAsTheValue() throws Exception {
+        // quoting is how a value that looks like an option is given
+        assertEquals(List.of("-urgent"), parse("John -p 123 -t \"-urgent\"").getAllValues(FLAG_TAG));
+    }
+
+    @Test
+    public void tokenize_escapedQuote_staysInTheValue() throws Exception {
+        // a quote is syntax, so it needs an escape to survive rather than being dropped in silence
+        assertEquals("Dwayne \"The Rock\" Johnson", parse("Dwayne \\\"The Rock\\\" Johnson -p 123").getName());
+        assertEquals(List.of("say \"hi\""), parse("John -p 123 -t \"say \\\"hi\\\"\"").getAllValues(FLAG_TAG));
+    }
+
+    @Test
+    public void tokenize_escapedBackslash_staysInTheValue() throws Exception {
+        assertEquals("a\\b", parse("\"a\\\\b\" -p 123").getName());
+    }
+
+    @Test
+    public void tokenize_backslashBeforeAnythingElse_isLeftAlone() throws Exception {
+        // only a quote and a backslash are escapable, so a stray backslash does not disappear
+        assertEquals("a\\nb", parse("\"a\\nb\" -p 123").getName());
+    }
+
+    @Test
     public void tokenize_valueAfterTheFlagsBegan_saysItBelongsToNoOption() {
         // the likeliest cause is an unquoted name, so the message says so
         assertThrows(ParseException.class,

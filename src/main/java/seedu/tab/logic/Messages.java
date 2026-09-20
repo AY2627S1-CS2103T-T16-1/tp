@@ -22,9 +22,11 @@ public class Messages {
     public static final String MESSAGE_MISSING_FIELDS = "Missing required field(s): %1$s";
     public static final String MESSAGE_INVALID_VALUE = "%1$s \"%2$s\" is not valid: %3$s";
     public static final String MESSAGE_UNKNOWN_FLAG = "There is no %1$s option.";
-    public static final String MESSAGE_FLAG_WITHOUT_VALUE = "%1$s needs a value after it.";
+    public static final String MESSAGE_FLAG_WITHOUT_VALUE =
+            "%1$s needs a value after it. A value opening with a hyphen goes in double quotes.";
     public static final String MESSAGE_VALUE_AFTER_FLAGS =
-            "\"%1$s\" does not belong to any option. A name holding spaces needs quotes around it.";
+            "\"%1$s\" does not belong to any option. The name comes before the options, and any "
+            + "value holding spaces goes in double quotes.";
 
     /**
      * Returns an error message indicating the duplicate prefixes.

@@ -114,7 +114,7 @@ public class AddCommandParserTest {
                         Email.getFailureReason("bob!yahoo")));
 
         // invalid tag
-        assertParseFailure(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_EMAIL_BOB + " -t ---" + ADD_TAG_FRIEND,
+        assertParseFailure(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_EMAIL_BOB + " -t \"---\"" + ADD_TAG_FRIEND,
                 Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, "---", Tag.getFailureReason("---")));
     }
 
@@ -128,7 +128,7 @@ public class AddCommandParserTest {
                         Email.getFailureReason("john@x")),
                 Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, "---", Tag.getFailureReason("---")));
 
-        assertParseFailure(parser, " \"---\" -p 12 -e john@x -t ---", expected);
+        assertParseFailure(parser, " \"---\" -p 12 -e john@x -t \"---\"", expected);
     }
 
     @Test
@@ -149,7 +149,7 @@ public class AddCommandParserTest {
                 + "\n"
                 + Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, "***", Tag.getFailureReason("***"));
 
-        assertParseFailure(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_EMAIL_BOB + " -t --- -t ***", expected);
+        assertParseFailure(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_EMAIL_BOB + " -t \"---\" -t ***", expected);
     }
 
     @Test

@@ -64,7 +64,7 @@ public class CommandTestUtil {
     public static final String ADD_INVALID_NAME = " \"---\""; // no letter or number in name
     public static final String ADD_INVALID_PHONE = " " + FLAG_PHONE + " 12"; // fewer than 3 digits
     public static final String ADD_INVALID_EMAIL = " " + FLAG_EMAIL + " bob!yahoo"; // missing '@' symbol
-    public static final String ADD_INVALID_TAG = " " + FLAG_TAG + " ---"; // no letter or number in tag
+    public static final String ADD_INVALID_TAG = " " + FLAG_TAG + " \"---\""; // no letter or number
 
     public static final String PREAMBLE_WHITESPACE = "\t  \r  \n";
     public static final String PREAMBLE_NON_EMPTY = "NonEmptyPreamble";
