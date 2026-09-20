@@ -9,7 +9,11 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
  */
 public class Email {
 
+    /** How this field is named when a value of it is reported as invalid. */
+    public static final String FIELD_NAME = "Email";
+
     private static final String SPECIAL_CHARACTERS = "+_.-";
+
     public static final String MESSAGE_CONSTRAINTS = "Emails should be of the format local-part@domain "
             + "and adhere to the following constraints:\n"
             + "1. The local-part should only contain alphanumeric characters and these special characters, excluding "
@@ -27,7 +31,9 @@ public class Email {
             + ALPHANUMERIC_NO_UNDERSCORE + ")*";
     private static final String DOMAIN_PART_REGEX = ALPHANUMERIC_NO_UNDERSCORE
             + "(-" + ALPHANUMERIC_NO_UNDERSCORE + ")*";
-    private static final String DOMAIN_LAST_PART_REGEX = "(" + DOMAIN_PART_REGEX + "){2,}$"; // At least two chars
+    private static final int MINIMUM_LAST_LABEL_LENGTH = 2;
+    private static final String DOMAIN_LAST_PART_REGEX =
+            "(" + DOMAIN_PART_REGEX + "){" + MINIMUM_LAST_LABEL_LENGTH + ",}$";
     private static final String DOMAIN_REGEX = "(" + DOMAIN_PART_REGEX + "\\.)*" + DOMAIN_LAST_PART_REGEX;
     public static final String VALIDATION_REGEX = LOCAL_PART_REGEX + "@" + DOMAIN_REGEX;
 
@@ -81,8 +87,9 @@ public class Email {
         }
 
         String lastLabel = domain.substring(domain.lastIndexOf('.') + 1);
-        if (lastLabel.length() < 2) {
-            return "the last part of the domain needs at least 2 characters";
+        if (lastLabel.length() < MINIMUM_LAST_LABEL_LENGTH) {
+            return "the last part of the domain needs at least "
+                    + MINIMUM_LAST_LABEL_LENGTH + " characters";
         }
         return "the domain may hold letters and digits in labels separated by dots, "
                 + "with hyphens allowed inside a label";

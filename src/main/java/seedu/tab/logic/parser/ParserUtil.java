@@ -47,7 +47,7 @@ public class ParserUtil {
         String trimmedName = name.trim();
         if (!Name.isValidName(trimmedName)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(
-                    "Name", trimmedName, Name.getFailureReason(trimmedName)));
+                    Name.FIELD_NAME, trimmedName, Name.getFailureReason(trimmedName)));
         }
         return new Name(trimmedName);
     }
@@ -63,7 +63,7 @@ public class ParserUtil {
         String trimmedPhone = phone.trim();
         if (!Phone.isValidPhone(trimmedPhone)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(
-                    "Phone", trimmedPhone, Phone.getFailureReason(trimmedPhone)));
+                    Phone.FIELD_NAME, trimmedPhone, Phone.getFailureReason(trimmedPhone)));
         }
         return new Phone(trimmedPhone);
     }
@@ -79,7 +79,7 @@ public class ParserUtil {
         String trimmedAddress = address.trim();
         if (!Address.isValidAddress(trimmedAddress)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(
-                    "Address", trimmedAddress, Address.getFailureReason(trimmedAddress)));
+                    Address.FIELD_NAME, trimmedAddress, Address.getFailureReason(trimmedAddress)));
         }
         return new Address(trimmedAddress);
     }
@@ -95,7 +95,7 @@ public class ParserUtil {
         String trimmedEmail = email.trim();
         if (!Email.isValidEmail(trimmedEmail)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(
-                    "Email", trimmedEmail, Email.getFailureReason(trimmedEmail)));
+                    Email.FIELD_NAME, trimmedEmail, Email.getFailureReason(trimmedEmail)));
         }
         return new Email(trimmedEmail);
     }
@@ -111,7 +111,7 @@ public class ParserUtil {
         String trimmedTag = tag.trim();
         if (!Tag.isValidTagName(trimmedTag)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(
-                    "Tag", trimmedTag, Tag.getFailureReason(trimmedTag)));
+                    Tag.FIELD_NAME, trimmedTag, Tag.getFailureReason(trimmedTag)));
         }
         return new Tag(trimmedTag);
     }

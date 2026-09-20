@@ -9,6 +9,9 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
  */
 public class Address {
 
+    /** How this field is named when a value of it is reported as invalid. */
+    public static final String FIELD_NAME = "Address";
+
     public static final String MESSAGE_CONSTRAINTS = "Addresses can take any values, and should not be blank";
 
     /*

@@ -11,6 +11,9 @@ import seedu.tab.commons.util.StringUtil;
  */
 public class Tag {
 
+    /** How this field is named when a value of it is reported as invalid. */
+    public static final String FIELD_NAME = "Tag";
+
     public static final String MESSAGE_CONSTRAINTS =
             "Tags should contain at least one letter or number, in any writing system";
 

@@ -11,6 +11,9 @@ import seedu.tab.commons.util.StringUtil;
  */
 public class Name {
 
+    /** How this field is named when a value of it is reported as invalid. */
+    public static final String FIELD_NAME = "Name";
+
     public static final String MESSAGE_CONSTRAINTS =
             "Names should contain at least one letter or number, in any writing system";
 
