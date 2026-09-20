@@ -2,6 +2,7 @@ package seedu.tab.model.student;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_NAME_BOB;
@@ -91,5 +92,26 @@ public class StudentTest {
         String expected = Student.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", email=" + ALICE.getEmail() + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
+    }
+
+    @Test
+    public void hashCode_equalStudents_returnsSameHashCode() {
+        // the contract that matters: two students that compare equal must hash alike, or one
+        // of them could go missing from a hashed collection
+        assertEquals(ALICE.hashCode(), new StudentBuilder(ALICE).build().hashCode());
+    }
+
+    @Test
+    public void hashCode_studentsDifferingInOneField_returnDifferentHashCodes() {
+        // not required by the contract, which permits collisions, but every field should
+        // reach the hash or students would cluster needlessly
+        assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withName(VALID_NAME_BOB)
+                .build().hashCode());
+        assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withPhone(VALID_PHONE_BOB)
+                .build().hashCode());
+        assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withEmail(VALID_EMAIL_BOB)
+                .build().hashCode());
+        assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withTags(VALID_TAG_HUSBAND)
+                .build().hashCode());
     }
 }
