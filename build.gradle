@@ -27,12 +27,6 @@ checkstyle {
 test {
     useJUnitPlatform()
 
-    // Monocle draws to nothing, so the UI classes can be built on a runner with no display
-    systemProperty 'embedded', 'monocle'
-    systemProperty 'glass.platform', 'Monocle'
-    systemProperty 'monocle.platform', 'Headless'
-    systemProperty 'prism.order', 'sw'
-    systemProperty 'java.awt.headless', 'true'
     finalizedBy jacocoTestReport
 }
 
@@ -68,9 +62,6 @@ dependencies {
     implementation "org.openjfx:javafx-graphics:${javaFxVersion}:win"
     implementation "org.openjfx:javafx-graphics:${javaFxVersion}:mac"
     implementation "org.openjfx:javafx-graphics:${javaFxVersion}:linux"
-
-    // a headless JavaFX toolkit, so the UI classes can be tested on a CI runner
-    testImplementation "org.testfx:openjfx-monocle:17.0.10"
 
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.7.0'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.7.4'

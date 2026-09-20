@@ -69,11 +69,10 @@ public class StudentBuilder {
     }
 
     /**
-     * Sets the {@code Email} of the {@code Student} that we are building. A null leaves the
-     * student without one, which the model allows.
+     * Sets the {@code Email} of the {@code Student} that we are building.
      */
     public StudentBuilder withEmail(String email) {
-        this.email = email == null ? null : new Email(email);
+        this.email = new Email(email);
         return this;
     }
 
