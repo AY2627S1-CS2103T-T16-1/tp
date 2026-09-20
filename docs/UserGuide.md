@@ -80,7 +80,14 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL [t/TAG]... `
+Format: `add n/NAME p/PHONE_NUMBER [e/EMAIL] [t/TAG]... `
+
+<box type="tip" seamless>
+
+**Tip:** The email is optional. Record a student you only have a phone number
+for, rather than inventing an address to satisfy the command. An email cannot
+be removed once set, only replaced.
+</box>
 
 <box type="tip" seamless>
 
@@ -243,7 +250,7 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com t/friend t/colleague`
+**Add**    | `add n/NAME p/PHONE_NUMBER [e/EMAIL] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 t/friend t/colleague`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
