@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.DESC_BOB;
+import static seedu.tab.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
@@ -15,6 +16,8 @@ import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.commons.core.index.Index;
@@ -24,6 +27,7 @@ import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
+import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 import seedu.tab.testutil.StudentBuilder;
@@ -70,6 +74,46 @@ public class EditCommandTest {
         expectedModel.setStudent(lastStudent, editedStudent);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_studentWithoutEmail_keepsItAbsentWhenAnotherFieldIsEdited() {
+        Student first = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student withoutEmail = new StudentBuilder(first).withoutEmail().build();
+        model.setStudent(first, withoutEmail);
+
+        Student editedStudent = new StudentBuilder(withoutEmail).withPhone(VALID_PHONE_BOB).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(editedStudent));
+
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.setStudent(withoutEmail, editedStudent);
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertEquals(Optional.empty(), editedStudent.getEmail());
+    }
+
+    @Test
+    public void execute_studentWithoutEmail_takesOneGivenLater() {
+        Student first = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student withoutEmail = new StudentBuilder(first).withoutEmail().build();
+        model.setStudent(first, withoutEmail);
+
+        Student editedStudent = new StudentBuilder(withoutEmail).withEmail(VALID_EMAIL_BOB).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withEmail(VALID_EMAIL_BOB).build());
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(editedStudent));
+
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.setStudent(withoutEmail, editedStudent);
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertEquals(Optional.of(new Email(VALID_EMAIL_BOB)), editedStudent.getEmail());
     }
 
     @Test

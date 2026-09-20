@@ -85,6 +85,27 @@ public class StudentTest {
         // different tags -> returns false
         editedAlice = new StudentBuilder(ALICE).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(ALICE.equals(editedAlice));
+
+        // an email against none -> returns false, in either direction
+        Student withoutEmail = new StudentBuilder(ALICE).withoutEmail().build();
+        assertFalse(ALICE.equals(withoutEmail));
+        assertFalse(withoutEmail.equals(ALICE));
+
+        // neither holds an email -> returns true
+        assertTrue(withoutEmail.equals(new StudentBuilder(ALICE).withoutEmail().build()));
+    }
+
+    @Test
+    public void hashCode_studentsWithoutAnEmail_matchWhenTheyAreEqual() {
+        Student withoutEmail = new StudentBuilder(ALICE).withoutEmail().build();
+        assertEquals(withoutEmail.hashCode(), new StudentBuilder(ALICE).withoutEmail().build().hashCode());
+    }
+
+    @Test
+    public void isSameStudent_oneHoldsNoEmail_stillTheSameStudent() {
+        // the email is not an identity, so leaving it out does not make a second record of one student
+        Student withoutEmail = new StudentBuilder(ALICE).withoutEmail().build();
+        assertTrue(ALICE.isSameStudent(withoutEmail));
     }
 
     @Test

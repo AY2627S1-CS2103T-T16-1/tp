@@ -120,6 +120,15 @@ public class AddCommandParserTest {
         Student expectedStudent = new StudentBuilder(AMY).withTags().build();
         assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY,
                 new AddCommand(expectedStudent));
+
+        // no email, which is the student this command exists to let a tutor record
+        Student withoutEmail = new StudentBuilder(AMY).withTags().withoutEmail().build();
+        assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY, new AddCommand(withoutEmail));
+
+        // no email and tags together
+        Student tagged = new StudentBuilder(AMY).withTags(VALID_TAG_FRIEND).withoutEmail().build();
+        assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + TAG_DESC_FRIEND,
+                new AddCommand(tagged));
     }
 
     @Test
