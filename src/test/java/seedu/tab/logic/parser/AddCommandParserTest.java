@@ -198,6 +198,16 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_nonBreakingSpace_isReadAsASeparator() {
+        // pasting from a web page or a chat message used to report the phone as missing, with
+        // "-p 91234567" plainly there in the command
+        Student expected = new StudentBuilder().withName("John Doe").withPhone(VALID_PHONE_BOB)
+                .withoutEmail().withTags().build();
+        assertParseSuccess(parser, " John\u00A0Doe\u00A0-p\u00A0" + VALID_PHONE_BOB,
+                new AddCommand(expected));
+    }
+
+    @Test
     public void parse_nameWithSlash_succeeds() {
         // no field is marked by a slash any more, so a slash needs nothing done to it
         Student son = new StudentBuilder().withName("Ravi s/o Kumaran").withPhone(VALID_PHONE_BOB)

@@ -189,4 +189,30 @@ public class StringUtilTest {
         assertFalse(StringUtil.hasLetterOrNumber("---"));
         assertFalse(StringUtil.hasLetterOrNumber("\uD83D\uDE00")); // an emoji does not
     }
+
+    //---------------- Tests for isWhitespace --------------------------------------
+
+    @Test
+    public void isWhitespace_ordinarySeparators_returnsTrue() {
+        assertTrue(StringUtil.isWhitespace(' '));
+        assertTrue(StringUtil.isWhitespace('\t'));
+        assertTrue(StringUtil.isWhitespace('\n'));
+    }
+
+    @Test
+    public void isWhitespace_unicodeSpaces_returnsTrue() {
+        // Character.isWhitespace leaves these out, yet normalizeFieldValue collapses them, so
+        // a caller splitting on whitespace has to agree with it
+        assertTrue(StringUtil.isWhitespace('\u00A0'), "non-breaking space");
+        assertTrue(StringUtil.isWhitespace('\u202F'), "narrow non-breaking space");
+        assertTrue(StringUtil.isWhitespace('\u3000'), "ideographic space");
+    }
+
+    @Test
+    public void isWhitespace_ordinaryCharacters_returnsFalse() {
+        assertFalse(StringUtil.isWhitespace('a'));
+        assertFalse(StringUtil.isWhitespace('-'));
+        assertFalse(StringUtil.isWhitespace('\u200B'), "a zero-width space separates nothing");
+    }
+
 }

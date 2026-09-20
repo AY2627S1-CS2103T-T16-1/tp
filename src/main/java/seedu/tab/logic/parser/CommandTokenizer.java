@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.ArrayList;
 import java.util.List;
 
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.parser.exceptions.ParseException;
 
 /**
@@ -60,7 +61,7 @@ public class CommandTokenizer {
                 isQuoted = !isQuoted;
                 wasQuoted = true;
                 hasToken = true;
-            } else if (!isQuoted && Character.isWhitespace(current)) {
+            } else if (!isQuoted && StringUtil.isWhitespace(current)) {
                 if (hasToken) {
                     tokens.add(new Token(value.toString(), wasQuoted));
                     value.setLength(0);

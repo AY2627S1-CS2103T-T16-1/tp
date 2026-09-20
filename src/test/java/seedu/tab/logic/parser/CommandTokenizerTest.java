@@ -36,6 +36,23 @@ public class CommandTokenizerTest {
     }
 
     @Test
+    public void tokenize_nonBreakingSpace_splitsLikeAnOrdinarySpace() throws Exception {
+        // a command pasted from a web page or a chat message carries these instead of spaces
+        assertEquals(List.of("John", "-p", "91234567"), valuesOf("John\u00A0-p\u00A091234567"));
+    }
+
+    @Test
+    public void tokenize_otherUnicodeSpaces_splitToo() throws Exception {
+        // the ideographic space is what a Chinese keyboard produces
+        assertEquals(List.of("陈伟明", "-t", "T1"), valuesOf("陈伟明\u3000-t\u202FT1"));
+    }
+
+    @Test
+    public void tokenize_nonBreakingSpaceInsideQuotes_isKept() throws Exception {
+        assertEquals(List.of("John\u00A0Doe"), valuesOf("\"John\u00A0Doe\""));
+    }
+
+    @Test
     public void tokenize_quotedValue_isOneToken() throws Exception {
         assertEquals(List.of("Siti Nur-Aisyah", "-t", "Lab 3"),
                 valuesOf("\"Siti Nur-Aisyah\" -t \"Lab 3\""));

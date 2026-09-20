@@ -19,6 +19,18 @@ public class StringUtil {
     private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
 
     /**
+     * Returns true if {@code character} separates one value from the next.
+     *
+     * <p>{@code Character.isWhitespace} leaves out the non-breaking space, which a command
+     * pasted from a web page or a chat message carries. Matching it here keeps a caller that
+     * splits on whitespace agreeing with {@link #normalizeFieldValue}, whose pattern does
+     * match it.
+     */
+    public static boolean isWhitespace(char character) {
+        return Character.isWhitespace(character) || Character.isSpaceChar(character);
+    }
+
+    /**
      * Returns true if the {@code sentence} contains the {@code word}.
      *   Ignores case, but a full word match is required.
      *   <br>examples:<pre>
