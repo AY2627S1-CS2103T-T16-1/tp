@@ -494,11 +494,32 @@ These were raised during requirement gathering and left out of the product.
 
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
-
-*{More to be added}*
+1.  **Operating environment**: Should work on any _mainstream OS_ as long as it has Java `25` (64-bit)
+    installed without requiring platform-specific installation or OS-dependent libraries. This
+    satisfies `Constraint-Platform-Independent` and `Constraint-Java-Version`.
+2.  **Portability**: Should be packaged as a single executable JAR file of at most 100 MB that runs
+    directly without requiring an installer or system administrator privileges. This satisfies
+    `Constraint-Portable`, `Constraint-Single-File`, and `Constraint-File-Size`.
+3.  **Single-user operation**: Should be designed for a single user operating locally at any given time,
+    without requiring or supporting concurrent multi-user write access to the data file. This
+    satisfies `Constraint-Single-User`.
+4.  **CLI-first accessibility**: All student management operations must be executable entirely via
+    keyboard commands without requiring a mouse, trackpad, or other pointing device. This
+    satisfies `Constraint-Typing-Preferred`.
+5.  **Typing efficiency**: A user with above-average typing speed for regular English text should be able
+    to accomplish regular student management tasks faster using CLI commands than using a traditional
+    mouse-driven graphical user interface. This satisfies `Constraint-Typing-Preferred`.
+6.  **Capacity**: Should comfortably store and manage up to 1,000 student records (sufficient for multiple
+    semesters of active and archived tutorial and lab slots) without noticeable degradation in performance.
+7.  **Responsiveness**: Should execute typical commands (such as adding, editing, deleting, tagging, listing,
+    and filtering across up to 1,000 student records) and update the GUI within 100 milliseconds on
+    standard modern desktop hardware.
+8.  **Startup time**: Should launch and display the GUI, ready for user command input, within 2 seconds
+    on standard modern desktop hardware with an existing data file containing up to 1,000 student records.
+9.  **Screen resolution and scaling**: The GUI should render cleanly without visual clipping or overlapping
+    components at screen resolutions of 1920×1080 and higher with display scaling at 100% and 125%, and
+    remain functional and usable down to 1280×720 with display scaling up to 150%. This satisfies
+    `Constraint-Screen-Resolution`.
 
 ### Glossary
 
