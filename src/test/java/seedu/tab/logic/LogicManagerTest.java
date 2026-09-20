@@ -1,6 +1,8 @@
 package seedu.tab.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.tab.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
@@ -19,6 +21,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.commands.CommandResult;
+import seedu.tab.logic.commands.DeleteCommand;
+import seedu.tab.logic.commands.ExitCommand;
 import seedu.tab.logic.commands.ListCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.exceptions.ParseException;
@@ -67,6 +71,33 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_exitCommand_success() throws Exception {
+        String exitCommand = ExitCommand.COMMAND_WORD;
+        CommandResult result = logic.execute(exitCommand);
+        assertEquals(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, result.getFeedbackToUser());
+        assertTrue(result.isExit());
+        assertFalse(result.isShowHelp());
+        assertEquals(model, new ModelManager());
+    }
+
+    @Test
+    public void execute_deleteCommand_successAndPersistsToStorage() throws Exception {
+        Student student = new StudentBuilder(AMY).build();
+        model.addStudent(student);
+
+        String deleteCommand = DeleteCommand.COMMAND_WORD + " 1";
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS,
+                Messages.format(student));
+        ModelManager expectedModel = new ModelManager();
+
+        assertCommandSuccess(deleteCommand, expectedMessage, expectedModel);
+
+        ReadOnlyStudentBook savedStudentBook =
+                new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json")).readStudentBook().get();
+        assertEquals(0, savedStudentBook.getStudentList().size());
     }
 
     @Test
