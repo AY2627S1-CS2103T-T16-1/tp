@@ -489,6 +489,45 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
+**Use case: UC06 - Delete a class no longer taught**
+
+**MSS**
+
+1.  User requests to delete a class, giving its class tag
+2.  TAB shows the class and every student in it
+3.  TAB asks the user to confirm the deletion, warning that students whose only tag is this class will be removed as well
+4.  User confirms the deletion
+5.  TAB removes the class tag, and the students that it left with no other tag
+6.  TAB shows how many students were affected
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. TAB holds no student tagged with that class.
+
+    * 2a1. TAB reports that there is no such class.
+
+      Use case ends.
+
+* 3a. User chooses not to delete the class.
+
+    * 3a1. TAB leaves the records unchanged.
+
+      Use case ends.
+
+* 5a. TAB cannot write to the data file.
+
+    * 5a1. TAB reports that the deletion was not saved, and why.
+
+      Use case ends.
+
+* *a. At any time, User chooses to abandon the deletion.
+
+    * *a1. User clears the input.
+
+      Use case ends.
+
 *{More to be added}*
 
 
