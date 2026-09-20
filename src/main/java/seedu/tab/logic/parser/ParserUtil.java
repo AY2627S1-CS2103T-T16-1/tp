@@ -10,7 +10,6 @@ import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.parser.exceptions.ParseException;
-import seedu.tab.model.student.Address;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.Phone;
@@ -66,22 +65,6 @@ public class ParserUtil {
                     Phone.FIELD_NAME, trimmedPhone, Phone.getFailureReason(trimmedPhone)));
         }
         return new Phone(trimmedPhone);
-    }
-
-    /**
-     * Parses a {@code String address} into an {@code Address}.
-     * Leading and trailing whitespaces will be trimmed.
-     *
-     * @throws ParseException if the given {@code address} is invalid.
-     */
-    public static Address parseAddress(String address) throws ParseException {
-        requireNonNull(address);
-        String trimmedAddress = address.trim();
-        if (!Address.isValidAddress(trimmedAddress)) {
-            throw new ParseException(Messages.getErrorMessageForInvalidValue(
-                    Address.FIELD_NAME, trimmedAddress, Address.getFailureReason(trimmedAddress)));
-        }
-        return new Address(trimmedAddress);
     }
 
     /**

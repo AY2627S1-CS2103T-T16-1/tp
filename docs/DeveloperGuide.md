@@ -227,12 +227,12 @@ letter or number, judged by Unicode category rather than by ASCII.
 | Punctuation only, such as `---` | no letter or number |
 | An emoji, or a zero-width space, on its own | no letter or number |
 
-**A name that holds a command prefix still fails to parse.** The model accepts
-`Abdul a/l Rahman`, but `ArgumentTokenizer` reads the `a/` as the address
-prefix and rejects the command. A/L and A/P are ordinary components of a
-Malaysian name, so this is the same defect as the one `s/o` used to have, and
-it is fixed by replacing the prefix syntax with positional arguments and
-flags rather than by changing `Name`. `AddCommandParserTest` pins it.
+**A name that holds a command prefix still fails to parse.** The prefixes are
+`n/`, `p/`, `e/` and `t/`, and a name holding any of them followed by a space
+is read as the start of another field. `a/l` and `a/p`, ordinary components of
+a Malaysian name, used to fail this way until the address field was removed
+and the `a/` prefix with it. The rest are fixed by replacing the prefix syntax
+with positional arguments and flags, not by changing `Name`.
 
 ### \[Proposed\] Undo/redo feature
 

@@ -1,7 +1,6 @@
 package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
@@ -16,7 +15,6 @@ import java.util.stream.Stream;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.parser.exceptions.ParseException;
-import seedu.tab.model.student.Address;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.Phone;
@@ -41,18 +39,18 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     public AddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG);
+                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_TAG);
 
         if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
         }
 
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS);
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL);
 
         ParseProblems problems = new ParseProblems();
 
         Prefix[] missingPrefixes = findMissingPrefixes(argMultimap,
-                PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS);
+                PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL);
         if (missingPrefixes.length > 0) {
             problems.add(Messages.getErrorMessageForMissingPrefixes(missingPrefixes));
         }
@@ -60,12 +58,11 @@ public class AddCommandParser implements Parser<AddCommand> {
         Name name = parseIfPresent(problems, argMultimap, PREFIX_NAME, ParserUtil::parseName);
         Phone phone = parseIfPresent(problems, argMultimap, PREFIX_PHONE, ParserUtil::parsePhone);
         Email email = parseIfPresent(problems, argMultimap, PREFIX_EMAIL, ParserUtil::parseEmail);
-        Address address = parseIfPresent(problems, argMultimap, PREFIX_ADDRESS, ParserUtil::parseAddress);
         Set<Tag> tagList = parseEachTag(problems, argMultimap.getAllValues(PREFIX_TAG));
 
         problems.throwIfAny();
 
-        Student student = new Student(name, phone, email, address, tagList);
+        Student student = new Student(name, phone, email, tagList);
 
         return new AddCommand(student);
     }
