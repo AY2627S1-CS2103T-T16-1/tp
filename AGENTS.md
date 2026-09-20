@@ -109,6 +109,27 @@ extra co-authors distort the record being graded.
 **Never rewrite published history** on `master` without checking with the team
 first. `git push --force` on a shared branch breaks every teammate's clone.
 
+## Reviewing pull requests
+
+Follow the
+[se-edu PR review guidelines](https://se-education.org/guides/guidelines/PRs-reviewing.html).
+The way comments are phrased matters as much as the code itself.
+
+**Reviewers**
+- Add specific comments at relevant places in the code rather than broad
+  summary comments for the entire PR.
+- Phrase feedback as questions (e.g. "Should this be extracted out?")
+  rather than demands to encourage collaborative dialogue.
+- Avoid judgmental labels like "good", "bad", or "wrong"; frame observations
+  around preference or impact (e.g. "I like how you...", "Not sure I like...").
+- Keep language accessible and universal using plain English; avoid slang,
+  colloquialisms, or culture-specific references.
+
+**Authors**
+- Avoid defensive or confrontational responses; explain reasoning calmly
+  and objectively without trying to prove superiority.
+- Acknowledge and thank reviewers for their time and input.
+
 ## Java code style
 
 Enforced by `config/checkstyle/checkstyle.xml`, which implements the
