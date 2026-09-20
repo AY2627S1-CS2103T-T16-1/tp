@@ -8,7 +8,34 @@ import static seedu.tab.testutil.Assert.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.model.student.Student;
+import seedu.tab.testutil.StudentBuilder;
+
 public class MessagesTest {
+
+    @Test
+    public void format_studentWithEmail_holdsEveryField() {
+        Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withEmail("alice@example.com").withTags("friends").build();
+        assertEquals("Alice Pauline; Phone: 94351253; Email: alice@example.com; Tags: [friends]",
+                Messages.format(student));
+    }
+
+    @Test
+    public void format_studentWithoutEmail_omitsTheEmailField() {
+        // spelled out rather than compared against format itself, so that "Email: null" or a
+        // stray separator is caught
+        Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withTags("friends").withoutEmail().build();
+        assertEquals("Alice Pauline; Phone: 94351253; Tags: [friends]", Messages.format(student));
+    }
+
+    @Test
+    public void format_studentWithoutEmailOrTags_endsAtTheTagLabel() {
+        Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withTags().withoutEmail().build();
+        assertEquals("Alice Pauline; Phone: 94351253; Tags: ", Messages.format(student));
+    }
 
     @Test
     public void getErrorMessageForMissingPrefixes_onePrefix_namesTheField() {
