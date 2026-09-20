@@ -6,12 +6,13 @@ Guidance for AI coding agents and human contributors working in this repository.
 
 CS2103T AY26/27 S1 team project (T16-1), forked from
 [se-edu/addressbook-level3](https://github.com/se-edu/addressbook-level3). A
-JavaFX desktop address-book application, CLI-first with a GUI shell.
+JavaFX desktop application for managing a teaching assistant's students,
+CLI-first with a GUI shell.
 
 - Java 25, Gradle, JUnit 5, Jackson, JavaFX 17
-- Main class: `seedu.address.Main`
-- Source: `src/main/java/seedu/address/{commons,logic,model,storage,ui}`
-- Tests: `src/test/java/seedu/address/...`, test fixtures in `src/test/data`
+- Main class: `seedu.tab.Main`
+- Source: `src/main/java/seedu/tab/{commons,logic,model,storage,ui}`
+- Tests: `src/test/java/seedu/tab/...`, test fixtures in `src/test/data`
 - Architecture is documented in `docs/DeveloperGuide.md` — read it before
   making structural changes.
 
@@ -22,7 +23,7 @@ JavaFX desktop address-book application, CLI-first with a GUI shell.
 ./gradlew test             # tests only
 ./gradlew checkstyleMain checkstyleTest
 ./gradlew run              # launch the app
-./gradlew shadowJar        # build addressbook.jar
+./gradlew shadowJar        # build tab.jar
 .github/run-checks.sh      # repo-wide text hygiene checks (staged files)
 ```
 
@@ -302,7 +303,7 @@ Most real bugs land in Low or Medium.
 
 ## Documentation
 
-`docs/` is a Jekyll site. Follow the
+`docs/` is a MarkBind site. Follow the
 [se-edu Markdown standard](https://se-education.org/guides/conventions/markdown.html).
 User-facing behaviour changes belong in `docs/UserGuide.md`; design and
 implementation changes belong in `docs/DeveloperGuide.md`. UML diagrams are
@@ -312,7 +313,7 @@ PlantUML sources under `docs/diagrams/`.
 
 - JUnit 5. New functional code needs tests — coverage is reported to Codecov
   and tracked over the project.
-- Reuse the builders in `src/test/java/seedu/address/testutil` rather than
+- Reuse the builders in `src/test/java/seedu/tab/testutil` rather than
   constructing model objects by hand.
 - See `docs/Testing.md` for how to run the different test kinds.
 
