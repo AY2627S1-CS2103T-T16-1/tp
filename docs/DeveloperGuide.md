@@ -159,6 +159,45 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Student names
+
+`Name` accepts almost anything. A name is stored and displayed but never
+parsed, compared as a key, or used to build a file path, so no character in it
+can hinder the app. The rule therefore rejects only strings that carry no
+identity at all.
+
+**A name is valid when it**
+
+* contains at least one letter or number, judged by Unicode category
+  (`\p{L}` or `\p{N}`), not by ASCII
+* neither begins nor ends with whitespace, judged against all of Unicode
+  rather than the ASCII five
+
+**Everything else is allowed**, including:
+
+| Accepted | Example |
+| --- | --- |
+| Slashes | `Ravi s/o Kumaran`, `Anita d/o Rajan` |
+| Hyphens and apostrophes | `Siti Nur-Aisyah`, `Ma Ying-jeou`, `Sean O'Brien` |
+| Full stops and other punctuation | `J. R. R. Tolkien`, `James&` |
+| A leading hyphen | `-Ahmad` |
+| Ligatures and Roman numerals | `X Æ A-Xii`, `X Æ A-Ⅻ` |
+| Any script | Chinese, Japanese, Korean, Arabic, Tamil, Hebrew, Mongolian, Vietnamese |
+| Characters outside the basic plane | `𠮷田`, Adlam, Cuneiform |
+| Combining marks and format characters | Arabic harakat, Sinhala ZWJ |
+| Digits only | `12345` |
+
+**A name is rejected when it is**
+
+| Rejected | Why |
+| --- | --- |
+| Empty or whitespace only | no identity |
+| Punctuation only, such as `---` | no identity |
+| An emoji on its own | no letter or number |
+| A zero-width space on its own | would display as a blank name |
+| Arabic harakat with no base letters | no letter or number |
+| Surrounded by whitespace, including U+00A0 | trailing space is not part of a name |
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation

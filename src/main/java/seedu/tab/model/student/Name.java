@@ -3,6 +3,8 @@ package seedu.tab.model.student;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.AppUtil.checkArgument;
 
+import java.util.regex.Pattern;
+
 /**
  * Represents a Student's name in the student book.
  * Guarantees: immutable; is valid as declared in {@link #isValidName(String)}
@@ -10,13 +12,17 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should only contain alphanumeric characters and spaces, and should not be blank";
+            "Names should contain at least one letter or number, "
+                    + "and should not begin or end with a space";
 
     /*
-     * The first character of the name must not be a whitespace,
-     * otherwise " " (a blank string) becomes a valid input.
+     * A name is stored and displayed, never parsed further, so it may hold any
+     * character a real name needs: s/o and d/o, hyphens, apostrophes, full stops.
+     * The two rules below reject only what carries no identity at all.
      */
-    public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} ]*";
+    public static final String VALIDATION_REGEX = "(?U)\\S(.*\\S)?";
+
+    private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
 
     public final String fullName;
 
@@ -35,7 +41,7 @@ public class Name {
      * Returns true if a given string is a valid name.
      */
     public static boolean isValidName(String test) {
-        return test.matches(VALIDATION_REGEX);
+        return test.matches(VALIDATION_REGEX) && HAS_LETTER_OR_NUMBER.matcher(test).find();
     }
 
 

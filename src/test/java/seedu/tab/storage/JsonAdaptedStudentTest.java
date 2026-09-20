@@ -18,7 +18,7 @@ import seedu.tab.model.student.Name;
 import seedu.tab.model.student.Phone;
 
 public class JsonAdaptedStudentTest {
-    private static final String INVALID_NAME = "R@chel";
+    private static final String INVALID_NAME = "---"; // no letter or number
     private static final String INVALID_PHONE = "+651234";
     private static final String INVALID_ADDRESS = " ";
     private static final String INVALID_EMAIL = "example.com";
