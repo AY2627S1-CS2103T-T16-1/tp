@@ -12,4 +12,6 @@ public class CliFlags {
 
     /** The name a student is added under, which is given before any flag rather than marked by one. */
     public static final String FIELD_NAME = "NAME";
+
+    private CliFlags() {} // this class only holds flags
 }

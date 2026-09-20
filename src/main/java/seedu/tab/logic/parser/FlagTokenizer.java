@@ -25,6 +25,8 @@ public class FlagTokenizer {
 
     private static final String FLAG_MARKER = "-";
 
+    private FlagTokenizer() {} // this class only reads arguments
+
     /**
      * Returns the name and the flag values in {@code arguments}, which is tokenized first so
      * that a quoted value may hold spaces or open with the flag marker.

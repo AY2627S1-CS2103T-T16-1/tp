@@ -22,6 +22,8 @@ public class CommandTokenizer {
 
     private static final char QUOTE = '"';
 
+    private CommandTokenizer() {} // this class only splits arguments
+
     /**
      * One token of a command's arguments.
      *
