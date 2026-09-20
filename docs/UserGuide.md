@@ -112,10 +112,10 @@ is read as the start of another field. Names containing `s/o`, `d/o`, `a/l` and
 
 Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+* `add n/Betsy Crowe t/friend e/betsycrowe@example.com p/1234567 t/criminal`
 * `add n/Ravi s/o Kumaran p/91234567 e/e0923841@u.nus.edu`
 * `add n/Siti Nur-Aisyah p/84420917 e/e1147203@u.nus.edu`
-* `add n/陈伟明 p/98123344 e/e1077310@u.nus.edu a/Prince George's Park Residences`
+* `add n/陈伟明 p/98123344 e/e1077310@u.nus.edu`
 
 Leading and trailing spaces are removed, repeated spaces inside a name are
 collapsed to one, and invisible characters are discarded, so that a name is
@@ -125,7 +125,7 @@ If a field is rejected, TAB quotes the value it could not accept and says what
 is wrong with it, rather than restating the whole rule:
 
 ```
-> add n/John Doe p/98765432 e/e1234567 a/Blk 30
+> add n/John Doe p/98765432 e/e1234567
 Email "e1234567" is not valid: an email needs an @ between the local part and the domain
 ```
 
@@ -134,7 +134,7 @@ before the command is refused, so a command with more than one mistake tells
 you about all of them at once:
 
 ```
-> add n/John Doe p/12 a/Blk 30
+> add n/John Doe p/12
 Missing required field(s): e/EMAIL
 Phone "12" is not valid: a phone number needs at least 3 digits
 ```

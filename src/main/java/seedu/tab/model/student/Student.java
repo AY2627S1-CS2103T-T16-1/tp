@@ -15,7 +15,6 @@ import seedu.tab.model.tag.Tag;
  * Guarantees: details are present and not null, field values are validated, immutable.
  */
 public class Student {
-
     // Identity fields
     private final Name name;
     private final Phone phone;
@@ -104,5 +103,4 @@ public class Student {
                 .add("tags", tags)
                 .toString();
     }
-
 }

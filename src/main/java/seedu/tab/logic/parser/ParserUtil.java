@@ -19,7 +19,6 @@ import seedu.tab.model.tag.Tag;
  * Contains utility methods used for parsing strings in the various *Parser classes.
  */
 public class ParserUtil {
-
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
     /**

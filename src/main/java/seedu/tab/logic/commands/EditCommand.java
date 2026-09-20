@@ -30,7 +30,6 @@ import seedu.tab.model.tag.Tag;
  * Edits the details of an existing student in the student book.
  */
 public class EditCommand extends Command {
-
     public static final String COMMAND_WORD = "edit";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the student identified "
@@ -176,8 +175,6 @@ public class EditCommand extends Command {
         public Optional<Email> getEmail() {
             return Optional.ofNullable(email);
         }
-
-
 
         /**
          * Sets {@code tags} to this object's {@code tags}.

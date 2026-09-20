@@ -68,11 +68,11 @@ public class JsonStudentBookStorageTest {
         // "address" key. Those files have to keep loading, with the key ignored.
         ReadOnlyStudentBook loaded = readStudentBook("withAddressFieldStudentBook.json").get();
 
+        Student expected = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withEmail("alice@example.com").withTags("friends").build();
+
         assertEquals(1, loaded.getStudentList().size());
-        Student alice = loaded.getStudentList().get(0);
-        assertEquals("Alice Pauline", alice.getName().fullName);
-        assertEquals("94351253", alice.getPhone().value);
-        assertEquals("alice@example.com", alice.getEmail().value);
+        assertEquals(expected, loaded.getStudentList().get(0));
     }
 
     @Test
@@ -98,7 +98,6 @@ public class JsonStudentBookStorageTest {
         jsonStudentBookStorage.saveStudentBook(original); // file path not specified
         readBack = jsonStudentBookStorage.readStudentBook().get(); // file path not specified
         assertEquals(original, new StudentBook(readBack));
-
     }
 
     @Test

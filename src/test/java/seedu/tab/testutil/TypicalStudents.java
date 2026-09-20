@@ -20,7 +20,6 @@ import seedu.tab.model.student.Student;
  * A utility class containing a list of {@code Student} objects to be used in tests.
  */
 public class TypicalStudents {
-
     public static final Student ALICE = new StudentBuilder().withName("Alice Pauline")
             .withEmail("alice@example.com")
             .withPhone("94351253")

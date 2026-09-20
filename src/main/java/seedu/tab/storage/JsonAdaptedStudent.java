@@ -20,7 +20,6 @@ import seedu.tab.model.tag.Tag;
  * Jackson-friendly version of {@link Student}.
  */
 class JsonAdaptedStudent {
-
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Student's %s field is missing!";
 
     private final String name;
@@ -90,9 +89,7 @@ class JsonAdaptedStudent {
         }
         final Email modelEmail = new Email(email);
 
-
         final Set<Tag> modelTags = new HashSet<>(studentTags);
         return new Student(modelName, modelPhone, modelEmail, modelTags);
     }
-
 }
