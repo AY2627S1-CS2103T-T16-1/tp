@@ -119,10 +119,13 @@ least one letter or number, in any writing system.
 
 <box type="tip" seamless>
 
-**Tip:** The name comes first and may hold spaces as it is. Put double quotes
-around any other value holding spaces, and around any value opening with a
-hyphen, so that TAB does not read it as an option. `add "Ravi s/o Kumaran" -p
-91234567 -t "Lab 3"` and `add "-Ahmad" -p 84001122` both work.
+**Tip:** The name comes first and may hold spaces as it is, so
+`add Ravi s/o Kumaran -p 91234567` needs no quotes at all. Slashes, hyphens and
+apostrophes are ordinary characters here.
+
+Use double quotes for an option value holding spaces, and for any value opening
+with a hyphen, so that TAB does not read it as an option:
+`add Siti Nur-Aisyah -p 84420917 -t "Lab 3"` and `add "-Ahmad" -p 84001122`.
 
 To put a double quote or a backslash inside a value, write `\"` or `\\`:
 `add Dwayne \"The Rock\" Johnson -p 91234567`.

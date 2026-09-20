@@ -11,9 +11,10 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  * Splits the arguments of a command into tokens the way a shell does: on whitespace, with
  * double quotes grouping a value that holds spaces.
  *
- * <p>Quoting is what lets a value hold a character the parser would otherwise read: a name
- * with spaces, or one opening with the hyphen that marks a flag. A quote character cannot
- * itself appear in a value, since there is no escape.
+ * <p>Quoting is what lets a value hold a character the parser would otherwise read: an
+ * option value with spaces, or any value opening with the hyphen that marks an option. A
+ * backslash escapes a quote or another backslash, so a value may hold either of them; a
+ * backslash before anything else stays where it is.
  */
 public class CommandTokenizer {
 
