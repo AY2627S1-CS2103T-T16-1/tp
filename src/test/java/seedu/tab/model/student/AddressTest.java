@@ -1,5 +1,6 @@
 package seedu.tab.model.student;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
@@ -52,5 +53,10 @@ public class AddressTest {
 
         // different values -> returns false
         assertFalse(address.equals(new Address("Other Valid Address")));
+    }
+
+    @Test
+    public void getFailureReason_explainsTheOnlyWayAnAddressCanFail() {
+        assertEquals("an address may not be empty or begin with a space", Address.getFailureReason(""));
     }
 }

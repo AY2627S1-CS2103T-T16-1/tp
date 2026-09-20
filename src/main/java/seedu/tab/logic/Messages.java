@@ -19,6 +19,7 @@ public class Messages {
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
     public static final String MESSAGE_MISSING_FIELDS = "Missing required field(s): %1$s";
+    public static final String MESSAGE_INVALID_VALUE = "%1$s \"%2$s\" is not valid: %3$s";
 
     /**
      * Returns an error message indicating the duplicate prefixes.
@@ -43,6 +44,14 @@ public class Messages {
                 .collect(Collectors.joining(", "));
 
         return String.format(MESSAGE_MISSING_FIELDS, missingFields);
+    }
+
+    /**
+     * Returns an error message quoting the value that was rejected and saying what is wrong
+     * with it, rather than restating the whole rule for the field.
+     */
+    public static String getErrorMessageForInvalidValue(String fieldName, String value, String reason) {
+        return String.format(MESSAGE_INVALID_VALUE, fieldName, value, reason);
     }
 
     /**

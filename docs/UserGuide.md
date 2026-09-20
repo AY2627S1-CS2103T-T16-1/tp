@@ -84,14 +84,23 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
 
 <box type="tip" seamless>
 
-**Tip:** A person can have any number of tags, including zero.
+**Tip:** A student can have any number of tags, including zero. A tag may hold
+spaces, hyphens and any script, so `Lab 3`, `needs-followup` and
+`AY2627 Sem 1 CS2103T T16` are all valid.
+</box>
+
+<box type="tip" seamless>
+
+**Tip:** A phone number may be written the way you would write it down:
+`+65 9123 4567`, `6516-2727 ext 21`, or even
+`1234 5678 (HP) 1111-3333 (Office)`. It only has to hold at least 3 digits.
 </box>
 
 <box type="tip" seamless>
 
 **Tip:** A name may hold anything you would write on a roster: slashes,
 hyphens, apostrophes, full stops, and any script. It only has to contain at
-least one letter or number.
+least one letter or number, in any writing system.
 </box>
 
 <box type="warning" seamless>
@@ -111,6 +120,14 @@ Examples:
 Leading and trailing spaces are removed, repeated spaces inside a name are
 collapsed to one, and invisible characters are discarded, so that a name is
 always stored the way it looks.
+
+If a field is rejected, TAB quotes the value it could not accept and says what
+is wrong with it, rather than restating the whole rule:
+
+```
+> add n/John Doe p/98765432 e/e1234567 a/Blk 30
+Email "e1234567" is not valid: an email needs an @ between the local part and the domain
+```
 
 ### Listing all persons: `list`
 

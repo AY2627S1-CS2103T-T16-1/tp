@@ -183,6 +183,10 @@ public class NameTest {
 
         // zero-width characters, which would otherwise hide a duplicate
         assertEquals(new Name("John"), new Name("\u200BJohn"));
+
+        // a zero-width character between a base letter and its mark must not survive as a
+        // decomposed pair, or the two spellings would be different students
+        assertEquals(new Name("Ren\u00E9"), new Name("Rene\u200B\u0301"));
         assertEquals(new Name("John"), new Name("John\uFEFF"));
     }
 
@@ -211,5 +215,11 @@ public class NameTest {
 
         // different values -> returns false
         assertFalse(name.equals(new Name("Other Valid Name")));
+    }
+
+    @Test
+    public void getFailureReason_explainsTheOnlyWayANameCanFail() {
+        assertEquals("it holds no letter or number", Name.getFailureReason("---"));
+        assertEquals("it holds no letter or number", Name.getFailureReason(""));
     }
 }

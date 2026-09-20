@@ -18,6 +18,8 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
+import seedu.tab.model.student.Student;
+import seedu.tab.testutil.StudentBuilder;
 
 public class JsonStudentBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonStudentBookStorageTest");
@@ -84,6 +86,31 @@ public class JsonStudentBookStorageTest {
         readBack = jsonStudentBookStorage.readStudentBook().get(); // file path not specified
         assertEquals(original, new StudentBook(readBack));
 
+    }
+
+    @Test
+    public void readAndSaveStudentBook_widenedPhoneAndTag_roundTrips() throws Exception {
+        // A phone number with a country code and a tag with a space are newly accepted.
+        // Saving is only half the claim; they have to come back unchanged.
+        Path filePath = testFolder.resolve("WidenedValues.json");
+        Student student = new StudentBuilder().withName("Ravi s/o Kumaran")
+                .withPhone("+65 9123 4567").withEmail("e0923841@u.nus.edu")
+                .withAddress("Blk 30 Geylang Street 29")
+                .withTags("Lab 3", "needs-followup").build();
+
+        StudentBook original = new StudentBook();
+        original.addStudent(student);
+
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+        storage.saveStudentBook(original, filePath);
+        ReadOnlyStudentBook readBack = storage.readStudentBook(filePath).get();
+
+        assertEquals(original, new StudentBook(readBack));
+
+        Student loaded = readBack.getStudentList().get(0);
+        assertEquals("+65 9123 4567", loaded.getPhone().value);
+        assertEquals("Ravi s/o Kumaran", loaded.getName().fullName);
+        assertEquals(student.getTags(), loaded.getTags());
     }
 
     @Test

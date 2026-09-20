@@ -9,7 +9,11 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
  */
 public class Email {
 
+    /** How this field is named when a value of it is reported as invalid. */
+    public static final String FIELD_NAME = "Email";
+
     private static final String SPECIAL_CHARACTERS = "+_.-";
+
     public static final String MESSAGE_CONSTRAINTS = "Emails should be of the format local-part@domain "
             + "and adhere to the following constraints:\n"
             + "1. The local-part should only contain alphanumeric characters and these special characters, excluding "
@@ -27,7 +31,9 @@ public class Email {
             + ALPHANUMERIC_NO_UNDERSCORE + ")*";
     private static final String DOMAIN_PART_REGEX = ALPHANUMERIC_NO_UNDERSCORE
             + "(-" + ALPHANUMERIC_NO_UNDERSCORE + ")*";
-    private static final String DOMAIN_LAST_PART_REGEX = "(" + DOMAIN_PART_REGEX + "){2,}$"; // At least two chars
+    private static final int MINIMUM_LAST_LABEL_LENGTH = 2;
+    private static final String DOMAIN_LAST_PART_REGEX =
+            "(" + DOMAIN_PART_REGEX + "){" + MINIMUM_LAST_LABEL_LENGTH + ",}$";
     private static final String DOMAIN_REGEX = "(" + DOMAIN_PART_REGEX + "\\.)*" + DOMAIN_LAST_PART_REGEX;
     public static final String VALIDATION_REGEX = LOCAL_PART_REGEX + "@" + DOMAIN_REGEX;
 
@@ -49,6 +55,44 @@ public class Email {
      */
     public static boolean isValidEmail(String test) {
         return test.matches(VALIDATION_REGEX);
+    }
+
+    /**
+     * Returns why {@code test} does not hold an email address, naming the part of it that is
+     * at fault. The answer is only meaningful when {@link #isValidEmail(String)} rejects it.
+     */
+    public static String getFailureReason(String test) {
+        requireNonNull(test);
+
+        int at = test.indexOf('@');
+        if (at < 0) {
+            return "an email needs an @ between the local part and the domain";
+        }
+        if (test.indexOf('@', at + 1) >= 0) {
+            return "an email may hold only one @";
+        }
+
+        String localPart = test.substring(0, at);
+        String domain = test.substring(at + 1);
+
+        if (localPart.isEmpty()) {
+            return "there is nothing before the @";
+        }
+        if (!localPart.matches(LOCAL_PART_REGEX)) {
+            return "the part before the @ may hold letters and digits, joined by any of "
+                    + SPECIAL_CHARACTERS;
+        }
+        if (domain.isEmpty()) {
+            return "there is nothing after the @";
+        }
+
+        String lastLabel = domain.substring(domain.lastIndexOf('.') + 1);
+        if (lastLabel.length() < MINIMUM_LAST_LABEL_LENGTH) {
+            return "the last part of the domain needs at least "
+                    + MINIMUM_LAST_LABEL_LENGTH + " characters";
+        }
+        return "the domain may hold letters and digits in labels separated by dots, "
+                + "with hyphens allowed inside a label";
     }
 
     @Override

@@ -3,14 +3,19 @@ package seedu.tab.model.tag;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.AppUtil.checkArgument;
 
+import seedu.tab.commons.util.StringUtil;
+
 /**
  * Represents a Tag in the student book.
  * Guarantees: immutable; name is valid as declared in {@link #isValidTagName(String)}
  */
 public class Tag {
 
-    public static final String MESSAGE_CONSTRAINTS = "Tag names should be alphanumeric";
-    public static final String VALIDATION_REGEX = "\\p{Alnum}+";
+    /** How this field is named when a value of it is reported as invalid. */
+    public static final String FIELD_NAME = "Tag";
+
+    public static final String MESSAGE_CONSTRAINTS =
+            "Tags should contain at least one letter or number, in any writing system";
 
     public final String tagName;
 
@@ -22,14 +27,15 @@ public class Tag {
     public Tag(String tagName) {
         requireNonNull(tagName);
         checkArgument(isValidTagName(tagName), MESSAGE_CONSTRAINTS);
-        this.tagName = tagName;
+        this.tagName = StringUtil.normalizeFieldValue(tagName);
     }
 
     /**
      * Returns true if a given string is a valid tag name.
      */
     public static boolean isValidTagName(String test) {
-        return test.matches(VALIDATION_REGEX);
+        requireNonNull(test);
+        return StringUtil.hasLetterOrNumber(StringUtil.normalizeFieldValue(test));
     }
 
     @Override
@@ -49,6 +55,15 @@ public class Tag {
     @Override
     public int hashCode() {
         return tagName.hashCode();
+    }
+
+    /**
+     * Returns why {@code test} does not hold a tag. The answer is only meaningful when
+     * {@link #isValidTagName(String)} rejects it.
+     */
+    public static String getFailureReason(String test) {
+        requireNonNull(test);
+        return "it holds no letter or number";
     }
 
     /**

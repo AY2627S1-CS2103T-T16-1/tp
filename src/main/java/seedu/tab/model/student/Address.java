@@ -9,6 +9,9 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
  */
 public class Address {
 
+    /** How this field is named when a value of it is reported as invalid. */
+    public static final String FIELD_NAME = "Address";
+
     public static final String MESSAGE_CONSTRAINTS = "Addresses can take any values, and should not be blank";
 
     /*
@@ -35,6 +38,15 @@ public class Address {
      */
     public static boolean isValidAddress(String test) {
         return test.matches(VALIDATION_REGEX);
+    }
+
+    /**
+     * Returns why {@code test} does not hold an address. The answer is only meaningful when
+     * {@link #isValidAddress(String)} rejects it.
+     */
+    public static String getFailureReason(String test) {
+        requireNonNull(test);
+        return "an address may not be empty or begin with a space";
     }
 
     @Override

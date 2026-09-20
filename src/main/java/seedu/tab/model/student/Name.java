@@ -3,8 +3,7 @@ package seedu.tab.model.student;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.AppUtil.checkArgument;
 
-import java.text.Normalizer;
-import java.util.regex.Pattern;
+import seedu.tab.commons.util.StringUtil;
 
 /**
  * Represents a Student's name in the student book.
@@ -12,33 +11,24 @@ import java.util.regex.Pattern;
  */
 public class Name {
 
+    /** How this field is named when a value of it is reported as invalid. */
+    public static final String FIELD_NAME = "Name";
+
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should contain at least one letter, character or number, from any writing system";
-
-    /**
-     * Zero-width characters that carry no meaning of their own. They are removed rather than
-     * kept, because two names that look identical must not be stored as different students.
-     * The zero-width joiner and non-joiner are deliberately absent: scripts such as Sinhala
-     * and Arabic need them to shape correctly.
-     */
-    private static final Pattern ZERO_WIDTH = Pattern.compile("[\\u200B\\uFEFF]");
-
-    /** Any Unicode whitespace, so that a stored name holds only the ASCII space. */
-    private static final Pattern WHITESPACE = Pattern.compile("(?U)\\s+");
-
-    private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
+            "Names should contain at least one letter or number, in any writing system";
 
     public final String fullName;
 
     /**
-     * Constructs a {@code Name}, storing it in the form described by {@link #normalize(String)}.
+     * Constructs a {@code Name}, storing the form described by
+     * {@link StringUtil#normalizeFieldValue(String)}.
      *
      * @param name A valid name.
      */
     public Name(String name) {
         requireNonNull(name);
         checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
-        fullName = normalize(name);
+        fullName = StringUtil.normalizeFieldValue(name);
     }
 
     /**
@@ -50,18 +40,16 @@ public class Name {
      */
     public static boolean isValidName(String test) {
         requireNonNull(test);
-        return HAS_LETTER_OR_NUMBER.matcher(normalize(test)).find();
+        return StringUtil.hasLetterOrNumber(StringUtil.normalizeFieldValue(test));
     }
 
     /**
-     * Returns {@code raw} in the form the student book stores, searches and compares: composed,
-     * without zero-width characters, and with every run of whitespace reduced to one ASCII
-     * space and the ends trimmed.
+     * Returns why {@code test} does not hold a name. The answer is only meaningful when
+     * {@link #isValidName(String)} rejects it.
      */
-    private static String normalize(String raw) {
-        String composed = Normalizer.normalize(raw, Normalizer.Form.NFC);
-        String visible = ZERO_WIDTH.matcher(composed).replaceAll("");
-        return WHITESPACE.matcher(visible).replaceAll(" ").trim();
+    public static String getFailureReason(String test) {
+        requireNonNull(test);
+        return "it holds no letter or number";
     }
 
     @Override
