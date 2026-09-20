@@ -27,6 +27,8 @@ public class NameTest {
 
         assertFalse(Name.isValidName("")); // empty string
         assertFalse(Name.isValidName(" ")); // spaces only
+        assertFalse(Name.isValidName("\t\n\r ")); // tabs and line breaks only
+        assertFalse(Name.isValidName("\u3000")); // an ideographic space only
         assertFalse(Name.isValidName("---")); // punctuation only
         assertFalse(Name.isValidName("^")); // a single symbol
         assertFalse(Name.isValidName("\uD83D\uDE00")); // emoji only
@@ -36,11 +38,28 @@ public class NameTest {
 
     @Test
     public void isValidName_surroundingWhitespace_isTrimmed() {
-        assertTrue(Name.isValidName(" Peter")); // leading space
-        assertTrue(Name.isValidName("Peter ")); // trailing space
-        assertTrue(Name.isValidName("\u00A0Peter")); // leading non-breaking space
-        assertEquals("Peter", new Name(" Peter ").fullName);
-        assertEquals("Peter", new Name("\u00A0Peter\u00A0").fullName);
+        assertEquals("Peter", new Name(" Peter ").fullName); // space
+        assertEquals("Peter", new Name("\tPeter\t").fullName); // tab
+        assertEquals("Peter", new Name("\nPeter\n").fullName); // line feed
+        assertEquals("Peter", new Name("\rPeter\r").fullName); // carriage return
+        assertEquals("Peter", new Name("\fPeter\f").fullName); // form feed
+        assertEquals("Peter", new Name("\u000BPeter\u000B").fullName); // vertical tab
+        assertEquals("Peter", new Name("\u00A0Peter\u00A0").fullName); // non-breaking space
+        assertEquals("Peter", new Name("\u3000Peter\u3000").fullName); // ideographic space
+    }
+
+    @Test
+    public void isValidName_whitespaceInsideName_becomesOneSpace() {
+        assertEquals("John Doe", new Name("John\tDoe").fullName); // tab
+        assertEquals("John Doe", new Name("John\nDoe").fullName); // line feed
+        assertEquals("John Doe", new Name("John\u00A0Doe").fullName); // non-breaking space
+        assertEquals("John Doe", new Name("John\u2003Doe").fullName); // em space
+        assertEquals("John Doe", new Name("John\u2009Doe").fullName); // thin space
+        assertEquals("John Doe", new Name("John\u1680Doe").fullName); // ogham space mark
+        assertEquals("John Doe", new Name("John \t\n Doe").fullName); // a run of several
+
+        // an ideographic space is what a CJK input method produces
+        assertEquals("\u9673 \u5049\u660E", new Name("\u9673\u3000\u5049\u660E").fullName);
     }
 
     @Test

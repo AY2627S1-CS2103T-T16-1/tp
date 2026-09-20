@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should contain at least one letter or number";
+            "Names should contain at least one letter, character or number, from any writing system";
 
     /**
      * Zero-width characters that carry no meaning of their own. They are removed rather than
@@ -44,7 +44,9 @@ public class Name {
     /**
      * Returns true if a given string holds a name. A name is stored and displayed, but it is
      * also split into words by the search and compared as the identity of a student, so the
-     * only requirement is that something remains once it is normalized.
+     * only requirement is that something remains once it is normalized: one character
+     * that Unicode calls a letter or a number, which covers logographic scripts such as
+     * Chinese as well as alphabets.
      */
     public static boolean isValidName(String test) {
         requireNonNull(test);
