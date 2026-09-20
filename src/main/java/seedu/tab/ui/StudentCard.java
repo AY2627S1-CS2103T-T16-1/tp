@@ -54,7 +54,7 @@ public class StudentCard extends UiPart<Region> {
         if (studentEmail.isPresent()) {
             email.setText(studentEmail.get().value);
         } else {
-            // the row would otherwise hold a blank line where the address used to be
+            // an unmanaged row takes no space, so the card does not keep a blank line for it
             email.setManaged(false);
             email.setVisible(false);
         }

@@ -84,8 +84,8 @@ public class AddCommandParser implements Parser<AddCommand> {
 
     /**
      * Parses the value supplied for {@code prefix}, recording why if it is rejected. A prefix
-     * the command left out yields null without a second complaint, because it is already
-     * reported as missing.
+     * the command left out yields null without a complaint, because an optional field is
+     * entitled to be absent and a required one is reported separately.
      */
     private static <T> T parseIfPresent(ParseProblems problems, ArgumentMultimap argMultimap,
             Prefix prefix, ParseProblems.ValueParser<T> parser) {
