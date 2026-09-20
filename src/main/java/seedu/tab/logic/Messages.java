@@ -18,6 +18,7 @@ public class Messages {
     public static final String MESSAGE_STUDENTS_LISTED_OVERVIEW = "%1$d student(s) listed!";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
+    public static final String MESSAGE_MISSING_FIELDS = "Missing required field(s): %1$s";
 
     /**
      * Returns an error message indicating the duplicate prefixes.
@@ -29,6 +30,19 @@ public class Messages {
                 Stream.of(duplicatePrefixes).map(Prefix::toString).collect(Collectors.toSet());
 
         return MESSAGE_DUPLICATE_FIELDS + String.join(" ", duplicateFields);
+    }
+
+    /**
+     * Returns an error message naming the fields that the command left out.
+     */
+    public static String getErrorMessageForMissingPrefixes(Prefix... missingPrefixes) {
+        assert missingPrefixes.length > 0;
+
+        String missingFields = Stream.of(missingPrefixes)
+                .map(Prefix::getLabel)
+                .collect(Collectors.joining(", "));
+
+        return String.format(MESSAGE_MISSING_FIELDS, missingFields);
     }
 
     /**

@@ -142,27 +142,39 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_compulsoryFieldMissing_failure() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
+        // a field is left out entirely, so that each case fails for one reason only
 
-        // missing name prefix
+        // missing name
+        assertParseFailure(parser, PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_NAME));
+
+        // missing phone
+        assertParseFailure(parser, NAME_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_PHONE));
+
+        // missing email
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB,
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_EMAIL));
+
+        // missing address
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB,
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_ADDRESS));
+
+        // several fields missing -> every one of them is named, in the order of the format
+        assertParseFailure(parser, NAME_DESC_BOB + ADDRESS_DESC_BOB,
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_PHONE, PREFIX_EMAIL));
+
+        // nothing at all
+        assertParseFailure(parser, " ",
+                Messages.getErrorMessageForMissingPrefixes(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
+                        PREFIX_ADDRESS));
+    }
+
+    @Test
+    public void parse_valueBeforeTheFirstPrefix_failsAsAFormatError() {
+        // text before the first prefix is not a missing field; the command itself is malformed
         assertParseFailure(parser, VALID_NAME_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
-                expectedMessage);
-
-        // missing phone prefix
-        assertParseFailure(parser, NAME_DESC_BOB + VALID_PHONE_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
-                expectedMessage);
-
-        // missing email prefix
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + VALID_EMAIL_BOB + ADDRESS_DESC_BOB,
-                expectedMessage);
-
-        // missing address prefix
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + VALID_ADDRESS_BOB,
-                expectedMessage);
-
-        // all prefixes missing
-        assertParseFailure(parser, VALID_NAME_BOB + VALID_PHONE_BOB + VALID_EMAIL_BOB + VALID_ADDRESS_BOB,
-                expectedMessage);
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
     }
 
     @Test
