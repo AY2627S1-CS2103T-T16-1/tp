@@ -26,7 +26,6 @@ checkstyle {
 
 test {
     useJUnitPlatform()
-
     finalizedBy jacocoTestReport
 }
 
