@@ -8,7 +8,6 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import seedu.tab.commons.util.ToStringBuilder;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.exceptions.CommandException;
-import seedu.tab.logic.parser.CliFlags;
 import seedu.tab.model.Model;
 import seedu.tab.model.student.Student;
 
@@ -19,13 +18,16 @@ public class AddCommand extends Command {
 
     public static final String COMMAND_WORD = "add";
 
+    /** The name is given before any option rather than marked by one. */
+    public static final String FIELD_NAME = "NAME";
+
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a student to the student book. "
-            + "Parameters: " + CliFlags.FIELD_NAME + " "
+            + "Parameters: " + FIELD_NAME + " "
             + FLAG_PHONE.getLabel() + " "
             + "[" + FLAG_EMAIL.getLabel() + "] "
             + "[" + FLAG_TAG.getLabel() + "]...\n"
-            + "The name comes first and may hold spaces as it is. Any other value holding "
-            + "spaces, and a name opening with a hyphen, goes in double quotes.\n"
+            + "The name comes first and may hold spaces as it is. Any option value holding "
+            + "spaces, and any value opening with a hyphen, goes in double quotes.\n"
             + "Example: " + COMMAND_WORD + " \"Siti Nur-Aisyah\" "
             + FLAG_PHONE + " 98765432 "
             + FLAG_EMAIL + " e1147203@u.nus.edu "

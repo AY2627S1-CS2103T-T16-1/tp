@@ -13,13 +13,14 @@ import seedu.tab.logic.Messages;
 import seedu.tab.logic.parser.exceptions.ParseException;
 
 /**
- * Stores the value given for each flag of a command, together with the name given before the
- * first flag. A flag may be repeated, and the order its values were given in is kept.
+ * Stores the value given for each flag of a command, together with the preamble: the value
+ * given before the first flag, which each command names for itself. A flag may be repeated,
+ * and the order its values were given in is kept.
  */
 public class FlagArgumentMap {
 
     private final Map<Flag, List<String>> values = new HashMap<>();
-    private String name = "";
+    private String preamble = "";
 
     /**
      * Associates {@code value} with {@code flag}, after any value already given for it.
@@ -27,20 +28,18 @@ public class FlagArgumentMap {
     public void put(Flag flag, String value) {
         requireNonNull(flag);
         requireNonNull(value);
-        List<String> flagValues = getAllValues(flag);
-        flagValues.add(value);
-        values.put(flag, flagValues);
+        values.computeIfAbsent(flag, key -> new ArrayList<>()).add(value);
     }
 
-    public void setName(String name) {
-        this.name = requireNonNull(name);
+    public void setPreamble(String preamble) {
+        this.preamble = requireNonNull(preamble);
     }
 
     /**
-     * Returns the name given before the first flag, which is empty when none was given.
+     * Returns the value given before the first flag, which is empty when none was given.
      */
-    public String getName() {
-        return name;
+    public String getPreamble() {
+        return preamble;
     }
 
     /**

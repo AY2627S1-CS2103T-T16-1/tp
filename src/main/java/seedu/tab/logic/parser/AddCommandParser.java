@@ -47,7 +47,7 @@ public class AddCommandParser implements Parser<AddCommand> {
             problems.add(Messages.getErrorMessageForMissingFields(missingFields));
         }
 
-        Name name = parseName(problems, arguments.getName());
+        Name name = parseName(problems, arguments.getPreamble());
         Phone phone = parseIfPresent(problems, arguments, FLAG_PHONE, ParserUtil::parsePhone);
         Email email = parseIfPresent(problems, arguments, FLAG_EMAIL, ParserUtil::parseEmail);
         Set<Tag> tagList = parseEachTag(problems, arguments.getAllValues(FLAG_TAG));
@@ -65,8 +65,8 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     private static String[] findMissingFields(FlagArgumentMap arguments) {
         List<String> missing = new ArrayList<>();
-        if (arguments.getName().isEmpty()) {
-            missing.add(CliFlags.FIELD_NAME);
+        if (arguments.getPreamble().isEmpty()) {
+            missing.add(AddCommand.FIELD_NAME);
         }
         if (arguments.getValue(FLAG_PHONE).isEmpty()) {
             missing.add(FLAG_PHONE.getLabel());

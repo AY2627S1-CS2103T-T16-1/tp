@@ -3,7 +3,9 @@ package seedu.tab.logic.parser;
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_EMAIL_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_EMAIL_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_INVALID_EMAIL;
+import static seedu.tab.logic.commands.CommandTestUtil.ADD_INVALID_NAME;
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_INVALID_PHONE;
+import static seedu.tab.logic.commands.CommandTestUtil.ADD_INVALID_TAG;
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_NAME_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_NAME_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_PHONE_AMY;
@@ -83,7 +85,7 @@ public class AddCommandParserTest {
 
         // missing name
         assertParseFailure(parser, ADD_PHONE_BOB + ADD_EMAIL_BOB,
-                Messages.getErrorMessageForMissingFields(CliFlags.FIELD_NAME));
+                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME));
 
         // missing phone
         assertParseFailure(parser, ADD_NAME_BOB + ADD_EMAIL_BOB,
@@ -91,17 +93,17 @@ public class AddCommandParserTest {
 
         // several fields missing -> every one of them is named, in the order of the format
         assertParseFailure(parser, ADD_TAG_FRIEND,
-                Messages.getErrorMessageForMissingFields(CliFlags.FIELD_NAME, FLAG_PHONE.getLabel()));
+                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME, FLAG_PHONE.getLabel()));
 
         // nothing at all
         assertParseFailure(parser, " ",
-                Messages.getErrorMessageForMissingFields(CliFlags.FIELD_NAME, FLAG_PHONE.getLabel()));
+                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME, FLAG_PHONE.getLabel()));
     }
 
     @Test
     public void parse_invalidValue_failure() {
         // invalid name
-        assertParseFailure(parser, " \"---\"" + ADD_PHONE_BOB + ADD_EMAIL_BOB + ADD_TAG_HUSBAND,
+        assertParseFailure(parser, ADD_INVALID_NAME + ADD_PHONE_BOB + ADD_EMAIL_BOB + ADD_TAG_HUSBAND,
                 Messages.getErrorMessageForInvalidValue(Name.FIELD_NAME, "---", Name.getFailureReason("---")));
 
         // invalid phone
@@ -114,7 +116,7 @@ public class AddCommandParserTest {
                         Email.getFailureReason("bob!yahoo")));
 
         // invalid tag
-        assertParseFailure(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_EMAIL_BOB + " -t \"---\"" + ADD_TAG_FRIEND,
+        assertParseFailure(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_EMAIL_BOB + ADD_INVALID_TAG + ADD_TAG_FRIEND,
                 Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, "---", Tag.getFailureReason("---")));
     }
 
@@ -190,14 +192,14 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_valueAfterTheFlagsBegan_saysItBelongsToNoOption() {
-        // the likeliest cause is a name that needed quotes and did not get them
+        // the name needs no quotes, but it does have to be given before the options
         assertParseFailure(parser, " Ravi" + ADD_PHONE_BOB + " Kumaran",
                 String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "Kumaran"));
     }
 
     @Test
     public void parse_nameWithSlash_succeeds() {
-        // no field is marked by a slash any more, so these names need only their quotes
+        // no field is marked by a slash any more, so a slash needs nothing done to it
         Student son = new StudentBuilder().withName("Ravi s/o Kumaran").withPhone(VALID_PHONE_BOB)
                 .withEmail(VALID_EMAIL_BOB).withTags().build();
         assertParseSuccess(parser, " \"Ravi s/o Kumaran\"" + ADD_PHONE_BOB + ADD_EMAIL_BOB,

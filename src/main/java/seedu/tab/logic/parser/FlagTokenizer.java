@@ -17,9 +17,10 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  * Reads the arguments of a command as a name followed by flagged fields, the way a shell reads
  * an operand followed by options.
  *
- * <p>The tokens before the first flag are the name, joined back together with single spaces.
- * Every flag after it takes the one token that follows it. A token belonging to no flag, an
- * unknown flag, and a flag left without a value are each reported for what they are.
+ * <p>The tokens before the first flag are the preamble, joined back together with single
+ * spaces, which each command reads as whatever it takes in that position. Every flag after it
+ * takes the one token that follows it. A token belonging to no flag, an unknown flag, and a
+ * flag left without a value are each reported for what they are.
  */
 public class FlagTokenizer {
 
@@ -28,8 +29,8 @@ public class FlagTokenizer {
     private FlagTokenizer() {} // this class only reads arguments
 
     /**
-     * Returns the name and the flag values in {@code arguments}, which is tokenized first so
-     * that a quoted value may hold spaces or open with the flag marker.
+     * Returns the preamble and the flag values in {@code arguments}, which is tokenized
+     * first so that a quoted value may hold spaces or open with the flag marker.
      *
      * @throws ParseException if a quote is left open, or a token belongs to no known flag.
      */
@@ -37,27 +38,28 @@ public class FlagTokenizer {
         requireNonNull(arguments);
 
         List<Token> tokens = CommandTokenizer.tokenize(arguments);
+        // a caller that names the same marker twice means one flag, not a broken collector
         Map<String, Flag> flagsByMarker = Stream.of(knownFlags)
-                .collect(Collectors.toMap(Flag::getFlag, Function.identity()));
+                .collect(Collectors.toMap(Flag::getFlag, Function.identity(), (first, second) -> first));
 
         FlagArgumentMap parsed = new FlagArgumentMap();
-        int firstFlag = readName(tokens, parsed);
+        int firstFlag = readPreamble(tokens, parsed);
         readFlags(tokens, firstFlag, flagsByMarker, parsed);
         return parsed;
     }
 
     /**
-     * Reads the tokens before the first flag into the name of {@code parsed}, and returns the
-     * index of the token that ended it.
+     * Reads the tokens before the first flag into the preamble of {@code parsed}, and returns
+     * the index of the token that ended it.
      */
-    private static int readName(List<Token> tokens, FlagArgumentMap parsed) {
-        List<String> nameTokens = new ArrayList<>();
+    private static int readPreamble(List<Token> tokens, FlagArgumentMap parsed) {
+        List<String> preambleTokens = new ArrayList<>();
         int index = 0;
         while (index < tokens.size() && !isFlag(tokens.get(index))) {
-            nameTokens.add(tokens.get(index).value());
+            preambleTokens.add(tokens.get(index).value());
             index++;
         }
-        parsed.setName(String.join(" ", nameTokens));
+        parsed.setPreamble(String.join(" ", preambleTokens));
         return index;
     }
 
