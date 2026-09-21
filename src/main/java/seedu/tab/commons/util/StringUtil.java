@@ -6,7 +6,7 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.Normalizer;
-import java.util.Arrays;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -33,29 +33,18 @@ public class StringUtil {
     }
 
     /**
-     * Returns true if the {@code sentence} contains the {@code word}.
-     *   Ignores case, but a full word match is required.
-     *   <br>examples:<pre>
-     *       containsWordIgnoreCase("ABc def", "abc") == true
-     *       containsWordIgnoreCase("ABc def", "DEF") == true
-     *       containsWordIgnoreCase("ABc def", "AB") == false //not a full word match
-     *       </pre>
+     * Returns true if {@code sentence} contains {@code keyword}, ignoring case.
+     * A partial match is allowed (e.g. "Hans" contains "Han").
+     *
      * @param sentence cannot be null
-     * @param word cannot be null, cannot be empty, must be a single word
+     * @param keyword cannot be null, cannot be empty
      */
-    public static boolean containsWordIgnoreCase(String sentence, String word) {
+    public static boolean containsIgnoreCase(String sentence, String keyword) {
         requireNonNull(sentence);
-        requireNonNull(word);
+        requireNonNull(keyword);
+        checkArgument(!keyword.isEmpty(), "empty keyword");
 
-        String preppedWord = word.trim();
-        checkArgument(!preppedWord.isEmpty(), "Word parameter cannot be empty");
-        checkArgument(preppedWord.split("\\s+").length == 1, "Word parameter should be a single word");
-
-        String preppedSentence = sentence;
-        String[] wordsInPreppedSentence = preppedSentence.split("\\s+");
-
-        return Arrays.stream(wordsInPreppedSentence)
-                .anyMatch(preppedWord::equalsIgnoreCase);
+        return sentence.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
     }
 
     /**

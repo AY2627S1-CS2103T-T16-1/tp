@@ -1,10 +1,10 @@
 package seedu.tab.model.student;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.commons.util.ToStringBuilder;
 import seedu.tab.model.tag.Tag;
 
@@ -26,18 +26,14 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     }
 
     private static boolean matchesKeyword(Student student, String keyword) {
-        return containsIgnoreCase(student.getName().fullName, keyword)
-                || containsIgnoreCase(student.getPhone().value, keyword)
-                || containsIgnoreCase(student.getEmail().map(Email::toString).orElse(""), keyword)
+        return StringUtil.containsIgnoreCase(student.getName().fullName, keyword)
+                || StringUtil.containsIgnoreCase(student.getPhone().value, keyword)
+                || StringUtil.containsIgnoreCase(student.getEmail().map(Email::toString).orElse(""), keyword)
                 || matchesAnyTag(student.getTags(), keyword);
     }
 
     private static boolean matchesAnyTag(Set<Tag> tags, String keyword) {
-        return tags.stream().anyMatch(tag -> containsIgnoreCase(tag.tagName, keyword));
-    }
-
-    private static boolean containsIgnoreCase(String sentence, String keyword) {
-        return sentence.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
+        return tags.stream().anyMatch(tag -> StringUtil.containsIgnoreCase(tag.tagName, keyword));
     }
 
     @Override
@@ -59,3 +55,5 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
         return new ToStringBuilder(this).add("keywords", keywords).toString();
     }
 }
+
+
