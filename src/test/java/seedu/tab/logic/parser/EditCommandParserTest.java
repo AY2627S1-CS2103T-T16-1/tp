@@ -1,11 +1,8 @@
 package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.tab.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
-import static seedu.tab.logic.commands.CommandTestUtil.ADDRESS_DESC_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_DESC_BOB;
-import static seedu.tab.logic.commands.CommandTestUtil.INVALID_ADDRESS_DESC;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_EMAIL_DESC;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NAME_DESC;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_PHONE_DESC;
@@ -15,14 +12,12 @@ import static seedu.tab.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.PHONE_DESC_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.TAG_DESC_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.TAG_DESC_HUSBAND;
-import static seedu.tab.logic.commands.CommandTestUtil.VALID_ADDRESS_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_EMAIL_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_NAME_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_TAG;
@@ -38,7 +33,6 @@ import seedu.tab.commons.core.index.Index;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
-import seedu.tab.model.student.Address;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.Phone;
@@ -83,34 +77,46 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_invalidValue_failure() {
-        assertParseFailure(parser, "1" + INVALID_NAME_DESC, Name.MESSAGE_CONSTRAINTS); // invalid name
-        assertParseFailure(parser, "1" + INVALID_PHONE_DESC, Phone.MESSAGE_CONSTRAINTS); // invalid phone
-        assertParseFailure(parser, "1" + INVALID_EMAIL_DESC, Email.MESSAGE_CONSTRAINTS); // invalid email
-        assertParseFailure(parser, "1" + INVALID_ADDRESS_DESC, Address.MESSAGE_CONSTRAINTS); // invalid address
-        assertParseFailure(parser, "1" + INVALID_TAG_DESC, Tag.MESSAGE_CONSTRAINTS); // invalid tag
+        assertParseFailure(parser, "1" + INVALID_NAME_DESC,
+                Messages.getErrorMessageForInvalidValue("Name",
+                        "---", Name.getFailureReason("---"))); // invalid name
+        assertParseFailure(parser, "1" + INVALID_PHONE_DESC,
+                Messages.getErrorMessageForInvalidValue("Phone",
+                        "12", Phone.getFailureReason("12"))); // invalid phone
+        assertParseFailure(parser, "1" + INVALID_EMAIL_DESC,
+                Messages.getErrorMessageForInvalidValue("Email", "bob!yahoo",
+                        Email.getFailureReason("bob!yahoo"))); // invalid email
+        assertParseFailure(parser, "1" + INVALID_TAG_DESC,
+                Messages.getErrorMessageForInvalidValue("Tag",
+                        "---", Tag.getFailureReason("---"))); // invalid tag
 
         // invalid phone followed by valid email
-        assertParseFailure(parser, "1" + INVALID_PHONE_DESC + EMAIL_DESC_AMY, Phone.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1" + INVALID_PHONE_DESC + EMAIL_DESC_AMY,
+                Messages.getErrorMessageForInvalidValue("Phone",
+                        "12", Phone.getFailureReason("12")));
 
         // while parsing {@code PREFIX_TAG} alone will reset the tags of the {@code Student} being edited,
         // parsing it together with a valid tag results in error
-        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_DESC_HUSBAND + TAG_EMPTY, Tag.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_EMPTY + TAG_DESC_HUSBAND, Tag.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "1" + TAG_EMPTY + TAG_DESC_FRIEND + TAG_DESC_HUSBAND, Tag.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_DESC_HUSBAND + TAG_EMPTY,
+                Messages.getErrorMessageForInvalidValue("Tag", "", Tag.getFailureReason("")));
+        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_EMPTY + TAG_DESC_HUSBAND,
+                Messages.getErrorMessageForInvalidValue("Tag", "", Tag.getFailureReason("")));
+        assertParseFailure(parser, "1" + TAG_EMPTY + TAG_DESC_FRIEND + TAG_DESC_HUSBAND,
+                Messages.getErrorMessageForInvalidValue("Tag", "", Tag.getFailureReason("")));
 
         // multiple invalid values, but only the first invalid value is captured
-        assertParseFailure(parser, "1" + INVALID_NAME_DESC + INVALID_EMAIL_DESC + VALID_ADDRESS_AMY + VALID_PHONE_AMY,
-                Name.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1" + INVALID_NAME_DESC + INVALID_EMAIL_DESC + VALID_PHONE_AMY,
+                Messages.getErrorMessageForInvalidValue("Name", "---", Name.getFailureReason("---")));
     }
 
     @Test
     public void parse_allFieldsSpecified_success() {
         Index targetIndex = INDEX_SECOND_STUDENT;
         String userInput = targetIndex.getOneBased() + PHONE_DESC_BOB + TAG_DESC_HUSBAND
-                + EMAIL_DESC_AMY + ADDRESS_DESC_AMY + NAME_DESC_AMY + TAG_DESC_FRIEND;
+                + EMAIL_DESC_AMY + NAME_DESC_AMY + TAG_DESC_FRIEND;
 
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withName(VALID_NAME_AMY)
-                .withPhone(VALID_PHONE_BOB).withEmail(VALID_EMAIL_AMY).withAddress(VALID_ADDRESS_AMY)
+                .withPhone(VALID_PHONE_BOB).withEmail(VALID_EMAIL_AMY)
                 .withTags(VALID_TAG_HUSBAND, VALID_TAG_FRIEND).build();
         EditCommand expectedCommand = new EditCommand(targetIndex, descriptor);
 
@@ -150,12 +156,6 @@ public class EditCommandParserTest {
         expectedCommand = new EditCommand(targetIndex, descriptor);
         assertParseSuccess(parser, userInput, expectedCommand);
 
-        // address
-        userInput = targetIndex.getOneBased() + ADDRESS_DESC_AMY;
-        descriptor = new EditStudentDescriptorBuilder().withAddress(VALID_ADDRESS_AMY).build();
-        expectedCommand = new EditCommand(targetIndex, descriptor);
-        assertParseSuccess(parser, userInput, expectedCommand);
-
         // tags
         userInput = targetIndex.getOneBased() + TAG_DESC_FRIEND;
         descriptor = new EditStudentDescriptorBuilder().withTags(VALID_TAG_FRIEND).build();
@@ -180,19 +180,19 @@ public class EditCommandParserTest {
         assertParseFailure(parser, userInput, Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE));
 
         // multiple valid fields repeated
-        userInput = targetIndex.getOneBased() + PHONE_DESC_AMY + ADDRESS_DESC_AMY + EMAIL_DESC_AMY
-                + TAG_DESC_FRIEND + PHONE_DESC_AMY + ADDRESS_DESC_AMY + EMAIL_DESC_AMY + TAG_DESC_FRIEND
-                + PHONE_DESC_BOB + ADDRESS_DESC_BOB + EMAIL_DESC_BOB + TAG_DESC_HUSBAND;
+        userInput = targetIndex.getOneBased() + PHONE_DESC_AMY + EMAIL_DESC_AMY
+                + TAG_DESC_FRIEND + PHONE_DESC_AMY + EMAIL_DESC_AMY + TAG_DESC_FRIEND
+                + PHONE_DESC_BOB + EMAIL_DESC_BOB + TAG_DESC_HUSBAND;
 
         assertParseFailure(parser, userInput,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS));
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL));
 
         // multiple invalid values
-        userInput = targetIndex.getOneBased() + INVALID_PHONE_DESC + INVALID_ADDRESS_DESC + INVALID_EMAIL_DESC
-                + INVALID_PHONE_DESC + INVALID_ADDRESS_DESC + INVALID_EMAIL_DESC;
+        userInput = targetIndex.getOneBased() + INVALID_PHONE_DESC + INVALID_EMAIL_DESC
+                + INVALID_PHONE_DESC + INVALID_EMAIL_DESC;
 
         assertParseFailure(parser, userInput,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS));
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL));
     }
 
     @Test

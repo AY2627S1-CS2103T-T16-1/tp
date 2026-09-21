@@ -50,6 +50,10 @@ public class StudentBookParserTest {
         DeleteCommand command = (DeleteCommand) parser.parseCommand(
                 DeleteCommand.COMMAND_WORD + " " + INDEX_FIRST_STUDENT.getOneBased());
         assertEquals(new DeleteCommand(INDEX_FIRST_STUDENT), command);
+
+        DeleteCommand whitespaceCommand = (DeleteCommand) parser.parseCommand(
+                "  " + DeleteCommand.COMMAND_WORD + "   " + INDEX_FIRST_STUDENT.getOneBased() + "  ");
+        assertEquals(new DeleteCommand(INDEX_FIRST_STUDENT), whitespaceCommand);
     }
 
     @Test
@@ -65,6 +69,8 @@ public class StudentBookParserTest {
     public void parseCommand_exit() throws Exception {
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);
+        assertTrue(parser.parseCommand("  " + ExitCommand.COMMAND_WORD + "  ") instanceof ExitCommand);
+        assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " extra arguments") instanceof ExitCommand);
     }
 
     @Test

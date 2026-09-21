@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.tab.logic.commands.CommandTestUtil.showStudentAtIndex;
+import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
@@ -99,6 +100,40 @@ public class DeleteCommandTest {
 
         // different student -> returns false
         assertFalse(deleteFirstCommand.equals(deleteSecondCommand));
+    }
+
+    @Test
+    public void execute_nullModel_throwsNullPointerException() {
+        DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_STUDENT);
+        assertThrows(NullPointerException.class, () -> deleteCommand.execute(null));
+    }
+
+    @Test
+    public void execute_validIndexLastStudentUnfilteredList_success() {
+        Index lastIndex = Index.fromOneBased(model.getFilteredStudentList().size());
+        Student studentToDelete = model.getFilteredStudentList().get(lastIndex.getZeroBased());
+        DeleteCommand deleteCommand = new DeleteCommand(lastIndex);
+
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS,
+                Messages.format(studentToDelete));
+
+        ModelManager expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.deleteStudent(studentToDelete);
+
+        assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_studentActuallyRemovedFromStudentBook_success() throws Exception {
+        Student studentToDelete = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        int initialSize = model.getFilteredStudentList().size();
+        DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_STUDENT);
+
+        deleteCommand.execute(model);
+
+        assertEquals(initialSize - 1, model.getFilteredStudentList().size());
+        assertFalse(model.getFilteredStudentList().contains(studentToDelete));
+        assertFalse(model.getStudentBook().getStudentList().contains(studentToDelete));
     }
 
     @Test

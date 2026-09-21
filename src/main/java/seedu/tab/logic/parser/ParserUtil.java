@@ -8,8 +8,8 @@ import java.util.Set;
 
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.StringUtil;
+import seedu.tab.logic.Messages;
 import seedu.tab.logic.parser.exceptions.ParseException;
-import seedu.tab.model.student.Address;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.Phone;
@@ -19,7 +19,6 @@ import seedu.tab.model.tag.Tag;
  * Contains utility methods used for parsing strings in the various *Parser classes.
  */
 public class ParserUtil {
-
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
     /**
@@ -45,7 +44,8 @@ public class ParserUtil {
         requireNonNull(name);
         String trimmedName = name.trim();
         if (!Name.isValidName(trimmedName)) {
-            throw new ParseException(Name.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Messages.getErrorMessageForInvalidValue(
+                    Name.FIELD_NAME, trimmedName, Name.getFailureReason(trimmedName)));
         }
         return new Name(trimmedName);
     }
@@ -60,24 +60,10 @@ public class ParserUtil {
         requireNonNull(phone);
         String trimmedPhone = phone.trim();
         if (!Phone.isValidPhone(trimmedPhone)) {
-            throw new ParseException(Phone.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Messages.getErrorMessageForInvalidValue(
+                    Phone.FIELD_NAME, trimmedPhone, Phone.getFailureReason(trimmedPhone)));
         }
         return new Phone(trimmedPhone);
-    }
-
-    /**
-     * Parses a {@code String address} into an {@code Address}.
-     * Leading and trailing whitespaces will be trimmed.
-     *
-     * @throws ParseException if the given {@code address} is invalid.
-     */
-    public static Address parseAddress(String address) throws ParseException {
-        requireNonNull(address);
-        String trimmedAddress = address.trim();
-        if (!Address.isValidAddress(trimmedAddress)) {
-            throw new ParseException(Address.MESSAGE_CONSTRAINTS);
-        }
-        return new Address(trimmedAddress);
     }
 
     /**
@@ -90,7 +76,8 @@ public class ParserUtil {
         requireNonNull(email);
         String trimmedEmail = email.trim();
         if (!Email.isValidEmail(trimmedEmail)) {
-            throw new ParseException(Email.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Messages.getErrorMessageForInvalidValue(
+                    Email.FIELD_NAME, trimmedEmail, Email.getFailureReason(trimmedEmail)));
         }
         return new Email(trimmedEmail);
     }
@@ -105,7 +92,8 @@ public class ParserUtil {
         requireNonNull(tag);
         String trimmedTag = tag.trim();
         if (!Tag.isValidTagName(trimmedTag)) {
-            throw new ParseException(Tag.MESSAGE_CONSTRAINTS);
+            throw new ParseException(Messages.getErrorMessageForInvalidValue(
+                    Tag.FIELD_NAME, trimmedTag, Tag.getFailureReason(trimmedTag)));
         }
         return new Tag(trimmedTag);
     }

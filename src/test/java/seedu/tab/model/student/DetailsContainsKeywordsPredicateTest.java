@@ -62,7 +62,7 @@ public class DetailsContainsKeywordsPredicateTest {
     @Test
     public void test_keywordInOtherDetails_returnsTrue() {
         StudentBuilder studentBuilder = new StudentBuilder().withName("Alice")
-                .withPhone("91234567").withEmail("alice@example.com").withAddress("Main Street")
+                .withPhone("91234567").withEmail("alice@example.com")
                 .withTags("friend", "colleague", "home");
 
         // Partial phone number match
@@ -73,16 +73,29 @@ public class DetailsContainsKeywordsPredicateTest {
         predicate = new DetailsContainsKeywordsPredicate(List.of("alice@example"));
         assertTrue(predicate.test(studentBuilder.build()));
 
-        // Partial address match, with a different letter case
-        predicate = new DetailsContainsKeywordsPredicate(List.of("STREET"));
-        assertTrue(predicate.test(studentBuilder.build()));
-
         // Tag match
         predicate = new DetailsContainsKeywordsPredicate(List.of("friend"));
         assertTrue(predicate.test(studentBuilder.build()));
 
         // Partial tag match
         predicate = new DetailsContainsKeywordsPredicate(List.of("ho"));
+        assertTrue(predicate.test(studentBuilder.build()));
+    }
+
+    @Test
+    public void test_keywordInEmail_returnsTrue() {
+        // Student without email should not match email keyword
+        StudentBuilder studentBuilder = new StudentBuilder().withName("Alice")
+                .withPhone("91234567").withoutEmail()
+                .withTags("friend");
+
+        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of("example"));
+        assertFalse(predicate.test(studentBuilder.build()));
+
+        // Student with email should match
+        studentBuilder = new StudentBuilder().withName("Alice")
+                .withPhone("91234567").withEmail("alice@example.com")
+                .withTags("friend");
         assertTrue(predicate.test(studentBuilder.build()));
     }
 
@@ -104,7 +117,7 @@ public class DetailsContainsKeywordsPredicateTest {
         // Non-matching keyword
         predicate = new DetailsContainsKeywordsPredicate(List.of("Carol"));
         assertFalse(predicate.test(new StudentBuilder().withName("Alice Bob")
-                .withPhone("91234567").withEmail("alice@example.com").withAddress("Main Street")
+                .withPhone("91234567").withEmail("alice@example.com")
                 .withTags("friend").build()));
     }
 

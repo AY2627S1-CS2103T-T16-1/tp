@@ -2,17 +2,38 @@ package seedu.tab.logic.parser;
 
 /**
  * A prefix that marks the beginning of an argument in an arguments string.
- * E.g. 't/' in 'add James t/ friend'.
+ * E.g. 't/' in 'edit 1 t/friend'.
  */
 public class Prefix {
     private final String prefix;
+    private final String fieldName;
 
     public Prefix(String prefix) {
+        this(prefix, "");
+    }
+
+    /**
+     * Constructs a prefix that marks a named field, so that a message can say
+     * which field it means rather than only which characters mark it.
+     *
+     * @param prefix The characters that mark the field, such as {@code e/}.
+     * @param fieldName The name of the field, such as {@code EMAIL}.
+     */
+    public Prefix(String prefix, String fieldName) {
         this.prefix = prefix;
+        this.fieldName = fieldName;
     }
 
     public String getPrefix() {
         return prefix;
+    }
+
+    /**
+     * Returns the prefix together with the name of the field, such as {@code e/EMAIL}.
+     * Two prefixes are still equal when their characters match, whatever they are named.
+     */
+    public String getLabel() {
+        return prefix + fieldName;
     }
 
     @Override

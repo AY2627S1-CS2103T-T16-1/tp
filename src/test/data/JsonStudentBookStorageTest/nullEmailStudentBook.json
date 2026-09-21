@@ -1,0 +1,19 @@
+{
+  "students": [
+    {
+      "name": "Alice Pauline",
+      "phone": "94351253",
+      "email": null,
+      "tags": [
+        "friends"
+      ]
+    },
+    {
+      "name": "Benson Meier",
+      "phone": "98765432",
+      "tags": [
+        "owesMoney"
+      ]
+    }
+  ]
+}

@@ -11,7 +11,7 @@ import seedu.tab.model.tag.Tag;
 /**
  * Tests that a {@code Student}'s details match any of the keywords given.
  * A keyword matches when it appears in the student's name, phone, email,
- * address or tags, ignoring case and allowing partial matches.
+ * or tags, ignoring case and allowing partial matches.
  */
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     private final List<String> keywords;
@@ -28,8 +28,7 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     private static boolean matchesKeyword(Student student, String keyword) {
         return containsIgnoreCase(student.getName().fullName, keyword)
                 || containsIgnoreCase(student.getPhone().value, keyword)
-                || containsIgnoreCase(student.getEmail().value, keyword)
-                || containsIgnoreCase(student.getAddress().value, keyword)
+                || containsIgnoreCase(student.getEmail().map(Email::toString).orElse(""), keyword)
                 || matchesAnyTag(student.getTags(), keyword);
     }
 
@@ -60,5 +59,3 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
         return new ToStringBuilder(this).add("keywords", keywords).toString();
     }
 }
-
-

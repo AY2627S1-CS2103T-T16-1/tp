@@ -2,8 +2,8 @@ package seedu.tab.model.student;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.tab.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
@@ -34,7 +34,7 @@ public class StudentTest {
 
         // same name, all other attributes different -> returns true
         Student editedAlice = new StudentBuilder(ALICE).withPhone(VALID_PHONE_BOB).withEmail(VALID_EMAIL_BOB)
-                .withAddress(VALID_ADDRESS_BOB).withTags(VALID_TAG_HUSBAND).build();
+                .withTags(VALID_TAG_HUSBAND).build();
         assertTrue(ALICE.isSameStudent(editedAlice));
 
         // different name, all other attributes same -> returns false
@@ -45,10 +45,11 @@ public class StudentTest {
         Student editedBob = new StudentBuilder(BOB).withName(VALID_NAME_BOB.toLowerCase()).build();
         assertFalse(BOB.isSameStudent(editedBob));
 
-        // name has trailing spaces, all other attributes same -> returns false
+        // name differs only by surrounding whitespace -> returns true, because Name stores a
+        // normalized form and an accidental extra space does not make a different student
         String nameWithTrailingSpaces = VALID_NAME_BOB + " ";
         editedBob = new StudentBuilder(BOB).withName(nameWithTrailingSpaces).build();
-        assertFalse(BOB.isSameStudent(editedBob));
+        assertTrue(BOB.isSameStudent(editedBob));
     }
 
     @Test
@@ -81,19 +82,57 @@ public class StudentTest {
         editedAlice = new StudentBuilder(ALICE).withEmail(VALID_EMAIL_BOB).build();
         assertFalse(ALICE.equals(editedAlice));
 
-        // different address -> returns false
-        editedAlice = new StudentBuilder(ALICE).withAddress(VALID_ADDRESS_BOB).build();
-        assertFalse(ALICE.equals(editedAlice));
-
         // different tags -> returns false
         editedAlice = new StudentBuilder(ALICE).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(ALICE.equals(editedAlice));
+
+        // an email against none -> returns false, in either direction
+        Student withoutEmail = new StudentBuilder(ALICE).withoutEmail().build();
+        assertFalse(ALICE.equals(withoutEmail));
+        assertFalse(withoutEmail.equals(ALICE));
+
+        // neither holds an email -> returns true
+        assertTrue(withoutEmail.equals(new StudentBuilder(ALICE).withoutEmail().build()));
+    }
+
+    @Test
+    public void hashCode_studentsWithoutAnEmail_matchWhenTheyAreEqual() {
+        Student withoutEmail = new StudentBuilder(ALICE).withoutEmail().build();
+        assertEquals(withoutEmail.hashCode(), new StudentBuilder(ALICE).withoutEmail().build().hashCode());
+    }
+
+    @Test
+    public void isSameStudent_oneHoldsNoEmail_stillTheSameStudent() {
+        // the email is not an identity, so leaving it out does not make a second record of one student
+        Student withoutEmail = new StudentBuilder(ALICE).withoutEmail().build();
+        assertTrue(ALICE.isSameStudent(withoutEmail));
     }
 
     @Test
     public void toStringMethod() {
         String expected = Student.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
-                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags() + "}";
+                + ", email=" + ALICE.getEmail().orElse(null) + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
+    }
+
+    @Test
+    public void hashCode_equalStudents_returnsSameHashCode() {
+        // the contract that matters: two students that compare equal must hash alike, or one
+        // of them could go missing from a hashed collection
+        assertEquals(ALICE.hashCode(), new StudentBuilder(ALICE).build().hashCode());
+    }
+
+    @Test
+    public void hashCode_studentsDifferingInOneField_returnDifferentHashCodes() {
+        // not required by the contract, which permits collisions, but every field should
+        // reach the hash or students would cluster needlessly
+        assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withName(VALID_NAME_BOB)
+                .build().hashCode());
+        assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withPhone(VALID_PHONE_BOB)
+                .build().hashCode());
+        assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withEmail(VALID_EMAIL_BOB)
+                .build().hashCode());
+        assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withTags(VALID_TAG_HUSBAND)
+                .build().hashCode());
     }
 }

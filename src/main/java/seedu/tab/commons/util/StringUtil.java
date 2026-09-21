@@ -5,12 +5,32 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.text.Normalizer;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 /**
  * Helper functions for handling strings.
  */
 public class StringUtil {
+
+    private static final Pattern ZERO_WIDTH = Pattern.compile("[\\u200B\\uFEFF]");
+    private static final Pattern WHITESPACE = Pattern.compile("(?U)\\s+");
+    private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
+
+    /**
+     * Returns true if {@code character} separates one value from the next.
+     *
+     * <p>The answer comes from the very pattern {@link #normalizeFieldValue} collapses with,
+     * so a caller that splits on whitespace and the value it then stores cannot disagree. On
+     * one character, matching one or more of them is the same as matching one. Naming the
+     * characters instead would leave gaps in both directions: {@code Character.isWhitespace}
+     * misses the non-breaking space that a command pasted from a web page carries, and claims
+     * the file separator, which the pattern does not.
+     */
+    public static boolean isWhitespace(char character) {
+        return WHITESPACE.matcher(String.valueOf(character)).matches();
+    }
 
     /**
      * Returns true if the {@code sentence} contains the {@code word}.
@@ -46,6 +66,35 @@ public class StringUtil {
         StringWriter sw = new StringWriter();
         t.printStackTrace(new PrintWriter(sw));
         return t.getMessage() + "\n" + sw.toString();
+    }
+
+    /**
+     * Returns {@code raw} in the form a stored field holds: without the zero-width characters
+     * that would let two identical-looking values differ, with every run of whitespace reduced
+     * to one ASCII space, the ends trimmed, and the result composed to Unicode form NFC.
+     *
+     * Composing happens last. A zero-width character sitting between a base letter and its
+     * combining mark blocks the two from composing, so {@code e\u200B\u0301} would otherwise
+     * be stored decomposed and compare unequal to {@code \u00E9}, which looks the same.
+     *
+     * The zero-width joiner and non-joiner are kept, because scripts such as Sinhala and
+     * Arabic need them to shape correctly.
+     */
+    public static String normalizeFieldValue(String raw) {
+        requireNonNull(raw);
+        String visible = ZERO_WIDTH.matcher(raw).replaceAll("");
+        String spaced = WHITESPACE.matcher(visible).replaceAll(" ").trim();
+        return Normalizer.normalize(spaced, Normalizer.Form.NFC);
+    }
+
+    /**
+     * Returns true if {@code s} holds at least one character that Unicode calls a letter or a
+     * number. Logographic scripts such as Chinese count: Han characters are letters to Unicode,
+     * even though a reader would not call them letters.
+     */
+    public static boolean hasLetterOrNumber(String s) {
+        requireNonNull(s);
+        return HAS_LETTER_OR_NUMBER.matcher(s).find();
     }
 
     /**

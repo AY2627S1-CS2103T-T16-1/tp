@@ -31,7 +31,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
    * `list` : Lists all contacts.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
+   * `add John Doe -p 98765432 -e johnd@example.com` : Adds a student named `John Doe`.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -50,16 +50,23 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 **Notes about the command format:**<br>
 
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
-  For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
+  For example, in `add NAME`, replace `NAME` with a value such as `John Doe`.
 
 * Items in square brackets are optional.<br>
-  For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
+  For example, `NAME [-t TAG]` can be used as `John Doe -t friend` or as `John Doe`.
 
 * Items followed by `...` can appear zero or more times.<br>
-  For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
+  For example, `[-t TAG]...` may be omitted, or written as `-t friend` or as
+  `-t friend -t family`.
 
 * Parameters can be in any order.<br>
-  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
+  For example, if the command specifies `-p PHONE_NUMBER -e EMAIL`,
+  `-e EMAIL -p PHONE_NUMBER` is also acceptable. A parameter given before any
+  option, such as the name in `add`, keeps its place at the front.
+
+* `add` marks its fields with options such as `-p`, while `edit` marks them
+  with prefixes such as `p/`. A value holding spaces goes in double quotes
+  after an option, and needs no quotes after a prefix.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -76,32 +83,102 @@ Shows a message explaining how to access the help page.
 Format: `help`
 
 
-### Adding a person: `add`
+### Adding a student: `add`
 
-Adds a person to the address book.
+Adds a student to the student book.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
+Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]...`
 
 <box type="tip" seamless>
 
-**Tip:** A person can have any number of tags, including zero.
+**Tip:** The email is optional. Record a student you only have a phone number
+for, rather than inventing an address to satisfy the command. An email cannot
+be removed once set, only replaced.
+</box>
+
+<box type="tip" seamless>
+
+**Tip:** A student can have any number of tags, including zero. A tag may hold
+spaces, hyphens and any script, so `Lab 3`, `needs-followup` and
+`AY2627 Sem 1 CS2103T T16` are all valid.
+</box>
+
+<box type="tip" seamless>
+
+**Tip:** A phone number may be written the way you would write it down:
+`+65 9123 4567`, `6516-2727 ext 21`, or even
+`1234 5678 (HP) 1111-3333 (Office)`. It only has to hold at least 3 digits.
+</box>
+
+<box type="tip" seamless>
+
+**Tip:** A name may hold anything you would write on a roster: slashes,
+hyphens, apostrophes, full stops, and any script. It only has to contain at
+least one letter or number, in any writing system.
+</box>
+
+<box type="tip" seamless>
+
+**Tip:** The name comes first and may hold spaces as it is, so
+`add Ravi s/o Kumaran -p 91234567` needs no quotes at all. Slashes, hyphens and
+apostrophes are ordinary characters here.
+
+Use double quotes for an option value holding spaces, and for any value opening
+with a hyphen, so that TAB does not read it as an option:
+`add Siti Nur-Aisyah -p 84420917 -t "Lab 3"` and `add "-Ahmad" -p 84001122`.
+
+To put a double quote or a backslash inside a value, write `\"` or `\\`:
+`add Dwayne \"The Rock\" Johnson -p 91234567`.
 </box>
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+* `add John Doe -p 98765432 -e johnd@example.com`
+* `add "Betsy Crowe" -t friend -e betsycrowe@example.com -p 1234567 -t criminal`
+* `add "Ravi s/o Kumaran" -p 91234567 -e e0923841@u.nus.edu`
+* `add Siti Nur-Aisyah -p 84420917 -e e1147203@u.nus.edu -t T1 -t "Lab 3"`
+* `add 陈伟明 -p 98123344 -e e1077310@u.nus.edu`
 
-### Listing all persons: `list`
+Leading and trailing spaces are removed, repeated spaces inside a name are
+collapsed to one, and invisible characters are discarded, so that a name is
+always stored the way it looks.
 
-Shows a list of all persons in the address book.
+If a field is rejected, TAB quotes the value it could not accept and says what
+is wrong with it, rather than restating the whole rule:
+
+```
+> add John Doe -p 98765432 -e e1234567
+Email "e1234567" is not valid: an email needs an @ between the local part and the domain
+```
+
+Once TAB can tell which value belongs to which field, every field is checked
+before the command is refused, so a command with more than one mistake tells
+you about all of them at once:
+
+```
+> add John Doe -e e1234567
+Missing required field(s): -p PHONE
+Email "e1234567" is not valid: an email needs an @ between the local part and the domain
+```
+
+### Listing all students: `list`
+
+Shows a list of all students in the student book.
 
 Format: `list`
 
-### Editing a person: `edit`
+### Editing a student: `edit`
 
-Edits an existing person in the address book.
+Edits an existing student in the student book.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
+Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]...`
+
+<box type="warning" seamless>
+
+**Known limitation:** `edit` still marks its fields with prefixes, so a value
+containing `p/`, `e/` or `t/` followed by a space is read as the start of
+another field. A name that `add` accepts may therefore be impossible to type
+into `edit`. Add the student afresh if you hit this.
+</box>
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
@@ -121,7 +198,7 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 
 * The search is case-insensitive; for example, `hans` matches `Hans`.
 * Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search covers all details of a student: name, phone number, email address, home address and tags.
+* The search covers all details of a student: name, phone number, email address and tags.
 * Parts of details match; for example, `Han` matches `Hans`, and `912` matches the phone number `91234567`.
 * Students matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
 
@@ -196,10 +273,10 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
+**Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]...` <br> e.g., `add James Ho -p 22224444 -t friend -t colleague`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Help**   | `help`
