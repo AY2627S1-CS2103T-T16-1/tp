@@ -16,27 +16,6 @@ CLI-first with a GUI shell.
 - Architecture is documented in `docs/DeveloperGuide.md` — read it before
   making structural changes.
 
-## Product constraints
-
-Keep changes within the official
-[tP constraints](https://nus-cs2103-ay2627-s1.github.io/website/admin/tp-constraints.html):
-
-- Evolve the brownfield codebase breadth-first and incrementally. Each merge to
-  `master` should leave a working, slightly improved product.
-- Keep the product single-user, primarily object-oriented and CLI-first. It
-  must store data locally in a human-editable text file and must not use a
-  DBMS.
-- Support Java 25 on Windows, Linux and macOS without requiring an installer or
-  a team-owned remote server. Avoid OS-specific libraries and behavior.
-- Package the product as one executable JAR (or one ZIP if extra files are
-  unavoidable), with a maximum product size of 100 MB.
-- The GUI should work well at 1920x1080 with 100% and 125% scaling, and remain
-  usable at 1280x720 with 150% scaling.
-- Third-party libraries and services require prior teaching-team approval.
-  They must be free, permissively licensed, require no user installation and
-  comply with all other constraints. Prefer testable features and provide a
-  fallback when relying on a public network service.
-
 ## Commands
 
 ```sh
