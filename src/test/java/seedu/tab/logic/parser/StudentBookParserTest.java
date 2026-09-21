@@ -22,7 +22,7 @@ import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.ListCommand;
 import seedu.tab.logic.parser.exceptions.ParseException;
-import seedu.tab.model.student.NameContainsKeywordsPredicate;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 import seedu.tab.testutil.StudentBuilder;
@@ -72,7 +72,7 @@ public class StudentBookParserTest {
         List<String> keywords = List.of("foo", "bar", "baz");
         FindCommand command = (FindCommand) parser.parseCommand(
                 FindCommand.COMMAND_WORD + " " + keywords.stream().collect(Collectors.joining(" ")));
-        assertEquals(new FindCommand(new NameContainsKeywordsPredicate(keywords)), command);
+        assertEquals(new FindCommand(new DetailsContainsKeywordsPredicate(keywords)), command);
     }
 
     @Test
