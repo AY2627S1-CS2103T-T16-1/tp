@@ -1,8 +1,8 @@
 {
   "baseUrl": "",
   "titlePrefix": "",
-  "titleSuffix": "AddressBook Level-3",
-  "faviconPath": "images/SeEduLogo.png",
+  "titleSuffix": "TA's Address Book",
+  "faviconPath": "images/ruihongc.png",
   "style": {
     "codeTheme": "light"
   },
