@@ -133,7 +133,11 @@
       "src": "index.md",
       "title": "",
       "headings": {
-        "addressbook-level-3": "AddressBook Level-3"
+        "tab": "TAB",
+        "target-users": "Target Users",
+        "value-proposition": "Value Proposition",
+        "documentation": "Documentation",
+        "acknowledgements": "Acknowledgements"
       },
       "headingKeywords": {}
     },
