@@ -81,6 +81,14 @@ Let's point both badges at AY2627S1-CS2103T-T16-1/tp, and add the
 missing Codecov badge to README.md.
 ```
 
+**Commit organization**
+- Each commit should contain one complete logical change and build on earlier
+  commits in a bottom-up order.
+- Aim to keep a commit below 100 changed lines. A mechanical change may be
+  larger, but should be isolated from behavioral changes and described so that
+  it can be reproduced.
+- Every commit retained in an unsquashed PR history should pass CI.
+
 **Branch names**
 - Kebab case, made of meaningful keywords: `refactor-ui-tests`
 - For a branch that addresses an issue, prefix the issue number:
@@ -106,8 +114,54 @@ add `Co-Authored-By:` trailers for AI tools, and do not add tool session
 links. CS2103T assesses individual contributions via RepoSense authorship, so
 extra co-authors distort the record being graded.
 
+**Reuse** — comply with the course
+[reuse policy](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixB-policies.html#policy-on-reuse):
+- Cite reused, adapted or externally inspired code immediately in a nearby
+  comment, and comply with its license.
+- Record reused ideas, code, documentation and third-party libraries in the
+  Developer Guide's Acknowledgements section, with the source and extent of
+  reuse. Credit reused media where it first appears as well.
+
 **Never rewrite published history** on `master` without checking with the team
 first. `git push --force` on a shared branch breaks every teammate's clone.
+
+## Issues and pull requests
+
+Follow the
+[tP GitHub workflow](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixE-gitHub.html#tp-project-schedule-tracking),
+[PR guidelines](https://se-education.org/guides/guidelines/PRs.html) and
+[GitHub conventions](https://se-education.org/guides/conventions/github.html).
+
+**Issues and milestones**
+- Track project work with descriptive, standalone issues small enough for one
+  person to finish in a few hours. Assign the responsible member, appropriate
+  labels and the target `v1.x` milestone.
+- Prefer tasks that move the whole product between working states. Do not use
+  depth-first tasks such as adding an entire layer without usable behavior.
+
+**Creating pull requests**
+- Keep each PR small, single-purpose, standalone and complete, including the
+  relevant functional code, comments, tests, UG and DG changes.
+- Use a separate branch for each PR. Use a branch in the
+  author's fork. Never send a feature PR from `master`.
+- Match the PR title to its issue title where practical; otherwise write it as
+  a commit subject describing the whole PR.
+- In the description, use `Fixes #123` for a complete fix or `Fixes part of
+  #123` for a partial fix. Include before-and-after screenshots for UI changes
+  and propose a merge commit message for a non-trivial multi-commit PR.
+- Assign the PR to the issue's milestone. Open it as a draft, inspect the final
+  diff for unintended changes, and ensure all checks pass before marking it
+  ready for review.
+
+**Merging pull requests**
+- Do not merge a PR while CI is failing. Use a merge commit; do not squash or
+  rebase, because rewriting commit timestamps interferes with course progress
+  tracking.
+- Give the merge commit a traceable subject, using this format
+  consistently: `Issue title #IssueNumber (#PrNumber)`.
+- After merging, close the issue, pull `upstream/master` into local `master`,
+  push it to `origin/master`, then merge `master` into every unmerged branch
+  that needs the update. Keep all merged PR branches.
 
 ## Reviewing pull requests
 
@@ -118,6 +172,10 @@ The way comments are phrased matters as much as the code itself.
 **Reviewers**
 - Add specific comments at relevant places in the code rather than broad
   summary comments for the entire PR.
+- Also leave an overall review, and verify that the PR is a single, standalone,
+  complete change with tests and documentation, no unrelated changes, a
+  suitable title/description and passing checks.
+- Before approving, confirm that all earlier review comments are resolved.
 - Phrase feedback as questions (e.g. "Should this be extracted out?")
   rather than demands to encourage collaborative dialogue.
 - Avoid judgmental labels like "good", "bad", or "wrong"; frame observations
@@ -330,6 +388,17 @@ User-facing behaviour changes belong in `docs/UserGuide.md`; design and
 implementation changes belong in `docs/DeveloperGuide.md`. UML diagrams are
 PlantUML sources under `docs/diagrams/`.
 
+- Keep the UG, DG, product website and executable aligned with the latest
+  release. The UG must cover every current feature precisely; mark future
+  features `Coming soon` or leave them out.
+- Keep the main UG and DG content in their existing files so grading scripts
+  can attribute it. Each contributor should commit their own documentation.
+- Keep UML diagrams simple, purpose-focused and integrated with the nearby
+  explanation. Use code snippets sparingly so they do not become stale.
+- Maintain the DG's `Instructions for Manual Testing` appendix for every
+  user-testable feature changed from AB3. It should complement rather than
+  repeat the UG, and its commands and expected results must be accurate.
+
 ## Testing
 
 - JUnit 5. New functional code needs tests — coverage is reported to Codecov
@@ -337,6 +406,22 @@ PlantUML sources under `docs/diagrams/`.
 - Reuse the builders in `src/test/java/seedu/tab/testutil` rather than
   constructing model objects by hand.
 - See `docs/Testing.md` for how to run the different test kinds.
+- Before a release, test the packaged JAR from an empty writable directory with
+  `java -jar` under Java 25. Exercise the documented manual-test path and check
+  relevant resolutions, display scaling and supported operating systems.
+
+## Releases and iterations
+
+- Plan each iteration with issues, assignees and a milestone deadline. Keep
+  incoming PRs on that milestone and move incomplete work forward rather than
+  claiming it in the release.
+- A release must contain the executable JAR and release notes describing what
+  changed since the previous release. Verify that source, JAR, UG, DG and
+  website all describe the same version before closing the milestone.
+- During the `v1.6` feature freeze, avoid functional-code changes unless they
+  are necessary. Per contributor, changes under `src/main` are limited to 15%
+  of their functional code or 100 lines, whichever is higher; tests,
+  documentation and non-code files are outside that limit.
 
 ## Working agreements for agents
 
