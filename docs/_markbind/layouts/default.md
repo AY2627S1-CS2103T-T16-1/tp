@@ -4,12 +4,12 @@
 
 <header sticky>
   <navbar type="dark">
-    <a slot="brand" href="{{baseUrl}}/index.html" title="Home" class="navbar-brand">AB-3</a>
+    <a slot="brand" href="{{baseUrl}}/index.html" title="Home" class="navbar-brand">TAB</a>
     <li><a href="{{baseUrl}}/index.html" class="nav-link">Home</a></li>
     <li><a href="{{baseUrl}}/UserGuide.html" class="nav-link">User Guide</a></li>
     <li><a href="{{baseUrl}}/DeveloperGuide.html" class="nav-link">Developer Guide</a></li>
     <li><a href="{{baseUrl}}/AboutUs.html" class="nav-link">About Us</a></li>
-    <li><a href="https://github.com/se-edu/addressbook-level3" target="_blank" class="nav-link"><md>:fab-github:</md></a>
+    <li><a href="https://github.com/AY2627S1-CS2103T-T16-1/tp" target="_blank" class="nav-link"><md>:fab-github:</md></a>
     </li>
     <li slot="right">
       <form class="navbar-form">
@@ -31,7 +31,7 @@
   * [Quick Start]({{ baseUrl }}/UserGuide.html#quick-start)
   * [Features]({{ baseUrl }}/UserGuide.html#features)
   * [FAQ]({{ baseUrl }}/UserGuide.html#faq)
-  * [Command Summary]({{ baseUrl }}/UserGuide.html#faq)
+  * [Command Summary]({{ baseUrl }}/UserGuide.html#command-summary)
 * [Developer Guide]({{ baseUrl }}/DeveloperGuide.html) :expanded:
   * [Acknowledgements]({{ baseUrl }}/DeveloperGuide.html#acknowledgements)
   * [Setting Up]({{ baseUrl }}/DeveloperGuide.html#setting-up-getting-started)
