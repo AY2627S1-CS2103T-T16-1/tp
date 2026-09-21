@@ -18,7 +18,7 @@ import seedu.tab.commons.core.index.Index;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.model.Model;
 import seedu.tab.model.StudentBook;
-import seedu.tab.model.student.NameContainsKeywordsPredicate;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 
@@ -132,7 +132,7 @@ public class CommandTestUtil {
 
         Student student = model.getFilteredStudentList().get(targetIndex.getZeroBased());
         final String[] splitName = student.getName().fullName.split("\\s+");
-        model.updateFilteredStudentList(new NameContainsKeywordsPredicate(List.of(splitName[0])));
+        model.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of(splitName[0])));
 
         assertEquals(1, model.getFilteredStudentList().size());
     }

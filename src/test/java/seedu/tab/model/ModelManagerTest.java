@@ -13,7 +13,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.commons.core.GuiSettings;
-import seedu.tab.model.student.NameContainsKeywordsPredicate;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 import seedu.tab.testutil.StudentBookBuilder;
 
 public class ModelManagerTest {
@@ -98,7 +98,7 @@ public class ModelManagerTest {
 
         // different filteredList -> returns false
         String[] keywords = ALICE.getName().fullName.split("\\s+");
-        modelManager.updateFilteredStudentList(new NameContainsKeywordsPredicate(List.of(keywords)));
+        modelManager.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of(keywords)));
         assertFalse(modelManager.equals(new ModelManager(studentBook, userPrefs)));
 
         // resets modelManager to initial state for upcoming tests
