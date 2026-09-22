@@ -509,16 +509,16 @@ These were raised during requirement gathering and left out of the product.
 
 **Table of contents**
 
-* [UC01 - Add a student](#uc01---add-a-student)
-* [UC02 - Find a student and act on the right one](#uc02---find-a-student-and-act-on-the-right-one)
-* [UC03 - Review follow-ups and clear the ones handled](#uc03---review-follow-ups-and-clear-the-ones-handled)
-* [UC04 - Import a roster](#uc04---import-a-roster)
-* [UC05 - Recover from an unreadable data file](#uc05---recover-from-an-unreadable-data-file)
-* [UC06 - Delete a class no longer taught](#uc06---delete-a-class-no-longer-taught)
-* [UC07 - Archive last semester's students](#uc07---archive-last-semesters-students)
-* [UC08 - Semester close-out](#uc08---semester-close-out)
-* [UC09 - Edit a student's details](#uc09---edit-a-students-details)
-* [UC10 - Add/remove a tag from a student](#uc10---addremove-a-tag-from-a-student)
+* [UC01 - Add a student](#uc01-add-a-student)
+* [UC02 - Find a student and act on the right one](#uc02-find-a-student-and-act-on-the-right-one)
+* [UC03 - Review follow-ups and clear the ones handled](#uc03-review-follow-ups-and-clear-the-ones-handled)
+* [UC04 - Import a roster](#uc04-import-a-roster)
+* [UC05 - Recover from an unreadable data file](#uc05-recover-from-an-unreadable-data-file)
+* [UC06 - Delete a class no longer taught](#uc06-delete-a-class-no-longer-taught)
+* [UC07 - Archive last semester's students](#uc07-archive-last-semester-s-students)
+* [UC08 - Semester close-out](#uc08-semester-close-out)
+* [UC09 - Edit a student's details](#uc09-edit-a-student-s-details)
+* [UC10 - Add/remove a tag from a student](#uc10-add-remove-a-tag-from-a-student)
 
 #### UC01 - Add a student
 
