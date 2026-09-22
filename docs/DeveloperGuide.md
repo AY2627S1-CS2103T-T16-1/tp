@@ -457,8 +457,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant with many students | import many students from a file and give them all the same tag at once | get a whole roster into TAB without entering each student by hand |
 | `*` | teaching assistant with many students | edit student records en masse | update a whole group of students without repeating the same edit |
 | `*` | teaching assistant with many students | delete entire classes | remove a class I no longer teach at the end of a semester |
-| `*` | teaching assistant | define my own short alias for a tag I use constantly | label a whole roster with far fewer keystrokes |
-| `*` | teaching assistant | reset the aliases I have defined | clear shortcuts that no longer match the classes I teach |
+| `*` | teaching assistant | define my own tag alias for a tag I use constantly | label a whole roster with far fewer keystrokes |
+| `*` | teaching assistant | reset the tag aliases I have defined | clear tag aliases that no longer match the classes I teach |
 | `*` | teaching assistant with exchange students | save a phone number with a country code and spaces | contact students whose numbers are not local 8-digit numbers |
 | `*` | teaching assistant | be asked to confirm before all data is wiped | avoid destroying a semester of student records with one mistyped command |
 | `*` | teaching assistant | view a student's remarks | recall important context such as special needs |
