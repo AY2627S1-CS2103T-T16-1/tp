@@ -761,10 +761,11 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to close out a semester, giving the semester and, if needed, the module(s) it covered.
 2.  TAB lists every student still active for that semester.
-3.  TAB asks how to treat any records still awaiting a follow-up, and asks for confirmation.
+3.  TAB asks the user to confirm the close-out.
 4.  User confirms the close-out.
-5.  TAB archives the semester's students, recording who was still awaiting a follow-up.
-6.  TAB starts a clean student list for the coming semester, keeping the archive loadable.
+5.  TAB archives the students selected for archiving, preserving their follow-up status.
+6.  TAB prepares the active list for the coming semester, retaining only records the User chose to hold back and
+    keeping the archive available.
 
     Use case ends.
 
@@ -776,22 +777,22 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* 3a. Records still await a follow-up.
+* 2b. One or more students still await a follow-up.
 
-    * 3a1. TAB reminds the user how many, and asks whether to archive them with the rest or hold them back.
-    * 3a2. User chooses how to treat them.
+    * 2b1. TAB reminds the user how many, and asks whether to archive them with the rest or hold them back.
+    * 2b2. User chooses how to treat them.
 
-      Use case resumes at step 4.
+      Use case resumes at step 3.
+
+* 3a. User chooses not to close out the semester.
+
+    * 3a1. TAB leaves the records unchanged.
+
+      Use case ends.
 
 * 5a. TAB cannot write the archive or the fresh file.
 
     * 5a1. TAB reports that the close-out was not saved, and why.
-
-      Use case ends.
-
-* *a. At any time, User chooses to abandon the close-out.
-
-    * *a1. User clears the input.
 
       Use case ends.
 
