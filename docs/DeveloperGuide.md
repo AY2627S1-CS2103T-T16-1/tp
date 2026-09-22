@@ -510,7 +510,7 @@ These were raised during requirement gathering and left out of the product.
 **Table of contents**
 
 * [UC01 - Add a student](#uc01---add-a-student)
-* [UC02 - Find a student](#uc02---find-a-student)
+* [UC02 - Find a student and act on the right one](#uc02---find-a-student-and-act-on-the-right-one)
 * [UC04 - Import a roster](#uc04---import-a-roster)
 * [UC05 - Recover from an unreadable data file](#uc05---recover-from-an-unreadable-data-file)
 * [UC06 - Delete a class no longer taught](#uc06---delete-a-class-no-longer-taught)
@@ -568,13 +568,17 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-#### UC02 - Find a student
+#### UC02 - Find a student and act on the right one
 
 **MSS**
 
 1.  User requests to find students.
-2.  User provides search terms, and optionally indicates the specific field for each search term, like name, email or tag.
-3.  TAB shows a list of students matching any part of the search terms, displaying their identifying details.
+2.  User provides search terms, and optionally indicates the specific field for each search term, such as name,
+    NUS ID, email or tag.
+3.  TAB shows the students matching any part of the search terms regardless of letter case, displaying identifying
+    details such as their NUS IDs.
+4.  User identifies the intended student.
+5.  User initiates the desired action on that student.
 
     Use case ends.
 
@@ -590,17 +594,17 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 3.
 
-* 2b. No student matches the search terms.
+* 3a. No student matches the search terms.
 
-    * 2b1. TAB reports that no matching students were found.
-
-      Use case ends.
-
-* *a. At any time, User chooses to abandon the action.
-
-    * *a1. User clears the input.
+    * 3a1. TAB reports that no matching students were found.
 
       Use case ends.
+
+* 4a. None of the matching students is the intended student.
+
+    * 4a1. User provides revised search terms.
+
+      Use case resumes at step 3.
 
 #### UC04 - Import a roster
 
