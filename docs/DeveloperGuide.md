@@ -525,8 +525,8 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to add a student.
 2.  User provides available details, including the name.
-3.  TAB saves the student.
-4.  TAB shows the new record, including the tags the User provided.
+3.  TAB saves the student record.
+4.  TAB shows the new student record, including the tags the User provided.
 
     Use case ends.
 
@@ -559,8 +559,8 @@ These were raised during requirement gathering and left out of the product.
 * 2c. The student matches another student whom TAB already holds, and they are the same student.
 
     * 2c1. TAB shows the matching student and asks whether to add the new one anyway.
-    * 2c2. User indicates that the student is already on record.
-    * 2c3. TAB leaves the records unchanged.
+    * 2c2. User indicates that a student record already exists for that student.
+    * 2c3. TAB leaves the student records unchanged.
 
       Use case ends.
 
@@ -626,7 +626,7 @@ These were raised during requirement gathering and left out of the product.
 4.  TAB shows the flagged students whose details contain that fragment, regardless of letter case.
 5.  User identifies the intended student and provides the date they last contacted the student.
 6.  TAB records the contact date and clears the student's follow-up flag.
-7.  TAB shows the updated record and the remaining students who need follow-up.
+7.  TAB shows the updated student record and the remaining students who need follow-up.
 
     Use case ends.
 
@@ -670,7 +670,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* 6a. TAB cannot save the updated record.
+* 6a. TAB cannot save the updated student record.
 
     * 6a1. TAB reports that the contact date and follow-up status were not changed, and why.
 
@@ -682,7 +682,7 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to import a roster of students from a file.
 2.  User provides the file and the class tag to label every student with.
-3.  TAB saves the new students with the given class tag, preserving any other tags on their records.
+3.  TAB saves the new student records with the given class tag, preserving each student record's other tags.
 4.  TAB shows how many students were added, matched and skipped.
 
     Use case ends.
@@ -691,7 +691,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 2a. TAB cannot find or read the file.
 
-    * 2a1. TAB reports the problem and leaves the records unchanged.
+    * 2a1. TAB reports the problem and leaves the student records unchanged.
 
       Use case ends.
 
@@ -705,8 +705,8 @@ These were raised during requirement gathering and left out of the product.
 
 * 2c. A student matches another student whom TAB already holds, on NUS-ID, email or phone.
 
-    * 2c1. TAB shows the match and asks whether to update the existing record with the imported details.
-    * 2c2. User chooses whether to update or skip the existing record.
+    * 2c1. TAB shows the match and asks whether to update the existing student record with the imported details.
+    * 2c2. User chooses whether to update or skip the existing student record.
     * 2c3. TAB applies the User's choice, preserving the student's other tags, and continues to process the other
       rows.
 
@@ -716,7 +716,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 2d. Before TAB saves the import, User chooses to abandon it.
 
-    * 2d1. TAB leaves the records unchanged.
+    * 2d1. TAB leaves the student records unchanged.
 
       Use case ends.
 
@@ -731,11 +731,11 @@ These were raised during requirement gathering and left out of the product.
 **MSS**
 
 1.  User starts TAB.
-2.  TAB informs the user that a record is unreadable, identifies the record and the reason, leaves the file unchanged,
-    and displays the readable records.
+2.  TAB informs the user that a student record is unreadable, identifies the student record and the reason, leaves
+    the file unchanged, and displays the readable student records.
 3.  User repairs the file.
 4.  User requests to reload the data file.
-5.  TAB reloads the data and confirms that all records are readable.
+5.  TAB reloads the data and confirms that all student records are readable.
 
     Use case ends.
 
@@ -748,19 +748,19 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 4.
 
-* 5a. One or more records are still unreadable.
+* 5a. One or more student records are still unreadable.
 
-    * 5a1. TAB identifies each unreadable record and the reason, leaves the file unchanged, and displays the
-      readable records.
+    * 5a1. TAB identifies each unreadable student record and the reason, leaves the file unchanged, and displays the
+      readable student records.
     * 5a2. User repairs the file and requests to reload it.
 
-      Steps 5a1-5a2 are repeated until all records are readable.
+      Steps 5a1-5a2 are repeated until all student records are readable.
 
       Use case resumes at step 5.
 
 * 2b. User chooses to abandon the recovery after TAB reports the unreadable data.
 
-    * 2b1. TAB leaves the file as it found it and continues with any records it could read.
+    * 2b1. TAB leaves the file as it found it and continues with any student records it could read.
 
       Use case ends.
 
@@ -788,7 +788,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 3a. User chooses not to delete the class.
 
-    * 3a1. TAB leaves the records unchanged.
+    * 3a1. TAB leaves the student records unchanged.
 
       Use case ends.
 
@@ -803,11 +803,11 @@ These were raised during requirement gathering and left out of the product.
 **MSS**
 
 1.  User requests to archive a past class, giving its class tag and the semester.
-2.  TAB shows the students that would be archived.
+2.  TAB shows the student records that would be archived.
 3.  TAB asks for confirmation.
 4.  User confirms.
-5.  TAB removes those students from the active list while keeping them available in the archive.
-6.  TAB shows how many students were archived.
+5.  TAB removes those student records from the active list while keeping them available in the archive.
+6.  TAB shows how many student records were archived.
 
     Use case ends.
 
@@ -821,7 +821,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 3a. User chooses not to archive the students.
 
-    * 3a1. TAB leaves the records unchanged.
+    * 3a1. TAB leaves the student records unchanged.
 
       Use case ends.
 
@@ -839,9 +839,9 @@ These were raised during requirement gathering and left out of the product.
 2.  TAB lists every student still active for that semester.
 3.  TAB asks the user to confirm the close-out.
 4.  User confirms the close-out.
-5.  TAB archives the students selected for archiving, preserving their follow-up status.
-6.  TAB prepares the active list for the coming semester, retaining only records the User chose to hold back and
-    keeping the archive available.
+5.  TAB archives the student records selected for archiving, preserving their follow-up status.
+6.  TAB prepares the active list for the coming semester, retaining only student records the User chose to hold back
+    and keeping the archive available.
 
     Use case ends.
 
@@ -862,7 +862,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 3a. User chooses not to close out the semester.
 
-    * 3a1. TAB leaves the records unchanged.
+    * 3a1. TAB leaves the student records unchanged.
 
       Use case ends.
 
@@ -880,7 +880,7 @@ These were raised during requirement gathering and left out of the product.
 2.  User requests to edit the student.
 3.  User provides one or more details to change.
 4.  TAB updates the provided details while preserving the other details.
-5.  TAB shows the updated record.
+5.  TAB shows the updated student record.
 
     Use case ends.
 
@@ -903,13 +903,13 @@ These were raised during requirement gathering and left out of the product.
 
 * 3c. User chooses to abandon the edit.
 
-    * 3c1. TAB leaves the student's record unchanged.
+    * 3c1. TAB leaves the student record unchanged.
 
       Use case ends.
 
 * 4a. The edited details match another student whom TAB already holds.
 
-    * 4a1. TAB reports the matching student and leaves both records unchanged.
+    * 4a1. TAB reports the matching student and leaves both student records unchanged.
 
       Use case ends.
 
@@ -926,7 +926,7 @@ These were raised during requirement gathering and left out of the product.
 1.  <u>User finds and identifies the intended student (UC02).</u>
 2.  User requests to add or remove a tag from the student, providing the tag.
 3.  TAB makes the requested change while preserving the student's other tags.
-4.  TAB shows the student's record.
+4.  TAB shows the student record.
 
     Use case ends.
 
