@@ -562,6 +562,10 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
+* 2d. Before submitting the details, User chooses to abandon the addition.
+
+      Use case ends.
+
 * 3a. TAB cannot write to the data file.
 
     * 3a1. TAB reports that the student was not saved, and why.
