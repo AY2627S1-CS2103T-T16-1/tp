@@ -550,20 +550,18 @@ These were raised during requirement gathering and left out of the product.
 
 * 1c. The student matches another student whom TAB already holds, on NUS-ID, email or phone.
 
-    * 1c1. TAB shows the matching student and asks whether to add the new one anyway.
+    * 1c1. TAB shows the matching student and asks whether both student records refer to the same student.
     * 1c2. User confirms that they are different students.
 
       Use case resumes at step 2.
 
-* 1d. The student matches another student whom TAB already holds, and they are the same student.
+    * 1c2a. User indicates that a student record already exists for the same student.
 
-    * 1d1. TAB shows the matching student and asks whether to add the new one anyway.
-    * 1d2. User indicates that a student record already exists for that student.
-    * 1d3. TAB leaves the student records unchanged.
+        * 1c2a1. TAB leaves the student records unchanged.
 
-      Use case ends.
+          Use case ends.
 
-* 1e. Before submitting the command, User chooses to abandon the addition.
+* 1d. Before submitting the command, User chooses to abandon the addition.
 
       Use case ends.
 
