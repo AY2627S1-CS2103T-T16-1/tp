@@ -30,21 +30,21 @@ Refer to the guide [_Setting up and getting started_](SettingUp.md).
 
 <puml src="diagrams/ArchitectureDiagram.puml" width="280" />
 
-The ***Architecture Diagram*** given above explains the high-level design of the App.
+The ***Architecture Diagram*** given above explains the high-level design of TAB.
 
 The following provides a quick overview of the main components and their interactions.
 
 **Main components of the architecture**
 
-**`Main`** (consisting of classes [`Main`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
-* At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
+**`Main`** (consisting of classes [`Main`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of TAB's launch and shut down.
+* At TAB's launch, it initializes the other components in the correct sequence, and connects them up with each other.
 * At shut down, it shuts down the other components and invokes cleanup methods where necessary.
 
-The bulk of the app's work is done by the following four components:
+The bulk of TAB's work is done by the following four components:
 
-* [**`UI`**](#ui-component): The UI of the App.
+* [**`UI`**](#ui-component): The UI of TAB.
 * [**`Logic`**](#logic-component): The command executor.
-* [**`Model`**](#model-component): Holds the data of the App in memory.
+* [**`Model`**](#model-component): Holds the data of TAB in memory.
 * [**`Storage`**](#storage-component): Reads data from, and writes data to, the hard disk.
 
 [**`Commons`**](#common-classes) represents a collection of classes used by multiple other components.
@@ -245,7 +245,7 @@ alone, so a tag or a phone number cannot be found by `find` today.
 
 Nothing else is rejected in any of the three. A phone number may hold `+`,
 spaces, brackets and an extension; a tag may hold spaces, hyphens and any
-script. None of those characters can hinder the app, because none of these
+script. None of those characters can hinder TAB, because none of these
 fields is parsed, dialled, or used to build a file path.
 
 #### Student names
@@ -308,7 +308,7 @@ These operations are exposed in the `Model` interface as `Model#commitAddressBoo
 
 Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
 
-Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial state of the student book, and the `currentStatePointer` pointing to that single state.
+Step 1. The user launches TAB for the first time. The `VersionedAddressBook` will be initialized with the initial state of the student book, and the `currentStatePointer` pointing to that single state.
 
 <puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
 
@@ -427,8 +427,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 | Priority | As a ...  | I want to ...  | So that I can... |
 |----------|---------|--------------|----------------|
-| `* * *` | teaching assistant who prefers a CLI | start the app from a terminal | begin working without leaving the keyboard |
-| `* * *` | teaching assistant who prefers a CLI | exit the app with a command | close it without reaching for the mouse |
+| `* * *` | teaching assistant who prefers a CLI | start TAB from a terminal | begin working without leaving the keyboard |
+| `* * *` | teaching assistant who prefers a CLI | exit TAB with a command | close it without reaching for the mouse |
 | `* * *` | teaching assistant | view a list of all my students | see everyone I am responsible for at a glance |
 | `* * *` | teaching assistant | view a student's name | identify the student |
 | `* * *` | teaching assistant | view a student's email | contact them via email for any emergency updates |
@@ -436,25 +436,25 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *` | teaching assistant | add a student record | keep track of new students I have |
 | `* * *` | teaching assistant | delete a student's record | remove students who dropped my class from the student book |
 | `* * *` | teaching assistant | save the updates I made to student records | ensure my updates persist in future sessions |
-| `* * *` | teaching assistant who can type fast and prefers CLI | complete every task the app offers using only the keyboard | never break out of typing to reach for a mouse or trackpad |
+| `* * *` | teaching assistant who can type fast and prefers CLI | complete every task TAB offers using only the keyboard | never break out of typing to reach for a mouse or trackpad |
 | `* * *` | teaching assistant in Singapore | save a name containing s/o, d/o, hyphens or apostrophes | record students under the name that appears on the official roster |
 | `* * *` | teaching assistant | flag a student as needing follow-up, and clear the flag once I have replied | keep an accurate list of who is still waiting on me |
 | `* * *` | teaching assistant | find students by part of any detail I remember, whatever the letter case | locate a student from a fragment, such as part of a name or a few digits of a phone number |
-| `* * *` | teaching assistant handling student data | use the app fully offline with data stored only on my own machine | comply with the expectation that student data stays off third-party services |
-| `* *` | forgetful or new user | see a summary of everything the app can do, from inside the app | learn or recall how to use it without leaving the keyboard |
+| `* * *` | teaching assistant handling student data | use TAB fully offline with data stored only on my own machine | comply with the expectation that student data stays off third-party services |
+| `* *` | forgetful or new user | see a summary of everything TAB can do, from inside TAB | learn or recall how to use it without leaving the keyboard |
 | `* *` | teaching assistant | edit a student's record | ensure a student's record reflect the latest information I know |
 | `* *` | teaching assistant | add a tag to a student without disturbing the tags already on their record | build up a student’s tags over the semester without losing earlier ones |
 | `* *` | teaching assistant | remove a single tag from a student | drop a student from one group without rebuilding the rest of their record |
 | `* *` | teaching assistant | add a student without an email address | record the students I only have partial details for, instead of inventing data |
 | `* *` | teaching assistant | know how long it has been since I marked a student for follow-up | know how stale our last interaction is |
-| `* *` | teaching assistant who hand-edits the data file | be told at startup that my saved data is unreadable, and where the problem is, instead of the app starting empty | repair it rather than silently lose everything |
+| `* *` | teaching assistant who hand-edits the data file | be told at startup that my saved data is unreadable, and where the problem is, instead of TAB starting empty | repair it rather than silently lose everything |
 | `* *` | teaching assistant | view a student's phone number | call them directly when an urgent matter comes up |
 | `* *` | teaching assistant | undo my last command | revert a mistake before it makes trouble |
 | `* *` | teaching assistant | find students by a tag | focus on a single tutorial group |
 | `*` | teaching assistant | view a student's NUS-ID | match a student's name to records on other digital platforms (e.g. attendance) |
 | `*` | teaching assistant | find students by a specific detail such as name, NUS-ID, phone or email | go straight to the right record when I know one thing about the student |
 | `*` | teaching assistant who can type fast and prefers CLI | see a student record whenever I make changes to it | confirm that the changes I made are correct |
-| `*` | teaching assistant with many students | import many students from a file and give them all the same tag at once | get a whole roster into the app without entering each student by hand |
+| `*` | teaching assistant with many students | import many students from a file and give them all the same tag at once | get a whole roster into TAB without entering each student by hand |
 | `*` | teaching assistant with many students | edit student records en masse | update a whole group of students without repeating the same edit |
 | `*` | teaching assistant with many students | delete entire classes | remove a class I no longer teach at the end of a semester |
 | `*` | teaching assistant | define my own short alias for a tag I use constantly | label a whole roster with far fewer keystrokes |
@@ -471,14 +471,14 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | group my students by tag | see the class composition at a glance |
 | `*` | teaching assistant | export my student records to a file | share or print the list externally |
 | `*` | teaching assistant | clear all data | start fresh with a clean student book |
-| `*` | teaching assistant | reset the app to sample data | explore how the app works before entering real records |
+| `*` | teaching assistant | reset TAB to sample data | explore how TAB works before entering real records |
 | `*` | teaching assistant | keep separate data files per module | avoid mixing student records from different modules |
 | `*` | long-time teaching assistant | archive student records after students graduate | keep past students for reference without cluttering my active list |
 | `*` | teaching assistant who can type fast | recall and reuse my recent commands | repeat the same command without retyping it |
 | `*` | teaching assistant who can type fast | auto-complete commands as I type | type common commands with fewer keystrokes |
 | `*` | teaching assistant | see a count of my students | quickly confirm nothing was lost after an import or delete |
 | `*` | teaching assistant | be told what was wrong with my input and which part of it caused the problem | correct it in one attempt instead of guessing |
-| `*` | teaching assistant who hand-edits the data file | reload the data file from disk without restarting the app | fix the file and carry on in the same sitting |
+| `*` | teaching assistant who hand-edits the data file | reload the data file from disk without restarting TAB | fix the file and carry on in the same sitting |
 | `*` | teaching assistant | list students I have not followed up with since a given date | make sure no one who needs help flies under the radar |
 | `*` | teaching assistant working in twenty-second windows | identify a student by their NUS-ID when deleting a record | avoid removing the wrong student when several students are listed |
 | `*` | teaching assistant working in twenty-second windows | identify a student by their NUS-ID when editing a record | avoid changing the wrong student’s details |
@@ -486,7 +486,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant who can type fast | be shown a likely correction when I mistype a command word | recover without looking up the syntax |
 | `*` | teaching assistant | look back at results I have already replaced | re-read earlier output without running the search again |
 | `*` | teaching assistant | start from my previous input when an entry is rejected | correct one detail instead of retyping everything |
-| `*` | teaching assistant on a 1920 × 1080 laptop | start the app with all of it already visible on my screen | begin working without resizing anything first |
+| `*` | teaching assistant on a 1920 × 1080 laptop | start TAB with all of it already visible on my screen | begin working without resizing anything first |
 
 #### Considered and dropped
 
@@ -495,13 +495,13 @@ These were raised during requirement gathering and left out of the product.
 | As a ... | I wanted to ... | Why it was dropped |
 |--------|---------------|--------------------|
 | teaching assistant | view a student's address | Cancelled, no need for address |
-| teaching assistant | send an email to a student | Not in the scope of the app, it is not a messaging app |
-| teaching assistant | send a Telegram message to a student | Not in the scope of the app, it is not a messaging app |
-| teaching assistant | send an SMS to a student | Not in the scope of the app, it is not a messaging app |
-| teaching assistant with many students | send a mass message to an entire class, by connecting to email | Not in the scope of the app, it is not a messaging app |
-| teaching assistant | record a student's attendance status per tutorial | Not in the scope of the app, it is not an attendance taking app. Other platforms already exist to serve this purpose. |
-| teaching assistant | view a student's attendance status | Not in the scope of the app, it is not an attendance taking app. Other platforms already exist to serve this purpose. |
-| teaching assistant | record grades for a student | Not in the scope of the app, it is not a gradebook. Other platforms already exist to serve this purpose. |
+| teaching assistant | send an email to a student | Not in the scope of TAB, it is not a messaging app |
+| teaching assistant | send a Telegram message to a student | Not in the scope of TAB, it is not a messaging app |
+| teaching assistant | send an SMS to a student | Not in the scope of TAB, it is not a messaging app |
+| teaching assistant with many students | send a mass message to an entire class, by connecting to email | Not in the scope of TAB, it is not a messaging app |
+| teaching assistant | record a student's attendance status per tutorial | Not in the scope of TAB, it is not an attendance taking app. Other platforms already exist to serve this purpose. |
+| teaching assistant | view a student's attendance status | Not in the scope of TAB, it is not an attendance taking app. Other platforms already exist to serve this purpose. |
+| teaching assistant | record grades for a student | Not in the scope of TAB, it is not a gradebook. Other platforms already exist to serve this purpose. |
 
 ### Use cases
 
@@ -1053,7 +1053,7 @@ These were raised during requirement gathering and left out of the product.
 
 ## **Appendix: Instructions for manual testing**
 
-Given below are instructions to test the app manually.
+Given below are instructions to test TAB manually.
 
 <box type="info" seamless>
 
@@ -1074,7 +1074,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch TAB by double-clicking the JAR file.<br>
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
