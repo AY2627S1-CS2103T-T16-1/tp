@@ -230,7 +230,7 @@ it out as `Optional<Email>`. The field is nullable rather than
 Jackson nor survives a round trip, and returning one obliges a caller to decide
 what to do when there is none.
 
-A saved file simply carries no `email` key. One that holds a malformed address
+The data file simply carries no `email` key. One that holds a malformed address
 is still refused, rather than the address being quietly dropped.
 
 An email cannot be cleared once set. `edit` replaces a value and has no
