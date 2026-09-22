@@ -507,7 +507,17 @@ These were raised during requirement gathering and left out of the product.
 
 (For all use cases below, the **System** is `TAB` and the **Actor** is the `user`, unless specified otherwise)
 
-**Use case: UC01 - Add a student**
+**Table of contents**
+
+* [UC01 - Add a student](#uc01---add-a-student)
+* [UC02 - Find a student](#uc02---find-a-student)
+* [UC04 - Import a roster](#uc04---import-a-roster)
+* [UC05 - Recover from an unreadable data file](#uc05---recover-from-an-unreadable-data-file)
+* [UC06 - Delete a class no longer taught](#uc06---delete-a-class-no-longer-taught)
+* [UC07 - Archive last semester's students](#uc07---archive-last-semesters-students)
+* [UC08 - Close out a semester](#uc08---close-out-a-semester)
+
+#### UC01 - Add a student
 
 **MSS**
 
@@ -549,7 +559,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-**Use case: UC02 - Find a student**
+#### UC02 - Find a student
 
 **MSS**
 
@@ -595,7 +605,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-**Use case: UC04 - Import a roster**
+#### UC04 - Import a roster
 
 **MSS**
 
@@ -640,7 +650,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-**Use case: UC05 - Recover from an unreadable data file**
+#### UC05 - Recover from an unreadable data file
 
 **MSS**
 
@@ -679,7 +689,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-**Use case: UC06 - Delete a class no longer taught**
+#### UC06 - Delete a class no longer taught
 
 **MSS**
 
@@ -718,7 +728,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-**Use case: UC07 - Archive last semester's students**
+#### UC07 - Archive last semester's students
 
 **MSS**
 
@@ -757,7 +767,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-**Use case: UC08 - Close out a semester**
+#### UC08 - Close out a semester
 
 **MSS**
 
