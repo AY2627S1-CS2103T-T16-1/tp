@@ -597,11 +597,10 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to import a roster from a file, giving the file and the class tag to give every student in it.
-2.  TAB reads the file and turns each row into a student record.
-3.  TAB checks each record against the students it already holds.
-4.  TAB saves the new students, tagged with the given class.
-5.  TAB shows how many students were added, matched and skipped.
+1.  User requests to import a roster of students from a file.
+2.  User provides the file and the class tag to label every student with.
+3.  TAB saves the new students, tagged with the given class.
+4.  TAB shows how many students were added, matched and skipped.
 
     Use case ends.
 
