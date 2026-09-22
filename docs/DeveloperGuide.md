@@ -835,7 +835,7 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to close out a semester, giving the semester and, if needed, the module(s) it covered.
+1.  User requests to close out a semester, giving the semester and, if needed, the course(s) it covered.
 2.  TAB lists every student still active for that semester.
 3.  TAB asks the user to confirm the close-out.
 4.  User confirms the close-out.
