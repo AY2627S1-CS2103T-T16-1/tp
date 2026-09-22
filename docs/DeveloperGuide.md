@@ -219,7 +219,7 @@ They normalize for different reasons, and the rule each one enforces differs.
 
 | Field | Why it is normalized | What it must hold |
 | --- | --- | --- |
-| `Name` | it is the identity a student is compared by, and the only field the search reads | at least one letter or number |
+| `Name` | it is the identity field used to compare students, and the only field the search reads | at least one letter or number |
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
 
@@ -236,7 +236,7 @@ is still refused, rather than the address being quietly dropped.
 An email cannot be cleared once set. `edit` replaces a value and has no
 spelling for removing one, the way `t/` alone empties the tags.
 
-`Phone` is **not** an identity and **not** a key: two students may hold the
+`Phone` is **not** an identity field and **not** a key: two students may hold the
 same number, and `isSameStudent` does not read it. It is normalized only so
 that a number typed with an odd space is stored the way it looks.
 
@@ -250,8 +250,8 @@ fields is parsed, dialled, or used to build a file path.
 
 #### Student names
 
-A name is displayed, split into words by the search, and compared as the
-identity of a student. `Name` therefore stores a normalized form rather than
+A name is displayed, split into words by the search, and used as a student's
+identity field. `Name` therefore stores a normalized form rather than
 the raw input, so that two names which look identical cannot be searched
 differently or admitted as two students.
 
