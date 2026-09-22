@@ -505,7 +505,7 @@ These were raised during requirement gathering and left out of the product.
 
 ### Use cases
 
-(For all use cases below, the **System** is `TAB` and the **Actor** is the `user`, unless specified otherwise.)
+(For all use cases below, the **System** is `TAB` and the **Actor** is the `User`, unless specified otherwise.)
 
 **Table of contents**
 
@@ -731,7 +731,7 @@ These were raised during requirement gathering and left out of the product.
 **MSS**
 
 1.  User starts TAB.
-2.  TAB informs the user that a student record is unreadable, identifies the student record and the reason, leaves
+2.  TAB informs the User that a student record is unreadable, identifies the student record and the reason, leaves
     the data file unchanged, and displays the readable student records.
 3.  User repairs the data file.
 4.  User requests to reload the data file.
@@ -770,7 +770,7 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to delete a class, giving its class tag.
 2.  TAB shows the class and every student in it.
-3.  TAB asks the user to confirm the deletion, warning that students whose only tag is this class will be removed as
+3.  TAB asks the User to confirm the deletion, warning that students whose only tag is this class will be removed as
     well.
 4.  User confirms the deletion.
 5.  TAB removes the class from the student book and removes students who belong to no other class.
@@ -837,7 +837,7 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to close out a semester, giving the semester and, if needed, the course(s) it covered.
 2.  TAB lists every student still active for that semester.
-3.  TAB asks the user to confirm the close-out.
+3.  TAB asks the User to confirm the close-out.
 4.  User confirms the close-out.
 5.  TAB archives the student records selected for archiving, preserving their follow-up status.
 6.  TAB prepares the active list for the coming semester, retaining only student records the User chose to hold back
@@ -855,7 +855,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 2b. One or more students still await a follow-up.
 
-    * 2b1. TAB reminds the user how many, and asks whether to archive them with the rest or hold them back.
+    * 2b1. TAB reminds the User how many, and asks whether to archive them with the rest or hold them back.
     * 2b2. User chooses how to treat them.
 
       Use case resumes at step 3.
