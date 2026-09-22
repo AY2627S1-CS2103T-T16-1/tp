@@ -655,7 +655,8 @@ These were raised during requirement gathering and left out of the product.
 **MSS**
 
 1.  User starts TAB.
-2.  TAB informs the User that a record is unreadable, identifies the record and the reason, leaves the file unchanged, and displays the readable records.
+2.  TAB informs the user that a record is unreadable, identifies the record and the reason, leaves the file unchanged,
+    and displays the readable records.
 3.  User repairs the file.
 4.  User requests to reload the data file.
 5.  TAB reloads the data and confirms that all records are readable.
@@ -681,9 +682,9 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 5.
 
-* *a. At any time, User chooses to abandon the recovery.
+* *a. After TAB reports unreadable data, User chooses to abandon the recovery.
 
-    * *a1. TAB leaves the file as it found it and continues with the readable records.
+    * *a1. TAB leaves the file as it found it and continues with any records it could read.
 
       Use case ends.
 
