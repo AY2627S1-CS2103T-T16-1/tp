@@ -1,0 +1,27 @@
+{
+  "students": [
+    {
+      "name": "Flag True",
+      "phone": "91234561",
+      "tags": [],
+      "flag": true
+    },
+    {
+      "name": "Flag False",
+      "phone": "91234562",
+      "tags": [],
+      "flag": false
+    },
+    {
+      "name": "Flag Null",
+      "phone": "91234563",
+      "tags": [],
+      "flag": null
+    },
+    {
+      "name": "Flag Missing",
+      "phone": "91234564",
+      "tags": []
+    }
+  ]
+}

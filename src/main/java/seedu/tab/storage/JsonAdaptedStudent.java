@@ -20,8 +20,8 @@ import seedu.tab.model.tag.Tag;
 /**
  * Jackson-friendly version of {@link Student}.
  */
-// A student without an email leaves the key out of the file rather than writing a null, so that
-// the file stays as readable by hand as one written before the email became optional.
+// Optional and default-valued fields leave their keys out rather than writing null, so that the
+// file stays as readable by hand as one written before those fields were introduced.
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class JsonAdaptedStudent {
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Student's %s field is missing!";
@@ -30,6 +30,7 @@ class JsonAdaptedStudent {
     private final String phone;
     private final String email;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
+    private final Boolean flag;
 
     /**
      * Constructs a {@code JsonAdaptedStudent} with the given student details.
@@ -37,13 +38,15 @@ class JsonAdaptedStudent {
     @JsonCreator
     public JsonAdaptedStudent(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email,
-            @JsonProperty("tags") List<JsonAdaptedTag> tags) {
+            @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("flag") Boolean flag) {
         this.name = name;
         this.phone = phone;
         this.email = email;
         if (tags != null) {
             this.tags.addAll(tags);
         }
+        this.flag = flag;
     }
 
     /**
@@ -56,6 +59,7 @@ class JsonAdaptedStudent {
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
+        flag = source.isFlagged() ? Boolean.TRUE : null;
     }
 
     /**
@@ -93,6 +97,6 @@ class JsonAdaptedStudent {
         final Email modelEmail = email == null ? null : new Email(email);
 
         final Set<Tag> modelTags = new HashSet<>(studentTags);
-        return new Student(modelName, modelPhone, modelEmail, modelTags);
+        return new Student(modelName, modelPhone, modelEmail, modelTags, Boolean.TRUE.equals(flag));
     }
 }
