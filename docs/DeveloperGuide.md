@@ -891,15 +891,22 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* 4a. The edited details match another student whom TAB already holds.
+* 3d. The edited details match another student whom TAB already holds, on NUS-ID, email or phone.
 
-    * 4a1. TAB reports the matching student and leaves both student records unchanged.
+    * 3d1. TAB shows the matching student and asks whether both student records refer to the same student.
+    * 3d2. User confirms that they are different students and chooses to apply the edited details.
 
-      Use case ends.
+      Use case resumes at step 4.
 
-* 4b. TAB cannot write to the data file.
+    * 3d2a. User indicates that a student record already exists for the same student.
 
-    * 4b1. TAB reports that the changes were not saved, and why.
+        * 3d2a1. TAB leaves both student records unchanged.
+
+          Use case ends.
+
+* 4a. TAB cannot write to the data file.
+
+    * 4a1. TAB reports that the changes were not saved, and why.
 
       Use case ends.
 
