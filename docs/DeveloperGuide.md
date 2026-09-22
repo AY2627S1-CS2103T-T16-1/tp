@@ -408,7 +408,7 @@ _{Explain here how the data archiving feature will be implemented}_
 An NUS School of Computing teaching assistant tutoring 2 to 3 tutorial or lab
 slots per semester. They are usually fast typists who prefer a CLI.
 
-* has a need to manage 150 to 250 student records, sliced by slot, module,
+* has a need to manage 150 to 250 student records, sliced by slot, course,
   project team, and follow-up status
 * prefers desktop apps to web or mobile apps
 * can type fast, and prefers typing to mouse interactions
@@ -472,7 +472,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | export my student records to a file | share or print the list externally |
 | `*` | teaching assistant | clear all data | start fresh with a clean student book |
 | `*` | teaching assistant | reset TAB to sample data | explore how TAB works before entering real records |
-| `*` | teaching assistant | keep separate data files per module | avoid mixing student records from different modules |
+| `*` | teaching assistant | keep separate data files per course | avoid mixing student records from different courses |
 | `*` | long-time teaching assistant | archive student records after students graduate | keep past students for reference without cluttering my active list |
 | `*` | teaching assistant who can type fast | recall and reuse my recent commands | repeat the same command without retyping it |
 | `*` | teaching assistant who can type fast | auto-complete commands as I type | type common commands with fewer keystrokes |
@@ -1024,8 +1024,7 @@ These were raised during requirement gathering and left out of the product.
 * **Index**: The 1-based positive integer identifying a student according to their current display position in the
   active/filtered list shown in the GUI, rather than a permanent database identifier or 0-based code index.
 * **Mainstream OS**: Windows, Linux and macOS.
-* **Module**: An academic course of study (e.g., CS2103T) taught by the User, distinct from a Java language module or
-  software component.
+* **Course**: An academic subject (e.g., CS2103T) taught by the User.
 * **NFC (Normalization Form C)**: The Unicode normalization form TAB uses to store canonically equivalent character
   sequences consistently.
 * **Normalized field value**: The standard stored form produced by `StringUtil.normalizeFieldValue`, allowing input
@@ -1034,7 +1033,7 @@ These were raised during requirement gathering and left out of the product.
   `e0123456`.
 * **Person**: A legacy implementation term used in class names inherited from AddressBook-Level3. In TAB's domain, a
   `Person` object represents a student record.
-* **Roster**: A list of students belonging to a module, tutorial group, or lab group, particularly one prepared for
+* **Roster**: A list of students belonging to a course, tutorial group, or lab group, particularly one prepared for
   import into TAB.
 * **Semester close-out**: The end-of-semester workflow (UC08) where active student records are archived
   and the active list is reset in preparation for a new academic term, optionally retaining records with
