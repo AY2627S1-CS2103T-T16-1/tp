@@ -1012,6 +1012,7 @@ These were raised during requirement gathering and left out of the product.
   `add` command uses options.
 * **Command prefix**: A marker attached to the beginning of a field value, such as `p/`. Commands such as `edit` use
   prefixes.
+* **Course**: An academic subject (e.g., CS2103T) taught by the User.
 * **Data file**: The local, human-editable JSON file (`addressbook.json`) used by TAB to store student records,
   distinct from `preferences.json`.
 * **Filtered list**: The subset of student records currently visible in the GUI as a result of a filter or search
@@ -1024,7 +1025,6 @@ These were raised during requirement gathering and left out of the product.
 * **Index**: The 1-based positive integer identifying a student according to their current display position in the
   active/filtered list shown in the GUI, rather than a permanent database identifier or 0-based code index.
 * **Mainstream OS**: Windows, Linux and macOS.
-* **Course**: An academic subject (e.g., CS2103T) taught by the User.
 * **NFC (Normalization Form C)**: The Unicode normalization form TAB uses to store canonically equivalent character
   sequences consistently.
 * **Normalized field value**: The standard stored form produced by `StringUtil.normalizeFieldValue`, allowing input
