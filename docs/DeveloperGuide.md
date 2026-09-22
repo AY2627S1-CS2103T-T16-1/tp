@@ -524,11 +524,18 @@ These were raised during requirement gathering and left out of the product.
 1.  User requests to add a student.
 2.  User provides available details, including the name.
 3.  TAB saves the student.
-4.  TAB shows the new record, including the tags it applied.
+4.  TAB shows the new record, including the tags the User provided.
 
     Use case ends.
 
 **Extensions**
+
+* 1a. TAB does not recognize the command word and identifies a likely intended command.
+
+    * 1a1. TAB suggests the likely command.
+    * 1a2. User corrects the command word and submits again.
+
+      Use case resumes at step 2.
 
 * 2a. At least one detail is not in an acceptable form.
 
@@ -547,15 +554,17 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 3.
 
-* 3a. TAB cannot write to the data file.
+* 2c. The student matches another student whom TAB already holds, and they are the same person.
 
-    * 3a1. TAB reports that the student was not saved, and why.
+    * 2c1. TAB shows the matching student and asks whether to add the new one anyway.
+    * 2c2. User indicates that the student is already on record.
+    * 2c3. TAB leaves the records unchanged.
 
       Use case ends.
 
-* *a. At any time, User chooses to abandon the addition.
+* 3a. TAB cannot write to the data file.
 
-    * *a1. User clears the input.
+    * 3a1. TAB reports that the student was not saved, and why.
 
       Use case ends.
 
