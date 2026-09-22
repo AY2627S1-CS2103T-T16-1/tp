@@ -530,11 +530,11 @@ These were raised during requirement gathering and left out of the product.
 
 **Extensions**
 
-* 2a. A detail is not in an acceptable form.
+* 2a. At least one detail is not in an acceptable form.
 
-    * 2a1. TAB names the detail it rejected and the reason.
+    * 2a1. TAB names every detail it rejected and the reason.
     * 2a2. TAB leaves the original input in the command box.
-    * 2a3. User corrects that detail and submits again.
+    * 2a3. User corrects the details and submits again.
 
       Steps 2a1-2a3 are repeated until every detail is acceptable.
 
