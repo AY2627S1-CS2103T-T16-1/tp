@@ -732,8 +732,8 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User starts TAB.
 2.  TAB informs the user that a student record is unreadable, identifies the student record and the reason, leaves
-    the file unchanged, and displays the readable student records.
-3.  User repairs the file.
+    the data file unchanged, and displays the readable student records.
+3.  User repairs the data file.
 4.  User requests to reload the data file.
 5.  TAB reloads the data and confirms that all student records are readable.
 
@@ -741,18 +741,18 @@ These were raised during requirement gathering and left out of the product.
 
 **Extensions**
 
-* 2a. TAB cannot read the file at all, for example because it is not a TAB data file.
+* 2a. TAB cannot read the data file at all, for example because it is not a TAB data file.
 
-    * 2a1. TAB reports why and leaves the file untouched.
-    * 2a2. User repairs or replaces the file.
+    * 2a1. TAB reports why and leaves the data file untouched.
+    * 2a2. User repairs or replaces the data file.
 
       Use case resumes at step 4.
 
 * 5a. One or more student records are still unreadable.
 
-    * 5a1. TAB identifies each unreadable student record and the reason, leaves the file unchanged, and displays the
-      readable student records.
-    * 5a2. User repairs the file and requests to reload it.
+    * 5a1. TAB identifies each unreadable student record and the reason, leaves the data file unchanged, and displays
+      the readable student records.
+    * 5a2. User repairs the data file and requests to reload it.
 
       Steps 5a1-5a2 are repeated until all student records are readable.
 
@@ -760,7 +760,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 2b. User chooses to abandon the recovery after TAB reports the unreadable data.
 
-    * 2b1. TAB leaves the file as it found it and continues with any student records it could read.
+    * 2b1. TAB leaves the data file as it found it and continues with any student records it could read.
 
       Use case ends.
 
@@ -866,7 +866,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* 5a. TAB cannot write the archive or the fresh file.
+* 5a. TAB cannot write the archive or the new data file.
 
     * 5a1. TAB reports that the close-out was not saved, and why.
 
