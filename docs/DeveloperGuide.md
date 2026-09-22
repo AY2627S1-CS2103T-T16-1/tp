@@ -1031,6 +1031,7 @@ These were raised during requirement gathering and left out of the product.
   that looks the same to be stored and compared consistently.
 * **NUS-ID**: A unique digital identifier for every student at the National University of Singapore. It has the form
   `e0123456`.
+* **Option**: See **Command option**.
 * **Person**: A legacy implementation term used in class names inherited from AddressBook-Level3. In TAB's domain, a
   `Person` object represents a student record.
 * **Prefix**: See **Command prefix**.
