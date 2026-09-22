@@ -46,6 +46,10 @@ public class StudentCardTest {
         return onFxThread(() -> (Label) new StudentCard(student, 1).getRoot().lookup("#email"));
     }
 
+    private static Label followUpLabelOf(Student student) throws Exception {
+        return onFxThread(() -> (Label) new StudentCard(student, 1).getRoot().lookup("#followUp"));
+    }
+
     @Test
     public void constructor_studentWithEmail_showsTheEmail() throws Exception {
         Student student = new StudentBuilder().withEmail("alice@example.com").build();
@@ -64,6 +68,36 @@ public class StudentCardTest {
         // the row is unmanaged as well as hidden, so the card does not keep a blank line for it
         assertFalse(email.isManaged());
         assertFalse(email.isVisible());
+    }
+
+    @Test
+    public void constructor_flaggedStudent_showsFollowUpStatus() throws Exception {
+        Label followUp = followUpLabelOf(new StudentBuilder().withFlag(true).build());
+
+        assertEquals("Needs follow-up", followUp.getText());
+        assertTrue(followUp.isManaged());
+        assertTrue(followUp.isVisible());
+    }
+
+    @Test
+    public void constructor_unflaggedStudent_leavesFollowUpRowOut() throws Exception {
+        Label followUp = followUpLabelOf(new StudentBuilder().withFlag(false).build());
+
+        assertFalse(followUp.isManaged());
+        assertFalse(followUp.isVisible());
+    }
+
+    @Test
+    public void constructor_withoutEmailOrFollowUp_leavesBothRowsOut() throws Exception {
+        Student student = new StudentBuilder().withoutEmail().withFlag(false).build();
+        StudentCard card = onFxThread(() -> new StudentCard(student, 1));
+        Label email = (Label) card.getRoot().lookup("#email");
+        Label followUp = (Label) card.getRoot().lookup("#followUp");
+
+        assertFalse(email.isManaged());
+        assertFalse(email.isVisible());
+        assertFalse(followUp.isManaged());
+        assertFalse(followUp.isVisible());
     }
 
     @Test

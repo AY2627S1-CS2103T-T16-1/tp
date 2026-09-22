@@ -39,6 +39,8 @@ public class StudentCard extends UiPart<Region> {
     @FXML
     private Label email;
     @FXML
+    private Label followUp;
+    @FXML
     private FlowPane tags;
 
     /**
@@ -57,6 +59,12 @@ public class StudentCard extends UiPart<Region> {
             // an unmanaged row takes no space, so the card does not keep a blank line for it
             email.setManaged(false);
             email.setVisible(false);
+        }
+        if (student.isFlagged()) {
+            followUp.setText("Needs follow-up");
+        } else {
+            followUp.setManaged(false);
+            followUp.setVisible(false);
         }
         student.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
