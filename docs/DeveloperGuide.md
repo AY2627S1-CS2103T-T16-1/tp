@@ -105,7 +105,7 @@ How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
+1. The command can communicate with the `Model` when it is executed (e.g. to delete a student).<br>
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
@@ -312,11 +312,11 @@ Step 1. The user launches the application for the first time. The `VersionedAddr
 
 <puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
 
-Step 2. The user executes `delete 5` command to delete the 5th person in the student book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the student book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted state.
+Step 2. The user executes `delete 5` command to delete the 5th student in the student book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the student book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted state.
 
 <puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
 
-Step 3. The user executes `add David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified state of the student book to be saved into the `addressBookStateList`.
+Step 3. The user executes `add David …​` to add a new student. The `add` command also calls `Model#commitAddressBook()`, causing another modified state of the student book to be saved into the `addressBookStateList`.
 
 <puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
 
@@ -325,7 +325,7 @@ Step 3. The user executes `add David …​` to add a new person. The `add` comm
 **Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the state of the student book will not be saved into the `addressBookStateList`.
 </box>
 
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous state, and restores the student book to that state.
+Step 4. The user now decides that adding the student was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous state, and restores the student book to that state.
 
 <puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
 
@@ -378,7 +378,7 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 * **Alternative 2:** Individual command knows how to undo/redo by
   itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
+  * Pros: Will use less memory (e.g. for `delete`, just save the student being deleted).
   * Cons: We must ensure that the implementation of each individual command is correct.
 
 _{more aspects and alternatives to be added}_
@@ -480,9 +480,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | be told what was wrong with my input and which part of it caused the problem | correct it in one attempt instead of guessing |
 | `*` | teaching assistant who hand-edits the data file | reload the data file from disk without restarting the app | fix the file and carry on in the same sitting |
 | `*` | teaching assistant | list students I have not followed up with since a given date | make sure no one who needs help flies under the radar |
-| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS ID when deleting a record | avoid removing the wrong person when several students are listed |
-| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS ID when editing a record | avoid changing the wrong person’s details |
-| `*` | teaching assistant | record two students who genuinely have the same name | keep two different people as two different records |
+| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS ID when deleting a record | avoid removing the wrong student when several students are listed |
+| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS ID when editing a record | avoid changing the wrong student’s details |
+| `*` | teaching assistant | record two students who genuinely have the same name | keep two different students as two different records |
 | `*` | teaching assistant who can type fast | be shown a likely correction when I mistype a command word | recover without looking up the syntax |
 | `*` | teaching assistant | look back at results I have already replaced | re-read earlier output without running the search again |
 | `*` | teaching assistant | start from my previous input when an entry is rejected | correct one detail instead of retyping everything |
@@ -1079,17 +1079,17 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases … }_
 
-### Deleting a person
+### Deleting a student
 
-1. Deleting a person while all persons are being shown
+1. Deleting a student while all students are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+   1. Prerequisites: List all students using the `list` command, with multiple students in the list.
 
    1. Test case: `delete 1`<br>
       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: No student is deleted. The status message shows error details.
 
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
