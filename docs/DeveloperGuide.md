@@ -563,33 +563,33 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to find students by giving a generic search term, or a search term for a specific field like name, email or tag.
-2.  TAB filters students based on given search terms.
-3.  TAB shows a list of students matching the search terms, displaying their identifying details.
+1.  User requests to find students.
+2.  User provides search terms, and optionally indicates the specific field for each search term, like name, email or tag.
+3.  TAB shows a list of students matching any part of the search terms, displaying their identifying details.
 
     Use case ends.
 
 **Extensions**
 
-* 1a. The search terms are not in an acceptable form.
+* 2a. The search terms are not in an acceptable form.
 
-    * 1a1. TAB reports the error and leaves the input in the command box.
-    * 1a2. User corrects the search terms and submits again.
+    * 2a1. TAB reports the error.
+    * 2a2. TAB leaves the original input in the command box.
+    * 2a3. User corrects the search terms and submits again.
 
-      Steps 1a1-1a2 are repeated until the search terms are acceptable.
+      Steps 2a1-2a3 are repeated until the search terms are acceptable.
 
-      Use case resumes at step 2.
+      Use case resumes at step 3.
 
-* 2a. No student matches the search terms.
+* 2b. No student matches the search terms.
 
-    * 2a1. TAB reports that no matching students were found.
-    * 2a2. User enters new search terms.
+    * 2b1. TAB reports that no matching students were found.
 
-      Use case resumes at step 2.
+      Use case ends.
 
 * 3a. None of the listed students is the intended one.
 
-    * 2b1. User enters new search terms with different keywords or details.
+    * 3a1. User enters new search terms with different keywords or details.
 
       Use case resumes at step 2.
 
