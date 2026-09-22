@@ -472,7 +472,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | export my student records to a file | share or print the list externally |
 | `*` | teaching assistant | clear all data | start fresh with a clean student book |
 | `*` | teaching assistant | reset the app to sample data | explore how the app works before entering real records |
-| `*` | teaching assistant | keep separate data files per course | avoid mixing student records from different modules |
+| `*` | teaching assistant | keep separate data files per module | avoid mixing student records from different modules |
 | `*` | long-time teaching assistant | archive student records after students graduate | keep past students for reference without cluttering my active list |
 | `*` | teaching assistant who can type fast | recall and reuse my recent commands | repeat the same command without retyping it |
 | `*` | teaching assistant who can type fast | auto-complete commands as I type | type common commands with fewer keystrokes |
