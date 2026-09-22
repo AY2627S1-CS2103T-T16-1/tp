@@ -739,7 +739,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 2a. TAB cannot read the data file at all, for example because it is not a TAB data file.
 
-    * 2a1. TAB reports why and leaves the data file untouched.
+    * 2a1. TAB reports why and leaves the data file unchanged.
     * 2a2. User repairs or replaces the data file.
 
       Use case resumes at step 4.
@@ -756,7 +756,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 2b. User chooses to abandon the recovery after TAB reports the unreadable data.
 
-    * 2b1. TAB leaves the data file as it found it and continues with any student records it could read.
+    * 2b1. TAB leaves the data file unchanged and continues with any student records it could read.
 
       Use case ends.
 
