@@ -636,6 +636,12 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
+* 3a. UC02 ends without identifying a student, or User chooses not to act on the identified student.
+
+    * 3a1. TAB leaves the student records unchanged.
+
+      Use case ends.
+
 * 4a. The contact date is not in an acceptable form.
 
     * 4a1. TAB explains why the date was rejected.
