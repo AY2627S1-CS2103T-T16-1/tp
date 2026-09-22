@@ -1033,6 +1033,7 @@ These were raised during requirement gathering and left out of the product.
   `e0123456`.
 * **Person**: A legacy implementation term used in class names inherited from AddressBook-Level3. In TAB's domain, a
   `Person` object represents a student record.
+* **Prefix**: See **Command prefix**.
 * **Roster**: A list of students belonging to a course, tutorial group, or lab group, particularly one prepared for
   import into TAB.
 * **Semester close-out**: The end-of-semester workflow (UC08) where active student records are archived
