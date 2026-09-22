@@ -523,10 +523,9 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to add a student.
-2.  User provides available details, including the name.
-3.  TAB saves the student record.
-4.  TAB shows the new student record, including the tags the User provided.
+1.  User requests to add a student, providing available details including the name.
+2.  TAB saves the student record.
+3.  TAB shows the new student record, including the tags the User provided.
 
     Use case ends.
 
@@ -537,40 +536,40 @@ These were raised during requirement gathering and left out of the product.
     * 1a1. TAB suggests the likely command.
     * 1a2. User corrects the command word and submits again.
 
+      Use case resumes at step 1.
+
+* 1b. At least one detail is not in an acceptable form.
+
+    * 1b1. TAB names every detail it rejected and the reason.
+    * 1b2. TAB leaves the original input in the command box.
+    * 1b3. User corrects the details and submits again.
+
+      Steps 1b1-1b3 are repeated until every detail is acceptable.
+
       Use case resumes at step 2.
 
-* 2a. At least one detail is not in an acceptable form.
+* 1c. The student matches another student whom TAB already holds, on NUS-ID, email or phone.
 
-    * 2a1. TAB names every detail it rejected and the reason.
-    * 2a2. TAB leaves the original input in the command box.
-    * 2a3. User corrects the details and submits again.
+    * 1c1. TAB shows the matching student and asks whether to add the new one anyway.
+    * 1c2. User confirms that they are different students.
 
-      Steps 2a1-2a3 are repeated until every detail is acceptable.
+      Use case resumes at step 2.
 
-      Use case resumes at step 3.
+* 1d. The student matches another student whom TAB already holds, and they are the same student.
 
-* 2b. The student matches another student whom TAB already holds, on NUS-ID, email or phone.
-
-    * 2b1. TAB shows the matching student and asks whether to add the new one anyway.
-    * 2b2. User confirms that they are different students.
-
-      Use case resumes at step 3.
-
-* 2c. The student matches another student whom TAB already holds, and they are the same student.
-
-    * 2c1. TAB shows the matching student and asks whether to add the new one anyway.
-    * 2c2. User indicates that a student record already exists for that student.
-    * 2c3. TAB leaves the student records unchanged.
+    * 1d1. TAB shows the matching student and asks whether to add the new one anyway.
+    * 1d2. User indicates that a student record already exists for that student.
+    * 1d3. TAB leaves the student records unchanged.
 
       Use case ends.
 
-* 2d. Before submitting the details, User chooses to abandon the addition.
+* 1e. Before submitting the command, User chooses to abandon the addition.
 
       Use case ends.
 
-* 3a. TAB cannot write to the data file.
+* 2a. TAB cannot write to the data file.
 
-    * 3a1. TAB reports that the student was not saved, and why.
+    * 2a1. TAB reports that the student was not saved, and why.
 
       Use case ends.
 
@@ -578,41 +577,41 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to find students.
-2.  User provides search terms, and optionally indicates the specific field for each search term, such as name,
+1.  User requests to find students, providing search terms and optionally indicating the specific field for each
+    search term, such as name,
     NUS-ID, email or tag.
-3.  TAB shows the students matching any part of the search terms regardless of letter case, displaying identifying
+2.  TAB shows the students matching any part of the search terms regardless of letter case, displaying identifying
     details such as their NUS-IDs.
-4.  User identifies the intended student.
-5.  User initiates the desired action on that student.
+3.  User identifies the intended student.
+4.  User initiates the desired action on that student.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. The search terms are not in an acceptable form.
+* 1a. The search terms are not in an acceptable form.
 
-    * 2a1. TAB reports the error.
-    * 2a2. TAB leaves the original input in the command box.
-    * 2a3. User corrects the search terms and submits again.
+    * 1a1. TAB reports the error.
+    * 1a2. TAB leaves the original input in the command box.
+    * 1a3. User corrects the search terms and submits again.
 
-      Steps 2a1-2a3 are repeated until the search terms are acceptable.
+      Steps 1a1-1a3 are repeated until the search terms are acceptable.
 
-      Use case resumes at step 3.
+      Use case resumes at step 2.
 
-* 3a. No student matches the search terms.
+* 2a. No student matches the search terms.
 
-    * 3a1. TAB reports that no matching students were found.
+    * 2a1. TAB reports that no matching students were found.
 
       Use case ends.
 
-* 4a. None of the matching students is the intended student.
+* 3a. None of the matching students is the intended student.
 
-    * 4a1. User provides revised search terms.
+    * 3a1. User provides revised search terms.
 
-      Use case resumes at step 3.
+      Use case resumes at step 2.
 
-* 4b. User chooses not to act on the intended student.
+* 3b. User chooses not to act on the intended student.
 
       Use case ends.
 
@@ -680,49 +679,48 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to import a roster of students from a file.
-2.  User provides the file and the class tag to label every student with.
-3.  TAB saves the new student records with the given class tag, preserving each student record's other tags.
-4.  TAB shows how many students were added, matched and skipped.
+1.  User requests to import a roster of students, providing the file and the class tag to label every student with.
+2.  TAB saves the new student records with the given class tag, preserving each student record's other tags.
+3.  TAB shows how many students were added, matched and skipped.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. TAB cannot find or read the file.
+* 1a. TAB cannot find or read the file.
 
-    * 2a1. TAB reports the problem and leaves the student records unchanged.
+    * 1a1. TAB reports the problem and leaves the student records unchanged.
 
       Use case ends.
 
-* 2b. A row in the file is missing a required detail or is otherwise malformed.
+* 1b. A row in the file is missing a required detail or is otherwise malformed.
 
-    * 2b1. TAB names the row and the reason, skips it, and continues to process the other rows.
+    * 1b1. TAB names the row and the reason, skips it, and continues to process the other rows.
 
-      Step 2b1 is repeated for each malformed row.
+      Step 1b1 is repeated for each malformed row.
 
-      Use case resumes at step 3.
+      Use case resumes at step 2.
 
-* 2c. A student matches another student whom TAB already holds, on NUS-ID, email or phone.
+* 1c. A student matches another student whom TAB already holds, on NUS-ID, email or phone.
 
-    * 2c1. TAB shows the match and asks whether to update the existing student record with the imported details.
-    * 2c2. User chooses whether to update or skip the existing student record.
-    * 2c3. TAB applies the User's choice, preserving the student's other tags, and continues to process the other
+    * 1c1. TAB shows the match and asks whether to update the existing student record with the imported details.
+    * 1c2. User chooses whether to update or skip the existing student record.
+    * 1c3. TAB applies the User's choice, preserving the student's other tags, and continues to process the other
       rows.
 
-      Steps 2c1-2c3 are repeated for each match.
+      Steps 1c1-1c3 are repeated for each match.
 
-      Use case resumes at step 3.
+      Use case resumes at step 2.
 
-* 2d. Before TAB saves the import, User chooses to abandon it.
+* 1d. Before TAB saves the import, User chooses to abandon it.
 
-    * 2d1. TAB leaves the student records unchanged.
+    * 1d1. TAB leaves the student records unchanged.
 
       Use case ends.
 
-* 3a. TAB cannot write to the data file.
+* 2a. TAB cannot write to the data file.
 
-    * 3a1. TAB reports that the import was not saved, and why.
+    * 2a1. TAB reports that the import was not saved, and why.
 
       Use case ends.
 
