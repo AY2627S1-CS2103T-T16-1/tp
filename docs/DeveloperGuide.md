@@ -451,8 +451,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *` | teaching assistant | view a student's phone number | call them directly when an urgent matter comes up |
 | `* *` | teaching assistant | undo my last command | revert a mistake before it makes trouble |
 | `* *` | teaching assistant | find students by a tag | focus on a single tutorial group |
-| `*` | teaching assistant | view a student's NUS ID | match a student's name to records on other digital platforms (e.g. attendance) |
-| `*` | teaching assistant | find students by a specific detail such as name, NUS ID, phone or email | go straight to the right record when I know one thing about the student |
+| `*` | teaching assistant | view a student's NUS-ID | match a student's name to records on other digital platforms (e.g. attendance) |
+| `*` | teaching assistant | find students by a specific detail such as name, NUS-ID, phone or email | go straight to the right record when I know one thing about the student |
 | `*` | teaching assistant who can type fast and prefers CLI | see a student record whenever I make changes to it | confirm that the changes I made are correct |
 | `*` | teaching assistant with many students | import many students from a file and give them all the same tag at once | get a whole roster into the app without entering each student by hand |
 | `*` | teaching assistant with many students | edit student records en masse | update a whole group of students without repeating the same edit |
@@ -464,10 +464,10 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | view a student's remarks | recall important context such as special needs |
 | `*` | teaching assistant | add a remark to a student's record | note down requests or needs I should remember |
 | `*` | teaching assistant | redo an action I undid | restore a change I reverted by accident |
-| `*` | teaching assistant | be warned when a new student matches an existing record on phone, email or NUS ID | catch genuine duplicates even when the two names are spelled differently |
+| `*` | teaching assistant | be warned when a new student matches an existing record on phone, email or NUS-ID | catch genuine duplicates even when the two names are spelled differently |
 | `*` | teaching assistant | merge two duplicate student records after seeing how they differ | combine the information from both without losing either |
 | `*` | teaching assistant | find students who have no tag | spot students not yet assigned to a group |
-| `*` | teaching assistant | sort my list by a detail I choose, such as name, NUS ID, or when the student was added | read the list in the order that suits the task in front of me |
+| `*` | teaching assistant | sort my list by a detail I choose, such as name, NUS-ID, or when the student was added | read the list in the order that suits the task in front of me |
 | `*` | teaching assistant | group my students by tag | see the class composition at a glance |
 | `*` | teaching assistant | export my student records to a file | share or print the list externally |
 | `*` | teaching assistant | clear all data | start fresh with a clean student book |
@@ -480,8 +480,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | be told what was wrong with my input and which part of it caused the problem | correct it in one attempt instead of guessing |
 | `*` | teaching assistant who hand-edits the data file | reload the data file from disk without restarting the app | fix the file and carry on in the same sitting |
 | `*` | teaching assistant | list students I have not followed up with since a given date | make sure no one who needs help flies under the radar |
-| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS ID when deleting a record | avoid removing the wrong student when several students are listed |
-| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS ID when editing a record | avoid changing the wrong student’s details |
+| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS-ID when deleting a record | avoid removing the wrong student when several students are listed |
+| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS-ID when editing a record | avoid changing the wrong student’s details |
 | `*` | teaching assistant | record two students who genuinely have the same name | keep separate student records for them |
 | `*` | teaching assistant who can type fast | be shown a likely correction when I mistype a command word | recover without looking up the syntax |
 | `*` | teaching assistant | look back at results I have already replaced | re-read earlier output without running the search again |
@@ -1020,7 +1020,7 @@ These were raised during requirement gathering and left out of the product.
   contact timestamp on a student record.
 * **Identity field**: A field used by TAB to identify whether two records refer to the same student. In the core
   model, student identity is determined by normalized name; warning mechanisms in workflows also check for
-  matching NUS IDs, phone numbers, or emails.
+  matching NUS-IDs, phone numbers, or emails.
 * **Index**: The 1-based positive integer identifying a student according to their current display position in the
   active/filtered list shown in the GUI, rather than a permanent database identifier or 0-based code index.
 * **Mainstream OS**: Windows, Linux and macOS.
