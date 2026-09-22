@@ -587,18 +587,6 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* 3a. None of the listed students is the intended one.
-
-    * 3a1. User enters new search terms with different keywords or details.
-
-      Use case resumes at step 2.
-
-* 3b. User identifies the intended student(s) they are looking for.
-
-    * 3b1. User initiates an action, such as <u>deleting the student (UC06)</u>.
-
-      Use case ends.
-
 * *a. At any time, User chooses to abandon the action.
 
     * *a1. User clears the input.
