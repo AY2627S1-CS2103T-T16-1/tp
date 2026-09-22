@@ -1,7 +1,7 @@
 {
   "baseUrl": "",
   "titlePrefix": "",
-  "titleSuffix": "TA's Address Book",
+  "titleSuffix": "TAB",
   "faviconPath": "images/ruihongc.png",
   "style": {
     "codeTheme": "light"
