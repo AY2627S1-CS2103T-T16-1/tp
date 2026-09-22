@@ -612,22 +612,23 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* 2b. A row is missing a required detail or is otherwise malformed.
+* 2b. A row in the file is missing a required detail or is otherwise malformed.
 
-    * 2b1. TAB names the row and the reason, skips it, and carries on with the rest.
+    * 2b1. TAB names the row and the reason, skips it, and continues to process the other rows.
 
       Use case resumes at step 3.
 
-* 3a. A student matches one TAB already holds, on NUS ID, email or phone.
+* 2c. A student matches another student whom TAB already holds, on NUS ID, email or phone.
 
-    * 3a1. TAB lists the matches and asks whether to update the existing records with the imported details.
-    * 3a2. User picks which matches, if any, to update.
+    * 2c1. TAB lists the match and asks whether to update the existing records with the imported details.
+    * 2c2. User indicates whether to update the existing record.
+    * 2c3. TAB updates instead of saving this student, and continues to process the other rows.
 
-      Use case resumes at step 4.
+      Use case resumes at step 3.
 
-* 4a. TAB cannot write to the data file.
+* 2d. TAB cannot write to the data file.
 
-    * 4a1. TAB reports that the import was not saved, and why.
+    * 2d1. TAB reports that the import was not saved, and why.
 
       Use case ends.
 
