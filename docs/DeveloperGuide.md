@@ -505,7 +505,7 @@ These were raised during requirement gathering and left out of the product.
 
 ### Use cases
 
-(For all use cases below, the **System** is `TAB` and the **Actor** is the `user`, unless specified otherwise)
+(For all use cases below, the **System** is `TAB` and the **Actor** is the `user`, unless specified otherwise.)
 
 **Table of contents**
 
@@ -564,8 +564,8 @@ These were raised during requirement gathering and left out of the product.
 **MSS**
 
 1.  User requests to find students by giving a generic search term, or a search term for a specific field like name, email or tag.
-2.  TAB filters students based on given search terms. 
-3.  TAB shows a list of students matching the search terms, displaying their identifying details
+2.  TAB filters students based on given search terms.
+3.  TAB shows a list of students matching the search terms, displaying their identifying details.
 
     Use case ends.
 
@@ -609,11 +609,11 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to import a roster from a file, giving the file and the class tag to give every student in it
-2.  TAB reads the file and turns each row into a student record
-3.  TAB checks each record against the students it already holds
-4.  TAB saves the new students, tagged with the given class
-5.  TAB shows how many students were added, matched and skipped
+1.  User requests to import a roster from a file, giving the file and the class tag to give every student in it.
+2.  TAB reads the file and turns each row into a student record.
+3.  TAB checks each record against the students it already holds.
+4.  TAB saves the new students, tagged with the given class.
+5.  TAB shows how many students were added, matched and skipped.
 
     Use case ends.
 
@@ -654,11 +654,11 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User starts TAB
-2.  TAB reads its data file and finds a record it cannot understand
-3.  TAB names the record and the reason, keeps the file untouched, and loads the records it can still read
-4.  User repairs the file and asks TAB to load it again
-5.  TAB loads the records, reporting anything still unreadable
+1.  User starts TAB.
+2.  TAB reads its data file and finds a record it cannot understand.
+3.  TAB names the record and the reason, keeps the file untouched, and loads the records it can still read.
+4.  User repairs the file and asks TAB to load it again.
+5.  TAB loads the records, reporting anything still unreadable.
 
     Use case ends.
 
@@ -693,12 +693,12 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to delete a class, giving its class tag
-2.  TAB shows the class and every student in it
-3.  TAB asks the user to confirm the deletion, warning that students whose only tag is this class will be removed as well
-4.  User confirms the deletion
-5.  TAB removes the class tag, and the students that it left with no other tag
-6.  TAB shows how many students were affected
+1.  User requests to delete a class, giving its class tag.
+2.  TAB shows the class and every student in it.
+3.  TAB asks the user to confirm the deletion, warning that students whose only tag is this class will be removed as well.
+4.  User confirms the deletion.
+5.  TAB removes the class tag, and the students that it left with no other tag.
+6.  TAB shows how many students were affected.
 
     Use case ends.
 
@@ -732,12 +732,12 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to archive a past class, giving its class tag and the semester
-2.  TAB shows the students that would be archived
-3.  TAB asks for confirmation
-4.  User confirms
-5.  TAB moves those students into the archive, out of the active list
-6.  TAB shows how many students were archived
+1.  User requests to archive a past class, giving its class tag and the semester.
+2.  TAB shows the students that would be archived.
+3.  TAB asks for confirmation.
+4.  User confirms.
+5.  TAB moves those students into the archive, out of the active list.
+6.  TAB shows how many students were archived.
 
     Use case ends.
 
@@ -771,12 +771,12 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to close out a semester, giving the semester and, if needed, the module(s) it covered
-2.  TAB lists every student still active for that semester
-3.  TAB asks how to treat any records still awaiting a follow-up, and asks for confirmation
-4.  User confirms the close-out
-5.  TAB archives the semester's students, recording who was still awaiting a follow-up
-6.  TAB starts a clean student list for the coming semester, keeping the archive loadable
+1.  User requests to close out a semester, giving the semester and, if needed, the module(s) it covered.
+2.  TAB lists every student still active for that semester.
+3.  TAB asks how to treat any records still awaiting a follow-up, and asks for confirmation.
+4.  User confirms the close-out.
+5.  TAB archives the semester's students, recording who was still awaiting a follow-up.
+6.  TAB starts a clean student list for the coming semester, keeping the archive loadable.
 
     Use case ends.
 
