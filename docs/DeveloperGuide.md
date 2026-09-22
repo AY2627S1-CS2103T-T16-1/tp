@@ -292,7 +292,7 @@ letter or number, judged by Unicode category rather than by ASCII.
 is read as the start of another field. `a/l` and `a/p`, ordinary components of
 a Malaysian name, used to fail this way until the address field was removed
 and the `a/` prefix with it. The rest are fixed by replacing the prefix syntax
-with positional arguments and flags, not by changing `Name`.
+with positional arguments and command options, not by changing `Name`.
 
 ### \[Proposed\] Undo/redo feature
 
