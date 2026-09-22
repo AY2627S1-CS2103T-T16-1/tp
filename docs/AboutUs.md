@@ -20,7 +20,7 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Team Lead
 * Responsibilities: Deliverables and Deadlines, Scheduling and Tracking
-* Area of Responsibility: Logic
+* Component in-charge: Logic
 
 ### Jiang Xinnan
 
@@ -30,7 +30,7 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Developer
 * Responsibilities: Documentation
-* Area of Responsibility: UI
+* Component in-charge: UI
 
 ### Nguyen Phuc Thang
 
@@ -40,7 +40,7 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Developer
 * Responsibilities: Integration, Git expert
-* Area of Responsibility: Storage
+* Component in-charge: Storage
 
 ### Ng See Jay
 
@@ -50,7 +50,7 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Developer
 * Responsibilities: Testing
-* Area of Responsibility: Parser
+* Component in-charge: Parser
 
 ### Rui Hong
 
@@ -60,4 +60,4 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Developer
 * Responsibilities: Code Quality
-* Area of Responsibility: Model
+* Component in-charge: Model
