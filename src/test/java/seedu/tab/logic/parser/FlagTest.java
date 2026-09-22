@@ -15,6 +15,18 @@ public class FlagTest {
     }
 
     @Test
+    public void markerOnlyFlag_labelIsJustTheMarkerAndTakesNoValue() {
+        Flag markerOnly = new Flag("-f");
+        assertEquals("-f", markerOnly.getLabel());
+        assertFalse(markerOnly.takesValue());
+    }
+
+    @Test
+    public void valueTakingFlag_takesValue() {
+        assertTrue(new Flag("-e", "EMAIL").takesValue());
+    }
+
+    @Test
     public void toString_isJustTheMarker() {
         // the marker alone is what a user typed, so it is what a message quotes back
         assertEquals("-e", new Flag("-e", "EMAIL").toString());

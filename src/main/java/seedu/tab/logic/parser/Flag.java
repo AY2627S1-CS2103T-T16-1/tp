@@ -9,6 +9,19 @@ import static java.util.Objects.requireNonNull;
 public class Flag {
     private final String flag;
     private final String fieldName;
+    private final boolean takesValue;
+
+    /**
+     * Constructs a presence-only flag that takes no value.
+     *
+     * @param flag The characters that mark the option, such as {@code -f}.
+     */
+    public Flag(String flag) {
+        requireNonNull(flag);
+        this.flag = flag;
+        this.fieldName = null;
+        this.takesValue = false;
+    }
 
     /**
      * Constructs a flag that marks a named field, so that a message can say which field it
@@ -22,10 +35,15 @@ public class Flag {
         requireNonNull(fieldName);
         this.flag = flag;
         this.fieldName = fieldName;
+        this.takesValue = true;
     }
 
     public String getFlag() {
         return flag;
+    }
+
+    public boolean takesValue() {
+        return takesValue;
     }
 
     /**
@@ -33,7 +51,7 @@ public class Flag {
      * Two flags are still equal when their characters match, whatever they are named.
      */
     public String getLabel() {
-        return flag + " " + fieldName;
+        return takesValue ? flag + " " + fieldName : flag;
     }
 
     @Override

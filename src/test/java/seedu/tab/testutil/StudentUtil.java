@@ -1,6 +1,7 @@
 package seedu.tab.testutil;
 
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
@@ -39,6 +40,9 @@ public class StudentUtil {
                 sb.append(FLAG_EMAIL).append(" ").append(quoted(email.value)).append(" "));
         student.getTags().forEach(tag ->
                 sb.append(FLAG_TAG).append(" ").append(quoted(tag.tagName)).append(" "));
+        if (student.isFlagged()) {
+            sb.append(FLAG_FOLLOW_UP).append(" ");
+        }
         return sb.toString();
     }
 

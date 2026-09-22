@@ -3,6 +3,7 @@ package seedu.tab.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
@@ -60,6 +61,7 @@ public class CommandTestUtil {
     public static final String ADD_EMAIL_BOB = " " + FLAG_EMAIL + " " + VALID_EMAIL_BOB;
     public static final String ADD_TAG_FRIEND = " " + FLAG_TAG + " " + VALID_TAG_FRIEND;
     public static final String ADD_TAG_HUSBAND = " " + FLAG_TAG + " " + VALID_TAG_HUSBAND;
+    public static final String ADD_FOLLOW_UP = " " + FLAG_FOLLOW_UP;
 
     public static final String ADD_INVALID_NAME = " \"---\""; // no letter or number in name
     public static final String ADD_INVALID_PHONE = " " + FLAG_PHONE + " 12"; // fewer than 3 digits

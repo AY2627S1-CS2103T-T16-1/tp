@@ -37,6 +37,10 @@ public class StudentBookParserTest {
         Student student = new StudentBuilder().build();
         AddCommand command = (AddCommand) parser.parseCommand(StudentUtil.getAddCommand(student));
         assertEquals(new AddCommand(student), command);
+
+        Student flaggedStudent = new StudentBuilder().withName("Flagged Student").withFlag(true).build();
+        AddCommand flaggedCommand = (AddCommand) parser.parseCommand(StudentUtil.getAddCommand(flaggedStudent));
+        assertEquals(new AddCommand(flaggedStudent), flaggedCommand);
     }
 
     @Test

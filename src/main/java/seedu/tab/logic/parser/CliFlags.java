@@ -9,6 +9,7 @@ public class CliFlags {
     public static final Flag FLAG_PHONE = new Flag("-p", "PHONE");
     public static final Flag FLAG_EMAIL = new Flag("-e", "EMAIL");
     public static final Flag FLAG_TAG = new Flag("-t", "TAG");
+    public static final Flag FLAG_FOLLOW_UP = new Flag("-f");
 
     private CliFlags() {} // this class only holds flags
 }

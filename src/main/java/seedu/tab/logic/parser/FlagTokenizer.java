@@ -18,9 +18,10 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  * reads an operand followed by options.
  *
  * <p>The tokens before the first flag are the preamble, joined back together with single
- * spaces, which each command reads as whatever it takes in that position. Every flag after it
- * takes the one token that follows it. A token belonging to no flag, an unknown flag, and a
- * flag left without a value are each reported for what they are.
+ * spaces, which each command reads as whatever it takes in that position. Every value-taking
+ * flag after it takes the one token that follows it, while a presence-only flag consumes no
+ * value. A token belonging to no flag, an unknown flag, and a value-taking flag left without a
+ * value are each reported for what they are.
  */
 public class FlagTokenizer {
 
@@ -64,7 +65,7 @@ public class FlagTokenizer {
     }
 
     /**
-     * Reads each flag from {@code index} onwards together with the token that follows it.
+     * Reads each flag from {@code index} onwards, together with its value when it takes one.
      */
     private static void readFlags(List<Token> tokens, int index, Map<String, Flag> flagsByMarker,
             FlagArgumentMap parsed) throws ParseException {
@@ -77,6 +78,11 @@ public class FlagTokenizer {
             Flag flag = flagsByMarker.get(token.value());
             if (flag == null) {
                 throw new ParseException(String.format(Messages.MESSAGE_UNKNOWN_FLAG, token.value()));
+            }
+            if (!flag.takesValue()) {
+                parsed.put(flag, "");
+                index++;
+                continue;
             }
             // an option in the value position means the one before it was left empty, not that
             // the user wants to store "-e" as a tag
