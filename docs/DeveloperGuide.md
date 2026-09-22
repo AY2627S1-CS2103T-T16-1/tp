@@ -251,7 +251,7 @@ fields is parsed, dialled, or used to build a file path.
 #### Student names
 
 A name is displayed, split into words by the search, and used as a student's
-identity field. `Name` therefore stores a normalized form rather than
+identity field. `Name` therefore stores a normalized field value rather than
 the raw input, so that two names which look identical cannot be searched
 differently or admitted as two students.
 
