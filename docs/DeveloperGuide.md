@@ -730,7 +730,7 @@ These were raised during requirement gathering and left out of the product.
 2.  TAB shows the students that would be archived.
 3.  TAB asks for confirmation.
 4.  User confirms.
-5.  TAB moves those students into the archive, out of the active list.
+5.  TAB removes those students from the active list while keeping them available in the archive.
 6.  TAB shows how many students were archived.
 
     Use case ends.
@@ -752,12 +752,6 @@ These were raised during requirement gathering and left out of the product.
 * 5a. TAB cannot write to the data file or the archive.
 
     * 5a1. TAB reports that the archiving was not saved, and why.
-
-      Use case ends.
-
-* *a. At any time, User chooses to abandon the archiving.
-
-    * *a1. User clears the input.
 
       Use case ends.
 
