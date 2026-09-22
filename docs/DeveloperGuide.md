@@ -552,11 +552,11 @@ These were raised during requirement gathering and left out of the product.
 * 2b. The student matches another student whom TAB already holds, on NUS-ID, email or phone.
 
     * 2b1. TAB shows the matching student and asks whether to add the new one anyway.
-    * 2b2. User confirms that the two are different people.
+    * 2b2. User confirms that they are different students.
 
       Use case resumes at step 3.
 
-* 2c. The student matches another student whom TAB already holds, and they are the same person.
+* 2c. The student matches another student whom TAB already holds, and they are the same student.
 
     * 2c1. TAB shows the matching student and asks whether to add the new one anyway.
     * 2c2. User indicates that the student is already on record.
