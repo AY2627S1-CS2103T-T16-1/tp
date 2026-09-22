@@ -610,6 +610,10 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 3.
 
+* 4b. User chooses not to act on the intended student.
+
+      Use case ends.
+
 #### UC04 - Import a roster
 
 **MSS**
