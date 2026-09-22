@@ -999,6 +999,10 @@ These were raised during requirement gathering and left out of the product.
 
 ### Glossary
 
+> Names do have a predetermined goodness. If they are straightforward, simple, and do not conflict, then they are called “good names.”
+>
+> -Xunzi
+
 * **Active list**: The student records used for current teaching work, excluding records moved to the proposed
   archive.
 * **Address book**: A legacy term inherited from AddressBook-Level3. Unless it refers to a class or interface in the
