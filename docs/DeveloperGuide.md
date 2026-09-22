@@ -521,11 +521,10 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to add a student, giving the name and whatever other details they have
-2.  TAB checks that each detail is in an acceptable form
-3.  TAB checks the student against the records it already holds
-4.  TAB saves the student
-5.  TAB shows the new record, including the tags it applied
+1.  User requests to add a student.
+2.  User provides available details, including the name.
+3.  TAB saves the student.
+4.  TAB shows the new record, including the tags it applied.
 
     Use case ends.
 
@@ -533,23 +532,24 @@ These were raised during requirement gathering and left out of the product.
 
 * 2a. A detail is not in an acceptable form.
 
-    * 2a1. TAB names the detail it rejected and the reason, and leaves the input in the command box.
-    * 2a2. User corrects that detail and submits again.
+    * 2a1. TAB names the detail it rejected and the reason.
+    * 2a2. TAB leaves the original input in the command box.
+    * 2a3. User corrects that detail and submits again.
 
-      Steps 2a1-2a2 are repeated until every detail is acceptable.
+      Steps 2a1-2a3 are repeated until every detail is acceptable.
 
       Use case resumes at step 3.
 
-* 3a. The student matches one TAB already holds, on NUS ID, email or phone.
+* 2b. The student matches another student whom TAB already holds, on NUS ID, email or phone.
 
-    * 3a1. TAB shows the matching student and asks whether to add the new one anyway.
-    * 3a2. User confirms that the two are different people.
+    * 2b1. TAB shows the matching student and asks whether to add the new one anyway.
+    * 2b2. User confirms that the two are different people.
 
-      Use case resumes at step 4.
+      Use case resumes at step 3.
 
-* 4a. TAB cannot write to the data file.
+* 3a. TAB cannot write to the data file.
 
-    * 4a1. TAB reports that the student was not saved, and why.
+    * 3a1. TAB reports that the student was not saved, and why.
 
       Use case ends.
 
