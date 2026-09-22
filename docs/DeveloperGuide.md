@@ -999,8 +999,55 @@ These were raised during requirement gathering and left out of the product.
 
 ### Glossary
 
-* **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Active list**: The student records used for current teaching work, excluding records moved to the proposed
+  archive.
+* **Address book**: A legacy term inherited from AddressBook-Level3. Unless it refers to a class or interface in the
+  code, it means the student book.
+* **Archive**: In the proposed archiving feature, the collection of past student records retained by TAB but excluded
+  from the active list.
+* **Class**: In the product domain, a tutorial or lab group taught by the User. This is distinct from a Java class.
+* **Class tag**: A tag used to identify a class.
+* **CLI (Command-Line Interface)**: The keyboard-driven interface through which the User enters commands into TAB.
+* **Command option**: A separate, hyphen-prefixed token, such as `-p`, that identifies the value following it. The
+  `add` command uses options.
+* **Command prefix**: A marker attached to the beginning of a field value, such as `p/`. Commands such as `edit` use
+  prefixes.
+* **Data file**: The local, human-editable JSON file (`addressbook.json`) used by TAB to store student records,
+  distinct from `preferences.json`.
+* **Filtered list**: The subset of student records currently visible in the GUI as a result of a filter or search
+  command (such as `find` or `list`). Commands taking an Index target records relative to this list.
+* **Follow-up**: An action or response that the User still owes to a student, tracked in TAB as a pending status and
+  contact timestamp on a student record.
+* **Identity field**: A field used by TAB to identify whether two records refer to the same student. In the core
+  model, student identity is determined by normalized name; warning mechanisms in workflows also check for
+  matching NUS IDs, phone numbers, or emails.
+* **Index**: The 1-based positive integer identifying a student according to their current display position in the
+  active/filtered list shown in the GUI, rather than a permanent database identifier or 0-based code index.
+* **Mainstream OS**: Windows, Linux and macOS.
+* **Module**: An academic course of study (e.g., CS2103T) taught by the User, distinct from a Java language module or
+  software component.
+* **NFC (Normalization Form C)**: The Unicode normalization form TAB uses to store canonically equivalent character
+  sequences consistently.
+* **Normalized field value**: The standard stored form produced by `StringUtil.normalizeFieldValue`, allowing input
+  that looks the same to be stored and compared consistently.
+* **NUS-ID**: A unique digital identifier for every student at the National University of Singapore. It has the form
+  `e0123456`.
+* **Person**: A legacy implementation term used in class names inherited from AddressBook-Level3. In TAB's domain, a
+  `Person` object represents a student record.
+* **Roster**: A list of students belonging to a module, tutorial group, or lab group, particularly one prepared for
+  import into TAB.
+* **Semester close-out**: The end-of-semester workflow (UC08) where active student records are archived
+  and the active list is reset in preparation for a new academic term, optionally retaining records with
+  pending follow-ups.
+* **Student book**: The collection of student records managed by TAB. This is the preferred product-facing term for
+  what inherited code may call an address book.
+* **Student record**: The information TAB stores about one student, such as their name, phone number, email address,
+  and tags.
+* **TAB**: Teaching Assistant's Book; the desktop student-management application described in this guide.
+* **Tag**: A user-defined label attached to a student record for grouping or filtering students.
+* **Tag alias**: A user-defined shorthand for a longer tag (such as a shortcut for a tutorial group tag), distinct
+  from a command or shell alias.
+* **User**: The teaching assistant operating TAB.
 
 --------------------------------------------------------------------------------------------------------------------
 
