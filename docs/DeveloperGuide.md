@@ -537,7 +537,7 @@ These were raised during requirement gathering and left out of the product.
     * 1a1. TAB suggests the likely command.
     * 1a2. User corrects the command word and submits again.
 
-      Use case resumes at step 1.
+      Use case resumes at step 2.
 
 * 1b. At least one detail is not in an acceptable form.
 
