@@ -640,7 +640,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 3a. User remembers no detail that would narrow the list.
 
-    * 3a1. User selects the intended student from the displayed follow-up list.
+    * 3a1. User selects the intended student from the filtered list of students needing follow-up.
 
       Use case resumes at step 5.
 
