@@ -1005,8 +1005,8 @@ These were raised during requirement gathering and left out of the product.
 
 * **Active list**: The student records used for current teaching work, excluding records moved to the proposed
   archive.
-* **Address book**: A legacy term inherited from AddressBook-Level3. Unless it refers to a class or interface in the
-  code, it means the student book.
+* **Address book**: A legacy term found in the upstream AddressBook-Level3 project and retained here only when
+  referring to that project's history. TAB calls its collection of student records the student book.
 * **Archive**: In the proposed archiving feature, the collection of past student records retained by TAB but excluded
   from the active list.
 * **ASCII space**: The ordinary space character (`U+0020`). This term means that exact character rather than every
@@ -1019,7 +1019,7 @@ These were raised during requirement gathering and left out of the product.
 * **Command prefix**: A marker attached to the beginning of a field value, such as `p/`. Commands such as `edit` use
   prefixes.
 * **Course**: An academic subject (e.g., CS2103T) taught by the User.
-* **Data file**: The local, human-editable JSON file (`addressbook.json`) used by TAB to store student records,
+* **Data file**: The local, human-editable JSON file (`tab.json`) used by TAB to store student records,
   distinct from `preferences.json`.
 * **Filtered list**: The subset of student records currently visible in the GUI as a result of a filter or search
   command (such as `find` or `list`). Commands taking an Index target records relative to this list.
@@ -1038,16 +1038,15 @@ These were raised during requirement gathering and left out of the product.
 * **NUS-ID**: A unique digital identifier for every student at the National University of Singapore. It has the form
   `e0123456`.
 * **Option**: See **Command option**.
-* **Person**: A legacy implementation term used in class names inherited from AddressBook-Level3. In TAB's domain, a
-  `Person` object represents a student record.
+* **Person**: A legacy term found in the upstream AddressBook-Level3 project. TAB's model uses `Student` for a student
+  record.
 * **Prefix**: See **Command prefix**.
 * **Roster**: A list of students belonging to a course, tutorial group, or lab group, particularly one prepared for
   import into TAB.
 * **Semester close-out**: The end-of-semester workflow (UC08) where active student records are archived
   and the active list is reset in preparation for a new academic term, optionally retaining records with
   pending follow-ups.
-* **Student book**: The collection of student records managed by TAB. This is the preferred product-facing term for
-  what inherited code may call an address book.
+* **Student book**: The collection of student records managed by TAB.
 * **Student record**: The information TAB stores about one student, such as their name, phone number, email address,
   and tags.
 * **TAB**: Teaching Assistant's Book; the desktop student-management application described in this guide.
