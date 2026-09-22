@@ -1005,6 +1005,8 @@ These were raised during requirement gathering and left out of the product.
   code, it means the student book.
 * **Archive**: In the proposed archiving feature, the collection of past student records retained by TAB but excluded
   from the active list.
+* **ASCII space**: The ordinary space character (`U+0020`). This term means that exact character rather than every
+  whitespace character.
 * **Class**: In the product domain, a tutorial or lab group taught by the User. This is distinct from a Java class.
 * **Class tag**: A tag used to identify a class.
 * **CLI (Command-Line Interface)**: The keyboard-driven interface through which the User enters commands into TAB.
@@ -1049,6 +1051,11 @@ These were raised during requirement gathering and left out of the product.
 * **Tag alias**: A user-defined shorthand for a longer tag (such as a shortcut for a tutorial group tag), distinct
   from a command or shell alias.
 * **User**: The teaching assistant operating TAB.
+* **Whitespace**: The Unicode characters with the `White_Space` property, as matched by Java's `(?U)\s`: `U+0009` to
+  `U+000D`, `U+0020`, `U+0085`, `U+00A0`, `U+1680`, `U+2000` to `U+200A`, `U+2028` to `U+2029`, `U+202F`, `U+205F`
+  and `U+3000`. This set excludes the zero-width space (`U+200B`), byte order mark (`U+FEFF`), zero-width non-joiner
+  (`U+200C`) and zero-width joiner (`U+200D`). It governs `CommandTokenizer` and normalized field values; some
+  inherited parsers use narrower rules where stated.
 
 --------------------------------------------------------------------------------------------------------------------
 
