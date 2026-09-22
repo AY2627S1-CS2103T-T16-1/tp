@@ -549,7 +549,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 3.
 
-* 2b. The student matches another student whom TAB already holds, on NUS ID, email or phone.
+* 2b. The student matches another student whom TAB already holds, on NUS-ID, email or phone.
 
     * 2b1. TAB shows the matching student and asks whether to add the new one anyway.
     * 2b2. User confirms that the two are different people.
@@ -580,9 +580,9 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to find students.
 2.  User provides search terms, and optionally indicates the specific field for each search term, such as name,
-    NUS ID, email or tag.
+    NUS-ID, email or tag.
 3.  TAB shows the students matching any part of the search terms regardless of letter case, displaying identifying
-    details such as their NUS IDs.
+    details such as their NUS-IDs.
 4.  User identifies the intended student.
 5.  User initiates the desired action on that student.
 
@@ -703,7 +703,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 3.
 
-* 2c. A student matches another student whom TAB already holds, on NUS ID, email or phone.
+* 2c. A student matches another student whom TAB already holds, on NUS-ID, email or phone.
 
     * 2c1. TAB shows the match and asks whether to update the existing record with the imported details.
     * 2c2. User chooses whether to update or skip the existing record.
