@@ -919,6 +919,52 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
+#### UC10 - Add/remove a tag from a student
+
+**MSS**
+
+1.  <u>User finds and identifies the intended student (UC02).</u>
+2.  User requests to add or remove a tag from the student, providing the tag.
+3.  TAB makes the requested change while preserving the student's other tags.
+4.  TAB shows the student's record.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The tag is not in an acceptable form.
+
+    * 2a1. TAB explains why the tag was rejected.
+    * 2a2. User corrects the tag and submits again.
+
+      Steps 2a1-2a2 are repeated until the tag is acceptable.
+
+      Use case resumes at step 3.
+
+* 2b. User chooses to abandon the change.
+
+    * 2b1. TAB leaves the student's tags unchanged.
+
+      Use case ends.
+
+* 3a. User requests to add a tag that the student already has.
+
+    * 3a1. TAB reports that the student already has the tag and leaves the student's tags unchanged.
+
+      Use case resumes at step 4.
+
+* 3b. User requests to remove a tag that the student does not have.
+
+    * 3b1. TAB reports that the student does not have the tag and leaves the student's tags unchanged.
+
+      Use case resumes at step 4.
+
+* 3c. TAB cannot write to the data file.
+
+    * 3c1. TAB reports that the tag was not added or removed, and why.
+
+      Use case ends.
+
 *{More to be added}*
 
 
