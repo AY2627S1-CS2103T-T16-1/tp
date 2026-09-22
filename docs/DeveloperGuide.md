@@ -564,7 +564,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 1d. Before submitting the command, User chooses to abandon the addition.
 
-      Use case ends.
+    Use case ends.
 
 * 2a. TAB cannot write to the data file.
 
@@ -612,7 +612,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 3b. User chooses not to act on the intended student.
 
-      Use case ends.
+    Use case ends.
 
 #### UC03 - Review follow-ups and clear the ones handled
 
@@ -659,7 +659,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 7a. User chooses to review another student who needs follow-up.
 
-      Use case resumes at step 3.
+    Use case resumes at step 3.
 
 #### UC04 - Import a roster
 
