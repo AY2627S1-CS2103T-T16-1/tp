@@ -19,6 +19,13 @@ import seedu.tab.testutil.StudentBuilder;
 public class StudentTest {
 
     @Test
+    public void constructor_withoutFlag_defaultsToUnflagged() {
+        Student student = new Student(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail().orElse(null), ALICE.getTags());
+        assertFalse(student.isFlagged());
+    }
+
+    @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Student student = new StudentBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> student.getTags().remove(0));
@@ -86,6 +93,10 @@ public class StudentTest {
         editedAlice = new StudentBuilder(ALICE).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(ALICE.equals(editedAlice));
 
+        // different follow-up flag -> returns false
+        editedAlice = new StudentBuilder(ALICE).withFlag(!ALICE.isFlagged()).build();
+        assertFalse(ALICE.equals(editedAlice));
+
         // an email against none -> returns false, in either direction
         Student withoutEmail = new StudentBuilder(ALICE).withoutEmail().build();
         assertFalse(ALICE.equals(withoutEmail));
@@ -109,9 +120,16 @@ public class StudentTest {
     }
 
     @Test
+    public void isSameStudent_differentFollowUpFlag_stillTheSameStudent() {
+        Student flaggedAlice = new StudentBuilder(ALICE).withFlag(!ALICE.isFlagged()).build();
+        assertTrue(ALICE.isSameStudent(flaggedAlice));
+    }
+
+    @Test
     public void toStringMethod() {
         String expected = Student.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
-                + ", email=" + ALICE.getEmail().orElse(null) + ", tags=" + ALICE.getTags() + "}";
+                + ", email=" + ALICE.getEmail().orElse(null) + ", tags=" + ALICE.getTags()
+                + ", isFlagged=" + ALICE.isFlagged() + "}";
         assertEquals(expected, ALICE.toString());
     }
 
@@ -133,6 +151,8 @@ public class StudentTest {
         assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withEmail(VALID_EMAIL_BOB)
                 .build().hashCode());
         assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withTags(VALID_TAG_HUSBAND)
+                .build().hashCode());
+        assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withFlag(!ALICE.isFlagged())
                 .build().hashCode());
     }
 }

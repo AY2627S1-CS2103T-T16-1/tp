@@ -40,6 +40,14 @@ public class MessagesTest {
     }
 
     @Test
+    public void format_flaggedStudent_includesFollowUpStatus() {
+        Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withTags("friends").withFlag(true).build();
+        assertEquals("Alice Pauline; Phone: 94351253; Email: amy@gmail.com; Tags: [friends]; Needs follow-up",
+                Messages.format(student));
+    }
+
+    @Test
     public void getErrorMessageForMissingPrefixes_onePrefix_namesTheField() {
         assertEquals("Missing required field(s): e/EMAIL",
                 Messages.getErrorMessageForMissingPrefixes(PREFIX_EMAIL));

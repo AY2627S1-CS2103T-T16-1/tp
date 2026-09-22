@@ -26,17 +26,27 @@ public class Student {
 
     // Data fields
     private final Set<Tag> tags = new HashSet<>();
+    private final boolean isFlagged;
 
     /**
      * Every field but the email must be present and not null. A student may be recorded before
      * an email address is known, rather than the address being invented to satisfy the command.
      */
     public Student(Name name, Phone phone, Email email, Set<Tag> tags) {
+        this(name, phone, email, tags, false);
+    }
+
+    /**
+     * Every field but the email must be present and not null. A student may be recorded before
+     * an email address is known, rather than the address being invented to satisfy the command.
+     */
+    public Student(Name name, Phone phone, Email email, Set<Tag> tags, boolean isFlagged) {
         requireAllNonNull(name, phone, tags);
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.tags.addAll(tags);
+        this.isFlagged = isFlagged;
     }
 
     public Name getName() {
@@ -57,6 +67,10 @@ public class Student {
      */
     public Set<Tag> getTags() {
         return Collections.unmodifiableSet(tags);
+    }
+
+    public boolean isFlagged() {
+        return isFlagged;
     }
 
     /**
@@ -90,13 +104,14 @@ public class Student {
         return name.equals(otherStudent.name)
                 && phone.equals(otherStudent.phone)
                 && Objects.equals(email, otherStudent.email)
-                && tags.equals(otherStudent.tags);
+                && tags.equals(otherStudent.tags)
+                && isFlagged == otherStudent.isFlagged;
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, tags);
+        return Objects.hash(name, phone, email, tags, isFlagged);
     }
 
     @Override
@@ -106,6 +121,7 @@ public class Student {
                 .add("phone", phone)
                 .add("email", email)
                 .add("tags", tags)
+                .add("isFlagged", isFlagged)
                 .toString();
     }
 }

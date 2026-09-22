@@ -98,6 +98,9 @@ public class Messages {
         student.getEmail().ifPresent(email -> builder.append("; Email: ").append(email));
         builder.append("; Tags: ");
         student.getTags().forEach(builder::append);
+        if (student.isFlagged()) {
+            builder.append("; Needs follow-up");
+        }
         return builder.toString();
     }
 
