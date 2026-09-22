@@ -518,6 +518,7 @@ These were raised during requirement gathering and left out of the product.
 * [UC07 - Archive last semester's students](#uc07---archive-last-semesters-students)
 * [UC08 - Semester close-out](#uc08---semester-close-out)
 * [UC09 - Edit a student's details](#uc09---edit-a-students-details)
+* [UC10 - Add/remove a tag from a student](#uc10---addremove-a-tag-from-a-student)
 
 #### UC01 - Add a student
 
