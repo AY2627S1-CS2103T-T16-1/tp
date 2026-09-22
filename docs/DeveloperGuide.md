@@ -835,7 +835,8 @@ These were raised during requirement gathering and left out of the product.
 2.  TAB lists every student still active for that semester.
 3.  TAB asks the User to confirm the semester close-out.
 4.  User confirms the semester close-out.
-5.  TAB archives the student records selected for archiving, preserving their follow-up status.
+5.  TAB archives the semester's student records except any the User chose to hold back, preserving the archived
+    student records' follow-up status.
 6.  TAB prepares the active list for the coming semester, retaining only student records the User chose to hold back
     and keeping the archive available.
 
@@ -851,8 +852,8 @@ These were raised during requirement gathering and left out of the product.
 
 * 2b. One or more students still await a follow-up.
 
-    * 2b1. TAB reminds the User how many, and asks whether to archive them with the rest or hold them back.
-    * 2b2. User chooses how to treat them.
+    * 2b1. TAB reminds the User how many, and asks whether to archive all of them or hold any back.
+    * 2b2. User chooses which students, if any, to hold back.
 
       Use case resumes at step 3.
 
