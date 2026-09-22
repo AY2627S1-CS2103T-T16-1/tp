@@ -652,6 +652,12 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 3.
 
+* 2d. Before TAB saves the import, User chooses to abandon it.
+
+    * 2d1. TAB leaves the records unchanged.
+
+      Use case ends.
+
 * 3a. TAB cannot write to the data file.
 
     * 3a1. TAB reports that the import was not saved, and why.
