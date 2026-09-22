@@ -175,7 +175,7 @@ an option is a whole token, so a name is read as a name however it is spelled.
 Parsing runs in two passes, the way a shell does it.
 
 `CommandTokenizer` splits the arguments on whitespace and lets double quotes
-group a value holding spaces. A token records whether a quote took part in it,
+group a value containing whitespace. A token records whether a quote took part in it,
 because that is the only thing separating the value `-Ahmad` from the option
 `-e`. A backslash escapes a quote or another backslash, so a value may hold
 either; a backslash before anything else stays in the value, so nothing the User
@@ -187,7 +187,7 @@ that `-t` needs a value instead of storing `-e` as a tag. A value that really
 does open with a hyphen is given in quotes.
 
 `FlagTokenizer` reads the tokens. Those before the first option are the name,
-joined with single spaces, so a name of several words needs no quotes unless it
+joined with single ASCII spaces, so a name of several words needs no quotes unless it
 would otherwise be misread. Each option takes the token after it, and `-t`
 repeats. An unknown option, an option left without a value, and a token
 belonging to no option are each reported for what they are, rather than as one
@@ -209,9 +209,9 @@ so that the new parsing could be reviewed on its own.
 ### Field values
 
 `Name`, `Tag` and `Phone` each store the form returned by
-`StringUtil.normalizeFieldValue`: without zero-width characters, with runs of
-whitespace reduced to one ASCII space, the ends trimmed, and the result
-composed to Unicode NFC. Composing happens last, because a zero-width
+`StringUtil.normalizeFieldValue`: without zero-width characters, with each run of
+whitespace reduced to one ASCII space and leading and trailing whitespace removed,
+and with the result composed to Unicode NFC. Composing happens last, because a zero-width
 character between a base letter and its combining mark blocks the two from
 composing.
 
@@ -238,13 +238,13 @@ spelling for removing one, the way `t/` alone empties the tags.
 
 `Phone` is **not** an identity field and **not** a key: two students may hold the
 same number, and `isSameStudent` does not read it. It is normalized only so
-that a number typed with an odd space is stored the way it looks.
+that a number typed with unusual whitespace is stored consistently.
 
 Only `Name` is searched. `NameContainsKeywordsPredicate` reads `getName()`
 alone, so a tag or a phone number cannot be found by `find` today.
 
 Nothing else is rejected in any of the three. A phone number may hold `+`,
-spaces, brackets and an extension; a tag may hold spaces, hyphens and any
+whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
 script. None of those characters can hinder TAB, because none of these
 fields is parsed, dialled, or used to build a file path.
 
@@ -261,8 +261,8 @@ differently or admitted as two students.
   as `e` plus two combining marks become the same string
 * stripped of the zero-width space and the byte order mark, which are invisible
   and carry no meaning of their own
-* reduced to single ASCII spaces, with the ends trimmed, so that a
-  non-breaking space cannot hide a word from the search
+* reduced to single ASCII spaces, with leading and trailing whitespace removed,
+  so that a non-breaking space cannot hide a word from the search
 
 The zero-width joiner and non-joiner are deliberately kept, because scripts
 such as Sinhala and Arabic need them to shape correctly. Two names that differ
@@ -288,7 +288,7 @@ letter or number, judged by Unicode category rather than by ASCII.
 | An emoji, or a zero-width space, on its own | no letter or number |
 
 **A name that holds a command prefix still fails to parse.** The prefixes are
-`n/`, `p/`, `e/` and `t/`, and a name holding any of them followed by a space
+`n/`, `p/`, `e/` and `t/`, and a name holding any of them after an ASCII space
 is read as the start of another field. `a/l` and `a/p`, ordinary components of
 a Malaysian name, used to fail this way until the address field was removed
 and the `a/` prefix with it. The rest are fixed by replacing the prefix syntax
@@ -1054,8 +1054,9 @@ These were raised during requirement gathering and left out of the product.
 * **Whitespace**: The Unicode characters with the `White_Space` property, as matched by Java's `(?U)\s`: `U+0009` to
   `U+000D`, `U+0020`, `U+0085`, `U+00A0`, `U+1680`, `U+2000` to `U+200A`, `U+2028` to `U+2029`, `U+202F`, `U+205F`
   and `U+3000`. This set excludes the zero-width space (`U+200B`), byte order mark (`U+FEFF`), zero-width non-joiner
-  (`U+200C`) and zero-width joiner (`U+200D`). It governs `CommandTokenizer` and normalized field values; some
-  inherited parsers use narrower rules where stated.
+  (`U+200C`) and zero-width joiner (`U+200D`). It governs `CommandTokenizer` and normalized field values, not every
+  parser. `edit` recognizes prefixes only after an ASCII space, while top-level command parsing and `find` retain
+  narrower ASCII-oriented rules.
 
 --------------------------------------------------------------------------------------------------------------------
 
