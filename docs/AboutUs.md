@@ -18,8 +18,8 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 [[homepage](https://dillionlim.github.io/)]
 [[github](https://github.com/dillionlim)]
 
-* Role: Team Lead
-* Responsibilities: Deliverables and deadlines, Scheduling and tracking
+* Role: Team Lead, Deliverables and Deadlines, Scheduling and Tracking
+* Area of Responsibility: Logic
 
 ### Jiang Xinnan
 
@@ -27,8 +27,8 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github](http://github.com/jxinnan)]
 
-* Role: Developer
-* Responsibilities: Documentation
+* Role: Documentation
+* Area of Responsibility: UI
 
 ### Nguyen Phuc Thang
 
@@ -36,8 +36,8 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github](https://github.com/Nguyen-Phuc-Thang)]
 
-* Role: Developer
-* Responsibilities: Integration, Git expert
+* Role: Integration, Git expert
+* Area of Responsibility: Storage
 
 ### Ng See Jay
 
@@ -45,8 +45,8 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github]](https://github.com/cjbuzz)
 
-* Role: Developer
-* Responsibilities: Testing, Parser Component
+* Role: Testing
+* Area of Responsibility: Parser
 
 ### Rui Hong
 
@@ -54,5 +54,5 @@ You cannot reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github](https://github.com/ruihongc)]
 
-* Role: Developer
-* Responsibilities: Code Quality
+* Role: Code Quality
+* Area of Responsibility: Model
