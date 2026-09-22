@@ -408,7 +408,7 @@ _{Explain here how the data archiving feature will be implemented}_
 An NUS School of Computing teaching assistant tutoring 2 to 3 tutorial or lab
 slots per semester. They are usually fast typists who prefer a CLI.
 
-* has a need to manage 150 to 250 student contacts, sliced by slot, module,
+* has a need to manage 150 to 250 student records, sliced by slot, module,
   project team, and follow-up status
 * prefers desktop apps to web or mobile apps
 * can type fast, and prefers typing to mouse interactions
@@ -433,9 +433,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *` | teaching assistant | view a student's name | identify the student |
 | `* * *` | teaching assistant | view a student's email | contact them via email for any emergency updates |
 | `* * *` | teaching assistant | view a student's tag | know which class the student is in |
-| `* * *` | teaching assistant | add records of a student | keep track of new students I have |
+| `* * *` | teaching assistant | add a student record | keep track of new students I have |
 | `* * *` | teaching assistant | delete a student's record | remove students who dropped my class from the student book |
-| `* * *` | teaching assistant | save the updates I made to various records | ensure my updates persist in future sessions |
+| `* * *` | teaching assistant | save the updates I made to student records | ensure my updates persist in future sessions |
 | `* * *` | teaching assistant who can type fast and prefers CLI | complete every task the app offers using only the keyboard | never break out of typing to reach for a mouse or trackpad |
 | `* * *` | teaching assistant in Singapore | save a name containing s/o, d/o, hyphens or apostrophes | record students under the name that appears on the official roster |
 | `* * *` | teaching assistant | flag a student as needing follow-up, and clear the flag once I have replied | keep an accurate list of who is still waiting on me |
@@ -453,27 +453,27 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *` | teaching assistant | find students by a tag | focus on a single tutorial group |
 | `*` | teaching assistant | view a student's NUS ID | match a student's name to records on other digital platforms (e.g. attendance) |
 | `*` | teaching assistant | find students by a specific detail such as name, NUS ID, phone or email | go straight to the right record when I know one thing about the student |
-| `*` | teaching assistant who can type fast and prefers CLI | see a record whenever I make changes to it | confirm that the changes I made are correct |
+| `*` | teaching assistant who can type fast and prefers CLI | see a student record whenever I make changes to it | confirm that the changes I made are correct |
 | `*` | teaching assistant with many students | import many students from a file and give them all the same tag at once | get a whole roster into the app without entering each student by hand |
-| `*` | teaching assistant with many students | edit records of many students en masse | update a whole group of students without repeating the same edit |
+| `*` | teaching assistant with many students | edit student records en masse | update a whole group of students without repeating the same edit |
 | `*` | teaching assistant with many students | delete entire classes | remove a class I no longer teach at the end of a semester |
 | `*` | teaching assistant | define my own short alias for a tag I use constantly | label a whole roster with far fewer keystrokes |
 | `*` | teaching assistant | reset the aliases I have defined | clear shortcuts that no longer match the classes I teach |
 | `*` | teaching assistant with exchange students | save a phone number with a country code and spaces | contact students whose numbers are not local 8-digit numbers |
-| `*` | teaching assistant | be asked to confirm before all data is wiped | avoid destroying a semester of records with one mistyped command |
+| `*` | teaching assistant | be asked to confirm before all data is wiped | avoid destroying a semester of student records with one mistyped command |
 | `*` | teaching assistant | view a student's remarks | recall important context such as special needs |
 | `*` | teaching assistant | add a remark to a student's record | note down requests or needs I should remember |
 | `*` | teaching assistant | redo an action I undid | restore a change I reverted by accident |
 | `*` | teaching assistant | be warned when a new student matches an existing record on phone, email or NUS ID | catch genuine duplicates even when the two names are spelled differently |
-| `*` | teaching assistant | merge two duplicate records after seeing how they differ | combine the information from both without losing either |
+| `*` | teaching assistant | merge two duplicate student records after seeing how they differ | combine the information from both without losing either |
 | `*` | teaching assistant | find students who have no tag | spot students not yet assigned to a group |
 | `*` | teaching assistant | sort my list by a detail I choose, such as name, NUS ID, or when the student was added | read the list in the order that suits the task in front of me |
 | `*` | teaching assistant | group my students by tag | see the class composition at a glance |
-| `*` | teaching assistant | export my records to a file | share or print the list externally |
+| `*` | teaching assistant | export my student records to a file | share or print the list externally |
 | `*` | teaching assistant | clear all data | start fresh with a clean student book |
 | `*` | teaching assistant | reset the app to sample data | explore how the app works before entering real records |
-| `*` | teaching assistant | keep separate data files per course | avoid mixing contacts from different modules |
-| `*` | long-time teaching assistant | archive the records of students who graduated | keep past students for reference without cluttering my active list |
+| `*` | teaching assistant | keep separate data files per course | avoid mixing student records from different modules |
+| `*` | long-time teaching assistant | archive student records after students graduate | keep past students for reference without cluttering my active list |
 | `*` | teaching assistant who can type fast | recall and reuse my recent commands | repeat the same command without retyping it |
 | `*` | teaching assistant who can type fast | auto-complete commands as I type | type common commands with fewer keystrokes |
 | `*` | teaching assistant | see a count of my students | quickly confirm nothing was lost after an import or delete |
@@ -482,7 +482,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | list students I have not followed up with since a given date | make sure no one who needs help flies under the radar |
 | `*` | teaching assistant working in twenty-second windows | identify a student by their NUS ID when deleting a record | avoid removing the wrong student when several students are listed |
 | `*` | teaching assistant working in twenty-second windows | identify a student by their NUS ID when editing a record | avoid changing the wrong student’s details |
-| `*` | teaching assistant | record two students who genuinely have the same name | keep two different students as two different records |
+| `*` | teaching assistant | record two students who genuinely have the same name | keep separate student records for them |
 | `*` | teaching assistant who can type fast | be shown a likely correction when I mistype a command word | recover without looking up the syntax |
 | `*` | teaching assistant | look back at results I have already replaced | re-read earlier output without running the search again |
 | `*` | teaching assistant | start from my previous input when an entry is rejected | correct one detail instead of retyping everything |
@@ -1068,7 +1068,7 @@ testers are expected to do more *exploratory* testing.
    1. Download the JAR file and copy it into an empty folder.
 
    1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+      Expected: The GUI opens with a set of sample student records. The window size may not be optimal.
 
 1. Saving window preferences
 
@@ -1086,7 +1086,8 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: List all students using the `list` command, with multiple students in the list.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The first student record is deleted from the list. The status message shows the deleted student
+      record's details.
 
    1. Test case: `delete 0`<br>
       Expected: No student is deleted. The status message shows error details.
