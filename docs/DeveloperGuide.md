@@ -696,9 +696,9 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 5.
 
-* *a. After TAB reports unreadable data, User chooses to abandon the recovery.
+* 2b. User chooses to abandon the recovery after TAB reports the unreadable data.
 
-    * *a1. TAB leaves the file as it found it and continues with any records it could read.
+    * 2b1. TAB leaves the file as it found it and continues with any records it could read.
 
       Use case ends.
 
