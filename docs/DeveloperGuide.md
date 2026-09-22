@@ -511,6 +511,7 @@ These were raised during requirement gathering and left out of the product.
 
 * [UC01 - Add a student](#uc01---add-a-student)
 * [UC02 - Find a student and act on the right one](#uc02---find-a-student-and-act-on-the-right-one)
+* [UC03 - Review follow-ups and clear the ones handled](#uc03---review-follow-ups-and-clear-the-ones-handled)
 * [UC04 - Import a roster](#uc04---import-a-roster)
 * [UC05 - Recover from an unreadable data file](#uc05---recover-from-an-unreadable-data-file)
 * [UC06 - Delete a class no longer taught](#uc06---delete-a-class-no-longer-taught)
@@ -611,6 +612,66 @@ These were raised during requirement gathering and left out of the product.
       Use case resumes at step 3.
 
 * 4b. User chooses not to act on the intended student.
+
+      Use case ends.
+
+#### UC03 - Review follow-ups and clear the ones handled
+
+**MSS**
+
+1.  User requests to review students who need follow-up.
+2.  TAB shows the students who are flagged for follow-up and the date each was last contacted, if recorded.
+3.  User provides part of any detail they remember about a student they have replied to.
+4.  TAB shows the flagged students whose details contain that fragment, regardless of letter case.
+5.  User identifies the intended student and provides the date they last contacted the student.
+6.  TAB records the contact date and clears the student's follow-up flag.
+7.  TAB shows the updated record and the remaining students who need follow-up.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. No student is flagged for follow-up.
+
+    * 2a1. TAB reports that no student needs follow-up.
+
+      Use case ends.
+
+* 3a. User remembers no detail that would narrow the list.
+
+    * 3a1. User selects the intended student from the displayed follow-up list.
+
+      Use case resumes at step 5.
+
+* 4a. No flagged student matches the fragment.
+
+    * 4a1. TAB reports that no matching student was found.
+    * 4a2. User provides a different fragment.
+
+      Use case resumes at step 4.
+
+* 5a. User cannot identify the intended student among the matches.
+
+    * 5a1. User provides another fragment to narrow the results.
+
+      Use case resumes at step 4.
+
+* 5b. The contact date is not in an acceptable form.
+
+    * 5b1. TAB explains why the date was rejected.
+    * 5b2. User corrects the date and submits again.
+
+      Steps 5b1-5b2 are repeated until the date is acceptable.
+
+      Use case resumes at step 6.
+
+* 5c. User decides that the student still needs follow-up.
+
+      Use case ends.
+
+* 6a. TAB cannot save the updated record.
+
+    * 6a1. TAB reports that the contact date and follow-up status were not changed, and why.
 
       Use case ends.
 
