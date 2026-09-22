@@ -612,7 +612,7 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to import a roster of students from a file.
 2.  User provides the file and the class tag to label every student with.
-3.  TAB saves the new students, tagged with the given class.
+3.  TAB saves the new students with the given class tag, preserving any other tags on their records.
 4.  TAB shows how many students were added, matched and skipped.
 
     Use case ends.
@@ -629,25 +629,24 @@ These were raised during requirement gathering and left out of the product.
 
     * 2b1. TAB names the row and the reason, skips it, and continues to process the other rows.
 
+      Step 2b1 is repeated for each malformed row.
+
       Use case resumes at step 3.
 
 * 2c. A student matches another student whom TAB already holds, on NUS ID, email or phone.
 
-    * 2c1. TAB lists the match and asks whether to update the existing records with the imported details.
-    * 2c2. User indicates whether to update the existing record.
-    * 2c3. TAB updates instead of saving this student, and continues to process the other rows.
+    * 2c1. TAB shows the match and asks whether to update the existing record with the imported details.
+    * 2c2. User chooses whether to update or skip the existing record.
+    * 2c3. TAB applies the User's choice, preserving the student's other tags, and continues to process the other
+      rows.
+
+      Steps 2c1-2c3 are repeated for each match.
 
       Use case resumes at step 3.
 
-* 2d. TAB cannot write to the data file.
+* 3a. TAB cannot write to the data file.
 
-    * 2d1. TAB reports that the import was not saved, and why.
-
-      Use case ends.
-
-* *a. At any time, User chooses to abandon the import.
-
-    * *a1. User clears the input.
+    * 3a1. TAB reports that the import was not saved, and why.
 
       Use case ends.
 
