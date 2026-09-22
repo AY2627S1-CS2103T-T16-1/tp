@@ -516,7 +516,7 @@ These were raised during requirement gathering and left out of the product.
 * [UC05 - Recover from an unreadable data file](#uc05---recover-from-an-unreadable-data-file)
 * [UC06 - Delete a class no longer taught](#uc06---delete-a-class-no-longer-taught)
 * [UC07 - Archive last semester's students](#uc07---archive-last-semesters-students)
-* [UC08 - Close out a semester](#uc08---close-out-a-semester)
+* [UC08 - Semester close-out](#uc08---semester-close-out)
 * [UC09 - Edit a student's details](#uc09---edit-a-students-details)
 
 #### UC01 - Add a student
@@ -831,14 +831,14 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-#### UC08 - Close out a semester
+#### UC08 - Semester close-out
 
 **MSS**
 
-1.  User requests to close out a semester, giving the semester and, if needed, the course(s) it covered.
+1.  User requests a semester close-out, giving the semester and, if needed, the course(s) it covered.
 2.  TAB lists every student still active for that semester.
-3.  TAB asks the User to confirm the close-out.
-4.  User confirms the close-out.
+3.  TAB asks the User to confirm the semester close-out.
+4.  User confirms the semester close-out.
 5.  TAB archives the student records selected for archiving, preserving their follow-up status.
 6.  TAB prepares the active list for the coming semester, retaining only student records the User chose to hold back
     and keeping the archive available.
@@ -849,7 +849,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 2a. No student is active for that semester.
 
-    * 2a1. TAB reports that there is nothing to close out.
+    * 2a1. TAB reports that there is nothing to include in the semester close-out.
 
       Use case ends.
 
@@ -860,7 +860,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 3.
 
-* 3a. User chooses not to close out the semester.
+* 3a. User chooses not to proceed with the semester close-out.
 
     * 3a1. TAB leaves the student records unchanged.
 
@@ -868,7 +868,7 @@ These were raised during requirement gathering and left out of the product.
 
 * 5a. TAB cannot write the archive or the new data file.
 
-    * 5a1. TAB reports that the close-out was not saved, and why.
+    * 5a1. TAB reports that the semester close-out was not saved, and why.
 
       Use case ends.
 
