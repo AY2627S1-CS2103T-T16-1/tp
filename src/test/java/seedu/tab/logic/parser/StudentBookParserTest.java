@@ -67,6 +67,13 @@ public class StudentBookParserTest {
         EditCommand command = (EditCommand) parser.parseCommand(EditCommand.COMMAND_WORD + " "
                 + INDEX_FIRST_STUDENT.getOneBased() + " " + StudentUtil.getEditStudentDescriptorDetails(descriptor));
         assertEquals(new EditCommand(INDEX_FIRST_STUDENT, descriptor), command);
+
+        EditStudentDescriptor toggleDescriptor = new EditStudentDescriptorBuilder()
+                .withFlagToggled(true).build();
+        EditCommand toggleCommand = (EditCommand) parser.parseCommand(EditCommand.COMMAND_WORD + " "
+                + INDEX_FIRST_STUDENT.getOneBased() + " "
+                + StudentUtil.getEditStudentDescriptorDetails(toggleDescriptor));
+        assertEquals(new EditCommand(INDEX_FIRST_STUDENT, toggleDescriptor), toggleCommand);
     }
 
     @Test

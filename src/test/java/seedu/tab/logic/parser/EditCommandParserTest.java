@@ -3,6 +3,7 @@ package seedu.tab.logic.parser;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_DESC_BOB;
+import static seedu.tab.logic.commands.CommandTestUtil.FOLLOW_UP_DESC;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_EMAIL_DESC;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NAME_DESC;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_PHONE_DESC;
@@ -19,6 +20,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.tab.logic.parser.CliSyntax.PREFIX_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
@@ -133,6 +135,31 @@ public class EditCommandParserTest {
         EditCommand expectedCommand = new EditCommand(targetIndex, descriptor);
 
         assertParseSuccess(parser, userInput, expectedCommand);
+    }
+
+    @Test
+    public void parse_followUpPrefixAloneOrWithAnotherEdit_success() {
+        EditStudentDescriptor toggleOnly = new EditStudentDescriptorBuilder()
+                .withFlagToggled(true).build();
+        assertParseSuccess(parser, "1" + FOLLOW_UP_DESC,
+                new EditCommand(INDEX_FIRST_STUDENT, toggleOnly));
+
+        EditStudentDescriptor toggleAndPhone = new EditStudentDescriptorBuilder()
+                .withPhone(VALID_PHONE_BOB).withFlagToggled(true).build();
+        assertParseSuccess(parser, "1" + PHONE_DESC_BOB + FOLLOW_UP_DESC,
+                new EditCommand(INDEX_FIRST_STUDENT, toggleAndPhone));
+    }
+
+    @Test
+    public void parse_followUpPrefixWithValue_failure() {
+        assertParseFailure(parser, "1 " + PREFIX_FOLLOW_UP + "true",
+                EditCommand.MESSAGE_FOLLOW_UP_PREFIX_TAKES_NO_VALUE);
+    }
+
+    @Test
+    public void parse_repeatedFollowUpPrefix_failure() {
+        assertParseFailure(parser, "1" + FOLLOW_UP_DESC + FOLLOW_UP_DESC,
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_FOLLOW_UP));
     }
 
     @Test

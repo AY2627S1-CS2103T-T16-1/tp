@@ -5,6 +5,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.tab.logic.parser.CliSyntax.PREFIX_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.tab.logic.parser.CliSyntax.PREFIX_TAG;
@@ -66,6 +67,9 @@ public class StudentUtil {
             } else {
                 tags.forEach(s -> sb.append(PREFIX_TAG).append(s.tagName).append(" "));
             }
+        }
+        if (descriptor.shouldToggleFlag()) {
+            sb.append(PREFIX_FOLLOW_UP);
         }
         return sb.toString();
     }
