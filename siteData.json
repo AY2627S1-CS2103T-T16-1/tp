@@ -109,7 +109,7 @@
       "src": "UserGuide.md",
       "title": "User Guide",
       "headings": {
-        "ab-3-user-guide": "AB-3 User Guide",
+        "tab-user-guide": "TAB User Guide",
         "quick-start": "Quick start",
         "features": "Features",
         "viewing-help-help": "Viewing help: help",
@@ -117,7 +117,7 @@
         "listing-all-students-list": "Listing all students: list",
         "editing-a-student-edit": "Editing a student: edit",
         "locating-students-by-detail-find": "Locating students by detail: find",
-        "deleting-a-person-delete": "Deleting a person: delete",
+        "deleting-a-student-delete": "Deleting a student: delete",
         "clearing-all-entries-clear": "Clearing all entries: clear",
         "exiting-the-program-exit": "Exiting the program: exit",
         "saving-the-data": "Saving the data",
@@ -145,7 +145,7 @@
       "src": "team/johndoe.md",
       "title": "John Doe's Project Portfolio Page",
       "headings": {
-        "project-addressbook-level-3": "Project: AddressBook Level 3"
+        "project-tab": "Project: TAB"
       },
       "headingKeywords": {}
     }
