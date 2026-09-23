@@ -505,12 +505,12 @@ These were raised during requirement gathering and left out of the product.
 
 ### Use cases
 
-(For all use cases below, the **System** is `TAB` and the **Actor** is the `user`, unless specified otherwise)
+(For all use cases below, the **System** is `TAB` and the **Actor** is the `user`, unless specified otherwise.)
 
 **Table of contents**
 
 * [UC01 - Add a student](#uc01---add-a-student)
-* [UC02 - Find a student](#uc02---find-a-student)
+* [UC02 - Find a student and act on the right one](#uc02---find-a-student-and-act-on-the-right-one)
 * [UC04 - Import a roster](#uc04---import-a-roster)
 * [UC05 - Recover from an unreadable data file](#uc05---recover-from-an-unreadable-data-file)
 * [UC06 - Delete a class no longer taught](#uc06---delete-a-class-no-longer-taught)
@@ -521,87 +521,96 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to add a student, giving the name and whatever other details they have
-2.  TAB checks that each detail is in an acceptable form
-3.  TAB checks the student against the records it already holds
-4.  TAB saves the student
-5.  TAB shows the new record, including the tags it applied
+1.  User requests to add a student.
+2.  User provides available details, including the name.
+3.  TAB saves the student.
+4.  TAB shows the new record, including the tags the User provided.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. A detail is not in an acceptable form.
+* 1a. TAB does not recognize the command word and identifies a likely intended command.
 
-    * 2a1. TAB names the detail it rejected and the reason, and leaves the input in the command box.
-    * 2a2. User corrects that detail and submits again.
+    * 1a1. TAB suggests the likely command.
+    * 1a2. User corrects the command word and submits again.
 
-      Steps 2a1-2a2 are repeated until every detail is acceptable.
+      Use case resumes at step 2.
+
+* 2a. At least one detail is not in an acceptable form.
+
+    * 2a1. TAB names every detail it rejected and the reason.
+    * 2a2. TAB leaves the original input in the command box.
+    * 2a3. User corrects the details and submits again.
+
+      Steps 2a1-2a3 are repeated until every detail is acceptable.
 
       Use case resumes at step 3.
 
-* 3a. The student matches one TAB already holds, on NUS ID, email or phone.
+* 2b. The student matches another student whom TAB already holds, on NUS ID, email or phone.
 
-    * 3a1. TAB shows the matching student and asks whether to add the new one anyway.
-    * 3a2. User confirms that the two are different people.
+    * 2b1. TAB shows the matching student and asks whether to add the new one anyway.
+    * 2b2. User confirms that the two are different people.
 
-      Use case resumes at step 4.
+      Use case resumes at step 3.
 
-* 4a. TAB cannot write to the data file.
+* 2c. The student matches another student whom TAB already holds, and they are the same person.
 
-    * 4a1. TAB reports that the student was not saved, and why.
-
-      Use case ends.
-
-* *a. At any time, User chooses to abandon the addition.
-
-    * *a1. User clears the input.
+    * 2c1. TAB shows the matching student and asks whether to add the new one anyway.
+    * 2c2. User indicates that the student is already on record.
+    * 2c3. TAB leaves the records unchanged.
 
       Use case ends.
 
-#### UC02 - Find a student
+* 2d. Before submitting the details, User chooses to abandon the addition.
+
+      Use case ends.
+
+* 3a. TAB cannot write to the data file.
+
+    * 3a1. TAB reports that the student was not saved, and why.
+
+      Use case ends.
+
+#### UC02 - Find a student and act on the right one
 
 **MSS**
 
-1.  User requests to find students by giving a generic search term, or a search term for a specific field like name, email or tag.
-2.  TAB filters students based on given search terms. 
-3.  TAB shows a list of students matching the search terms, displaying their identifying details
+1.  User requests to find students.
+2.  User provides search terms, and optionally indicates the specific field for each search term, such as name,
+    NUS ID, email or tag.
+3.  TAB shows the students matching any part of the search terms regardless of letter case, displaying identifying
+    details such as their NUS IDs.
+4.  User identifies the intended student.
+5.  User initiates the desired action on that student.
 
     Use case ends.
 
 **Extensions**
 
-* 1a. The search terms are not in an acceptable form.
+* 2a. The search terms are not in an acceptable form.
 
-    * 1a1. TAB reports the error and leaves the input in the command box.
-    * 1a2. User corrects the search terms and submits again.
+    * 2a1. TAB reports the error.
+    * 2a2. TAB leaves the original input in the command box.
+    * 2a3. User corrects the search terms and submits again.
 
-      Steps 1a1-1a2 are repeated until the search terms are acceptable.
+      Steps 2a1-2a3 are repeated until the search terms are acceptable.
 
-      Use case resumes at step 2.
+      Use case resumes at step 3.
 
-* 2a. No student matches the search terms.
+* 3a. No student matches the search terms.
 
-    * 2a1. TAB reports that no matching students were found.
-    * 2a2. User enters new search terms.
-
-      Use case resumes at step 2.
-
-* 3a. None of the listed students is the intended one.
-
-    * 2b1. User enters new search terms with different keywords or details.
-
-      Use case resumes at step 2.
-
-* 3b. User identifies the intended student(s) they are looking for.
-
-    * 3b1. User initiates an action, such as <u>deleting the student (UC06)</u>.
+    * 3a1. TAB reports that no matching students were found.
 
       Use case ends.
 
-* *a. At any time, User chooses to abandon the action.
+* 4a. None of the matching students is the intended student.
 
-    * *a1. User clears the input.
+    * 4a1. User provides revised search terms.
+
+      Use case resumes at step 3.
+
+* 4b. User chooses not to act on the intended student.
 
       Use case ends.
 
@@ -609,11 +618,10 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to import a roster from a file, giving the file and the class tag to give every student in it
-2.  TAB reads the file and turns each row into a student record
-3.  TAB checks each record against the students it already holds
-4.  TAB saves the new students, tagged with the given class
-5.  TAB shows how many students were added, matched and skipped
+1.  User requests to import a roster of students from a file.
+2.  User provides the file and the class tag to label every student with.
+3.  TAB saves the new students with the given class tag, preserving any other tags on their records.
+4.  TAB shows how many students were added, matched and skipped.
 
     Use case ends.
 
@@ -625,28 +633,34 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* 2b. A row is missing a required detail or is otherwise malformed.
+* 2b. A row in the file is missing a required detail or is otherwise malformed.
 
-    * 2b1. TAB names the row and the reason, skips it, and carries on with the rest.
+    * 2b1. TAB names the row and the reason, skips it, and continues to process the other rows.
+
+      Step 2b1 is repeated for each malformed row.
 
       Use case resumes at step 3.
 
-* 3a. A student matches one TAB already holds, on NUS ID, email or phone.
+* 2c. A student matches another student whom TAB already holds, on NUS ID, email or phone.
 
-    * 3a1. TAB lists the matches and asks whether to update the existing records with the imported details.
-    * 3a2. User picks which matches, if any, to update.
+    * 2c1. TAB shows the match and asks whether to update the existing record with the imported details.
+    * 2c2. User chooses whether to update or skip the existing record.
+    * 2c3. TAB applies the User's choice, preserving the student's other tags, and continues to process the other
+      rows.
 
-      Use case resumes at step 4.
+      Steps 2c1-2c3 are repeated for each match.
 
-* 4a. TAB cannot write to the data file.
+      Use case resumes at step 3.
 
-    * 4a1. TAB reports that the import was not saved, and why.
+* 2d. Before TAB saves the import, User chooses to abandon it.
+
+    * 2d1. TAB leaves the records unchanged.
 
       Use case ends.
 
-* *a. At any time, User chooses to abandon the import.
+* 3a. TAB cannot write to the data file.
 
-    * *a1. User clears the input.
+    * 3a1. TAB reports that the import was not saved, and why.
 
       Use case ends.
 
@@ -654,11 +668,12 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User starts TAB
-2.  TAB reads its data file and finds a record it cannot understand
-3.  TAB names the record and the reason, keeps the file untouched, and loads the records it can still read
-4.  User repairs the file and asks TAB to load it again
-5.  TAB loads the records, reporting anything still unreadable
+1.  User starts TAB.
+2.  TAB informs the user that a record is unreadable, identifies the record and the reason, leaves the file unchanged,
+    and displays the readable records.
+3.  User repairs the file.
+4.  User requests to reload the data file.
+5.  TAB reloads the data and confirms that all records are readable.
 
     Use case ends.
 
@@ -667,25 +682,23 @@ These were raised during requirement gathering and left out of the product.
 * 2a. TAB cannot read the file at all, for example because it is not a TAB data file.
 
     * 2a1. TAB reports why and leaves the file untouched.
-    * 2a2. User repairs or replaces the file, or decides to start with a fresh one.
+    * 2a2. User repairs or replaces the file.
+
+      Use case resumes at step 4.
+
+* 5a. One or more records are still unreadable.
+
+    * 5a1. TAB identifies each unreadable record and the reason, leaves the file unchanged, and displays the
+      readable records.
+    * 5a2. User repairs the file and requests to reload it.
+
+      Steps 5a1-5a2 are repeated until all records are readable.
 
       Use case resumes at step 5.
 
-* 4a. Records are still unreadable after the repair.
+* 2b. User chooses to abandon the recovery after TAB reports the unreadable data.
 
-    * 4a1. User repairs or asks TAB to drop each remaining record.
-
-      Use case resumes at step 5.
-
-* 5a. TAB cannot write its changes back to the file.
-
-    * 5a1. TAB reports that the repair was not saved, and why.
-
-      Use case ends.
-
-* *a. At any time, User chooses to abandon the recovery.
-
-    * *a1. TAB leaves the file as it found it and continues with the readable records.
+    * 2b1. TAB leaves the file as it found it and continues with any records it could read.
 
       Use case ends.
 
@@ -693,12 +706,13 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to delete a class, giving its class tag
-2.  TAB shows the class and every student in it
-3.  TAB asks the user to confirm the deletion, warning that students whose only tag is this class will be removed as well
-4.  User confirms the deletion
-5.  TAB removes the class tag, and the students that it left with no other tag
-6.  TAB shows how many students were affected
+1.  User requests to delete a class, giving its class tag.
+2.  TAB shows the class and every student in it.
+3.  TAB asks the user to confirm the deletion, warning that students whose only tag is this class will be removed as
+    well.
+4.  User confirms the deletion.
+5.  TAB removes the class from the student book and removes students who belong to no other class.
+6.  TAB shows how many students were affected.
 
     Use case ends.
 
@@ -722,22 +736,16 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* *a. At any time, User chooses to abandon the deletion.
-
-    * *a1. User clears the input.
-
-      Use case ends.
-
 #### UC07 - Archive last semester's students
 
 **MSS**
 
-1.  User requests to archive a past class, giving its class tag and the semester
-2.  TAB shows the students that would be archived
-3.  TAB asks for confirmation
-4.  User confirms
-5.  TAB moves those students into the archive, out of the active list
-6.  TAB shows how many students were archived
+1.  User requests to archive a past class, giving its class tag and the semester.
+2.  TAB shows the students that would be archived.
+3.  TAB asks for confirmation.
+4.  User confirms.
+5.  TAB removes those students from the active list while keeping them available in the archive.
+6.  TAB shows how many students were archived.
 
     Use case ends.
 
@@ -761,22 +769,17 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* *a. At any time, User chooses to abandon the archiving.
-
-    * *a1. User clears the input.
-
-      Use case ends.
-
 #### UC08 - Close out a semester
 
 **MSS**
 
-1.  User requests to close out a semester, giving the semester and, if needed, the module(s) it covered
-2.  TAB lists every student still active for that semester
-3.  TAB asks how to treat any records still awaiting a follow-up, and asks for confirmation
-4.  User confirms the close-out
-5.  TAB archives the semester's students, recording who was still awaiting a follow-up
-6.  TAB starts a clean student list for the coming semester, keeping the archive loadable
+1.  User requests to close out a semester, giving the semester and, if needed, the module(s) it covered.
+2.  TAB lists every student still active for that semester.
+3.  TAB asks the user to confirm the close-out.
+4.  User confirms the close-out.
+5.  TAB archives the students selected for archiving, preserving their follow-up status.
+6.  TAB prepares the active list for the coming semester, retaining only records the User chose to hold back and
+    keeping the archive available.
 
     Use case ends.
 
@@ -788,22 +791,22 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* 3a. Records still await a follow-up.
+* 2b. One or more students still await a follow-up.
 
-    * 3a1. TAB reminds the user how many, and asks whether to archive them with the rest or hold them back.
-    * 3a2. User chooses how to treat them.
+    * 2b1. TAB reminds the user how many, and asks whether to archive them with the rest or hold them back.
+    * 2b2. User chooses how to treat them.
 
-      Use case resumes at step 4.
+      Use case resumes at step 3.
+
+* 3a. User chooses not to close out the semester.
+
+    * 3a1. TAB leaves the records unchanged.
+
+      Use case ends.
 
 * 5a. TAB cannot write the archive or the fresh file.
 
     * 5a1. TAB reports that the close-out was not saved, and why.
-
-      Use case ends.
-
-* *a. At any time, User chooses to abandon the close-out.
-
-    * *a1. User clears the input.
 
       Use case ends.
 
