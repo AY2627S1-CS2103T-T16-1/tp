@@ -36,7 +36,7 @@ The following provides a quick overview of the main components and their interac
 
 **Main components of the architecture**
 
-**`Main`** (consisting of classes [`Main`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of TAB's launch and shut down.
+**`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/MainApp.java)) is in charge of TAB's launch and shut down.
 * At TAB's launch, it initializes the other components in the correct sequence, and connects them up with each other.
 * At shut down, it shuts down the other components and invokes cleanup methods where necessary.
 
@@ -68,24 +68,24 @@ The sections below give more details of each component.
 
 ### UI component
 
-The **API** of this component is specified in [`Ui.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/Ui.java)
+The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/Ui.java)
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
+The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/MainWindow.java).
 
 The `UI` component,
 
 * executes commands entered by the User using the `Logic` component.
 * listens for changes to `Model` data so that the UI can be updated with the modified data.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
-* depends on some classes in the `Model` component because it displays `Person` objects from the model.
+* depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
 ### Logic component
 
-**API** : [`Logic.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/logic/Logic.java)
+**API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java)
 
 Here's a (partial) class diagram of the `Logic` component:
 
@@ -103,7 +103,7 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 
 How the `Logic` component works:
 
-1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
+1. When `Logic` is called upon to execute a command, the command is passed to a `StudentBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a student).<br>
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
@@ -114,26 +114,26 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 <puml src="diagrams/ParserClasses.puml" width="600"/>
 
 How the parsing works:
-* When called upon to parse a command entered by the User, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
+* When called upon to parse a command entered by the User, the `StudentBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the command and create an `XYZCommand` object (e.g., `AddCommand`). The `StudentBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
-**API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
+**API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/model/Model.java)
 
 <puml src="diagrams/ModelClassDiagram.puml" width="450" />
 
 
 The `Model` component,
 
-* stores the student book's data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
+* stores the student book's data i.e., all `Student` objects (which are contained in a `UniqueStudentList` object).
+* stores the `Student` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Student>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the User’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
 
 <box type="info" seamless>
 
-**Note:** The alternative, arguably more object-oriented, design below keeps a unique list of tags in `AddressBook`, and each `Person` references tags from that list. This lets `AddressBook` maintain one `Tag` object per unique tag instead of each `Person` holding its own `Tag` objects.<br>
+**Note:** The alternative, arguably more object-oriented, design below keeps a unique list of tags in `StudentBook`, and each `Student` references tags from that list. This lets `StudentBook` maintain one `Tag` object per unique tag instead of each `Student` holding its own `Tag` objects.<br>
 
 <puml src="diagrams/BetterModelClassDiagram.puml" width="450" />
 </box>
@@ -141,18 +141,18 @@ The `Model` component,
 
 ### Storage component
 
-**API** : [`Storage.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/storage/Storage.java)
+**API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/storage/Storage.java)
 
 <puml src="diagrams/StorageClassDiagram.puml" width="550" />
 
 The `Storage` component,
 * can save both the student book's data and the User's preference data in JSON format, and read them back into corresponding objects.
-* is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
+* is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonStudentBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
 ### Common classes
 
-Classes used by multiple components are in the `seedu.address.commons` package.
+Classes used by multiple components are in the `seedu.tab.commons` package.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -298,41 +298,41 @@ with positional arguments and command options, not by changing `Name`.
 
 #### Proposed Implementation
 
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
+The proposed undo/redo mechanism is facilitated by `VersionedStudentBook`. It extends `StudentBook` with an undo/redo history, stored internally as a `studentBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
 
-* `VersionedAddressBook#commit()` -- Saves the current state of the student book in its history.
-* `VersionedAddressBook#undo()` -- Restores the previous state of the student book from its history.
-* `VersionedAddressBook#redo()` -- Restores a previously undone state of the student book from its history.
+* `VersionedStudentBook#commit()` -- Saves the current state of the student book in its history.
+* `VersionedStudentBook#undo()` -- Restores the previous state of the student book from its history.
+* `VersionedStudentBook#redo()` -- Restores a previously undone state of the student book from its history.
 
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
+These operations would be exposed in the `Model` interface as `Model#commitStudentBook()`, `Model#undoStudentBook()` and `Model#redoStudentBook()` respectively.
 
 Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
 
-Step 1. The User launches TAB for the first time. The `VersionedAddressBook` will be initialized with the initial state of the student book, and the `currentStatePointer` pointing to that single state.
+Step 1. The User launches TAB for the first time. The `VersionedStudentBook` will be initialized with the initial state of the student book, and the `currentStatePointer` pointing to that single state.
 
 <puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
 
-Step 2. The User executes `delete 5` command to delete the 5th student in the student book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the student book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted state.
+Step 2. The User executes `delete 5` command to delete the 5th student in the student book. The `delete` command calls `Model#commitStudentBook()`, causing the modified state of the student book after the `delete 5` command executes to be saved in the `studentBookStateList`, and the `currentStatePointer` is shifted to the newly inserted state.
 
 <puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
 
-Step 3. The User executes `add David …​` to add a new student. The `add` command also calls `Model#commitAddressBook()`, causing another modified state of the student book to be saved into the `addressBookStateList`.
+Step 3. The User executes `add David …​` to add a new student. The `add` command also calls `Model#commitStudentBook()`, causing another modified state of the student book to be saved into the `studentBookStateList`.
 
 <puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
 
 <box type="info" seamless>
 
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the state of the student book will not be saved into the `addressBookStateList`.
+**Note:** If a command fails its execution, it will not call `Model#commitStudentBook()`, so the state of the student book will not be saved into the `studentBookStateList`.
 </box>
 
-Step 4. The User now decides that adding the student was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous state, and restores the student book to that state.
+Step 4. The User now decides that adding the student was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoStudentBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous state, and restores the student book to that state.
 
 <puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
 
 
 <box type="info" seamless>
 
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial `AddressBook` state, then there are no previous `AddressBook` states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the User rather
+**Note:** If the `currentStatePointer` is at index 0, pointing to the initial `StudentBook` state, then there are no previous `StudentBook` states to restore. The `undo` command uses `Model#canUndoStudentBook()` to check if this is the case. If so, it will return an error to the User rather
 than attempting to perform the undo.
 </box>
 
@@ -349,18 +349,18 @@ Similarly, how an undo operation goes through the `Model` component is shown bel
 
 <puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
 
-The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the student book to that state.
+The `redo` command does the opposite — it calls `Model#redoStudentBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the student book to that state.
 
 <box type="info" seamless>
 
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest `AddressBook` state, then there are no undone `AddressBook` states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the User rather than attempting to perform the redo.
+**Note:** If the `currentStatePointer` is at index `studentBookStateList.size() - 1`, pointing to the latest `StudentBook` state, then there are no undone `StudentBook` states to restore. The `redo` command uses `Model#canRedoStudentBook()` to check if this is the case. If so, it will return an error to the User rather than attempting to perform the redo.
 </box>
 
-Step 5. The User then decides to execute the command `list`. Commands that do not modify the student book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
+Step 5. The User then decides to execute the command `list`. Commands that do not modify the student book, such as `list`, will usually not call `Model#commitStudentBook()`, `Model#undoStudentBook()` or `Model#redoStudentBook()`. Thus, the `studentBookStateList` remains unchanged.
 
 <puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
 
-Step 6. The User executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all states of the student book after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add David …` command. This is the behavior that most modern desktop applications follow.
+Step 6. The User executes `clear`, which calls `Model#commitStudentBook()`. Since the `currentStatePointer` is not pointing at the end of the `studentBookStateList`, all states of the student book after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add David …` command. This is the behavior that most modern desktop applications follow.
 
 <puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
 
@@ -1005,8 +1005,8 @@ These were raised during requirement gathering and left out of the product.
 
 * **Active list**: The student records used for current teaching work, excluding records moved to the proposed
   archive.
-* **Address book**: A legacy term inherited from AddressBook-Level3. Unless it refers to a class or interface in the
-  code, it means the student book.
+* **Address book**: A legacy term found in the upstream AddressBook-Level3 project and retained here only when
+  referring to that project's history. TAB calls its collection of student records the student book.
 * **Archive**: In the proposed archiving feature, the collection of past student records retained by TAB but excluded
   from the active list.
 * **ASCII space**: The ordinary space character (`U+0020`). This term means that exact character rather than every
@@ -1019,7 +1019,7 @@ These were raised during requirement gathering and left out of the product.
 * **Command prefix**: A marker attached to the beginning of a field value, such as `p/`. Commands such as `edit` use
   prefixes.
 * **Course**: An academic subject (e.g., CS2103T) taught by the User.
-* **Data file**: The local, human-editable JSON file (`addressbook.json`) used by TAB to store student records,
+* **Data file**: The local, human-editable JSON file (`tab.json`) used by TAB to store student records,
   distinct from `preferences.json`.
 * **Filtered list**: The subset of student records currently visible in the GUI as a result of a filter or search
   command (such as `find` or `list`). Commands taking an Index target records relative to this list.
@@ -1038,16 +1038,15 @@ These were raised during requirement gathering and left out of the product.
 * **NUS-ID**: A unique digital identifier for every student at the National University of Singapore. It has the form
   `e0123456`.
 * **Option**: See **Command option**.
-* **Person**: A legacy implementation term used in class names inherited from AddressBook-Level3. In TAB's domain, a
-  `Person` object represents a student record.
+* **Person**: A legacy term found in the upstream AddressBook-Level3 project. TAB's model uses `Student` for a student
+  record.
 * **Prefix**: See **Command prefix**.
 * **Roster**: A list of students belonging to a course, tutorial group, or lab group, particularly one prepared for
   import into TAB.
 * **Semester close-out**: The end-of-semester workflow (UC08) where active student records are archived
   and the active list is reset in preparation for a new academic term, optionally retaining records with
   pending follow-ups.
-* **Student book**: The collection of student records managed by TAB. This is the preferred product-facing term for
-  what inherited code may call an address book.
+* **Student book**: The collection of student records managed by TAB.
 * **Student record**: The information TAB stores about one student, such as their name, phone number, email address,
   and tags.
 * **TAB**: Teaching Assistant's Book; the desktop student-management application described in this guide.
