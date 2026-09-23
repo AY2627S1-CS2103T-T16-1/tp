@@ -517,6 +517,7 @@ These were raised during requirement gathering and left out of the product.
 * [UC06 - Delete a class no longer taught](#uc06---delete-a-class-no-longer-taught)
 * [UC07 - Archive last semester's students](#uc07---archive-last-semesters-students)
 * [UC08 - Close out a semester](#uc08---close-out-a-semester)
+* [UC09 - Edit a student's details](#uc09---edit-a-students-details)
 
 #### UC01 - Add a student
 
@@ -868,6 +869,53 @@ These were raised during requirement gathering and left out of the product.
 * 5a. TAB cannot write the archive or the fresh file.
 
     * 5a1. TAB reports that the close-out was not saved, and why.
+
+      Use case ends.
+
+#### UC09 - Edit a student's details
+
+**MSS**
+
+1.  <u>User finds and identifies the intended student (UC02).</u>
+2.  User requests to edit the student.
+3.  User provides one or more details to change.
+4.  TAB updates the provided details while preserving the other details.
+5.  TAB shows the updated record.
+
+    Use case ends.
+
+**Extensions**
+
+* 3a. User provides no detail to change.
+
+    * 3a1. TAB reports that at least one detail must be provided.
+
+      Use case ends.
+
+* 3b. At least one new detail is not in an acceptable form.
+
+    * 3b1. TAB names every detail it rejected and the reason.
+    * 3b2. User corrects the details and submits again.
+
+      Steps 3b1-3b2 are repeated until every detail is acceptable.
+
+      Use case resumes at step 4.
+
+* 3c. User chooses to abandon the edit.
+
+    * 3c1. TAB leaves the student's record unchanged.
+
+      Use case ends.
+
+* 4a. The edited details match another student whom TAB already holds.
+
+    * 4a1. TAB reports the matching student and leaves both records unchanged.
+
+      Use case ends.
+
+* 4b. TAB cannot write to the data file.
+
+    * 4b1. TAB reports that the changes were not saved, and why.
 
       Use case ends.
 
