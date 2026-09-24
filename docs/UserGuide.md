@@ -166,6 +166,8 @@ Shows a list of all students in the student book.
 
 Format: `list`
 
+If the student book is empty, TAB reports that there is no student in your list.
+
 ### Editing a student: `edit`
 
 Edits an existing student in the student book.
