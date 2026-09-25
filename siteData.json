@@ -52,6 +52,7 @@
         "common-classes": "Common classes",
         "implementation": "Implementation",
         "how-add-reads-its-arguments": "How add reads its arguments",
+        "follow-up-flag": "Follow-up flag",
         "field-values": "Field values",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
@@ -64,6 +65,7 @@
         "glossary": "Glossary",
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
+        "follow-up-status": "Follow-up status",
         "deleting-a-student": "Deleting a student",
         "saving-data": "Saving data"
       },
