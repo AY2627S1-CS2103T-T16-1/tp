@@ -89,6 +89,8 @@ public class AddCommandParserTest {
                 + ADD_EMAIL_BOB + ADD_TAG_FRIEND, new AddCommand(expected));
         assertParseSuccess(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_EMAIL_BOB
                 + ADD_TAG_FRIEND + ADD_FOLLOW_UP, new AddCommand(expected));
+        assertParseSuccess(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_EMAIL_BOB
+                + ADD_TAG_FRIEND + " -f", new AddCommand(expected));
     }
 
     @Test

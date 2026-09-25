@@ -163,7 +163,7 @@ This section describes some noteworthy details on how certain features are imple
 ### How `add` reads its arguments
 
 `add` marks its fields with options,
-`NAME -p PHONE [-e EMAIL] [-t TAG]... [-f]`,
+`NAME -p PHONE [-e EMAIL] [-t TAG]... [--follow-up]`,
 where the other commands mark theirs with prefixes such as `p/`.
 
 A prefix has to be a sequence a value never contains, and no such sequence
@@ -190,8 +190,9 @@ does open with a hyphen is given in quotes.
 `FlagTokenizer` reads the tokens. Those before the first option are the name,
 joined with single ASCII spaces, so a name of several words needs no quotes unless it
 would otherwise be misread. Value-taking options take the token after them,
-and `-t` repeats. The presence-only `-f` option instead records an empty value
-and consumes no following token. This lets `FlagArgumentMap` distinguish an
+and `-t` repeats. The presence-only `--follow-up` option and its `-f` alias
+instead record an empty value and consume no following token. This lets
+`FlagArgumentMap` distinguish an
 absent option from a present marker without a separate representation. An
 unknown option, a value-taking option left without a value, and a token
 belonging to no option are each reported for what they are, rather than as one
@@ -218,9 +219,9 @@ data, so full equality, hashing, and diagnostic string output include it, but
 change their identity. The four-argument constructor defaults the value to
 false so existing callers remain source-compatible.
 
-The add parser maps the presence of `-f` to true. For edit, the
-`EditStudentDescriptor` stores `shouldToggleFlag` rather than a replacement
-value. `EditCommand` applies that intent to the selected student's existing
+The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
+For edit, the `EditStudentDescriptor` stores `shouldToggleFlag` rather than a
+replacement value. `EditCommand` applies that intent to the selected student's existing
 state. This keeps an unrelated edit from resetting the flag and makes the
 non-idempotent `f/` behavior explicit.
 
@@ -1124,7 +1125,7 @@ testers are expected to do more *exploratory* testing.
       `Needs follow-up`. The saved Alice record in `data/tab.json` has no
       `flag` key.
 
-   1. Test case: `add Bob Lim -p 92345678 -f`<br>
+   1. Test case: `add Bob Lim -p 92345678 --follow-up`<br>
       Expected: Bob is added. His card and the command result both show
       `Needs follow-up`, and his saved record has `"flag": true`.
 
@@ -1151,9 +1152,9 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Continue from the preceding test and note each student's
       current details and follow-up status.
 
-   1. Test cases: `add Cara Ng -p 93456789 -f -f` and
-      `add Cara Ng -p 93456789 -f true`<br>
-      Expected: Neither command adds Cara. The first reports a repeated `-f`;
+   1. Test cases: `add Cara Ng -p 93456789 --follow-up -f` and
+      `add Cara Ng -p 93456789 --follow-up true`<br>
+      Expected: Neither command adds Cara. The first reports a repeated `--follow-up`;
       the second reports that `true` belongs to no option.
 
    1. Test cases: `edit 1 f/ f/` and `edit 1 f/true`<br>

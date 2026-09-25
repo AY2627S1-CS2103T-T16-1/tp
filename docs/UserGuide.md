@@ -87,7 +87,7 @@ Format: `help`
 
 Adds a student to the student book.
 
-Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [-f]`
+Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [--follow-up]`
 
 <box type="tip" seamless>
 
@@ -105,8 +105,9 @@ spaces, hyphens and any script, so `Lab 3`, `needs-followup` and
 
 <box type="tip" seamless>
 
-**Tip:** Add `-f` when the student already needs a reply or another action from
-you. This option takes no value. Without it, the student starts unflagged.
+**Tip:** Add `--follow-up` when the student already needs a reply or another
+action from you. This option takes no value, and the shorter `-f` alias is also
+accepted. Without either option, the student starts unflagged.
 </box>
 
 <box type="tip" seamless>
@@ -142,7 +143,7 @@ Examples:
 * `add "Betsy Crowe" -t friend -e betsycrowe@example.com -p 1234567 -t criminal`
 * `add "Ravi s/o Kumaran" -p 91234567 -e e0923841@u.nus.edu`
 * `add Siti Nur-Aisyah -p 84420917 -e e1147203@u.nus.edu -t T1 -t "Lab 3"`
-* `add Priya Nair -p 91234567 -e priya@example.com -f`
+* `add Priya Nair -p 91234567 -e priya@example.com --follow-up`
 * `add 陈伟明 -p 98123344 -e e1077310@u.nus.edu`
 
 A flagged student's card and successful command result include a separate
@@ -295,7 +296,7 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [-f]` <br> e.g., `add James Ho -p 22224444 -t friend -t colleague -f`
+**Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [--follow-up]` <br> e.g., `add James Ho -p 22224444 -t friend -t colleague --follow-up`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... [f/]`<br> e.g., `edit 2 n/James Lee f/`

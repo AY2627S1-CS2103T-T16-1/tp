@@ -184,7 +184,7 @@ public class FlagTokenizerTest {
 
     @Test
     public void tokenize_markerOnlyFlagAtMiddleOrEnd_recordsEmptyValue() throws Exception {
-        FlagArgumentMap middle = parse("John -f -p 123");
+        FlagArgumentMap middle = parse("John --follow-up -p 123");
         FlagArgumentMap end = parse("John -p 123 -f");
 
         assertEquals(Optional.of(""), middle.getValue(FLAG_FOLLOW_UP));
@@ -194,14 +194,15 @@ public class FlagTokenizerTest {
 
     @Test
     public void tokenize_repeatedMarkerOnlyFlag_keepsEveryOccurrence() throws Exception {
-        assertEquals(List.of("", ""), parse("John -f -f").getAllValues(FLAG_FOLLOW_UP));
+        assertEquals(List.of("", ""),
+                parse("John --follow-up -f").getAllValues(FLAG_FOLLOW_UP));
     }
 
     @Test
     public void tokenize_valueAfterMarkerOnlyFlag_saysItBelongsToNoOption() {
         assertThrows(ParseException.class,
                 String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "true"), () ->
-                    parse("John -f true"));
+                    parse("John --follow-up true"));
     }
 
     @Test

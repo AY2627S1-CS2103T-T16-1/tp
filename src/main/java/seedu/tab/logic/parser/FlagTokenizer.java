@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,7 +40,8 @@ public class FlagTokenizer {
         List<Token> tokens = CommandTokenizer.tokenize(arguments);
         // a caller that names the same marker twice means one flag, not a broken collector
         Map<String, Flag> flagsByMarker = Stream.of(knownFlags)
-                .collect(Collectors.toMap(Flag::getFlag, Function.identity(), (first, second) -> first));
+                .flatMap(flag -> flag.getMarkers().stream().map(marker -> Map.entry(marker, flag)))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first));
 
         FlagArgumentMap parsed = new FlagArgumentMap();
         int firstFlag = readPreamble(tokens, parsed);
