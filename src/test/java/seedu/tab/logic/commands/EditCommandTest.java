@@ -117,6 +117,72 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_toggleFollowUpFlag_changesFalseToTrue() {
+        Student original = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student editedStudent = new StudentBuilder(original).withFlag(true).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withFlagToggled(true).build());
+
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.setStudent(original, editedStudent);
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(editedStudent));
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_toggleFollowUpFlag_changesTrueToFalse() {
+        Student original = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student flaggedStudent = new StudentBuilder(original).withFlag(true).build();
+        model.setStudent(original, flaggedStudent);
+        Student editedStudent = new StudentBuilder(flaggedStudent).withFlag(false).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withFlagToggled(true).build());
+
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.setStudent(flaggedStudent, editedStudent);
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(editedStudent));
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_unrelatedEdit_preservesFollowUpFlag() {
+        Student original = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student flaggedStudent = new StudentBuilder(original).withFlag(true).build();
+        model.setStudent(original, flaggedStudent);
+        Student editedStudent = new StudentBuilder(flaggedStudent).withPhone(VALID_PHONE_BOB).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
+
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.setStudent(flaggedStudent, editedStudent);
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(editedStudent));
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertTrue(editedStudent.isFlagged());
+    }
+
+    @Test
+    public void execute_toggleFollowUpFlagInFilteredList_changesDisplayedStudent() {
+        showStudentAtIndex(model, INDEX_FIRST_STUDENT);
+        Student original = model.getFilteredStudentList().get(0);
+        Student editedStudent = new StudentBuilder(original).withFlag(true).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withFlagToggled(true).build());
+
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.setStudent(original, editedStudent);
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(editedStudent));
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
     public void execute_noFieldSpecifiedUnfilteredList_success() {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT, new EditStudentDescriptor());
         Student editedStudent = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
@@ -173,6 +239,15 @@ public class EditCommandTest {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredStudentList().size() + 1);
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withName(VALID_NAME_BOB).build();
         EditCommand editCommand = new EditCommand(outOfBoundIndex, descriptor);
+
+        assertCommandFailure(editCommand, model, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+    }
+
+    @Test
+    public void execute_invalidStudentIndexWithToggle_failureWithoutMutation() {
+        Index outOfBoundIndex = Index.fromOneBased(model.getFilteredStudentList().size() + 1);
+        EditCommand editCommand = new EditCommand(outOfBoundIndex,
+                new EditStudentDescriptorBuilder().withFlagToggled(true).build());
 
         assertCommandFailure(editCommand, model, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
     }

@@ -44,6 +44,18 @@ public class AddCommandTest {
     }
 
     @Test
+    public void execute_flaggedStudent_addSuccessfulWithFollowUpFeedback() throws Exception {
+        ModelStubAcceptingStudentAdded modelStub = new ModelStubAcceptingStudentAdded();
+        Student flaggedStudent = new StudentBuilder().withFlag(true).build();
+
+        CommandResult commandResult = new AddCommand(flaggedStudent).execute(modelStub);
+
+        assertEquals("New student added: Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
+                + "Tags: ; Needs follow-up", commandResult.getFeedbackToUser());
+        assertEquals(List.of(flaggedStudent), modelStub.studentsAdded);
+    }
+
+    @Test
     public void execute_duplicateStudent_throwsCommandException() {
         Student validStudent = new StudentBuilder().build();
         AddCommand addCommand = new AddCommand(validStudent);

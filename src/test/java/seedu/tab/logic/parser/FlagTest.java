@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class FlagTest {
@@ -12,6 +14,26 @@ public class FlagTest {
     @Test
     public void getLabel_joinsTheMarkerAndTheFieldName() {
         assertEquals("-e EMAIL", new Flag("-e", "EMAIL").getLabel());
+    }
+
+    @Test
+    public void markerOnlyFlag_labelIsJustTheMarkerAndTakesNoValue() {
+        Flag markerOnly = new Flag("-f");
+        assertEquals("-f", markerOnly.getLabel());
+        assertFalse(markerOnly.takesValue());
+    }
+
+    @Test
+    public void markerOnlyFlagWithAlias_returnsEveryMarker() {
+        Flag markerOnly = new Flag("--follow-up", List.of("-f"));
+
+        assertEquals(List.of("--follow-up", "-f"), markerOnly.getMarkers());
+        assertEquals("--follow-up", markerOnly.getLabel());
+    }
+
+    @Test
+    public void valueTakingFlag_takesValue() {
+        assertTrue(new Flag("-e", "EMAIL").takesValue());
     }
 
     @Test

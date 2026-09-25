@@ -71,6 +71,14 @@ public class EditStudentDescriptorBuilder {
         return this;
     }
 
+    /**
+     * Sets whether the {@code EditStudentDescriptor} should toggle the follow-up flag.
+     */
+    public EditStudentDescriptorBuilder withFlagToggled(boolean shouldToggleFlag) {
+        descriptor.setFlagToggled(shouldToggleFlag);
+        return this;
+    }
+
     public EditStudentDescriptor build() {
         return descriptor;
     }

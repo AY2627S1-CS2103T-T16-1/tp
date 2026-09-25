@@ -87,7 +87,7 @@ Format: `help`
 
 Adds a student to the student book.
 
-Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]...`
+Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [--follow-up]`
 
 <box type="tip" seamless>
 
@@ -101,6 +101,13 @@ be removed once set, only replaced.
 **Tip:** A student can have any number of tags, including zero. A tag may hold
 spaces, hyphens and any script, so `Lab 3`, `needs-followup` and
 `AY2627 Sem 1 CS2103T T16` are all valid.
+</box>
+
+<box type="tip" seamless>
+
+**Tip:** Add `--follow-up` when the student already needs a reply or another
+action from you. This option takes no value, and the shorter `-f` alias is also
+accepted. Without either option, the student starts unflagged.
 </box>
 
 <box type="tip" seamless>
@@ -136,7 +143,11 @@ Examples:
 * `add "Betsy Crowe" -t friend -e betsycrowe@example.com -p 1234567 -t criminal`
 * `add "Ravi s/o Kumaran" -p 91234567 -e e0923841@u.nus.edu`
 * `add Siti Nur-Aisyah -p 84420917 -e e1147203@u.nus.edu -t T1 -t "Lab 3"`
+* `add Priya Nair -p 91234567 -e priya@example.com --follow-up`
 * `add 陈伟明 -p 98123344 -e e1077310@u.nus.edu`
+
+A flagged student's card and successful command result include a separate
+`Needs follow-up` line. An unflagged student has no placeholder row.
 
 Leading and trailing spaces are removed, repeated spaces inside a name are
 collapsed to one, and invisible characters are discarded, so that a name is
@@ -172,12 +183,12 @@ If the student book is empty, TAB reports that there is no student in your list.
 
 Edits an existing student in the student book.
 
-Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]...`
+Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... [f/]`
 
 <box type="warning" seamless>
 
 **Known limitation:** `edit` still marks its fields with prefixes, so a value
-containing `p/`, `e/` or `t/` followed by a space is read as the start of
+containing `n/`, `p/`, `e/`, `t/` or `f/` after a space is read as the start of
 another field. A name that `add` accepts may therefore be impossible to type
 into `edit`. Add the student afresh if you hit this.
 </box>
@@ -185,12 +196,19 @@ into `edit`. Add the student afresh if you hit this.
 * Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
+* `f/` takes no value and toggles the follow-up status. An unflagged student
+  becomes flagged; a flagged student becomes unflagged. Repeating the same
+  command toggles the status back, so check the updated card after each edit.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
 * To remove all of a student's tags, enter `t/` without a tag after it.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
+*  `edit 1 f/` Flags the 1st student for follow-up. Running `edit 1 f/` again
+   clears the flag.
+*  `edit 2 p/91234567 f/` Updates the phone number and toggles follow-up in one
+   command.
 
 ### Locating students by detail: `find`
 
@@ -244,6 +262,11 @@ TAB automatically saves data after every command. You do not need to save manual
 
 TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.json`. Advanced users are welcome to update data directly by editing that data file.
 
+A student who needs follow-up has `"flag": true` in their JSON record. An
+unflagged student normally has no `flag` key; absence, `false`, and `null` all
+mean that no follow-up is needed. Data files created before this field existed
+continue to load, with every record that lacks the key treated as unflagged.
+
 <box type="warning" seamless>
 
 **Caution:**
@@ -275,10 +298,10 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]...` <br> e.g., `add James Ho -p 22224444 -t friend -t colleague`
+**Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [--follow-up]` <br> e.g., `add James Ho -p 22224444 -t friend -t colleague --follow-up`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... [f/]`<br> e.g., `edit 2 n/James Lee f/`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Help**   | `help`

@@ -2,6 +2,7 @@ package seedu.tab.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalStudents.ALICE;
 import static seedu.tab.testutil.TypicalStudents.HOON;
@@ -93,6 +94,17 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_handEditedFlagValues_loadWithCompatibleDefaults() throws Exception {
+        ReadOnlyStudentBook loaded = readStudentBook("followUpFlagStudentBook.json").get();
+
+        assertEquals(4, loaded.getStudentList().size());
+        assertTrue(loaded.getStudentList().get(0).isFlagged());
+        assertFalse(loaded.getStudentList().get(1).isFlagged());
+        assertFalse(loaded.getStudentList().get(2).isFlagged());
+        assertFalse(loaded.getStudentList().get(3).isFlagged());
+    }
+
+    @Test
     public void readAndSaveStudentBook_allInOrder_success() throws Exception {
         Path filePath = testFolder.resolve("TempStudentBook.json");
         StudentBook original = getTypicalStudentBook();
@@ -159,6 +171,26 @@ public class JsonStudentBookStorageTest {
         ReadOnlyStudentBook readBack = storage.readStudentBook(filePath).get();
         assertEquals(original, new StudentBook(readBack));
         assertEquals(Optional.empty(), readBack.getStudentList().get(0).getEmail());
+    }
+
+    @Test
+    public void readAndSaveStudentBook_followUpFlag_roundTripsAndOmitsFalse() throws Exception {
+        Path filePath = testFolder.resolve("FollowUpFlag.json");
+        Student flaggedStudent = new StudentBuilder().withName("Wong Mei Ling").withPhone("91234567")
+                .withFlag(true).build();
+        Student unflaggedStudent = new StudentBuilder().withName("Ravi Kumar").withPhone("91234568")
+                .withFlag(false).build();
+        StudentBook original = new StudentBook();
+        original.addStudent(flaggedStudent);
+        original.addStudent(unflaggedStudent);
+
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+        storage.saveStudentBook(original, filePath);
+
+        String savedJson = Files.readString(filePath);
+        assertTrue(savedJson.contains("\"flag\" : true"));
+        assertEquals(1, savedJson.split("\"flag\"", -1).length - 1);
+        assertEquals(original, new StudentBook(storage.readStudentBook(filePath).get()));
     }
 
     @Test

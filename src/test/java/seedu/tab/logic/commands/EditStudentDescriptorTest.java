@@ -51,6 +51,24 @@ public class EditStudentDescriptorTest {
         // different tags -> returns false
         editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(DESC_AMY.equals(editedAmy));
+
+        // different toggle intent -> returns false
+        editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withFlagToggled(true).build();
+        assertFalse(DESC_AMY.equals(editedAmy));
+    }
+
+    @Test
+    public void copyConstructor_toggleIntent_copied() {
+        EditStudentDescriptor source = new EditStudentDescriptorBuilder()
+                .withFlagToggled(true).build();
+        assertEquals(source, new EditStudentDescriptor(source));
+    }
+
+    @Test
+    public void isAnyFieldEdited_toggleIntentOnly_returnsTrue() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder()
+                .withFlagToggled(true).build();
+        assertTrue(descriptor.isAnyFieldEdited());
     }
 
     @Test
@@ -60,7 +78,8 @@ public class EditStudentDescriptorTest {
                 + editStudentDescriptor.getName().orElse(null) + ", phone="
                 + editStudentDescriptor.getPhone().orElse(null) + ", email="
                 + editStudentDescriptor.getEmail().orElse(null) + ", tags="
-                + editStudentDescriptor.getTags().orElse(null) + "}";
+                + editStudentDescriptor.getTags().orElse(null) + ", shouldToggleFlag="
+                + editStudentDescriptor.shouldToggleFlag() + "}";
         assertEquals(expected, editStudentDescriptor.toString());
     }
 }

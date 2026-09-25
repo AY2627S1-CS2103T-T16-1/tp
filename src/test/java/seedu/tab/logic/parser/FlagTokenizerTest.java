@@ -2,6 +2,7 @@ package seedu.tab.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.testutil.Assert.assertThrows;
@@ -17,7 +18,7 @@ import seedu.tab.logic.parser.exceptions.ParseException;
 public class FlagTokenizerTest {
 
     private static FlagArgumentMap parse(String arguments) throws ParseException {
-        return FlagTokenizer.tokenize(arguments, FLAG_PHONE, FLAG_EMAIL, FLAG_TAG);
+        return FlagTokenizer.tokenize(arguments, FLAG_PHONE, FLAG_EMAIL, FLAG_TAG, FLAG_FOLLOW_UP);
     }
 
     @Test
@@ -179,5 +180,35 @@ public class FlagTokenizerTest {
     public void tokenize_emptyQuotedValue_reachesTheFlag() throws Exception {
         // the field parser decides whether an empty value is allowed, not the tokenizer
         assertEquals(Optional.of(""), parse("John -e \"\"").getValue(FLAG_EMAIL));
+    }
+
+    @Test
+    public void tokenize_markerOnlyFlagAtMiddleOrEnd_recordsEmptyValue() throws Exception {
+        FlagArgumentMap middle = parse("John --follow-up -p 123");
+        FlagArgumentMap end = parse("John -p 123 -f");
+
+        assertEquals(Optional.of(""), middle.getValue(FLAG_FOLLOW_UP));
+        assertEquals(Optional.of("123"), middle.getValue(FLAG_PHONE));
+        assertEquals(Optional.of(""), end.getValue(FLAG_FOLLOW_UP));
+    }
+
+    @Test
+    public void tokenize_repeatedMarkerOnlyFlag_keepsEveryOccurrence() throws Exception {
+        assertEquals(List.of("", ""),
+                parse("John --follow-up -f").getAllValues(FLAG_FOLLOW_UP));
+    }
+
+    @Test
+    public void tokenize_valueAfterMarkerOnlyFlag_saysItBelongsToNoOption() {
+        assertThrows(ParseException.class,
+                String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "true"), () ->
+                    parse("John --follow-up true"));
+    }
+
+    @Test
+    public void tokenize_markerOnlyFlagAfterValueTakingFlag_saysFirstNeedsValue() {
+        assertThrows(ParseException.class,
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()), () ->
+                    parse("John -e -f"));
     }
 }

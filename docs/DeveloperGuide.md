@@ -162,7 +162,8 @@ This section describes some noteworthy details on how certain features are imple
 
 ### How `add` reads its arguments
 
-`add` marks its fields with options, `NAME -p PHONE [-e EMAIL] [-t TAG]...`,
+`add` marks its fields with options,
+`NAME -p PHONE [-e EMAIL] [-t TAG]... [--follow-up]`,
 where the other commands mark theirs with prefixes such as `p/`.
 
 A prefix has to be a sequence a value never contains, and no such sequence
@@ -188,8 +189,12 @@ does open with a hyphen is given in quotes.
 
 `FlagTokenizer` reads the tokens. Those before the first option are the name,
 joined with single ASCII spaces, so a name of several words needs no quotes unless it
-would otherwise be misread. Each option takes the token after it, and `-t`
-repeats. An unknown option, an option left without a value, and a token
+would otherwise be misread. Value-taking options take the token after them,
+and `-t` repeats. The presence-only `--follow-up` option and its `-f` alias
+instead record an empty value and consume no following token. This lets
+`FlagArgumentMap` distinguish an
+absent option from a present marker without a separate representation. An
+unknown option, a value-taking option left without a value, and a token
 belonging to no option are each reported for what they are, rather than as one
 generic complaint.
 
@@ -205,6 +210,31 @@ that `add` now accepts cannot be typed into `edit`. The two commands reading
 differently is a second problem on top of the first. Converting `edit` is
 tracked as issue #105, and was kept out of the change that introduced the options
 so that the new parsing could be reviewed on its own.
+
+### Follow-up flag
+
+`Student` stores follow-up as the primitive boolean `isFlagged`. It is student
+data, so full equality, hashing, and diagnostic string output include it, but
+`isSameStudent` does not: changing whether a student needs a reply does not
+change their identity. The four-argument constructor defaults the value to
+false so existing callers remain source-compatible.
+
+The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
+For edit, the `EditStudentDescriptor` stores `shouldToggleFlag` rather than a
+replacement value. `EditCommand` applies that intent to the selected student's existing
+state. This keeps an unrelated edit from resetting the flag and makes the
+non-idempotent `f/` behavior explicit.
+
+`JsonAdaptedStudent` uses a nullable `Boolean flag` at the storage boundary.
+Only `Boolean.TRUE` maps to true in the model; a missing key, JSON `null`, and
+`false` all map to the primitive false default. When saving, true is written
+as `"flag": true`, while false is represented as null and omitted by
+Jackson's `NON_NULL` policy. Files created before the field existed therefore
+load without migration or gratuitous rewrites.
+
+`StudentCard` shows a `Needs follow-up` label for true. For false it makes the
+label both invisible and unmanaged, so the card keeps no blank placeholder
+row. Successful add and edit feedback uses the same wording.
 
 ### Field values
 
@@ -511,7 +541,7 @@ These were raised during requirement gathering and left out of the product.
 
 * [UC01 - Add a student](#uc01-add-a-student)
 * [UC02 - Find a student and act on the right one](#uc02-find-a-student-and-act-on-the-right-one)
-* [UC03 - Review follow-ups and clear the ones handled](#uc03-review-follow-ups-and-clear-the-ones-handled)
+* [UC03 - Flag and clear a follow-up](#uc03-flag-and-clear-a-follow-up)
 * [UC04 - Import a roster](#uc04-import-a-roster)
 * [UC05 - Recover from an unreadable data file](#uc05-recover-from-an-unreadable-data-file)
 * [UC06 - Delete a class no longer taught](#uc06-delete-a-class-no-longer-taught)
@@ -524,9 +554,11 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to add a student, providing available details including the name.
+1.  User requests to add a student, providing available details including the
+    name and, optionally, that the student needs follow-up.
 2.  TAB saves the student record.
-3.  TAB shows the new student record, including the tags the User provided.
+3.  TAB shows the new student record, including the tags and follow-up status
+    the User provided.
 
     Use case ends.
 
@@ -614,58 +646,49 @@ These were raised during requirement gathering and left out of the product.
 
     Use case ends.
 
-#### UC03 - Review follow-ups and clear the ones handled
+#### UC03 - Flag and clear a follow-up
 
 **MSS**
 
-1.  User requests to review students who need follow-up.
-2.  TAB shows the students who are flagged for follow-up and the date each was last contacted, if recorded.
-3.  <u>User finds and identifies the intended student among those flagged for follow-up (UC02).</u>
-4.  User provides the date they last contacted the student.
-5.  TAB records the contact date and clears the student's follow-up flag.
-6.  TAB shows the updated student record and the remaining students who need follow-up.
-7.  User chooses to finish reviewing students who need follow-up.
+1.  <u>User finds and identifies a student who needs a response (UC02).</u>
+2.  User requests to toggle follow-up for that student.
+3.  TAB saves the student as needing follow-up.
+4.  TAB shows the updated student record with `Needs follow-up`.
+5.  Later, <u>User finds and identifies the same student after responding
+    (UC02).</u>
+6.  User requests to toggle follow-up for that student.
+7.  TAB saves the student as not needing follow-up.
+8.  TAB shows the updated student record without `Needs follow-up`.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. No student is flagged for follow-up.
+* 1a. UC02 ends without identifying a student, or User chooses not to act on
+  the identified student.
 
-    * 2a1. TAB reports that no student needs follow-up.
-
-      Use case ends.
-
-* 3a. UC02 ends without identifying a student, or User chooses not to act on the identified student.
-
-    * 3a1. TAB leaves the student records unchanged.
+    * 1a1. TAB leaves the student records unchanged.
 
       Use case ends.
 
-* 4a. The contact date is not in an acceptable form.
+* 3a. TAB cannot save the updated student record.
 
-    * 4a1. TAB explains why the date was rejected.
-    * 4a2. User corrects the date and submits again.
-
-      Steps 4a1-4a2 are repeated until the date is acceptable.
-
-      Use case resumes at step 5.
-
-* 4b. User decides that the student still needs follow-up.
-
-    * 4b1. TAB leaves the student record unchanged.
-
-      Use case resumes at step 7.
-
-* 5a. TAB cannot save the updated student record.
-
-    * 5a1. TAB reports that the contact date and follow-up status were not changed, and why.
+    * 3a1. TAB reports that the follow-up status was not changed, and why.
 
       Use case ends.
 
-* 7a. User chooses to review another student who needs follow-up.
+* 5a. UC02 ends without identifying the student, or User chooses not to clear
+  the follow-up status.
 
-    Use case resumes at step 3.
+    * 5a1. TAB leaves the student's follow-up status unchanged.
+
+      Use case ends.
+
+* 7a. TAB cannot save the updated student record.
+
+    * 7a1. TAB reports that the follow-up status was not changed, and why.
+
+      Use case ends.
 
 #### UC04 - Import a roster
 
@@ -869,8 +892,10 @@ These were raised during requirement gathering and left out of the product.
 
 1.  <u>User finds and identifies the intended student (UC02).</u>
 2.  User requests to edit the student.
-3.  User provides one or more details to change.
-4.  TAB updates the provided details while preserving the other details.
+3.  User provides one or more details to change and may request to toggle the
+    follow-up status.
+4.  TAB updates the provided details, toggles follow-up if requested, and
+    preserves the other details.
 5.  TAB shows the updated student record.
 
     Use case ends.
@@ -1021,8 +1046,8 @@ These were raised during requirement gathering and left out of the product.
   distinct from `preferences.json`.
 * **Filtered list**: The subset of student records currently visible in the GUI as a result of a filter or search
   command (such as `find` or `list`). Commands taking an Index target records relative to this list.
-* **Follow-up**: An action or response that the User still owes to a student, tracked in TAB as a pending status and
-  contact timestamp on a student record.
+* **Follow-up**: An action or response that the User still owes to a student,
+  tracked in TAB as a pending status on a student record.
 * **Identity field**: A field used by TAB to identify whether two records refer to the same student. In the core
   model, student identity is determined by normalized name; warning mechanisms in workflows also check for
   matching NUS-IDs, phone numbers, or emails.
@@ -1088,6 +1113,66 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Follow-up status
+
+1. Adding students with and without follow-up
+
+   1. Prerequisites: Launch the JAR from an empty folder, then run `clear`.
+
+   1. Test case: `add Alice Tan -p 91234567`<br>
+      Expected: Alice is added. Neither her card nor the command result shows
+      `Needs follow-up`. The saved Alice record in `data/tab.json` has no
+      `flag` key.
+
+   1. Test case: `add Bob Lim -p 92345678 --follow-up`<br>
+      Expected: Bob is added. His card and the command result both show
+      `Needs follow-up`, and his saved record has `"flag": true`.
+
+1. Toggling follow-up while editing
+
+   1. Prerequisites: Continue from the preceding test with Alice at index 1
+      and Bob at index 2.
+
+   1. Test case: `edit 1 f/`<br>
+      Expected: Alice now shows `Needs follow-up`.
+
+   1. Test case: `edit 1 p/81112222`<br>
+      Expected: Alice's phone changes and `Needs follow-up` remains.
+
+   1. Test case: `edit 1 f/`<br>
+      Expected: Alice no longer shows `Needs follow-up`, with no blank row
+      left in its place.
+
+   1. Test case: `edit 2 f/`<br>
+      Expected: Bob no longer shows `Needs follow-up`.
+
+1. Rejecting invalid or repeated follow-up markers
+
+   1. Prerequisites: Continue from the preceding test and note each student's
+      current details and follow-up status.
+
+   1. Test cases: `add Cara Ng -p 93456789 --follow-up -f` and
+      `add Cara Ng -p 93456789 --follow-up true`<br>
+      Expected: Neither command adds Cara. The first reports a repeated `--follow-up`;
+      the second reports that `true` belongs to no option.
+
+   1. Test cases: `edit 1 f/ f/` and `edit 1 f/true`<br>
+      Expected: Neither command changes Alice. The first reports a repeated
+      `f/`; the second explains that `f/` takes no value.
+
+1. Persisting and loading follow-up status
+
+   1. Prerequisites: Add a flagged student and an unflagged student, then exit
+      TAB and launch the same JAR from the same folder again.<br>
+      Expected: The flagged student's `Needs follow-up` row returns and the
+      unflagged student still has no such row.
+
+   1. Exit TAB. Back up `data/tab.json`, then replace it with a valid student
+      book whose records respectively use `"flag": true`, `"flag": false`,
+      `"flag": null`, and no `flag` key. Relaunch TAB.<br>
+      Expected: Only the record with `true` shows `Needs follow-up`. The other
+      three load as unflagged, including the legacy record with no key.
 
 ### Deleting a student
 

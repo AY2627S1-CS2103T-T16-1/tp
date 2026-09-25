@@ -23,6 +23,7 @@ public class StudentBuilder {
     private Phone phone;
     private Email email;
     private Set<Tag> tags;
+    private boolean isFlagged;
 
     /**
      * Creates a {@code StudentBuilder} with the default details.
@@ -32,6 +33,7 @@ public class StudentBuilder {
         phone = new Phone(DEFAULT_PHONE);
         email = new Email(DEFAULT_EMAIL);
         tags = new HashSet<>();
+        isFlagged = false;
     }
 
     /**
@@ -42,6 +44,7 @@ public class StudentBuilder {
         phone = studentToCopy.getPhone();
         email = studentToCopy.getEmail().orElse(null);
         tags = new HashSet<>(studentToCopy.getTags());
+        isFlagged = studentToCopy.isFlagged();
     }
 
     /**
@@ -84,8 +87,16 @@ public class StudentBuilder {
         return this;
     }
 
+    /**
+     * Sets whether the {@code Student} that we are building needs follow-up.
+     */
+    public StudentBuilder withFlag(boolean isFlagged) {
+        this.isFlagged = isFlagged;
+        return this;
+    }
+
     public Student build() {
-        return new Student(name, phone, email, tags);
+        return new Student(name, phone, email, tags, isFlagged);
     }
 
 }

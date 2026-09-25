@@ -2,6 +2,7 @@ package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_EMAIL_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_EMAIL_BOB;
+import static seedu.tab.logic.commands.CommandTestUtil.ADD_FOLLOW_UP;
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_INVALID_EMAIL;
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_INVALID_NAME;
 import static seedu.tab.logic.commands.CommandTestUtil.ADD_INVALID_PHONE;
@@ -18,6 +19,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -77,6 +79,18 @@ public class AddCommandParserTest {
         Student tagged = new StudentBuilder(AMY).withTags(VALID_TAG_FRIEND).withoutEmail().build();
         assertParseSuccess(parser, ADD_NAME_AMY + ADD_PHONE_AMY + ADD_TAG_FRIEND,
                 new AddCommand(tagged));
+    }
+
+    @Test
+    public void parse_followUpOptionPresent_buildsFlaggedStudent() {
+        Student expected = new StudentBuilder(BOB).withTags(VALID_TAG_FRIEND).withFlag(true).build();
+
+        assertParseSuccess(parser, ADD_NAME_BOB + ADD_FOLLOW_UP + ADD_PHONE_BOB
+                + ADD_EMAIL_BOB + ADD_TAG_FRIEND, new AddCommand(expected));
+        assertParseSuccess(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_EMAIL_BOB
+                + ADD_TAG_FRIEND + ADD_FOLLOW_UP, new AddCommand(expected));
+        assertParseSuccess(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_EMAIL_BOB
+                + ADD_TAG_FRIEND + " -f", new AddCommand(expected));
     }
 
     @Test
@@ -170,6 +184,9 @@ public class AddCommandParserTest {
 
         assertParseFailure(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_EMAIL_AMY + ADD_EMAIL_BOB,
                 Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
+
+        assertParseFailure(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_FOLLOW_UP + ADD_FOLLOW_UP,
+                Messages.getErrorMessageForDuplicateFlags(FLAG_FOLLOW_UP));
     }
 
     @Test
@@ -195,6 +212,9 @@ public class AddCommandParserTest {
         // the name needs no quotes, but it does have to be given before the options
         assertParseFailure(parser, " Ravi" + ADD_PHONE_BOB + " Kumaran",
                 String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "Kumaran"));
+
+        assertParseFailure(parser, ADD_NAME_BOB + ADD_PHONE_BOB + ADD_FOLLOW_UP + " true",
+                String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "true"));
     }
 
     @Test

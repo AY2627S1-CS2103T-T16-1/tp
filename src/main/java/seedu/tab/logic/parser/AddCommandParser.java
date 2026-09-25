@@ -1,6 +1,7 @@
 package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
@@ -37,8 +38,9 @@ public class AddCommandParser implements Parser<AddCommand> {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public AddCommand parse(String args) throws ParseException {
-        FlagArgumentMap arguments = FlagTokenizer.tokenize(args, FLAG_PHONE, FLAG_EMAIL, FLAG_TAG);
-        arguments.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL);
+        FlagArgumentMap arguments = FlagTokenizer.tokenize(
+                args, FLAG_PHONE, FLAG_EMAIL, FLAG_TAG, FLAG_FOLLOW_UP);
+        arguments.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL, FLAG_FOLLOW_UP);
 
         ParseProblems problems = new ParseProblems();
 
@@ -54,7 +56,8 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         problems.throwIfAny();
 
-        Student student = new Student(name, phone, email, tagList);
+        boolean isFlagged = arguments.getValue(FLAG_FOLLOW_UP).isPresent();
+        Student student = new Student(name, phone, email, tagList, isFlagged);
 
         return new AddCommand(student);
     }

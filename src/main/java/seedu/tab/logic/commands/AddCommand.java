@@ -2,6 +2,7 @@ package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
@@ -25,9 +26,11 @@ public class AddCommand extends Command {
             + "Parameters: " + FIELD_NAME + " "
             + FLAG_PHONE.getLabel() + " "
             + "[" + FLAG_EMAIL.getLabel() + "] "
-            + "[" + FLAG_TAG.getLabel() + "]...\n"
+            + "[" + FLAG_TAG.getLabel() + "]... "
+            + "[" + FLAG_FOLLOW_UP.getLabel() + "]\n"
             + "The name comes first and may hold spaces as it is. Any option value holding "
-            + "spaces, and any value opening with a hyphen, goes in double quotes.\n"
+            + "spaces, and any value opening with a hyphen, goes in double quotes. "
+            + FLAG_FOLLOW_UP + " (alias -f) takes no value and marks the student as needing follow-up.\n"
             + "Example: " + COMMAND_WORD + " \"Siti Nur-Aisyah\" "
             + FLAG_PHONE + " 98765432 "
             + FLAG_EMAIL + " e1147203@u.nus.edu "
