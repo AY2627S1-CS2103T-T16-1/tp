@@ -10,6 +10,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
+import seedu.tab.model.tag.Flag;
 
 /**
  * A UI component that displays information of a {@code Student}.
@@ -60,8 +61,9 @@ public class StudentCard extends UiPart<Region> {
             email.setManaged(false);
             email.setVisible(false);
         }
-        if (student.isFlagged()) {
-            followUp.setText("Needs follow-up");
+        Optional<Flag> studentFlag = student.getFlag();
+        if (studentFlag.isPresent()) {
+            followUp.setText(studentFlag.get().tagName);
         } else {
             followUp.setManaged(false);
             followUp.setVisible(false);

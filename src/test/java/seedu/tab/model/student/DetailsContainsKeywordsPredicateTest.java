@@ -83,6 +83,17 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_keywordInFollowUpFlag_matchesOnlyFlaggedStudent() {
+        Student flaggedStudent = new StudentBuilder().withName("Alice").withFlag(true).build();
+        Student unflaggedStudent = new StudentBuilder().withName("Alice").withFlag(false).build();
+        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of("FOLLOW-UP"));
+
+        assertTrue(predicate.test(flaggedStudent));
+        assertFalse(predicate.test(unflaggedStudent));
+        assertTrue(new DetailsContainsKeywordsPredicate(List.of("needs")).test(flaggedStudent));
+    }
+
+    @Test
     public void test_keywordInEmail_returnsTrue() {
         // Student without email should not match email keyword
         StudentBuilder studentBuilder = new StudentBuilder().withName("Alice")

@@ -223,6 +223,10 @@ but `isSameStudent` does not: changing whether a student needs a reply does not
 change their identity. The four-argument constructor defaults to no flag so
 existing callers remain source-compatible.
 
+Search combines ordinary tags with the optional flag and matches their
+inherited `tagName` values. The student card and command feedback display the
+same value, while the card keeps the flag in its separate follow-up row.
+
 The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
 For edit, the `EditStudentDescriptor` stores `shouldToggleFlag` rather than a
 replacement value. `EditCommand` applies that intent to the selected student's existing
@@ -1133,10 +1137,19 @@ testers are expected to do more *exploratory* testing.
       Expected: Bob is added. His card and the command result both show
       `Needs follow-up`, and his saved record has `"flag": true`.
 
+1. Finding students by follow-up status
+
+   1. Prerequisites: Continue from the preceding test with Alice unflagged
+      and Bob flagged.
+
+   1. Test cases: `find follow-up` and `find NEEDS`<br>
+      Expected: Each search shows Bob and excludes Alice, matching part of
+      the flag's displayed name without regard to case.
+
 1. Toggling follow-up while editing
 
-   1. Prerequisites: Continue from the preceding test with Alice at index 1
-      and Bob at index 2.
+   1. Prerequisites: Run `list` after the preceding search, restoring Alice
+      at index 1 and Bob at index 2.
 
    1. Test case: `edit 1 f/`<br>
       Expected: Alice now shows `Needs follow-up`.
