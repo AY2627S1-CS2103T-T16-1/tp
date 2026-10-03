@@ -257,7 +257,7 @@ They normalize for different reasons, and the rule each one enforces differs.
 
 | Field | Why it is normalized | What it must hold |
 | --- | --- | --- |
-| `Name` | it is the identity field used to compare students, and the only field the search reads | at least one letter or number |
+| `Name` | it is the identity field used to compare students, so visually identical names should have the same stored form | at least one letter or number |
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
 
@@ -278,8 +278,10 @@ spelling for removing one, the way `t/` alone empties the tags.
 same number, and `isSameStudent` does not read it. It is normalized only so
 that a number typed with unusual whitespace is stored consistently.
 
-Only `Name` is searched. `NameContainsKeywordsPredicate` reads `getName()`
-alone, so a tag or a phone number cannot be found by `find` today.
+`FindCommandParser` creates a `DetailsContainsKeywordsPredicate`, which checks
+each keyword against the student's name, phone, email, ordinary tags, and
+optional follow-up flag. Matching is case-insensitive and partial; any keyword
+can match.
 
 Nothing else is rejected in any of the three. A phone number may hold `+`,
 whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
@@ -288,7 +290,7 @@ fields is parsed, dialled, or used to build a file path.
 
 #### Student names
 
-A name is displayed, split into words by the search, and used as a student's
+A name is displayed, searched as text, and used as a student's
 identity field. `Name` therefore stores a normalized field value rather than
 the raw input, so that two names which look identical cannot be searched
 differently or admitted as two students.
