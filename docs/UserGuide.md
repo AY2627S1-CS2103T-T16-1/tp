@@ -218,7 +218,8 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 
 * The search is case-insensitive; for example, `hans` matches `Hans`.
 * Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search covers all details of a student: name, phone number, email address and tags.
+* The search covers all details of a student: name, phone number, email address,
+  tags and follow-up status. For example, `find follow-up` can find flagged students.
 * Parts of details match; for example, `Han` matches `Hans`, and `912` matches the phone number `91234567`.
 * Students matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
 

@@ -213,11 +213,19 @@ so that the new parsing could be reviewed on its own.
 
 ### Follow-up flag
 
-`Student` stores follow-up as the primitive boolean `isFlagged`. It is student
-data, so full equality, hashing, and diagnostic string output include it, but
-`isSameStudent` does not: changing whether a student needs a reply does not
-change their identity. The four-argument constructor defaults the value to
-false so existing callers remain source-compatible.
+`Flag` extends `Tag` and uses its validation, normalization, and display
+behavior. Its fixed name is `Needs follow-up`. A general tag with those words
+remains a distinct value: tag equality requires the same concrete class as
+well as the same normalized name. `Student` holds an optional `Flag` and
+exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
+interface for commands and the UI. Full equality and hashing include the flag,
+but `isSameStudent` does not: changing whether a student needs a reply does not
+change their identity. The four-argument constructor defaults to no flag so
+existing callers remain source-compatible.
+
+Search combines ordinary tags with the optional flag and matches their
+inherited `tagName` values. The student card and command feedback display the
+same value, while the card keeps the flag in its separate follow-up row.
 
 The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
 For edit, the `EditStudentDescriptor` stores `shouldToggleFlag` rather than a
@@ -226,9 +234,9 @@ state. This keeps an unrelated edit from resetting the flag and makes the
 non-idempotent `f/` behavior explicit.
 
 `JsonAdaptedStudent` uses a nullable `Boolean flag` at the storage boundary.
-Only `Boolean.TRUE` maps to true in the model; a missing key, JSON `null`, and
-`false` all map to the primitive false default. When saving, true is written
-as `"flag": true`, while false is represented as null and omitted by
+Only `Boolean.TRUE` creates a `Flag` in the model; a missing key, JSON `null`, and
+`false` all map to no flag. When saving, a present flag is written
+as `"flag": true`, while an absent flag is represented as null and omitted by
 Jackson's `NON_NULL` policy. Files created before the field existed therefore
 load without migration or gratuitous rewrites.
 
@@ -249,7 +257,7 @@ They normalize for different reasons, and the rule each one enforces differs.
 
 | Field | Why it is normalized | What it must hold |
 | --- | --- | --- |
-| `Name` | it is the identity field used to compare students, and the only field the search reads | at least one letter or number |
+| `Name` | it is the identity field used to compare students, so visually identical names should have the same stored form | at least one letter or number |
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
 
@@ -270,8 +278,10 @@ spelling for removing one, the way `t/` alone empties the tags.
 same number, and `isSameStudent` does not read it. It is normalized only so
 that a number typed with unusual whitespace is stored consistently.
 
-Only `Name` is searched. `NameContainsKeywordsPredicate` reads `getName()`
-alone, so a tag or a phone number cannot be found by `find` today.
+`FindCommandParser` creates a `DetailsContainsKeywordsPredicate`, which checks
+each keyword against the student's name, phone, email, ordinary tags, and
+optional follow-up flag. Matching is case-insensitive and partial; any keyword
+can match.
 
 Nothing else is rejected in any of the three. A phone number may hold `+`,
 whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
@@ -280,7 +290,7 @@ fields is parsed, dialled, or used to build a file path.
 
 #### Student names
 
-A name is displayed, split into words by the search, and used as a student's
+A name is displayed, searched as text, and used as a student's
 identity field. `Name` therefore stores a normalized field value rather than
 the raw input, so that two names which look identical cannot be searched
 differently or admitted as two students.
@@ -1129,10 +1139,19 @@ testers are expected to do more *exploratory* testing.
       Expected: Bob is added. His card and the command result both show
       `Needs follow-up`, and his saved record has `"flag": true`.
 
+1. Finding students by follow-up status
+
+   1. Prerequisites: Continue from the preceding test with Alice unflagged
+      and Bob flagged.
+
+   1. Test cases: `find follow-up` and `find NEEDS`<br>
+      Expected: Each search shows Bob and excludes Alice, matching part of
+      the flag's displayed name without regard to case.
+
 1. Toggling follow-up while editing
 
-   1. Prerequisites: Continue from the preceding test with Alice at index 1
-      and Bob at index 2.
+   1. Prerequisites: Run `list` after the preceding search, restoring Alice
+      at index 1 and Bob at index 2.
 
    1. Test case: `edit 1 f/`<br>
       Expected: Alice now shows `Needs follow-up`.

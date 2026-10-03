@@ -18,6 +18,7 @@ Class Email
 Class Name
 Class Phone
 Class Tag
+Class Flag
 
 Class I #FFFFFF
 }
@@ -40,6 +41,8 @@ Student *--> Name
 Student *--> Phone
 Student *--> "0..1" Email
 Student *--> "*" Tag
+Student *--> "0..1" Flag
+Flag --|> Tag
 
 Student -[hidden]up--> I
 UniqueStudentList -[hidden]right-> I

@@ -59,7 +59,7 @@ class JsonAdaptedStudent {
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
-        flag = source.isFlagged() ? Boolean.TRUE : null;
+        flag = source.getFlag().isPresent() ? Boolean.TRUE : null;
     }
 
     /**
