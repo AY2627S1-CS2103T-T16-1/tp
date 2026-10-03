@@ -44,11 +44,12 @@ public class Tag {
             return true;
         }
 
-        // instanceof handles nulls
-        if (!(other instanceof Tag otherTag)) {
+        // A follow-up flag and a general tag with the same text have different meanings.
+        if (other == null || getClass() != other.getClass()) {
             return false;
         }
 
+        Tag otherTag = (Tag) other;
         return tagName.equals(otherTag.tagName);
     }
 

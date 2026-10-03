@@ -213,11 +213,15 @@ so that the new parsing could be reviewed on its own.
 
 ### Follow-up flag
 
-`Student` stores follow-up as the primitive boolean `isFlagged`. It is student
-data, so full equality, hashing, and diagnostic string output include it, but
-`isSameStudent` does not: changing whether a student needs a reply does not
-change their identity. The four-argument constructor defaults the value to
-false so existing callers remain source-compatible.
+`Flag` extends `Tag` and uses its validation, normalization, and display
+behavior. Its fixed name is `Needs follow-up`. A general tag with those words
+remains a distinct value: tag equality requires the same concrete class as
+well as the same normalized name. `Student` holds an optional `Flag` and
+exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
+interface for commands and the UI. Full equality and hashing include the flag,
+but `isSameStudent` does not: changing whether a student needs a reply does not
+change their identity. The four-argument constructor defaults to no flag so
+existing callers remain source-compatible.
 
 The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
 For edit, the `EditStudentDescriptor` stores `shouldToggleFlag` rather than a
@@ -226,9 +230,9 @@ state. This keeps an unrelated edit from resetting the flag and makes the
 non-idempotent `f/` behavior explicit.
 
 `JsonAdaptedStudent` uses a nullable `Boolean flag` at the storage boundary.
-Only `Boolean.TRUE` maps to true in the model; a missing key, JSON `null`, and
-`false` all map to the primitive false default. When saving, true is written
-as `"flag": true`, while false is represented as null and omitted by
+Only `Boolean.TRUE` creates a `Flag` in the model; a missing key, JSON `null`, and
+`false` all map to no flag. When saving, a present flag is written
+as `"flag": true`, while an absent flag is represented as null and omitted by
 Jackson's `NON_NULL` policy. Files created before the field existed therefore
 load without migration or gratuitous rewrites.
 

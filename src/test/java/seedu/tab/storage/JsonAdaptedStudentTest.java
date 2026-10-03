@@ -18,6 +18,7 @@ import seedu.tab.commons.exceptions.IllegalValueException;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.Phone;
+import seedu.tab.model.tag.Flag;
 
 public class JsonAdaptedStudentTest {
     private static final String INVALID_NAME = "---"; // no letter or number
@@ -102,6 +103,7 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_TAGS, true);
         assertTrue(student.toModelType().isFlagged());
+        assertEquals(new Flag(), student.toModelType().getFlag().orElseThrow());
     }
 
     @Test

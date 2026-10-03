@@ -14,6 +14,7 @@ import static seedu.tab.testutil.TypicalStudents.BOB;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.model.tag.Flag;
 import seedu.tab.testutil.StudentBuilder;
 
 public class StudentTest {
@@ -23,6 +24,14 @@ public class StudentTest {
         Student student = new Student(ALICE.getName(), ALICE.getPhone(),
                 ALICE.getEmail().orElse(null), ALICE.getTags());
         assertFalse(student.isFlagged());
+        assertTrue(student.getFlag().isEmpty());
+    }
+
+    @Test
+    public void constructor_withFlag_exposesTypedFlag() {
+        Student student = new StudentBuilder(ALICE).withFlag(true).build();
+        assertEquals(new Flag(), student.getFlag().orElseThrow());
+        assertTrue(student.isFlagged());
     }
 
     @Test

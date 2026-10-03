@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import seedu.tab.commons.util.ToStringBuilder;
+import seedu.tab.model.tag.Flag;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -26,7 +27,7 @@ public class Student {
 
     // Data fields
     private final Set<Tag> tags = new HashSet<>();
-    private final boolean isFlagged;
+    private final Flag flag;
 
     /**
      * Every field but the email must be present and not null. A student may be recorded before
@@ -46,7 +47,7 @@ public class Student {
         this.phone = phone;
         this.email = email;
         this.tags.addAll(tags);
-        this.isFlagged = isFlagged;
+        this.flag = isFlagged ? new Flag() : null;
     }
 
     public Name getName() {
@@ -70,7 +71,12 @@ public class Student {
     }
 
     public boolean isFlagged() {
-        return isFlagged;
+        return flag != null;
+    }
+
+    /** Returns the follow-up flag, when this student needs follow-up. */
+    public Optional<Flag> getFlag() {
+        return Optional.ofNullable(flag);
     }
 
     /**
@@ -105,13 +111,13 @@ public class Student {
                 && phone.equals(otherStudent.phone)
                 && Objects.equals(email, otherStudent.email)
                 && tags.equals(otherStudent.tags)
-                && isFlagged == otherStudent.isFlagged;
+                && Objects.equals(flag, otherStudent.flag);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, tags, isFlagged);
+        return Objects.hash(name, phone, email, tags, flag);
     }
 
     @Override
@@ -121,7 +127,7 @@ public class Student {
                 .add("phone", phone)
                 .add("email", email)
                 .add("tags", tags)
-                .add("isFlagged", isFlagged)
+                .add("isFlagged", isFlagged())
                 .toString();
     }
 }
