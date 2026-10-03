@@ -912,9 +912,9 @@ These were raised during requirement gathering and left out of the product.
 
 **Extensions**
 
-* 3a. User provides no detail to change.
+* 3a. User provides neither a detail to change nor a follow-up toggle.
 
-    * 3a1. TAB reports that at least one detail must be provided.
+    * 3a1. TAB reports that the edit must include a change.
 
       Use case ends.
 
