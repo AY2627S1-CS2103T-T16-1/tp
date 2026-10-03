@@ -12,8 +12,10 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.commands.ClearCommand;
+import seedu.tab.logic.commands.Command;
 import seedu.tab.logic.commands.DeleteCommand;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
@@ -102,6 +104,56 @@ public class StudentBookParserTest {
     public void parseCommand_list() throws Exception {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD + " 3") instanceof ListCommand);
+    }
+
+    @Test
+    public void parseCommand_everySeparator_givesTheSameCommandAsASpace() {
+        // only add reads its arguments with the tokenizer, so testing add alone hides the rest:
+        // the others look for an ordinary space and used to keep the separator as their first
+        // character, turning "delete 1" into an invalid index and "find John" into a search for
+        // a keyword nobody typed
+        String[] commands = {"delete 1", "edit 1 p/91234567", "find John", "add John Doe -p 91234567"};
+
+        for (String command : commands) {
+            int space = command.indexOf(' ');
+            String word = command.substring(0, space);
+            String rest = command.substring(space + 1);
+
+            for (int code = Character.MIN_VALUE; code <= Character.MAX_VALUE; code++) {
+                char separator = (char) code;
+                if (!StringUtil.isWhitespace(separator)) {
+                    continue;
+                }
+                assertEquals(parseOrNull(word + ' ' + rest), parseOrNull(word + separator + rest),
+                        command + " differed on U+" + Integer.toHexString(code));
+            }
+        }
+    }
+
+    /** Returns the command {@code input} parses to, or null when it is refused. */
+    private Command parseOrNull(String input) {
+        try {
+            return parser.parseCommand(input);
+        } catch (ParseException e) {
+            return null;
+        }
+    }
+
+    @Test
+    public void parseCommand_leadingSeparators_areIgnored() throws Exception {
+        assertTrue(parser.parseCommand("\u00A0\u3000 " + ListCommand.COMMAND_WORD) instanceof ListCommand);
+    }
+
+    @Test
+    public void parseCommand_onlySeparators_throwsParseException() {
+        String expected = String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE);
+        assertThrows(ParseException.class, expected, () -> parser.parseCommand("\u00A0 \t\n"));
+    }
+
+    @Test
+    public void parseCommand_argumentsHoldingALineBreak_areStillRead() throws Exception {
+        // a command copied out of a document may arrive wrapped across lines
+        assertTrue(parser.parseCommand(AddCommand.COMMAND_WORD + " John Doe\n-p 91234567") instanceof AddCommand);
     }
 
     @Test
