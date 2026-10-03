@@ -24,6 +24,14 @@ import seedu.tab.logic.parser.exceptions.ParseException;
 public class StudentBookParser {
 
     private static final int NOT_FOUND = -1;
+
+    /**
+     * What the separators between the command word and its arguments are handed on as. The
+     * parsers below read the rest of the line themselves, and most of them know only this one,
+     * so giving them anything else makes a command mean different things by which space was
+     * typed.
+     */
+    private static final String ARGUMENT_SEPARATOR = " ";
     private static final Logger logger = LogsCenter.getLogger(StudentBookParser.class);
 
     /**
@@ -32,6 +40,11 @@ public class StudentBookParser {
      * <p>The command word is separated from its arguments by {@link StringUtil#isWhitespace},
      * the same rule the tokenizer splits the arguments on. Spelling the rule a second time as
      * a pattern is what let a command pasted from a web page be refused as unknown.
+     *
+     * <p>Whatever separated the two is handed on as a single space, so that a command means
+     * the same thing whichever one was typed. Only the add command reads its arguments with
+     * the tokenizer; the rest look for an ordinary space and would otherwise keep the
+     * separator as the first character of their arguments.
      *
      * @param userInput full user input string
      * @return the command based on the user input
@@ -43,9 +56,12 @@ public class StudentBookParser {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
         int wordEnd = indexOfNextSeparator(userInput, wordStart);
+        int argumentsStart = indexOfNextValue(userInput, wordEnd);
 
         final String commandWord = userInput.substring(wordStart, wordEnd);
-        final String arguments = userInput.substring(wordEnd);
+        final String arguments = argumentsStart == NOT_FOUND
+                ? ""
+                : ARGUMENT_SEPARATOR + userInput.substring(argumentsStart);
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.commands.ClearCommand;
+import seedu.tab.logic.commands.Command;
 import seedu.tab.logic.commands.DeleteCommand;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
@@ -106,17 +107,35 @@ public class StudentBookParserTest {
     }
 
     @Test
-    public void parseCommand_everySeparatorTheTokenizerAccepts_separatesTheCommandWord() throws Exception {
-        // the tokenizer splits arguments on any of these; the command boundary has to agree, or
-        // a command pasted from a web page is refused as unknown before it reaches the tokenizer
-        for (int code = Character.MIN_VALUE; code <= Character.MAX_VALUE; code++) {
-            char separator = (char) code;
-            if (!StringUtil.isWhitespace(separator)) {
-                continue;
+    public void parseCommand_everySeparator_givesTheSameCommandAsASpace() {
+        // only add reads its arguments with the tokenizer, so testing add alone hides the rest:
+        // the others look for an ordinary space and used to keep the separator as their first
+        // character, turning "delete 1" into an invalid index and "find John" into a search for
+        // a keyword nobody typed
+        String[] commands = {"delete 1", "edit 1 p/91234567", "find John", "add John Doe -p 91234567"};
+
+        for (String command : commands) {
+            int space = command.indexOf(' ');
+            String word = command.substring(0, space);
+            String rest = command.substring(space + 1);
+
+            for (int code = Character.MIN_VALUE; code <= Character.MAX_VALUE; code++) {
+                char separator = (char) code;
+                if (!StringUtil.isWhitespace(separator)) {
+                    continue;
+                }
+                assertEquals(parseOrNull(word + ' ' + rest), parseOrNull(word + separator + rest),
+                        command + " differed on U+" + Integer.toHexString(code));
             }
-            String input = AddCommand.COMMAND_WORD + separator + "John Doe -p 91234567";
-            assertTrue(parser.parseCommand(input) instanceof AddCommand,
-                    "did not split on U+" + Integer.toHexString(code));
+        }
+    }
+
+    /** Returns the command {@code input} parses to, or null when it is refused. */
+    private Command parseOrNull(String input) {
+        try {
+            return parser.parseCommand(input);
+        } catch (ParseException e) {
+            return null;
         }
     }
 
