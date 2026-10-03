@@ -4,10 +4,9 @@ import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.tab.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import seedu.tab.commons.core.LogsCenter;
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.commands.ClearCommand;
 import seedu.tab.logic.commands.Command;
@@ -24,27 +23,29 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  */
 public class StudentBookParser {
 
-    /**
-     * Used for initial separation of command word and args.
-     */
-    private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
+    private static final int NOT_FOUND = -1;
     private static final Logger logger = LogsCenter.getLogger(StudentBookParser.class);
 
     /**
      * Parses user input into command for execution.
+     *
+     * <p>The command word is separated from its arguments by {@link StringUtil#isWhitespace},
+     * the same rule the tokenizer splits the arguments on. Spelling the rule a second time as
+     * a pattern is what let a command pasted from a web page be refused as unknown.
      *
      * @param userInput full user input string
      * @return the command based on the user input
      * @throws ParseException if the user input does not conform to the expected format
      */
     public Command parseCommand(String userInput) throws ParseException {
-        final Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput.trim());
-        if (!matcher.matches()) {
+        int wordStart = indexOfNextValue(userInput, 0);
+        if (wordStart == NOT_FOUND) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
+        int wordEnd = indexOfNextSeparator(userInput, wordStart);
 
-        final String commandWord = matcher.group("commandWord");
-        final String arguments = matcher.group("arguments");
+        final String commandWord = userInput.substring(wordStart, wordEnd);
+        final String arguments = userInput.substring(wordEnd);
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.
@@ -65,6 +66,33 @@ public class StudentBookParser {
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
             }
         };
+    }
+
+
+    /**
+     * Returns the index of the first character at or after {@code from} that separates nothing,
+     * or {@code NOT_FOUND} when the rest of {@code input} is all separators.
+     */
+    private static int indexOfNextValue(String input, int from) {
+        for (int i = from; i < input.length(); i++) {
+            if (!StringUtil.isWhitespace(input.charAt(i))) {
+                return i;
+            }
+        }
+        return NOT_FOUND;
+    }
+
+    /**
+     * Returns the index of the first separator at or after {@code from}, or the end of
+     * {@code input} when there is none.
+     */
+    private static int indexOfNextSeparator(String input, int from) {
+        for (int i = from; i < input.length(); i++) {
+            if (StringUtil.isWhitespace(input.charAt(i))) {
+                return i;
+            }
+        }
+        return input.length();
     }
 
 }

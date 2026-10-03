@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.commands.ClearCommand;
 import seedu.tab.logic.commands.DeleteCommand;
@@ -102,6 +103,38 @@ public class StudentBookParserTest {
     public void parseCommand_list() throws Exception {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD + " 3") instanceof ListCommand);
+    }
+
+    @Test
+    public void parseCommand_everySeparatorTheTokenizerAccepts_separatesTheCommandWord() throws Exception {
+        // the tokenizer splits arguments on any of these; the command boundary has to agree, or
+        // a command pasted from a web page is refused as unknown before it reaches the tokenizer
+        for (int code = Character.MIN_VALUE; code <= Character.MAX_VALUE; code++) {
+            char separator = (char) code;
+            if (!StringUtil.isWhitespace(separator)) {
+                continue;
+            }
+            String input = AddCommand.COMMAND_WORD + separator + "John Doe -p 91234567";
+            assertTrue(parser.parseCommand(input) instanceof AddCommand,
+                    "did not split on U+" + Integer.toHexString(code));
+        }
+    }
+
+    @Test
+    public void parseCommand_leadingSeparators_areIgnored() throws Exception {
+        assertTrue(parser.parseCommand("\u00A0\u3000 " + ListCommand.COMMAND_WORD) instanceof ListCommand);
+    }
+
+    @Test
+    public void parseCommand_onlySeparators_throwsParseException() {
+        String expected = String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE);
+        assertThrows(ParseException.class, expected, () -> parser.parseCommand("\u00A0 \t\n"));
+    }
+
+    @Test
+    public void parseCommand_argumentsHoldingALineBreak_areStillRead() throws Exception {
+        // a command copied out of a document may arrive wrapped across lines
+        assertTrue(parser.parseCommand(AddCommand.COMMAND_WORD + " John Doe\n-p 91234567") instanceof AddCommand);
     }
 
     @Test
