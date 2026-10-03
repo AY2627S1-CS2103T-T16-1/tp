@@ -902,8 +902,7 @@ These were raised during requirement gathering and left out of the product.
 
 1.  <u>User finds and identifies the intended student (UC02).</u>
 2.  User requests to edit the student.
-3.  User provides one or more details to change and may request to toggle the
-    follow-up status.
+3.  User specifies changes to the student's details, follow-up status, or both.
 4.  TAB updates the provided details, toggles follow-up if requested, and
     preserves the other details.
 5.  TAB shows the updated student record.
@@ -912,9 +911,9 @@ These were raised during requirement gathering and left out of the product.
 
 **Extensions**
 
-* 3a. User provides no detail to change.
+* 3a. User specifies no change.
 
-    * 3a1. TAB reports that at least one detail must be provided.
+    * 3a1. TAB reports that the edit must include a change.
 
       Use case ends.
 
