@@ -25,7 +25,7 @@ Computing—who manage 150 to 250 students across multiple tutorial or lab slots
 
 * **CLI-first speed:** Perform common tasks—adding students, tagging groups, and searching
   records—entirely from the keyboard without reaching for a mouse.
-* **Flexible tagging:** Group and filter students by module, tutorial group, lab slot, 
+* **Flexible tagging:** Group and filter students by module, tutorial group, lab slot,
   or team to focus on the class at hand.
 * **Follow-up tracking:** Flag students who require a reply or assistance, keeping track
   of how long queries have been pending so no student is overlooked.
