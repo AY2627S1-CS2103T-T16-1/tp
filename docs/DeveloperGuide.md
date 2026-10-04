@@ -553,7 +553,7 @@ These were raised during requirement gathering and left out of the product.
 **MSS**
 
 1.  User requests to find students by giving a generic search term, or a search term for a specific field like name, email or tag.
-2.  TAB filters students based on given search terms. 
+2.  TAB filters students based on given search terms.
 3.  TAB shows a list of students matching the search terms, displaying their identifying details
 
     Use case ends.
