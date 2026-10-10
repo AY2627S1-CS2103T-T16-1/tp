@@ -1,6 +1,7 @@
 package seedu.tab.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.tab.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
@@ -108,23 +109,28 @@ public class StudentBookParserTest {
 
     @Test
     public void parseCommand_everySeparator_givesTheSameCommandAsASpace() {
-        // only add reads its arguments with the tokenizer, so testing add alone hides the rest:
-        // the others look for an ordinary space and used to keep the separator as their first
-        // character, turning "delete 1" into an invalid index and "find John" into a search for
-        // a keyword nobody typed
-        String[] commands = {"delete 1", "edit 1 p/91234567", "find John", "add John Doe -p 91234567"};
+        // only add and edit read their arguments with the tokenizer, so testing those alone
+        // hides the rest: the others look for an ordinary space and used to keep the separator
+        // as their first character, turning "delete 1" into an invalid index and "find John"
+        // into a search for a keyword nobody typed
+        String[] commands = {"delete 1", "edit 1 -p 91234567", "find John", "add John Doe -p 91234567"};
 
         for (String command : commands) {
             int space = command.indexOf(' ');
             String word = command.substring(0, space);
             String rest = command.substring(space + 1);
 
+            // a command the parser refuses even with an ordinary space would compare null with
+            // null for every separator, so the loop below would pass while testing nothing
+            Command baseline = parseOrNull(word + ' ' + rest);
+            assertNotNull(baseline, command + " is refused with an ordinary space");
+
             for (int code = Character.MIN_VALUE; code <= Character.MAX_VALUE; code++) {
                 char separator = (char) code;
                 if (!StringUtil.isWhitespace(separator)) {
                     continue;
                 }
-                assertEquals(parseOrNull(word + ' ' + rest), parseOrNull(word + separator + rest),
+                assertEquals(baseline, parseOrNull(word + separator + rest),
                         command + " differed on U+" + Integer.toHexString(code));
             }
         }
