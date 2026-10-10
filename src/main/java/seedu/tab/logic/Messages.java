@@ -4,7 +4,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import seedu.tab.logic.parser.Flag;
-import seedu.tab.logic.parser.Prefix;
 import seedu.tab.model.student.Student;
 
 /**
@@ -29,21 +28,6 @@ public class Messages {
             + "goes in double quotes.";
 
     /**
-     * Returns an error message indicating the duplicate prefixes.
-     */
-    public static String getErrorMessageForDuplicatePrefixes(Prefix... duplicatePrefixes) {
-        assert duplicatePrefixes.length > 0;
-
-        // distinct rather than a set, so that the fields are named in the order they were given
-        String duplicateFields = Stream.of(duplicatePrefixes)
-                .map(Prefix::toString)
-                .distinct()
-                .collect(Collectors.joining(" "));
-
-        return MESSAGE_DUPLICATE_FIELDS + duplicateFields;
-    }
-
-    /**
      * Returns an error message indicating the flags that were given more than once.
      */
     public static String getErrorMessageForDuplicateFlags(Flag... duplicateFlags) {
@@ -65,19 +49,6 @@ public class Messages {
         assert missingFields.length > 0;
 
         return String.format(MESSAGE_MISSING_FIELDS, String.join(", ", missingFields));
-    }
-
-    /**
-     * Returns an error message naming the fields that the command left out.
-     */
-    public static String getErrorMessageForMissingPrefixes(Prefix... missingPrefixes) {
-        assert missingPrefixes.length > 0;
-
-        String missingFields = Stream.of(missingPrefixes)
-                .map(Prefix::getLabel)
-                .collect(Collectors.joining(", "));
-
-        return String.format(MESSAGE_MISSING_FIELDS, missingFields);
     }
 
     /**
