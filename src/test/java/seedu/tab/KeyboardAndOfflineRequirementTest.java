@@ -69,7 +69,7 @@ public class KeyboardAndOfflineRequirementTest {
 
         // Edit student using keyboard command
         CommandResult editResult = logic.execute(
-                EditCommand.COMMAND_WORD + " 1 p/91234567");
+                EditCommand.COMMAND_WORD + " 1 -p 91234567");
         assertTrue(editResult.getFeedbackToUser().contains("91234567"));
 
         // Delete student using keyboard command

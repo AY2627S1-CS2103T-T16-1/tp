@@ -8,6 +8,7 @@ import java.util.List;
 public class CliFlags {
 
     /* Flag definitions */
+    public static final Flag FLAG_NAME = new Flag("-n", "NAME");
     public static final Flag FLAG_PHONE = new Flag("-p", "PHONE");
     public static final Flag FLAG_EMAIL = new Flag("-e", "EMAIL");
     public static final Flag FLAG_TAG = new Flag("-t", "TAG");

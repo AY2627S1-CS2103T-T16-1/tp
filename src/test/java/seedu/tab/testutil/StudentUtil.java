@@ -2,13 +2,9 @@ package seedu.tab.testutil;
 
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_FOLLOW_UP;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Set;
 
@@ -54,22 +50,28 @@ public class StudentUtil {
 
     /**
      * Returns the part of command string for the given {@code EditStudentDescriptor}'s details.
+     * Every value is quoted, since a name, a tag and even a phone number may hold spaces.
      */
     public static String getEditStudentDescriptorDetails(EditStudentDescriptor descriptor) {
         StringBuilder sb = new StringBuilder();
-        descriptor.getName().ifPresent(name -> sb.append(PREFIX_NAME).append(name.fullName).append(" "));
-        descriptor.getPhone().ifPresent(phone -> sb.append(PREFIX_PHONE).append(phone.value).append(" "));
-        descriptor.getEmail().ifPresent(email -> sb.append(PREFIX_EMAIL).append(email.value).append(" "));
+        descriptor.getName().ifPresent(name ->
+                sb.append(FLAG_NAME).append(" ").append(quoted(name.fullName)).append(" "));
+        descriptor.getPhone().ifPresent(phone ->
+                sb.append(FLAG_PHONE).append(" ").append(quoted(phone.value)).append(" "));
+        descriptor.getEmail().ifPresent(email ->
+                sb.append(FLAG_EMAIL).append(" ").append(quoted(email.value)).append(" "));
         if (descriptor.getTags().isPresent()) {
             Set<Tag> tags = descriptor.getTags().get();
             if (tags.isEmpty()) {
-                sb.append(PREFIX_TAG);
+                // an explicitly empty value, which is how every tag is removed
+                sb.append(FLAG_TAG).append(" \"\" ");
             } else {
-                tags.forEach(s -> sb.append(PREFIX_TAG).append(s.tagName).append(" "));
+                tags.forEach(tag ->
+                        sb.append(FLAG_TAG).append(" ").append(quoted(tag.tagName)).append(" "));
             }
         }
         if (descriptor.shouldToggleFlag()) {
-            sb.append(PREFIX_FOLLOW_UP);
+            sb.append(FLAG_FOLLOW_UP);
         }
         return sb.toString();
     }

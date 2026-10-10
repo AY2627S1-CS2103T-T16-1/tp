@@ -1,11 +1,11 @@
 package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_FOLLOW_UP;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_TAG;
+import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
+import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.model.Model.PREDICATE_SHOW_ALL_STUDENTS;
 
 import java.util.Collections;
@@ -33,25 +33,28 @@ import seedu.tab.model.tag.Tag;
 public class EditCommand extends Command {
     public static final String COMMAND_WORD = "edit";
 
+    /** The index is given before any option rather than marked by one. */
+    public static final String FIELD_INDEX = "INDEX";
+
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the student identified "
             + "by the index number used in the displayed student list. "
-            + "Existing values will be overwritten by the input values, while f/ toggles "
-            + "whether the student needs follow-up.\n"
-            + "Parameters: INDEX (must be a positive integer) "
-            + "[" + PREFIX_NAME.getLabel() + "] "
-            + "[" + PREFIX_PHONE.getLabel() + "] "
-            + "[" + PREFIX_EMAIL.getLabel() + "] "
-            + "[" + PREFIX_TAG.getLabel() + "]... "
-            + "[" + PREFIX_FOLLOW_UP.getLabel() + "]\n"
+            + "Existing values will be overwritten by the input values, while " + FLAG_FOLLOW_UP
+            + " toggles whether the student needs follow-up.\n"
+            + "Parameters: " + FIELD_INDEX + " (must be a positive integer) "
+            + "[" + FLAG_NAME.getLabel() + "] "
+            + "[" + FLAG_PHONE.getLabel() + "] "
+            + "[" + FLAG_EMAIL.getLabel() + "] "
+            + "[" + FLAG_TAG.getLabel() + "]... "
+            + "[" + FLAG_FOLLOW_UP.getLabel() + "]\n"
+            + "The index comes first. Any option value holding spaces, and any value opening with "
+            + "a hyphen, goes in double quotes. " + FLAG_TAG + " \"\" clears every tag.\n"
             + "Example: " + COMMAND_WORD + " 1 "
-            + PREFIX_PHONE + "91234567 "
-            + PREFIX_EMAIL + "johndoe@example.com";
+            + FLAG_PHONE + " 91234567 "
+            + FLAG_EMAIL + " johndoe@example.com";
 
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_STUDENT = "This student already exists in the student book.";
-    public static final String MESSAGE_FOLLOW_UP_PREFIX_TAKES_NO_VALUE =
-            "The f/ prefix toggles follow-up and does not take a value.";
 
     private final Index index;
     private final EditStudentDescriptor editStudentDescriptor;
