@@ -64,9 +64,9 @@ TAB is a **desktop application for teaching assistants to manage student records
   `-e EMAIL -p PHONE_NUMBER` is also acceptable. A parameter given before any
   option, such as the name in `add`, keeps its place at the front.
 
-* `add` marks its fields with options such as `-p`, while `edit` marks them
-  with prefixes such as `p/`. A value holding spaces goes in double quotes
-  after an option, and needs no quotes after a prefix.
+* Every command marks its fields with options such as `-p`. A value holding
+  spaces goes in double quotes after an option, as does any value opening with
+  a hyphen.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -183,32 +183,41 @@ If the student book is empty, TAB reports that there is no student in your list.
 
 Edits an existing student in the student book.
 
-Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... [f/]`
+Format: `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [-t TAG]... [--follow-up]`
 
-<box type="warning" seamless>
+<box type="tip" seamless>
 
-**Known limitation:** `edit` still marks its fields with prefixes, so a value
-containing `n/`, `p/`, `e/`, `t/` or `f/` after a space is read as the start of
-another field. A name that `add` accepts may therefore be impossible to type
-into `edit`. Add the student afresh if you hit this.
+**Tip:** `edit` takes the same options as `add`, so a value reads the same way
+in both commands. A name holding slashes, hyphens or apostrophes needs nothing
+done to it beyond the quotes any value with spaces takes:
+`edit 1 -n "Ravi s/o Kumaran"`.
 </box>
 
 * Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list. The index **must be a positive integer** 1, 2, 3, ...
+* The index comes first, before any option.
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
-* `f/` takes no value and toggles the follow-up status. An unflagged student
-  becomes flagged; a flagged student becomes unflagged. Repeating the same
-  command toggles the status back, so check the updated card after each edit.
+* `--follow-up` takes no value and toggles the follow-up status, and the shorter
+  `-f` alias is also accepted. An unflagged student becomes flagged; a flagged
+  student becomes unflagged. Repeating the same command toggles the status back,
+  so check the updated card after each edit.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
-* To remove all of a student's tags, enter `t/` without a tag after it.
+* To remove all of a student's tags, give `-t` an empty value: `-t ""`. A bare
+  `-t` with nothing after it is refused, so that a mistyped option is reported
+  rather than read as a request to clear.
 
 Examples:
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
-*  `edit 1 f/` Flags the 1st student for follow-up. Running `edit 1 f/` again
-   clears the flag.
-*  `edit 2 p/91234567 f/` Updates the phone number and toggles follow-up in one
-   command.
+*  `edit 1 -p 91234567 -e johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 2 -n "Betsy Crower" -t ""` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
+*  `edit 1 -n "Ravi s/o Kumaran"` Edits the name of the 1st student to be `Ravi s/o Kumaran`.
+*  `edit 3 -p "+65 9123 4567" -t T1 -t "Lab 3"` Replaces the phone number and both tags of the 3rd student.
+*  `edit 1 --follow-up` Flags the 1st student for follow-up. Running
+   `edit 1 --follow-up` again clears the flag.
+*  `edit 2 -p 91234567 --follow-up` Updates the phone number and toggles
+   follow-up in one command.
+
+A cleared tag set and a toggled follow-up status are both saved at once, and
+return as they were when you next launch TAB.
 
 ### Locating students by detail: `find`
 
@@ -302,7 +311,7 @@ Action     | Format, Examples
 **Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [--follow-up]` <br> e.g., `add James Ho -p 22224444 -t friend -t colleague --follow-up`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... [f/]`<br> e.g., `edit 2 n/James Lee f/`
+**Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [-t TAG]... [--follow-up]`<br> e.g., `edit 2 -n "James Lee" --follow-up`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Help**   | `help`
