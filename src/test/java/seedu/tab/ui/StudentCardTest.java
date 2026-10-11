@@ -243,6 +243,39 @@ public class StudentCardTest {
     }
 
     @Test
+    public void constructor_anyStudent_putsTheChipsBesideTheNameAndThePillAtTheEdge() throws Exception {
+        double[] gaps = new double[2];
+        double[] pillEdges = new double[2];
+        boolean[] flags = {true, false};
+        for (int i = 0; i < flags.length; i++) {
+            Student student = new StudentBuilder().withName("Siti Nur-Aisyah")
+                    .withTags("T1").withFlag(flags[i]).build();
+            double[] edges = onFxThread(() -> {
+                Region root = (Region) new StudentCard(student, 3).getRoot();
+                assertNotNull(styledScene(root, CARD_WIDTH, 120));
+
+                Label name = (Label) root.lookup("#name");
+                Region tags = (Region) root.lookup("#tags");
+                Label pill = (Label) root.lookup("#followUp");
+                return new double[] {
+                    name.localToScene(name.getBoundsInLocal()).getMaxX(),
+                    tags.localToScene(tags.getBoundsInLocal()).getMinX(),
+                    pill.localToScene(pill.getBoundsInLocal()).getMaxX(),
+                };
+            });
+            gaps[i] = edges[1] - edges[0];
+            pillEdges[i] = edges[2];
+        }
+
+        // the chips follow the name rather than sitting out at the trailing edge, and they sit
+        // in the same place whether or not the student carries a pill
+        assertTrue(gaps[0] < 12, "the chips drifted away from the name by " + gaps[0]);
+        assertEquals(gaps[0], gaps[1], 0.5, "the pill moved the chips");
+        // the pill a flagged student does carry stays against the card's trailing edge
+        assertTrue(pillEdges[0] > CARD_WIDTH - 40, "the pill left the edge at " + pillEdges[0]);
+    }
+
+    @Test
     public void constructor_aNameLongerThanTheCard_isCutWithTheWholeOnHover() throws Exception {
         String whole = "Siti Nur-Aisyah Binte Test Test Test Test Test Test Test";
         Label shown = onFxThread(() -> (Label) new StudentCard(
