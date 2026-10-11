@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.Label;
 
 public class ResultDisplayTest {
 
@@ -46,8 +46,8 @@ public class ResultDisplayTest {
         });
     }
 
-    private static int rowsOf(ResultDisplay display) {
-        return ((TextArea) display.getRoot().lookup("#resultDisplay")).getPrefRowCount();
+    private static String textOf(ResultDisplay display) {
+        return ((Label) display.getRoot().lookup("#resultDisplay")).getText();
     }
 
     @Test
@@ -61,29 +61,29 @@ public class ResultDisplayTest {
     }
 
     @Test
-    public void setFeedbackToUser_oneLine_takesOneRow() throws Exception {
+    public void setFeedbackToUser_oneLine_showsItAndTakesSpace() throws Exception {
         ResultDisplay display = showing("Listed all students.");
 
         assertTrue(display.getRoot().isManaged());
         assertTrue(display.getRoot().isVisible());
-        assertEquals(1, rowsOf(display));
+        assertEquals("Listed all students.", textOf(display));
     }
 
     @Test
-    public void setFeedbackToUser_severalLines_growsToFitThem() throws Exception {
+    public void setFeedbackToUser_severalLines_keepsEveryOne() throws Exception {
         // a command reporting more than one bad field must not have its tail cut off
-        ResultDisplay display = showing("Phone \"12\" is not valid\nEmail \"nope\" is not valid");
+        String both = "Phone \"12\" is not valid\nEmail \"nope\" is not valid";
+        ResultDisplay display = showing(both);
 
-        assertEquals(2, rowsOf(display));
+        assertEquals(both, textOf(display));
     }
 
     @Test
-    public void setFeedbackToUser_manyLines_stopsGrowingAndScrolls() throws Exception {
-        String many = String.join("\n", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j");
-        ResultDisplay display = showing(many);
+    public void setFeedbackToUser_aLongLine_isWrappedRatherThanCutOff() throws Exception {
+        ResultDisplay display = showing("a very long line ".repeat(20).trim());
+        Label label = (Label) display.getRoot().lookup("#resultDisplay");
 
-        // beyond the cap the area scrolls rather than pushing the student list off the window
-        assertEquals(6, rowsOf(display));
+        assertTrue(label.isWrapText(), "a long result should wrap rather than run off the window");
     }
 
     @Test

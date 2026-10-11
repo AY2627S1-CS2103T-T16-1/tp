@@ -3,7 +3,7 @@ package seedu.tab.ui;
 import static java.util.Objects.requireNonNull;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 
 /**
@@ -12,11 +12,9 @@ import javafx.scene.layout.Region;
 public class ResultDisplay extends UiPart<Region> {
 
     private static final String FXML = "ResultDisplay.fxml";
-    /** Beyond this the area scrolls, rather than pushing the student list off the window. */
-    private static final int MAX_ROWS = 6;
 
     @FXML
-    private TextArea resultDisplay;
+    private Label resultDisplay;
 
     /**
      * Creates a {@code ResultDisplay}, which stays out of the window until it has something to
@@ -34,15 +32,17 @@ public class ResultDisplay extends UiPart<Region> {
     }
 
     /**
-     * Sizes the area to {@code text}, and takes it out of the window when there is nothing to
-     * report. A fixed height left a gap under the command line before the first command and
-     * after a result shorter than the space reserved for it.
+     * Takes the line out of the window when there is nothing to report.
+     *
+     * <p>A label is used rather than a text area because a text area reserves room for a fixed
+     * number of rows whatever it holds, which left a band of empty space under the command
+     * line. A label is exactly as tall as what it has to say, and wraps rather than scrolling,
+     * so a command reporting several bad fields hides none of them.
      */
     private void fitToText(String text) {
         boolean hasSomethingToSay = !text.isBlank();
         getRoot().setManaged(hasSomethingToSay);
         getRoot().setVisible(hasSomethingToSay);
-        resultDisplay.setPrefRowCount(Math.clamp(text.lines().count(), 1, MAX_ROWS));
     }
 
 }
