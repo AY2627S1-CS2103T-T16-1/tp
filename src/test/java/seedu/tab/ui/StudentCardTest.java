@@ -32,6 +32,9 @@ public class StudentCardTest {
         } catch (IllegalStateException alreadyRunning) {
             started.countDown();
         }
+        // JavaFX shuts itself down when the last window closes, and then runs nothing more,
+        // so a test that shows a window would leave every test after it waiting forever
+        Platform.runLater(() -> Platform.setImplicitExit(false));
         assertTrue(started.await(TIMEOUT_SECONDS, TimeUnit.SECONDS), "the toolkit did not start");
     }
 
