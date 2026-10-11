@@ -137,20 +137,25 @@ public class TagRow extends Region {
      * row, where it read as "1 m".
      */
     private void showOneCutChip() {
-        double countWidth = chips.size() > 1 ? widthOfTheRest(1) : 0;
-        double forTheChip = getWidth() - (countWidth > 0 ? countWidth + SPACING : 0);
-        if (forTheChip < RECOGNISABLE_CHIP_WIDTH && chips.size() > 1) {
-            // what is left of the chip would be an ellipsis and little else, so the row
-            // goes to the chip alone
-            countWidth = 0;
-            forTheChip = getWidth();
+        if (chips.size() == 1) {
+            // one tag and nothing to count, so the row goes to it, cut to what there is
+            place(chips.get(0), 0, getWidth());
+            return;
+        }
+
+        double countWidth = widthOfTheRest(1);
+        double forTheChip = getWidth() - countWidth - SPACING;
+        if (forTheChip < RECOGNISABLE_CHIP_WIDTH) {
+            // what is left of the chip would be an ellipsis and little else, which names no
+            // tag, so the row says how many there are instead
+            describeTheRest(0);
+            place(overflow, 0, getWidth());
+            return;
         }
 
         place(chips.get(0), 0, forTheChip);
-        if (countWidth > 0) {
-            describeTheRest(1);
-            place(overflow, forTheChip + SPACING, countWidth);
-        }
+        describeTheRest(1);
+        place(overflow, forTheChip + SPACING, countWidth);
     }
 
     /**

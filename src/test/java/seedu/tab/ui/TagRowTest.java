@@ -231,9 +231,10 @@ public class TagRowTest {
     public void setTags_aTagTheRowCuts_namesTheWholeOfItOnHover() throws Exception {
         // under the sixteen characters a chip is cut to, but too wide for the room the row
         // has, which is what happens beside a long name or a follow-up pill
+        // wide enough for a chip and a count, but not for the whole of the chip
         TagRow row = rowOf(400, List.of("attendance-low", "needs-consult"));
         onFxThread(() -> {
-            row.resize(70, row.getHeight());
+            row.resize(140, row.getHeight());
             row.layout();
             return null;
         });

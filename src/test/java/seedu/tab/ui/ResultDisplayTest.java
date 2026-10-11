@@ -8,14 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.Region;
@@ -23,7 +19,6 @@ import javafx.scene.text.Text;
 
 public class ResultDisplayTest {
 
-    private static final int TIMEOUT_SECONDS = 10;
     /** Enough pulses for an answer asked for on one to be acted on by the window. */
     private static final int PULSES = 3;
     /** How many widths the sweep tries, four pixels apart from 300. */
@@ -39,22 +34,11 @@ public class ResultDisplayTest {
 
     @BeforeAll
     public static void startToolkit() throws Exception {
-        CountDownLatch started = new CountDownLatch(1);
-        try {
-            Platform.startup(started::countDown);
-        } catch (IllegalStateException alreadyRunning) {
-            started.countDown();
-        }
-        // JavaFX shuts itself down when the last window closes, and then runs nothing more,
-        // so a test that shows a window would leave every test after it waiting forever
-        Platform.runLater(() -> Platform.setImplicitExit(false));
-        assertTrue(started.await(TIMEOUT_SECONDS, TimeUnit.SECONDS), "the toolkit did not start");
+        FxToolkit.start();
     }
 
     private static <T> T onFxThread(Callable<T> work) throws Exception {
-        FutureTask<T> task = new FutureTask<>(work);
-        Platform.runLater(task);
-        return task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        return FxToolkit.onFxThread(work);
     }
 
     private static ResultDisplay showing(String feedback) throws Exception {
@@ -271,19 +255,15 @@ public class ResultDisplayTest {
     }
 
     @Test
-    public void setFeedbackToUser_beforeTheAreaHasAWidth_countsTheBreaksItWasWritten()
+    public void setFeedbackToUser_beforeTheAreaIsDrawn_countsTheBreaksItWasWritten()
             throws Exception {
-        // a reply can arrive before the window has given the area a width to wrap at, and
-        // a reply wrapped at no width would come out as a row for every word
-        ResultDisplay display = displayAt(450);
-        say(display, "Hi");
+        // a reply can arrive before the area has a skin, and so before there is anything
+        // drawn to ask where it wrapped
+        ResultDisplay display = onFxThread(ResultDisplay::new);
         onFxThread(() -> {
-            Text drawn = (Text) display.getRoot().lookup("#resultDisplay").lookup(".text");
-            drawn.setWrappingWidth(0);
+            display.setFeedbackToUser("Invalid command format!\nadd: Adds a student.");
             return null;
         });
-
-        say(display, "Invalid command format!\nadd: Adds a student to the student book.");
 
         assertEquals(2, rowsOf(display), "the breaks it was written with are all there is");
     }
