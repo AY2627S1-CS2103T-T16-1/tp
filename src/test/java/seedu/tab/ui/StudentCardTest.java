@@ -3,6 +3,7 @@ package seedu.tab.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -239,6 +240,52 @@ public class StudentCardTest {
         assertTrue(widths[0] >= 120, "the name was crushed to " + widths[0]);
         assertTrue(widths[1] <= 150, "the chip should be capped, but was " + widths[1]);
         assertTrue(widths[2] > 0, "the follow-up pill should still be laid out");
+    }
+
+    @Test
+    public void constructor_aNameLongerThanTheCard_isCutWithTheWholeOnHover() throws Exception {
+        String whole = "Siti Nur-Aisyah Binte Test Test Test Test Test Test Test";
+        Label shown = onFxThread(() -> (Label) new StudentCard(
+                new StudentBuilder().withName(whole).build(), 1).getRoot().lookup("#name"));
+
+        assertTrue(shown.getText().length() < whole.length(), "the name should be cut");
+        assertTrue(shown.getText().endsWith("\u2026"), "and marked as cut");
+        assertNotNull(shown.getTooltip(), "the whole name should still be reachable");
+        assertEquals(whole, shown.getTooltip().getText());
+    }
+
+    @Test
+    public void constructor_aShortName_isShownWholeAndWithoutATooltip() throws Exception {
+        Label shown = onFxThread(() -> (Label) new StudentCard(
+                new StudentBuilder().withName("Alex Yeoh").build(), 1).getRoot().lookup("#name"));
+
+        assertEquals("Alex Yeoh", shown.getText());
+        assertNull(shown.getTooltip(), "a name that fits needs no tooltip");
+    }
+
+    @Test
+    public void constructor_moreTagsThanFit_countsTheRest() throws Exception {
+        Student student = new StudentBuilder()
+                .withTags("alpha", "bravo", "charlie", "delta", "echo").build();
+        HBox tags = onFxThread(() -> (HBox) new StudentCard(student, 1).getRoot().lookup("#tags"));
+
+        List<String> shown = tags.getChildren().stream()
+                .map(node -> ((Label) node).getText())
+                .collect(Collectors.toList());
+
+        // five chips squeezed into one row come out as single letters, which say nothing
+        assertEquals(List.of("alpha", "bravo", "charlie", "+2"), shown);
+    }
+
+    @Test
+    public void constructor_aTagLongerThanAChip_isCutWithTheWholeOnHover() throws Exception {
+        String whole = "test".repeat(20);
+        HBox tags = onFxThread(() -> (HBox) new StudentCard(
+                new StudentBuilder().withTags(whole).build(), 1).getRoot().lookup("#tags"));
+        Label chip = (Label) tags.getChildren().get(0);
+
+        assertTrue(chip.getText().length() < whole.length(), "the chip should be cut");
+        assertEquals(whole, chip.getTooltip().getText());
     }
 
     @Test
