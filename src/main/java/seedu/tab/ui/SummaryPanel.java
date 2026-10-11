@@ -105,7 +105,7 @@ public class SummaryPanel extends UiPart<Region> {
      */
     private static HBox rowFor(String tag, int count) {
         Label name = new Label();
-        UiText.showShortened(name, tag, MAX_TAG_CHARACTERS);
+        UiText.showShortenedToFit(name, tag, MAX_TAG_CHARACTERS);
         name.getStyleClass().add("summary-name");
 
         Region spacer = new Region();

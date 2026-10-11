@@ -242,6 +242,14 @@ public class SummaryPanelTest {
             }
             assertNotNull(name);
             assertNotNull(count);
+            // a row short of space shares the shortfall among everything in it, and a
+            // count cut to an ellipsis is the one part of the row a reader cannot work out
+            // for themselves, so it is the count that is held and the tag that gives way
+            assertEquals(Region.USE_PREF_SIZE, count.getMinWidth(),
+                    "the count should not be squeezable");
+            assertTrue(count.getWidth() >= count.prefWidth(-1) - 0.5,
+                    "the count was squeezed to " + count.getWidth()
+                    + " of the " + count.prefWidth(-1) + " it needs");
             return new String[] {count.getText(), name.getText(),
                 name.getTooltip() == null ? null : name.getTooltip().getText()};
         });
@@ -252,4 +260,5 @@ public class SummaryPanelTest {
         assertTrue(shown[1].length() < longTag.length(), "the tag should be cut: " + shown[1]);
         assertEquals(longTag, shown[2], "the whole tag should be a hover away");
     }
+
 }
