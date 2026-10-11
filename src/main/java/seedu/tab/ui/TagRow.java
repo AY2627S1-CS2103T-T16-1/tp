@@ -21,10 +21,16 @@ import javafx.scene.shape.Rectangle;
  */
 public class TagRow extends Region {
 
+    /** Enough of a chip to read the start of a tag, kept even beside a very long name. */
+    static final double READABLE_CHIP_WIDTH = 70;
+
     /** The gap between one chip and the next, matching the spacing the card uses. */
     private static final double SPACING = 6;
-    /** Enough of a chip to read the start of a tag, kept even beside a very long name. */
-    private static final double READABLE_CHIP_WIDTH = 70;
+    /**
+     * Enough of a chip for the first few letters of a tag, which is what the row keeps when
+     * the alternative is saying nothing about how many tags were left out.
+     */
+    private static final double RECOGNISABLE_CHIP_WIDTH = 44;
     /**
      * How much of the tags a card shows. A card is a summary, and the chips share the row
      * with the name, so a long tag is cut and a long list is counted rather than letting the
@@ -96,11 +102,7 @@ public class TagRow extends Region {
 
         int shown = countThatFit();
         if (shown == 0) {
-            // no chip fits beside a count of the others, so the row goes to the first tag
-            // alone, cut to the row if it has to be: which tag a student carries says more
-            // than how many they have. Keeping a chip and placing the count after it anyway
-            // drew the count half outside the row, where it read as "1 m"
-            placeCut(chips.get(0));
+            showOneCutChip();
             return;
         }
 
@@ -111,6 +113,32 @@ public class TagRow extends Region {
         }
         if (shown < chips.size()) {
             place(overflow, x);
+        }
+    }
+
+    /**
+     * Draws the first tag cut to the row, with a count of the others after it where there
+     * is room for one.
+     *
+     * <p>A row too narrow for a whole chip and a count still has room for part of a chip and
+     * a count, and dropping the count there leaves nothing to say the other tags exist.
+     * Drawing the chip whole and the count after it anyway put the count half outside the
+     * row, where it read as "1 m".
+     */
+    private void showOneCutChip() {
+        double countWidth = chips.size() > 1 ? widthOfTheRest(1) : 0;
+        double forTheChip = getWidth() - (countWidth > 0 ? countWidth + SPACING : 0);
+        if (forTheChip < RECOGNISABLE_CHIP_WIDTH && chips.size() > 1) {
+            // what is left of the chip would be an ellipsis and little else, so the row
+            // goes to the chip alone
+            countWidth = 0;
+            forTheChip = getWidth();
+        }
+
+        place(chips.get(0), 0, forTheChip);
+        if (countWidth > 0) {
+            describeTheRest(1);
+            place(overflow, forTheChip + SPACING, countWidth);
         }
     }
 
@@ -175,21 +203,20 @@ public class TagRow extends Region {
     }
 
     /**
-     * Lays {@code chip} out across the whole row, cut to it, for a row with space for
-     * nothing else.
-     */
-    private void placeCut(Label chip) {
-        double height = chip.prefHeight(-1);
-        chip.resizeRelocate(0, Math.round((getHeight() - height) / 2), getWidth(), height);
-        chip.setVisible(true);
-    }
-
-    /**
      * Lays {@code chip} out at {@code x}, centred down the row, and returns where the next
      * chip starts.
      */
     private double place(Label chip, double x) {
-        double width = drawnWidthOf(chip);
+        return place(chip, x, drawnWidthOf(chip));
+    }
+
+    /**
+     * Lays {@code chip} out at {@code x} in {@code room}, centred down the row. A chip is
+     * never drawn wider than its own text needs, so a lone tag reads as a tag rather than
+     * as a pill stretched across the row.
+     */
+    private double place(Label chip, double x, double room) {
+        double width = Math.min(drawnWidthOf(chip), room);
         double height = chip.prefHeight(-1);
         chip.resizeRelocate(x, Math.round((getHeight() - height) / 2), width, height);
         chip.setVisible(true);

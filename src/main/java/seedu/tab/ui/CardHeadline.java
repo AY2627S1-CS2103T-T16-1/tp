@@ -19,7 +19,7 @@ public class CardHeadline extends Pane {
     /** The gap between the name and the tags beside it. */
     private static final double SPACING = 8;
     /** Enough of the tags to read the start of one, kept even beside a very long name. */
-    private static final double READABLE_TAGS_WIDTH = 70;
+    private static final double READABLE_TAGS_WIDTH = TagRow.READABLE_CHIP_WIDTH;
 
     private Label name;
     private TagRow tags;
