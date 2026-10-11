@@ -181,8 +181,9 @@
     -fx-padding: 0;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
-    -fx-highlight-fill: transparent;
-    -fx-highlight-text-fill: transparent;
+    /* the reply is selectable, so it keeps a selection that can be seen. Hiding one is for
+       the command line, whose field carries the input behind a copy of its own */
+    -fx-highlight-fill: -tab-selected-text;
     -fx-text-fill: -tab-text;
     -fx-font-size: 12px;
 }
