@@ -244,4 +244,21 @@ public class TagRowTest {
         assertNotNull(chip.getTooltip(), "a chip the row cut should still be readable");
         assertEquals("attendance-low", chip.getTooltip().getText());
     }
+
+    @Test
+    public void setTags_oneTagInARowTooNarrowForIt_cutsItToTheRow() throws Exception {
+        // the one tag a student has, on a row with no space for it: there is nothing to
+        // count, so the whole row goes to the chip whatever is left of it
+        TagRow row = rowOf(400, List.of("needsconsultation"));
+        onFxThread(() -> {
+            row.resize(30, row.getHeight());
+            row.layout();
+            return null;
+        });
+
+        Label chip = (Label) row.getChildrenUnmodifiable().get(0);
+        assertTrue(chip.isVisible(), "the row should still name the tag it has");
+        assertEquals(30, chip.getWidth(), 0.5, "the chip should be cut to the row");
+        assertTrue(drawnInside(row), "the chip was drawn outside the row");
+    }
 }
