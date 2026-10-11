@@ -76,6 +76,14 @@ public class CommandHighlighterTest {
     }
 
     @Test
+    public void highlight_trailingBackslash_hasNothingToEscapeAndIsKept() {
+        // a backslash typed as the last character escapes nothing, and must neither be
+        // swallowed nor send the scan past the end of the command
+        assertEquals(List.of(COMMAND_WORD, VALUE), kindsOf("add John\\"));
+        assertEquals("add John\\", rejoined("add John\\"));
+    }
+
+    @Test
     public void highlight_unknownCommandWord_isStillTheCommandWord() {
         assertEquals(List.of(COMMAND_WORD, VALUE), kindsOf("frobnicate 1"));
     }
