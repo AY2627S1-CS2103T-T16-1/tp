@@ -179,10 +179,14 @@ public class CommandBoxTest {
 
         // the line is monospace, so every character advances the caret by the same amount.
         // Measuring a span before the stylesheet reached it gave the default proportional
-        // font instead, and the caret came to rest partway through a character.
-        double step = offsets[0];
-        for (int i = 1; i < offsets.length; i++) {
-            assertEquals(step * (i + 1), offsets[i], 0.75,
+        // font instead, and the caret came to rest partway through a character. What is
+        // compared is the advance from one character to the next, not the distance from
+        // the edge: the caret is centred on the point it marks, and the field insets its
+        // text, so where it starts is not one character's width
+        double step = offsets[1] - offsets[0];
+        assertTrue(step > 0, "the caret should move as characters are typed");
+        for (int i = 2; i < offsets.length; i++) {
+            assertEquals(step, offsets[i] - offsets[i - 1], 0.75,
                     "the caret should advance evenly, but stopped at " + offsets[i]);
         }
     }
