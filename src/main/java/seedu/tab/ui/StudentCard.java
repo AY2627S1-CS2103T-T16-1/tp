@@ -15,6 +15,8 @@ import seedu.tab.model.student.Student;
 public class StudentCard extends UiPart<Region> {
 
     private static final String FXML = "StudentListCard.fxml";
+    /** Enough of a chip to read the start of a tag, kept even beside a very long name. */
+    private static final double READABLE_CHIP_WIDTH = 70;
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -59,6 +61,9 @@ public class StudentCard extends UiPart<Region> {
         student.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+        // a student with tags keeps enough of the row for one chip to stay readable, while a
+        // student with none leaves no gap where chips would have been
+        tags.setMinWidth(tags.getChildren().isEmpty() ? 0 : READABLE_CHIP_WIDTH);
     }
 
     /**

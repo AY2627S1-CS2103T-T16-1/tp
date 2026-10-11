@@ -394,6 +394,9 @@
 }
 
 #tags .label {
+    /* one very long tag would otherwise take the whole row and crush the name beside it */
+    -fx-max-width: 140;
+    -fx-text-overrun: ellipsis;
     -fx-text-fill: -tab-chip-text;
     -fx-background-color: -tab-chip-bg;
     -fx-padding: 2 7 2 7;
