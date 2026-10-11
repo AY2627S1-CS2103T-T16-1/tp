@@ -68,9 +68,8 @@ public class HelpWindow extends UiPart<Stage> {
     public void show() {
         logger.fine("Showing help page about the application.");
         getRoot().show();
-        // now that the window has a frame, it can be sized to its content exactly, rather
-        // than to the content's own idea of its size
-        getRoot().sizeToScene();
+        // now that the window has a frame, its size can account for it
+        fitToContent();
         getRoot().centerOnScreen();
     }
 
@@ -86,11 +85,24 @@ public class HelpWindow extends UiPart<Stage> {
      * word "Label".
      */
     private void fitToContent() {
-        Parent content = getRoot().getScene().getRoot();
+        Stage stage = getRoot();
+        Parent content = stage.getScene().getRoot();
         content.applyCss();
         content.layout();
-        getRoot().setWidth(content.prefWidth(-1));
-        getRoot().setHeight(content.prefHeight(-1));
+        // before the window is shown there is no frame to measure, and the scene is the
+        // whole of it; afterwards the frame is whatever the window is wider than its scene
+        double frameWidth = frameAround(stage.getWidth(), stage.getScene().getWidth());
+        double frameHeight = frameAround(stage.getHeight(), stage.getScene().getHeight());
+        stage.setWidth(content.prefWidth(-1) + frameWidth);
+        stage.setHeight(content.prefHeight(-1) + frameHeight);
+    }
+
+    /**
+     * Returns how much of {@code window} is frame rather than {@code scene}. A window that
+     * has not been shown has no size at all to measure, and no frame around it yet either.
+     */
+    private static double frameAround(double window, double scene) {
+        return Double.isNaN(window) || Double.isNaN(scene) ? 0 : Math.max(0, window - scene);
     }
 
     /**
