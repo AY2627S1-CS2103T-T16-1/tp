@@ -19,7 +19,7 @@ import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
@@ -190,7 +190,7 @@ public class StudentCardTest {
     @Test
     public void constructor_severalTags_areShownInOrder() throws Exception {
         Student student = new StudentBuilder().withTags("T1", "Lab 3", "needs-followup").build();
-        FlowPane tags = onFxThread(() -> (FlowPane) new StudentCard(student, 1).getRoot().lookup("#tags"));
+        HBox tags = onFxThread(() -> (HBox) new StudentCard(student, 1).getRoot().lookup("#tags"));
 
         List<String> shown = tags.getChildren().stream()
                 .map(node -> ((Label) node).getText())

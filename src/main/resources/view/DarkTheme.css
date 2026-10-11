@@ -389,8 +389,7 @@
 }
 
 #tags {
-    -fx-hgap: 7;
-    -fx-vgap: 3;
+    -fx-alignment: center-left;
 }
 
 #tags .label {
