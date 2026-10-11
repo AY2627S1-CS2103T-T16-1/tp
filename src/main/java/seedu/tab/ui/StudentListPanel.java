@@ -37,6 +37,10 @@ public class StudentListPanel extends UiPart<Region> {
                 setGraphic(null);
                 setText(null);
             } else {
+                // a cell that asks for no width of its own is laid out to the width the list
+                // has, so a long name or tag wraps or is elided instead of pushing the list
+                // sideways behind a horizontal scroll bar
+                setPrefWidth(0);
                 setGraphic(new StudentCard(student, getIndex() + 1).getRoot());
             }
         }

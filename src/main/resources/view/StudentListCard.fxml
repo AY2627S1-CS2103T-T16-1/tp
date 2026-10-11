@@ -22,7 +22,9 @@
 
   <VBox spacing="4" HBox.hgrow="ALWAYS">
     <HBox alignment="CENTER_LEFT" spacing="8">
-      <Label fx:id="name" text="\$first" styleClass="card-name" />
+      <!-- the name keeps its natural width, so the spacer beside it cannot squeeze it into
+           an ellipsis while the row still has room to spare -->
+      <Label fx:id="name" text="\$first" styleClass="card-name" minWidth="-Infinity" />
       <FlowPane fx:id="tags" />
       <Region HBox.hgrow="ALWAYS" />
       <!-- the trailing pill. It carries the follow-up marker, and takes the age once a
