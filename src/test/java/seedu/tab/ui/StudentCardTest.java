@@ -312,8 +312,12 @@ public class StudentCardTest {
                 Region root = (Region) new StudentCard(student, 1).getRoot();
                 assertNotNull(styledScene(root, cardWidth, 120));
                 Label name = (Label) root.lookup("#name");
-                assertEquals(name.prefWidth(-1), name.getWidth(), 0.5,
-                        "the layout cut the name further at a card width of " + cardWidth);
+                // an elided label still reports the whole text, so what the name reads as is
+                // only fixed if the row gave it the width it asked for. A row rounds a width
+                // to whole pixels, so the two are compared to within one.
+                assertTrue(name.getWidth() >= name.prefWidth(-1) - 1,
+                        "a card " + cardWidth + " wide cut the name again, to " + name.getWidth()
+                        + " of the " + name.prefWidth(-1) + " it asked for");
                 return name.getText();
             }));
         }
