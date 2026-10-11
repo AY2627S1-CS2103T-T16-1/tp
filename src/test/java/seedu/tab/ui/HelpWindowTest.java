@@ -87,4 +87,24 @@ public class HelpWindowTest {
         assertTrue(whole[0], "the address was cut");
         assertTrue(whole[1], "the button was cut");
     }
+
+    @Test
+    public void window_onceOpen_cannotBeShrunkUntilItClips() throws Exception {
+        double[] limits = onFxThread(() -> {
+            Stage stage = new Stage();
+            HelpWindow window = new HelpWindow(stage);
+            Region content = (Region) stage.getScene().getRoot();
+            content.applyCss();
+            content.layout();
+            return new double[] {stage.getMinWidth(), content.prefWidth(-1),
+                stage.getMinHeight(), content.prefHeight(-1)};
+        });
+
+        // the window may be resized, so it needs a floor: without one it can be dragged
+        // narrower than the address it exists to carry
+        assertTrue(limits[0] >= limits[1] - 0.5,
+                "the window may shrink to " + limits[0] + " for content needing " + limits[1]);
+        assertTrue(limits[2] >= limits[3] - 0.5,
+                "the window may shrink to " + limits[2] + " for content needing " + limits[3]);
+    }
 }
