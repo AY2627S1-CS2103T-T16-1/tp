@@ -131,19 +131,37 @@ public class TagRow extends Region {
             needed += drawnWidthOf(chips.get(i)) + SPACING;
         }
         if (shown < chips.size()) {
-            describeTheRest(shown);
-            needed += drawnWidthOf(overflow) + SPACING;
+            needed += widthOfTheRest(shown) + SPACING;
         }
         return Math.max(0, needed - SPACING);
+    }
+
+    /**
+     * Returns what the trailing chip takes to say that {@code shown} chips are drawn.
+     *
+     * <p>The chip itself is asked, and put back as it was. A chip built to one side to
+     * measure instead is not in the window, so it is not dressed by the stylesheet and comes
+     * out a little narrower than the one drawn, which is enough to fit one chip too many on
+     * a row that is nearly full.
+     */
+    private double widthOfTheRest(int shown) {
+        String wasShowing = overflow.getText();
+        overflow.setText(textForTheRest(shown));
+        double width = drawnWidthOf(overflow);
+        overflow.setText(wasShowing);
+        return width;
     }
 
     /**
      * Puts the number of chips left out on the trailing chip, and names them on hover.
      */
     private void describeTheRest(int shown) {
-        int hidden = chips.size() - shown;
-        overflow.setText(hidden + " more…");
+        overflow.setText(textForTheRest(shown));
         overflow.getTooltip().setText(String.join(", ", tagNames.subList(shown, chips.size())));
+    }
+
+    private String textForTheRest(int shown) {
+        return (chips.size() - shown) + " more…";
     }
 
     /**
