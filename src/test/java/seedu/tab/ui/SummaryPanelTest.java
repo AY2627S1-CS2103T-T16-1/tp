@@ -26,8 +26,7 @@ import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
 /**
- * Tests the counting the summary panel shows. The arithmetic is kept apart from the nodes, so
- * it can be checked without a toolkit.
+ * Tests what the summary panel counts and the order it lists it in.
  */
 public class SummaryPanelTest {
 
@@ -193,5 +192,16 @@ public class SummaryPanelTest {
         assertEquals("0", textOf(panel, "#flaggedCount"));
         assertEquals("0 students", textOf(panel, "#total"));
         assertTrue(tagRowsOf(panel).isEmpty());
+    }
+
+    @Test
+    public void tagCounts_tagsCountedTheSame_areListedWithoutRegardToCase() {
+        List<Student> students = List.of(
+                new StudentBuilder().withName("A").withTags("Zoo").build(),
+                new StudentBuilder().withName("B").withTags("apple").build(),
+                new StudentBuilder().withName("C").withTags("Mango").build());
+
+        assertEquals(List.of("apple", "Mango", "Zoo"),
+                List.copyOf(SummaryPanel.countByTag(students).keySet()));
     }
 }

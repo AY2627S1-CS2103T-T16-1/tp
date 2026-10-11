@@ -57,7 +57,10 @@ public class SummaryPanel extends UiPart<Region> {
 
         Map<String, Integer> ordered = new LinkedHashMap<>();
         counts.entrySet().stream()
+                // two tags counted the same read as a list in alphabetical order, and a
+                // reader does not read "Zoo" as coming before "apple"
                 .sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder())
+                        .thenComparing(Map.Entry::getKey, String.CASE_INSENSITIVE_ORDER)
                         .thenComparing(Map.Entry.comparingByKey()))
                 .forEach(entry -> ordered.put(entry.getKey(), entry.getValue()));
         return ordered;

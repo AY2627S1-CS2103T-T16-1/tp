@@ -25,7 +25,12 @@ import seedu.tab.testutil.StudentBuilder;
 public class StudentListPanelTest {
 
     private static final int TIMEOUT_SECONDS = 10;
-    private static final double LIST_WIDTH = 420;
+    /**
+     * A list narrow enough that a card of its own size would outgrow it. At a comfortable
+     * width the card fits whether or not it is held to the list, so the test passed with the
+     * binding taken out and guarded nothing.
+     */
+    private static final double LIST_WIDTH = 300;
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -64,7 +69,14 @@ public class StudentListPanelTest {
             assertFalse(cells.isEmpty(), "the list should have laid out at least one cell");
             // a cell wider than the list is what puts a horizontal scroll bar under it, which
             // is what appeared as soon as the sidebar narrowed the list
-            return cells.stream().allMatch(cell -> cell.getLayoutBounds().getWidth() <= LIST_WIDTH);
+            boolean cellsFit = cells.stream()
+                    .allMatch(cell -> cell.getLayoutBounds().getWidth() <= LIST_WIDTH);
+            // and the pill at the trailing edge is the first thing a card that outgrew the
+            // list carries off the side of it
+            Node pill = root.lookup("#followUp");
+            boolean pillShows = pill == null
+                    || pill.localToScene(pill.getBoundsInLocal()).getMaxX() <= LIST_WIDTH;
+            return cellsFit && pillShows;
         });
 
         assertTrue(fits, "a card outgrew the list and would scroll it sideways");
