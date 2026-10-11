@@ -435,7 +435,6 @@
     -fx-font-size: 11px;
 }
 
-<<<<<<< HEAD
 /* the student card, laid out as docs/images/Ui.png draws it */
 .card-index {
     -fx-text-fill: -tab-text-muted;
@@ -473,7 +472,8 @@
     -fx-padding: 2 8 2 8;
     -fx-background-radius: 10;
     -fx-font-size: 11px;
-=======
+}
+
 /* the area itself is a control; only its text should show against the window */
 .result-display .viewport,
 .result-display .scroll-pane,
@@ -483,5 +483,9 @@
 
 .result-display .text {
     -fx-fill: -tab-text;
->>>>>>> 162-dress-the-window-in-the-products-theme
+}
+
+/* a value too long for its row is elided rather than widening the card it sits in */
+.card-name, .card-detail, .card-detail-strong, .summary-name {
+    -fx-text-overrun: ellipsis;
 }
