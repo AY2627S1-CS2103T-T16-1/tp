@@ -5,6 +5,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.TextFlow?>
 
@@ -19,11 +20,13 @@
   <StackPane HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
     <!-- the colours are painted here, behind a field whose own text is transparent, because a
          TextField cannot colour its own content -->
-    <TextFlow fx:id="highlighted" styleClass="command-highlight" mouseTransparent="true" />
-    <!-- the field's own caret is drawn in its text colour, which is transparent while the
-         colours show, so the line carries one of its own -->
-    <Region fx:id="caret" styleClass="command-caret" mouseTransparent="true"
-            StackPane.alignment="CENTER_LEFT" />
+    <!-- the copy and the caret live in a plain Pane, which neither resizes what it holds nor
+         grows with it. A StackPane does both, so the copy of a long command dragged the whole
+         command box wider than the window. -->
+    <Pane fx:id="lane" maxWidth="Infinity" mouseTransparent="true">
+      <TextFlow fx:id="highlighted" styleClass="command-highlight" />
+      <Region fx:id="caret" styleClass="command-caret" />
+    </Pane>
     <TextField fx:id="commandTextField" onAction="#handleCommandEntered"
                promptText="Enter command here..." />
   </StackPane>

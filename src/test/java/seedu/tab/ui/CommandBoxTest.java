@@ -1,7 +1,6 @@
 package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -138,57 +137,13 @@ public class CommandBoxTest {
             Region caret = (Region) root.lookup("#caret");
 
             field.positionCaret(0);
-            double atStart = caret.getTranslateX();
+            double atStart = caret.getLayoutX();
             field.positionCaret("add John".length());
-            return new double[] {atStart, caret.getTranslateX()};
+            return new double[] {atStart, caret.getLayoutX()};
         });
 
         assertEquals(0.0, offsets[0]);
         assertTrue(offsets[1] > offsets[0], "the caret should sit further along for a later position");
-    }
-
-    @Test
-    public void colours_whenTheCommandOutgrowsTheLine_stepAsideCompletely() throws Exception {
-        boolean[] state = onFxThread(() -> {
-            CommandBox box = new CommandBox(unused -> null);
-            Region root = box.getRoot();
-            assertNotNull(styledScene(root, 600, 60));
-
-            setTextOf(box, "add ".repeat(300));
-            root.layout();
-
-            TextFlow flow = (TextFlow) root.lookup("#highlighted");
-            Region ownCaret = (Region) root.lookup("#caret");
-            return new boolean[] {flow.isVisible(), flow.isManaged(), ownCaret.isManaged()};
-        });
-
-        // hidden is not enough: a TextFlow wraps, so a long command left managed keeps asking
-        // for the height of every wrapped line and the command box grows to match
-        assertFalse(state[0], "the colours should step aside once the command does not fit");
-        assertFalse(state[1], "the hidden copy should stop taking part in layout");
-        assertFalse(state[2], "the field draws its own caret again, so ours should go");
-    }
-
-    @Test
-    public void colours_whenTheLineNarrows_stepAsideWithoutRetyping() throws Exception {
-        boolean[] state = onFxThread(() -> {
-            CommandBox box = new CommandBox(unused -> null);
-            Region root = box.getRoot();
-            Scene scene = styledScene(root, 900, 60);
-            assertNotNull(scene);
-            setTextOf(box, "add Siti Nur-Aisyah -p 84420917 -t T1 --follow-up");
-            root.layout();
-            boolean wide = ((TextFlow) root.lookup("#highlighted")).isVisible();
-
-            // the window narrowing is not a change of text, so nothing would have rechecked
-            scene.getWindow();
-            root.resize(180, 60);
-            root.layout();
-            return new boolean[] {wide, ((TextFlow) root.lookup("#highlighted")).isVisible()};
-        });
-
-        assertTrue(state[0], "the command should be coloured while it fits");
-        assertFalse(state[1], "narrowing the line should hand the text back to the field");
     }
 
     @Test
@@ -205,7 +160,7 @@ public class CommandBoxTest {
             for (char typed : "list".toCharArray()) {
                 field.appendText(String.valueOf(typed));
                 root.layout();
-                seen[at++] = ownCaret.getTranslateX();
+                seen[at++] = ownCaret.getLayoutX();
             }
             return seen;
         });
@@ -218,6 +173,60 @@ public class CommandBoxTest {
             assertEquals(step * (i + 1), offsets[i], 0.75,
                     "the caret should advance evenly, but stopped at " + offsets[i]);
         }
+    }
+
+    @Test
+    public void colours_whenTheCommandOutgrowsTheLine_scrollWithIt() throws Exception {
+        Object[] state = onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            assertNotNull(styledScene(root, 300, 60));
+
+            TextField field = (TextField) root.lookup("#commandTextField");
+            TextFlow flow = (TextFlow) root.lookup("#highlighted");
+            Region lane = (Region) root.lookup("#lane");
+            double emptyWidth = lane.getWidth();
+
+            field.setText("add \"Siti Nur-Aisyah\" -p 84420917 -t T1 -e someone@u.nus.edu --follow-up");
+            field.positionCaret(field.getLength());
+            root.layout();
+
+            return new Object[] {flow.isVisible(), flow.getLayoutX(), lane.getWidth(),
+                emptyWidth, lane.getClip() != null, flow.getHeight()};
+        });
+
+        // the colours stay on however long the command is: they scroll with it rather than
+        // switching off, which is what the field itself does with its own text
+        assertTrue((Boolean) state[0], "the colours should stay on");
+        assertTrue((Double) state[1] < 0, "the copy should be scrolled to keep the caret in view");
+        assertTrue((Boolean) state[4], "the lane should be clipped so the copy cannot spill out");
+        assertEquals((Double) state[3], (Double) state[2], 1.0,
+                "a long command must not drag the command box wider");
+        assertTrue((Double) state[5] < 40,
+                "the copy must stay on one line rather than wrapping and growing the box");
+    }
+
+    @Test
+    public void caret_onAnEmptyLine_isOneLineTall() throws Exception {
+        double[] heights = onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            assertNotNull(styledScene(root, 300, 60));
+
+            TextField field = (TextField) root.lookup("#commandTextField");
+            Region ownCaret = (Region) root.lookup("#caret");
+
+            field.setText("add ".repeat(60));
+            root.layout();
+            double afterLong = ownCaret.getPrefHeight();
+            field.setText("");
+            root.layout();
+            return new double[] {afterLong, ownCaret.getPrefHeight()};
+        });
+
+        // clearing a long command used to leave the caret at the height that command needed
+        assertEquals(heights[0], heights[1], 4.0,
+                "the caret should go back to one line once the command is cleared");
     }
 
     @Test

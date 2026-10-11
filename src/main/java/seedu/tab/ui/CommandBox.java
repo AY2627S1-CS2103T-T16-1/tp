@@ -9,7 +9,9 @@ import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -28,6 +30,8 @@ public class CommandBox extends UiPart<Region> {
     /** Set while the coloured copy is showing, which is when the field hides its own text. */
     private static final PseudoClass COLOURED = PseudoClass.getPseudoClass("coloured");
     private static final int BLINK_MILLIS = 530;
+    /** How much of the line is kept clear beyond the caret while scrolling. */
+    private static final double CARET_MARGIN = 12;
 
     private final CommandExecutor commandExecutor;
 
@@ -39,6 +43,9 @@ public class CommandBox extends UiPart<Region> {
 
     @FXML
     private Region caret;
+
+    @FXML
+    private Pane lane;
 
     /**
      * Creates a {@code CommandBox} with the given {@code CommandExecutor}.
@@ -54,12 +61,12 @@ public class CommandBox extends UiPart<Region> {
         // types into is where the caret starts rather than somewhere they have to click
         Platform.runLater(commandTextField::requestFocus);
 
-        commandTextField.caretPositionProperty().addListener((unused, old, at) -> placeCaret());
-        commandTextField.textProperty().addListener((unused, old, typed) -> placeCaret());
-        commandTextField.focusedProperty().addListener((unused, old, focused) -> placeCaret());
+        commandTextField.caretPositionProperty().addListener((unused, old, at) -> layOutColours());
+        commandTextField.focusedProperty().addListener((unused, old, focused) -> layOutColours());
         // the line narrows when the window does, which can take a command that fitted and
         // make it wrap, so the decision is remade whenever the width changes
-        commandTextField.widthProperty().addListener((unused, old, width) -> decideWhetherColoursFit());
+        commandTextField.widthProperty().addListener((unused, old, width) -> layOutColours());
+        lane.widthProperty().addListener((unused, old, width) -> clipTheLane());
         blink();
     }
 
@@ -101,41 +108,65 @@ public class CommandBox extends UiPart<Region> {
         // font would give the default proportional one. The caret is measured from these
         // fonts, so it has to be the font they will actually be drawn in.
         highlighted.applyCss();
-        decideWhetherColoursFit();
+        layOutColours();
     }
 
     /**
-     * Shows the coloured copy only while it fits on one line beside the field.
-     *
-     * <p>The copy cannot scroll with the field, so once the command outgrows the line the
-     * field shows its own text again. The hidden copy is unmanaged as well as invisible: a
-     * TextFlow wraps, so a long command left managed keeps asking for the height of every
-     * wrapped line and the command box grows to match. The caret goes with it, because the
-     * field draws its own once its text is visible again, and a second one placed without
-     * regard to the field's scrolling would sit in the wrong place.
+     * Returns true if the coloured copy is of the text the field now holds.
      */
-    private void decideWhetherColoursFit() {
-        boolean fits = highlighted.prefWidth(-1) <= commandTextField.getWidth();
-        highlighted.setVisible(fits);
-        highlighted.setManaged(fits);
-        caret.setManaged(fits);
-        commandTextField.pseudoClassStateChanged(COLOURED, fits);
-        placeCaret();
+    private boolean copyMatchesField() {
+        StringBuilder painted = new StringBuilder();
+        for (Node node : highlighted.getChildren()) {
+            painted.append(((Text) node).getText());
+        }
+        return painted.toString().equals(commandTextField.getText());
     }
 
     /**
-     * Moves the caret to the character the User is at.
+     * Lays the coloured copy out on one line and scrolls it so that the caret is in view.
      *
-     * <p>The run of text before the caret is measured in the very font the coloured copy is
-     * drawn in. Counting characters and multiplying by one character's width looks simpler and
-     * is wrong: it assumes the field and the copy resolved to the same font, and when they do
-     * not the caret drifts further from the text with every character typed.
+     * <p>A TextFlow wraps at the width it is given, which would turn a long command into
+     * several lines and grow the box. It is sized to its content instead and the lane around
+     * it is clipped, so the copy runs off the edge the way the field's own text does. The
+     * field scrolls to keep its caret visible and so does this: the same rule, so the two stay
+     * together without the field having to report an offset it does not expose.
      */
-    private void placeCaret() {
-        caret.setVisible(commandTextField.isFocused() && highlighted.isVisible());
+    private void layOutColours() {
+        // JavaFX moves the caret before it reports the new text, so this runs once against
+        // the copy of the previous command. The recolour that follows puts it right.
+        if (!copyMatchesField()) {
+            return;
+        }
 
-        caret.setTranslateX(widthBefore(commandTextField.getCaretPosition()));
+        double content = widthBefore(commandTextField.getLength());
+        // the copy is taken out of the lane's layout and placed by hand. Left to the
+        // StackPane it would be resized to the lane, and a TextFlow wraps at the width it is
+        // given, so a long command became several lines and made the box grow.
+        highlighted.setPrefWidth(content);
+        highlighted.autosize();
+        caret.autosize();
+
+        double visible = Math.max(lane.getWidth(), 1);
+        double caretAt = widthBefore(commandTextField.getCaretPosition());
+        double scrolled = content <= visible
+                ? 0
+                : Math.clamp(caretAt - visible + CARET_MARGIN, 0, content - visible);
+
         matchCaretToTheLine();
+        double middle = lane.getHeight() / 2;
+        highlighted.relocate(-scrolled, middle - highlighted.getHeight() / 2);
+        caret.relocate(caretAt - scrolled, middle - caret.getHeight() / 2);
+        caret.setVisible(commandTextField.isFocused());
+    }
+
+    /**
+     * Keeps the lane's clip the size of the lane, so a command longer than the line is cut off
+     * at its edge rather than spilling over the rest of the window.
+     */
+    private void clipTheLane() {
+        Rectangle clip = new Rectangle(lane.getWidth(), lane.getHeight());
+        lane.setClip(clip);
+        layOutColours();
     }
 
     /**
@@ -147,15 +178,22 @@ public class CommandBox extends UiPart<Region> {
      */
     private void matchCaretToTheLine() {
         if (highlighted.getChildren().isEmpty()) {
+            // nothing is painted, so the caret takes the height of one line of the field's
+            // own font. Returning early instead left it at whatever the last command needed,
+            // and a command that had wrapped left a caret several lines tall on an empty line.
+            Text ruler = new Text("X");
+            ruler.setFont(commandTextField.getFont());
+            caret.setPrefHeight(ruler.getLayoutBounds().getHeight());
+            caret.autosize();
             return;
         }
         Text run = (Text) highlighted.getChildren().get(0);
         Bounds ink = run.getLayoutBounds();
         caret.setPrefHeight(ink.getHeight());
+        caret.autosize();
         // the run is laid out in the same StackPane cell, so matching its centre lines the
         // two up without having to know anything about the font's metrics
-        caret.setTranslateY(run.getBoundsInParent().getMinY() + ink.getHeight() / 2
-                - highlighted.getHeight() / 2);
+
     }
 
     /**
