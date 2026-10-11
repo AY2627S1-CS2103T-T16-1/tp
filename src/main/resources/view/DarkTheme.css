@@ -177,6 +177,14 @@
 }
 
 .result-display {
+    /* a TextArea paints its inside from -fx-control-inner-background, so setting only
+       -fx-background-color leaves the default white slab showing */
+    -fx-control-inner-background: -tab-bg;
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-highlight-fill: -tab-surface-selected;
     -fx-text-fill: -tab-text;
     -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
@@ -427,6 +435,7 @@
     -fx-font-size: 11px;
 }
 
+<<<<<<< HEAD
 /* the student card, laid out as docs/images/Ui.png draws it */
 .card-index {
     -fx-text-fill: -tab-text-muted;
@@ -453,7 +462,7 @@
 /* the NUS ID, which reads as an identifier rather than as prose */
 .card-detail-strong {
     -fx-text-fill: -tab-text-muted;
-    -fx-font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", "Consolas", monospace;
+    -fx-font-family: "Monospaced";
     -fx-font-size: 12px;
 }
 
@@ -464,4 +473,15 @@
     -fx-padding: 2 8 2 8;
     -fx-background-radius: 10;
     -fx-font-size: 11px;
+=======
+/* the area itself is a control; only its text should show against the window */
+.result-display .viewport,
+.result-display .scroll-pane,
+.result-display .content {
+    -fx-background-color: transparent;
+}
+
+.result-display .text {
+    -fx-fill: -tab-text;
+>>>>>>> 162-dress-the-window-in-the-products-theme
 }

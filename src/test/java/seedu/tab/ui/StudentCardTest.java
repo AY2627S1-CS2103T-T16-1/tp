@@ -2,6 +2,7 @@ package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -15,14 +16,18 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
+import javafx.geometry.Bounds;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.Region;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
 public class StudentCardTest {
 
     private static final int TIMEOUT_SECONDS = 10;
+    private static final double CARD_WIDTH = 420;
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -156,6 +161,30 @@ public class StudentCardTest {
         // the card must size to its content rather than demanding a width the window cannot give
         double width = onFxThread(() -> card.getRoot().prefWidth(-1));
         assertTrue(width > 0, "the card should report a preferred width");
+    }
+
+    @Test
+    public void constructor_aLongNameAndTag_doNotPushTheFollowUpPillOutOfTheCard() throws Exception {
+        Student student = new StudentBuilder()
+                .withName("Nurul Izzah binte Hassan Al-Rashid Abdullah Mohamed")
+                .withTags("AY2627 Sem 1 CS2103T T16").withFlag(true).build();
+
+        boolean fits = onFxThread(() -> {
+            StudentCard card = new StudentCard(student, 48);
+            Region root = (Region) card.getRoot();
+            Scene scene = new Scene(root, CARD_WIDTH, 120);
+            assertNotNull(scene);
+            root.applyCss();
+            root.layout();
+
+            Label pill = (Label) root.lookup("#followUp");
+            Bounds inCard = pill.localToScene(pill.getBoundsInLocal());
+            return inCard.getMaxX() <= CARD_WIDTH && inCard.getWidth() > 0;
+        });
+
+        // the pill carries the follow-up marker, and an age once one is recorded, so it has to
+        // stay in the card however long the name beside it is
+        assertTrue(fits, "the follow-up pill was pushed outside the card");
     }
 
     @Test

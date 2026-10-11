@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
-import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 
 public class ResultDisplayTest {
 
@@ -46,8 +46,12 @@ public class ResultDisplayTest {
         });
     }
 
+    private static TextArea areaOf(ResultDisplay display) {
+        return (TextArea) display.getRoot().lookup("#resultDisplay");
+    }
+
     private static String textOf(ResultDisplay display) {
-        return ((Label) display.getRoot().lookup("#resultDisplay")).getText();
+        return areaOf(display).getText();
     }
 
     @Test
@@ -81,9 +85,20 @@ public class ResultDisplayTest {
     @Test
     public void setFeedbackToUser_aLongLine_isWrappedRatherThanCutOff() throws Exception {
         ResultDisplay display = showing("a very long line ".repeat(20).trim());
-        Label label = (Label) display.getRoot().lookup("#resultDisplay");
 
-        assertTrue(label.isWrapText(), "a long result should wrap rather than run off the window");
+        assertTrue(areaOf(display).isWrapText(), "a long result should wrap, not run off the window");
+    }
+
+    @Test
+    public void resultArea_staysReadableWhenItCannotAllBeShown() throws Exception {
+        // a reply too long for the space has to remain reachable, so the area keeps the
+        // scrolling and the selection a text area gives and a label does not
+        ResultDisplay display = showing(String.join("\n", java.util.Collections.nCopies(40, "line")));
+        TextArea area = areaOf(display);
+
+        assertFalse(area.isEditable(), "the reply is not something the User edits");
+        assertTrue(area.isWrapText());
+        assertEquals(40, area.getText().lines().count(), "every line must still be there to scroll to");
     }
 
     @Test
