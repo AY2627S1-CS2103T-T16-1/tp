@@ -20,13 +20,14 @@ final class UiText {
      * tooltip, so a card summarises without the record becoming unreachable.
      */
     static void showShortened(Label label, String value, int limit) {
-        if (value.length() <= limit) {
+        String shown = firstCharacters(value, limit);
+        if (shown.equals(value)) {
             label.setText(value);
             return;
         }
         // the ellipsis reads as part of the word it follows, so it does not sit off
         // behind a space the cut happened to land on
-        label.setText(firstCharacters(value, limit).stripTrailing() + ELLIPSIS);
+        label.setText(shown.stripTrailing() + ELLIPSIS);
         label.setTooltip(new Tooltip(value));
     }
 
@@ -36,7 +37,9 @@ final class UiText {
      *
      * <p>Cutting the string at an index cuts it between the two halves of an emoji, or
      * between a letter and the accent that belongs to it, and what is left is drawn as a
-     * broken glyph. A name or a tag may hold either.
+     * broken glyph. A name or a tag may hold either. Counting them the same way also keeps a
+     * value that is long in the way Java stores it, and short in the way it reads, from
+     * being marked as cut when nothing was taken off it.
      */
     private static String firstCharacters(String value, int limit) {
         BreakIterator characters = BreakIterator.getCharacterInstance();
