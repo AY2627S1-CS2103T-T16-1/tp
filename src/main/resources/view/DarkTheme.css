@@ -467,6 +467,9 @@
 
 /* the trailing pill: the follow-up marker today, its age once one is recorded */
 .card-pill {
+    /* sits on the name's line, which is the first row of the card beside it */
+    -fx-padding: 2 8 2 8;
+    -fx-translate-y: 1;
     -fx-text-fill: -tab-highlight;
     -fx-background-color: derive(-tab-highlight, -70%);
     -fx-padding: 2 8 2 8;
