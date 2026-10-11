@@ -607,7 +607,6 @@
     -fx-min-width: 2;
     -fx-pref-width: 2;
     -fx-max-width: 2;
-    -fx-min-height: 15;
-    -fx-pref-height: 15;
-    -fx-max-height: 15;
+    -fx-min-height: 0;
+    -fx-max-height: 100;
 }

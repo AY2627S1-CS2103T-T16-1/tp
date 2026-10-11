@@ -6,6 +6,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
+import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
@@ -134,6 +135,27 @@ public class CommandBox extends UiPart<Region> {
         caret.setVisible(commandTextField.isFocused() && highlighted.isVisible());
 
         caret.setTranslateX(widthBefore(commandTextField.getCaretPosition()));
+        matchCaretToTheLine();
+    }
+
+    /**
+     * Gives the caret the height and the vertical place of the text beside it.
+     *
+     * <p>A bar of a fixed height centred in the line does not sit where the text does: a
+     * font's ink is not centred in its line box, so the two are out by a point or so. Taking
+     * both from a run of the text itself keeps them together whatever the font.
+     */
+    private void matchCaretToTheLine() {
+        if (highlighted.getChildren().isEmpty()) {
+            return;
+        }
+        Text run = (Text) highlighted.getChildren().get(0);
+        Bounds ink = run.getLayoutBounds();
+        caret.setPrefHeight(ink.getHeight());
+        // the run is laid out in the same StackPane cell, so matching its centre lines the
+        // two up without having to know anything about the font's metrics
+        caret.setTranslateY(run.getBoundsInParent().getMinY() + ink.getHeight() / 2
+                - highlighted.getHeight() / 2);
     }
 
     /**
