@@ -21,7 +21,8 @@ final class UiText {
      *
      * <p>Cutting by a count of characters catches only one of the two ways a value is cut.
      * A value under the count is still cut by the width the label is given, and a tag such
-     * as "CS2103T-TUTORIALS" then read as "CS2103T-TUTORI…" with nothing to say what it was.
+     * as "attendance-low" beside a long name reads as "attendan\u2026", and a tag the panel
+     * lists as "CS2103T-TUTORI\u2026", with nothing in either to say what it was.
      */
     static void showShortenedToFit(Label label, String value, int limit) {
         showShortened(label, value, limit);
