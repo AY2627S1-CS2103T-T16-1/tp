@@ -8,6 +8,7 @@ import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
@@ -52,6 +53,7 @@ public class CommandBox extends UiPart<Region> {
         Platform.runLater(commandTextField::requestFocus);
 
         commandTextField.caretPositionProperty().addListener((unused, old, at) -> placeCaret());
+        commandTextField.textProperty().addListener((unused, old, typed) -> placeCaret());
         commandTextField.focusedProperty().addListener((unused, old, focused) -> placeCaret());
         blink();
     }
@@ -98,22 +100,30 @@ public class CommandBox extends UiPart<Region> {
     /**
      * Moves the caret to the character the User is at.
      *
-     * <p>The font is monospace, so a character's width is the same wherever it falls and the
-     * caret sits at that width times the number of characters before it. Measuring the run of
-     * text instead would have to repeat the flow's own layout.
+     * <p>The run of text before the caret is measured in the very font the coloured copy is
+     * drawn in. Counting characters and multiplying by one character's width looks simpler and
+     * is wrong: it assumes the field and the copy resolved to the same font, and when they do
+     * not the caret drifts further from the text with every character typed.
      */
     private void placeCaret() {
         caret.setVisible(commandTextField.isFocused());
-        caret.setTranslateX(characterWidth() * commandTextField.getCaretPosition());
+
+        String typed = commandTextField.getText();
+        int at = Math.clamp(commandTextField.getCaretPosition(), 0, typed.length());
+        Text ruler = new Text(typed.substring(0, at));
+        ruler.setFont(colouredFont());
+        caret.setTranslateX(ruler.getLayoutBounds().getWidth());
     }
 
     /**
-     * Returns how wide one character of the command line is.
+     * Returns the font the coloured copy is drawn in, which is the one the caret has to agree
+     * with. Before anything is typed there is no copy, so the field's own font stands in.
      */
-    private double characterWidth() {
-        Text ruler = new Text("0");
-        ruler.setFont(commandTextField.getFont());
-        return ruler.getLayoutBounds().getWidth();
+    private Font colouredFont() {
+        if (highlighted.getChildren().isEmpty()) {
+            return commandTextField.getFont();
+        }
+        return ((Text) highlighted.getChildren().get(0)).getFont();
     }
 
     /**
