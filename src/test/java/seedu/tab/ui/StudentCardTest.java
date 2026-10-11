@@ -454,4 +454,17 @@ public class StudentCardTest {
         }
         return true;
     }
+
+    @Test
+    public void constructor_aNameLongInBytesButShortToRead_isNotMarkedAsCut() throws Exception {
+        // seventeen characters to a reader, twenty-nine to Java, against a cap of
+        // twenty-two: the name fits, so nothing should be taken off it and nothing should
+        // say otherwise
+        String whole = "Siti " + "\uD83C\uDF93".repeat(12);
+        Label shown = onFxThread(() -> (Label) new StudentCard(
+                new StudentBuilder().withName(whole).build(), 1).getRoot().lookup("#name"));
+
+        assertEquals(whole, shown.getText());
+        assertNull(shown.getTooltip(), "a name that fits needs no tooltip");
+    }
 }
