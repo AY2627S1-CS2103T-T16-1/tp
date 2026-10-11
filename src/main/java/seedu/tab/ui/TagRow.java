@@ -15,7 +15,9 @@ import javafx.scene.shape.Rectangle;
  * <p>A plain row would instead share the shortfall among every chip, so a card with several
  * tags came out as a line of chips each cut to two or three letters, which names none of
  * them. Dropping the chips that do not fit keeps the ones that are shown readable, and the
- * trailing chip says how many are missing and names them on hover.
+ * trailing chip says how many are missing and names them on hover. A row with space for
+ * neither shows the first tag alone, cut to the row: which tag it is says more than how
+ * many there are.
  */
 public class TagRow extends Region {
 
@@ -93,6 +95,14 @@ public class TagRow extends Region {
         }
 
         int shown = countThatFit();
+        if (shown == 0) {
+            // no chip fits beside a count of the others, so the row gives what space it has
+            // to the first tag: its name cut short still says which tag it is, where a bare
+            // count of the tags says nothing about any of them
+            placeCut(chips.get(0));
+            return;
+        }
+
         describeTheRest(shown);
         double x = 0;
         for (int i = 0; i < shown; i++) {
@@ -105,8 +115,7 @@ public class TagRow extends Region {
 
     /**
      * Returns how many chips the row can show whole, leaving room for the trailing chip when
-     * it cannot show them all. Shows at least one chip, partly cut if need be, so that a row
-     * too narrow for any whole chip still says something about the student.
+     * it cannot show them all, or none when not even one chip and that trailing chip fit.
      */
     private int countThatFit() {
         for (int shown = Math.min(chips.size(), MAX_CHIPS); shown > 0; shown--) {
@@ -114,7 +123,7 @@ public class TagRow extends Region {
                 return shown;
             }
         }
-        return chips.size() == 1 ? 1 : 0;
+        return drawnWidthOf(chips.get(0)) <= getWidth() ? 1 : 0;
     }
 
     private boolean fits(int shown) {
@@ -162,6 +171,16 @@ public class TagRow extends Region {
 
     private String textForTheRest(int shown) {
         return (chips.size() - shown) + " more…";
+    }
+
+    /**
+     * Lays {@code chip} out across the whole row, cut to it, for a row with space for
+     * nothing else.
+     */
+    private void placeCut(Label chip) {
+        double height = chip.prefHeight(-1);
+        chip.resizeRelocate(0, Math.round((getHeight() - height) / 2), getWidth(), height);
+        chip.setVisible(true);
     }
 
     /**

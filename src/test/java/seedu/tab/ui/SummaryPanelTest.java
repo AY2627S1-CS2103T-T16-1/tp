@@ -17,9 +17,12 @@ import org.junit.jupiter.api.Test;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.tab.model.student.Student;
@@ -50,6 +53,19 @@ public class SummaryPanelTest {
         return task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
+    /**
+     * Returns a scene holding {@code root}, dressed in the stylesheet the window uses, so
+     * that a row is measured in the font and the padding the product gives it.
+     */
+    private static Scene styledScene(Region root, double width, double height) {
+        Scene scene = new Scene(root, width, height);
+        scene.getStylesheets().add(
+                UiPart.class.getResource("/view/DarkTheme.css").toExternalForm());
+        root.applyCss();
+        root.layout();
+        return scene;
+    }
+
     @Test
     public void panel_manyTags_keepsTheTotalInSightAndScrollsTheTags() throws Exception {
         List<Student> many = new java.util.ArrayList<>();
@@ -61,13 +77,10 @@ public class SummaryPanelTest {
         boolean[] state = onFxThread(() -> {
             SummaryPanel panel = new SummaryPanel(students);
             Region root = (Region) panel.getRoot();
-            Scene scene = new Scene(root, 160, SHORT_WINDOW);
-            assertNotNull(scene);
-            root.applyCss();
-            root.layout();
+            assertNotNull(styledScene(root, 160, SHORT_WINDOW));
 
             Label total = (Label) root.lookup("#total");
-            javafx.geometry.Bounds inPanel = total.localToScene(total.getBoundsInLocal());
+            Bounds inPanel = total.localToScene(total.getBoundsInLocal());
             return new boolean[] {
                 root.lookup("#tagScroll") != null,
                 inPanel.getMaxY() <= SHORT_WINDOW,
@@ -86,7 +99,7 @@ public class SummaryPanelTest {
         ScrollPane scroll = (ScrollPane) panel.getRoot().lookup("#tagScroll");
         VBox rows = (VBox) scroll.getContent();
         return rows.getChildren().stream()
-                .map(row -> ((Label) ((javafx.scene.layout.HBox) row).getChildren().get(0)).getText())
+                .map(row -> ((Label) ((HBox) row).getChildren().get(0)).getText())
                 .toList();
     }
 
@@ -203,5 +216,40 @@ public class SummaryPanelTest {
 
         assertEquals(List.of("apple", "Mango", "Zoo"),
                 List.copyOf(SummaryPanel.countByTag(students).keySet()));
+    }
+
+    @Test
+    public void rows_aTagTooLongForThePanel_keepItsCountWhole() throws Exception {
+        String longTag = "attendance-and-participation-term-two";
+        ObservableList<Student> students = FXCollections.observableArrayList(
+                new StudentBuilder().withName("A").withTags(longTag).build(),
+                new StudentBuilder().withName("B").withTags(longTag).build());
+
+        String[] shown = onFxThread(() -> {
+            SummaryPanel panel = new SummaryPanel(students);
+            Region root = (Region) panel.getRoot();
+            assertNotNull(styledScene(root, 190, 400));
+
+            Label name = null;
+            Label count = null;
+            for (Node node : root.lookupAll(".summary-row .label")) {
+                Label label = (Label) node;
+                if (label.getStyleClass().contains("summary-count")) {
+                    count = label;
+                } else {
+                    name = label;
+                }
+            }
+            assertNotNull(name);
+            assertNotNull(count);
+            return new String[] {count.getText(), name.getText(),
+                name.getTooltip() == null ? null : name.getTooltip().getText()};
+        });
+
+        // the count is the one part of the row a reader cannot work out for themselves, so
+        // it is the tag that gives way
+        assertEquals("2", shown[0]);
+        assertTrue(shown[1].length() < longTag.length(), "the tag should be cut: " + shown[1]);
+        assertEquals(longTag, shown[2], "the whole tag should be a hover away");
     }
 }

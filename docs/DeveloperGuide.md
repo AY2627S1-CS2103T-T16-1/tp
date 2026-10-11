@@ -89,8 +89,9 @@ The `UI` component,
 the list. It counts `Logic#getFilteredStudentList()`, which is the only list
 `Logic` exposes, so it summarises **what the list is showing** rather than the
 whole address book: after `find Siti` it counts the matches. That is the
-reading the User Guide documents. Widening `Logic` to reach the whole book
-would be a one-line change if the team prefers the other reading.
+reading the User Guide documents, and it keeps the panel answering the same
+question as the list it sits beside. Summarising the whole book instead would
+need `Logic` to expose it.
 
 The list is an `ObservableList`, so a listener keeps the counts current
 without the panel being told when a command changes anything. The counting
@@ -1294,7 +1295,7 @@ testers are expected to do more *exploratory* testing.
       Expected: The panel's total matches the number of cards. Each tag in use
       is listed with its count, most used first, and tags with equal counts
       are in alphabetical order whatever case they were typed in.
-   1. Test case: `find Siti`<br>
+   1. Test case: `find Alex`<br>
       Expected: The counts fall to cover only the students now listed. The
       total reads the number of matches.
    1. Test case: `clear`<br>

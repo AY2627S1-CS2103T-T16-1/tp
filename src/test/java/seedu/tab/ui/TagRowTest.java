@@ -143,4 +143,15 @@ public class TagRowTest {
         row.setTags(names);
         return row.prefWidth(-1);
     }
+
+    @Test
+    public void setTags_aRowTooNarrowForAChipAndACount_showsTheFirstTag() throws Exception {
+        TagRow row = rowOf(70, List.of("needsconsultation", "urgent"));
+
+        List<String> chips = chipsOf(row);
+        // a bare "2 more…" names no tag at all, where the first tag cut short still says
+        // which tag the student carries
+        assertEquals(1, chips.size(), "the row should show one tag, not " + chips);
+        assertEquals("needsconsult\u2026", chips.get(0));
+    }
 }

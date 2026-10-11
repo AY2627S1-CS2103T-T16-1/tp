@@ -24,6 +24,13 @@ import seedu.tab.model.student.Student;
  */
 public class SummaryPanel extends UiPart<Region> {
 
+    /**
+     * How much of a tag the panel names. The panel is narrow and the count beside the tag is
+     * the part a reader cannot work out for themselves, so a longer tag is cut and carries
+     * the whole of itself on its tooltip.
+     */
+    private static final int MAX_TAG_CHARACTERS = 18;
+
     private static final String FXML = "SummaryPanel.fxml";
     private static final String SINGULAR = "%d student";
     private static final String PLURAL = "%d students";
@@ -90,9 +97,15 @@ public class SummaryPanel extends UiPart<Region> {
 
     /**
      * Returns a row naming {@code tag} with its count pushed to the far edge.
+     *
+     * <p>A long tag gives way, not its count. A row shares what it cannot fit between the
+     * two, so a tag long enough left the count reading as an ellipsis, which is the one part
+     * of the row a reader cannot work out for themselves. The whole of a cut tag is on its
+     * tooltip.
      */
     private static HBox rowFor(String tag, int count) {
-        Label name = new Label(tag);
+        Label name = new Label();
+        UiText.showShortened(name, tag, MAX_TAG_CHARACTERS);
         name.getStyleClass().add("summary-name");
 
         Region spacer = new Region();
@@ -100,6 +113,7 @@ public class SummaryPanel extends UiPart<Region> {
 
         Label number = new Label(String.valueOf(count));
         number.getStyleClass().add("summary-count");
+        number.setMinWidth(Region.USE_PREF_SIZE);
 
         HBox row = new HBox(name, spacer, number);
         row.getStyleClass().add("summary-row");

@@ -164,8 +164,9 @@ Examples:
 * `add Priya Nair -p 91234567 -e priya@example.com --follow-up`
 * `add 陈伟明 -p 98123344 -e e1077310@u.nus.edu`
 
-A flagged student's card and successful command result include a separate
-`Needs follow-up` line. An unflagged student has no placeholder row.
+A flagged student's card carries a `Needs follow-up` marker at its right-hand
+edge, on the same line as the name, and the command result says so too. An
+unflagged student's card leaves no gap where the marker would have been.
 
 Leading and trailing spaces are removed, repeated spaces inside a name are
 collapsed to one, and invisible characters are discarded, so that a name is
