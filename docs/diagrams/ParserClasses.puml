@@ -11,11 +11,12 @@ package "Parser classes"{
 Class "<<interface>>\nParser" as Parser
 Class StudentBookParser
 Class XYZCommandParser
-Class CliSyntax
+Class CliFlags
 Class ParserUtil
-Class ArgumentMultimap
-Class ArgumentTokenizer
-Class Prefix
+Class FlagArgumentMap
+Class FlagTokenizer
+Class CommandTokenizer
+Class Flag
 }
 
 Class HiddenOutside #FFFFFF
@@ -26,13 +27,14 @@ StudentBookParser .down.> XYZCommandParser: <<create>>
 XYZCommandParser ..> XYZCommand : <<create>>
 StudentBookParser ..> Command : <<use>>
 XYZCommandParser .up.|> Parser
-XYZCommandParser ..> ArgumentMultimap
-XYZCommandParser ..> ArgumentTokenizer
-ArgumentTokenizer .left.> ArgumentMultimap
-XYZCommandParser ..> CliSyntax
-CliSyntax ..> Prefix
+XYZCommandParser ..> FlagArgumentMap
+XYZCommandParser ..> FlagTokenizer
+FlagTokenizer .left.> FlagArgumentMap
+FlagTokenizer ..> CommandTokenizer
+XYZCommandParser ..> CliFlags
+CliFlags ..> Flag
 XYZCommandParser ..> ParserUtil
-ParserUtil .down.> Prefix
-ArgumentTokenizer .down.> Prefix
+FlagArgumentMap .down.> Flag
+FlagTokenizer .down.> Flag
 XYZCommand -up-|> Command
 @enduml
