@@ -94,6 +94,11 @@ Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [--follow-up]`
 **Tip:** The email is optional. Record a student you only have a phone number
 for, rather than inventing an address to satisfy the command. An email cannot
 be removed once set, only replaced.
+
+An address may run to 254 characters, the longest an email address is allowed
+to be, so no real address is turned away. A longer value is refused and TAB
+tells you how long it was — useful when a copy-and-paste has picked up more
+than you meant.
 </box>
 
 <box type="tip" seamless>
