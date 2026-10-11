@@ -31,6 +31,8 @@ public class StudentCardTest {
 
     private static final int TIMEOUT_SECONDS = 10;
     private static final double CARD_WIDTH = 420;
+    /** About what the list gives a card when the window opens at its default size. */
+    private static final double DEFAULT_CARD_WIDTH = 490;
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -307,7 +309,7 @@ public class StudentCardTest {
         // a name cut by the room the row has left breaks off wherever the tags and the pill
         // leave it, so the same name reads differently from one card to the next
         List<String> cut = new ArrayList<>();
-        for (double cardWidth : new double[] {320, 420, 700}) {
+        for (double cardWidth : new double[] {DEFAULT_CARD_WIDTH, 600, 760}) {
             cut.add(onFxThread(() -> {
                 Region root = (Region) new StudentCard(student, 1).getRoot();
                 assertNotNull(styledScene(root, cardWidth, 120));
@@ -323,7 +325,29 @@ public class StudentCardTest {
         }
 
         assertEquals(List.of(cut.get(0), cut.get(0), cut.get(0)), cut);
-        assertEquals("Siti Nur-Aisyah Binte\u2026", cut.get(0).substring(0, cut.get(0).length()));
+        assertEquals("Siti Nur-Aisyah Binte\u2026", cut.get(0));
+    }
+
+    @Test
+    public void constructor_aCardTooNarrowForTheName_cutsItFurtherAndKeepsATag() throws Exception {
+        Student student = new StudentBuilder()
+                .withName("Siti Nur-Aisyah Binte Abdullah Rahman")
+                .withTags("alpha", "bravo").withFlag(true).build();
+
+        double[] widths = onFxThread(() -> {
+            Region root = (Region) new StudentCard(student, 1).getRoot();
+            assertNotNull(styledScene(root, 300, 120));
+            Label name = (Label) root.lookup("#name");
+            assertTrue(visibleChipsOf(root).size() > 0,
+                    "a card with tags should show the start of one however narrow it is");
+            return new double[] {name.getWidth(), name.prefWidth(-1)};
+        });
+
+        // below the width the name is cut to, it gives way to the tags beside it, and the
+        // label draws the ellipsis that says it has
+        assertTrue(widths[0] < widths[1],
+                "the name should give way at " + widths[0] + " rather than hold " + widths[1]);
+        assertTrue(widths[0] > 0, "the name should not vanish");
     }
 
     @Test
