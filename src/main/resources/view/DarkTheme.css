@@ -414,3 +414,41 @@
     -fx-text-fill: -tab-text-muted;
     -fx-font-size: 11px;
 }
+
+/* the student card, laid out as docs/images/Ui.png draws it */
+.card-index {
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-min-width: 22;
+    -fx-alignment: center-right;
+    -fx-padding: 3 0 0 0;
+}
+
+.card-name {
+    -fx-text-fill: -tab-text;
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 15px;
+}
+
+.card-detail {
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+}
+
+/* the NUS ID, which reads as an identifier rather than as prose */
+.card-detail-strong {
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-family: "monospace";
+    -fx-font-size: 12px;
+}
+
+/* the trailing pill: the follow-up marker today, its age once one is recorded */
+.card-pill {
+    -fx-text-fill: -tab-highlight;
+    -fx-background-color: derive(-tab-highlight, -70%);
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 10;
+    -fx-font-size: 11px;
+}
