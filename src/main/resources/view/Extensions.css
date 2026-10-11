@@ -1,20 +1,14 @@
+/* Rules that have to win against a control's own stylesheet, which is why they sit apart
+   from the rest of the theme. Their colours come from the palette in DarkTheme.css: a
+   looked-up colour is resolved against the node it is used on, not against the file it was
+   written in, so the two stylesheets share one palette. */
 
 .error {
-    -fx-text-fill: #d06651 !important; /* The error class should always override the default text-fill style */
+    /* always overrides the default text-fill of the control it marks */
+    -fx-text-fill: -tab-danger !important;
 }
 
 .list-cell:empty {
-    /* Empty cells will not have alternating colours */
-    -fx-background: #383838;
-}
-
-.tag-selector {
-    -fx-border-width: 1;
-    -fx-border-color: white;
-    -fx-border-radius: 3;
-    -fx-background-radius: 3;
-}
-
-.tooltip-text {
-    -fx-text-fill: white;
+    /* an empty cell carries the window's own colour rather than a row of its own */
+    -fx-background: -tab-bg;
 }

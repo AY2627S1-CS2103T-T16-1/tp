@@ -73,12 +73,25 @@ public class CardHeadline extends Pane {
         child.resizeRelocate(x, Math.round((getHeight() - height) / 2), width, height);
     }
 
-    /** Picks the name and the tags out of what the card put in the row. */
+    /**
+     * Picks the name and the tags out of what the card put in the row, by what they are
+     * rather than by the order they were written in, so that the row still lays itself out
+     * if the two are ever swapped round in the layout file.
+     */
     private void read() {
         if (name != null) {
             return;
         }
-        name = (Label) getChildren().get(0);
-        tags = (TagRow) getChildren().get(1);
+        name = firstOf(Label.class);
+        tags = firstOf(TagRow.class);
+    }
+
+    private <T> T firstOf(Class<T> kind) {
+        return getChildren().stream()
+                .filter(kind::isInstance)
+                .map(kind::cast)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "a card's first line needs a " + kind.getSimpleName()));
     }
 }

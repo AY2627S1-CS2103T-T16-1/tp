@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
@@ -77,5 +78,22 @@ public class UiFontsTest {
             assertNotEquals("System", family,
                     "a machine with one of the preferred families should use it");
         }
+    }
+
+    @Test
+    public void firstOf_aMachineWithNoneOfThem_keepsItsOwn() throws Exception {
+        String chosen = onFxThread(() -> UiFonts.firstOf(
+                List.of("Inter", "Segoe UI"), List.of("Some Other Face", "And Another")));
+
+        assertEquals(Font.getDefault().getFamily(), chosen,
+                "a machine carrying none of the preferred families should keep its own");
+    }
+
+    @Test
+    public void firstOf_severalInstalled_takesTheFirstPreferred() throws Exception {
+        String chosen = onFxThread(() -> UiFonts.firstOf(
+                List.of("Inter", "Segoe UI"), List.of("Segoe UI", "Inter")));
+
+        assertEquals("Inter", chosen, "the order preferred decides, not the order installed");
     }
 }
