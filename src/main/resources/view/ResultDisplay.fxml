@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.StackPane?>
 
 <StackPane fx:id="placeHolder" styleClass="result-pane" xmlns="http://javafx.com/javafx/17"
     xmlns:fx="http://javafx.com/fxml/1">
+  <padding>
+    <Insets top="8" right="12" bottom="8" left="12" />
+  </padding>
   <TextArea fx:id="resultDisplay" editable="false" wrapText="true" prefRowCount="3"
             styleClass="result-display"/>
 </StackPane>

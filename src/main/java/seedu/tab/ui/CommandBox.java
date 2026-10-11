@@ -1,5 +1,7 @@
 package seedu.tab.ui;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -8,6 +10,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.util.Duration;
 import seedu.tab.logic.commands.CommandResult;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.exceptions.ParseException;
@@ -21,6 +24,7 @@ public class CommandBox extends UiPart<Region> {
     private static final String FXML = "CommandBox.fxml";
     /** Set while the coloured copy is showing, which is when the field hides its own text. */
     private static final PseudoClass COLOURED = PseudoClass.getPseudoClass("coloured");
+    private static final int BLINK_MILLIS = 530;
 
     private final CommandExecutor commandExecutor;
 
@@ -29,6 +33,9 @@ public class CommandBox extends UiPart<Region> {
 
     @FXML
     private TextFlow highlighted;
+
+    @FXML
+    private Region caret;
 
     /**
      * Creates a {@code CommandBox} with the given {@code CommandExecutor}.
@@ -43,6 +50,10 @@ public class CommandBox extends UiPart<Region> {
         // every task is meant to be reachable from the keyboard alone, so the line the User
         // types into is where the caret starts rather than somewhere they have to click
         Platform.runLater(commandTextField::requestFocus);
+
+        commandTextField.caretPositionProperty().addListener((unused, old, at) -> placeCaret());
+        commandTextField.focusedProperty().addListener((unused, old, focused) -> placeCaret());
+        blink();
     }
 
     /**
@@ -82,6 +93,39 @@ public class CommandBox extends UiPart<Region> {
         boolean fits = highlighted.prefWidth(-1) <= commandTextField.getWidth();
         highlighted.setVisible(fits);
         commandTextField.pseudoClassStateChanged(COLOURED, fits);
+    }
+
+    /**
+     * Moves the caret to the character the User is at.
+     *
+     * <p>The font is monospace, so a character's width is the same wherever it falls and the
+     * caret sits at that width times the number of characters before it. Measuring the run of
+     * text instead would have to repeat the flow's own layout.
+     */
+    private void placeCaret() {
+        caret.setVisible(commandTextField.isFocused());
+        caret.setTranslateX(characterWidth() * commandTextField.getCaretPosition());
+    }
+
+    /**
+     * Returns how wide one character of the command line is.
+     */
+    private double characterWidth() {
+        Text ruler = new Text("0");
+        ruler.setFont(commandTextField.getFont());
+        return ruler.getLayoutBounds().getWidth();
+    }
+
+    /**
+     * Blinks the caret, which the field would otherwise do for a caret of its own.
+     */
+    private void blink() {
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO, event -> caret.setOpacity(1)),
+                new KeyFrame(Duration.millis(BLINK_MILLIS), event -> caret.setOpacity(0)),
+                new KeyFrame(Duration.millis(BLINK_MILLIS * 2)));
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
     }
 
     /**
