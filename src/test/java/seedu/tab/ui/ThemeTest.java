@@ -162,10 +162,11 @@ public class ThemeTest {
         }
 
         // text drawn in a transparent highlight disappears the moment it is selected, which
-        // is what selecting it to copy it does first. Only the command line may do it, and
-        // only because a copy of the command is drawn behind the field
-        assertTrue(hidden.isEmpty() || hidden.equals(Set.of(".command-line #commandTextField")),
-                "these hide their own text when it is selected: " + hidden);
+        // is what selecting it to copy it does first. Nothing this window draws does that,
+        // and the one place that may — the command field, whose text is carried by a copy
+        // drawn over it — arrives with the branch that draws the copy, and relaxes this
+        // there
+        assertTrue(hidden.isEmpty(), "these hide their own text when it is selected: " + hidden);
     }
 
     @Test
@@ -177,10 +178,12 @@ public class ThemeTest {
         List<String> lists = new ArrayList<>();
         for (Path stylesheet : List.of(DARK_THEME, EXTENSIONS, HELP_WINDOW)) {
             String css = Files.readString(stylesheet, StandardCharsets.UTF_8);
-            Matcher families = Pattern.compile("-fx-font-family:([^;]*);").matcher(css);
+            // the property may be spaced out, the shorthand says the same thing, and the
+            // last declaration in a rule may have no semicolon after it
+            Matcher families = Pattern.compile("-fx-font(-family)?\\s*:([^;}]*)").matcher(css);
             families.results()
-                    .filter(result -> result.group(1).contains(","))
-                    .map(result -> stylesheet.getFileName() + ":" + result.group().trim())
+                    .filter(result -> result.group(2).contains(","))
+                    .map(result -> stylesheet.getFileName() + ": " + result.group().trim())
                     .forEach(lists::add);
         }
 
