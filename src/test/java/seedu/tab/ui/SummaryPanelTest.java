@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -68,7 +69,7 @@ public class SummaryPanelTest {
 
     @Test
     public void panel_manyTags_keepsTheTotalInSightAndScrollsTheTags() throws Exception {
-        List<Student> many = new java.util.ArrayList<>();
+        List<Student> many = new ArrayList<>();
         for (int i = 0; i < 40; i++) {
             many.add(tagged("Student " + i, false, "tag-" + i));
         }

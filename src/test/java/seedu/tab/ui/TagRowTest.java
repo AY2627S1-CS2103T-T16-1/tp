@@ -19,6 +19,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 
 public class TagRowTest {
 
@@ -52,7 +53,7 @@ public class TagRowTest {
             TagRow row = new TagRow();
             row.setId("tags");
             row.setTags(names);
-            Region holder = new javafx.scene.layout.StackPane(row);
+            Region holder = new StackPane(row);
             Scene scene = new Scene(holder, width, 40);
             scene.getStylesheets().add(
                     UiPart.class.getResource("/view/DarkTheme.css").toExternalForm());

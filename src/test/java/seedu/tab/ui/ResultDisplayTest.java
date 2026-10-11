@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -121,7 +122,7 @@ public class ResultDisplayTest {
     public void resultArea_staysReadableWhenItCannotAllBeShown() throws Exception {
         // a reply too long for the space has to remain reachable, so the area keeps the
         // scrolling and the selection a text area gives and a label does not
-        ResultDisplay display = showing(String.join("\n", java.util.Collections.nCopies(40, "line")));
+        ResultDisplay display = showing(String.join("\n", Collections.nCopies(40, "line")));
         TextArea area = areaOf(display);
 
         assertFalse(area.isEditable(), "the reply is not something the User edits");

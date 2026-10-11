@@ -153,9 +153,9 @@ public class CommandBox extends UiPart<Region> {
         }
 
         double content = widthBefore(commandTextField.getLength());
-        // the copy is taken out of the lane's layout and placed by hand. Left to the
-        // StackPane it would be resized to the lane, and a TextFlow wraps at the width it is
-        // given, so a long command became several lines and made the box grow.
+        // the copy is sized to the command rather than to the lane holding it, because a
+        // TextFlow wraps at the width it is given: sized to the lane, a long command came
+        // out on several lines and made the box grow down the window.
         highlighted.setPrefWidth(content);
         highlighted.autosize();
         caret.autosize();
@@ -229,7 +229,7 @@ public class CommandBox extends UiPart<Region> {
      * fragments between the characters. The field's highlight is turned off in the stylesheet
      * and this stands in for it, measured the same way as everything else on the line.
      */
-    private void showSelection(double scrolled, double middle) {
+    private void showSelection(double drawnFrom, double middle) {
         IndexRange range = commandTextField.getSelection();
         boolean hasSelection = range.getLength() > 0;
         selection.setVisible(hasSelection);
@@ -241,7 +241,7 @@ public class CommandBox extends UiPart<Region> {
         // a managed child is laid out at its preferred size, so resizing it has no effect
         selection.setPrefSize(to - from, caret.getHeight());
         selection.autosize();
-        selection.relocate(from - scrolled, middle - caret.getHeight() / 2);
+        selection.relocate(from - drawnFrom, middle - caret.getHeight() / 2);
     }
 
     /**
