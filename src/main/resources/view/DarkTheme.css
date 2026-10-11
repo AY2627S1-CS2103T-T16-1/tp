@@ -141,16 +141,13 @@
     -fx-background-color: transparent;
 }
 
-/* the row the User is on is marked by an accent down its left edge */
+/* the row the User is on keeps the same rounded shape as every other card, with an accent
+   showing down its left edge. Two layers, because a one-sided border squares the corners. */
 .list-cell:filled:selected #cardPane {
-    -fx-background-color: -tab-surface-selected;
-    -fx-border-color: -tab-accent;
-    -fx-border-width: 0 0 0 3;
-    -fx-border-radius: 0 6 6 0;
-}
-
-.list-cell .label {
-    -fx-text-fill: -tab-text;
+    -fx-background-color: -tab-accent, -tab-surface-selected;
+    -fx-background-insets: 0, 0 0 0 3;
+    -fx-background-radius: 6, 6;
+    -fx-border-width: 0;
 }
 
 .cell_big_label {
@@ -187,8 +184,16 @@
     -fx-background-color: transparent;
     -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
-    -fx-text-fill: -tab-text;
+    -fx-text-fill: -tab-text-muted;
     -fx-highlight-fill: -tab-surface-selected;
+    -fx-padding: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* the line is still selectable and still scrolls, but it should not look like a box */
+.result-display:focused {
+    -fx-background-color: transparent;
 }
 
 .result-display .viewport,
@@ -435,7 +440,7 @@
 /* the student card, laid out as docs/images/Ui.png draws it */
 .card-index {
     -fx-text-fill: -tab-text-muted;
-    -fx-font-family: "Segoe UI";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
     -fx-min-width: 22;
     -fx-alignment: center-right;
@@ -444,20 +449,21 @@
 
 .card-name {
     -fx-text-fill: -tab-text;
-    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
+    -fx-font-weight: bold;
     -fx-font-size: 15px;
 }
 
 .card-detail {
     -fx-text-fill: -tab-text-muted;
-    -fx-font-family: "Segoe UI";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
 }
 
 /* the NUS ID, which reads as an identifier rather than as prose */
 .card-detail-strong {
     -fx-text-fill: -tab-text-muted;
-    -fx-font-family: "monospace";
+    -fx-font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", "Consolas", monospace;
     -fx-font-size: 12px;
 }
 
