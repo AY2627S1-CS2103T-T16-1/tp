@@ -1,26 +1,46 @@
+/*
+ * TAB's palette. Every colour below is named here and referred to by name
+ * elsewhere in this file, so that a shade is changed in one place rather than
+ * hunted through the rules that use it.
+ */
+* {
+    -tab-bg: #11151e;              /* the window behind everything */
+    -tab-surface: #1a1f2b;         /* a card, the command line, the sidebar */
+    -tab-surface-raised: #222938;  /* a surface lifted above its neighbours */
+    -tab-surface-selected: #243041;/* the row the User is on */
+    -tab-border: #272e3d;          /* a divider, and the edge of a surface */
+    -tab-text: #e6e9ef;            /* ordinary text */
+    -tab-text-muted: #8b93a7;      /* an index, a label, a secondary detail */
+    -tab-accent: #4ec9b0;          /* the product's own colour */
+    -tab-highlight: #e0a458;       /* something that wants attention */
+    -tab-chip-bg: #2b3446;         /* a tag chip */
+    -tab-chip-text: #a8b3cb;
+    -tab-danger: #ff6b6b;          /* a refused command */
+}
+
 .background {
-    -fx-background-color: derive(#1d1d1d, 20%);
-    background-color: #383838; /* Used in the default.html file */
+    -fx-background-color: -tab-bg;
+    background-color: -tab-surface; /* Used in the default.html file */
 }
 
 .label {
     -fx-font-size: 11pt;
     -fx-font-family: "Segoe UI Semibold";
-    -fx-text-fill: #555555;
+    -fx-text-fill: -tab-text-muted;
     -fx-opacity: 0.9;
 }
 
 .label-bright {
     -fx-font-size: 11pt;
     -fx-font-family: "Segoe UI Semibold";
-    -fx-text-fill: white;
+    -fx-text-fill: -tab-text;
     -fx-opacity: 1;
 }
 
 .label-header {
     -fx-font-size: 32pt;
     -fx-font-family: "Segoe UI Light";
-    -fx-text-fill: white;
+    -fx-text-fill: -tab-text;
     -fx-opacity: 1;
 }
 
@@ -40,9 +60,9 @@
 }
 
 .table-view {
-    -fx-base: #1d1d1d;
-    -fx-control-inner-background: #1d1d1d;
-    -fx-background-color: #1d1d1d;
+    -fx-base: -tab-bg;
+    -fx-control-inner-background: -tab-bg;
+    -fx-background-color: -tab-bg;
     -fx-table-cell-border-color: transparent;
     -fx-table-header-border-color: transparent;
     -fx-padding: 5;
@@ -67,7 +87,7 @@
 .table-view .column-header .label {
     -fx-font-size: 20pt;
     -fx-font-family: "Segoe UI Light";
-    -fx-text-fill: white;
+    -fx-text-fill: -tab-text;
     -fx-alignment: center-left;
     -fx-opacity: 1;
 }
@@ -77,134 +97,149 @@
 }
 
 .split-pane:horizontal .split-pane-divider {
-    -fx-background-color: derive(#1d1d1d, 20%);
-    -fx-border-color: transparent transparent transparent #4d4d4d;
+    -fx-background-color: -tab-bg;
+    -fx-border-color: transparent transparent transparent -tab-border;
 }
 
 .split-pane {
     -fx-border-radius: 1;
     -fx-border-width: 1;
-    -fx-background-color: derive(#1d1d1d, 20%);
+    -fx-background-color: -tab-bg;
 }
 
 .list-view {
     -fx-background-insets: 0;
     -fx-padding: 0;
-    -fx-background-color: derive(#1d1d1d, 20%);
+    -fx-background-color: -tab-bg;
 }
 
 .list-cell {
     -fx-label-padding: 0 0 0 0;
     -fx-graphic-text-gap : 0;
-    -fx-padding: 0 0 0 0;
+    -fx-padding: 0 0 6 0;
+    -fx-background-color: transparent;
 }
 
-.list-cell:filled:even {
-    -fx-background-color: #3c3e3f;
-}
-
-.list-cell:filled:odd {
-    -fx-background-color: #515658;
+/* the mockup's rows are uniform, so the card carries the colour, not the cell */
+.list-cell:filled:even, .list-cell:filled:odd {
+    -fx-background-color: transparent;
 }
 
 .list-cell:filled:selected {
-    -fx-background-color: #424d5f;
+    -fx-background-color: transparent;
 }
 
+/* the row the User is on is marked by an accent down its left edge */
 .list-cell:filled:selected #cardPane {
-    -fx-border-color: #3e7b91;
-    -fx-border-width: 1;
+    -fx-background-color: -tab-surface-selected;
+    -fx-border-color: -tab-accent;
+    -fx-border-width: 0 0 0 3;
+    -fx-border-radius: 0 8 8 0;
 }
 
 .list-cell .label {
-    -fx-text-fill: white;
+    -fx-text-fill: -tab-text;
 }
 
 .cell_big_label {
     -fx-font-family: "Segoe UI Semibold";
     -fx-font-size: 16px;
-    -fx-text-fill: #010504;
+    -fx-text-fill: -tab-text;
 }
 
 .cell_small_label {
     -fx-font-family: "Segoe UI";
     -fx-font-size: 13px;
-    -fx-text-fill: #010504;
+    -fx-text-fill: -tab-text-muted;
 }
 
 .stack-pane {
-     -fx-background-color: derive(#1d1d1d, 20%);
+     -fx-background-color: -tab-bg;
 }
 
 .pane-with-border {
-     -fx-background-color: derive(#1d1d1d, 20%);
-     -fx-border-color: derive(#1d1d1d, 10%);
+     -fx-background-color: -tab-bg;
+     -fx-border-color: -tab-border;
      -fx-border-top-width: 1px;
 }
 
 .status-bar {
-    -fx-background-color: derive(#1d1d1d, 30%);
+    -fx-background-color: -tab-bg;
 }
 
 .result-display {
+    /* a TextArea paints its inside from -fx-control-inner-background, so setting only
+       -fx-background-color leaves the default white slab showing */
+    -fx-control-inner-background: -tab-bg;
     -fx-background-color: transparent;
-    -fx-font-family: "Segoe UI Light";
-    -fx-font-size: 13pt;
-    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12pt;
+    -fx-text-fill: -tab-text;
+    -fx-highlight-fill: -tab-surface-selected;
+}
+
+.result-display .viewport,
+.result-display .scroll-pane,
+.result-display .content {
+    -fx-background-color: transparent;
+}
+
+.result-display .text {
+    -fx-fill: -tab-text;
 }
 
 .result-display .label {
-    -fx-text-fill: black !important;
+    -fx-text-fill: -tab-text !important;
 }
 
 .status-bar .label {
     -fx-font-family: "Segoe UI Light";
-    -fx-text-fill: white;
+    -fx-text-fill: -tab-text;
     -fx-padding: 4px;
     -fx-pref-height: 30px;
 }
 
 .status-bar-with-border {
-    -fx-background-color: derive(#1d1d1d, 30%);
-    -fx-border-color: derive(#1d1d1d, 25%);
+    -fx-background-color: -tab-bg;
+    -fx-border-color: -tab-border;
     -fx-border-width: 1px;
 }
 
 .status-bar-with-border .label {
-    -fx-text-fill: white;
+    -fx-text-fill: -tab-text;
 }
 
 .grid-pane {
-    -fx-background-color: derive(#1d1d1d, 30%);
-    -fx-border-color: derive(#1d1d1d, 30%);
+    -fx-background-color: -tab-bg;
+    -fx-border-color: -tab-bg;
     -fx-border-width: 1px;
 }
 
 .grid-pane .stack-pane {
-    -fx-background-color: derive(#1d1d1d, 30%);
+    -fx-background-color: -tab-bg;
 }
 
 .context-menu {
-    -fx-background-color: derive(#1d1d1d, 50%);
+    -fx-background-color: -tab-surface-raised;
 }
 
 .context-menu .label {
-    -fx-text-fill: white;
+    -fx-text-fill: -tab-text;
 }
 
 .menu-bar {
-    -fx-background-color: derive(#1d1d1d, 20%);
+    -fx-background-color: -tab-bg;
 }
 
 .menu-bar .label {
     -fx-font-size: 14pt;
     -fx-font-family: "Segoe UI Light";
-    -fx-text-fill: white;
+    -fx-text-fill: -tab-text;
     -fx-opacity: 0.9;
 }
 
 .menu .left-container {
-    -fx-background-color: black;
+    -fx-background-color: -tab-bg;
 }
 
 /*
@@ -214,27 +249,27 @@
  */
 .button {
     -fx-padding: 5 22 5 22;
-    -fx-border-color: #e2e2e2;
+    -fx-border-color: -tab-text;
     -fx-border-width: 2;
     -fx-background-radius: 0;
-    -fx-background-color: #1d1d1d;
+    -fx-background-color: -tab-bg;
     -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
     -fx-font-size: 11pt;
-    -fx-text-fill: #d8d8d8;
+    -fx-text-fill: -tab-text-muted;
     -fx-background-insets: 0 0 0 0, 0, 1, 2;
 }
 
 .button:hover {
-    -fx-background-color: #3a3a3a;
+    -fx-background-color: -tab-border;
 }
 
 .button:pressed, .button:default:hover:pressed {
-  -fx-background-color: white;
-  -fx-text-fill: #1d1d1d;
+  -fx-background-color: -tab-text;
+  -fx-text-fill: -tab-bg;
 }
 
 .button:focused {
-    -fx-border-color: white, white;
+    -fx-border-color: -tab-text, -tab-text;
     -fx-border-width: 1, 1;
     -fx-border-style: solid, segments(1, 1);
     -fx-border-radius: 0, 0;
@@ -243,13 +278,13 @@
 
 .button:disabled, .button:default:disabled {
     -fx-opacity: 0.4;
-    -fx-background-color: #1d1d1d;
-    -fx-text-fill: white;
+    -fx-background-color: -tab-bg;
+    -fx-text-fill: -tab-text;
 }
 
 .button:default {
     -fx-background-color: -fx-focus-color;
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: -tab-text;
 }
 
 .button:default:hover {
@@ -257,36 +292,36 @@
 }
 
 .dialog-pane {
-    -fx-background-color: #1d1d1d;
+    -fx-background-color: -tab-bg;
 }
 
 .dialog-pane > *.button-bar > *.container {
-    -fx-background-color: #1d1d1d;
+    -fx-background-color: -tab-bg;
 }
 
 .dialog-pane > *.label.content {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: white;
+    -fx-text-fill: -tab-text;
 }
 
 .dialog-pane:header *.header-panel {
-    -fx-background-color: derive(#1d1d1d, 25%);
+    -fx-background-color: -tab-border;
 }
 
 .dialog-pane:header *.header-panel *.label {
     -fx-font-size: 18px;
     -fx-font-style: italic;
-    -fx-fill: white;
-    -fx-text-fill: white;
+    -fx-fill: -tab-text;
+    -fx-text-fill: -tab-text;
 }
 
 .scroll-bar {
-    -fx-background-color: derive(#1d1d1d, 20%);
+    -fx-background-color: -tab-bg;
 }
 
 .scroll-bar .thumb {
-    -fx-background-color: derive(#1d1d1d, 50%);
+    -fx-background-color: -tab-surface-raised;
     -fx-background-insets: 3;
 }
 
@@ -308,24 +343,33 @@
 }
 
 #cardPane {
-    -fx-background-color: transparent;
+    -fx-background-color: -tab-surface;
+    -fx-background-radius: 8;
     -fx-border-width: 0;
 }
 
 #commandTypeLabel {
     -fx-font-size: 11px;
-    -fx-text-fill: #F70D1A;
+    -fx-text-fill: -tab-danger;
 }
 
 #commandTextField {
-    -fx-background-color: transparent #383838 transparent #383838;
+    -fx-background-color: -tab-surface;
+    -fx-background-radius: 8;
     -fx-background-insets: 0;
-    -fx-border-color: #383838 #383838 #ffffff #383838;
+    -fx-border-color: -tab-border;
+    -fx-border-radius: 8;
     -fx-border-insets: 0;
     -fx-border-width: 1;
-    -fx-font-family: "Segoe UI Light";
+    -fx-font-family: "Segoe UI";
     -fx-font-size: 13pt;
-    -fx-text-fill: white;
+    -fx-text-fill: -tab-text;
+    -fx-prompt-text-fill: -tab-text-muted;
+    -fx-padding: 10 14 10 14;
+}
+
+#commandTextField:focused {
+    -fx-border-color: -tab-accent;
 }
 
 #filterField, #studentListPanel, #studentWebpage {
@@ -333,7 +377,7 @@
 }
 
 #resultDisplay .content {
-    -fx-background-color: transparent, #383838, transparent, #383838;
+    -fx-background-color: transparent;
     -fx-background-radius: 0;
 }
 
@@ -343,10 +387,104 @@
 }
 
 #tags .label {
-    -fx-text-fill: white;
-    -fx-background-color: #3e7b91;
-    -fx-padding: 1 3 1 3;
-    -fx-border-radius: 2;
-    -fx-background-radius: 2;
+    -fx-text-fill: -tab-chip-text;
+    -fx-background-color: -tab-chip-bg;
+    -fx-padding: 2 7 2 7;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
     -fx-font-size: 11;
+}
+
+/* the three panes of the main window, which carry the window's own colour */
+.command-pane, .result-pane, .student-list-pane {
+    -fx-background-color: -tab-bg;
+}
+
+.menu-bar {
+    -fx-border-color: transparent transparent -tab-border transparent;
+    -fx-border-width: 1;
+}
+
+.status-bar {
+    -fx-border-color: -tab-border transparent transparent transparent;
+    -fx-border-width: 1;
+}
+
+.status-bar .label {
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-size: 11px;
+}
+
+/* the student card, laid out as docs/images/Ui.png draws it */
+.card-index {
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-min-width: 22;
+    -fx-alignment: center-right;
+    -fx-padding: 3 0 0 0;
+}
+
+.card-name {
+    -fx-text-fill: -tab-text;
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 15px;
+}
+
+.card-detail {
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+}
+
+/* the NUS ID, which reads as an identifier rather than as prose */
+.card-detail-strong {
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-family: "monospace";
+    -fx-font-size: 12px;
+}
+
+/* the trailing pill: the follow-up marker today, its age once one is recorded */
+.card-pill {
+    -fx-text-fill: -tab-highlight;
+    -fx-background-color: derive(-tab-highlight, -70%);
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 10;
+    -fx-font-size: 11px;
+}
+
+/* the summary of what is on display, beside the list */
+.summary-panel {
+    -fx-background-color: -tab-bg;
+    -fx-border-color: transparent -tab-border transparent transparent;
+    -fx-border-width: 1;
+}
+
+.summary-heading {
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 10px;
+}
+
+.summary-name {
+    -fx-text-fill: -tab-text;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+}
+
+.summary-count {
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+}
+
+.summary-total {
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-size: 11px;
+    -fx-padding: 8 0 0 0;
+}
+
+/* a long value is elided rather than widening the card */
+.card-detail, .card-detail-strong, .summary-name {
+    -fx-text-overrun: ellipsis;
 }
