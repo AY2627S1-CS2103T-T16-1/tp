@@ -555,9 +555,13 @@
 }
 
 .command-quoted-value {
-    -fx-fill: -tab-highlight;
+    -fx-fill: -tab-string;
 }
 
 .command-value, .command-space {
     -fx-fill: -tab-text;
+}
+
+.command-prompt, .command-command-word {
+    -fx-font-weight: bold;
 }
