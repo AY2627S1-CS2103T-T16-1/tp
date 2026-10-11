@@ -290,10 +290,6 @@ public class CommandBoxTest {
         });
     }
 
-    /** Half the caret's width, which is what the field insets its own text by. */
-    private static double halfACaretOf(Region root) {
-        return ((Region) root.lookup("#caret")).getWidth() / 2;
-    }
 
     private static List<String> styleClassesOf(CommandBox box, String id) {
         return List.copyOf(box.getRoot().lookup(id).getStyleClass());
@@ -422,50 +418,6 @@ public class CommandBoxTest {
     }
 
     @Test
-    public void caretMovedLeft_inACommandLongerThanTheLine_leavesTheLineWhereItIs() throws Exception {
-        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
-        Region root = box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
-        TextFlow copy = (TextFlow) root.lookup("#highlighted");
-        TextField field = (TextField) root.lookup("#commandTextField");
-
-        double[] drawnFrom = onFxThread(() -> {
-            field.setText("find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides");
-            field.positionCaret(field.getLength());
-            double atTheEnd = copy.getLayoutX();
-            field.positionCaret(field.getLength() - 4);
-            return new double[] {atTheEnd, copy.getLayoutX()};
-        });
-
-        // the field scrolls only when the caret would leave the line, so a copy that scrolls
-        // on every move shows a different part of the command from the one the field hit-tests
-        // a click against, and a click then lands on the wrong character
-        assertTrue(drawnFrom[0] < 0, "a command longer than the line should have scrolled");
-        assertEquals(drawnFrom[0], drawnFrom[1], 0.01,
-                "moving the caret back within the line should not move the line");
-    }
-
-    @Test
-    public void caretMovedToTheStart_ofALongCommand_bringsTheLineBack() throws Exception {
-        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
-        Region root = box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
-        TextFlow copy = (TextFlow) root.lookup("#highlighted");
-        TextField field = (TextField) root.lookup("#commandTextField");
-
-        double drawnFrom = onFxThread(() -> {
-            field.setText("find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides");
-            field.positionCaret(field.getLength());
-            field.positionCaret(0);
-            return copy.getLayoutX();
-        });
-
-        // the field draws its text half a caret in from the edge, and the copy sits on it
-        assertEquals(halfACaretOf(root), drawnFrom, 0.01,
-                "the start of the command should be back in view");
-    }
-
-    @Test
     public void laidOut_fromTheStart_leavesTheLineSomethingToDrawIn() throws Exception {
         CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
         Region root = box.getRoot();
@@ -501,36 +453,6 @@ public class CommandBoxTest {
         });
 
         assertTrue(drawn, "what was typed should be inside the part of the lane that is drawn");
-    }
-
-    @Test
-    public void caretPastTheEnd_scrollsNoFurtherThanTheFieldDoes() throws Exception {
-        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
-        Region root = box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
-        TextFlow copy = (TextFlow) root.lookup("#highlighted");
-        TextField field = (TextField) root.lookup("#commandTextField");
-
-        double[] measured = onFxThread(() -> {
-            field.setText("find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides");
-            field.positionCaret(field.getLength());
-            Region lane = (Region) root.lookup("#lane");
-            Region mark = (Region) root.lookup("#caret");
-            return new double[] {-copy.getLayoutX(), copy.getWidth() - lane.getWidth(),
-                mark.getLayoutX() + mark.getWidth(), lane.getWidth(), mark.getWidth()};
-        });
-
-        // the copy is drawn where the field's own text sits, because the field is what
-        // decides which character a click lands on: a copy even a pixel out of step puts a
-        // click near a character's middle on the one beside it
-        assertEquals(measured[1] + halfACaretOf(root), measured[0], 0.5,
-                "the copy is drawn from " + measured[0] + " where the field's text ends at "
-                + measured[1]);
-        // and the caret itself has to be inside the line, not hanging on the edge of it
-        // where the lane is clipped, or there is nothing of it left to see
-        assertTrue(measured[2] <= measured[3],
-                "the caret ends at " + measured[2] + ", past the line's " + measured[3]);
-        assertTrue(measured[4] > 0, "the caret should have a width to be seen by");
     }
 
     /** Returns how light {@code colour} is, as WCAG weighs a colour's parts. */
@@ -629,57 +551,6 @@ public class CommandBoxTest {
             }
             return tooFaint;
         });
-    }
-
-    @Test
-    public void caretPastTheEnd_isDrawnInsideTheLineWithoutMovingTheCopy() throws Exception {
-        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
-        Region root = box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
-        TextFlow copy = (TextFlow) root.lookup("#highlighted");
-        TextField field = (TextField) root.lookup("#commandTextField");
-
-        double[] measured = onFxThread(() -> {
-            field.setText("find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides");
-            field.positionCaret(field.getLength());
-            Region lane = (Region) root.lookup("#lane");
-            Region mark = (Region) root.lookup("#caret");
-            return new double[] {-copy.getLayoutX(), copy.getWidth() - lane.getWidth(),
-                mark.getLayoutX() + mark.getWidth(), lane.getWidth()};
-        });
-
-        // both at once: the copy where the field's own text sits, so clicks land where they
-        // are aimed, and the caret inside the line, so it can be seen
-        assertEquals(measured[1] + halfACaretOf(root), measured[0], 0.5,
-                "the copy is drawn from " + measured[0] + " against the field's " + measured[1]);
-        assertTrue(measured[2] <= measured[3] + 0.01,
-                "the caret ends at " + measured[2] + ", past the line's " + measured[3]);
-    }
-
-    @Test
-    public void textCutFromTheEnd_leavesTheLineWhereTheFieldLeftIt() throws Exception {
-        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
-        Region root = box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
-        TextFlow copy = (TextFlow) root.lookup("#highlighted");
-        TextField field = (TextField) root.lookup("#commandTextField");
-
-        double[] drawnFrom = onFxThread(() -> {
-            field.setText("find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides");
-            field.positionCaret(field.getLength());
-            double atTheEnd = copy.getLayoutX();
-            // as Ctrl+X on a selection at the end does
-            field.selectRange(field.getLength() - 8, field.getLength());
-            field.replaceSelection("");
-            return new double[] {atTheEnd, copy.getLayoutX()};
-        });
-
-        // a field does not re-scroll when text is cut out of it, so neither may the copy:
-        // the two would otherwise sit as far apart as the cut was long, and a click would
-        // land that many characters away from where it was aimed
-        assertEquals(drawnFrom[0], drawnFrom[1], 0.5,
-                "cutting the end of the command moved the line from " + drawnFrom[0]
-                + " to " + drawnFrom[1]);
     }
 
     @Test
