@@ -167,4 +167,23 @@ public class ThemeTest {
         assertTrue(hidden.isEmpty() || hidden.equals(Set.of(".command-line #commandTextField")),
                 "these hide their own text when it is selected: " + hidden);
     }
+
+    @Test
+    public void everyStylesheet_namesOneFontFamilyAtMost() throws IOException {
+        // JavaFX reads only the first family of a list and falls back to the system font
+        // when it is missing, rather than trying the next as a browser does, so a list names
+        // families the window will never use. The one the window is written in is chosen
+        // against the families the machine has, in UiFonts, and inherited from there
+        List<String> lists = new ArrayList<>();
+        for (Path stylesheet : List.of(DARK_THEME, EXTENSIONS, HELP_WINDOW)) {
+            String css = Files.readString(stylesheet, StandardCharsets.UTF_8);
+            Matcher families = Pattern.compile("-fx-font-family:([^;]*);").matcher(css);
+            families.results()
+                    .filter(result -> result.group(1).contains(","))
+                    .map(result -> stylesheet.getFileName() + ":" + result.group().trim())
+                    .forEach(lists::add);
+        }
+
+        assertTrue(lists.isEmpty(), "these name more than one family: " + lists);
+    }
 }
