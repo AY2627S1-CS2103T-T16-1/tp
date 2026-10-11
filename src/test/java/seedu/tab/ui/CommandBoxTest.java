@@ -1,9 +1,11 @@
 package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -14,12 +16,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import seedu.tab.logic.commands.CommandResult;
+import seedu.tab.logic.parser.exceptions.ParseException;
 
 public class CommandBoxTest {
 
@@ -261,6 +266,151 @@ public class CommandBoxTest {
         onFxThread(() -> setTextOf(box, ""));
 
         assertEquals(List.of(), colouredTextOf(box));
+    }
+
+    /** A box whose executor records what it was asked to run, and may refuse to run it. */
+    private static CommandBox boxExecutedBy(List<String> ran, boolean refuses) throws Exception {
+        return onFxThread(() -> new CommandBox(command -> {
+            ran.add(command);
+            if (refuses) {
+                throw new ParseException("no");
+            }
+            return new CommandResult("done");
+        }));
+    }
+
+    /** Presses Enter on the command line, as the field's own action does. */
+    private static void pressEnter(CommandBox box) throws Exception {
+        onFxThread(() -> {
+            box.getRoot().lookup("#commandTextField").fireEvent(new ActionEvent());
+            return null;
+        });
+    }
+
+    private static List<String> styleClassesOf(CommandBox box, String id) {
+        return List.copyOf(box.getRoot().lookup(id).getStyleClass());
+    }
+
+    @Test
+    public void handleCommandEntered_aCommand_runsItAndClearsTheLine() throws Exception {
+        List<String> ran = new ArrayList<>();
+        CommandBox box = boxExecutedBy(ran, false);
+        onFxThread(() -> setTextOf(box, "list"));
+
+        pressEnter(box);
+
+        assertEquals(List.of("list"), ran);
+        assertEquals("", onFxThread(() -> ((TextField) box.getRoot()
+                .lookup("#commandTextField")).getText()), "the line should be ready for the next command");
+    }
+
+    @Test
+    public void handleCommandEntered_anEmptyLine_runsNothing() throws Exception {
+        List<String> ran = new ArrayList<>();
+        CommandBox box = boxExecutedBy(ran, false);
+
+        pressEnter(box);
+
+        // Enter on an empty line is how a User checks they have one, not a command
+        assertEquals(List.of(), ran);
+    }
+
+    @Test
+    public void handleCommandEntered_aCommandThatFails_keepsItAndMarksTheLine() throws Exception {
+        List<String> ran = new ArrayList<>();
+        CommandBox box = boxExecutedBy(ran, true);
+        onFxThread(() -> setTextOf(box, "add"));
+
+        pressEnter(box);
+
+        // what was typed stays, so the User can correct it rather than type it again
+        assertEquals("add", onFxThread(() -> ((TextField) box.getRoot()
+                .lookup("#commandTextField")).getText()));
+        assertTrue(styleClassesOf(box, "#commandTextField").contains(CommandBox.ERROR_STYLE_CLASS));
+        assertTrue(styleClassesOf(box, "#highlighted").contains("command-error"),
+                "the copy the User reads is the one that has to turn red");
+    }
+
+    @Test
+    public void handleCommandEntered_failingTwice_marksTheLineOnce() throws Exception {
+        List<String> ran = new ArrayList<>();
+        CommandBox box = boxExecutedBy(ran, true);
+        onFxThread(() -> setTextOf(box, "add"));
+
+        pressEnter(box);
+        pressEnter(box);
+
+        long marks = styleClassesOf(box, "#commandTextField").stream()
+                .filter(CommandBox.ERROR_STYLE_CLASS::equals).count();
+        assertEquals(1, marks, "the mark should not be added again on top of itself");
+    }
+
+    @Test
+    public void typing_afterAFailure_takesTheMarkOff() throws Exception {
+        List<String> ran = new ArrayList<>();
+        CommandBox box = boxExecutedBy(ran, true);
+        onFxThread(() -> setTextOf(box, "add"));
+        pressEnter(box);
+
+        onFxThread(() -> setTextOf(box, "add "));
+
+        assertFalse(styleClassesOf(box, "#commandTextField").contains(CommandBox.ERROR_STYLE_CLASS),
+                "a line being corrected should stop reading as a failure");
+    }
+
+    @Test
+    public void focus_leavingAndReturning_leavesTheColoursInPlace() throws Exception {
+        CommandBox box = boxShowing("find Siti");
+        onFxThread(() -> {
+            Region root = (Region) box.getRoot();
+            assertNotNull(styledScene(root, 400, 60));
+            root.lookup("#commandTextField").requestFocus();
+            root.layout();
+            return null;
+        });
+
+        assertEquals(List.of("find", " ", "Siti"), colouredTextOf(box));
+    }
+
+    @Test
+    public void typing_aCharacterAtATime_keepsTheColoursWithTheText() throws Exception {
+        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
+        TextField field = onFxThread(() -> (TextField) box.getRoot().lookup("#commandTextField"));
+        assertNotNull(onFxThread(() -> styledScene((Region) box.getRoot(), 400, 60)));
+
+        // typing moves the caret before it reports the new text, which the colouring has to
+        // sit out rather than measure the command before it against the text after it
+        for (char typed : "find Siti".toCharArray()) {
+            onFxThread(() -> {
+                field.insertText(field.getLength(), String.valueOf(typed));
+                return null;
+            });
+        }
+
+        assertEquals(List.of("find", " ", "Siti"), colouredTextOf(box));
+    }
+
+    @Test
+    public void caretMoved_beforeTheCopyCaughtUp_leavesTheCopyAlone() throws Exception {
+        CommandBox box = boxShowing("find Siti");
+        Region root = (Region) box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 400, 60)));
+        TextFlow copy = (TextFlow) root.lookup("#highlighted");
+        TextField field = (TextField) root.lookup("#commandTextField");
+
+        // JavaFX moves the caret before it reports the new text, so the colouring is asked
+        // where to put a copy of the command before it, against the text after it
+        double before = onFxThread(() -> {
+            copy.getChildren().setAll(new Text("find Sit"));
+            copy.setLayoutX(-12);
+            field.selectRange(2, 5);
+            return copy.getLayoutX();
+        });
+
+        assertEquals(-12, before, "a copy that has fallen behind should be left where it is");
+        // and the recolour that follows puts both the copy and its place right
+        onFxThread(() -> setTextOf(box, "find Sitie"));
+        assertEquals(List.of("find", " ", "Sitie"), colouredTextOf(box));
     }
 
     @Test
