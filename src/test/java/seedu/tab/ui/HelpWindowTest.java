@@ -14,6 +14,7 @@ import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
 public class HelpWindowTest {
@@ -60,7 +61,30 @@ public class HelpWindowTest {
                 "the window is " + measured[0] + " wide for content needing " + measured[1]);
         assertTrue(measured[2] >= measured[3] - 0.5,
                 "the window is " + measured[2] + " tall for content needing " + measured[3]);
-        assertTrue(measured[1] >= measured[4] + measured[5],
-                "the row should ask for the address and the button side by side");
+        assertTrue(measured[1] >= measured[5],
+                "the row should ask for at least the width of the button");
+    }
+
+    @Test
+    public void window_atTheSizeItOpens_showsTheWholeAddressAndButton() throws Exception {
+        boolean[] whole = onFxThread(() -> {
+            Stage stage = new Stage();
+            HelpWindow window = new HelpWindow(stage);
+            Region content = (Region) stage.getScene().getRoot();
+            content.applyCss();
+            // the size the window opens at, as the layout file sets it
+            content.resize(stage.getScene().getWidth(), stage.getScene().getHeight());
+            content.layout();
+
+            Label message = (Label) content.lookup("#helpMessage");
+            Button copy = (Button) content.lookup("#copyButton");
+            return new boolean[] {
+                message.getWidth() >= message.prefWidth(-1) - 0.5,
+                copy.getWidth() >= copy.prefWidth(-1) - 0.5};
+        });
+
+        // an address with its end missing is of no use, and this window exists to carry it
+        assertTrue(whole[0], "the address was cut");
+        assertTrue(whole[1], "the button was cut");
     }
 }
