@@ -6,6 +6,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
@@ -108,22 +109,38 @@ public class CommandBox extends UiPart<Region> {
     private void placeCaret() {
         caret.setVisible(commandTextField.isFocused());
 
-        String typed = commandTextField.getText();
-        int at = Math.clamp(commandTextField.getCaretPosition(), 0, typed.length());
-        Text ruler = new Text(typed.substring(0, at));
-        ruler.setFont(colouredFont());
-        caret.setTranslateX(ruler.getLayoutBounds().getWidth());
+        caret.setTranslateX(widthBefore(commandTextField.getCaretPosition()));
     }
 
     /**
-     * Returns the font the coloured copy is drawn in, which is the one the caret has to agree
-     * with. Before anything is typed there is no copy, so the field's own font stands in.
+     * Returns how wide the copy is up to {@code caretPosition}.
+     *
+     * <p>Each run is measured in its own font. The command word is drawn bold and so is wider
+     * than the rest, which is why one font cannot measure the whole line: doing that pushed
+     * the caret past the end of the text by about the extra width of that first word.
      */
-    private Font colouredFont() {
-        if (highlighted.getChildren().isEmpty()) {
-            return commandTextField.getFont();
+    private double widthBefore(int caretPosition) {
+        double width = 0;
+        int seen = 0;
+        for (Node node : highlighted.getChildren()) {
+            Text run = (Text) node;
+            if (seen >= caretPosition) {
+                break;
+            }
+            int take = Math.min(run.getText().length(), caretPosition - seen);
+            width += measure(run.getText().substring(0, take), run.getFont());
+            seen += run.getText().length();
         }
-        return ((Text) highlighted.getChildren().get(0)).getFont();
+        return width;
+    }
+
+    /**
+     * Returns the width {@code text} takes in {@code font}.
+     */
+    private static double measure(String text, Font font) {
+        Text ruler = new Text(text);
+        ruler.setFont(font);
+        return ruler.getLayoutBounds().getWidth();
     }
 
     /**
