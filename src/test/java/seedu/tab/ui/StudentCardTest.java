@@ -176,12 +176,28 @@ public class StudentCardTest {
     public void constructor_longNameAndTag_doNotPushTheCardOutOfShape() throws Exception {
         Student student = new StudentBuilder()
                 .withName("Nurul Izzah binte Hassan Al-Rashid Abdullah Mohamed")
-                .withTags("AY2627 Sem 1 CS2103T T16").build();
-        StudentCard card = onFxThread(() -> new StudentCard(student, 48));
+                .withPhone("91112222")
+                .withEmail("a.very.long.address.indeed@u.nus.edu")
+                .withTags("AY2627 Sem 1 CS2103T T16").withFlag(true).build();
 
-        // the card must size to its content rather than demanding a width the window cannot give
-        double width = onFxThread(() -> card.getRoot().prefWidth(-1));
-        assertTrue(width > 0, "the card should report a preferred width");
+        double[] measured = onFxThread(() -> {
+            Region root = (Region) new StudentCard(student, 48).getRoot();
+            assertNotNull(styledScene(root, CARD_WIDTH, 120));
+            Label pill = (Label) root.lookup("#followUp");
+            Label phone = (Label) root.lookup("#phone");
+            return new double[] {root.prefWidth(-1), root.getWidth(),
+                pill.getBoundsInParent().getMaxX(), phone.getWidth(), phone.prefWidth(-1)};
+        });
+
+        // a card drawn wider than the list is what scrolls the list sideways, and the pill
+        // at its trailing edge is the first thing to be carried off the side of it
+        assertTrue(measured[1] <= CARD_WIDTH + 0.5,
+                "the card was drawn " + measured[1] + " wide in a " + CARD_WIDTH + " list");
+        assertTrue(measured[2] <= measured[1] + 0.5,
+                "the pill ends at " + measured[2] + ", past the card's " + measured[1]);
+        // and half a phone number is of no use to anyone
+        assertTrue(measured[3] >= measured[4] - 0.5,
+                "the phone was cut to " + measured[3] + " of " + measured[4]);
     }
 
     @Test

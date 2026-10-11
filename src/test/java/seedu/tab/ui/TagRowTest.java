@@ -66,6 +66,7 @@ public class TagRowTest {
     private static List<String> chipsOf(TagRow row) {
         return row.getChildrenUnmodifiable().stream()
                 .filter(Node::isVisible)
+                .filter(chip -> chip.getBoundsInParent().getMaxX() <= row.getWidth() + 0.5)
                 .map(node -> (Label) node)
                 .sorted(Comparator.comparingDouble(Label::getLayoutX))
                 .map(Label::getText)
@@ -153,5 +154,24 @@ public class TagRowTest {
         // which tag the student carries
         assertEquals(1, chips.size(), "the row should show one tag, not " + chips);
         assertEquals("needsconsult\u2026", chips.get(0));
+    }
+
+    @Test
+    public void setTags_roomForOneChipButNotACount_leavesTheCountOut() throws Exception {
+        // wide enough for "alpha" but not for "alpha" and a count beside it. Drawing the
+        // count anyway put it half outside the row, where it read as "1 m"
+        TagRow row = rowOf(58, List.of("alpha", "bravo"));
+
+        List<String> chips = chipsOf(row);
+        assertEquals(List.of("alpha"), chips);
+        assertTrue(drawnInside(row), "a chip was drawn outside the row: " + chips);
+    }
+
+    /** Returns true if every chip the row shows is drawn within the row. */
+    private static boolean drawnInside(TagRow row) {
+        return row.getChildrenUnmodifiable().stream()
+                .filter(Node::isVisible)
+                .allMatch(chip -> chip.getBoundsInParent().getMinX() >= -0.5
+                        && chip.getBoundsInParent().getMaxX() <= row.getWidth() + 0.5);
     }
 }
