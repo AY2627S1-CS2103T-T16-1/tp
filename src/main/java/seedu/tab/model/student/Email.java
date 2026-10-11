@@ -12,6 +12,18 @@ public class Email {
     /** How this field is named when a value of it is reported as invalid. */
     public static final String FIELD_NAME = "Email";
 
+    /**
+     * The longest address a command may enter, which is the limit RFC 5321 section 4.5.3.1 puts
+     * on a forward path. It is far above any address a teaching assistant records.
+     *
+     * <p>The limit exists because {@link #VALIDATION_REGEX} nests one quantifier inside another
+     * and Java matches a repeated group by recursion, so a long enough address exhausts the
+     * stack. It is deliberately **not** applied by {@link #isValidEmail(String)}: storage
+     * validates with that method, and narrowing it would make a file written by an earlier
+     * version unloadable, discarding records the product had already accepted.
+     */
+    public static final int MAX_LENGTH = 254;
+
     private static final String SPECIAL_CHARACTERS = "+_.-";
 
     public static final String MESSAGE_CONSTRAINTS = "Emails should be of the format local-part@domain "
@@ -52,9 +64,22 @@ public class Email {
 
     /**
      * Returns true if a given string is a valid email.
+     *
+     * <p>Callers taking an address from the User must clear
+     * {@link #isWithinLengthLimit(String)} first: this matches {@link #VALIDATION_REGEX} as a
+     * whole, which exhausts the stack on a long enough address.
      */
     public static boolean isValidEmail(String test) {
         return test.matches(VALIDATION_REGEX);
+    }
+
+    /**
+     * Returns true if {@code test} is short enough to be entered as an address, and so short
+     * enough for {@link #isValidEmail(String)} to examine safely.
+     */
+    public static boolean isWithinLengthLimit(String test) {
+        requireNonNull(test);
+        return test.length() <= MAX_LENGTH;
     }
 
     /**
@@ -63,6 +88,12 @@ public class Email {
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);
+
+        // before anything that matches part of the address, for the reason given on MAX_LENGTH
+        if (test.length() > MAX_LENGTH) {
+            return "an email may hold at most " + MAX_LENGTH + " characters, and this one holds "
+                    + test.length();
+        }
 
         int at = test.indexOf('@');
         if (at < 0) {

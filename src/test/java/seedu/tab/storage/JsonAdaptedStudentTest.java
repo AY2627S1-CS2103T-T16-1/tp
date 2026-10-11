@@ -1,5 +1,6 @@
 package seedu.tab.storage;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -81,6 +82,18 @@ public class JsonAdaptedStudentTest {
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, INVALID_EMAIL, VALID_TAGS, false);
         String expectedMessage = Email.MESSAGE_CONSTRAINTS;
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
+    public void toModelType_emailLongerThanACommandMayEnter_stillLoads() {
+        // the length limit belongs to what a command may enter, so a file an earlier version
+        // wrote is not made unloadable by it. Were storage to reject this, a failed load would
+        // start an empty book and the next save would discard the records.
+        String overLimit = "a".repeat(Email.MAX_LENGTH + 1 - "@example.com".length()) + "@example.com";
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, overLimit, VALID_TAGS, false);
+
+        assertDoesNotThrow(student::toModelType);
     }
 
     @Test
