@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
@@ -160,5 +161,45 @@ public class ResultDisplayTest {
         });
 
         assertEquals(1, rows, "a reply that fits should not leave empty space under it");
+    }
+
+    @Test
+    public void setFeedbackToUser_theRepliesSeenMost_takeOneRow() throws Exception {
+        // the reply a User sees after almost every command is one short line, and an empty
+        // row under it is a band of nothing where the list could be
+        for (String reply : List.of("Listed all students.", "Opened help window.",
+                "Student book has been cleared!", "Invalid command format!")) {
+            int rows = onFxThread(() -> {
+                ResultDisplay display = new ResultDisplay();
+                Region root = display.getRoot();
+                assertNotNull(styledScene(root, 740, 200));
+                display.setFeedbackToUser(reply);
+                root.layout();
+                return ((TextArea) root.lookup("#resultDisplay")).getPrefRowCount();
+            });
+
+            assertEquals(1, rows, "\"" + reply + "\" should take one row, not " + rows);
+        }
+    }
+
+    @Test
+    public void setFeedbackToUser_inAnyFontTheWindowMayUse_countsRowsTheSameWay() throws Exception {
+        // the rows are worked out from the font the area is dressed in, which differs from
+        // one machine to the next, so a reply that fits has to fit in any of them
+        for (String family : List.of("Inter", "System", "Monospaced", "Serif")) {
+            int rows = onFxThread(() -> {
+                ResultDisplay display = new ResultDisplay();
+                Region root = display.getRoot();
+                assertNotNull(styledScene(root, 740, 200));
+                root.lookup("#resultDisplay").setStyle("-fx-font-family: \"" + family + "\";");
+                root.applyCss();
+                root.layout();
+                display.setFeedbackToUser("Listed all students.");
+                root.layout();
+                return ((TextArea) root.lookup("#resultDisplay")).getPrefRowCount();
+            });
+
+            assertEquals(1, rows, "one line in " + family + " came to " + rows + " rows");
+        }
     }
 }
