@@ -122,11 +122,13 @@ public class ResultDisplay extends UiPart<Region> {
      * <p>Where it wraps is the area's own business, so the area is asked. Taking its width
      * and subtracting a guess at its padding and its scroll bar put the wrap a few pixels
      * from where the area actually puts it, and a reply that came within those few pixels of
-     * the edge was given a row it did not use.
+     * the edge was given a row it did not use. A width of nothing needs no guard of its own:
+     * JavaFX reads that as "do not wrap", which gives the lines the reply was written with,
+     * the same answer as having nothing drawn at all.
      */
     private int rowsNeededFor(String text) {
         long written = Math.max(1, text.lines().count());
-        if (drawn == null || drawn.getWrappingWidth() <= 0) {
+        if (drawn == null) {
             // nothing has been drawn yet, so the breaks in the reply are all there is
             return (int) written;
         }
