@@ -521,3 +521,15 @@
 .card-detail, .card-detail-strong, .summary-name {
     -fx-text-overrun: ellipsis;
 }
+
+/* the tag list scrolls inside the sidebar without looking like a control */
+.summary-scroll,
+.summary-scroll .viewport,
+.summary-scroll > .scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.summary-scroll {
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+}
