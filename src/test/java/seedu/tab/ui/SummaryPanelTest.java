@@ -262,4 +262,29 @@ public class SummaryPanelTest {
         assertEquals(longTag, shown[2], "the whole tag should be a hover away");
     }
 
+    @Test
+    public void rows_aTagTheRowCuts_nameTheWholeOfItOnHover() throws Exception {
+        // shorter than the count of characters a tag is cut to, so only the width cuts it
+        String tag = "CS2103T-TUTORIAL";
+        ObservableList<Student> students = FXCollections.observableArrayList(
+                new StudentBuilder().withName("A").withTags(tag).build());
+
+        String tooltip = onFxThread(() -> {
+            SummaryPanel panel = new SummaryPanel(students);
+            Region root = (Region) panel.getRoot();
+            assertNotNull(styledScene(root, 190, 400));
+
+            Label name = root.lookupAll(".summary-row .label").stream()
+                    .map(node -> (Label) node)
+                    .filter(label -> tag.equals(label.getText()))
+                    .findFirst().orElseThrow(() -> new AssertionError("no row names the tag"));
+            // squeezed as a narrow panel squeezes it
+            HBox row = (HBox) name.getParent();
+            row.resize(60, row.getHeight());
+            row.layout();
+            return name.getTooltip() == null ? null : name.getTooltip().getText();
+        });
+
+        assertEquals(tag, tooltip, "a tag the row cut should still be readable on hover");
+    }
 }

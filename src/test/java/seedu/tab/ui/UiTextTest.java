@@ -79,4 +79,19 @@ public class UiTextTest {
         assertTrue(label.getText().length() < whole.length(), "the value should be cut");
         assertEquals(whole, label.getTooltip().getText());
     }
+
+    @Test
+    public void showShortenedToFit_aLabelGivenMoreRoom_takesTheTooltipBackOff() throws Exception {
+        String whole = "CS2103T-TUTORIAL";
+        Label label = onFxThread(() -> {
+            Label narrow = labelAt(whole, 40);
+            assertNotNull(narrow.getTooltip(), "a value the width cut should name itself");
+            narrow.resize(400, narrow.prefHeight(-1));
+            return narrow;
+        });
+
+        // a tooltip repeating what is already on the label is noise, so it goes when the
+        // label has room for the whole value again
+        assertNull(label.getTooltip(), "the tooltip should go once the value fits");
+    }
 }

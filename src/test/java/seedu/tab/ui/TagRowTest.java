@@ -155,17 +155,29 @@ public class TagRowTest {
         // which tag the student carries
         assertEquals(1, chips.size(), "the row should show one tag, not " + chips);
         assertEquals("needsconsult\u2026", chips.get(0));
+        assertTrue(drawnInside(row), "a chip was drawn outside the row");
     }
 
     @Test
-    public void setTags_roomForOneChipButNotACount_leavesTheCountOut() throws Exception {
-        // wide enough for "alpha" but not for "alpha" and a count beside it. Drawing the
-        // count anyway put it half outside the row, where it read as "1 m"
-        TagRow row = rowOf(58, List.of("alpha", "bravo"));
+    public void setTags_roomForOneChipButNotBothWhole_stillSaysHowManyMore() throws Exception {
+        // wide enough for one chip and a count, but not for both chips. Dropping the count
+        // here leaves nothing to say the other tag is there at all
+        TagRow row = rowOf(160, List.of("needsconsultation", "urgentfollowup"));
 
         List<String> chips = chipsOf(row);
-        assertEquals(List.of("alpha"), chips);
+        assertEquals("1 more\u2026", chips.get(chips.size() - 1),
+                "the row should still say how many it left out: " + chips);
         assertTrue(drawnInside(row), "a chip was drawn outside the row: " + chips);
+    }
+
+    @Test
+    public void setTags_oneTagInAWideRow_drawsItAtItsOwnWidth() throws Exception {
+        TagRow row = rowOf(400, List.of("alpha"));
+
+        Label chip = (Label) row.getChildrenUnmodifiable().get(0);
+        // a chip stretched to the row reads as a pill across the card rather than as a tag
+        assertEquals(chip.prefWidth(-1), chip.getWidth(), 0.5,
+                "the chip was stretched to " + chip.getWidth());
     }
 
     /** Returns true if every chip the row shows is drawn within the row. */
