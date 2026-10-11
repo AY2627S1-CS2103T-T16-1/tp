@@ -113,6 +113,32 @@ public class CommandBoxTest {
     }
 
     @Test
+    public void caret_movesWithTheCharacterTheUserIsOn() throws Exception {
+        // the field's own caret is drawn in its text colour, which is transparent while the
+        // colours show, so the line carries one of its own and has to place it
+        double[] offsets = onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            setTextOf(box, "add John");
+            Region root = box.getRoot();
+            Scene scene = new Scene(root, 600, 60);
+            assertNotNull(scene);
+            root.applyCss();
+            root.layout();
+
+            TextField field = (TextField) root.lookup("#commandTextField");
+            Region caret = (Region) root.lookup("#caret");
+
+            field.positionCaret(0);
+            double atStart = caret.getTranslateX();
+            field.positionCaret("add John".length());
+            return new double[] {atStart, caret.getTranslateX()};
+        });
+
+        assertEquals(0.0, offsets[0]);
+        assertTrue(offsets[1] > offsets[0], "the caret should sit further along for a later position");
+    }
+
+    @Test
     public void clearingTheField_leavesNothingPainted() throws Exception {
         CommandBox box = boxShowing("add John");
         onFxThread(() -> setTextOf(box, ""));
