@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import seedu.tab.commons.core.GuiSettings;
@@ -73,6 +74,12 @@ public class MainWindowTest {
         }
     }
 
+    private static MainWindow filledWindow2() {
+        MainWindow window = new MainWindow(new Stage(), new LogicStub(), DATA_FILE);
+        window.fillInnerParts();
+        return window;
+    }
+
     private static MainWindow filledWindow() throws Exception {
         return onFxThread(() -> {
             MainWindow window = new MainWindow(new Stage(), new LogicStub(), DATA_FILE);
@@ -100,5 +107,25 @@ public class MainWindowTest {
         // or the gap stays behind under the command line
         assertFalse(pane.isManaged());
         assertFalse(pane.isVisible());
+    }
+
+    @Test
+    public void window_cannotBeMadeSmallerThanWhatIsInIt() throws Exception {
+        double[] sizes = onFxThread(() -> {
+            MainWindow window = filledWindow2();
+            Stage stage = window.getPrimaryStage();
+            Region root = (Region) stage.getScene().getRoot();
+            root.applyCss();
+            root.layout();
+            return new double[] {stage.getMinWidth(), root.minWidth(-1),
+                stage.getMinHeight(), root.minHeight(-1)};
+        });
+
+        // a window that can be made smaller than its content shows the content cut off at the
+        // edge, which is worse than refusing to shrink
+        assertTrue(sizes[0] >= sizes[1],
+                "the window may shrink to " + sizes[0] + " but needs " + sizes[1]);
+        assertTrue(sizes[2] >= sizes[3],
+                "the window may shrink to " + sizes[2] + " but needs " + sizes[3]);
     }
 }

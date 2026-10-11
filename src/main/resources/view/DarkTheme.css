@@ -22,6 +22,7 @@
     -tab-value: #c3d0dc;           /* a plain value on the command line */
     -tab-chip-bg: #2a3945;         /* a tag chip */
     -tab-chip-text: #8cc7e5;
+    -tab-shadow: #000000;             /* the well a sunken surface sits in */
     -tab-danger: #ff6b6b;          /* a refused command */
 }
 
@@ -167,6 +168,8 @@
 
 .status-bar {
     -fx-background-color: -tab-bg;
+    -fx-border-color: -tab-border transparent transparent transparent;
+    -fx-border-width: 1;
 }
 
 .result-display {
@@ -188,7 +191,9 @@
 }
 
 .status-bar .label {
-    -fx-text-fill: -tab-text;
+    /* the path to the data file, which is a footnote rather than something to read */
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-size: 11px;
     -fx-padding: 4px;
     -fx-pref-height: 30px;
 }
@@ -223,10 +228,9 @@
 
 .menu-bar {
     -fx-background-color: -tab-bg;
-}
-
-.menu-bar {
     -fx-padding: 2 6 2 6;
+    -fx-border-color: transparent transparent -tab-border transparent;
+    -fx-border-width: 1;
 }
 
 .menu-bar .label {
@@ -368,7 +372,7 @@
 }
 
 #filterField, #studentListPanel, #studentWebpage {
-    -fx-effect: innershadow(gaussian, black, 10, 0, 0, 0);
+    -fx-effect: innershadow(gaussian, -tab-shadow, 10, 0, 0, 0);
 }
 
 #resultDisplay .content {
@@ -406,21 +410,6 @@
 .result-rule {
     -fx-border-color: transparent transparent transparent -tab-accent;
     -fx-border-width: 0 0 0 2;
-}
-
-.menu-bar {
-    -fx-border-color: transparent transparent -tab-border transparent;
-    -fx-border-width: 1;
-}
-
-.status-bar {
-    -fx-border-color: -tab-border transparent transparent transparent;
-    -fx-border-width: 1;
-}
-
-.status-bar .label {
-    -fx-text-fill: -tab-text-muted;
-    -fx-font-size: 11px;
 }
 
 /* the area itself is a control; only its text should show against the window */
