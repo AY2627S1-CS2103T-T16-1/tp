@@ -25,13 +25,9 @@
       <!-- the name yields only once the row has run out of room, and is elided rather
            than pushing the pill beside it out of the card -->
       <Label fx:id="name" text="\$first" styleClass="card-name" minWidth="40" />
-<<<<<<< HEAD
-      <FlowPane fx:id="tags" minWidth="0" />
-=======
       <!-- prefWrapLength defaults to 400, so the pane would claim that much preferred width
            for a single chip and the name beside it would be squeezed to its minimum -->
       <FlowPane fx:id="tags" minWidth="0" prefWrapLength="1" />
->>>>>>> 163-redesign-the-student-card
       <Region HBox.hgrow="ALWAYS" minWidth="0" />
       <!-- the trailing pill. It carries the follow-up marker, and takes the age once a
            follow-up records when it was raised -->

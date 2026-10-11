@@ -485,7 +485,6 @@
     -fx-fill: -tab-text;
 }
 
-<<<<<<< HEAD
 /* the summary of what is on display, beside the list */
 .summary-panel {
     -fx-background-color: -tab-bg;
@@ -495,19 +494,20 @@
 
 .summary-heading {
     -fx-text-fill: -tab-text-muted;
-    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
+    -fx-font-weight: bold;
     -fx-font-size: 10px;
 }
 
 .summary-name {
     -fx-text-fill: -tab-text;
-    -fx-font-family: "Segoe UI";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
 }
 
 .summary-count {
     -fx-text-fill: -tab-text-muted;
-    -fx-font-family: "Segoe UI";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
 }
 
@@ -515,11 +515,6 @@
     -fx-text-fill: -tab-text-muted;
     -fx-font-size: 11px;
     -fx-padding: 8 0 0 0;
-}
-
-/* a long value is elided rather than widening the card */
-.card-detail, .card-detail-strong, .summary-name {
-    -fx-text-overrun: ellipsis;
 }
 
 /* the tag list scrolls inside the sidebar without looking like a control */
@@ -532,9 +527,9 @@
 .summary-scroll {
     -fx-padding: 0;
     -fx-background-insets: 0;
-=======
+}
+
 /* a value too long for its row is elided rather than widening the card it sits in */
 .card-name, .card-detail, .card-detail-strong, .summary-name {
     -fx-text-overrun: ellipsis;
->>>>>>> 163-redesign-the-student-card
 }
