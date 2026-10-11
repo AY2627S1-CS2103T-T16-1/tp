@@ -4,13 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_FOLLOW_UP;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.util.ArrayList;
@@ -38,37 +34,26 @@ public class CommandTestUtil {
     public static final String VALID_TAG_HUSBAND = "husband";
     public static final String VALID_TAG_FRIEND = "friend";
 
-    public static final String NAME_DESC_AMY = " " + PREFIX_NAME + VALID_NAME_AMY;
-    public static final String NAME_DESC_BOB = " " + PREFIX_NAME + VALID_NAME_BOB;
-    public static final String PHONE_DESC_AMY = " " + PREFIX_PHONE + VALID_PHONE_AMY;
-    public static final String PHONE_DESC_BOB = " " + PREFIX_PHONE + VALID_PHONE_BOB;
-    public static final String EMAIL_DESC_AMY = " " + PREFIX_EMAIL + VALID_EMAIL_AMY;
-    public static final String EMAIL_DESC_BOB = " " + PREFIX_EMAIL + VALID_EMAIL_BOB;
-    public static final String TAG_DESC_FRIEND = " " + PREFIX_TAG + VALID_TAG_FRIEND;
-    public static final String TAG_DESC_HUSBAND = " " + PREFIX_TAG + VALID_TAG_HUSBAND;
-    public static final String FOLLOW_UP_DESC = " " + PREFIX_FOLLOW_UP;
+    // add takes the name before any option, where edit marks it with one, so the name needs a
+    // fixture in each spelling. Every other field reads the same way in both commands.
+    public static final String NAME_AMY = " \"" + VALID_NAME_AMY + "\"";
+    public static final String NAME_BOB = " \"" + VALID_NAME_BOB + "\"";
+    public static final String FLAG_NAME_AMY = " " + FLAG_NAME + " \"" + VALID_NAME_AMY + "\"";
+    public static final String FLAG_NAME_BOB = " " + FLAG_NAME + " \"" + VALID_NAME_BOB + "\"";
+    public static final String PHONE_AMY = " " + FLAG_PHONE + " " + VALID_PHONE_AMY;
+    public static final String PHONE_BOB = " " + FLAG_PHONE + " " + VALID_PHONE_BOB;
+    public static final String EMAIL_AMY = " " + FLAG_EMAIL + " " + VALID_EMAIL_AMY;
+    public static final String EMAIL_BOB = " " + FLAG_EMAIL + " " + VALID_EMAIL_BOB;
+    public static final String TAG_FRIEND = " " + FLAG_TAG + " " + VALID_TAG_FRIEND;
+    public static final String TAG_HUSBAND = " " + FLAG_TAG + " " + VALID_TAG_HUSBAND;
+    public static final String FOLLOW_UP = " " + FLAG_FOLLOW_UP;
+    public static final String NO_TAGS = " " + FLAG_TAG + " \"\"";
 
-    public static final String INVALID_NAME_DESC = " " + PREFIX_NAME + "---"; // no letter or number in name
-    public static final String INVALID_PHONE_DESC = " " + PREFIX_PHONE + "12"; // fewer than 3 digits
-    public static final String INVALID_EMAIL_DESC = " " + PREFIX_EMAIL + "bob!yahoo"; // missing '@' symbol
-    public static final String INVALID_TAG_DESC = " " + PREFIX_TAG + "---"; // no letter or number in tag
-
-    // add takes a positional name and flagged fields, where edit still marks every field with
-    // a prefix, so the two commands need fixtures of their own
-    public static final String ADD_NAME_AMY = " \"" + VALID_NAME_AMY + "\"";
-    public static final String ADD_NAME_BOB = " \"" + VALID_NAME_BOB + "\"";
-    public static final String ADD_PHONE_AMY = " " + FLAG_PHONE + " " + VALID_PHONE_AMY;
-    public static final String ADD_PHONE_BOB = " " + FLAG_PHONE + " " + VALID_PHONE_BOB;
-    public static final String ADD_EMAIL_AMY = " " + FLAG_EMAIL + " " + VALID_EMAIL_AMY;
-    public static final String ADD_EMAIL_BOB = " " + FLAG_EMAIL + " " + VALID_EMAIL_BOB;
-    public static final String ADD_TAG_FRIEND = " " + FLAG_TAG + " " + VALID_TAG_FRIEND;
-    public static final String ADD_TAG_HUSBAND = " " + FLAG_TAG + " " + VALID_TAG_HUSBAND;
-    public static final String ADD_FOLLOW_UP = " " + FLAG_FOLLOW_UP;
-
-    public static final String ADD_INVALID_NAME = " \"---\""; // no letter or number in name
-    public static final String ADD_INVALID_PHONE = " " + FLAG_PHONE + " 12"; // fewer than 3 digits
-    public static final String ADD_INVALID_EMAIL = " " + FLAG_EMAIL + " bob!yahoo"; // missing '@' symbol
-    public static final String ADD_INVALID_TAG = " " + FLAG_TAG + " \"---\""; // no letter or number
+    public static final String INVALID_NAME = " \"---\""; // no letter or number in name
+    public static final String INVALID_FLAG_NAME = " " + FLAG_NAME + " \"---\""; // no letter or number
+    public static final String INVALID_PHONE = " " + FLAG_PHONE + " 12"; // fewer than 3 digits
+    public static final String INVALID_EMAIL = " " + FLAG_EMAIL + " bob!yahoo"; // missing '@' symbol
+    public static final String INVALID_TAG = " " + FLAG_TAG + " \"---\""; // no letter or number
 
     public static final String PREAMBLE_WHITESPACE = "\t  \r  \n";
     public static final String PREAMBLE_NON_EMPTY = "NonEmptyPreamble";

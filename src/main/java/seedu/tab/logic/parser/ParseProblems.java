@@ -1,7 +1,11 @@
 package seedu.tab.logic.parser;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import seedu.tab.logic.parser.exceptions.ParseException;
 
@@ -35,6 +39,33 @@ public class ParseProblems {
             problems.add(e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Parses {@code value} if it was given, recording why if it is rejected. A field the command
+     * left out yields null without a complaint, because an optional field is entitled to be
+     * absent and a required one is reported separately.
+     */
+    public <T> T collectIfPresent(Optional<String> value, ValueParser<T> parser) {
+        if (value.isEmpty()) {
+            return null;
+        }
+        return collect(() -> parser.parse(value.get()));
+    }
+
+    /**
+     * Parses every value supplied for one repeatable field, recording why for each one that is
+     * rejected, and returns the ones that were accepted.
+     */
+    public <T> Set<T> collectEach(Collection<String> values, ValueParser<T> parser) {
+        Set<T> parsed = new HashSet<>();
+        for (String value : values) {
+            T parsedValue = collect(() -> parser.parse(value));
+            if (parsedValue != null) {
+                parsed.add(parsedValue);
+            }
+        }
+        return parsed;
     }
 
     /**

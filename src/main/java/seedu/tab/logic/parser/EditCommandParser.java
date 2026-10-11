@@ -1,19 +1,18 @@
 package seedu.tab.logic.parser;
 
-import static java.util.Objects.requireNonNull;
-import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_EMAIL;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_FOLLOW_UP;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_NAME;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.tab.logic.parser.CliSyntax.PREFIX_TAG;
+import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
+import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import seedu.tab.commons.core.index.Index;
+import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.tab.logic.parser.exceptions.ParseException;
@@ -27,64 +26,83 @@ public class EditCommandParser implements Parser<EditCommand> {
     /**
      * Parses the given {@code String} of arguments in the context of the EditCommand
      * and returns an EditCommand object for execution.
+     *
+     * The command is read the way {@code add} reads its own: once the shape is settled, every
+     * field is examined before the command is refused, so that a user who mistyped the index
+     * and a field is told about both at once. The shape is settled first, because an unclosed
+     * quote, an unknown option, or a single-valued option given twice leaves it unclear which
+     * field a value belongs to.
+     *
      * @throws ParseException if the user input does not conform to the expected format
      */
     public EditCommand parse(String args) throws ParseException {
-        requireNonNull(args);
-        ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenize(
-                        args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_TAG, PREFIX_FOLLOW_UP);
+        FlagArgumentMap arguments = FlagTokenizer.tokenize(
+                args, FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_TAG, FLAG_FOLLOW_UP);
+        arguments.verifyNoDuplicateFlagsFor(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_FOLLOW_UP);
 
-        Index index;
+        ParseProblems problems = new ParseProblems();
 
-        try {
-            index = ParserUtil.parseIndex(argMultimap.getPreamble());
-        } catch (ParseException pe) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE), pe);
+        Index index = parseIndex(problems, arguments.getPreamble());
+        if (!hasAnyField(arguments)) {
+            problems.add(EditCommand.MESSAGE_NOT_EDITED);
         }
+        EditStudentDescriptor descriptor = describeEdit(problems, arguments);
 
-        argMultimap.verifyNoDuplicatePrefixesFor(
-                PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_FOLLOW_UP);
+        problems.throwIfAny();
 
-        EditStudentDescriptor editStudentDescriptor = new EditStudentDescriptor();
-
-        if (argMultimap.getValue(PREFIX_NAME).isPresent()) {
-            editStudentDescriptor.setName(ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get()));
-        }
-        if (argMultimap.getValue(PREFIX_PHONE).isPresent()) {
-            editStudentDescriptor.setPhone(ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get()));
-        }
-        if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
-            editStudentDescriptor.setEmail(ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get()));
-        }
-        parseTagsForEdit(argMultimap.getAllValues(PREFIX_TAG)).ifPresent(editStudentDescriptor::setTags);
-        if (argMultimap.getValue(PREFIX_FOLLOW_UP).isPresent()) {
-            if (!argMultimap.getValue(PREFIX_FOLLOW_UP).get().isEmpty()) {
-                throw new ParseException(EditCommand.MESSAGE_FOLLOW_UP_PREFIX_TAKES_NO_VALUE);
-            }
-            editStudentDescriptor.setFlagToggled(true);
-        }
-
-        if (!editStudentDescriptor.isAnyFieldEdited()) {
-            throw new ParseException(EditCommand.MESSAGE_NOT_EDITED);
-        }
-
-        return new EditCommand(index, editStudentDescriptor);
+        return new EditCommand(index, descriptor);
     }
 
     /**
-     * Parses {@code Collection<String> tags} into a {@code Set<Tag>} if {@code tags} is non-empty.
-     * If {@code tags} contains only one element which is an empty string, it will be parsed into a
-     * {@code Set<Tag>} containing zero tags.
+     * Returns true if the command named a field to change. A field whose value is rejected still
+     * counts as named, so that a user who mistyped one is told what is wrong with it rather than
+     * that they named no field.
      */
-    private Optional<Set<Tag>> parseTagsForEdit(Collection<String> tags) throws ParseException {
-        assert tags != null;
+    private static boolean hasAnyField(FlagArgumentMap arguments) {
+        return Stream.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_TAG, FLAG_FOLLOW_UP)
+                .anyMatch(flag -> !arguments.getAllValues(flag).isEmpty());
+    }
 
+    /**
+     * Parses the index given before the first option, recording why if it is rejected. An index
+     * that was left out is reported as a missing field rather than as a malformed one.
+     */
+    private static Index parseIndex(ParseProblems problems, String index) {
+        if (index.isEmpty()) {
+            problems.add(Messages.getErrorMessageForMissingFields(EditCommand.FIELD_INDEX));
+            return null;
+        }
+        return problems.collect(() -> ParserUtil.parseIndex(index));
+    }
+
+    /**
+     * Returns the fields the command asks to change, recording why for each value rejected.
+     */
+    private static EditStudentDescriptor describeEdit(ParseProblems problems, FlagArgumentMap arguments) {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+
+        descriptor.setName(problems.collectIfPresent(arguments.getValue(FLAG_NAME), ParserUtil::parseName));
+        descriptor.setPhone(problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone));
+        descriptor.setEmail(problems.collectIfPresent(arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail));
+        parseTagsForEdit(problems, arguments.getAllValues(FLAG_TAG)).ifPresent(descriptor::setTags);
+        descriptor.setFlagToggled(arguments.getValue(FLAG_FOLLOW_UP).isPresent());
+
+        return descriptor;
+    }
+
+    /**
+     * Parses the tags the command supplied into the set that replaces the student's own, or
+     * returns nothing when the command leaves the tags alone. A single empty value, which is
+     * how {@code -t ""} is spelled, asks for every tag to be removed.
+     */
+    private static Optional<Set<Tag>> parseTagsForEdit(ParseProblems problems, List<String> tags) {
         if (tags.isEmpty()) {
             return Optional.empty();
         }
-        Collection<String> tagSet = tags.size() == 1 && tags.contains("") ? Collections.emptySet() : tags;
-        return Optional.of(ParserUtil.parseTags(tagSet));
+        if (tags.size() == 1 && tags.get(0).isEmpty()) {
+            return Optional.of(Set.of());
+        }
+        return Optional.of(problems.collectEach(tags, ParserUtil::parseTag));
     }
 
 }

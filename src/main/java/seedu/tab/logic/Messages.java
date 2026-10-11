@@ -24,8 +24,9 @@ public class Messages {
     public static final String MESSAGE_FLAG_WITHOUT_VALUE =
             "%1$s needs a value after it. A value opening with a hyphen goes in double quotes.";
     public static final String MESSAGE_VALUE_AFTER_FLAGS =
-            "\"%1$s\" does not belong to any option. The name comes before the options. Options "
-            + "that take a value take one token, and a value holding spaces goes in double quotes.";
+            "\"%1$s\" does not belong to any option. Only the first value may be given without "
+            + "an option. Options that take a value take one token, and a value holding spaces "
+            + "goes in double quotes.";
 
     /**
      * Returns an error message indicating the duplicate prefixes.

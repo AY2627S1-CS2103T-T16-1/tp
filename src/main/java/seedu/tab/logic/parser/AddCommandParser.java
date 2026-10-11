@@ -6,10 +6,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import seedu.tab.logic.Messages;
@@ -50,9 +47,9 @@ public class AddCommandParser implements Parser<AddCommand> {
         }
 
         Name name = parseName(problems, arguments.getPreamble());
-        Phone phone = parseIfPresent(problems, arguments, FLAG_PHONE, ParserUtil::parsePhone);
-        Email email = parseIfPresent(problems, arguments, FLAG_EMAIL, ParserUtil::parseEmail);
-        Set<Tag> tagList = parseEachTag(problems, arguments.getAllValues(FLAG_TAG));
+        Phone phone = problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone);
+        Email email = problems.collectIfPresent(arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail);
+        Set<Tag> tagList = problems.collectEach(arguments.getAllValues(FLAG_TAG), ParserUtil::parseTag);
 
         problems.throwIfAny();
 
@@ -86,35 +83,6 @@ public class AddCommandParser implements Parser<AddCommand> {
             return null;
         }
         return problems.collect(() -> ParserUtil.parseName(name));
-    }
-
-    /**
-     * Parses every tag supplied, recording why for each one that is rejected, and returns the
-     * ones that were accepted.
-     */
-    private static Set<Tag> parseEachTag(ParseProblems problems, Collection<String> tags) {
-        Set<Tag> parsed = new HashSet<>();
-        for (String tag : tags) {
-            Tag parsedTag = problems.collect(() -> ParserUtil.parseTag(tag));
-            if (parsedTag != null) {
-                parsed.add(parsedTag);
-            }
-        }
-        return parsed;
-    }
-
-    /**
-     * Parses the value supplied for {@code flag}, recording why if it is rejected. A flag the
-     * command left out yields null without a complaint, because an optional field is entitled
-     * to be absent and a required one is reported separately.
-     */
-    private static <T> T parseIfPresent(ParseProblems problems, FlagArgumentMap arguments,
-            Flag flag, ParseProblems.ValueParser<T> parser) {
-        Optional<String> value = arguments.getValue(flag);
-        if (value.isEmpty()) {
-            return null;
-        }
-        return problems.collect(() -> parser.parse(value.get()));
     }
 
 }

@@ -160,11 +160,12 @@ Classes used by multiple components are in the `seedu.tab.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### How `add` reads its arguments
+### How commands read their arguments
 
-`add` marks its fields with options,
-`NAME -p PHONE [-e EMAIL] [-t TAG]... [--follow-up]`,
-where the other commands mark theirs with prefixes such as `p/`.
+`add` and `edit` mark their fields with options,
+`add NAME -p PHONE [-e EMAIL] [-t TAG]... [--follow-up]` and
+`edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [-t TAG]... [--follow-up]`,
+where AB3 marked them with prefixes such as `p/`.
 
 A prefix has to be a sequence a value never contains, and no such sequence
 exists for a name. `s/o`, `d/o`, `a/l` and `a/p` are ordinary parts of
@@ -187,9 +188,13 @@ having been left empty, rather than as a value. `add John -p 123 -t -e` reports
 that `-t` needs a value instead of storing `-e` as a tag. A value that really
 does open with a hyphen is given in quotes.
 
-`FlagTokenizer` reads the tokens. Those before the first option are the name,
-joined with single ASCII spaces, so a name of several words needs no quotes unless it
-would otherwise be misread. Value-taking options take the token after them,
+`FlagTokenizer` reads the tokens. Those before the first option are the
+*preamble*, joined with single ASCII spaces, which each command reads as
+whatever it takes in that position: the name for `add`, so a name of several
+words needs no quotes unless it would otherwise be misread, and the index for
+`edit`. Each command names its own, in `AddCommand.FIELD_NAME` and
+`EditCommand.FIELD_INDEX`, rather than the shared `CliFlags` doing it for
+them. Value-taking options take the token after them,
 and `-t` repeats. The presence-only `--follow-up` option and its `-f` alias
 instead record an empty value and consume no following token. This lets
 `FlagArgumentMap` distinguish an
@@ -203,13 +208,17 @@ quote, an unknown option, or a single-valued option given twice all leave it
 unclear which field a value belongs to, so each is refused on its own instead
 of being collected with the field errors.
 
-`edit` still takes prefixes, and that is a known limitation rather than a
-considered design. The collision the options remove from `add` is still present
-in `edit`: `edit 1 n/John p/ Smith` reads `Smith` as a phone number, so a name
-that `add` now accepts cannot be typed into `edit`. The two commands reading
-differently is a second problem on top of the first. Converting `edit` is
-tracked as issue #105, and was kept out of the change that introduced the options
-so that the new parsing could be reviewed on its own.
+`edit` clears a field with an explicitly empty value rather than with a bare
+option. `-t ""` removes every tag, where AB3's `t/` did so by appearing with
+nothing after it. A bare option cannot mean "clear" here, because a bare option
+is what reports the mistake in `edit 1 -t -e a@b.com`: the `-e` is read as the
+value `-t` was left without, rather than being stored as a tag. An empty quoted
+value also separates a value left empty by accident from one cleared on
+purpose. `CommandTokenizer` produces an empty token for `""` and leaves the
+decision to the field parser, so no tokenizer change was needed.
+
+`edit`'s `--follow-up` option toggles the flag, as AB3's `f/` did. Setting and
+clearing it explicitly is tracked separately as issue #146.
 
 ### Follow-up flag
 
@@ -231,7 +240,7 @@ The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
 For edit, the `EditStudentDescriptor` stores `shouldToggleFlag` rather than a
 replacement value. `EditCommand` applies that intent to the selected student's existing
 state. This keeps an unrelated edit from resetting the flag and makes the
-non-idempotent `f/` behavior explicit.
+non-idempotent `--follow-up` behavior explicit.
 
 `JsonAdaptedStudent` uses a nullable `Boolean flag` at the storage boundary.
 Only `Boolean.TRUE` creates a `Flag` in the model; a missing key, JSON `null`, and
@@ -272,7 +281,8 @@ The data file simply carries no `email` key. One that holds a malformed address
 is still refused, rather than the address being quietly dropped.
 
 An email cannot be cleared once set. `edit` replaces a value and has no
-spelling for removing one, the way `t/` alone empties the tags.
+spelling for removing one, the way `-t ""` empties the tags. Clearing an email
+is tracked as issue #102.
 
 `Phone` is **not** an identity field and **not** a key: two students may hold the
 same number, and `isSameStudent` does not read it. It is normalized only so
@@ -327,12 +337,13 @@ letter or number, judged by Unicode category rather than by ASCII.
 | Punctuation only, such as `---` | no letter or number |
 | An emoji, or a zero-width space, on its own | no letter or number |
 
-**A name that holds a command prefix still fails to parse.** The prefixes are
-`n/`, `p/`, `e/` and `t/`, and a name holding any of them after an ASCII space
-is read as the start of another field. `a/l` and `a/p`, ordinary components of
-a Malaysian name, used to fail this way until the address field was removed
-and the `a/` prefix with it. The rest are fixed by replacing the prefix syntax
-with positional arguments and command options, not by changing `Name`.
+**A name that holds a command prefix parses.** AB3 marked its fields with the
+prefixes `n/`, `p/`, `e/` and `t/`, so a name holding any of them after an
+ASCII space was read as the start of another field. `a/l` and `a/p`, ordinary
+components of a Malaysian name, failed this way until the address field was
+removed and the `a/` prefix with it, and the rest failed until `add` and `edit`
+took positional arguments and command options instead. `Name` itself never
+needed changing.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -1047,9 +1058,9 @@ These were raised during requirement gathering and left out of the product.
 * **Class tag**: A tag used to identify a class.
 * **CLI (Command-Line Interface)**: The keyboard-driven interface through which the User enters commands into TAB.
 * **Command option**: A separate, hyphen-prefixed token, such as `-p`, that identifies the value following it. The
-  `add` command uses options.
-* **Command prefix**: A marker attached to the beginning of a field value, such as `p/`. Commands such as `edit` use
-  prefixes.
+  `add` and `edit` commands use options.
+* **Command prefix**: A marker attached to the beginning of a field value, such as `p/`. AB3 marked its fields with
+  prefixes, where TAB uses options.
 * **Course**: An academic subject (e.g., CS2103T) taught by the User.
 * **Data file**: The local, human-editable JSON file (`tab.json`) used by TAB to store student records,
   distinct from `preferences.json`.
@@ -1090,8 +1101,7 @@ These were raised during requirement gathering and left out of the product.
   `U+000D`, `U+0020`, `U+0085`, `U+00A0`, `U+1680`, `U+2000` to `U+200A`, `U+2028` to `U+2029`, `U+202F`, `U+205F`
   and `U+3000`. This set excludes the zero-width space (`U+200B`), byte order mark (`U+FEFF`), zero-width non-joiner
   (`U+200C`) and zero-width joiner (`U+200D`). It governs `CommandTokenizer` and normalized field values, not every
-  parser. `edit` recognizes prefixes only after an ASCII space, while top-level command parsing and `find` retain
-  narrower ASCII-oriented rules.
+  parser: top-level command parsing and `find` retain narrower ASCII-oriented rules.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -1152,17 +1162,17 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Run `list` after the preceding search, restoring Alice
       at index 1 and Bob at index 2.
 
-   1. Test case: `edit 1 f/`<br>
+   1. Test case: `edit 1 --follow-up`<br>
       Expected: Alice now shows `Needs follow-up`.
 
-   1. Test case: `edit 1 p/81112222`<br>
+   1. Test case: `edit 1 -p 81112222`<br>
       Expected: Alice's phone changes and `Needs follow-up` remains.
 
-   1. Test case: `edit 1 f/`<br>
+   1. Test case: `edit 1 -f`<br>
       Expected: Alice no longer shows `Needs follow-up`, with no blank row
-      left in its place.
+      left in its place. The alias marks the same option as `--follow-up`.
 
-   1. Test case: `edit 2 f/`<br>
+   1. Test case: `edit 2 --follow-up`<br>
       Expected: Bob no longer shows `Needs follow-up`.
 
 1. Rejecting invalid or repeated follow-up markers
@@ -1175,9 +1185,9 @@ testers are expected to do more *exploratory* testing.
       Expected: Neither command adds Cara. The first reports a repeated `--follow-up`;
       the second reports that `true` belongs to no option.
 
-   1. Test cases: `edit 1 f/ f/` and `edit 1 f/true`<br>
+   1. Test cases: `edit 1 --follow-up -f` and `edit 1 --follow-up true`<br>
       Expected: Neither command changes Alice. The first reports a repeated
-      `f/`; the second explains that `f/` takes no value.
+      `--follow-up`; the second reports that `true` belongs to no option.
 
 1. Persisting and loading follow-up status
 
@@ -1191,6 +1201,52 @@ testers are expected to do more *exploratory* testing.
       `"flag": null`, and no `flag` key. Relaunch TAB.<br>
       Expected: Only the record with `true` shows `Needs follow-up`. The other
       three load as unflagged, including the legacy record with no key.
+
+### Editing a student
+
+1. Editing a name that AB3's prefixes made impossible to type
+
+   1. Prerequisites: Run `add Ravi Kumaran -p 91234567`, then `list`, and note
+      the new student's index.
+
+   1. Test case: `edit INDEX -n "Ravi s/o Kumaran"`<br>
+      Expected: The name becomes `Ravi s/o Kumaran` in full. The slash is an
+      ordinary character, where `n/John p/ Smith` once stored `Smith` as the
+      phone number.
+
+   1. Test case: `edit INDEX -n Ravi s/o Kumaran`<br>
+      Expected: No change. A name marked by an option takes one token, so the
+      message reports that `s/o` belongs to no option.
+
+1. Clearing the tags
+
+   1. Prerequisites: Give the student two tags with
+      `edit INDEX -t T1 -t "Lab 3"` and check that both appear on the card.
+
+   1. Test case: `edit INDEX -t ""`<br>
+      Expected: Both tags disappear and no other field changes.
+
+   1. Test case: `edit INDEX -t`<br>
+      Expected: No change. The message names `-t TAG` as needing a value,
+      rather than clearing the tags.
+
+   1. Test case: `edit INDEX -t T1 -t ""`<br>
+      Expected: No change. An empty value clears the tags only on its own, so
+      the message rejects the empty tag.
+
+1. Reporting several mistakes at once
+
+   1. Prerequisites: Run `list` and note the list size.
+
+   1. Test case: `edit 0 -p 12`<br>
+      Expected: No change. One message names both the index and the phone
+      number, rather than only the first fault found.
+
+   1. Test cases: `edit` and `edit INDEX`<br>
+      Expected: No change. The first names the missing index and says a field
+      to edit is needed; the second asks only for a field.
+
+1. _{ more test cases … }_
 
 ### Deleting a student
 
