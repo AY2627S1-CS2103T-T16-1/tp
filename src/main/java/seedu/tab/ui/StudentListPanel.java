@@ -12,6 +12,8 @@ import seedu.tab.model.student.Student;
  */
 public class StudentListPanel extends UiPart<Region> {
     private static final String FXML = "StudentListPanel.fxml";
+    /** Room left beside a card for the list's own scroll bar and insets. */
+    private static final double SCROLL_BAR_ALLOWANCE = 18;
 
     @FXML
     private ListView<Student> studentListView;
@@ -26,6 +28,21 @@ public class StudentListPanel extends UiPart<Region> {
     }
 
     /**
+     * Returns the card for {@code student}, held to the width the list has.
+     *
+     * <p>A card is bounded rather than starved. Asking the cell for no width at all does stop
+     * a long name pushing the list sideways, but it also leaves the card laying itself out in
+     * no room, so every name is elided to its minimum and stays that way once the list has
+     * been resized. A maximum leaves each part of the card its preferred width until the card
+     * really has run out of room.
+     */
+    private Region cardFor(Student student, int displayedIndex) {
+        Region card = new StudentCard(student, displayedIndex).getRoot();
+        card.maxWidthProperty().bind(studentListView.widthProperty().subtract(SCROLL_BAR_ALLOWANCE));
+        return card;
+    }
+
+    /**
      * Custom {@code ListCell} that displays the graphics of a {@code Student} using a {@code StudentCard}.
      */
     class StudentListViewCell extends ListCell<Student> {
@@ -37,11 +54,7 @@ public class StudentListPanel extends UiPart<Region> {
                 setGraphic(null);
                 setText(null);
             } else {
-                // a cell that asks for no width of its own is laid out to the width the list
-                // has, so a long name or tag wraps or is elided instead of pushing the list
-                // sideways behind a horizontal scroll bar
-                setPrefWidth(0);
-                setGraphic(new StudentCard(student, getIndex() + 1).getRoot());
+                setGraphic(cardFor(student, getIndex() + 1));
             }
         }
     }
