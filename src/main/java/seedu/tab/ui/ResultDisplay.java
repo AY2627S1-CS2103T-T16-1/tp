@@ -20,11 +20,11 @@ public class ResultDisplay extends UiPart<Region> {
      */
     private static final int MAX_ROWS = 6;
 
-    /** What the area keeps for its own padding and its scroll bar when text is wrapped. */
-    private static final double WRAPPING_ALLOWANCE = 26;
-
     @FXML
     private TextArea resultDisplay;
+
+    /** The text node the area draws its reply in, once the area has a skin to draw it. */
+    private Text drawn;
 
     /**
      * Creates a {@code ResultDisplay}, which stays out of the window until it has something to
@@ -32,10 +32,6 @@ public class ResultDisplay extends UiPart<Region> {
      */
     public ResultDisplay() {
         super(FXML);
-        // a reply wraps at the width of the area, so a window being resized changes how many
-        // rows the same reply needs
-        resultDisplay.widthProperty().addListener((unused, old, width) ->
-                fitToText(resultDisplay.getText()));
         fitToText("");
     }
 
@@ -61,7 +57,30 @@ public class ResultDisplay extends UiPart<Region> {
         if (!hasSomethingToSay) {
             return;
         }
+        watchTheTextItDraws();
         resultDisplay.setPrefRowCount((int) Math.clamp(rowsNeededFor(text), 1, MAX_ROWS));
+    }
+
+    /**
+     * Follows the text the area draws, so that the rows are counted again whenever the reply
+     * is wrapped differently.
+     *
+     * <p>Listening to the area's own width instead counts them against a width that has not
+     * been laid out yet, and leaves the area as tall as a reply that has since been widened
+     * back onto one line.
+     */
+    private void watchTheTextItDraws() {
+        if (drawn != null) {
+            return;
+        }
+        drawn = (Text) resultDisplay.lookup(".text");
+        if (drawn == null) {
+            // the area has no skin yet; the next reply finds one and starts following it
+            return;
+        }
+        drawn.layoutBoundsProperty().addListener((unused, old, bounds) ->
+                resultDisplay.setPrefRowCount(
+                        (int) Math.clamp(rowsNeededFor(resultDisplay.getText()), 1, MAX_ROWS)));
     }
 
     /**
@@ -71,25 +90,27 @@ public class ResultDisplay extends UiPart<Region> {
      * is wrapped at the width of the area as well, and one written on a single line is the
      * common case: "Edited student: ..." arrives as one line, so the area took one row and
      * hid everything the first row had no space for.
+     *
+     * <p>Where it wraps is the area's own business, so the area is asked. Taking its width
+     * and subtracting a guess at its padding and its scroll bar put the wrap a few pixels
+     * from where the area actually puts it, and a reply that came within those few pixels of
+     * the edge was given a row it did not use.
      */
     private int rowsNeededFor(String text) {
-        double wrapAt = resultDisplay.getWidth() - WRAPPING_ALLOWANCE;
         long written = Math.max(1, text.lines().count());
-        if (wrapAt <= 0) {
-            // the area has not been laid out yet, so the breaks in the reply are all there is
+        if (drawn == null || drawn.getWrappingWidth() <= 0) {
+            // nothing has been drawn yet, so the breaks in the reply are all there is
             return (int) written;
         }
 
         Text measured = new Text(text);
-        measured.setFont(resultDisplay.getFont());
+        measured.setFont(drawn.getFont());
         // a row is as tall as a row of this reply, measured before it is wrapped. Measuring
         // a letter of its own instead compares this reply's tallest glyph against that
         // letter's: in Inter a line of a reply stands 15.0 against the 14.52 of an "X", so
         // every one-line reply rounded up to two rows and carried an empty one
         double rowHeight = measured.getLayoutBounds().getHeight() / written;
-        measured.setWrappingWidth(wrapAt);
+        measured.setWrappingWidth(drawn.getWrappingWidth());
         return (int) Math.round(measured.getLayoutBounds().getHeight() / rowHeight);
     }
-
-
 }
