@@ -479,20 +479,19 @@
 
 .summary-heading {
     -fx-text-fill: -tab-text-muted;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-weight: bold;
     -fx-font-size: 10px;
 }
 
+/* a tag too long for the panel's width is elided, as a card's values are */
 .summary-name {
+    -fx-text-overrun: ellipsis;
     -fx-text-fill: -tab-text;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
 }
 
 .summary-count {
     -fx-text-fill: -tab-text-muted;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
 }
 
