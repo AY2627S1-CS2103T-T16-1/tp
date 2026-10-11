@@ -515,6 +515,6 @@
 }
 
 /* a value too long for its row is elided rather than widening the card it sits in */
-.card-name, .card-detail, .card-detail-strong, .summary-name {
+.card-name, .card-detail, .card-detail-strong {
     -fx-text-overrun: ellipsis;
 }
