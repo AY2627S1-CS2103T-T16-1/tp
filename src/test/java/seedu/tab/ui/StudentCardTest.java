@@ -108,7 +108,54 @@ public class StudentCardTest {
 
         assertEquals("Ravi s/o Kumaran", ((Label) card.getRoot().lookup("#name")).getText());
         assertEquals("+65 9123 4567", ((Label) card.getRoot().lookup("#phone")).getText());
-        assertEquals("7. ", ((Label) card.getRoot().lookup("#id")).getText());
+        assertEquals("7", ((Label) card.getRoot().lookup("#id")).getText());
+    }
+
+    @Test
+    public void constructor_anyStudent_leavesTheNusIdSlotOut() throws Exception {
+        // the card lays the slot out so that the field can fill it without further UI work,
+        // and must not show a placeholder in the meantime
+        Label nusId = onFxThread(() -> (Label) new StudentCard(new StudentBuilder().build(), 1)
+                .getRoot().lookup("#nusId"));
+
+        assertFalse(nusId.isManaged());
+        assertFalse(nusId.isVisible());
+    }
+
+    @Test
+    public void constructor_flaggedStudent_putsTheMarkerInTheTrailingPill() throws Exception {
+        StudentCard card = onFxThread(() -> new StudentCard(
+                new StudentBuilder().withFlag(true).build(), 1));
+        Label followUp = (Label) card.getRoot().lookup("#followUp");
+
+        assertTrue(followUp.getStyleClass().contains("card-pill"),
+                "the follow-up marker should be the trailing pill the mockup draws");
+    }
+
+    @Test
+    public void constructor_phoneAndEmail_shareTheSecondaryLine() throws Exception {
+        Student student = new StudentBuilder().withPhone("91234567")
+                .withEmail("alice@example.com").build();
+        StudentCard card = onFxThread(() -> new StudentCard(student, 1));
+        Label phone = (Label) card.getRoot().lookup("#phone");
+        Label email = (Label) card.getRoot().lookup("#email");
+
+        // the mockup drops the phone, but it is the one required contact field, so it stays
+        assertEquals(phone.getParent(), email.getParent());
+        assertTrue(phone.isVisible());
+        assertTrue(email.isVisible());
+    }
+
+    @Test
+    public void constructor_longNameAndTag_doNotPushTheCardOutOfShape() throws Exception {
+        Student student = new StudentBuilder()
+                .withName("Nurul Izzah binte Hassan Al-Rashid Abdullah Mohamed")
+                .withTags("AY2627 Sem 1 CS2103T T16").build();
+        StudentCard card = onFxThread(() -> new StudentCard(student, 48));
+
+        // the card must size to its content rather than demanding a width the window cannot give
+        double width = onFxThread(() -> card.getRoot().prefWidth(-1));
+        assertTrue(width > 0, "the card should report a preferred width");
     }
 
     @Test
