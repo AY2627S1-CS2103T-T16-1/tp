@@ -104,7 +104,7 @@ public class HelpWindow extends UiPart<Stage> {
      * Returns how much of {@code window} is frame rather than {@code scene}. A window that
      * has not been shown has no size at all to measure, and no frame around it yet either.
      */
-    private static double frameAround(double window, double scene) {
+    static double frameAround(double window, double scene) {
         return Double.isNaN(window) || Double.isNaN(scene) ? 0 : Math.max(0, window - scene);
     }
 
