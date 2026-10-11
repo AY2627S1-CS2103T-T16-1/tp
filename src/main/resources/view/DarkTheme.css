@@ -13,6 +13,7 @@
     -tab-text-muted: #8b93a7;      /* an index, a label, a secondary detail */
     -tab-accent: #4ec9b0;          /* the product's own colour */
     -tab-highlight: #e0a458;       /* something that wants attention */
+    -tab-option: #7fb8e0;          /* an option on the command line */
     -tab-chip-bg: #2b3446;         /* a tag chip */
     -tab-chip-text: #a8b3cb;
     -tab-danger: #ff6b6b;          /* a refused command */
@@ -487,4 +488,60 @@
 /* a long value is elided rather than widening the card */
 .card-detail, .card-detail-strong, .summary-name {
     -fx-text-overrun: ellipsis;
+}
+
+/* the command line, drawn as a shell prompt */
+.command-line {
+    -fx-background-color: -tab-surface;
+    -fx-background-radius: 8;
+    -fx-border-color: -tab-border;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+
+.command-prompt {
+    -fx-text-fill: -tab-accent;
+    -fx-font-family: "monospace";
+    -fx-font-size: 14px;
+}
+
+/* inside the line the field is bare: the rounded surface belongs to the line around it */
+.command-line #commandTextField {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+    -fx-font-family: "monospace";
+    -fx-font-size: 13px;
+    -fx-text-fill: -tab-text;
+    -fx-highlight-fill: -tab-surface-selected;
+}
+
+/* while the coloured copy shows, the field's own text gets out of the way, but the caret
+   stays so that typing still looks like typing */
+.command-line #commandTextField:coloured {
+    -fx-text-fill: transparent;
+}
+
+/* the same face and size as the field above it: the two are only lined up by matching here,
+   and CommandBoxTest fails if they drift apart */
+.command-token {
+    -fx-font-family: "monospace";
+    -fx-font-size: 13px;
+}
+
+.command-command-word {
+    -fx-fill: -tab-accent;
+    -fx-font-weight: bold;
+}
+
+.command-option {
+    -fx-fill: -tab-option;
+}
+
+.command-quoted-value {
+    -fx-fill: -tab-highlight;
+}
+
+.command-value, .command-space {
+    -fx-fill: -tab-text;
 }
