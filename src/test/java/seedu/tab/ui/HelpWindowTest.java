@@ -1,5 +1,6 @@
 package seedu.tab.ui;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Callable;
@@ -106,5 +107,20 @@ public class HelpWindowTest {
                 "the window may shrink to " + limits[0] + " for content needing " + limits[1]);
         assertTrue(limits[2] >= limits[3] - 0.5,
                 "the window may shrink to " + limits[2] + " for content needing " + limits[3]);
+    }
+
+    @Test
+    public void frameAround_aWindowThatHasBeenShown_isWhatTheSceneIsNot() {
+        assertEquals(16, HelpWindow.frameAround(736, 720), 0.01,
+                "the frame is whatever the window is wider than its scene");
+    }
+
+    @Test
+    public void frameAround_aWindowNotYetShown_isNothing() {
+        // a window that has not been shown has no size to measure, and no frame yet either
+        assertEquals(0, HelpWindow.frameAround(Double.NaN, 720), 0.01);
+        assertEquals(0, HelpWindow.frameAround(736, Double.NaN), 0.01);
+        // nor can a scene be wider than the window around it
+        assertEquals(0, HelpWindow.frameAround(700, 720), 0.01);
     }
 }
