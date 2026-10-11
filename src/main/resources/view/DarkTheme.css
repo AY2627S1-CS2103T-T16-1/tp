@@ -18,7 +18,7 @@
     -tab-accent: #68c4ee;          /* the prompt, and the command word after it */
     -tab-highlight: #d4ae40;       /* the follow-up pill */
     -tab-string: #a8c68d;          /* a quoted value on the command line */
-    -tab-option: #ae8ca9;          /* an option on the command line */
+    -tab-option: #cab4c7;          /* an option on the command line */
     -tab-value: #c3d0dc;           /* a plain value on the command line */
     -tab-chip-bg: #2a3945;         /* a tag chip */
     -tab-chip-text: #8cc7e5;

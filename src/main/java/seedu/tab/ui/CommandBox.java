@@ -104,10 +104,11 @@ public class CommandBox extends UiPart<Region> {
     /**
      * Repaints the coloured text behind the field so that it reads as what was typed.
      *
-     * <p>The field keeps the caret, the selection and every key the User presses; only its own
-     * text is transparent, so what is seen is the coloured copy underneath. The copy cannot
-     * scroll with the field, so once the command outgrows the line the colours are dropped and
-     * the field shows its own text again rather than sitting misaligned beneath it.
+     * <p>The field keeps every key the User presses and decides where a click lands; only its
+     * own text is transparent, so what is read is the coloured copy underneath, and the caret
+     * and the selection are drawn here to go with it. A command longer than the line scrolls
+     * the copy the way the field scrolls its own text, so the colours hold however long the
+     * command is.
      */
     private void recolour(String typed) {
         highlighted.getChildren().clear();
@@ -141,8 +142,8 @@ public class CommandBox extends UiPart<Region> {
      * <p>A TextFlow wraps at the width it is given, which would turn a long command into
      * several lines and grow the box. It is sized to its content instead and the lane around
      * it is clipped, so the copy runs off the edge the way the field's own text does. The
-     * field scrolls to keep its caret visible and so does this: the same rule, so the two stay
-     * together without the field having to report an offset it does not expose.
+     * field scrolls to keep its caret in view and so does this, by the same rule, since the
+     * field does not report the offset it has scrolled to.
      */
     private void layOutColours() {
         // JavaFX moves the caret before it reports the new text, so this runs once against
@@ -248,7 +249,9 @@ public class CommandBox extends UiPart<Region> {
      *
      * <p>A bar of a fixed height centred in the line does not sit where the text does: a
      * font's ink is not centred in its line box, so the two are out by a point or so. Taking
-     * both from a run of the text itself keeps them together whatever the font.
+     * the height from a run of the text itself keeps them together whatever the font, and an
+     * empty line falls back to one line of the field's own font rather than keeping the
+     * height the command before it needed.
      */
     private void matchCaretToTheLine() {
         if (highlighted.getChildren().isEmpty()) {

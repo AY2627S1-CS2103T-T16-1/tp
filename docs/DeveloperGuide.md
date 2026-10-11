@@ -83,6 +83,38 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
+#### Colouring the command line
+
+A `TextField` cannot colour its own content, so `CommandBox` keeps the field
+for input and draws a coloured copy of the command behind it, with the field's
+own text transparent. The field still takes every keystroke and still decides
+which character a click lands on, which keeps editing exactly as it was.
+
+`CommandHighlighter` decides the colours. It returns spans covering every
+character of the command, and asks `CommandTokenizer` where a token ends, so
+the colouring cannot disagree with the parser about what is a quoted value or
+where a backslash escapes something. It never rejects anything: a command is
+coloured while it is still half-typed.
+
+Three things then have to agree with the field, because the User reads our copy
+but interacts with the field:
+
+* **the scroll offset.** The copy is drawn from the same place the field has
+  scrolled to, moving only when the caret would leave the line and only far
+  enough to bring the caret itself back. A copy at a different offset shows one
+  character where the field hit-tests another, and clicks land in the wrong
+  place.
+* **the caret.** The field's caret is drawn in its text colour, which is
+  transparent, so the line carries one of its own, sized from a run of the text
+  so it sits where the text does.
+* **the selection.** The field draws its highlight at its own offset, which
+  broke into fragments behind the copy, so it is turned off in the stylesheet
+  and drawn here instead.
+
+`ThemeTest` and `CommandBoxTest` check the contrast of the selection band
+against the line, and of every token colour against the band, so that selecting
+a command cannot hide half of it.
+
 #### Summarising the list
 
 `SummaryPanel` shows the flagged count, a count per tag and the total, beside
@@ -1284,6 +1316,33 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### The command line
+
+1. Checking what the colours say
+
+   1. Test case: type `add "Siti Nur-Aisyah" -p 98765432 -t T1` without
+      pressing Enter.<br>
+      Expected: `add` is bold and in the accent colour, `"Siti Nur-Aisyah"` is
+      green, `-p` and `-t` are mauve, and the remaining values are in ordinary
+      text.
+   1. Test case: type `addd` and press Enter.<br>
+      Expected: The whole line turns red and the reply says the command is
+      unknown. Typing another character takes the red off again.
+
+1. Checking a command longer than the line
+
+   1. Test case: type a `find` command long enough to run past the right-hand
+      edge, then press `Home`, then `End`.<br>
+      Expected: The line scrolls so the caret stays in view at both ends, the
+      caret is visible at the end rather than cut off by the edge, and the
+      colours stay with the text.
+   1. Test case: with that command still typed, press `Ctrl`+`A`.<br>
+      Expected: A band is drawn behind the whole command, and every part of
+      the command is still readable on top of it.
+   1. Test case: click in the middle of the command.<br>
+      Expected: The caret lands on the character clicked, not one or two away
+      from it.
 
 ### The summary beside the list
 

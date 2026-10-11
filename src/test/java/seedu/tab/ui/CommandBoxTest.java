@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
@@ -570,5 +571,40 @@ public class CommandBoxTest {
 
         assertTrue(contrast >= 2.0,
                 "a selection the User cannot make out is no selection: contrast was " + contrast);
+    }
+
+    @Test
+    public void selection_withTheCommandOnTopOfIt_leavesEveryTokenLegible() throws Exception {
+        CommandBox box = boxShowing("add \"Siti Nur-Aisyah\" -p 98765432 -t T1");
+        Region root = box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 500, 60)));
+
+        List<String> faint = onFxThread(() -> {
+            TextField field = (TextField) root.lookup("#commandTextField");
+            field.selectAll();
+            root.layout();
+            Region band = (Region) root.lookup("#selection");
+            Color behind = backgroundOf(root);
+            Color over = backgroundOf(band);
+            Color seen = behind.interpolate(over, over.getOpacity());
+
+            TextFlow copy = (TextFlow) root.lookup("#highlighted");
+            List<String> tooFaint = new ArrayList<>();
+            for (Node run : copy.getChildren()) {
+                Text token = (Text) run;
+                if (token.getText().isBlank()) {
+                    continue;
+                }
+                double contrast = contrastBetween((Color) token.getFill(), seen);
+                if (contrast < 3.0) {
+                    tooFaint.add(token.getText() + " at " + Math.round(contrast * 100) / 100.0);
+                }
+            }
+            return tooFaint;
+        });
+
+        // selecting a command must not hide half of it: every colour it is written in has to
+        // stay legible against the band drawn behind it
+        assertTrue(faint.isEmpty(), "these tokens disappear into the selection: " + faint);
     }
 }
