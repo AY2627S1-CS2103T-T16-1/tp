@@ -1,6 +1,7 @@
 package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -16,7 +17,10 @@ import org.junit.jupiter.api.Test;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
@@ -28,6 +32,7 @@ import seedu.tab.testutil.StudentBuilder;
 public class SummaryPanelTest {
 
     private static final int TIMEOUT_SECONDS = 10;
+    private static final double SHORT_WINDOW = 600;
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -46,8 +51,41 @@ public class SummaryPanelTest {
         return task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
+    @Test
+    public void panel_manyTags_keepsTheTotalInSightAndScrollsTheTags() throws Exception {
+        List<Student> many = new java.util.ArrayList<>();
+        for (int i = 0; i < 40; i++) {
+            many.add(tagged("Student " + i, false, "tag-" + i));
+        }
+        ObservableList<Student> students = FXCollections.observableArrayList(many);
+
+        boolean[] state = onFxThread(() -> {
+            SummaryPanel panel = new SummaryPanel(students);
+            Region root = (Region) panel.getRoot();
+            Scene scene = new Scene(root, 160, SHORT_WINDOW);
+            assertNotNull(scene);
+            root.applyCss();
+            root.layout();
+
+            Label total = (Label) root.lookup("#total");
+            javafx.geometry.Bounds inPanel = total.localToScene(total.getBoundsInLocal());
+            return new boolean[] {
+                root.lookup("#tagScroll") != null,
+                inPanel.getMaxY() <= SHORT_WINDOW,
+            };
+        });
+
+        // forty tags are taller than a short window, and the total belongs at the foot of the
+        // sidebar rather than somewhere below the bottom of it
+        assertTrue(state[0], "the tag list should sit in something that can scroll");
+        assertTrue(state[1], "the student total was pushed off the bottom of the window");
+    }
+
     private static List<String> tagRowsOf(SummaryPanel panel) {
-        VBox rows = (VBox) panel.getRoot().lookup("#tagRows");
+        // the rows live inside a scroll pane, whose content a lookup cannot reach until the
+        // skin has built a viewport for it
+        ScrollPane scroll = (ScrollPane) panel.getRoot().lookup("#tagScroll");
+        VBox rows = (VBox) scroll.getContent();
         return rows.getChildren().stream()
                 .map(row -> ((Label) ((javafx.scene.layout.HBox) row).getChildren().get(0)).getText())
                 .toList();

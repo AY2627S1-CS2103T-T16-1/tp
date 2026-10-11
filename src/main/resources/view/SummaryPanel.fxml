@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
@@ -24,9 +25,12 @@
       <Insets top="10" />
     </VBox.margin>
   </Label>
-  <VBox fx:id="tagRows" spacing="4" />
-
-  <Region VBox.vgrow="ALWAYS" />
+  <!-- a cohort can carry more tags than the window is tall, so the list scrolls within
+       whatever height is left rather than pushing the total off the bottom -->
+  <ScrollPane fx:id="tagScroll" styleClass="summary-scroll" fitToWidth="true"
+              hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+    <VBox fx:id="tagRows" spacing="4" />
+  </ScrollPane>
 
   <Label fx:id="total" styleClass="summary-total" />
 </VBox>

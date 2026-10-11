@@ -22,14 +22,14 @@
 
   <VBox spacing="4" HBox.hgrow="ALWAYS">
     <HBox alignment="CENTER_LEFT" spacing="8">
-      <!-- the name keeps its natural width, so the spacer beside it cannot squeeze it into
-           an ellipsis while the row still has room to spare -->
-      <Label fx:id="name" text="\$first" styleClass="card-name" minWidth="-Infinity" />
-      <FlowPane fx:id="tags" />
-      <Region HBox.hgrow="ALWAYS" />
+      <!-- the name yields only once the row has run out of room, and is elided rather
+           than pushing the pill beside it out of the card -->
+      <Label fx:id="name" text="\$first" styleClass="card-name" minWidth="40" />
+      <FlowPane fx:id="tags" minWidth="0" />
+      <Region HBox.hgrow="ALWAYS" minWidth="0" />
       <!-- the trailing pill. It carries the follow-up marker, and takes the age once a
            follow-up records when it was raised -->
-      <Label fx:id="followUp" styleClass="card-pill" />
+      <Label fx:id="followUp" styleClass="card-pill" minWidth="-Infinity" />
     </HBox>
 
     <HBox alignment="CENTER_LEFT" spacing="12">
