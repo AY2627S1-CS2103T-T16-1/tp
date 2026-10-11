@@ -267,4 +267,21 @@ public class ResultDisplayTest {
         }
     }
 
+    @Test
+    public void setFeedbackToUser_beforeTheAreaHasAWidth_countsTheBreaksItWasWritten()
+            throws Exception {
+        // a reply can arrive before the window has given the area a width to wrap at, and
+        // a reply wrapped at no width would come out as a row for every word
+        ResultDisplay display = displayAt(450);
+        say(display, "Hi");
+        onFxThread(() -> {
+            Text drawn = (Text) display.getRoot().lookup("#resultDisplay").lookup(".text");
+            drawn.setWrappingWidth(0);
+            return null;
+        });
+
+        say(display, "Invalid command format!\nadd: Adds a student to the student book.");
+
+        assertEquals(2, rowsOf(display), "the breaks it was written with are all there is");
+    }
 }
