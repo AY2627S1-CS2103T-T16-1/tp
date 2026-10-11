@@ -46,7 +46,10 @@ public class CardHeadline extends Pane {
     protected void layoutChildren() {
         read();
         double forTheTags = roomForTheTags();
-        double forTheName = Math.max(0, getWidth() - forTheTags - (forTheTags > 0 ? SPACING : 0));
+        double leftOver = Math.max(0, getWidth() - forTheTags - (forTheTags > 0 ? SPACING : 0));
+        // the name is drawn no wider than its own text, so the tags sit against the name
+        // rather than out at the edge of whatever room the line happens to have
+        double forTheName = Math.min(name.prefWidth(-1), leftOver);
 
         layInRow(name, 0, forTheName);
         layInRow(tags, forTheName + SPACING, forTheTags);
