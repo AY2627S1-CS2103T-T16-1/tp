@@ -405,6 +405,13 @@
     -fx-font-size: 11;
 }
 
+/* the chip that counts the tags the row had no space for, which reads as an aside rather
+   than as another tag */
+#tags .tag-overflow {
+    -fx-text-fill: -tab-text-dim;
+    -fx-background-color: transparent;
+}
+
 /* the three panes of the main window, which carry the window's own colour */
 /* the window itself. Without this the scene's own white shows wherever a pane does not
    paint a background of its own, which is what a result strip with only a rule on it does. */

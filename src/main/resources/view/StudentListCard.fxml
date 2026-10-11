@@ -5,6 +5,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import seedu.tab.ui.TagRow?>
 
 <HBox id="cardPane" fx:id="cardPane" alignment="TOP_LEFT" spacing="12"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
@@ -19,17 +20,17 @@
     </minWidth>
   </Label>
 
-  <VBox spacing="4" HBox.hgrow="ALWAYS" minWidth="0">
+  <VBox fx:id="details" spacing="4" HBox.hgrow="ALWAYS" minWidth="0">
     <HBox alignment="CENTER_LEFT" spacing="8">
       <!-- the tags sit against the name, so a reader follows one line from the name to what
-           is said about them. The name keeps its own width rather than taking the row, and
-           the chips take up the slack to its right. Both sides stay bounded: the name never
-           falls below a readable stretch, and the card caps how long a name or a chip may
-           print. A row rather than a flow pane, because a FlowPane reports its
-           prefWrapLength as its preferred width whatever it holds. -->
-      <Label fx:id="name" text="\$first" styleClass="card-name" minWidth="120" />
-      <HBox fx:id="tags" spacing="6" minWidth="0" alignment="CENTER_LEFT"
-            HBox.hgrow="ALWAYS" />
+           is said about them. The name asks for no more than its own text needs, which keeps
+           a short name from holding the chips off at a column of their own, and the chips
+           take up the slack to its right. It is held at that width rather than being cut
+           again by the room the row has left, so that the card cuts a long name at the same
+           place whatever else it holds. A row rather than a flow pane, because a FlowPane
+           reports its prefWrapLength as its preferred width whatever it holds. -->
+      <Label fx:id="name" text="\$first" styleClass="card-name" minWidth="-Infinity" />
+      <TagRow fx:id="tags" HBox.hgrow="ALWAYS" />
     </HBox>
 
     <HBox alignment="CENTER_LEFT" spacing="12">

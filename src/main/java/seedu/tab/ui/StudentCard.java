@@ -1,12 +1,11 @@
 package seedu.tab.ui;
 
-import java.util.List;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
 
@@ -16,18 +15,14 @@ import seedu.tab.model.student.Student;
 public class StudentCard extends UiPart<Region> {
 
     private static final String FXML = "StudentListCard.fxml";
-    /** Enough of a chip to read the start of a tag, kept even beside a very long name. */
-    private static final double READABLE_CHIP_WIDTH = 70;
 
     /**
-     * How much of a value a card shows. A card is a summary, and one enormous value should
-     * not crowd out the rest of the record, so these are generous rather than tight: a name
-     * longer than this is rare, and the whole of it is still a hover away.
+     * How much of a name a card shows. A card is a summary and the name shares its row with
+     * the tags and the pill, so a name longer than this is cut rather than taking the row.
+     * The whole of it is still a hover away. The count is what a name is cut to, whatever
+     * else the card holds, so every long name on the list breaks off at the same place.
      */
-    private static final int MAX_NAME_CHARACTERS = 42;
-    private static final int MAX_TAG_CHARACTERS = 16;
-    private static final int MAX_TAGS_SHOWN = 3;
-    private static final String ELLIPSIS = "\u2026";
+    private static final int MAX_NAME_CHARACTERS = 22;
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -42,6 +37,8 @@ public class StudentCard extends UiPart<Region> {
     @FXML
     private HBox cardPane;
     @FXML
+    private VBox details;
+    @FXML
     private Label name;
     @FXML
     private Label id;
@@ -54,7 +51,7 @@ public class StudentCard extends UiPart<Region> {
     @FXML
     private Label nusId;
     @FXML
-    private HBox tags;
+    private TagRow tags;
 
     /**
      * Creates a {@code StudentCard} with the given {@code Student} and index to display.
@@ -63,50 +60,29 @@ public class StudentCard extends UiPart<Region> {
         super(FXML);
         this.student = student;
         id.setText(String.valueOf(displayedIndex));
-        showShortened(name, student.getName().fullName, MAX_NAME_CHARACTERS);
+        UiText.showShortened(name, student.getName().fullName, MAX_NAME_CHARACTERS);
         phone.setText(student.getPhone().value);
         show(email, student.getEmail().map(Email::toString).orElse(null));
         show(followUp, student.getFlag().map(flag -> flag.tagName).orElse(null));
         // a student carries no NUS ID yet, so the slot the card lays out for it stays empty
         show(nusId, null);
-        List<String> tagNames = student.getTags().stream()
+        clipToItsOwnBox(details);
+        tags.setTags(student.getTags().stream()
                 .map(tag -> tag.tagName)
                 .sorted()
-                .toList();
-        tagNames.stream().limit(MAX_TAGS_SHOWN).forEach(this::addChip);
-        if (tagNames.size() > MAX_TAGS_SHOWN) {
-            // a row of chips cut down to single letters tells the User nothing, so the ones
-            // that do not fit are counted instead of being squeezed in beside the rest
-            Label more = new Label("+" + (tagNames.size() - MAX_TAGS_SHOWN));
-            more.setTooltip(new Tooltip(String.join(", ", tagNames)));
-            tags.getChildren().add(more);
-        }
-        // a student with tags keeps enough of the row for one chip to stay readable, while a
-        // student with none leaves the whole row to the name
-        tags.setMinWidth(tags.getChildren().isEmpty() ? 0 : READABLE_CHIP_WIDTH);
+                .toList());
     }
 
     /**
-     * Adds a chip for {@code tagName}, shortened if it is longer than a chip should be.
+     * Holds {@code details} to the space the card gives it. The name is cut by the character
+     * count rather than by the room left on the row, so on a card too narrow for it the row
+     * would otherwise paint over the pill at the card's trailing edge.
      */
-    private void addChip(String tagName) {
-        Label chip = new Label();
-        showShortened(chip, tagName, MAX_TAG_CHARACTERS);
-        tags.getChildren().add(chip);
-    }
-
-    /**
-     * Puts {@code value} on {@code label}, cut to {@code limit} characters with an ellipsis if
-     * it runs longer. What was cut is still readable: the label carries the whole value as its
-     * tooltip, so a card summarises without the record becoming unreachable.
-     */
-    private static void showShortened(Label label, String value, int limit) {
-        if (value.length() <= limit) {
-            label.setText(value);
-            return;
-        }
-        label.setText(value.substring(0, limit) + ELLIPSIS);
-        label.setTooltip(new Tooltip(value));
+    private static void clipToItsOwnBox(Region details) {
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(details.widthProperty());
+        clip.heightProperty().bind(details.heightProperty());
+        details.setClip(clip);
     }
 
     /**
