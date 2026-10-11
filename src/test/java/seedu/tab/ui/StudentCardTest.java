@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -18,9 +20,9 @@ import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
@@ -204,19 +206,17 @@ public class StudentCardTest {
                 .withName("Siti Nur-Aisyah Binte Test Test Test Test Test Test Test")
                 .withTags("T1").withFlag(true).build();
 
-        double[] widths = onFxThread(() -> {
-            StudentCard card = new StudentCard(student, 14);
-            Region root = (Region) card.getRoot();
+        List<String> shown = onFxThread(() -> {
+            Region root = (Region) new StudentCard(student, 14).getRoot();
             assertNotNull(styledScene(root, CARD_WIDTH, 120));
 
-            Region tags = (Region) root.lookup("#tags");
-            Label pill = (Label) root.lookup("#followUp");
-            return new double[] {tags.getWidth(), tags.prefWidth(-1), pill.getWidth()};
+            assertTrue(((Label) root.lookup("#followUp")).getWidth() > 0,
+                    "the follow-up pill should still be laid out");
+            return visibleChipsOf(root);
         });
 
-        // a chip cut down to an ellipsis says nothing, so enough of it survives to read
-        assertTrue(widths[0] >= 70, "the tag chip was squeezed to nothing: " + widths[0]);
-        assertTrue(widths[2] > 0, "the follow-up pill should still be laid out");
+        // a chip cut down to an ellipsis says nothing, so the name gives way before the chip
+        assertEquals(List.of("T1"), shown);
     }
 
     @Test
@@ -233,11 +233,12 @@ public class StudentCardTest {
             Label pill = (Label) root.lookup("#followUp");
             Region tags = (Region) root.lookup("#tags");
             return new double[] {name.getWidth(), tags.getWidth(), pill.getWidth(),
-                root.getWidth()};
+                name.prefWidth(-1)};
         });
 
         // one enormous tag used to take the whole row, crush the name and run under the pill
-        assertTrue(widths[0] >= 120, "the name was crushed to " + widths[0]);
+        assertTrue(widths[0] >= widths[3] - 0.5,
+                "the chip crushed the name to " + widths[0] + " of the " + widths[3] + " it asked for");
         assertTrue(widths[1] <= 150, "the chip should be capped, but was " + widths[1]);
         assertTrue(widths[2] > 0, "the follow-up pill should still be laid out");
     }
@@ -248,7 +249,8 @@ public class StudentCardTest {
         double[] pillEdges = new double[2];
         boolean[] flags = {true, false};
         for (int i = 0; i < flags.length; i++) {
-            Student student = new StudentBuilder().withName("Siti Nur-Aisyah")
+            // a short name, which a width floor on the name would pad out into a gap
+            Student student = new StudentBuilder().withName("Bo")
                     .withTags("T1").withFlag(flags[i]).build();
             double[] edges = onFxThread(() -> {
                 Region root = (Region) new StudentCard(student, 3).getRoot();
@@ -297,25 +299,50 @@ public class StudentCardTest {
     }
 
     @Test
+    public void constructor_aLongName_isCutAtTheSamePlaceOnEveryCard() throws Exception {
+        Student student = new StudentBuilder()
+                .withName("Siti Nur-Aisyah Binte Abdullah Rahman")
+                .withTags("alpha", "bravo", "charlie").withFlag(true).build();
+
+        // a name cut by the room the row has left breaks off wherever the tags and the pill
+        // leave it, so the same name reads differently from one card to the next
+        List<String> cut = new ArrayList<>();
+        for (double cardWidth : new double[] {320, 420, 700}) {
+            cut.add(onFxThread(() -> {
+                Region root = (Region) new StudentCard(student, 1).getRoot();
+                assertNotNull(styledScene(root, cardWidth, 120));
+                Label name = (Label) root.lookup("#name");
+                assertEquals(name.prefWidth(-1), name.getWidth(), 0.5,
+                        "the layout cut the name further at a card width of " + cardWidth);
+                return name.getText();
+            }));
+        }
+
+        assertEquals(List.of(cut.get(0), cut.get(0), cut.get(0)), cut);
+        assertEquals("Siti Nur-Aisyah Binte\u2026", cut.get(0).substring(0, cut.get(0).length()));
+    }
+
+    @Test
     public void constructor_moreTagsThanFit_countsTheRest() throws Exception {
         Student student = new StudentBuilder()
                 .withTags("alpha", "bravo", "charlie", "delta", "echo").build();
-        HBox tags = onFxThread(() -> (HBox) new StudentCard(student, 1).getRoot().lookup("#tags"));
 
-        List<String> shown = tags.getChildren().stream()
-                .map(node -> ((Label) node).getText())
-                .collect(Collectors.toList());
+        List<String> shown = onFxThread(() -> {
+            Region root = (Region) new StudentCard(student, 1).getRoot();
+            assertNotNull(styledScene(root, CARD_WIDTH, 120));
+            return visibleChipsOf(root);
+        });
 
         // five chips squeezed into one row come out as single letters, which say nothing
-        assertEquals(List.of("alpha", "bravo", "charlie", "+2"), shown);
+        assertEquals(List.of("alpha", "bravo", "charlie", "2 more\u2026"), shown);
     }
 
     @Test
     public void constructor_aTagLongerThanAChip_isCutWithTheWholeOnHover() throws Exception {
         String whole = "test".repeat(20);
-        HBox tags = onFxThread(() -> (HBox) new StudentCard(
+        TagRow tags = onFxThread(() -> (TagRow) new StudentCard(
                 new StudentBuilder().withTags(whole).build(), 1).getRoot().lookup("#tags"));
-        Label chip = (Label) tags.getChildren().get(0);
+        Label chip = (Label) tags.getChildrenUnmodifiable().get(0);
 
         assertTrue(chip.getText().length() < whole.length(), "the chip should be cut");
         assertEquals(whole, chip.getTooltip().getText());
@@ -323,12 +350,27 @@ public class StudentCardTest {
 
     @Test
     public void constructor_severalTags_areShownInOrder() throws Exception {
-        Student student = new StudentBuilder().withTags("T1", "Lab 3", "needs-followup").build();
-        HBox tags = onFxThread(() -> (HBox) new StudentCard(student, 1).getRoot().lookup("#tags"));
+        Student student = new StudentBuilder().withTags("T1", "Lab 3", "needs-follow").build();
 
-        List<String> shown = tags.getChildren().stream()
-                .map(node -> ((Label) node).getText())
+        List<String> shown = onFxThread(() -> {
+            Region root = (Region) new StudentCard(student, 1).getRoot();
+            assertNotNull(styledScene(root, CARD_WIDTH, 120));
+            return visibleChipsOf(root);
+        });
+
+        assertEquals(List.of("Lab 3", "T1", "needs-follow"), shown);
+    }
+
+    /**
+     * Returns the text of the chips the laid-out {@code card} is showing, in the order the
+     * row draws them.
+     */
+    private static List<String> visibleChipsOf(Region card) {
+        return card.lookup("#tags").getParent().lookupAll("#tags .label").stream()
+                .filter(Node::isVisible)
+                .map(node -> (Label) node)
+                .sorted(Comparator.comparingDouble(Label::getLayoutX))
+                .map(Label::getText)
                 .collect(Collectors.toList());
-        assertEquals(List.of("Lab 3", "T1", "needs-followup"), shown);
     }
 }
