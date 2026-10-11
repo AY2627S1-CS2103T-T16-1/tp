@@ -39,13 +39,20 @@
           </padding>
         </StackPane>
 
-        <StackPane VBox.vgrow="NEVER" fx:id="resultDisplayPlaceholder">
+        <!-- the reply keeps the height it asks for. A VBox short of room shrinks every
+             child, whatever its grow priority, so the reply was squeezed below the rows it
+             had been given and what did not fit was cut off -->
+        <StackPane VBox.vgrow="NEVER" fx:id="resultDisplayPlaceholder" minHeight="-Infinity">
           <padding>
             <Insets top="6" right="12" bottom="6" left="12" />
           </padding>
         </StackPane>
 
-        <VBox fx:id="studentList" styleClass="student-list-pane" minWidth="340" prefWidth="340" VBox.vgrow="ALWAYS">
+        <!-- the list yields height before the reply does: it scrolls, so what it cannot
+             show is still reachable, where a reply squeezed below the rows it was given is
+             simply cut off -->
+        <VBox fx:id="studentList" styleClass="student-list-pane" minWidth="340" prefWidth="340"
+              minHeight="0" VBox.vgrow="ALWAYS">
           <padding>
             <Insets top="4" right="16" bottom="8" left="16" />
           </padding>
