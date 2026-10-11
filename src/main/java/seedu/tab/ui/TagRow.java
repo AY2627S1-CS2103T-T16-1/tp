@@ -21,10 +21,11 @@ import javafx.scene.shape.Rectangle;
  */
 public class TagRow extends Region {
 
+    /** Enough of a chip to read the start of a tag, kept even beside a very long name. */
+    static final double READABLE_CHIP_WIDTH = 70;
+
     /** The gap between one chip and the next, matching the spacing the card uses. */
     private static final double SPACING = 6;
-    /** Enough of a chip to read the start of a tag, kept even beside a very long name. */
-    private static final double READABLE_CHIP_WIDTH = 70;
     /**
      * Enough of a chip for the first few letters of a tag, which is what the row keeps when
      * the alternative is saying nothing about how many tags were left out.
