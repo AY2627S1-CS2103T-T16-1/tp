@@ -177,34 +177,12 @@
 }
 
 .result-display {
-    /* a TextArea paints its inside from -fx-control-inner-background, so setting only
-       -fx-background-color leaves the default white slab showing */
-    -fx-control-inner-background: -tab-bg;
-    -fx-background-color: transparent;
+    -fx-text-fill: -tab-text;
     -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
-    -fx-text-fill: -tab-text;
-    -fx-highlight-fill: -tab-surface-selected;
-    -fx-padding: 0;
-    -fx-focus-color: transparent;
-    -fx-faint-focus-color: transparent;
 }
 
 /* the line is still selectable and still scrolls, but it should not look like a box */
-.result-display:focused {
-    -fx-background-color: transparent;
-}
-
-.result-display .viewport,
-.result-display .scroll-pane,
-.result-display .content {
-    -fx-background-color: transparent;
-}
-
-.result-display .text {
-    -fx-fill: -tab-text;
-}
-
 .result-display .label {
     -fx-text-fill: -tab-text !important;
 }
@@ -421,12 +399,11 @@
     -fx-background-color: -tab-bg;
 }
 
-/* the answer to the command just run, set apart from the window by a surface of its own and
-   an accent down its leading edge, so it reads as a reply rather than as a stray line */
-.result-pane {
-    -fx-background-color: -tab-accent, -tab-surface;
-    -fx-background-insets: 0, 0 0 0 3;
-    -fx-background-radius: 4, 4;
+/* the answer to the command just run: a line of text with a quiet rule beside it, which is
+   all the mockup gives it. A surface here read as a slab rather than as a reply. */
+.result-rule {
+    -fx-border-color: transparent transparent transparent -tab-border;
+    -fx-border-width: 0 0 0 2;
 }
 
 .menu-bar {
