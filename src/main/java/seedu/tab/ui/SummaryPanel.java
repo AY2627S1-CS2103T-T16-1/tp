@@ -25,9 +25,10 @@ import seedu.tab.model.student.Student;
 public class SummaryPanel extends UiPart<Region> {
 
     /**
-     * How much of a tag the panel names. The panel is narrow and the count beside the tag is
-     * the part a reader cannot work out for themselves, so a longer tag is cut and carries
-     * the whole of itself on its tooltip.
+     * How much of a tag the panel names. A little longer than a card's chips are cut to,
+     * because a row here carries one tag and its count where a card's line carries several
+     * chips beside a name. The count is the part a reader cannot work out for themselves,
+     * so it is the tag that gives way, and the whole of it is on its tooltip.
      */
     private static final int MAX_TAG_CHARACTERS = 18;
 
