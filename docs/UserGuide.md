@@ -88,7 +88,7 @@ showing, so you can see the shape of your cohort without running a command.
 <box type="tip" seamless>
 
 **Tip:** The summary describes the students currently listed, not the whole
-address book. Run `find Siti` and it counts only the students that match;
+address book. Run `find Alex` and it counts only the students that match;
 run `list` to see the whole cohort again.
 </box>
 

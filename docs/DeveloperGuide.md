@@ -88,7 +88,7 @@ The `UI` component,
 `SummaryPanel` shows the flagged count, a count per tag and the total, beside
 the list. It counts `Logic#getFilteredStudentList()`, which is the only list
 `Logic` exposes, so it summarises **what the list is showing** rather than the
-whole address book: after `find Siti` it counts the matches. That is the
+whole address book: after `find Alex` it counts the matches. That is the
 reading the User Guide documents, and it keeps the panel answering the same
 question as the list it sits beside. Summarising the whole book instead would
 need `Logic` to expose it.
@@ -1298,6 +1298,8 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `find Alex`<br>
       Expected: The counts fall to cover only the students now listed. The
       total reads the number of matches.
+   1. Note: the sample data ships no flagged student, so flag one with
+      `edit 1 -f` before checking the flagged count.
    1. Test case: `clear`<br>
       Expected: The flagged count and the total read zero, and the tag list is
       empty rather than the panel disappearing.

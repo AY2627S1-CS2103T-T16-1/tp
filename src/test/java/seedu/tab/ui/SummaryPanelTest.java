@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -68,7 +69,7 @@ public class SummaryPanelTest {
 
     @Test
     public void panel_manyTags_keepsTheTotalInSightAndScrollsTheTags() throws Exception {
-        List<Student> many = new java.util.ArrayList<>();
+        List<Student> many = new ArrayList<>();
         for (int i = 0; i < 40; i++) {
             many.add(tagged("Student " + i, false, "tag-" + i));
         }
@@ -261,4 +262,29 @@ public class SummaryPanelTest {
         assertEquals(longTag, shown[2], "the whole tag should be a hover away");
     }
 
+    @Test
+    public void rows_aTagTheRowCuts_nameTheWholeOfItOnHover() throws Exception {
+        // shorter than the count of characters a tag is cut to, so only the width cuts it
+        String tag = "CS2103T-TUTORIAL";
+        ObservableList<Student> students = FXCollections.observableArrayList(
+                new StudentBuilder().withName("A").withTags(tag).build());
+
+        String tooltip = onFxThread(() -> {
+            SummaryPanel panel = new SummaryPanel(students);
+            Region root = (Region) panel.getRoot();
+            assertNotNull(styledScene(root, 190, 400));
+
+            Label name = root.lookupAll(".summary-row .label").stream()
+                    .map(node -> (Label) node)
+                    .filter(label -> tag.equals(label.getText()))
+                    .findFirst().orElseThrow(() -> new AssertionError("no row names the tag"));
+            // squeezed as a narrow panel squeezes it
+            HBox row = (HBox) name.getParent();
+            row.resize(60, row.getHeight());
+            row.layout();
+            return name.getTooltip() == null ? null : name.getTooltip().getText();
+        });
+
+        assertEquals(tag, tooltip, "a tag the row cut should still be readable on hover");
+    }
 }

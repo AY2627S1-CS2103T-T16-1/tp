@@ -6,7 +6,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 
 /**
- * Text helpers shared by the parts of a student card.
+ * Text helpers for the parts of the window that show a value too long for the room they
+ * have: a card's name and tags, and the tags the summary panel lists.
  */
 final class UiText {
 
