@@ -189,7 +189,9 @@ public class CommandBox extends UiPart<Region> {
         }
         double from = widthBefore(range.getStart());
         double to = widthBefore(range.getEnd());
-        selection.resize(to - from, caret.getHeight());
+        // a managed child is laid out at its preferred size, so resizing it has no effect
+        selection.setPrefSize(to - from, caret.getHeight());
+        selection.autosize();
         selection.relocate(from - scrolled, middle - caret.getHeight() / 2);
     }
 

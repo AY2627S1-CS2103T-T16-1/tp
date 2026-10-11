@@ -230,6 +230,29 @@ public class CommandBoxTest {
     }
 
     @Test
+    public void selection_isDrawnOverTheCharactersItCovers() throws Exception {
+        double[] band = onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            assertNotNull(styledScene(root, 400, 60));
+
+            TextField field = (TextField) root.lookup("#commandTextField");
+            Region selection = (Region) root.lookup("#selection");
+            TextFlow flow = (TextFlow) root.lookup("#highlighted");
+
+            field.setText("add John");
+            field.selectAll();
+            root.layout();
+            return new double[] {selection.getWidth(), selection.getHeight(), flow.getWidth()};
+        });
+
+        // the field's own highlight is turned off, because it is drawn at the offset the
+        // field has scrolled to and broke into fragments behind the copy
+        assertEquals(band[2], band[0], 1.0, "the band should cover exactly the selected text");
+        assertTrue(band[1] > 0, "the band should be as tall as the line");
+    }
+
+    @Test
     public void clearingTheField_leavesNothingPainted() throws Exception {
         CommandBox box = boxShowing("add John");
         onFxThread(() -> setTextOf(box, ""));
