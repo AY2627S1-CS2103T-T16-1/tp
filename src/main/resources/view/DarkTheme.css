@@ -31,19 +31,16 @@
 }
 
 .root {
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
 }
 
 .label {
     -fx-font-size: 11pt;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-text-fill: -tab-text-muted;
     -fx-opacity: 0.9;
 }
 
 .label-bright {
     -fx-font-size: 11pt;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-weight: bold;
     -fx-text-fill: -tab-text;
     -fx-opacity: 1;
@@ -51,14 +48,12 @@
 
 .label-header {
     -fx-font-size: 32pt;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-text-fill: -tab-text;
     -fx-opacity: 1;
 }
 
 .text-field {
     -fx-font-size: 12pt;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
 }
 
 .tab-pane {
@@ -98,7 +93,6 @@
 
 .table-view .column-header .label {
     -fx-font-size: 20pt;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-text-fill: -tab-text;
     -fx-alignment: center-left;
     -fx-opacity: 1;
@@ -151,14 +145,12 @@
 }
 
 .cell_big_label {
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-weight: bold;
     -fx-font-size: 16px;
     -fx-text-fill: -tab-text;
 }
 
 .cell_small_label {
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 13px;
     -fx-text-fill: -tab-text-muted;
 }
@@ -187,7 +179,6 @@
     -fx-faint-focus-color: transparent;
     -fx-highlight-fill: -tab-surface-selected;
     -fx-text-fill: -tab-text;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
 }
 
@@ -197,7 +188,6 @@
 }
 
 .status-bar .label {
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-text-fill: -tab-text;
     -fx-padding: 4px;
     -fx-pref-height: 30px;
@@ -241,7 +231,6 @@
 
 .menu-bar .label {
     -fx-font-size: 12px;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-text-fill: -tab-text;
     -fx-opacity: 0.9;
 }
@@ -261,7 +250,6 @@
     -fx-border-width: 2;
     -fx-background-radius: 0;
     -fx-background-color: -tab-bg;
-    -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
     -fx-font-size: 11pt;
     -fx-text-fill: -tab-text-muted;
     -fx-background-insets: 0 0 0 0, 0, 1, 2;
@@ -369,7 +357,6 @@
     -fx-border-radius: 6;
     -fx-border-insets: 0;
     -fx-border-width: 1;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 13pt;
     -fx-text-fill: -tab-text;
     -fx-prompt-text-fill: -tab-text-muted;

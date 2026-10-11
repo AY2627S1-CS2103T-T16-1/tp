@@ -34,6 +34,7 @@ public class HelpWindow extends UiPart<Stage> {
      */
     public HelpWindow(Stage root) {
         super(FXML, root);
+        UiFonts.applyTo(root.getScene());
         helpMessage.setText(HELP_MESSAGE);
     }
 
