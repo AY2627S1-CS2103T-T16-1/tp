@@ -30,6 +30,9 @@ public class HelpWindowTest {
         } catch (IllegalStateException alreadyRunning) {
             started.countDown();
         }
+        // JavaFX shuts itself down when the last window closes, and then runs nothing more,
+        // so a test that shows a window would leave every test after it waiting forever
+        Platform.runLater(() -> Platform.setImplicitExit(false));
         assertTrue(started.await(TIMEOUT_SECONDS, TimeUnit.SECONDS), "the toolkit did not start");
     }
 
@@ -122,5 +125,30 @@ public class HelpWindowTest {
         assertEquals(0, HelpWindow.frameAround(736, Double.NaN), 0.01);
         // nor can a scene be wider than the window around it
         assertEquals(0, HelpWindow.frameAround(700, 720), 0.01);
+    }
+
+    @Test
+    public void show_sizesTheWindowToWhatItDrawsAndItsFrame() throws Exception {
+        double[] measured = onFxThread(() -> {
+            Stage stage = new Stage();
+            HelpWindow window = new HelpWindow(stage);
+            Region content = (Region) stage.getScene().getRoot();
+            double beforeShowing = stage.getWidth();
+            window.show();
+            double shown = stage.getWidth();
+            double sceneWidth = stage.getScene().getWidth();
+            boolean showing = window.isShowing();
+            window.hide();
+            return new double[] {beforeShowing, shown, sceneWidth, showing ? 1 : 0,
+                window.isShowing() ? 1 : 0, content.prefWidth(-1)};
+        });
+
+        assertEquals(1, measured[3], "the window should be showing once shown");
+        assertEquals(0, measured[4], "and not once hidden");
+        // sized again once there is a frame, so the scene still holds what it draws
+        assertTrue(measured[2] >= measured[5] - 0.5,
+                "the scene is " + measured[2] + " wide for content needing " + measured[5]);
+        assertTrue(measured[1] >= measured[2],
+                "the window should be at least as wide as its scene");
     }
 }
