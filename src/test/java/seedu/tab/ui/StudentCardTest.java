@@ -494,13 +494,13 @@ public class StudentCardTest {
     public void constructor_atEveryWidth_saysWhenItHasLeftTagsOut() throws Exception {
         // a card showing some of a student's tags must say that there are more, at whatever
         // width: a card that simply drops the count leaves the reader thinking that is all
-        Student student = new StudentBuilder().withName("Charlotte Oliveiro")
-                .withTags("AY2627 Sem 1", "CS2103T", "T16", "needsconsultation").build();
+        // a long name and a pill, which is what leaves the tags least room
+        Student student = new StudentBuilder()
+                .withName("Bartholomew Montgomery Fitzwilliam")
+                .withTags("attendance-low", "needs-consult", "midterm").withFlag(true).build();
 
         List<String> silent = new ArrayList<>();
-        // from the narrowest card that has room for a chip and a count side by side. Below
-        // that the card shows the first tag alone, which says more than a bare count would
-        for (int width = 340; width <= 760; width += 10) {
+        for (int width = 300; width <= 760; width += 10) {
             int at = width;
             List<String> chips = onFxThread(() -> {
                 Region root = (Region) new StudentCard(student, 3).getRoot();
@@ -508,7 +508,7 @@ public class StudentCardTest {
                 return visibleChipsOf(root);
             });
             boolean saysMore = chips.stream().anyMatch(chip -> chip.endsWith("more\u2026"));
-            if (chips.size() < 4 && !saysMore) {
+            if (chips.size() < 3 && !saysMore) {
                 silent.add(at + ": " + chips);
             }
         }

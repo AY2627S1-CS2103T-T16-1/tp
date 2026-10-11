@@ -15,6 +15,30 @@ final class UiText {
     private UiText() {} // this class only holds helpers
 
     /**
+     * Puts {@code value} on {@code label} and names the whole of it on hover whenever the
+     * label is drawn narrower than the value needs.
+     *
+     * <p>Cutting by a count of characters catches only one of the two ways a value is cut.
+     * A value under the count is still cut by the width the label is given, and a tag such
+     * as "attendance-low" beside a long name then reads as "attendan\u2026" with nothing to say
+     * what it was.
+     */
+    static void showShortenedToFit(Label label, String value, int limit) {
+        showShortened(label, value, limit);
+        label.widthProperty().addListener((unused, old, width) -> nameWhatIsCut(label, value));
+        nameWhatIsCut(label, value);
+    }
+
+    private static void nameWhatIsCut(Label label, String value) {
+        boolean isCut = label.getWidth() > 0 && label.getWidth() < label.prefWidth(-1) - 0.5;
+        if (isCut || !label.getText().equals(value)) {
+            label.setTooltip(new Tooltip(value));
+            return;
+        }
+        label.setTooltip(null);
+    }
+
+    /**
      * Puts {@code value} on {@code label}, cut to {@code limit} characters with an ellipsis if
      * it runs longer. What was cut is still readable: the label carries the whole value as its
      * tooltip, so a card summarises without the record becoming unreachable.

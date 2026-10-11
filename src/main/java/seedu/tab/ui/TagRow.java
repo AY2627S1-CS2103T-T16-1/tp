@@ -32,14 +32,14 @@ public class TagRow extends Region {
      */
     private static final double RECOGNISABLE_CHIP_WIDTH = 44;
     /**
-     * How much of the tags a card shows. A card is a summary, and the chips share the row
-     * with the name, so a long tag is cut and a long list is counted rather than letting the
-     * tags take the card. The whole of what is cut is a hover away.
+     * How many characters of a tag a chip shows. A card is a summary, and the chips share
+     * the row with the name, so a long tag is cut and a long list is counted rather than
+     * letting the tags take the card. The whole of what is cut is a hover away.
      *
-     * <p>The count is set by the tags a course actually uses: "attendance-low" and
-     * "needs-consult" are the length of an ordinary tag, and a count that cuts those cuts
+     * <p>The length is set by the tags a course actually uses: "attendance-low" and
+     * "needs-consult" are the length of an ordinary tag, and cutting shorter than this cuts
      * most of what anyone types. How many chips then fit is decided by the row rather than
-     * by this, so a longer count costs chips on a narrow card, not a broken layout.
+     * by this, so a longer limit costs chips on a narrow card, not a broken layout.
      */
     private static final int MAX_TAG_CHARACTERS = 16;
     private static final int MAX_CHIPS = 3;
@@ -66,7 +66,7 @@ public class TagRow extends Region {
         getChildren().clear();
         for (String tagName : tagNames) {
             Label chip = new Label();
-            UiText.showShortened(chip, tagName, MAX_TAG_CHARACTERS);
+            UiText.showShortenedToFit(chip, tagName, MAX_TAG_CHARACTERS);
             chips.add(chip);
         }
         getChildren().addAll(chips);
@@ -84,7 +84,13 @@ public class TagRow extends Region {
 
     @Override
     protected double computeMinWidth(double height) {
-        return chips.isEmpty() ? 0 : Math.min(READABLE_CHIP_WIDTH, computePrefWidth(height));
+        if (chips.isEmpty()) {
+            return 0;
+        }
+        // enough for the start of one tag and a count of the others, since a row showing
+        // one chip and no count says nothing about the tags it left out
+        double forACount = chips.size() > 1 ? widthOfTheRest(1) + SPACING : 0;
+        return Math.min(computePrefWidth(height), RECOGNISABLE_CHIP_WIDTH + forACount);
     }
 
     @Override
