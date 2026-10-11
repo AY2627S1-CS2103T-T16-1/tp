@@ -512,6 +512,9 @@
 }
 
 .command-prompt {
+    /* the ornament sits low in its own em box, so centring the boxes does not centre what is
+       drawn in them. One point up lines the glyph with the lowercase it introduces. */
+    -fx-translate-y: -1;
     -fx-text-fill: -tab-accent;
     -fx-font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", "Consolas", monospace;
     -fx-font-size: 13px;
