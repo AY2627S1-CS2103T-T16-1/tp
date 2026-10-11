@@ -31,6 +31,8 @@ public class StudentCardTest {
 
     private static final int TIMEOUT_SECONDS = 10;
     private static final double CARD_WIDTH = 420;
+    /** What the card cuts a name to, as the card states it. */
+    private static final int MAX_NAME_CHARACTERS_UNDER_TEST = 22;
     /** About what the list gives a card when the window opens at its default size. */
     private static final double DEFAULT_CARD_WIDTH = 490;
 
@@ -420,5 +422,36 @@ public class StudentCardTest {
                 .sorted(Comparator.comparingDouble(Label::getLayoutX))
                 .map(Label::getText)
                 .collect(Collectors.toList());
+    }
+
+    @Test
+    public void constructor_aNameHoldingAnEmoji_doesNotCutItInHalf() throws Exception {
+        // an emoji is two characters as Java stores it, so cutting at an index can leave half
+        // of one behind, which is drawn as a broken glyph. This one sits exactly where the
+        // card cuts the name
+        String whole = "A".repeat(MAX_NAME_CHARACTERS_UNDER_TEST - 1)
+                + "\uD83C\uDF93 and more besides";
+        Label shown = onFxThread(() -> (Label) new StudentCard(
+                new StudentBuilder().withName(whole).build(), 1).getRoot().lookup("#name"));
+
+        String cut = shown.getText();
+        assertTrue(holdsOnlyWholeCharacters(cut), "half an emoji was left behind in " + cut);
+        assertEquals(whole, shown.getTooltip().getText());
+    }
+
+    /** Returns true if {@code text} holds no half of a character whose other half is gone. */
+    private static boolean holdsOnlyWholeCharacters(String text) {
+        for (int at = 0; at < text.length(); at++) {
+            char character = text.charAt(at);
+            if (Character.isHighSurrogate(character)) {
+                if (at + 1 >= text.length() || !Character.isLowSurrogate(text.charAt(at + 1))) {
+                    return false;
+                }
+                at++;
+            } else if (Character.isLowSurrogate(character)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

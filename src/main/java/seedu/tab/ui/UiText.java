@@ -1,5 +1,7 @@
 package seedu.tab.ui;
 
+import java.text.BreakIterator;
+
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 
@@ -24,7 +26,29 @@ final class UiText {
         }
         // the ellipsis reads as part of the word it follows, so it does not sit off
         // behind a space the cut happened to land on
-        label.setText(value.substring(0, limit).stripTrailing() + ELLIPSIS);
+        label.setText(firstCharacters(value, limit).stripTrailing() + ELLIPSIS);
         label.setTooltip(new Tooltip(value));
+    }
+
+    /**
+     * Returns the first {@code limit} characters of {@code value}, counted as a reader counts
+     * them rather than as Java stores them.
+     *
+     * <p>Cutting the string at an index cuts it between the two halves of an emoji, or
+     * between a letter and the accent that belongs to it, and what is left is drawn as a
+     * broken glyph. A name or a tag may hold either.
+     */
+    private static String firstCharacters(String value, int limit) {
+        BreakIterator characters = BreakIterator.getCharacterInstance();
+        characters.setText(value);
+        int end = characters.first();
+        for (int counted = 0; counted < limit; counted++) {
+            int next = characters.next();
+            if (next == BreakIterator.DONE) {
+                return value;
+            }
+            end = next;
+        }
+        return value.substring(0, end);
     }
 }
