@@ -82,7 +82,7 @@ public class StudentCard extends UiPart<Region> {
             tags.getChildren().add(more);
         }
         // a student with tags keeps enough of the row for one chip to stay readable, while a
-        // student with none leaves no gap where chips would have been
+        // student with none leaves the whole row to the name
         tags.setMinWidth(tags.getChildren().isEmpty() ? 0 : READABLE_CHIP_WIDTH);
     }
 
