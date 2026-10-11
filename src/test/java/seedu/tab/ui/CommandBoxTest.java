@@ -575,12 +575,31 @@ public class CommandBoxTest {
 
     @Test
     public void selection_withTheCommandOnTopOfIt_leavesEveryTokenLegible() throws Exception {
+        assertTrue(faintTokensOf(false).isEmpty(),
+                "these tokens disappear into the selection: " + faintTokensOf(false));
+    }
+
+    @Test
+    public void selection_onARefusedCommand_leavesItLegible() throws Exception {
+        // a refused command is written in one colour, and selecting it to correct it must
+        // not take it away
+        assertTrue(faintTokensOf(true).isEmpty(),
+                "a refused command disappears into the selection: " + faintTokensOf(true));
+    }
+
+    /** Returns the tokens that do not stand out from the band drawn behind a selection. */
+    private static List<String> faintTokensOf(boolean refused) throws Exception {
         CommandBox box = boxShowing("add \"Siti Nur-Aisyah\" -p 98765432 -t T1");
         Region root = box.getRoot();
         assertNotNull(onFxThread(() -> styledScene(root, 500, 60)));
 
-        List<String> faint = onFxThread(() -> {
+        return onFxThread(() -> {
             TextField field = (TextField) root.lookup("#commandTextField");
+            if (refused) {
+                field.getStyleClass().add(CommandBox.ERROR_STYLE_CLASS);
+                root.lookup("#highlighted").getStyleClass().add("command-error");
+                root.applyCss();
+            }
             field.selectAll();
             root.layout();
             Region band = (Region) root.lookup("#selection");
@@ -602,9 +621,5 @@ public class CommandBoxTest {
             }
             return tooFaint;
         });
-
-        // selecting a command must not hide half of it: every colour it is written in has to
-        // stay legible against the band drawn behind it
-        assertTrue(faint.isEmpty(), "these tokens disappear into the selection: " + faint);
     }
 }

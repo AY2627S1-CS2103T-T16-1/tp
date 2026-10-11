@@ -91,10 +91,14 @@ own text transparent. The field still takes every keystroke and still decides
 which character a click lands on, which keeps editing exactly as it was.
 
 `CommandHighlighter` decides the colours. It returns spans covering every
-character of the command, and asks `CommandTokenizer` where a token ends, so
-the colouring cannot disagree with the parser about what is a quoted value or
-where a backslash escapes something. It never rejects anything: a command is
-coloured while it is still half-typed.
+character of the command. It walks the command itself, rather than calling
+`CommandTokenizer`, because it has to keep the text exactly as typed, quotes
+and all, where the tokenizer removes them and may refuse an unclosed quote
+that is merely half-typed. It asks the tokenizer the questions the two must
+agree on — `CommandTokenizer#isEscapable`, and `StringUtil#isWhitespace` for
+where a token ends — and `CommandHighlighterTest` compares the two across
+awkward commands so the pair cannot drift apart. It never rejects anything: a
+command is coloured while it is still half-typed.
 
 Three things then have to agree with the field, because the User reads our copy
 but interacts with the field:
@@ -111,16 +115,17 @@ but interacts with the field:
   broke into fragments behind the copy, so it is turned off in the stylesheet
   and drawn here instead.
 
-`ThemeTest` and `CommandBoxTest` check the contrast of the selection band
-against the line, and of every token colour against the band, so that selecting
-a command cannot hide half of it.
+`CommandBoxTest` checks the contrast of the selection band against the line,
+and of every colour the line uses against that band, including the one a
+refused command is written in, so that selecting a command cannot hide half of
+it.
 
 #### Summarising the list
 
 `SummaryPanel` shows the flagged count, a count per tag and the total, beside
 the list. It counts `Logic#getFilteredStudentList()`, which is the only list
 `Logic` exposes, so it summarises **what the list is showing** rather than the
-whole address book: after `find Siti` it counts the matches. That is the
+whole address book: after `find Alex` it counts the matches. That is the
 reading the User Guide documents, and it keeps the panel answering the same
 question as the list it sits beside. Summarising the whole book instead would
 need `Logic` to expose it.
@@ -1357,6 +1362,8 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `find Alex`<br>
       Expected: The counts fall to cover only the students now listed. The
       total reads the number of matches.
+   1. Note: the sample data ships no flagged student, so flag one with
+      `edit 1 -f` before checking the flagged count.
    1. Test case: `clear`<br>
       Expected: The flagged count and the total read zero, and the tag list is
       empty rather than the panel disappearing.

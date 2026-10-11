@@ -91,9 +91,10 @@ see where you are typing, and selecting part of it (for example with
 
 <box type="tip" seamless>
 
-**Tip:** The colours follow the same rules the parser does about where one
-value ends and the next begins. If a value you meant to quote is not coloured
-as a quoted value, the parser will not read it as one either.
+**Tip:** The colours break a command where the parser breaks it, so if a value
+you meant to quote is not coloured as a quoted value, the parser will not read
+it as one either. One exception: `find` splits on spaces and does not honour
+quotes at all, so `find "John Doe"` searches for two words.
 </box>
 
 ### Reading the summary beside the list
@@ -110,7 +111,7 @@ showing, so you can see the shape of your cohort without running a command.
 <box type="tip" seamless>
 
 **Tip:** The summary describes the students currently listed, not the whole
-address book. Run `find Siti` and it counts only the students that match;
+address book. Run `find Alex` and it counts only the students that match;
 run `list` to see the whole cohort again.
 </box>
 

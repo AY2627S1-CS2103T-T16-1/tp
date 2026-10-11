@@ -22,9 +22,9 @@
     -tab-value: #c3d0dc;           /* a plain value on the command line */
     -tab-chip-bg: #2a3945;         /* a tag chip */
     -tab-chip-text: #8cc7e5;
-    -tab-selected-text: rgba(104, 196, 238, 0.42); /* the run of a command the User has selected */
+    -tab-selected-text: rgba(104, 196, 238, 0.36); /* the run of a command the User has selected */
     -tab-shadow: #000000;             /* the well a sunken surface sits in */
-    -tab-danger: #ff6b6b;          /* a refused command */
+    -tab-danger: #ff9090;          /* a refused command */
 }
 
 .background {
