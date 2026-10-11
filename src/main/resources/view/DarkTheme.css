@@ -22,6 +22,7 @@
     -tab-value: #c3d0dc;           /* a plain value on the command line */
     -tab-chip-bg: #2a3945;         /* a tag chip */
     -tab-chip-text: #8cc7e5;
+    -tab-selected-text: rgba(104, 196, 238, 0.42); /* the run of a command the User has selected */
     -tab-danger: #ff6b6b;          /* a refused command */
 }
 
@@ -628,7 +629,11 @@
 /* the selected run of a command, drawn here because the field's own highlight sits at an
    offset of its own and broke into fragments behind the coloured copy */
 .command-selection {
-    -fx-background-color: -tab-surface-selected;
+    /* the colour the row the User is on is drawn in is a shade off the line behind it, which
+       says nothing about a run of text: selecting the whole command looked no different from
+       not selecting it. This reads as a selection while leaving the command on top of it
+       legible. */
+    -fx-background-color: -tab-selected-text;
     -fx-background-radius: 2;
 }
 

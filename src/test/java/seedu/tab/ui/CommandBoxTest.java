@@ -20,6 +20,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -516,4 +517,51 @@ public class CommandBoxTest {
                 "the copy should end at the edge of the line, as the field's text does");
     }
 
+    /** Returns how light {@code colour} is, as WCAG weighs a colour's parts. */
+    private static double luminanceOf(Color colour) {
+        double[] parts = {colour.getRed(), colour.getGreen(), colour.getBlue()};
+        double[] weights = {0.2126, 0.7152, 0.0722};
+        double luminance = 0;
+        for (int i = 0; i < parts.length; i++) {
+            double part = parts[i] <= 0.03928
+                    ? parts[i] / 12.92
+                    : Math.pow((parts[i] + 0.055) / 1.055, 2.4);
+            luminance += weights[i] * part;
+        }
+        return luminance;
+    }
+
+    /** Returns the contrast between two colours, as WCAG states it. */
+    private static double contrastBetween(Color one, Color other) {
+        double lighter = Math.max(luminanceOf(one), luminanceOf(other));
+        double darker = Math.min(luminanceOf(one), luminanceOf(other));
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    private static Color backgroundOf(Region region) {
+        return (Color) region.getBackground().getFills().get(0).getFill();
+    }
+
+    @Test
+    public void selection_againstTheLineBehindIt_isVisible() throws Exception {
+        CommandBox box = boxShowing("find Siti");
+        Region root = box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 400, 60)));
+
+        double contrast = onFxThread(() -> {
+            TextField field = (TextField) root.lookup("#commandTextField");
+            field.selectAll();
+            root.layout();
+            Region band = (Region) root.lookup("#selection");
+            assertTrue(band.isVisible(), "selecting the command should draw a band behind it");
+            Color behind = backgroundOf(root);
+            Color over = backgroundOf(band);
+            // the band is translucent, so what the User sees is it over the line behind it
+            Color seen = behind.interpolate(over, over.getOpacity());
+            return contrastBetween(seen, behind);
+        });
+
+        assertTrue(contrast >= 2.0,
+                "a selection the User cannot make out is no selection: contrast was " + contrast);
+    }
 }
