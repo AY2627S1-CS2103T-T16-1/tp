@@ -569,8 +569,11 @@
     -fx-font-size: 15px;
     -fx-font-weight: normal;
     /* the copy behind this field carries the text; the field keeps the input, the caret
-       position and the selection, and shows none of them itself */
-    -fx-text-fill: transparent;
+       position and the selection, and shows none of them itself. Important, because
+       Extensions.css marks a refused command with an important text fill of its own, and
+       the field would otherwise paint its text in red over the copy, at its own scroll
+       offset rather than the copy's. */
+    -fx-text-fill: transparent !important;
     -fx-highlight-fill: transparent;
     -fx-highlight-text-fill: transparent;
 }
@@ -620,4 +623,9 @@
 .command-selection {
     -fx-background-color: -tab-surface-selected;
     -fx-background-radius: 2;
+}
+
+/* a refused command is marked on the copy, which is what the User is reading */
+.command-error .command-token {
+    -fx-fill: -tab-danger;
 }

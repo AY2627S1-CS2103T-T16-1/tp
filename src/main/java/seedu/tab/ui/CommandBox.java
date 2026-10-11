@@ -26,6 +26,8 @@ import seedu.tab.logic.parser.exceptions.ParseException;
 public class CommandBox extends UiPart<Region> {
 
     public static final String ERROR_STYLE_CLASS = "error";
+    /** Marks the coloured copy, which is the text the User actually sees. */
+    private static final String COPY_ERROR_STYLE_CLASS = "command-error";
     private static final String FXML = "CommandBox.fxml";
     private static final int BLINK_MILLIS = 530;
     /** How much of the line is kept clear beyond the caret while scrolling. */
@@ -277,6 +279,7 @@ public class CommandBox extends UiPart<Region> {
      */
     private void setStyleToDefault() {
         commandTextField.getStyleClass().remove(ERROR_STYLE_CLASS);
+        highlighted.getStyleClass().remove(COPY_ERROR_STYLE_CLASS);
     }
 
     /**
@@ -290,6 +293,7 @@ public class CommandBox extends UiPart<Region> {
         }
 
         styleClass.add(ERROR_STYLE_CLASS);
+        highlighted.getStyleClass().add(COPY_ERROR_STYLE_CLASS);
     }
 
     /**
