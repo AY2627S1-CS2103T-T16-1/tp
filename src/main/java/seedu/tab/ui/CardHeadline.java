@@ -65,7 +65,10 @@ public class CardHeadline extends Pane {
             return 0;
         }
         double spare = getWidth() - name.prefWidth(-1) - SPACING;
-        return Math.clamp(spare, Math.min(wanted, READABLE_TAGS_WIDTH), wanted);
+        // enough for a chip and a count of the tags it leaves out, so that a card beside a
+        // long name still says there are more rather than showing one chip and nothing else
+        double floor = Math.min(wanted, tags.minWidth(-1));
+        return Math.clamp(spare, floor, wanted);
     }
 
     private void layInRow(Region child, double x, double width) {

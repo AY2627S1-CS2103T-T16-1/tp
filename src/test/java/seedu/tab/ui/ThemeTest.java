@@ -148,4 +148,23 @@ public class ThemeTest {
             return result.group().trim();
         }
     }
+
+    @Test
+    public void darkTheme_hidesASelectionOnlyWhereSomethingElseDrawsIt() throws IOException {
+        String css = Files.readString(DARK_THEME, StandardCharsets.UTF_8);
+
+        Set<String> hidden = new TreeSet<>();
+        Matcher rules = Pattern.compile("(?m)^([.#][^{\\n]*?)\\s*\\{([^}]*)\\}").matcher(css);
+        while (rules.find()) {
+            if (rules.group(2).contains("-fx-highlight-text-fill: transparent")) {
+                hidden.add(rules.group(1).trim());
+            }
+        }
+
+        // text drawn in a transparent highlight disappears the moment it is selected, which
+        // is what selecting it to copy it does first. Only the command line may do it, and
+        // only because a copy of the command is drawn behind the field
+        assertTrue(hidden.isEmpty() || hidden.equals(Set.of(".command-line #commandTextField")),
+                "these hide their own text when it is selected: " + hidden);
+    }
 }
