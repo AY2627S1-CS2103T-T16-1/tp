@@ -43,6 +43,20 @@ public class CommandBoxTest {
         return task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
+    /**
+     * Returns a scene holding {@code root}, dressed in the stylesheet the window uses. A bare
+     * scene leaves every node at its default font, so anything measured in one is measuring
+     * text the product never shows.
+     */
+    private static Scene styledScene(Region root, double width, double height) {
+        Scene scene = new Scene(root, width, height);
+        scene.getStylesheets().add(
+                UiPart.class.getResource("/view/DarkTheme.css").toExternalForm());
+        root.applyCss();
+        root.layout();
+        return scene;
+    }
+
     /** A command box that executes nothing, since only the colouring is under test here. */
     private static CommandBox boxShowing(String typed) throws Exception {
         return onFxThread(() -> {
@@ -99,10 +113,7 @@ public class CommandBoxTest {
             CommandBox box = new CommandBox(unused -> null);
             setTextOf(box, "add John -p 123");
             Region root = box.getRoot();
-            Scene scene = new Scene(root, 600, 60);
-            assertNotNull(scene);
-            root.applyCss();
-            root.layout();
+            assertNotNull(styledScene(root, 600, 60));
 
             TextField field = (TextField) root.lookup("#commandTextField");
             TextFlow flow = (TextFlow) root.lookup("#highlighted");
@@ -121,10 +132,7 @@ public class CommandBoxTest {
             CommandBox box = new CommandBox(unused -> null);
             setTextOf(box, "add John");
             Region root = box.getRoot();
-            Scene scene = new Scene(root, 600, 60);
-            assertNotNull(scene);
-            root.applyCss();
-            root.layout();
+            assertNotNull(styledScene(root, 600, 60));
 
             TextField field = (TextField) root.lookup("#commandTextField");
             Region caret = (Region) root.lookup("#caret");
@@ -144,10 +152,7 @@ public class CommandBoxTest {
         boolean[] state = onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
             Region root = box.getRoot();
-            Scene scene = new Scene(root, 600, 60);
-            assertNotNull(scene);
-            root.applyCss();
-            root.layout();
+            assertNotNull(styledScene(root, 600, 60));
 
             setTextOf(box, "add ".repeat(300));
             root.layout();
@@ -169,10 +174,8 @@ public class CommandBoxTest {
         boolean[] state = onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
             Region root = box.getRoot();
-            Scene scene = new Scene(root, 900, 60);
+            Scene scene = styledScene(root, 900, 60);
             assertNotNull(scene);
-            root.applyCss();
-            root.layout();
             setTextOf(box, "add Siti Nur-Aisyah -p 84420917 -t T1 --follow-up");
             root.layout();
             boolean wide = ((TextFlow) root.lookup("#highlighted")).isVisible();
@@ -186,6 +189,35 @@ public class CommandBoxTest {
 
         assertTrue(state[0], "the command should be coloured while it fits");
         assertFalse(state[1], "narrowing the line should hand the text back to the field");
+    }
+
+    @Test
+    public void caret_followsEachCharacterAsItIsTyped() throws Exception {
+        double[] offsets = onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            assertNotNull(styledScene(root, 600, 60));
+
+            TextField field = (TextField) root.lookup("#commandTextField");
+            Region ownCaret = (Region) root.lookup("#caret");
+            double[] seen = new double[4];
+            int at = 0;
+            for (char typed : "list".toCharArray()) {
+                field.appendText(String.valueOf(typed));
+                root.layout();
+                seen[at++] = ownCaret.getTranslateX();
+            }
+            return seen;
+        });
+
+        // the line is monospace, so every character advances the caret by the same amount.
+        // Measuring a span before the stylesheet reached it gave the default proportional
+        // font instead, and the caret came to rest partway through a character.
+        double step = offsets[0];
+        for (int i = 1; i < offsets.length; i++) {
+            assertEquals(step * (i + 1), offsets[i], 0.75,
+                    "the caret should advance evenly, but stopped at " + offsets[i]);
+        }
     }
 
     @Test

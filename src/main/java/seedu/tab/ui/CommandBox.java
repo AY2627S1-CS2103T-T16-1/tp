@@ -96,6 +96,10 @@ public class CommandBox extends UiPart<Region> {
             highlighted.getChildren().add(text);
         }
 
+        // a Text added just now has not had the stylesheet applied to it, so asking for its
+        // font would give the default proportional one. The caret is measured from these
+        // fonts, so it has to be the font they will actually be drawn in.
+        highlighted.applyCss();
         decideWhetherColoursFit();
     }
 
