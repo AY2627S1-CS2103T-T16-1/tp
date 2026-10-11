@@ -453,7 +453,7 @@
 /* the NUS ID, which reads as an identifier rather than as prose */
 .card-detail-strong {
     -fx-text-fill: -tab-text-muted;
-    -fx-font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", "Consolas", monospace;
+    -fx-font-family: "Monospaced";
     -fx-font-size: 12px;
 }
 
@@ -516,8 +516,8 @@
        drawn in them. One point up lines the glyph with the lowercase it introduces. */
     -fx-translate-y: -1;
     -fx-text-fill: -tab-accent;
-    -fx-font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", "Consolas", monospace;
-    -fx-font-size: 13px;
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 15px;
     -fx-font-weight: normal;
 }
 
@@ -526,8 +526,8 @@
     -fx-background-color: transparent;
     -fx-border-width: 0;
     -fx-padding: 0;
-    -fx-font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", "Consolas", monospace;
-    -fx-font-size: 13px;
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 15px;
     -fx-font-weight: normal;
     -fx-text-fill: -tab-text;
     -fx-highlight-fill: -tab-surface-selected;
@@ -543,8 +543,8 @@
    and CommandBoxTest fails if they drift apart */
 .command-token {
     -fx-font-weight: normal;
-    -fx-font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", "Consolas", monospace;
-    -fx-font-size: 13px;
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 15px;
 }
 
 .command-command-word {

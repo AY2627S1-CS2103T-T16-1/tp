@@ -56,6 +56,9 @@ public class CommandBox extends UiPart<Region> {
         commandTextField.caretPositionProperty().addListener((unused, old, at) -> placeCaret());
         commandTextField.textProperty().addListener((unused, old, typed) -> placeCaret());
         commandTextField.focusedProperty().addListener((unused, old, focused) -> placeCaret());
+        // the line narrows when the window does, which can take a command that fitted and
+        // make it wrap, so the decision is remade whenever the width changes
+        commandTextField.widthProperty().addListener((unused, old, width) -> decideWhetherColoursFit());
         blink();
     }
 
@@ -93,9 +96,26 @@ public class CommandBox extends UiPart<Region> {
             highlighted.getChildren().add(text);
         }
 
+        decideWhetherColoursFit();
+    }
+
+    /**
+     * Shows the coloured copy only while it fits on one line beside the field.
+     *
+     * <p>The copy cannot scroll with the field, so once the command outgrows the line the
+     * field shows its own text again. The hidden copy is unmanaged as well as invisible: a
+     * TextFlow wraps, so a long command left managed keeps asking for the height of every
+     * wrapped line and the command box grows to match. The caret goes with it, because the
+     * field draws its own once its text is visible again, and a second one placed without
+     * regard to the field's scrolling would sit in the wrong place.
+     */
+    private void decideWhetherColoursFit() {
         boolean fits = highlighted.prefWidth(-1) <= commandTextField.getWidth();
         highlighted.setVisible(fits);
+        highlighted.setManaged(fits);
+        caret.setManaged(fits);
         commandTextField.pseudoClassStateChanged(COLOURED, fits);
+        placeCaret();
     }
 
     /**
@@ -107,7 +127,7 @@ public class CommandBox extends UiPart<Region> {
      * not the caret drifts further from the text with every character typed.
      */
     private void placeCaret() {
-        caret.setVisible(commandTextField.isFocused());
+        caret.setVisible(commandTextField.isFocused() && highlighted.isVisible());
 
         caret.setTranslateX(widthBefore(commandTextField.getCaretPosition()));
     }
