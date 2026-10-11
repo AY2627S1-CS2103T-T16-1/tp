@@ -593,7 +593,7 @@
 }
 
 .command-value, .command-space {
-    -fx-fill: -tab-text;
+    -fx-fill: -tab-value;
 }
 
 .command-prompt, .command-command-word {
