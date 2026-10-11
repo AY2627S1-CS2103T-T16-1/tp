@@ -522,8 +522,9 @@
 
 .command-prompt {
     -fx-text-fill: -tab-accent;
-    -fx-font-family: "monospace";
-    -fx-font-size: 14px;
+    -fx-font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", "Consolas", monospace;
+    -fx-font-size: 13px;
+    -fx-font-weight: normal;
 }
 
 /* inside the line the field is bare: the rounded surface belongs to the line around it */
@@ -548,7 +549,7 @@
    and CommandBoxTest fails if they drift apart */
 .command-token {
     -fx-font-weight: normal;
-    -fx-font-family: "monospace";
+    -fx-font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", "Consolas", monospace;
     -fx-font-size: 13px;
 }
 
