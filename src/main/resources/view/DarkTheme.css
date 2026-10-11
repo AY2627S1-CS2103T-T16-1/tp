@@ -395,6 +395,12 @@
 }
 
 /* the three panes of the main window, which carry the window's own colour */
+/* the window itself. Without this the scene's own white shows wherever a pane does not
+   paint a background of its own, which is what a result strip with only a rule on it does. */
+.window {
+    -fx-background-color: -tab-bg;
+}
+
 .command-pane, .student-list-pane {
     -fx-background-color: -tab-bg;
 }
