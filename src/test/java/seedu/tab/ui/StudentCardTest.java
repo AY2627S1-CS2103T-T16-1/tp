@@ -489,4 +489,46 @@ public class StudentCardTest {
 
         assertTrue(thrown.getMessage().contains("Label"), thrown.getMessage());
     }
+
+    @Test
+    public void constructor_atEveryWidth_saysWhenItHasLeftTagsOut() throws Exception {
+        // a card showing some of a student's tags must say that there are more, at whatever
+        // width: a card that simply drops the count leaves the reader thinking that is all
+        Student student = new StudentBuilder().withName("Charlotte Oliveiro")
+                .withTags("AY2627 Sem 1", "CS2103T", "T16", "needsconsultation").build();
+
+        List<String> silent = new ArrayList<>();
+        // from the narrowest card that has room for a chip and a count side by side. Below
+        // that the card shows the first tag alone, which says more than a bare count would
+        for (int width = 340; width <= 760; width += 10) {
+            int at = width;
+            List<String> chips = onFxThread(() -> {
+                Region root = (Region) new StudentCard(student, 3).getRoot();
+                assertNotNull(styledScene(root, at, 120));
+                return visibleChipsOf(root);
+            });
+            boolean saysMore = chips.stream().anyMatch(chip -> chip.endsWith("more\u2026"));
+            if (chips.size() < 4 && !saysMore) {
+                silent.add(at + ": " + chips);
+            }
+        }
+
+        assertTrue(silent.isEmpty(), "these widths left tags out without saying so: " + silent);
+    }
+
+    @Test
+    public void constructor_aCardTooNarrowForBoth_showsTheTagRatherThanTheCount() throws Exception {
+        Student student = new StudentBuilder().withName("Charlotte Oliveiro")
+                .withTags("AY2627 Sem 1", "CS2103T", "T16", "needsconsultation").build();
+
+        List<String> chips = onFxThread(() -> {
+            Region root = (Region) new StudentCard(student, 3).getRoot();
+            assertNotNull(styledScene(root, 300, 120));
+            return visibleChipsOf(root);
+        });
+
+        // which tag a student carries says more than how many they have
+        assertEquals(1, chips.size(), "the row should show one tag, not " + chips);
+        assertTrue(chips.get(0).startsWith("AY2627"), chips.get(0));
+    }
 }
