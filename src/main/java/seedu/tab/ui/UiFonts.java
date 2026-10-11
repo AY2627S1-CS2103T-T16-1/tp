@@ -29,8 +29,15 @@ final class UiFonts {
      * Returns the first preferred family the machine has, or the font it would use anyway.
      */
     static String bodyFamily() {
-        List<String> installed = Font.getFamilies();
-        return PREFERRED.stream()
+        return firstOf(PREFERRED, Font.getFamilies());
+    }
+
+    /**
+     * Returns the first of {@code preferred} that is {@code installed}, or the family the
+     * machine would use anyway when it carries none of them.
+     */
+    static String firstOf(List<String> preferred, List<String> installed) {
+        return preferred.stream()
                 .filter(installed::contains)
                 .findFirst()
                 .orElseGet(() -> Font.getDefault().getFamily());

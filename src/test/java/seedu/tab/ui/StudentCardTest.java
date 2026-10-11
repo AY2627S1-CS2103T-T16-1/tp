@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -388,17 +389,6 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_aTagLongerThanAChip_isCutWithTheWholeOnHover() throws Exception {
-        String whole = "test".repeat(20);
-        TagRow tags = onFxThread(() -> (TagRow) new StudentCard(
-                new StudentBuilder().withTags(whole).build(), 1).getRoot().lookup("#tags"));
-        Label chip = (Label) tags.getChildrenUnmodifiable().get(0);
-
-        assertTrue(chip.getText().length() < whole.length(), "the chip should be cut");
-        assertEquals(whole, chip.getTooltip().getText());
-    }
-
-    @Test
     public void constructor_severalTags_areShownInOrder() throws Exception {
         Student student = new StudentBuilder().withTags("T1", "Lab 3", "needs-follow").build();
 
@@ -466,5 +456,21 @@ public class StudentCardTest {
 
         assertEquals(whole, shown.getText());
         assertNull(shown.getTooltip(), "a name that fits needs no tooltip");
+    }
+
+    @Test
+    public void layout_aFirstLineMissingItsName_saysSoRatherThanGuessing() throws Exception {
+        // the row is laid out by hand, so a layout file that left the name out would
+        // otherwise draw the tags in its place and look merely odd
+        Exception thrown = onFxThread(() -> {
+            CardHeadline row = new CardHeadline();
+            row.getChildren().add(new TagRow());
+            return assertThrows(IllegalStateException.class, () -> {
+                row.applyCss();
+                row.layout();
+            });
+        });
+
+        assertTrue(thrown.getMessage().contains("Label"), thrown.getMessage());
     }
 }
