@@ -1,9 +1,10 @@
 package seedu.tab.ui;
 
-import java.util.Comparator;
+import java.util.List;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.tab.model.student.Email;
@@ -17,6 +18,16 @@ public class StudentCard extends UiPart<Region> {
     private static final String FXML = "StudentListCard.fxml";
     /** Enough of a chip to read the start of a tag, kept even beside a very long name. */
     private static final double READABLE_CHIP_WIDTH = 70;
+
+    /**
+     * How much of a value a card shows. A card is a summary, and one enormous value should
+     * not crowd out the rest of the record, so these are generous rather than tight: a name
+     * longer than this is rare, and the whole of it is still a hover away.
+     */
+    private static final int MAX_NAME_CHARACTERS = 42;
+    private static final int MAX_TAG_CHARACTERS = 16;
+    private static final int MAX_TAGS_SHOWN = 3;
+    private static final String ELLIPSIS = "\u2026";
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -52,18 +63,50 @@ public class StudentCard extends UiPart<Region> {
         super(FXML);
         this.student = student;
         id.setText(String.valueOf(displayedIndex));
-        name.setText(student.getName().fullName);
+        showShortened(name, student.getName().fullName, MAX_NAME_CHARACTERS);
         phone.setText(student.getPhone().value);
         show(email, student.getEmail().map(Email::toString).orElse(null));
         show(followUp, student.getFlag().map(flag -> flag.tagName).orElse(null));
         // a student carries no NUS ID yet, so the slot the card lays out for it stays empty
         show(nusId, null);
-        student.getTags().stream()
-                .sorted(Comparator.comparing(tag -> tag.tagName))
-                .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+        List<String> tagNames = student.getTags().stream()
+                .map(tag -> tag.tagName)
+                .sorted()
+                .toList();
+        tagNames.stream().limit(MAX_TAGS_SHOWN).forEach(this::addChip);
+        if (tagNames.size() > MAX_TAGS_SHOWN) {
+            // a row of chips cut down to single letters tells the User nothing, so the ones
+            // that do not fit are counted instead of being squeezed in beside the rest
+            Label more = new Label("+" + (tagNames.size() - MAX_TAGS_SHOWN));
+            more.setTooltip(new Tooltip(String.join(", ", tagNames)));
+            tags.getChildren().add(more);
+        }
         // a student with tags keeps enough of the row for one chip to stay readable, while a
         // student with none leaves no gap where chips would have been
         tags.setMinWidth(tags.getChildren().isEmpty() ? 0 : READABLE_CHIP_WIDTH);
+    }
+
+    /**
+     * Adds a chip for {@code tagName}, shortened if it is longer than a chip should be.
+     */
+    private void addChip(String tagName) {
+        Label chip = new Label();
+        showShortened(chip, tagName, MAX_TAG_CHARACTERS);
+        tags.getChildren().add(chip);
+    }
+
+    /**
+     * Puts {@code value} on {@code label}, cut to {@code limit} characters with an ellipsis if
+     * it runs longer. What was cut is still readable: the label carries the whole value as its
+     * tooltip, so a card summarises without the record becoming unreachable.
+     */
+    private static void showShortened(Label label, String value, int limit) {
+        if (value.length() <= limit) {
+            label.setText(value);
+            return;
+        }
+        label.setText(value.substring(0, limit) + ELLIPSIS);
+        label.setTooltip(new Tooltip(value));
     }
 
     /**
