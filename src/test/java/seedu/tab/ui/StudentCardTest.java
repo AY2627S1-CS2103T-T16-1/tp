@@ -6,15 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import seedu.tab.model.student.Student;
@@ -22,27 +18,15 @@ import seedu.tab.testutil.StudentBuilder;
 
 public class StudentCardTest {
 
-    private static final int TIMEOUT_SECONDS = 10;
 
     @BeforeAll
     public static void startToolkit() throws Exception {
-        CountDownLatch started = new CountDownLatch(1);
-        try {
-            Platform.startup(started::countDown);
-        } catch (IllegalStateException alreadyRunning) {
-            started.countDown();
-        }
-        // JavaFX shuts itself down when the last window closes, and then runs nothing more,
-        // so a test that shows a window would leave every test after it waiting forever
-        Platform.runLater(() -> Platform.setImplicitExit(false));
-        assertTrue(started.await(TIMEOUT_SECONDS, TimeUnit.SECONDS), "the toolkit did not start");
+        FxToolkit.start();
     }
 
     /** Runs {@code work} on the thread JavaFX requires its nodes to be built on. */
     private static <T> T onFxThread(Callable<T> work) throws Exception {
-        FutureTask<T> task = new FutureTask<>(work);
-        Platform.runLater(task);
-        return task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        return FxToolkit.onFxThread(work);
     }
 
     private static Label emailLabelOf(Student student) throws Exception {
