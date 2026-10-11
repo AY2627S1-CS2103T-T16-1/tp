@@ -141,12 +141,13 @@
     -fx-background-color: transparent;
 }
 
-/* the row the User is on is marked by an accent down its left edge */
+/* the row the User is on keeps the same rounded shape as every other card, with an accent
+   showing down its left edge. Two layers, because a one-sided border squares the corners. */
 .list-cell:filled:selected #cardPane {
-    -fx-background-color: -tab-surface-selected;
-    -fx-border-color: -tab-accent;
-    -fx-border-width: 0 0 0 3;
-    -fx-border-radius: 0 6 6 0;
+    -fx-background-color: -tab-accent, -tab-surface-selected;
+    -fx-background-insets: 0, 0 0 0 3;
+    -fx-background-radius: 6, 6;
+    -fx-border-width: 0;
 }
 
 .list-cell .label {
@@ -187,8 +188,16 @@
     -fx-background-color: transparent;
     -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
-    -fx-text-fill: -tab-text;
+    -fx-text-fill: -tab-text-muted;
     -fx-highlight-fill: -tab-surface-selected;
+    -fx-padding: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* the line is still selectable and still scrolls, but it should not look like a box */
+.result-display:focused {
+    -fx-background-color: transparent;
 }
 
 .result-display .viewport,
