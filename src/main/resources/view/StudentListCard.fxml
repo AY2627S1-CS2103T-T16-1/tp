@@ -19,20 +19,14 @@
     </minWidth>
   </Label>
 
-  <VBox spacing="4" HBox.hgrow="ALWAYS">
+  <VBox spacing="4" HBox.hgrow="ALWAYS" minWidth="0">
     <HBox alignment="CENTER_LEFT" spacing="8">
-      <!-- the name yields only once the row has run out of room, and is elided rather
-           than pushing the pill beside it out of the card -->
+      <!-- the name is the only part of the row that gives way, and it is elided rather than
+           pushing anything out. A chip cut in half says nothing, so the tags keep their
+           width; a row rather than a flow pane, because a FlowPane reports its
+           prefWrapLength as its preferred width whatever it holds. -->
       <Label fx:id="name" text="\$first" styleClass="card-name" minWidth="40" />
-      <!-- a row rather than a flow pane: a FlowPane reports its prefWrapLength as its
-           preferred width whatever it holds, which is 400 by default and squeezed the name,
-           and a small wrap length instead made two chips stack. A row asks for what its
-           chips need and keeps them on the line the mockup draws them on. -->
-      <HBox fx:id="tags" spacing="6" minWidth="0" alignment="CENTER_LEFT" />
-      <Region HBox.hgrow="ALWAYS" minWidth="0" />
-      <!-- the trailing pill. It carries the follow-up marker, and takes the age once a
-           follow-up records when it was raised -->
-      <Label fx:id="followUp" styleClass="card-pill" minWidth="-Infinity" />
+      <HBox fx:id="tags" spacing="6" minWidth="-Infinity" alignment="CENTER_LEFT" />
     </HBox>
 
     <HBox alignment="CENTER_LEFT" spacing="12">
@@ -42,4 +36,9 @@
       <Label fx:id="email" styleClass="card-detail" text="\$email" />
     </HBox>
   </VBox>
+
+  <!-- the trailing pill sits outside the row that gives way, so a long name can never push
+       it out of the card. It carries the follow-up marker, and takes the age once a
+       follow-up records when it was raised. -->
+  <Label fx:id="followUp" styleClass="card-pill" minWidth="-Infinity" />
 </HBox>
