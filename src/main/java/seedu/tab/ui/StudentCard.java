@@ -4,7 +4,6 @@ import java.util.Comparator;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.tab.model.student.Email;
@@ -42,7 +41,7 @@ public class StudentCard extends UiPart<Region> {
     @FXML
     private Label nusId;
     @FXML
-    private FlowPane tags;
+    private HBox tags;
 
     /**
      * Creates a {@code StudentCard} with the given {@code Student} and index to display.

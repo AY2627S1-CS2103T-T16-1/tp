@@ -2,7 +2,6 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
@@ -25,9 +24,11 @@
       <!-- the name yields only once the row has run out of room, and is elided rather
            than pushing the pill beside it out of the card -->
       <Label fx:id="name" text="\$first" styleClass="card-name" minWidth="40" />
-      <!-- prefWrapLength defaults to 400, so the pane would claim that much preferred width
-           for a single chip and the name beside it would be squeezed to its minimum -->
-      <FlowPane fx:id="tags" minWidth="0" prefWrapLength="1" />
+      <!-- a row rather than a flow pane: a FlowPane reports its prefWrapLength as its
+           preferred width whatever it holds, which is 400 by default and squeezed the name,
+           and a small wrap length instead made two chips stack. A row asks for what its
+           chips need and keeps them on the line the mockup draws them on. -->
+      <HBox fx:id="tags" spacing="6" minWidth="0" alignment="CENTER_LEFT" />
       <Region HBox.hgrow="ALWAYS" minWidth="0" />
       <!-- the trailing pill. It carries the follow-up marker, and takes the age once a
            follow-up records when it was raised -->
