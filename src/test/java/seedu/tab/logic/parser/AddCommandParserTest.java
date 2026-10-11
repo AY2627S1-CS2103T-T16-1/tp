@@ -135,6 +135,21 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_emailLongEnoughToOverflowTheStack_isRejectedWithTheOtherFieldsStillChecked() {
+        // a pasted address used to crash the command with StackOverflowError, which no parser
+        // catches, so the User saw no message at all
+        String overflowing = "a.".repeat(5000) + "a@example.com";
+        // the fields are reported in the order the format lists them, not the order they were given
+        String expected = Messages.getErrorMessageForInvalidValue(Phone.FIELD_NAME, "12",
+                        Phone.getFailureReason("12"))
+                + "\n"
+                + Messages.getErrorMessageForInvalidValue(Email.FIELD_NAME, overflowing,
+                        Email.getFailureReason(overflowing));
+
+        assertParseFailure(parser, NAME_BOB + " -p 12 -e " + overflowing, expected);
+    }
+
+    @Test
     public void parse_severalInvalidValues_reportsEveryOne() {
         // a user who mistyped four fields learns all four at once, rather than one per attempt
         String expected = String.join("\n",

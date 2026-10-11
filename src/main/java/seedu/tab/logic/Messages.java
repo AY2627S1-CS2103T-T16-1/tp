@@ -19,6 +19,8 @@ public class Messages {
                 "Multiple values specified for the following single-valued field(s): ";
     public static final String MESSAGE_MISSING_FIELDS = "Missing required field(s): %1$s";
     public static final String MESSAGE_INVALID_VALUE = "%1$s \"%2$s\" is not valid: %3$s";
+    /** How much of a rejected value is quoted back, so that a long one cannot hide the reason. */
+    public static final int MAX_QUOTED_VALUE_LENGTH = 60;
     public static final String MESSAGE_UNKNOWN_FLAG = "There is no %1$s option.";
     public static final String MESSAGE_FLAG_WITHOUT_VALUE =
             "%1$s needs a value after it. A value opening with a hyphen goes in double quotes.";
@@ -53,10 +55,23 @@ public class Messages {
 
     /**
      * Returns an error message quoting the value that was rejected and saying what is wrong
-     * with it, rather than restating the whole rule for the field.
+     * with it, rather than restating the whole rule for the field. A value too long to read is
+     * shortened, so that the reason stays visible rather than being pushed out of sight.
      */
     public static String getErrorMessageForInvalidValue(String fieldName, String value, String reason) {
-        return String.format(MESSAGE_INVALID_VALUE, fieldName, value, reason);
+        return String.format(MESSAGE_INVALID_VALUE, fieldName, shorten(value), reason);
+    }
+
+    /**
+     * Returns {@code value} itself, or its opening characters followed by an ellipsis when it is
+     * longer than a message can show. The length is not reported here, because the field that
+     * rejected the value says whatever its own rule makes relevant.
+     */
+    private static String shorten(String value) {
+        if (value.length() <= MAX_QUOTED_VALUE_LENGTH) {
+            return value;
+        }
+        return value.substring(0, MAX_QUOTED_VALUE_LENGTH) + "…";
     }
 
     /**

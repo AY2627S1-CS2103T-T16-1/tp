@@ -285,6 +285,39 @@ An email cannot be cleared once set. `edit` replaces a value and has no
 spelling for removing one, the way `-t ""` empties the tags. Clearing an email
 is tracked as issue #102.
 
+`Email.MAX_LENGTH` caps at 254 characters the address a **command** may enter.
+`ParserUtil.parseEmail` checks `Email.isWithinLengthLimit` before
+`Email.isValidEmail`, and `getFailureReason` carries the same guard because it
+matches the local part on its own.
+
+The limit is not there to simplify validation, which the guidance on arbitrary
+limits rules out. `VALIDATION_REGEX` nests one quantifier inside another,
+`([+_.-][^\W_]+)*`, and Java matches a repeated group by recursion, one frame
+per repetition, so an address with enough `.`-separated groups exhausts the
+stack. `StackOverflowError` is an `Error` that no parser catches, and
+`CommandBox` catches only `CommandException` and `ParseException`, so the User
+saw no feedback at all. 254 is the limit RFC 5321 section 4.5.3.1 puts on a
+forward path, so the bound comes from the domain rather than from the parser,
+and it is the only bound measured to be safe on every stack size tried: on a
+256 KB stack even a 513-character address overflows.
+
+`isValidEmail` deliberately keeps **no** length limit, so the check sits in the
+parser rather than in the field. Storage validates with `isValidEmail`, and a
+narrower rule there would make a file an earlier version had written
+unloadable. A failed load starts an empty book, so the next save would discard
+every record the product had already accepted — a worse outcome than the crash
+being fixed. `JsonAdaptedStudentTest` pins that upgrade path.
+
+One case is therefore left open: a data file hand-edited to hold an address of
+several thousand characters still fails while loading rather than being
+reported. Repairing that belongs with the unreadable-data handling in issue
+#144, which has to treat it as a broken record instead of letting it reach the
+matcher.
+
+`Messages.getErrorMessageForInvalidValue` shortens a rejected value past
+`MAX_QUOTED_VALUE_LENGTH` characters, so that a very long value cannot push the
+reason out of view. Every field shares that message, so every field benefits.
+
 `Phone` is **not** an identity field and **not** a key: two students may hold the
 same number, and `isSameStudent` does not read it. It is normalized only so
 that a number typed with unusual whitespace is stored consistently.
@@ -1248,6 +1281,29 @@ testers are expected to do more *exploratory* testing.
       to edit is needed; the second asks only for a field.
 
 1. _{ more test cases … }_
+
+### Rejecting an over-long email
+
+1. Refusing an address longer than the limit
+
+   1. Prerequisites: Run `list` and note the first student's details.
+
+   1. Test case: `edit 1 -e` followed by an address of more than 254
+      characters, such as `a.` repeated a few thousand times and then
+      `a@example.com`<br>
+      Expected: No change. The message names the 254-character limit and the
+      length actually given, and quotes only the opening characters of the
+      value rather than filling the result box with it.
+
+   1. Test case: the same address with a phone of `12` in the same command<br>
+      Expected: No change. Both the phone and the email are reported, which
+      confirms the length check joins the other field checks instead of
+      stopping them.
+
+   1. Test case: an address of exactly 254 characters, such as `a` repeated
+      242 times then `@example.com`<br>
+      Expected: The edit succeeds. The limit is the longest an email address
+      may be, so no real address is refused.
 
 ### Deleting a student
 
