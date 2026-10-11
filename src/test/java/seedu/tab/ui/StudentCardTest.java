@@ -328,9 +328,11 @@ public class StudentCardTest {
                 .withTags("alpha", "bravo", "charlie").withFlag(true).build();
 
         // a name cut by the room the row has left breaks off wherever the tags and the pill
-        // leave it, so the same name reads differently from one card to the next
+        // leave it, so the same name reads differently from one card to the next. Where the
+        // line is too narrow for all three the name does give way, which is what the next
+        // test covers; these are widths where it is not, in any font
         List<String> cut = new ArrayList<>();
-        for (double cardWidth : new double[] {DEFAULT_CARD_WIDTH, 600, 760}) {
+        for (double cardWidth : new double[] {620, 760, 900}) {
             cut.add(onFxThread(() -> {
                 Region root = (Region) new StudentCard(student, 1).getRoot();
                 assertNotNull(styledScene(root, cardWidth, 120));
