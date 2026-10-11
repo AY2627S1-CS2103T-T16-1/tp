@@ -3,6 +3,7 @@ package seedu.tab.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -622,5 +623,44 @@ public class CommandBoxTest {
                 .map(node -> (Text) node)
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Test
+    public void laidOut_withTheLineEmpty_drawsTheCopyAtTheFieldsInset() throws Exception {
+        // an empty line shows the prompt, which the field draws in a text node of its own:
+        // the copy must not take that for the command's text
+        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
+        Region root = box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
+
+        double drawnFrom = onFxThread(() -> {
+            TextField field = (TextField) root.lookup("#commandTextField");
+            assertTrue(field.getText().isEmpty(), "the line should be empty");
+            assertFalse(field.lookupAll(".text").isEmpty(),
+                    "the field should be drawing its prompt");
+            root.layout();
+            return ((TextFlow) root.lookup("#highlighted")).getLayoutX();
+        });
+
+        assertTrue(drawnFrom >= 0, "the copy should be placed at the field's own inset");
+    }
+
+    @Test
+    public void laidOut_beforeTheFieldHasASkin_drawsTheCopyAtTheFieldsInset() throws Exception {
+        // a command box that has never been in a window has no text node to read, so the
+        // copy falls back to the inset a field uses
+        CommandBox box = onFxThread(() -> {
+            CommandBox fresh = new CommandBox(unused -> null);
+            setTextOf(fresh, "list");
+            return fresh;
+        });
+
+        double drawnFrom = onFxThread(() -> {
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            assertNull(fieldTextOf(field), "a box outside a window should have no text node");
+            return ((TextFlow) box.getRoot().lookup("#highlighted")).getLayoutX();
+        });
+
+        assertTrue(drawnFrom >= 0, "the copy should still be placed, not left off the line");
     }
 }

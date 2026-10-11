@@ -187,14 +187,19 @@ public class CommandBox extends UiPart<Region> {
         return drawn == null ? halfACaret() : drawn.getLayoutX() + drawn.getTranslateX();
     }
 
-    /** Returns the node the field draws its own text in, or null before it has a skin. */
+    /**
+     * Returns the node the field draws its own text in, or null before it has a skin.
+     *
+     * <p>An empty line shows the prompt, which the field draws in a node of the same kind,
+     * so the one carrying the command is the one whose text is the command.
+     */
     private Text fieldText() {
-        for (Node node : commandTextField.lookupAll(".text")) {
-            if (node instanceof Text text && text.getText().equals(commandTextField.getText())) {
-                return text;
-            }
-        }
-        return null;
+        return commandTextField.lookupAll(".text").stream()
+                .filter(Text.class::isInstance)
+                .map(Text.class::cast)
+                .filter(text -> text.getText().equals(commandTextField.getText()))
+                .findFirst()
+                .orElse(null);
     }
 
 
