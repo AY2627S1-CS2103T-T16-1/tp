@@ -261,8 +261,10 @@ public class StudentCardTest {
                 Label name = (Label) root.lookup("#name");
                 Region tags = (Region) root.lookup("#tags");
                 Label pill = (Label) root.lookup("#followUp");
+                // where the name's text ends, not where its box does: a name given the
+                // whole line still reads as a gap between the name and the chips
                 return new double[] {
-                    name.localToScene(name.getBoundsInLocal()).getMaxX(),
+                    name.localToScene(name.getBoundsInLocal()).getMinX() + name.prefWidth(-1),
                     tags.localToScene(tags.getBoundsInLocal()).getMinX(),
                     pill.localToScene(pill.getBoundsInLocal()).getMaxX(),
                 };
