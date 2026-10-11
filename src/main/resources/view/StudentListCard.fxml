@@ -21,12 +21,13 @@
 
   <VBox spacing="4" HBox.hgrow="ALWAYS" minWidth="0">
     <HBox alignment="CENTER_LEFT" spacing="8">
-      <!-- the name is the only part of the row that gives way, and it is elided rather than
-           pushing anything out. A chip cut in half says nothing, so the tags keep their
-           width; a row rather than a flow pane, because a FlowPane reports its
-           prefWrapLength as its preferred width whatever it holds. -->
-      <Label fx:id="name" text="\$first" styleClass="card-name" minWidth="40" />
-      <HBox fx:id="tags" spacing="6" minWidth="-Infinity" alignment="CENTER_LEFT" />
+      <!-- both sides of this row are bounded. The name never falls below a readable
+           stretch, and the tags give way first; each chip is capped in the stylesheet, so
+           one very long tag is elided as a chip rather than taking the whole row. A row
+           rather than a flow pane, because a FlowPane reports its prefWrapLength as its
+           preferred width whatever it holds. -->
+      <Label fx:id="name" text="\$first" styleClass="card-name" minWidth="120" />
+      <HBox fx:id="tags" spacing="6" minWidth="0" alignment="CENTER_LEFT" />
     </HBox>
 
     <HBox alignment="CENTER_LEFT" spacing="12">

@@ -213,8 +213,31 @@ public class StudentCardTest {
             return new double[] {tags.getWidth(), tags.prefWidth(-1), pill.getWidth()};
         });
 
-        // a chip cut down to an ellipsis says nothing, so the name gives way instead
-        assertEquals(widths[1], widths[0], 0.5, "the tag chip should keep its full width");
+        // a chip cut down to an ellipsis says nothing, so enough of it survives to read
+        assertTrue(widths[0] >= 70, "the tag chip was squeezed to nothing: " + widths[0]);
+        assertTrue(widths[2] > 0, "the follow-up pill should still be laid out");
+    }
+
+    @Test
+    public void constructor_aVeryLongTag_leavesTheNameReadable() throws Exception {
+        Student student = new StudentBuilder().withName("Siti Nur-Aisyah")
+                .withTags("test".repeat(20)).withFlag(true).build();
+
+        double[] widths = onFxThread(() -> {
+            StudentCard card = new StudentCard(student, 17);
+            Region root = (Region) card.getRoot();
+            assertNotNull(styledScene(root, CARD_WIDTH, 120));
+
+            Label name = (Label) root.lookup("#name");
+            Label pill = (Label) root.lookup("#followUp");
+            Region tags = (Region) root.lookup("#tags");
+            return new double[] {name.getWidth(), tags.getWidth(), pill.getWidth(),
+                root.getWidth()};
+        });
+
+        // one enormous tag used to take the whole row, crush the name and run under the pill
+        assertTrue(widths[0] >= 120, "the name was crushed to " + widths[0]);
+        assertTrue(widths[1] <= 150, "the chip should be capped, but was " + widths[1]);
         assertTrue(widths[2] > 0, "the follow-up pill should still be laid out");
     }
 
