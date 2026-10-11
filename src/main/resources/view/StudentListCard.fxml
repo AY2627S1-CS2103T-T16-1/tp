@@ -5,6 +5,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import seedu.tab.ui.CardHeadline?>
 <?import seedu.tab.ui.TagRow?>
 
 <HBox id="cardPane" fx:id="cardPane" alignment="TOP_LEFT" spacing="12"
@@ -21,17 +22,15 @@
   </Label>
 
   <VBox fx:id="details" spacing="4" HBox.hgrow="ALWAYS" minWidth="0">
-    <HBox alignment="CENTER_LEFT" spacing="8">
+    <CardHeadline>
       <!-- the tags sit against the name, so a reader follows one line from the name to what
-           is said about them. The name asks for no more than its own text needs, which keeps
-           a short name from holding the chips off at a column of their own, and the chips
-           take up the slack to its right. It is held at that width rather than being cut
-           again by the room the row has left, so that the card cuts a long name at the same
-           place whatever else it holds. A row rather than a flow pane, because a FlowPane
-           reports its prefWrapLength as its preferred width whatever it holds. -->
-      <Label fx:id="name" text="\$first" styleClass="card-name" minWidth="-Infinity" />
-      <TagRow fx:id="tags" HBox.hgrow="ALWAYS" />
-    </HBox>
+           is said about them, and the name is held at the length the card cuts it to rather
+           than being cut again by the room the row has left. A row of its own rather than an
+           HBox, which would share a shortfall between the name and the tags and leave
+           neither readable. -->
+      <Label fx:id="name" text="\$first" styleClass="card-name" />
+      <TagRow fx:id="tags" />
+    </CardHeadline>
 
     <HBox alignment="CENTER_LEFT" spacing="12">
       <!-- laid out for the NUS ID, and left out of the card until a student carries one -->
