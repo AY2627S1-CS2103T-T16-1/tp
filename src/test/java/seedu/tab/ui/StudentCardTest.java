@@ -527,8 +527,11 @@ public class StudentCardTest {
             return visibleChipsOf(root);
         });
 
-        // which tag a student carries says more than how many they have
-        assertEquals(1, chips.size(), "the row should show one tag, not " + chips);
-        assertTrue(chips.get(0).startsWith("AY2627"), chips.get(0));
+        // which tag a student carries says more than how many they have, so whatever else
+        // the row has room for, it names a tag first. How many else fit depends on the
+        // font the machine has, so that is not pinned here
+        assertFalse(chips.isEmpty(), "the row should name a tag");
+        assertTrue(chips.get(0).startsWith("AY2627"),
+                "the row should lead with the tag, not a count: " + chips);
     }
 }
