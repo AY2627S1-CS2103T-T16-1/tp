@@ -18,10 +18,21 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.Region;
+import javafx.scene.text.Text;
 
 public class ResultDisplayTest {
 
     private static final int TIMEOUT_SECONDS = 10;
+    /** How many widths the sweep tries, four pixels apart from 300. */
+    private static final int WIDTHS_SWEPT = 60;
+    /** The most rows the area grows to, as the area states it. */
+    private static final int MAX_ROWS_UNDER_TEST = 6;
+    /** A short reply, one that wraps, and one written on two lines. */
+    private static final List<String> REPLIES = List.of(
+            "Listed all students.",
+            "Edited student: Siti Nur-Aisyah Binte Abdullah Rahman; Phone: 91234567; "
+                    + "Email: e1234567@u.nus.edu; Tags: needsconsultation urgent",
+            "Invalid command format!\nadd: Adds a student to the student book.");
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -200,6 +211,79 @@ public class ResultDisplayTest {
             });
 
             assertEquals(1, rows, "one line in " + family + " came to " + rows + " rows");
+        }
+    }
+
+    @Test
+    public void setFeedbackToUser_anyReply_takesTheRowsItIsDrawnIn() throws Exception {
+        // measured against what the area draws rather than against a font's own numbers, so
+        // this holds whichever font the machine dresses the area in
+        int[] counted = onFxThread(() -> {
+            ResultDisplay display = new ResultDisplay();
+            Region root = display.getRoot();
+            assertNotNull(styledScene(root, 450, 300));
+            TextArea area = (TextArea) root.lookup("#resultDisplay");
+
+            display.setFeedbackToUser("Hi");
+            root.applyCss();
+            root.layout();
+            Text drawn = (Text) area.lookup(".text");
+            assertNotNull(drawn, "the area should have drawn its reply");
+            double oneRow = drawn.getLayoutBounds().getHeight();
+
+            int[] rows = new int[REPLIES.size() * 2];
+            for (int i = 0; i < REPLIES.size(); i++) {
+                display.setFeedbackToUser(REPLIES.get(i));
+                root.layout();
+                rows[i * 2] = (int) Math.round(drawn.getLayoutBounds().getHeight() / oneRow);
+                rows[i * 2 + 1] = area.getPrefRowCount();
+            }
+            return rows;
+        });
+
+        for (int i = 0; i < REPLIES.size(); i++) {
+            int drawnRows = Math.min(counted[i * 2], MAX_ROWS_UNDER_TEST);
+            assertEquals(drawnRows, counted[i * 2 + 1],
+                    "\"" + REPLIES.get(i) + "\" is drawn in " + counted[i * 2]
+                    + " rows but the area keeps " + counted[i * 2 + 1]);
+        }
+    }
+
+    @Test
+    public void setFeedbackToUser_atEveryWidth_takesTheRowsItIsDrawnIn() throws Exception {
+        // a reply whose last word lands within a few pixels of the edge is where a guess at
+        // the area's wrap width shows: it puts the wrap a few pixels from where the area
+        // puts it, and the reply is given a row it does not use
+        String reply = "Edited student: Siti Nur-Aisyah; Phone: 91234567; Tags: urgent";
+
+        int[][] counted = onFxThread(() -> {
+            ResultDisplay display = new ResultDisplay();
+            Region root = display.getRoot();
+            assertNotNull(styledScene(root, 400, 300));
+            TextArea area = (TextArea) root.lookup("#resultDisplay");
+            display.setFeedbackToUser("Hi");
+            root.applyCss();
+            root.layout();
+            Text drawn = (Text) area.lookup(".text");
+            double oneRow = drawn.getLayoutBounds().getHeight();
+
+            int[][] atWidth = new int[WIDTHS_SWEPT][3];
+            for (int i = 0; i < WIDTHS_SWEPT; i++) {
+                int width = 300 + i * 4;
+                root.resize(width, 300);
+                display.setFeedbackToUser(reply);
+                root.layout();
+                atWidth[i][0] = width;
+                atWidth[i][1] = (int) Math.round(drawn.getLayoutBounds().getHeight() / oneRow);
+                atWidth[i][2] = area.getPrefRowCount();
+            }
+            return atWidth;
+        });
+
+        for (int[] at : counted) {
+            assertEquals(Math.min(at[1], MAX_ROWS_UNDER_TEST), at[2],
+                    "at " + at[0] + " wide the reply is drawn in " + at[1]
+                    + " rows but the area keeps " + at[2]);
         }
     }
 }

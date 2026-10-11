@@ -20,7 +20,11 @@
         <URL value="@HelpWindow.css" />
       </stylesheets>
 
-      <HBox alignment="CENTER" fx:id="helpMessageContainer">
+      <!-- the row keeps the width and height its content needs. A stage sizes itself to its
+           scene before the stylesheets have dressed what is in it, and this window cannot be
+           resized, so anything the theme adds afterwards would otherwise stay cut off -->
+      <HBox alignment="CENTER" fx:id="helpMessageContainer"
+            minWidth="-Infinity" minHeight="-Infinity">
         <children>
           <Label fx:id="helpMessage" text="Label">
             <HBox.margin>
