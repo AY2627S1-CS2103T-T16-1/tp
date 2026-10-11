@@ -22,6 +22,7 @@
     -tab-value: #c3d0dc;           /* a plain value on the command line */
     -tab-chip-bg: #2a3945;         /* a tag chip */
     -tab-chip-text: #8cc7e5;
+    -tab-shadow: #000000;             /* the well a sunken surface sits in */
     -tab-danger: #ff6b6b;          /* a refused command */
 }
 
@@ -167,6 +168,8 @@
 
 .status-bar {
     -fx-background-color: -tab-bg;
+    -fx-border-color: -tab-border transparent transparent transparent;
+    -fx-border-width: 1;
 }
 
 .result-display {
@@ -188,7 +191,9 @@
 }
 
 .status-bar .label {
-    -fx-text-fill: -tab-text;
+    /* the path to the data file, which is a footnote rather than something to read */
+    -fx-text-fill: -tab-text-muted;
+    -fx-font-size: 11px;
     -fx-padding: 4px;
     -fx-pref-height: 30px;
 }
@@ -223,10 +228,9 @@
 
 .menu-bar {
     -fx-background-color: -tab-bg;
-}
-
-.menu-bar {
     -fx-padding: 2 6 2 6;
+    -fx-border-color: transparent transparent -tab-border transparent;
+    -fx-border-width: 1;
 }
 
 .menu-bar .label {
@@ -368,7 +372,7 @@
 }
 
 #filterField, #studentListPanel, #studentWebpage {
-    -fx-effect: innershadow(gaussian, black, 10, 0, 0, 0);
+    -fx-effect: innershadow(gaussian, -tab-shadow, 10, 0, 0, 0);
 }
 
 #resultDisplay .content {
@@ -417,25 +421,9 @@
     -fx-border-width: 0 0 0 2;
 }
 
-.menu-bar {
-    -fx-border-color: transparent transparent -tab-border transparent;
-    -fx-border-width: 1;
-}
-
-.status-bar {
-    -fx-border-color: -tab-border transparent transparent transparent;
-    -fx-border-width: 1;
-}
-
-.status-bar .label {
-    -fx-text-fill: -tab-text-muted;
-    -fx-font-size: 11px;
-}
-
 /* the student card, laid out as docs/images/Ui.png draws it */
 .card-index {
     -fx-text-fill: -tab-text-muted;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
     -fx-min-width: 22;
     -fx-alignment: center-right;
@@ -444,14 +432,12 @@
 
 .card-name {
     -fx-text-fill: -tab-text;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-weight: bold;
     -fx-font-size: 15px;
 }
 
 .card-detail {
     -fx-text-fill: -tab-text-muted;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
 }
 
@@ -465,7 +451,6 @@
 /* the trailing pill: the follow-up marker today, its age once one is recorded */
 .card-pill {
     /* sits on the name's line, which is the first row of the card beside it */
-    -fx-padding: 2 8 2 8;
     -fx-translate-y: 1;
     -fx-text-fill: -tab-highlight;
     -fx-background-color: derive(-tab-highlight, -70%);
