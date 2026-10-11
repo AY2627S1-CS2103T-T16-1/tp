@@ -513,10 +513,10 @@ public class CommandBoxTest {
                 mark.getLayoutX() + mark.getWidth(), lane.getWidth(), mark.getWidth()};
         });
 
-        // a field brings the caret back to its edge and no further. Keeping a margin beyond
-        // it leaves the copy a margin's worth from where the field scrolled to, and a click
-        // then lands a character or two from the one it was aimed at
-        assertEquals(measured[1], measured[0], measured[4] + 0.5,
+        // the copy is drawn from exactly where the field has scrolled to, because the field
+        // is what decides which character a click lands on: a copy even a caret's width out
+        // of step puts a click near the end of a long command on the wrong character
+        assertEquals(measured[1], measured[0], 0.5,
                 "the copy should end at the edge of the line, as the field's text does");
         // and the caret itself has to be inside the line, not hanging on the edge of it
         // where the lane is clipped, or there is nothing of it left to see
@@ -621,5 +621,30 @@ public class CommandBoxTest {
             }
             return tooFaint;
         });
+    }
+
+    @Test
+    public void caretPastTheEnd_isDrawnInsideTheLineWithoutMovingTheCopy() throws Exception {
+        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
+        Region root = box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
+        TextFlow copy = (TextFlow) root.lookup("#highlighted");
+        TextField field = (TextField) root.lookup("#commandTextField");
+
+        double[] measured = onFxThread(() -> {
+            field.setText("find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides");
+            field.positionCaret(field.getLength());
+            Region lane = (Region) root.lookup("#lane");
+            Region mark = (Region) root.lookup("#caret");
+            return new double[] {-copy.getLayoutX(), copy.getWidth() - lane.getWidth(),
+                mark.getLayoutX() + mark.getWidth(), lane.getWidth()};
+        });
+
+        // both at once: the copy exactly where the field has scrolled to, so clicks land
+        // where they are aimed, and the caret inside the line, so it can be seen
+        assertEquals(measured[1], measured[0], 0.5,
+                "the copy is drawn from " + measured[0] + " against the field's " + measured[1]);
+        assertTrue(measured[2] <= measured[3] + 0.01,
+                "the caret ends at " + measured[2] + ", past the line's " + measured[3]);
     }
 }

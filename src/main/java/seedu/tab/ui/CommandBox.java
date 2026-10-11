@@ -171,7 +171,7 @@ public class CommandBox extends UiPart<Region> {
         double middle = lane.getHeight() / 2;
         showSelection(scrolled, middle);
         highlighted.relocate(-scrolled, middle - highlighted.getHeight() / 2);
-        caret.relocate(caretAt - scrolled, middle - caret.getHeight() / 2);
+        caret.relocate(caretDrawnAt(caretAt, scrolled, visible), middle - caret.getHeight() / 2);
         caret.setVisible(commandTextField.isFocused());
     }
 
@@ -191,18 +191,30 @@ public class CommandBox extends UiPart<Region> {
      * enough to scroll there is nothing left of it to see.
      */
     private double scrollThatKeepsTheCaretInView(double caretAt, double content, double visible) {
-        double caretWidth = Math.max(caret.getWidth(), caret.prefWidth(-1));
-        // the caret stands after the last character, so the line scrolls a caret's width
-        // further than the text alone would need; stopping at the text leaves the caret at
-        // the very edge of the line, where the lane is clipped and nothing of it shows
-        double furthest = Math.max(0, content + caretWidth - visible);
+        double furthest = Math.max(0, content - visible);
         double from = Math.clamp(scrolled, 0, furthest);
-        if (caretAt + caretWidth - from > visible) {
-            from = caretAt + caretWidth - visible;
+        if (caretAt - from > visible) {
+            from = caretAt - visible;
         } else if (caretAt - from < 0) {
             from = caretAt;
         }
         return Math.clamp(from, 0, furthest);
+    }
+
+    /**
+     * Returns where the caret is drawn in the line, given that the copy is drawn from
+     * {@code drawnFrom}.
+     *
+     * <p>The caret stands after the last character, so at the end of a command long enough
+     * to scroll it falls on the very edge of the line, where the lane is clipped and nothing
+     * of it shows. Scrolling the copy a caret's width further to make room moves the copy
+     * out of step with the field's own text, and the field is what decides which character a
+     * click lands on, so a click near the end then lands a character out. The copy therefore
+     * stays where the field puts it, and the caret alone is brought back inside the line.
+     */
+    private double caretDrawnAt(double caretAt, double drawnFrom, double visible) {
+        double caretWidth = Math.max(caret.getWidth(), caret.prefWidth(-1));
+        return Math.min(caretAt - drawnFrom, visible - caretWidth);
     }
 
     /**
