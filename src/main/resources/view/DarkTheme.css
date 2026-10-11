@@ -485,6 +485,7 @@
     -fx-fill: -tab-text;
 }
 
+<<<<<<< HEAD
 /* the summary of what is on display, beside the list */
 .summary-panel {
     -fx-background-color: -tab-bg;
@@ -531,4 +532,9 @@
 .summary-scroll {
     -fx-padding: 0;
     -fx-background-insets: 0;
+=======
+/* a value too long for its row is elided rather than widening the card it sits in */
+.card-name, .card-detail, .card-detail-strong, .summary-name {
+    -fx-text-overrun: ellipsis;
+>>>>>>> 163-redesign-the-student-card
 }
