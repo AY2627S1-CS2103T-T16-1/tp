@@ -96,9 +96,10 @@ public class TagRow extends Region {
 
         int shown = countThatFit();
         if (shown == 0) {
-            // no chip fits beside a count of the others, so the row gives what space it has
-            // to the first tag: its name cut short still says which tag it is, where a bare
-            // count of the tags says nothing about any of them
+            // no chip fits beside a count of the others, so the row goes to the first tag
+            // alone, cut to the row if it has to be: which tag a student carries says more
+            // than how many they have. Keeping a chip and placing the count after it anyway
+            // drew the count half outside the row, where it read as "1 m"
             placeCut(chips.get(0));
             return;
         }
@@ -123,7 +124,7 @@ public class TagRow extends Region {
                 return shown;
             }
         }
-        return drawnWidthOf(chips.get(0)) <= getWidth() ? 1 : 0;
+        return 0;
     }
 
     private boolean fits(int shown) {

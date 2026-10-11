@@ -34,8 +34,11 @@
 
     <HBox alignment="CENTER_LEFT" spacing="12">
       <!-- laid out for the NUS ID, and left out of the card until a student carries one -->
-      <Label fx:id="nusId" styleClass="card-detail-strong" />
-      <Label fx:id="phone" styleClass="card-detail" text="\$phone" />
+      <Label fx:id="nusId" styleClass="card-detail-strong" minWidth="-Infinity" />
+      <!-- the phone keeps its own width: half a phone number is of no use to anyone, where
+           the start of an email address still says whose it is. A row that shares what it
+           cannot fit between the two showed a flagged student's phone as "9111…" -->
+      <Label fx:id="phone" styleClass="card-detail" text="\$phone" minWidth="-Infinity" />
       <Label fx:id="email" styleClass="card-detail" text="\$email" />
     </HBox>
   </VBox>

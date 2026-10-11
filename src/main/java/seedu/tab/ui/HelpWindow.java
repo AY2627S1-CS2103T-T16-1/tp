@@ -3,6 +3,7 @@ package seedu.tab.ui;
 import java.util.logging.Logger;
 
 import javafx.fxml.FXML;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.Clipboard;
@@ -36,6 +37,7 @@ public class HelpWindow extends UiPart<Stage> {
         super(FXML, root);
         UiFonts.applyTo(root.getScene());
         helpMessage.setText(HELP_MESSAGE);
+        fitToContent();
     }
 
     /**
@@ -66,7 +68,29 @@ public class HelpWindow extends UiPart<Stage> {
     public void show() {
         logger.fine("Showing help page about the application.");
         getRoot().show();
+        // now that the window has a frame, it can be sized to its content exactly, rather
+        // than to the content's own idea of its size
+        getRoot().sizeToScene();
         getRoot().centerOnScreen();
+    }
+
+    /**
+     * Sizes the window to what it draws.
+     *
+     * <p>A stage sizes itself to its scene before the stylesheets have dressed what is in
+     * it, so the padding and the border a button takes from the theme arrive after the
+     * window has been measured. The window cannot be resized, so what no longer fits would
+     * stay cut off: the address read as "…/UserGuide.ht…" and the button as "Copy U…". The
+     * row inside holds its own size as well. The scene is measured when the layout file is
+     * read, which is before the address is put on the label, so it is measured against the
+     * word "Label".
+     */
+    private void fitToContent() {
+        Parent content = getRoot().getScene().getRoot();
+        content.applyCss();
+        content.layout();
+        getRoot().setWidth(content.prefWidth(-1));
+        getRoot().setHeight(content.prefHeight(-1));
     }
 
     /**

@@ -18,6 +18,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
@@ -53,8 +54,10 @@ public class StudentListPanelTest {
     public void cells_longContent_doNotOutgrowTheList() throws Exception {
         Student student = new StudentBuilder()
                 .withName("Nurul Izzah binte Hassan Al-Rashid Abdullah Mohamed")
+                .withPhone("91112222")
                 .withEmail("a.very.long.address.indeed@u.nus.edu")
-                .withTags("AY2627 Sem 1 CS2103T T16").build();
+                .withTags("AY2627 Sem 1 CS2103T T16")
+                .withFlag(true).build();
         ObservableList<Student> students = FXCollections.observableArrayList(student);
 
         boolean fits = onFxThread(() -> {
@@ -74,8 +77,15 @@ public class StudentListPanelTest {
             // and the pill at the trailing edge is the first thing a card that outgrew the
             // list carries off the side of it
             Node pill = root.lookup("#followUp");
-            boolean pillShows = pill == null
-                    || pill.localToScene(pill.getBoundsInLocal()).getMaxX() <= LIST_WIDTH;
+            assertNotNull(pill, "a flagged student should carry a pill to be checked");
+            assertTrue(pill.isVisible(), "the pill should be drawn on a flagged student");
+            boolean pillShows = pill.localToScene(pill.getBoundsInLocal()).getMaxX() <= LIST_WIDTH;
+            // a phone number cut in half is of no use, so it keeps its width whatever else
+            // the card has to give up
+            Label phone = (Label) root.lookup("#phone");
+            boolean phoneWhole = phone.getWidth() >= phone.prefWidth(-1) - 0.5;
+            assertTrue(phoneWhole, "the phone was cut to " + phone.getWidth()
+                    + " of the " + phone.prefWidth(-1) + " it needs");
             return cellsFit && pillShows;
         });
 

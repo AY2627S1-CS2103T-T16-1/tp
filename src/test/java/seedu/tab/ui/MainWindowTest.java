@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -29,6 +31,9 @@ import seedu.tab.testutil.StudentBuilder;
 public class MainWindowTest {
 
     private static final int TIMEOUT_SECONDS = 10;
+    /** A reply of the length a command reporting several bad fields gives. */
+    private static final String FIVE_LINE_REPLY =
+            "Siti Nur-Aisyah\nAlex Yeoh\nBernice Yu\nDavid Li\nRoy Balakrishnan";
     private static final Path DATA_FILE = Paths.get("data", "tab.json");
 
     @BeforeAll
@@ -55,7 +60,8 @@ public class MainWindowTest {
 
         @Override
         public CommandResult execute(String commandText) {
-            return new CommandResult(commandText);
+            return new CommandResult(
+                    commandText.equals("long") ? FIVE_LINE_REPLY : commandText);
         }
 
         @Override
@@ -127,5 +133,39 @@ public class MainWindowTest {
                 "the window may shrink to " + sizes[0] + " but needs " + sizes[1]);
         assertTrue(sizes[2] >= sizes[3],
                 "the window may shrink to " + sizes[2] + " but needs " + sizes[3]);
+    }
+
+    @Test
+    public void resultPane_aLongReplyInAShortWindow_keepsTheRoomItAsksFor() throws Exception {
+        double[] measured = onFxThread(() -> {
+            MainWindow window = filledWindow2();
+            Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+            // short enough that the panes together ask for more than there is
+            root.resize(740, 320);
+            root.applyCss();
+            root.layout();
+
+            TextField field = (TextField) root.lookup("#commandTextField");
+            field.setText("long");
+            field.fireEvent(new ActionEvent());
+            // the area counts its rows again once it has drawn the reply, which asks for
+            // another pass, as a pulse would give it
+            root.layout();
+            root.layout();
+
+            Region pane = (Region) root.lookup("#resultDisplayPlaceholder");
+            Region area = (Region) root.lookup("#resultDisplay");
+            Region list = (Region) root.lookup("#studentList");
+            return new double[] {area.getHeight(), area.prefHeight(-1),
+                list.getHeight(), list.prefHeight(-1), pane.getHeight()};
+        });
+
+        // the one that gives way must be the list, which scrolls what it cannot show, rather
+        // than the reply, which is simply cut off
+        assertTrue(measured[4] > 0, "the pane holding the reply should be laid out");
+        assertTrue(measured[0] >= measured[1] - 1,
+                "the reply was squeezed to " + measured[0] + " of " + measured[1]);
+        assertTrue(measured[2] <= measured[3],
+                "the list should be the pane that gives way");
     }
 }
