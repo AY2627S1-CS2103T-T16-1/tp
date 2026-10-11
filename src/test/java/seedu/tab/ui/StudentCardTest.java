@@ -47,6 +47,19 @@ public class StudentCardTest {
         return task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
+    /**
+     * Returns a scene holding {@code root}, dressed in the stylesheet the window uses, so that
+     * anything measured is measured in the font the product actually shows.
+     */
+    private static Scene styledScene(Region root, double width, double height) {
+        Scene scene = new Scene(root, width, height);
+        scene.getStylesheets().add(
+                UiPart.class.getResource("/view/DarkTheme.css").toExternalForm());
+        root.applyCss();
+        root.layout();
+        return scene;
+    }
+
     private static Label emailLabelOf(Student student) throws Exception {
         return onFxThread(() -> (Label) new StudentCard(student, 1).getRoot().lookup("#email"));
     }
@@ -172,10 +185,7 @@ public class StudentCardTest {
         boolean fits = onFxThread(() -> {
             StudentCard card = new StudentCard(student, 48);
             Region root = (Region) card.getRoot();
-            Scene scene = new Scene(root, CARD_WIDTH, 120);
-            assertNotNull(scene);
-            root.applyCss();
-            root.layout();
+            assertNotNull(styledScene(root, CARD_WIDTH, 120));
 
             Label pill = (Label) root.lookup("#followUp");
             Bounds inCard = pill.localToScene(pill.getBoundsInLocal());
@@ -185,6 +195,27 @@ public class StudentCardTest {
         // the pill carries the follow-up marker, and an age once one is recorded, so it has to
         // stay in the card however long the name beside it is
         assertTrue(fits, "the follow-up pill was pushed outside the card");
+    }
+
+    @Test
+    public void constructor_aLongName_leavesTheTagsReadable() throws Exception {
+        Student student = new StudentBuilder()
+                .withName("Siti Nur-Aisyah Binte Test Test Test Test Test Test Test")
+                .withTags("T1").withFlag(true).build();
+
+        double[] widths = onFxThread(() -> {
+            StudentCard card = new StudentCard(student, 14);
+            Region root = (Region) card.getRoot();
+            assertNotNull(styledScene(root, CARD_WIDTH, 120));
+
+            Region tags = (Region) root.lookup("#tags");
+            Label pill = (Label) root.lookup("#followUp");
+            return new double[] {tags.getWidth(), tags.prefWidth(-1), pill.getWidth()};
+        });
+
+        // a chip cut down to an ellipsis says nothing, so the name gives way instead
+        assertEquals(widths[1], widths[0], 0.5, "the tag chip should keep its full width");
+        assertTrue(widths[2] > 0, "the follow-up pill should still be laid out");
     }
 
     @Test
