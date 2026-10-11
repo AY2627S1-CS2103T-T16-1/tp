@@ -20,6 +20,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -454,4 +455,65 @@ public class CommandBoxTest {
 
         assertEquals(0.0, drawnFrom, 0.01, "the start of the command should be back in view");
     }
+
+    @Test
+    public void laidOut_fromTheStart_leavesTheLineSomethingToDrawIn() throws Exception {
+        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
+        Region root = box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
+
+        double[] clip = onFxThread(() -> {
+            Region lane = (Region) root.lookup("#lane");
+            Rectangle cut = (Rectangle) lane.getClip();
+            return new double[] {cut.getWidth(), cut.getHeight(), lane.getWidth(), lane.getHeight()};
+        });
+
+        // a region is given its width before its height, so a clip cut to the size the lane
+        // had when its width arrived is as tall as the lane was then, which is nothing: the
+        // line came up blank and stayed blank however much was typed into it
+        assertEquals(clip[2], clip[0], 0.01, "the clip should be as wide as the lane");
+        assertEquals(clip[3], clip[1], 0.01, "the clip should be as tall as the lane");
+        assertTrue(clip[1] > 0, "a line clipped to no height shows nothing");
+    }
+
+    @Test
+    public void typedText_onAFreshLine_isVisible() throws Exception {
+        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
+        Region root = box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
+
+        boolean drawn = onFxThread(() -> {
+            setTextOf(box, "list");
+            root.layout();
+            Region lane = (Region) root.lookup("#lane");
+            Rectangle cut = (Rectangle) lane.getClip();
+            TextFlow copy = (TextFlow) root.lookup("#highlighted");
+            return cut.getHeight() >= copy.getHeight() && copy.getHeight() > 0;
+        });
+
+        assertTrue(drawn, "what was typed should be inside the part of the lane that is drawn");
+    }
+
+    @Test
+    public void caretPastTheEnd_scrollsNoFurtherThanTheFieldDoes() throws Exception {
+        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
+        Region root = box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
+        TextFlow copy = (TextFlow) root.lookup("#highlighted");
+        TextField field = (TextField) root.lookup("#commandTextField");
+
+        double[] offsets = onFxThread(() -> {
+            field.setText("find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides");
+            field.positionCaret(field.getLength());
+            Region lane = (Region) root.lookup("#lane");
+            return new double[] {-copy.getLayoutX(), copy.getWidth() - lane.getWidth()};
+        });
+
+        // a field brings the caret back to its edge and no further. Keeping a margin beyond
+        // it leaves the copy a margin's worth from where the field scrolled to, and a click
+        // then lands a character or two from the one it was aimed at
+        assertEquals(offsets[1], offsets[0], 0.5,
+                "the copy should end at the edge of the line, as the field's text does");
+    }
+
 }

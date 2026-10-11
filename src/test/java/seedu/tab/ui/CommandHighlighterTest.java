@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.logic.parser.CommandTokenizer;
 import seedu.tab.ui.CommandHighlighter.Kind;
 import seedu.tab.ui.CommandHighlighter.Span;
 
@@ -102,5 +103,40 @@ public class CommandHighlighterTest {
     public void highlight_aBareHyphen_isAValueRatherThanAnOption() {
         // "-" alone marks nothing, exactly as the parser reads it
         assertEquals(List.of(COMMAND_WORD, VALUE), kindsOf("add -"));
+    }
+
+    @Test
+    public void highlight_aNonBreakingSpace_endsTheTokenAsTheParserDoes() {
+        // a command pasted from a web page carries these, and the parser splits on them
+        assertEquals(List.of(COMMAND_WORD, VALUE), kindsOf("add\u00a0John"));
+        assertEquals("add\u00a0John", rejoined("add\u00a0John"));
+    }
+
+    @Test
+    public void highlight_aBackslashBeforeASpace_endsTheTokenAsTheParserDoes() {
+        // a backslash escapes only the quote and another backslash, so this space still ends
+        // the token however it is coloured
+        assertEquals(List.of(COMMAND_WORD, VALUE, VALUE), kindsOf("add a\\ b"));
+    }
+
+    @Test
+    public void highlight_aBackslashBeforeAQuote_keepsTheQuoteInTheToken() {
+        // the escaped quote does not open a quoted value, as it does not for the parser
+        assertEquals(List.of(COMMAND_WORD, VALUE), kindsOf("add \\\"one"));
+    }
+
+    @Test
+    public void highlight_everyCommand_breaksWhereTheParserDoes() throws Exception {
+        // the colouring tells the User where one token ends and the next begins, so it has to
+        // break a command in the same places the parser does
+        for (String command : List.of("list", "add John -p 123", "add \"Siti Nur-Aisyah\"",
+                "add a\\ b", "add \\\"one", "add\u00a0John", "find  Siti   Nur", "edit 1 -t \"\"",
+                "add \"-Ahmad\" -p 84001122", "add John\u00a0-p\u00a0123")) {
+            long coloured = CommandHighlighter.highlight(command).stream()
+                    .filter(span -> span.kind() != SPACE)
+                    .count();
+            long parsed = CommandTokenizer.tokenize(command).size();
+            assertEquals(parsed, coloured, "disagreed about \"" + command + "\"");
+        }
     }
 }

@@ -86,9 +86,11 @@ public class CommandTokenizer {
     /**
      * Returns true if {@code character} is one a backslash may escape. Only the two characters
      * that mean something to the tokenizer are escapable, so a backslash before anything else
-     * stays in the value rather than quietly disappearing.
+     * stays in the value rather than quietly disappearing. The colouring asks the same
+     * question, so that what the User sees and what the parser reads agree on where a token
+     * ends.
      */
-    private static boolean isEscapable(char character) {
+    public static boolean isEscapable(char character) {
         return character == QUOTE || character == ESCAPE;
     }
 }

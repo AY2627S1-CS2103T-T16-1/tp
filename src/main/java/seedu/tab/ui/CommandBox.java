@@ -31,8 +31,6 @@ public class CommandBox extends UiPart<Region> {
     private static final String COPY_ERROR_STYLE_CLASS = "command-error";
     private static final String FXML = "CommandBox.fxml";
     private static final int BLINK_MILLIS = 530;
-    /** How much of the line is kept clear beyond the caret while scrolling. */
-    private static final double CARET_MARGIN = 12;
 
     private final CommandExecutor commandExecutor;
 
@@ -80,7 +78,8 @@ public class CommandBox extends UiPart<Region> {
         commandTextField.focusedProperty().addListener(layOutColours);
         commandTextField.selectionProperty().addListener(layOutColours);
         commandTextField.widthProperty().addListener(layOutColours);
-        lane.widthProperty().addListener((unused, old, width) -> clipTheLane());
+        clipTheLane();
+        lane.widthProperty().addListener((unused, old, width) -> layOutColours());
         blink();
     }
 
@@ -177,18 +176,20 @@ public class CommandBox extends UiPart<Region> {
      * {@code caretAt}.
      *
      * <p>A field scrolls only when the caret would leave the part of the command it is
-     * showing, and stays where it is otherwise. Working the offset out from the caret alone
-     * instead drags the command back under the caret every time the caret moves left, so the
-     * copy ends up showing a different part of the command from the one the field is
-     * hit-testing a click against, and a click then lands on the wrong character.
+     * showing, and then only far enough to bring it back to the edge. Working the offset out
+     * from the caret alone instead drags the command back under the caret every time the
+     * caret moves left, and keeping a margin beyond the caret leaves the copy a margin's
+     * worth away from where the field has scrolled to. Either way the copy shows a different
+     * part of the command from the one the field hit-tests a click against, and a click then
+     * lands on the wrong character.
      */
     private double scrollThatKeepsTheCaretInView(double caretAt, double content, double visible) {
         double furthest = Math.max(0, content - visible);
         double from = Math.clamp(scrolled, 0, furthest);
-        if (caretAt - from > visible - CARET_MARGIN) {
-            from = caretAt - visible + CARET_MARGIN;
-        } else if (caretAt - from < CARET_MARGIN) {
-            from = caretAt - CARET_MARGIN;
+        if (caretAt - from > visible) {
+            from = caretAt - visible;
+        } else if (caretAt - from < 0) {
+            from = caretAt;
         }
         return Math.clamp(from, 0, furthest);
     }
@@ -196,11 +197,17 @@ public class CommandBox extends UiPart<Region> {
     /**
      * Keeps the lane's clip the size of the lane, so a command longer than the line is cut off
      * at its edge rather than spilling over the rest of the window.
+     *
+     * <p>The clip follows both sides of the lane rather than being cut to the size the lane
+     * has at the time. A region is given its width before its height, so a clip made when the
+     * width arrives is as tall as the lane was then, which is nothing: the line came up blank
+     * and stayed blank however much was typed into it.
      */
     private void clipTheLane() {
-        Rectangle clip = new Rectangle(lane.getWidth(), lane.getHeight());
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(lane.widthProperty());
+        clip.heightProperty().bind(lane.heightProperty());
         lane.setClip(clip);
-        layOutColours();
     }
 
     /**

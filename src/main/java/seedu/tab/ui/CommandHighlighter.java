@@ -5,13 +5,20 @@ import static java.util.Objects.requireNonNull;
 import java.util.ArrayList;
 import java.util.List;
 
+import seedu.tab.commons.util.StringUtil;
+import seedu.tab.logic.parser.CommandTokenizer;
+
 /**
  * Splits a command into the runs of text that are coloured differently, so that the command
  * word, the options and the values are told apart as the User types.
  *
  * <p>This is only about appearance. It never rejects anything: a command is coloured while it
  * is still half-typed, so an unclosed quote or an unknown word is ordinary here and is left to
- * the parser to complain about when the command is submitted.
+ * the parser to complain about when the command is submitted. Where a token ends, though, it
+ * asks the same questions the tokenizer does: a command pasted from a web page carries a
+ * non-breaking space, which separates tokens for the parser, and a backslash escapes only the
+ * two characters that mean something to it. Deciding either differently here would colour a
+ * command as something other than what running it does.
  */
 public class CommandHighlighter {
 
@@ -34,6 +41,7 @@ public class CommandHighlighter {
 
     private static final char QUOTE = '"';
     private static final char ESCAPE = '\\';
+
     private static final String OPTION_MARKER = "-";
 
     private CommandHighlighter() {} // this class only colours commands
@@ -50,9 +58,9 @@ public class CommandHighlighter {
         boolean isFirstWord = true;
 
         while (index < command.length()) {
-            if (Character.isWhitespace(command.charAt(index))) {
+            if (StringUtil.isWhitespace(command.charAt(index))) {
                 int start = index;
-                while (index < command.length() && Character.isWhitespace(command.charAt(index))) {
+                while (index < command.length() && StringUtil.isWhitespace(command.charAt(index))) {
                     index++;
                 }
                 spans.add(new Span(command.substring(start, index), Kind.SPACE));
@@ -63,9 +71,10 @@ public class CommandHighlighter {
             boolean wasQuoted = false;
             boolean isQuoted = false;
             while (index < command.length()
-                    && (isQuoted || !Character.isWhitespace(command.charAt(index)))) {
+                    && (isQuoted || !StringUtil.isWhitespace(command.charAt(index)))) {
                 char current = command.charAt(index);
-                if (current == ESCAPE && index + 1 < command.length()) {
+                if (current == ESCAPE && index + 1 < command.length()
+                        && CommandTokenizer.isEscapable(command.charAt(index + 1))) {
                     index++;
                 } else if (current == QUOTE) {
                     isQuoted = !isQuoted;
