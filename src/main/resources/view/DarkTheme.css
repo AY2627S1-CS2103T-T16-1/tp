@@ -36,7 +36,6 @@
 .label {
     -fx-font-size: 11pt;
     -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
-    -fx-font-weight: bold;
     -fx-text-fill: -tab-text-muted;
     -fx-opacity: 0.9;
 }
