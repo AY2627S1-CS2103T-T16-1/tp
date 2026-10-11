@@ -162,11 +162,10 @@ public class ThemeTest {
         }
 
         // text drawn in a transparent highlight disappears the moment it is selected, which
-        // is what selecting it to copy it does first. Nothing this window draws does that,
-        // and the one place that may — the command field, whose text is carried by a copy
-        // drawn over it — arrives with the branch that draws the copy, and relaxes this
-        // there
-        assertTrue(hidden.isEmpty(), "these hide their own text when it is selected: " + hidden);
+        // is what selecting it to copy it does first. One place may: the command field,
+        // whose text and selection are both drawn by the copy over it
+        assertEquals(Set.of(".command-line #commandTextField"), hidden,
+                "these hide their own text when it is selected");
     }
 
     @Test

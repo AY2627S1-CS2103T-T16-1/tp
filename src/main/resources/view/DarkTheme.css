@@ -548,7 +548,7 @@
     -fx-font-family: "Monospaced";
     -fx-font-size: 15px;
     -fx-font-weight: normal;
-    /* the copy behind this field carries the text; the field keeps the input, the caret
+    /* the copy over this field carries the text; the field keeps the input, the caret
        position and the selection, and shows none of them itself. Important, because
        Extensions.css marks a refused command with an important text fill of its own, and
        the field would otherwise paint its text in red over the copy, at its own scroll

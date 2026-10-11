@@ -681,4 +681,75 @@ public class CommandBoxTest {
                 "cutting the end of the command moved the line from " + drawnFrom[0]
                 + " to " + drawnFrom[1]);
     }
+
+    @Test
+    public void edits_ofEveryKind_leaveTheCopyOnTheFieldsOwnText() throws Exception {
+        // the copy is compared with the field's own text node rather than with a model of
+        // where the field ought to have scrolled to. Every model tried here has been right
+        // for some edits and wrong for others: typing, deleting, cutting and undoing scroll
+        // a field by different rules
+        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
+        Region root = box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 320, 60)));
+        String command = "find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides";
+
+        List<String> adrift = new ArrayList<>();
+        for (String edit : List.of("type", "end", "home", "backspace", "delete",
+                "cut", "select-and-type", "undo")) {
+            double apart = onFxThread(() -> {
+                TextField field = (TextField) root.lookup("#commandTextField");
+                field.setText(command);
+                field.positionCaret(field.getLength());
+                applyEdit(field, edit);
+                root.layout();
+
+                TextFlow copy = (TextFlow) root.lookup("#highlighted");
+                Text drawn = fieldTextOf(field);
+                assertNotNull(drawn, "the field should be drawing its own text");
+                return Math.abs(copy.getLayoutX()
+                        - (drawn.getLayoutX() + drawn.getTranslateX()));
+            });
+            if (apart > 0.5) {
+                adrift.add(edit + " by " + apart);
+            }
+        }
+
+        assertTrue(adrift.isEmpty(), "the copy left the field's own text: " + adrift);
+    }
+
+    /** Does to {@code field} what the User would, by the name of the edit. */
+    private static void applyEdit(TextField field, String edit) {
+        if (edit.equals("type")) {
+            field.appendText("!");
+        } else if (edit.equals("end")) {
+            field.end();
+        } else if (edit.equals("home")) {
+            field.home();
+        } else if (edit.equals("backspace")) {
+            field.deletePreviousChar();
+        } else if (edit.equals("delete")) {
+            field.positionCaret(field.getLength() / 2);
+            field.deleteNextChar();
+        } else if (edit.equals("cut")) {
+            field.selectRange(field.getLength() - 8, field.getLength());
+            field.replaceSelection("");
+        } else if (edit.equals("select-and-type")) {
+            field.selectRange(field.getLength() - 12, field.getLength());
+            field.replaceSelection("x");
+        } else if (edit.equals("undo")) {
+            field.undo();
+        } else {
+            throw new IllegalArgumentException(edit);
+        }
+    }
+
+    /** Returns the node the field draws its own text in. */
+    private static Text fieldTextOf(TextField field) {
+        return field.lookupAll(".text").stream()
+                .filter(node -> node instanceof Text text
+                        && text.getText().equals(field.getText()))
+                .map(node -> (Text) node)
+                .findFirst()
+                .orElse(null);
+    }
 }

@@ -106,12 +106,12 @@ command is coloured while it is still half-typed.
 Three things then have to agree with the field, because the User reads our copy
 but interacts with the field:
 
-* **the scroll offset.** The copy is drawn where the field draws its own text,
-  which is half a caret's width in from each edge, and it moves only when the
-  caret would leave the line. It does not move when text is cut out of the
-  command either, because the field does not re-scroll then. A copy at a
-  different offset shows one character where the field hit-tests another, and
-  clicks land in the wrong place.
+* **the scroll offset.** The copy is drawn wherever the field is drawing its
+  own text, read from the field's text node rather than worked out again here.
+  A field scrolls by rules that differ between typing, deleting, cutting and
+  undoing, and every attempt to reproduce them was right for some of those and
+  wrong for others; a copy even a pixel out of step shows one character where
+  the field hit-tests another, and clicks land in the wrong place.
 * **the caret.** The field's caret is drawn in its text colour, which is
   transparent, so the line carries one of its own, sized from a run of the text
   so it sits where the text does.

@@ -34,12 +34,6 @@ public class CommandBox extends UiPart<Region> {
 
     private final CommandExecutor commandExecutor;
 
-    /**
-     * How far along the command the line is drawn from, kept between one change and the next
-     * so that it moves only when the caret would otherwise leave the line.
-     */
-    private double scrolled;
-
     @FXML
     private TextField commandTextField;
 
@@ -141,9 +135,8 @@ public class CommandBox extends UiPart<Region> {
      *
      * <p>A TextFlow wraps at the width it is given, which would turn a long command into
      * several lines and grow the box. It is sized to its content instead and the lane around
-     * it is clipped, so the copy runs off the edge the way the field's own text does. The
-     * field scrolls to keep its caret in view and so does this, by the same rule, since the
-     * field does not report the offset it has scrolled to.
+     * it is clipped, so the copy runs off the edge the way the field's own text does, and
+     * it is drawn wherever the field is drawing its own text.
      */
     private void layOutColours() {
         // JavaFX moves the caret before it reports the new text, so this runs once against
@@ -160,61 +153,50 @@ public class CommandBox extends UiPart<Region> {
         highlighted.autosize();
         caret.autosize();
 
-        double visible = Math.max(lane.getWidth(), 1);
         double caretAt = widthBefore(commandTextField.getCaretPosition());
-        // the caret is sized first, because the field insets its own text by half a caret
-        // and scrolls by a caret's width, so both depend on how wide the caret is
         matchCaretToTheLine();
-        scrolled = content <= visible ? 0 : scrollThatKeepsTheCaretInView(caretAt, content, visible);
 
-        // the field draws its text half a caret in from each edge and the copy has to sit
-        // exactly on it, or a click lands on the character beside the one it was aimed at
-        double inset = halfACaret();
+        // where the field is drawing its own text, which is the one thing the copy has to
+        // agree with: the field decides which character a click lands on, and it scrolls by
+        // rules of its own that differ between typing, deleting, cutting and undoing. Every
+        // attempt to work them out again here has been wrong in some case or other.
+        double drawnFrom = whereTheFieldDrawsItsText();
         double middle = lane.getHeight() / 2;
-        showSelection(scrolled - inset, middle);
-        highlighted.relocate(inset - scrolled, middle - highlighted.getHeight() / 2);
-        // the caret is centred on the point it marks, as the field's own caret is
-        caret.relocate(inset + caretAt - scrolled - caret.getWidth() / 2,
+        showSelection(-drawnFrom, middle);
+        highlighted.relocate(drawnFrom, middle - highlighted.getHeight() / 2);
+        // the caret is centred on the point it marks, as the field's own caret is, except
+        // at the very start of the line where half of it would fall outside
+        caret.relocate(Math.max(0, drawnFrom + caretAt - caret.getWidth() / 2),
                 middle - caret.getHeight() / 2);
         caret.setVisible(commandTextField.isFocused());
     }
 
     /**
-     * Returns how far along the command the line is drawn from, once the caret has moved to
-     * {@code caretAt}.
+     * Returns where the field draws its own text, in the lane's own terms.
      *
-     * <p>A field scrolls only when the caret would leave the part of the command it is
-     * showing, and then only far enough to bring it back. Working the offset out from the
-     * caret alone instead drags the command back under the caret every time the caret moves
-     * left, and the copy then shows a different part of the command from the one the field
-     * hit-tests a click against, so a click lands on the wrong character.
+     * <p>The field and the lane sit on each other, so the copy belongs wherever the field's
+     * text is. Asking the field means the two can never drift: it insets its text by half a
+     * caret, it scrolls when the caret would leave the line, and it leaves its offset alone
+     * when a cut shortens the command, and none of that has to be worked out again here.
      *
-     * <p>The caret stands after the last character, and the field leaves room for it: it
-     * scrolls its text a caret's width further than the text alone would need. The copy
-     * follows the same rule, so that the two stay on each other and the caret at the end of
-     * a long command is still drawn rather than clipped away at the edge.
-     *
-     * <p>Where the caret is already in view the line does not move at all, not even back
-     * into what is now a shorter command's range. A field does not re-scroll when text is
-     * cut out of it, so a copy that does leaves the two apart by however much was cut.
+     * <p>Before the field has a skin there is nothing to ask, so the copy falls back to the
+     * inset the field will use.
      */
-    private double scrollThatKeepsTheCaretInView(double caretAt, double content, double visible) {
-        double caretWidth = halfACaret() * 2;
-        double furthest = Math.max(0, content + caretWidth - visible);
-        double from = scrolled;
-        if (caretAt + caretWidth - from > visible) {
-            from = caretAt + caretWidth - visible;
-        } else if (caretAt - from < 0) {
-            from = caretAt;
-        } else {
-            // the caret is still in view, so the line stays where it is. Pulling it back
-            // into range here instead moves the copy while the field, which does not
-            // re-scroll on a cut, stays put: cutting the end of a long command then left
-            // the two eight characters apart and clicks landed that far out
-            return from;
-        }
-        return Math.clamp(from, 0, Math.max(furthest, 0));
+    private double whereTheFieldDrawsItsText() {
+        Text drawn = fieldText();
+        return drawn == null ? halfACaret() : drawn.getLayoutX() + drawn.getTranslateX();
     }
+
+    /** Returns the node the field draws its own text in, or null before it has a skin. */
+    private Text fieldText() {
+        for (Node node : commandTextField.lookupAll(".text")) {
+            if (node instanceof Text text && text.getText().equals(commandTextField.getText())) {
+                return text;
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Returns the inset the field draws its own text at, which the copy has to match.
