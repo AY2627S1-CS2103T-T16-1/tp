@@ -1,9 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.text.TextFlow?>
 
-<StackPane styleClass="stack-pane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <TextField fx:id="commandTextField" onAction="#handleCommandEntered" promptText="Enter command here..."/>
-</StackPane>
+<HBox fx:id="commandPane" styleClass="command-line" alignment="CENTER_LEFT" spacing="10"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <padding>
+    <Insets top="10" right="14" bottom="10" left="14" />
+  </padding>
 
+  <Label text="❯" styleClass="command-prompt" />
+
+  <StackPane HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+    <!-- the colours are painted here, behind a field whose own text is transparent, because a
+         TextField cannot colour its own content -->
+    <TextFlow fx:id="highlighted" styleClass="command-highlight" mouseTransparent="true" />
+    <TextField fx:id="commandTextField" onAction="#handleCommandEntered"
+               promptText="Enter command here..." />
+  </StackPane>
+</HBox>
