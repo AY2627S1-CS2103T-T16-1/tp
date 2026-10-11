@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.TextFlow?>
 
-<HBox fx:id="commandPane" styleClass="command-line" alignment="CENTER_LEFT" spacing="10"
+<HBox fx:id="commandPane" styleClass="command-line" alignment="BASELINE_LEFT" spacing="10"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
   <padding>
     <Insets top="10" right="14" bottom="10" left="14" />
