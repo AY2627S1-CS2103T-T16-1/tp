@@ -2,6 +2,7 @@ package seedu.tab.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.Region;
@@ -25,6 +26,9 @@ public class ResultDisplay extends UiPart<Region> {
 
     /** The text node the area draws its reply in, once the area has a skin to draw it. */
     private Text drawn;
+
+    /** Whether an answer is already on its way, so that one pulse does not ask twice. */
+    private boolean isCounting;
 
     /**
      * Creates a {@code ResultDisplay}, which stays out of the window until it has something to
@@ -58,7 +62,7 @@ public class ResultDisplay extends UiPart<Region> {
             return;
         }
         watchTheTextItDraws();
-        resultDisplay.setPrefRowCount((int) Math.clamp(rowsNeededFor(text), 1, MAX_ROWS));
+        countTheRowsAgain();
     }
 
     /**
@@ -78,9 +82,33 @@ public class ResultDisplay extends UiPart<Region> {
             // the area has no skin yet; the next reply finds one and starts following it
             return;
         }
-        drawn.layoutBoundsProperty().addListener((unused, old, bounds) ->
-                resultDisplay.setPrefRowCount(
-                        (int) Math.clamp(rowsNeededFor(resultDisplay.getText()), 1, MAX_ROWS)));
+        drawn.layoutBoundsProperty().addListener((unused, old, bounds) -> countTheRowsAgain());
+    }
+
+    /**
+     * Counts the rows the reply takes and gives the area that many, on the pulse after this
+     * one.
+     *
+     * <p>The count is asked for from inside a layout pass, because that is when the area has
+     * just wrapped the reply and can say where. Changing the rows there changes how tall the
+     * area wants to be, and the panes around it have already been laid out by then: the area
+     * is left at the height it had, which is why the first reply came up several rows too
+     * tall and stayed that way, and why widening the window did not bring a wrapped reply
+     * back onto one line. Asking again on the next pulse lets the window lay out around the
+     * answer.
+     */
+    private void countTheRowsAgain() {
+        if (isCounting) {
+            return;
+        }
+        isCounting = true;
+        Platform.runLater(() -> {
+            isCounting = false;
+            int rows = (int) Math.clamp(rowsNeededFor(resultDisplay.getText()), 1, MAX_ROWS);
+            if (rows != resultDisplay.getPrefRowCount()) {
+                resultDisplay.setPrefRowCount(rows);
+            }
+        });
     }
 
     /**
