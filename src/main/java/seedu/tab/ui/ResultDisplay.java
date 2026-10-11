@@ -2,9 +2,7 @@ package seedu.tab.ui;
 
 import static java.util.Objects.requireNonNull;
 
-import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.Region;
 
@@ -16,13 +14,10 @@ public class ResultDisplay extends UiPart<Region> {
     private static final String FXML = "ResultDisplay.fxml";
 
     /**
-     * The tallest the area grows before it starts scrolling, so that a long reply cannot push
-     * the student list off the window.
+     * The most rows the area grows to before it scrolls, so that a long reply cannot push the
+     * student list off the window while still being reachable.
      */
-    private static final double MAX_HEIGHT = 120;
-
-    /** What the text sits in, above and below, inside the area. */
-    private static final double VERTICAL_PADDING = 10;
+    private static final int MAX_ROWS = 6;
 
     @FXML
     private TextArea resultDisplay;
@@ -46,12 +41,10 @@ public class ResultDisplay extends UiPart<Region> {
      * Sizes the area to what it has to say, and takes it out of the window when that is
      * nothing.
      *
-     * <p>A text area reserves room for a whole number of rows whatever it holds, which left a
-     * band of empty space under the command line. The height is taken from the text once it
-     * has been laid out instead, so the area is as tall as its content wrapped at the width it
-     * actually has. Past {@link #MAX_HEIGHT} it scrolls rather than growing, and it stays a
-     * text area rather than becoming a label so that a reply too long to show at once can
-     * still be scrolled to and selected.
+     * <p>The area takes a row per line of the reply rather than a fixed number of them, which
+     * is what left a band of empty space under the command line. Past {@link #MAX_ROWS} it
+     * scrolls rather than growing, and it stays a text area rather than becoming a label so
+     * that a reply too long to show at once can still be scrolled to and selected.
      */
     private void fitToText(String text) {
         boolean hasSomethingToSay = !text.isBlank();
@@ -60,20 +53,8 @@ public class ResultDisplay extends UiPart<Region> {
         if (!hasSomethingToSay) {
             return;
         }
-        // the wrapped height is only known once the skin has laid the text out
-        Platform.runLater(this::matchHeightToText);
+        resultDisplay.setPrefRowCount((int) Math.clamp(text.lines().count(), 1, MAX_ROWS));
     }
 
-    /**
-     * Sets the area's height to the height of the text now laid out in it.
-     */
-    private void matchHeightToText() {
-        Node text = resultDisplay.lookup(".text");
-        if (text == null) {
-            return;
-        }
-        double wanted = text.getBoundsInLocal().getHeight() + VERTICAL_PADDING;
-        resultDisplay.setPrefHeight(Math.min(wanted, MAX_HEIGHT));
-    }
 
 }
