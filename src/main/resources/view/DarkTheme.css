@@ -183,7 +183,7 @@
     -fx-background-color: transparent;
     -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
-    -fx-text-fill: -tab-text-muted;
+    -fx-text-fill: -tab-text;
     -fx-highlight-fill: -tab-surface-selected;
     -fx-padding: 0;
     -fx-focus-color: transparent;
@@ -417,8 +417,16 @@
 }
 
 /* the three panes of the main window, which carry the window's own colour */
-.command-pane, .result-pane, .student-list-pane {
+.command-pane, .student-list-pane {
     -fx-background-color: -tab-bg;
+}
+
+/* the answer to the command just run, set apart from the window by a surface of its own and
+   an accent down its leading edge, so it reads as a reply rather than as a stray line */
+.result-pane {
+    -fx-background-color: -tab-accent, -tab-surface;
+    -fx-background-insets: 0, 0 0 0 3;
+    -fx-background-radius: 4, 4;
 }
 
 .menu-bar {
