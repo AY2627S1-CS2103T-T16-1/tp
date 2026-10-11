@@ -35,8 +35,13 @@ public class TagRow extends Region {
      * How much of the tags a card shows. A card is a summary, and the chips share the row
      * with the name, so a long tag is cut and a long list is counted rather than letting the
      * tags take the card. The whole of what is cut is a hover away.
+     *
+     * <p>The count is set by the tags a course actually uses: "attendance-low" and
+     * "needs-consult" are the length of an ordinary tag, and a count that cuts those cuts
+     * most of what anyone types. How many chips then fit is decided by the row rather than
+     * by this, so a longer count costs chips on a narrow card, not a broken layout.
      */
-    private static final int MAX_TAG_CHARACTERS = 12;
+    private static final int MAX_TAG_CHARACTERS = 16;
     private static final int MAX_CHIPS = 3;
 
     private final List<Label> chips = new ArrayList<>();

@@ -154,7 +154,7 @@ public class TagRowTest {
         // a bare "2 more…" names no tag at all, where the first tag cut short still says
         // which tag the student carries
         assertEquals(1, chips.size(), "the row should show one tag, not " + chips);
-        assertEquals("needsconsult\u2026", chips.get(0));
+        assertTrue(chips.get(0).startsWith("needsconsult"), chips.get(0));
         assertTrue(drawnInside(row), "a chip was drawn outside the row");
     }
 
@@ -186,5 +186,16 @@ public class TagRowTest {
                 .filter(Node::isVisible)
                 .allMatch(chip -> chip.getBoundsInParent().getMinX() >= -0.5
                         && chip.getBoundsInParent().getMaxX() <= row.getWidth() + 0.5);
+    }
+
+    @Test
+    public void setTags_tagsOfTheLengthACourseUses_areShownWhole() throws Exception {
+        // the tags this product is for: a count that cuts these cuts most of what is typed
+        List<String> ordinary = List.of("attendance-low", "needs-consult", "midterm", "Lab 3");
+        for (String tag : ordinary) {
+            TagRow row = rowOf(400, List.of(tag));
+
+            assertEquals(List.of(tag), chipsOf(row), "\"" + tag + "\" should be shown whole");
+        }
     }
 }
