@@ -161,9 +161,12 @@ public class CommandBox extends UiPart<Region> {
 
         double visible = Math.max(lane.getWidth(), 1);
         double caretAt = widthBefore(commandTextField.getCaretPosition());
+        // the caret is sized first, because how far the line scrolls depends on how wide the
+        // caret is: it is the caret that has to end up inside the line, not the point it
+        // stands at
+        matchCaretToTheLine();
         scrolled = content <= visible ? 0 : scrollThatKeepsTheCaretInView(caretAt, content, visible);
 
-        matchCaretToTheLine();
         double middle = lane.getHeight() / 2;
         showSelection(scrolled, middle);
         highlighted.relocate(-scrolled, middle - highlighted.getHeight() / 2);
@@ -176,18 +179,25 @@ public class CommandBox extends UiPart<Region> {
      * {@code caretAt}.
      *
      * <p>A field scrolls only when the caret would leave the part of the command it is
-     * showing, and then only far enough to bring it back to the edge. Working the offset out
-     * from the caret alone instead drags the command back under the caret every time the
-     * caret moves left, and keeping a margin beyond the caret leaves the copy a margin's
-     * worth away from where the field has scrolled to. Either way the copy shows a different
-     * part of the command from the one the field hit-tests a click against, and a click then
-     * lands on the wrong character.
+     * showing, and then only far enough to bring it back. Working the offset out from the
+     * caret alone instead drags the command back under the caret every time the caret moves
+     * left, and the copy then shows a different part of the command from the one the field
+     * hit-tests a click against, so a click lands on the wrong character.
+     *
+     * <p>What is brought back is the caret itself rather than the point it stands at. The
+     * caret is drawn a couple of pixels wide, so stopping at the point leaves it hanging on
+     * the edge of the line where the lane is clipped, and at the end of a command long
+     * enough to scroll there is nothing left of it to see.
      */
     private double scrollThatKeepsTheCaretInView(double caretAt, double content, double visible) {
-        double furthest = Math.max(0, content - visible);
+        double caretWidth = Math.max(caret.getWidth(), caret.prefWidth(-1));
+        // the caret stands after the last character, so the line scrolls a caret's width
+        // further than the text alone would need; stopping at the text leaves the caret at
+        // the very edge of the line, where the lane is clipped and nothing of it shows
+        double furthest = Math.max(0, content + caretWidth - visible);
         double from = Math.clamp(scrolled, 0, furthest);
-        if (caretAt - from > visible) {
-            from = caretAt - visible;
+        if (caretAt + caretWidth - from > visible) {
+            from = caretAt + caretWidth - visible;
         } else if (caretAt - from < 0) {
             from = caretAt;
         }

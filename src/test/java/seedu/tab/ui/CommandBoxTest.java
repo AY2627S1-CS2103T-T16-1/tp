@@ -503,18 +503,25 @@ public class CommandBoxTest {
         TextFlow copy = (TextFlow) root.lookup("#highlighted");
         TextField field = (TextField) root.lookup("#commandTextField");
 
-        double[] offsets = onFxThread(() -> {
+        double[] measured = onFxThread(() -> {
             field.setText("find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides");
             field.positionCaret(field.getLength());
             Region lane = (Region) root.lookup("#lane");
-            return new double[] {-copy.getLayoutX(), copy.getWidth() - lane.getWidth()};
+            Region mark = (Region) root.lookup("#caret");
+            return new double[] {-copy.getLayoutX(), copy.getWidth() - lane.getWidth(),
+                mark.getLayoutX() + mark.getWidth(), lane.getWidth(), mark.getWidth()};
         });
 
         // a field brings the caret back to its edge and no further. Keeping a margin beyond
         // it leaves the copy a margin's worth from where the field scrolled to, and a click
         // then lands a character or two from the one it was aimed at
-        assertEquals(offsets[1], offsets[0], 0.5,
+        assertEquals(measured[1], measured[0], measured[4] + 0.5,
                 "the copy should end at the edge of the line, as the field's text does");
+        // and the caret itself has to be inside the line, not hanging on the edge of it
+        // where the lane is clipped, or there is nothing of it left to see
+        assertTrue(measured[2] <= measured[3],
+                "the caret ends at " + measured[2] + ", past the line's " + measured[3]);
+        assertTrue(measured[4] > 0, "the caret should have a width to be seen by");
     }
 
     /** Returns how light {@code colour} is, as WCAG weighs a colour's parts. */
