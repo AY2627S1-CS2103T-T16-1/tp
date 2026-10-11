@@ -138,12 +138,15 @@ public class CommandBoxTest {
 
             field.positionCaret(0);
             double atStart = caret.getLayoutX();
+            field.positionCaret("add ".length());
+            double midway = caret.getLayoutX();
             field.positionCaret("add John".length());
-            return new double[] {atStart, caret.getLayoutX()};
+            return new double[] {atStart, midway, caret.getLayoutX()};
         });
 
-        assertEquals(0.0, offsets[0]);
+        assertEquals(0.0, offsets[0], "the caret should sit at the start of an unscrolled line");
         assertTrue(offsets[1] > offsets[0], "the caret should sit further along for a later position");
+        assertTrue(offsets[2] > offsets[1], "the caret should sit further along for a later position");
     }
 
     @Test
@@ -258,5 +261,47 @@ public class CommandBoxTest {
         onFxThread(() -> setTextOf(box, ""));
 
         assertEquals(List.of(), colouredTextOf(box));
+    }
+
+    @Test
+    public void caretMovedLeft_inACommandLongerThanTheLine_leavesTheLineWhereItIs() throws Exception {
+        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
+        Region root = box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
+        TextFlow copy = (TextFlow) root.lookup("#highlighted");
+        TextField field = (TextField) root.lookup("#commandTextField");
+
+        double[] drawnFrom = onFxThread(() -> {
+            field.setText("find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides");
+            field.positionCaret(field.getLength());
+            double atTheEnd = copy.getLayoutX();
+            field.positionCaret(field.getLength() - 4);
+            return new double[] {atTheEnd, copy.getLayoutX()};
+        });
+
+        // the field scrolls only when the caret would leave the line, so a copy that scrolls
+        // on every move shows a different part of the command from the one the field hit-tests
+        // a click against, and a click then lands on the wrong character
+        assertTrue(drawnFrom[0] < 0, "a command longer than the line should have scrolled");
+        assertEquals(drawnFrom[0], drawnFrom[1], 0.01,
+                "moving the caret back within the line should not move the line");
+    }
+
+    @Test
+    public void caretMovedToTheStart_ofALongCommand_bringsTheLineBack() throws Exception {
+        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
+        Region root = box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
+        TextFlow copy = (TextFlow) root.lookup("#highlighted");
+        TextField field = (TextField) root.lookup("#commandTextField");
+
+        double drawnFrom = onFxThread(() -> {
+            field.setText("find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides");
+            field.positionCaret(field.getLength());
+            field.positionCaret(0);
+            return copy.getLayoutX();
+        });
+
+        assertEquals(0.0, drawnFrom, 0.01, "the start of the command should be back in view");
     }
 }

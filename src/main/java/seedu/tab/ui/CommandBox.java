@@ -3,6 +3,7 @@ package seedu.tab.ui;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
@@ -35,6 +36,12 @@ public class CommandBox extends UiPart<Region> {
 
     private final CommandExecutor commandExecutor;
 
+    /**
+     * How far along the command the line is drawn from, kept between one change and the next
+     * so that it moves only when the caret would otherwise leave the line.
+     */
+    private double scrolled;
+
     @FXML
     private TextField commandTextField;
 
@@ -64,12 +71,15 @@ public class CommandBox extends UiPart<Region> {
         // types into is where the caret starts rather than somewhere they have to click
         Platform.runLater(commandTextField::requestFocus);
 
-        commandTextField.caretPositionProperty().addListener((unused, old, at) -> layOutColours());
-        commandTextField.focusedProperty().addListener((unused, old, focused) -> layOutColours());
-        commandTextField.selectionProperty().addListener((unused, old, range) -> layOutColours());
-        // the line narrows when the window does, which can take a command that fitted and
-        // make it wrap, so the decision is remade whenever the width changes
-        commandTextField.widthProperty().addListener((unused, old, width) -> layOutColours());
+        // where the copy sits follows the caret, the selection, and how much of the line the
+        // field has to show it in, so each of them asks for the same decision again. The last
+        // of them covers the line narrowing with the window, which can take a command that
+        // fitted and make it scroll.
+        ChangeListener<Object> layOutColours = (unused, old, now) -> layOutColours();
+        commandTextField.caretPositionProperty().addListener(layOutColours);
+        commandTextField.focusedProperty().addListener(layOutColours);
+        commandTextField.selectionProperty().addListener(layOutColours);
+        commandTextField.widthProperty().addListener(layOutColours);
         lane.widthProperty().addListener((unused, old, width) -> clipTheLane());
         blink();
     }
@@ -152,9 +162,7 @@ public class CommandBox extends UiPart<Region> {
 
         double visible = Math.max(lane.getWidth(), 1);
         double caretAt = widthBefore(commandTextField.getCaretPosition());
-        double scrolled = content <= visible
-                ? 0
-                : Math.clamp(caretAt - visible + CARET_MARGIN, 0, content - visible);
+        scrolled = content <= visible ? 0 : scrollThatKeepsTheCaretInView(caretAt, content, visible);
 
         matchCaretToTheLine();
         double middle = lane.getHeight() / 2;
@@ -162,6 +170,27 @@ public class CommandBox extends UiPart<Region> {
         highlighted.relocate(-scrolled, middle - highlighted.getHeight() / 2);
         caret.relocate(caretAt - scrolled, middle - caret.getHeight() / 2);
         caret.setVisible(commandTextField.isFocused());
+    }
+
+    /**
+     * Returns how far along the command the line is drawn from, once the caret has moved to
+     * {@code caretAt}.
+     *
+     * <p>A field scrolls only when the caret would leave the part of the command it is
+     * showing, and stays where it is otherwise. Working the offset out from the caret alone
+     * instead drags the command back under the caret every time the caret moves left, so the
+     * copy ends up showing a different part of the command from the one the field is
+     * hit-testing a click against, and a click then lands on the wrong character.
+     */
+    private double scrollThatKeepsTheCaretInView(double caretAt, double content, double visible) {
+        double furthest = Math.max(0, content - visible);
+        double from = Math.clamp(scrolled, 0, furthest);
+        if (caretAt - from > visible - CARET_MARGIN) {
+            from = caretAt - visible + CARET_MARGIN;
+        } else if (caretAt - from < CARET_MARGIN) {
+            from = caretAt - CARET_MARGIN;
+        }
+        return Math.clamp(from, 0, furthest);
     }
 
     /**
