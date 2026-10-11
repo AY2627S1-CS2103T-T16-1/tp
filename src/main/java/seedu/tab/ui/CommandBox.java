@@ -162,16 +162,20 @@ public class CommandBox extends UiPart<Region> {
 
         double visible = Math.max(lane.getWidth(), 1);
         double caretAt = widthBefore(commandTextField.getCaretPosition());
-        // the caret is sized first, because how far the line scrolls depends on how wide the
-        // caret is: it is the caret that has to end up inside the line, not the point it
-        // stands at
+        // the caret is sized first, because the field insets its own text by half a caret
+        // and scrolls by a caret's width, so both depend on how wide the caret is
         matchCaretToTheLine();
         scrolled = content <= visible ? 0 : scrollThatKeepsTheCaretInView(caretAt, content, visible);
 
+        // the field draws its text half a caret in from each edge and the copy has to sit
+        // exactly on it, or a click lands on the character beside the one it was aimed at
+        double inset = halfACaret();
         double middle = lane.getHeight() / 2;
-        showSelection(scrolled, middle);
-        highlighted.relocate(-scrolled, middle - highlighted.getHeight() / 2);
-        caret.relocate(caretDrawnAt(caretAt, scrolled, visible), middle - caret.getHeight() / 2);
+        showSelection(scrolled - inset, middle);
+        highlighted.relocate(inset - scrolled, middle - highlighted.getHeight() / 2);
+        // the caret is centred on the point it marks, as the field's own caret is
+        caret.relocate(inset + caretAt - scrolled - caret.getWidth() / 2,
+                middle - caret.getHeight() / 2);
         caret.setVisible(commandTextField.isFocused());
     }
 
@@ -185,36 +189,42 @@ public class CommandBox extends UiPart<Region> {
      * left, and the copy then shows a different part of the command from the one the field
      * hit-tests a click against, so a click lands on the wrong character.
      *
-     * <p>What is brought back is the caret itself rather than the point it stands at. The
-     * caret is drawn a couple of pixels wide, so stopping at the point leaves it hanging on
-     * the edge of the line where the lane is clipped, and at the end of a command long
-     * enough to scroll there is nothing left of it to see.
+     * <p>The caret stands after the last character, and the field leaves room for it: it
+     * scrolls its text a caret's width further than the text alone would need. The copy
+     * follows the same rule, so that the two stay on each other and the caret at the end of
+     * a long command is still drawn rather than clipped away at the edge.
+     *
+     * <p>Where the caret is already in view the line does not move at all, not even back
+     * into what is now a shorter command's range. A field does not re-scroll when text is
+     * cut out of it, so a copy that does leaves the two apart by however much was cut.
      */
     private double scrollThatKeepsTheCaretInView(double caretAt, double content, double visible) {
-        double furthest = Math.max(0, content - visible);
-        double from = Math.clamp(scrolled, 0, furthest);
-        if (caretAt - from > visible) {
-            from = caretAt - visible;
+        double caretWidth = halfACaret() * 2;
+        double furthest = Math.max(0, content + caretWidth - visible);
+        double from = scrolled;
+        if (caretAt + caretWidth - from > visible) {
+            from = caretAt + caretWidth - visible;
         } else if (caretAt - from < 0) {
             from = caretAt;
+        } else {
+            // the caret is still in view, so the line stays where it is. Pulling it back
+            // into range here instead moves the copy while the field, which does not
+            // re-scroll on a cut, stays put: cutting the end of a long command then left
+            // the two eight characters apart and clicks landed that far out
+            return from;
         }
-        return Math.clamp(from, 0, furthest);
+        return Math.clamp(from, 0, Math.max(furthest, 0));
     }
 
     /**
-     * Returns where the caret is drawn in the line, given that the copy is drawn from
-     * {@code drawnFrom}.
+     * Returns the inset the field draws its own text at, which the copy has to match.
      *
-     * <p>The caret stands after the last character, so at the end of a command long enough
-     * to scroll it falls on the very edge of the line, where the lane is clipped and nothing
-     * of it shows. Scrolling the copy a caret's width further to make room moves the copy
-     * out of step with the field's own text, and the field is what decides which character a
-     * click lands on, so a click near the end then lands a character out. The copy therefore
-     * stays where the field puts it, and the caret alone is brought back inside the line.
+     * <p>A text field leaves half a caret's width at each edge, so that a caret at either
+     * end of the command is drawn rather than cut in half by the edge. The copy is drawn
+     * over the field's own text, so it is drawn at the same inset.
      */
-    private double caretDrawnAt(double caretAt, double drawnFrom, double visible) {
-        double caretWidth = Math.max(caret.getWidth(), caret.prefWidth(-1));
-        return Math.min(caretAt - drawnFrom, visible - caretWidth);
+    private double halfACaret() {
+        return Math.max(caret.getWidth(), caret.prefWidth(-1)) / 2;
     }
 
     /**

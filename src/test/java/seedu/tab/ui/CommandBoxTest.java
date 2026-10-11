@@ -290,6 +290,11 @@ public class CommandBoxTest {
         });
     }
 
+    /** Half the caret's width, which is what the field insets its own text by. */
+    private static double halfACaretOf(Region root) {
+        return ((Region) root.lookup("#caret")).getWidth() / 2;
+    }
+
     private static List<String> styleClassesOf(CommandBox box, String id) {
         return List.copyOf(box.getRoot().lookup(id).getStyleClass());
     }
@@ -455,7 +460,9 @@ public class CommandBoxTest {
             return copy.getLayoutX();
         });
 
-        assertEquals(0.0, drawnFrom, 0.01, "the start of the command should be back in view");
+        // the field draws its text half a caret in from the edge, and the copy sits on it
+        assertEquals(halfACaretOf(root), drawnFrom, 0.01,
+                "the start of the command should be back in view");
     }
 
     @Test
@@ -513,11 +520,12 @@ public class CommandBoxTest {
                 mark.getLayoutX() + mark.getWidth(), lane.getWidth(), mark.getWidth()};
         });
 
-        // the copy is drawn from exactly where the field has scrolled to, because the field
-        // is what decides which character a click lands on: a copy even a caret's width out
-        // of step puts a click near the end of a long command on the wrong character
-        assertEquals(measured[1], measured[0], 0.5,
-                "the copy should end at the edge of the line, as the field's text does");
+        // the copy is drawn where the field's own text sits, because the field is what
+        // decides which character a click lands on: a copy even a pixel out of step puts a
+        // click near a character's middle on the one beside it
+        assertEquals(measured[1] + halfACaretOf(root), measured[0], 0.5,
+                "the copy is drawn from " + measured[0] + " where the field's text ends at "
+                + measured[1]);
         // and the caret itself has to be inside the line, not hanging on the edge of it
         // where the lane is clipped, or there is nothing of it left to see
         assertTrue(measured[2] <= measured[3],
@@ -640,11 +648,37 @@ public class CommandBoxTest {
                 mark.getLayoutX() + mark.getWidth(), lane.getWidth()};
         });
 
-        // both at once: the copy exactly where the field has scrolled to, so clicks land
-        // where they are aimed, and the caret inside the line, so it can be seen
-        assertEquals(measured[1], measured[0], 0.5,
+        // both at once: the copy where the field's own text sits, so clicks land where they
+        // are aimed, and the caret inside the line, so it can be seen
+        assertEquals(measured[1] + halfACaretOf(root), measured[0], 0.5,
                 "the copy is drawn from " + measured[0] + " against the field's " + measured[1]);
         assertTrue(measured[2] <= measured[3] + 0.01,
                 "the caret ends at " + measured[2] + ", past the line's " + measured[3]);
+    }
+
+    @Test
+    public void textCutFromTheEnd_leavesTheLineWhereTheFieldLeftIt() throws Exception {
+        CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
+        Region root = box.getRoot();
+        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
+        TextFlow copy = (TextFlow) root.lookup("#highlighted");
+        TextField field = (TextField) root.lookup("#commandTextField");
+
+        double[] drawnFrom = onFxThread(() -> {
+            field.setText("find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides");
+            field.positionCaret(field.getLength());
+            double atTheEnd = copy.getLayoutX();
+            // as Ctrl+X on a selection at the end does
+            field.selectRange(field.getLength() - 8, field.getLength());
+            field.replaceSelection("");
+            return new double[] {atTheEnd, copy.getLayoutX()};
+        });
+
+        // a field does not re-scroll when text is cut out of it, so neither may the copy:
+        // the two would otherwise sit as far apart as the cut was long, and a click would
+        // land that many characters away from where it was aimed
+        assertEquals(drawnFrom[0], drawnFrom[1], 0.5,
+                "cutting the end of the command moved the line from " + drawnFrom[0]
+                + " to " + drawnFrom[1]);
     }
 }

@@ -97,20 +97,21 @@ and all, where the tokenizer removes them and may refuse an unclosed quote
 that is merely half-typed. It asks the tokenizer the questions the two must
 agree on — `CommandTokenizer#isEscapable`, and `StringUtil#isWhitespace` for
 where a token ends — and `CommandHighlighterTest` runs both over a list of
-awkward commands and compares how many tokens each found. That catches the
-pair disagreeing about where a token ends, which is what the colours show; it
-does not compare the text of each token, so a disagreement that splits in the
-same places would go unnoticed. It never rejects anything: a
+awkward commands and compares how many tokens each found. That catches one of
+them splitting a command into a different number of pieces; it does not
+compare where each piece begins and ends, so a boundary that moves without
+changing the count slips through. It never rejects anything: a
 command is coloured while it is still half-typed.
 
 Three things then have to agree with the field, because the User reads our copy
 but interacts with the field:
 
-* **the scroll offset.** The copy is drawn from the same place the field has
-  scrolled to, moving only when the caret would leave the line and only far
-  enough to bring the caret itself back. A copy at a different offset shows one
-  character where the field hit-tests another, and clicks land in the wrong
-  place.
+* **the scroll offset.** The copy is drawn where the field draws its own text,
+  which is half a caret's width in from each edge, and it moves only when the
+  caret would leave the line. It does not move when text is cut out of the
+  command either, because the field does not re-scroll then. A copy at a
+  different offset shows one character where the field hit-tests another, and
+  clicks land in the wrong place.
 * **the caret.** The field's caret is drawn in its text colour, which is
   transparent, so the line carries one of its own, sized from a run of the text
   so it sits where the text does.
