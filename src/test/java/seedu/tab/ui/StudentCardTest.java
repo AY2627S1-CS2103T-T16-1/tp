@@ -11,15 +11,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -30,32 +26,24 @@ import seedu.tab.testutil.StudentBuilder;
 
 public class StudentCardTest {
 
-    private static final int TIMEOUT_SECONDS = 10;
     private static final double CARD_WIDTH = 420;
     /** What the card cuts a name to, as the card states it. */
     private static final int MAX_NAME_CHARACTERS_UNDER_TEST = 22;
-    /** About what the list gives a card when the window opens at its default size. */
-    private static final double DEFAULT_CARD_WIDTH = 490;
+    /**
+     * About what the list gives a card when the window opens at its default 740 width,
+     * once the sidebar beside it has taken its own. The window's own minimum of 490 leaves
+     * a card about 298 wide, which is the narrow end rather than the usual one.
+     */
+    private static final double DEFAULT_CARD_WIDTH = 546;
 
     @BeforeAll
     public static void startToolkit() throws Exception {
-        CountDownLatch started = new CountDownLatch(1);
-        try {
-            Platform.startup(started::countDown);
-        } catch (IllegalStateException alreadyRunning) {
-            started.countDown();
-        }
-        // JavaFX shuts itself down when the last window closes, and then runs nothing more,
-        // so a test that shows a window would leave every test after it waiting forever
-        Platform.runLater(() -> Platform.setImplicitExit(false));
-        assertTrue(started.await(TIMEOUT_SECONDS, TimeUnit.SECONDS), "the toolkit did not start");
+        FxToolkit.start();
     }
 
     /** Runs {@code work} on the thread JavaFX requires its nodes to be built on. */
     private static <T> T onFxThread(Callable<T> work) throws Exception {
-        FutureTask<T> task = new FutureTask<>(work);
-        Platform.runLater(task);
-        return task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        return FxToolkit.onFxThread(work);
     }
 
     /**
@@ -538,5 +526,32 @@ public class StudentCardTest {
         assertFalse(chips.isEmpty(), "the row should name a tag");
         assertTrue(chips.get(0).startsWith("AY2627"),
                 "the row should lead with the tag, not a count: " + chips);
+    }
+
+    @Test
+    public void constructor_atEveryWidth_keepsSomeOfTheName() throws Exception {
+        // a flagged student with tags on the narrowest window the product allows, where the
+        // name had been squeezed down to an ellipsis and nothing else
+        Student student = new StudentBuilder().withName("Bernice Yu")
+                .withTags("attendance-low", "needs-consult").withFlag(true).build();
+
+        List<String> unreadable = new ArrayList<>();
+        for (int width = 280; width <= 760; width += 10) {
+            int at = width;
+            String shown = onFxThread(() -> {
+                Region root = (Region) new StudentCard(student, 2).getRoot();
+                assertNotNull(styledScene(root, at, 120));
+                Label name = (Label) root.lookup("#name");
+                return name.getWidth() + "|" + name.prefWidth(-1);
+            });
+            double drawn = Double.parseDouble(shown.split("\\|")[0]);
+            if (drawn < 40) {
+                unreadable.add(at + ": " + drawn);
+            }
+        }
+
+        // a name a reader cannot make out at all says less about the student than a tag
+        // count they cannot see
+        assertTrue(unreadable.isEmpty(), "the name was squeezed away at: " + unreadable);
     }
 }
