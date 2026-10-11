@@ -29,7 +29,7 @@
       <Region HBox.hgrow="ALWAYS" />
       <!-- the trailing pill. It carries the follow-up marker, and takes the age once a
            follow-up records when it was raised -->
-      <Label fx:id="followUp" styleClass="card-pill" />
+      <Label fx:id="followUp" styleClass="card-pill" minWidth="-Infinity" />
     </HBox>
 
     <HBox alignment="CENTER_LEFT" spacing="12">
