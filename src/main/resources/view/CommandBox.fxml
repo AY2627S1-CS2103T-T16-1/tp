@@ -24,6 +24,9 @@
          grows with it. A StackPane does both, so the copy of a long command dragged the whole
          command box wider than the window. -->
     <Pane fx:id="lane" maxWidth="Infinity" mouseTransparent="true">
+      <!-- behind the text: the field's own highlight is drawn at the field's scroll offset,
+           which is not ours, so it broke into fragments behind the copy -->
+      <Region fx:id="selection" styleClass="command-selection" />
       <TextFlow fx:id="highlighted" styleClass="command-highlight" />
       <Region fx:id="caret" styleClass="command-caret" />
     </Pane>

@@ -185,7 +185,8 @@
     -fx-padding: 0;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
-    -fx-highlight-fill: -tab-surface-selected;
+    -fx-highlight-fill: transparent;
+    -fx-highlight-text-fill: transparent;
     -fx-text-fill: -tab-text;
     -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12px;
@@ -561,14 +562,11 @@
     -fx-font-family: "Monospaced";
     -fx-font-size: 15px;
     -fx-font-weight: normal;
-    -fx-text-fill: -tab-text;
-    -fx-highlight-fill: -tab-surface-selected;
-}
-
-/* while the coloured copy shows, the field's own text gets out of the way, but the caret
-   stays so that typing still looks like typing */
-.command-line #commandTextField:coloured {
+    /* the copy behind this field carries the text; the field keeps the input, the caret
+       position and the selection, and shows none of them itself */
     -fx-text-fill: transparent;
+    -fx-highlight-fill: transparent;
+    -fx-highlight-text-fill: transparent;
 }
 
 /* the same face and size as the field above it: the two are only lined up by matching here,
@@ -609,4 +607,11 @@
     -fx-max-width: 2;
     -fx-min-height: 0;
     -fx-max-height: 100;
+}
+
+/* the selected run of a command, drawn here because the field's own highlight sits at an
+   offset of its own and broke into fragments behind the coloured copy */
+.command-selection {
+    -fx-background-color: -tab-surface-selected;
+    -fx-background-radius: 2;
 }

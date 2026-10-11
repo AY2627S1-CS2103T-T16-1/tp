@@ -4,10 +4,10 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
-import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
+import javafx.scene.control.IndexRange;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -27,8 +27,6 @@ public class CommandBox extends UiPart<Region> {
 
     public static final String ERROR_STYLE_CLASS = "error";
     private static final String FXML = "CommandBox.fxml";
-    /** Set while the coloured copy is showing, which is when the field hides its own text. */
-    private static final PseudoClass COLOURED = PseudoClass.getPseudoClass("coloured");
     private static final int BLINK_MILLIS = 530;
     /** How much of the line is kept clear beyond the caret while scrolling. */
     private static final double CARET_MARGIN = 12;
@@ -47,6 +45,9 @@ public class CommandBox extends UiPart<Region> {
     @FXML
     private Pane lane;
 
+    @FXML
+    private Region selection;
+
     /**
      * Creates a {@code CommandBox} with the given {@code CommandExecutor}.
      */
@@ -63,6 +64,7 @@ public class CommandBox extends UiPart<Region> {
 
         commandTextField.caretPositionProperty().addListener((unused, old, at) -> layOutColours());
         commandTextField.focusedProperty().addListener((unused, old, focused) -> layOutColours());
+        commandTextField.selectionProperty().addListener((unused, old, range) -> layOutColours());
         // the line narrows when the window does, which can take a command that fitted and
         // make it wrap, so the decision is remade whenever the width changes
         commandTextField.widthProperty().addListener((unused, old, width) -> layOutColours());
@@ -154,6 +156,7 @@ public class CommandBox extends UiPart<Region> {
 
         matchCaretToTheLine();
         double middle = lane.getHeight() / 2;
+        showSelection(scrolled, middle);
         highlighted.relocate(-scrolled, middle - highlighted.getHeight() / 2);
         caret.relocate(caretAt - scrolled, middle - caret.getHeight() / 2);
         caret.setVisible(commandTextField.isFocused());
@@ -167,6 +170,27 @@ public class CommandBox extends UiPart<Region> {
         Rectangle clip = new Rectangle(lane.getWidth(), lane.getHeight());
         lane.setClip(clip);
         layOutColours();
+    }
+
+    /**
+     * Draws the selected run of the command behind the copy.
+     *
+     * <p>The field draws its own highlight at the offset it has scrolled to, which is not the
+     * offset the copy is drawn at, so the two disagreed and the highlight came out in
+     * fragments between the characters. The field's highlight is turned off in the stylesheet
+     * and this stands in for it, measured the same way as everything else on the line.
+     */
+    private void showSelection(double scrolled, double middle) {
+        IndexRange range = commandTextField.getSelection();
+        boolean hasSelection = range.getLength() > 0;
+        selection.setVisible(hasSelection);
+        if (!hasSelection) {
+            return;
+        }
+        double from = widthBefore(range.getStart());
+        double to = widthBefore(range.getEnd());
+        selection.resize(to - from, caret.getHeight());
+        selection.relocate(from - scrolled, middle - caret.getHeight() / 2);
     }
 
     /**
