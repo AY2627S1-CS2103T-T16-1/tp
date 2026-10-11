@@ -531,8 +531,9 @@
     -fx-background-color: transparent;
     -fx-border-width: 0;
     -fx-padding: 0;
-    -fx-font-family: "monospace";
+    -fx-font-family: "JetBrains Mono", "Cascadia Mono", "DejaVu Sans Mono", "Consolas", monospace;
     -fx-font-size: 13px;
+    -fx-font-weight: normal;
     -fx-text-fill: -tab-text;
     -fx-highlight-fill: -tab-surface-selected;
 }
@@ -546,6 +547,7 @@
 /* the same face and size as the field above it: the two are only lined up by matching here,
    and CommandBoxTest fails if they drift apart */
 .command-token {
+    -fx-font-weight: normal;
     -fx-font-family: "monospace";
     -fx-font-size: 13px;
 }
