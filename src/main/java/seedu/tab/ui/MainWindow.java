@@ -65,6 +65,7 @@ public class MainWindow extends UiPart<Stage> {
         this.dataFilePath = dataFilePath;
 
         // Configure the UI
+        UiFonts.applyTo(primaryStage.getScene());
         setWindowDefaultSize(logic.getGuiSettings());
 
         setAccelerators();

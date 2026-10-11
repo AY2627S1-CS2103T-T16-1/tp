@@ -2,6 +2,7 @@ package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Callable;
@@ -13,7 +14,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
+import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.Region;
 
 public class ResultDisplayTest {
 
@@ -52,6 +55,19 @@ public class ResultDisplayTest {
 
     private static String textOf(ResultDisplay display) {
         return areaOf(display).getText();
+    }
+
+    /**
+     * Returns a scene holding {@code root}, dressed in the stylesheet the window uses, so
+     * that a reply is wrapped at the width and in the font the product shows it in.
+     */
+    private static Scene styledScene(Region root, double width, double height) {
+        Scene scene = new Scene(root, width, height);
+        scene.getStylesheets().add(
+                UiPart.class.getResource("/view/DarkTheme.css").toExternalForm());
+        root.applyCss();
+        root.layout();
+        return scene;
     }
 
     @Test
@@ -110,5 +126,39 @@ public class ResultDisplayTest {
         });
 
         assertFalse(display.getRoot().isManaged());
+    }
+
+    @Test
+    public void setFeedbackToUser_aLongReplyOnOneLine_takesTheRowsItNeeds() throws Exception {
+        // "Edited student: ..." arrives as a single line and is wrapped by the area, so
+        // counting the breaks it was written with gave it one row and hid the rest of it
+        String reply = "Edited student: Siti Nur-Aisyah Binte Abdullah Rahman; "
+                + "Phone: 91234567; Email: e1234567@u.nus.edu; "
+                + "Tags: needsconsultation urgent; Needs follow-up";
+
+        int rows = onFxThread(() -> {
+            ResultDisplay display = new ResultDisplay();
+            Region root = display.getRoot();
+            assertNotNull(styledScene(root, 450, 200));
+            display.setFeedbackToUser(reply);
+            root.layout();
+            return ((TextArea) root.lookup("#resultDisplay")).getPrefRowCount();
+        });
+
+        assertTrue(rows > 1, "a reply too long for one row should take more than one: " + rows);
+    }
+
+    @Test
+    public void setFeedbackToUser_aShortReply_staysOneRow() throws Exception {
+        int rows = onFxThread(() -> {
+            ResultDisplay display = new ResultDisplay();
+            Region root = display.getRoot();
+            assertNotNull(styledScene(root, 450, 200));
+            display.setFeedbackToUser("Listed all students.");
+            root.layout();
+            return ((TextArea) root.lookup("#resultDisplay")).getPrefRowCount();
+        });
+
+        assertEquals(1, rows, "a reply that fits should not leave empty space under it");
     }
 }
