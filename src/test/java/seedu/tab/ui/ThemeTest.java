@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -30,6 +31,10 @@ public class ThemeTest {
             "src", "main", "resources", "view", "MainWindow.fxml");
     private static final Path DARK_THEME = Paths.get(
             "src", "main", "resources", "view", "DarkTheme.css");
+    private static final Path EXTENSIONS = Paths.get(
+            "src", "main", "resources", "view", "Extensions.css");
+    private static final Path HELP_WINDOW = Paths.get(
+            "src", "main", "resources", "view", "HelpWindow.css");
 
     /**
      * A colour written in place of a palette name, which the palette exists to prevent. Any
@@ -117,12 +122,21 @@ public class ThemeTest {
     }
 
     @Test
-    public void darkTheme_namesEveryColourRatherThanRepeatingIt() throws IOException {
-        String css = Files.readString(DARK_THEME, StandardCharsets.UTF_8);
-        String belowThePalette = css.substring(css.indexOf('}') + 1);
-
-        Matcher matcher = COLOUR_LITERAL.matcher(belowThePalette);
-        List<String> literals = matcher.results().map(MatchResultText::of).toList();
+    public void everyStylesheet_namesEveryColourRatherThanRepeatingIt() throws IOException {
+        // every stylesheet the window loads, not only the main one: a looked-up colour is
+        // resolved against the node it is used on rather than the file it was written in, so
+        // they all share one palette and a colour written into any of them escapes it
+        List<String> literals = new ArrayList<>();
+        for (Path stylesheet : List.of(DARK_THEME, EXTENSIONS, HELP_WINDOW)) {
+            String css = Files.readString(stylesheet, StandardCharsets.UTF_8);
+            String belowThePalette = stylesheet.equals(DARK_THEME)
+                    ? css.substring(css.indexOf('}') + 1)
+                    : css;
+            Matcher matcher = COLOUR_LITERAL.matcher(belowThePalette);
+            matcher.results()
+                    .map(result -> stylesheet.getFileName() + ": " + MatchResultText.of(result))
+                    .forEach(literals::add);
+        }
 
         assertTrue(literals.isEmpty(),
                 "these rules set a colour without going through the palette: " + literals);
