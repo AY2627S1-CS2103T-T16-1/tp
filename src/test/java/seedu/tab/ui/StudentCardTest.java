@@ -351,6 +351,24 @@ public class StudentCardTest {
     }
 
     @Test
+    public void constructor_aStudentWithNoTags_givesTheWholeLineToTheName() throws Exception {
+        Student student = new StudentBuilder()
+                .withName("Siti Nur-Aisyah Binte Abdullah Rahman").withTags().build();
+
+        double[] widths = onFxThread(() -> {
+            Region root = (Region) new StudentCard(student, 1).getRoot();
+            assertNotNull(styledScene(root, DEFAULT_CARD_WIDTH, 120));
+            Label name = (Label) root.lookup("#name");
+            return new double[] {name.getWidth(), name.prefWidth(-1),
+                root.lookup("#tags").getBoundsInParent().getWidth()};
+        });
+
+        // no chips means no gap where chips would have been
+        assertEquals(0, widths[2], "a row with no tags should take no width");
+        assertTrue(widths[0] >= widths[1] - 1, "the name should have the line to itself");
+    }
+
+    @Test
     public void constructor_moreTagsThanFit_countsTheRest() throws Exception {
         Student student = new StudentBuilder()
                 .withTags("alpha", "bravo", "charlie", "delta", "echo").build();
