@@ -1,6 +1,7 @@
 package seedu.tab.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.testutil.Assert.assertThrows;
@@ -42,6 +43,32 @@ public class MessagesTest {
                 .withTags("friends").withFlag(true).build();
         assertEquals("Alice Pauline; Phone: 94351253; Email: amy@gmail.com; Tags: [friends]; Needs follow-up",
                 Messages.format(student));
+    }
+
+    @Test
+    public void getErrorMessageForInvalidValue_shortValue_isQuotedWhole() {
+        assertEquals("Email \"bob!yahoo\" is not valid: no @",
+                Messages.getErrorMessageForInvalidValue("Email", "bob!yahoo", "no @"));
+    }
+
+    @Test
+    public void getErrorMessageForInvalidValue_valueAtTheQuotingLimit_isQuotedWhole() {
+        String value = "a".repeat(Messages.MAX_QUOTED_VALUE_LENGTH);
+
+        assertEquals("Email \"" + value + "\" is not valid: too long",
+                Messages.getErrorMessageForInvalidValue("Email", value, "too long"));
+    }
+
+    @Test
+    public void getErrorMessageForInvalidValue_longValue_isShortenedSoTheReasonStaysVisible() {
+        // a value of several thousand characters would otherwise push the reason out of sight
+        String value = "a".repeat(10000);
+
+        String message = Messages.getErrorMessageForInvalidValue("Email", value, "too long");
+
+        assertEquals("Email \"" + "a".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…\" is not valid: too long",
+                message);
+        assertTrue(message.length() < 200, "the message is still far too long: " + message.length());
     }
 
     @Test

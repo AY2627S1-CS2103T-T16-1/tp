@@ -68,6 +68,54 @@ public class EmailTest {
     }
 
     @Test
+    public void isWithinLengthLimit_atTheLimit_isAccepted() {
+        String atLimit = addressOfLength(Email.MAX_LENGTH);
+
+        assertEquals(Email.MAX_LENGTH, atLimit.length());
+        assertTrue(Email.isWithinLengthLimit(atLimit));
+        assertTrue(Email.isValidEmail(atLimit));
+    }
+
+    @Test
+    public void isWithinLengthLimit_oneCharacterOver_isRejected() {
+        String overLimit = addressOfLength(Email.MAX_LENGTH + 1);
+
+        assertEquals(Email.MAX_LENGTH + 1, overLimit.length());
+        assertFalse(Email.isWithinLengthLimit(overLimit));
+    }
+
+    @Test
+    public void isValidEmail_addressOverTheLengthLimit_isStillStructurallyValid() {
+        // the limit belongs to what a command may enter, not to the field itself. Narrowing
+        // isValidEmail would make a file an earlier version wrote unloadable, and storage
+        // validates with it, so a record the product had already accepted would be discarded.
+        String overLimit = addressOfLength(Email.MAX_LENGTH + 1);
+
+        assertTrue(Email.isValidEmail(overLimit));
+    }
+
+    @Test
+    public void getFailureReason_addressLongEnoughToOverflowTheStack_namesTheLength() {
+        // getFailureReason matches the local part on its own, so it is guarded by the same
+        // length branch and must answer without exhausting the stack
+        String overflowing = "a.".repeat(5000) + "a@example.com";
+
+        String reason = Email.getFailureReason(overflowing);
+
+        assertTrue(reason.contains(String.valueOf(Email.MAX_LENGTH)), reason);
+        assertTrue(reason.contains(String.valueOf(overflowing.length())), reason);
+    }
+
+    /**
+     * Returns a valid-looking address of exactly {@code length} characters, padded in the local
+     * part so that only the length is at fault.
+     */
+    private static String addressOfLength(int length) {
+        String domain = "@example.com";
+        return "a".repeat(length - domain.length()) + domain;
+    }
+
+    @Test
     public void equals() {
         Email email = new Email("valid@email");
 

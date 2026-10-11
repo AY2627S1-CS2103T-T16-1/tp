@@ -75,7 +75,9 @@ public class ParserUtil {
     public static Email parseEmail(String email) throws ParseException {
         requireNonNull(email);
         String trimmedEmail = email.trim();
-        if (!Email.isValidEmail(trimmedEmail)) {
+        // the length is examined first, because Email.isValidEmail exhausts the stack on a long
+        // enough address: an address the User typed has to clear the limit before being matched
+        if (!Email.isWithinLengthLimit(trimmedEmail) || !Email.isValidEmail(trimmedEmail)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(
                     Email.FIELD_NAME, trimmedEmail, Email.getFailureReason(trimmedEmail)));
         }
