@@ -186,7 +186,7 @@
     -fx-control-inner-background: -tab-bg;
     -fx-background-color: transparent;
     -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
-    -fx-font-size: 12pt;
+    -fx-font-size: 12px;
     -fx-text-fill: -tab-text;
     -fx-highlight-fill: -tab-surface-selected;
 }
