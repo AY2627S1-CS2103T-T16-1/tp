@@ -96,8 +96,11 @@ character of the command. It walks the command itself, rather than calling
 and all, where the tokenizer removes them and may refuse an unclosed quote
 that is merely half-typed. It asks the tokenizer the questions the two must
 agree on — `CommandTokenizer#isEscapable`, and `StringUtil#isWhitespace` for
-where a token ends — and `CommandHighlighterTest` compares the two across
-awkward commands so the pair cannot drift apart. It never rejects anything: a
+where a token ends — and `CommandHighlighterTest` runs both over a list of
+awkward commands and compares how many tokens each found. That catches the
+pair disagreeing about where a token ends, which is what the colours show; it
+does not compare the text of each token, so a disagreement that splits in the
+same places would go unnoticed. It never rejects anything: a
 command is coloured while it is still half-typed.
 
 Three things then have to agree with the field, because the User reads our copy
@@ -118,7 +121,11 @@ but interacts with the field:
 `CommandBoxTest` checks the contrast of the selection band against the line,
 and of every colour the line uses against that band, including the one a
 refused command is written in, so that selecting a command cannot hide half of
-it.
+it. The bar it holds them to is 3:1 rather than the 4.5:1 WCAG asks of text
+this size: on a window this dark, a band light enough to be seen against the
+line (2.2:1) lightens the background enough that 4.5:1 would need every token
+colour moved towards white, which is not the palette the mockup sets. The
+trade-off is deliberate and worth revisiting if the palette changes.
 
 #### Summarising the list
 
