@@ -74,17 +74,21 @@ public class ResultDisplay extends UiPart<Region> {
      */
     private int rowsNeededFor(String text) {
         double wrapAt = resultDisplay.getWidth() - WRAPPING_ALLOWANCE;
+        long written = Math.max(1, text.lines().count());
         if (wrapAt <= 0) {
             // the area has not been laid out yet, so the breaks in the reply are all there is
-            return (int) text.lines().count();
+            return (int) written;
         }
-        Text wrapped = new Text(text);
-        wrapped.setFont(resultDisplay.getFont());
-        wrapped.setWrappingWidth(wrapAt);
-        Text oneRow = new Text("X");
-        oneRow.setFont(resultDisplay.getFont());
-        return (int) Math.ceil(wrapped.getLayoutBounds().getHeight()
-                / oneRow.getLayoutBounds().getHeight());
+
+        Text measured = new Text(text);
+        measured.setFont(resultDisplay.getFont());
+        // a row is as tall as a row of this reply, measured before it is wrapped. Measuring
+        // a letter of its own instead compares this reply's tallest glyph against that
+        // letter's: in Inter a line of a reply stands 15.0 against the 14.52 of an "X", so
+        // every one-line reply rounded up to two rows and carried an empty one
+        double rowHeight = measured.getLayoutBounds().getHeight() / written;
+        measured.setWrappingWidth(wrapAt);
+        return (int) Math.round(measured.getLayoutBounds().getHeight() / rowHeight);
     }
 
 
