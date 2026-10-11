@@ -408,7 +408,7 @@
 /* the answer to the command just run: a line of text with a quiet rule beside it, which is
    all the mockup gives it. A surface here read as a slab rather than as a reply. */
 .result-rule {
-    -fx-border-color: transparent transparent transparent -tab-border;
+    -fx-border-color: transparent transparent transparent -tab-accent;
     -fx-border-width: 0 0 0 2;
 }
 
