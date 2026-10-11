@@ -4,17 +4,23 @@
  * hunted through the rules that use it.
  */
 * {
-    -tab-bg: #11151e;              /* the window behind everything */
-    -tab-surface: #1a1f2b;         /* a card, the command line, the sidebar */
-    -tab-surface-raised: #222938;  /* a surface lifted above its neighbours */
-    -tab-surface-selected: #243041;/* the row the User is on */
-    -tab-border: #272e3d;          /* a divider, and the edge of a surface */
-    -tab-text: #e6e9ef;            /* ordinary text */
-    -tab-text-muted: #8b93a7;      /* an index, a label, a secondary detail */
-    -tab-accent: #4ec9b0;          /* the product's own colour */
-    -tab-highlight: #e0a458;       /* something that wants attention */
-    -tab-chip-bg: #2b3446;         /* a tag chip */
-    -tab-chip-text: #a8b3cb;
+    /* Sampled from docs/images/Ui.png rather than guessed, so the app and the picture it
+       ships agree. The comment after each is where in the mockup it was read. */
+    -tab-bg: #15181c;              /* the window behind everything */
+    -tab-bg-sunken: #101216;       /* the sidebar, and the well the command line sits in */
+    -tab-surface: #232830;         /* a card: lighter than the window, not darker */
+    -tab-surface-raised: #2a303a;  /* a surface lifted above its neighbours */
+    -tab-surface-selected: #262e38;/* the row the User is on */
+    -tab-border: #22262d;          /* a divider, and the edge of a surface */
+    -tab-text: #f2f5f7;            /* a student's name, and ordinary text */
+    -tab-text-muted: #a6b9c8;      /* a secondary detail under a name */
+    -tab-text-dim: #798289;        /* a count beside a sidebar row */
+    -tab-accent: #68c4ee;          /* the prompt, and the command word after it */
+    -tab-highlight: #d4ae40;       /* the follow-up pill */
+    -tab-string: #a8c68d;          /* a quoted value on the command line */
+    -tab-option: #7fc8e8;          /* an option on the command line */
+    -tab-chip-bg: #2a3945;         /* a tag chip */
+    -tab-chip-text: #8cc7e5;
     -tab-danger: #ff6b6b;          /* a refused command */
 }
 
@@ -23,30 +29,37 @@
     background-color: -tab-surface; /* Used in the default.html file */
 }
 
+.root {
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
+}
+
 .label {
     -fx-font-size: 11pt;
-    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
+    -fx-font-weight: bold;
     -fx-text-fill: -tab-text-muted;
     -fx-opacity: 0.9;
 }
 
 .label-bright {
     -fx-font-size: 11pt;
-    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
+    -fx-font-weight: bold;
     -fx-text-fill: -tab-text;
     -fx-opacity: 1;
 }
 
 .label-header {
     -fx-font-size: 32pt;
-    -fx-font-family: "Segoe UI Light";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-text-fill: -tab-text;
     -fx-opacity: 1;
 }
 
 .text-field {
     -fx-font-size: 12pt;
-    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
+    -fx-font-weight: bold;
 }
 
 .tab-pane {
@@ -86,7 +99,7 @@
 
 .table-view .column-header .label {
     -fx-font-size: 20pt;
-    -fx-font-family: "Segoe UI Light";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-text-fill: -tab-text;
     -fx-alignment: center-left;
     -fx-opacity: 1;
@@ -134,7 +147,7 @@
     -fx-background-color: -tab-surface-selected;
     -fx-border-color: -tab-accent;
     -fx-border-width: 0 0 0 3;
-    -fx-border-radius: 0 8 8 0;
+    -fx-border-radius: 0 6 6 0;
 }
 
 .list-cell .label {
@@ -142,13 +155,14 @@
 }
 
 .cell_big_label {
-    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
+    -fx-font-weight: bold;
     -fx-font-size: 16px;
     -fx-text-fill: -tab-text;
 }
 
 .cell_small_label {
-    -fx-font-family: "Segoe UI";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 13px;
     -fx-text-fill: -tab-text-muted;
 }
@@ -172,7 +186,7 @@
        -fx-background-color leaves the default white slab showing */
     -fx-control-inner-background: -tab-bg;
     -fx-background-color: transparent;
-    -fx-font-family: "Segoe UI";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 12pt;
     -fx-text-fill: -tab-text;
     -fx-highlight-fill: -tab-surface-selected;
@@ -193,7 +207,7 @@
 }
 
 .status-bar .label {
-    -fx-font-family: "Segoe UI Light";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-text-fill: -tab-text;
     -fx-padding: 4px;
     -fx-pref-height: 30px;
@@ -231,9 +245,13 @@
     -fx-background-color: -tab-bg;
 }
 
+.menu-bar {
+    -fx-padding: 2 6 2 6;
+}
+
 .menu-bar .label {
-    -fx-font-size: 14pt;
-    -fx-font-family: "Segoe UI Light";
+    -fx-font-size: 12px;
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-text-fill: -tab-text;
     -fx-opacity: 0.9;
 }
@@ -344,7 +362,7 @@
 
 #cardPane {
     -fx-background-color: -tab-surface;
-    -fx-background-radius: 8;
+    -fx-background-radius: 6;
     -fx-border-width: 0;
 }
 
@@ -354,14 +372,14 @@
 }
 
 #commandTextField {
-    -fx-background-color: -tab-surface;
-    -fx-background-radius: 8;
+    -fx-background-color: -tab-bg-sunken;
+    -fx-background-radius: 6;
     -fx-background-insets: 0;
     -fx-border-color: -tab-border;
-    -fx-border-radius: 8;
+    -fx-border-radius: 6;
     -fx-border-insets: 0;
     -fx-border-width: 1;
-    -fx-font-family: "Segoe UI";
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Cantarell", "Noto Sans", sans-serif;
     -fx-font-size: 13pt;
     -fx-text-fill: -tab-text;
     -fx-prompt-text-fill: -tab-text-muted;
