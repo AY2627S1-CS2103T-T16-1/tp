@@ -72,6 +72,13 @@ public class EditStudentDescriptorTest {
     }
 
     @Test
+    public void isAnyFieldEdited_nonEmailFields_returnsTrue() {
+        assertTrue(new EditStudentDescriptorBuilder().withName(VALID_NAME_BOB).build().isAnyFieldEdited());
+        assertTrue(new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build().isAnyFieldEdited());
+        assertTrue(new EditStudentDescriptorBuilder().withTags(VALID_TAG_HUSBAND).build().isAnyFieldEdited());
+    }
+
+    @Test
     public void copyConstructor_emailEditIntent_preserved() {
         EditStudentDescriptor untouched = new EditStudentDescriptor();
         EditStudentDescriptor cleared = new EditStudentDescriptorBuilder().withoutEmail().build();
