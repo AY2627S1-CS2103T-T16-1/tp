@@ -227,8 +227,8 @@ This section describes some noteworthy details on how certain features are imple
 ### How commands read their arguments
 
 `add` and `edit` mark their fields with options,
-`add NAME -p PHONE [-e EMAIL] [-t TAG]... [--follow-up]` and
-`edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [-t TAG]... [--follow-up]`,
+`add NAME -p PHONE [-e EMAIL] [--nus-id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
+`edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--nus-id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`,
 where AB3 marked them with prefixes such as `p/`.
 
 A prefix has to be a sequence a value never contains, and no such sequence
@@ -267,13 +267,21 @@ unknown option, a value-taking option left without a value, and a token
 belonging to no option are each reported for what they are, rather than as one
 generic complaint.
 
+`Flag` also lets a value-taking option carry aliases. NUS Student ID uses
+`--nus-id` as its canonical option and the unused `-i` as its typing-friendly
+alias. Both spellings map to the same `FLAG_NUS_STUDENT_ID`, so giving
+both is rejected as a repeated single-valued field rather than letting one
+silently override the other. Usage labels and error messages use the canonical
+`--nus-id NUS_STUDENT_ID` spelling.
+
 The shape of the command is settled before any field is read. An unclosed
 quote, an unknown option, or a single-valued option given twice all leave it
 unclear which field a value belongs to, so each is refused on its own instead
 of being collected with the field errors.
 
 `edit` clears a field with an explicitly empty value rather than with a bare
-option. `-e ""` removes the email and `-t ""` removes every tag.
+option. `-e ""` removes the email, `--nus-id ""` removes the NUS Student ID, and
+`-t ""` removes every tag.
 A bare option cannot mean "clear" here, because a bare option
 is what reports the mistake in `edit 1 -t -e a@b.com`: the `-e` is read as the
 value `-t` was left without, rather than being stored as a tag. An empty quoted
@@ -345,6 +353,36 @@ They normalize for different reasons, and the rule each one enforces differs.
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
 
+**The NUS Student ID may be absent.** `NusStudentId` accepts `A`, exactly 8
+ASCII digits, and a final letter from `A` to `Z`. Input letters are
+case-insensitive and the value is stored in uppercase, so `a01234567x` and
+`A01234567X` are the same value. This narrow form reflects the identifier being
+recorded rather than an arbitrary external identifier. `Student` holds a
+nullable `NusStudentId` and exposes it as `Optional<NusStudentId>`, matching
+the existing optional-email boundary without inventing a sentinel value.
+
+The add and edit parsers read either `--nus-id` or `-i` through the same flag
+and validate with `ParserUtil.parseNusStudentId`. Add leaves the field absent when no
+option is given. For edit, `EditStudentDescriptor` keeps `isNusStudentIdEdited`
+separately from `Optional<NusStudentId>`: an absent option preserves the old value, a
+present non-empty option replaces it, and `--nus-id ""` clears it. Copies use
+`setNusStudentId` or `clearNusStudentId`, preserving all three states.
+
+`JsonAdaptedStudent` represents the storage property as a nullable string.
+Jackson omits it on save when no ID is present; both a missing `nusStudentId` key and
+JSON `null` load as absent, preserving files written before the field existed.
+A malformed non-null value rejects the data file instead of being silently
+dropped. The student card and command feedback show a present ID and omit the
+label entirely when absent.
+
+NUS Student ID is searchable but is **not an identity key**. Student identity remains
+the normalized name, so two different names may carry the same NUS Student ID, just as
+they may carry the same phone or email. This avoids rejecting legitimate data
+or claiming certainty when a reused detail might be a correction or a data-entry
+mistake. Adding or editing a record to a name already in the book is still
+rejected. A future duplicate-warning workflow can surface shared contact
+details without changing this model contract.
+
 **The email may be absent.** A student is recorded before an email address is
 known rather than one being invented. `Student` retains its nullable email
 constructor contract and exposes the value as `Optional<Email>` so callers
@@ -410,9 +448,9 @@ same number, and `isSameStudent` does not read it. It is normalized only so
 that a number typed with unusual whitespace is stored consistently.
 
 `FindCommandParser` creates a `DetailsContainsKeywordsPredicate`, which checks
-each keyword against the student's name, phone, email, ordinary tags, and
-optional follow-up flag. Matching is case-insensitive and partial; any keyword
-can match.
+each keyword against the student's name, NUS Student ID, phone, email, ordinary tags,
+and optional follow-up flag. Matching is case-insensitive and partial; any
+keyword can match.
 
 Nothing else is rejected in any of the three. A phone number may hold `+`,
 whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
@@ -657,8 +695,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *` | teaching assistant | view a student's phone number | call them directly when an urgent matter comes up |
 | `* *` | teaching assistant | undo my last command | revert a mistake before it makes trouble |
 | `* *` | teaching assistant | find students by a tag | focus on a single tutorial group |
-| `*` | teaching assistant | view a student's NUS-ID | match a student's name to records on other digital platforms (e.g. attendance) |
-| `*` | teaching assistant | find students by a specific detail such as name, NUS-ID, phone or email | go straight to the right record when I know one thing about the student |
+| `*` | teaching assistant | view a student's NUS Student ID | match a student's name to records on other digital platforms (e.g. attendance) |
+| `*` | teaching assistant | find students by a specific detail such as name, NUS Student ID, phone or email | go straight to the right record when I know one thing about the student |
 | `*` | teaching assistant who can type fast and prefers CLI | see a student record whenever I make changes to it | confirm that the changes I made are correct |
 | `*` | teaching assistant with many students | import many students from a file and give them all the same tag at once | get a whole roster into TAB without entering each student by hand |
 | `*` | teaching assistant with many students | edit student records en masse | update a whole group of students without repeating the same edit |
@@ -670,10 +708,10 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | view a student's remarks | recall important context such as special needs |
 | `*` | teaching assistant | add a remark to a student's record | note down requests or needs I should remember |
 | `*` | teaching assistant | redo an action I undid | restore a change I reverted by accident |
-| `*` | teaching assistant | be warned when a new student matches an existing record on phone, email or NUS-ID | catch genuine duplicates even when the two names are spelled differently |
+| `*` | teaching assistant | be warned when a new student matches an existing record on phone, email or NUS Student ID | catch genuine duplicates even when the two names are spelled differently |
 | `*` | teaching assistant | merge two duplicate student records after seeing how they differ | combine the information from both without losing either |
 | `*` | teaching assistant | find students who have no tag | spot students not yet assigned to a group |
-| `*` | teaching assistant | sort my list by a detail I choose, such as name, NUS-ID, or when the student was added | read the list in the order that suits the task in front of me |
+| `*` | teaching assistant | sort my list by a detail I choose, such as name, NUS Student ID, or when the student was added | read the list in the order that suits the task in front of me |
 | `*` | teaching assistant | group my students by tag | see the class composition at a glance |
 | `*` | teaching assistant | export my student records to a file | share or print the list externally |
 | `*` | teaching assistant | clear all data | start fresh with a clean student book |
@@ -686,8 +724,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | be told what was wrong with my input and which part of it caused the problem | correct it in one attempt instead of guessing |
 | `*` | teaching assistant who hand-edits the data file | reload the data file from disk without restarting TAB | fix the file and carry on in the same sitting |
 | `*` | teaching assistant | list students I have not followed up with since a given date | make sure no one who needs help flies under the radar |
-| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS-ID when deleting a record | avoid removing the wrong student when several students are listed |
-| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS-ID when editing a record | avoid changing the wrong student’s details |
+| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS Student ID when deleting a record | avoid removing the wrong student when several students are listed |
+| `*` | teaching assistant working in twenty-second windows | identify a student by their NUS Student ID when editing a record | avoid changing the wrong student’s details |
 | `*` | teaching assistant | record two students who genuinely have the same name | keep separate student records for them |
 | `*` | teaching assistant who can type fast | be shown a likely correction when I mistype a command word | recover without looking up the syntax |
 | `*` | teaching assistant | look back at results I have already replaced | re-read earlier output without running the search again |
@@ -731,10 +769,10 @@ These were raised during requirement gathering and left out of the product.
 **MSS**
 
 1.  User requests to add a student, providing available details including the
-    name and, optionally, that the student needs follow-up.
+    name and, optionally, the NUS Student ID and that the student needs follow-up.
 2.  TAB saves the student record.
-3.  TAB shows the new student record, including the tags and follow-up status
-    the User provided.
+3.  TAB shows the new student record, including the NUS Student ID, tags, and follow-up
+    status the User provided.
 
     Use case ends.
 
@@ -757,18 +795,12 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 2.
 
-* 1c. The student matches another student whom TAB already holds, on NUS-ID, email or phone.
+* 1c. The normalized name matches a student whom TAB already holds.
 
-    * 1c1. TAB shows the matching student and asks whether both student records refer to the same student.
-    * 1c2. User confirms that they are different students.
+    * 1c1. TAB reports that the student already exists and leaves the student
+      records unchanged.
 
-      Use case resumes at step 2.
-
-    * 1c2a. User indicates that a student record already exists for the same student.
-
-        * 1c2a1. TAB leaves the student records unchanged.
-
-          Use case ends.
+      Use case ends.
 
 * 1d. Before submitting the command, User chooses to abandon the addition.
 
@@ -784,11 +816,9 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to find students, providing search terms and optionally indicating the specific field for each
-    search term, such as name,
-    NUS-ID, email or tag.
-2.  TAB shows the students matching any part of the search terms regardless of letter case, displaying identifying
-    details such as their NUS-IDs.
+1.  User requests to find students, providing one or more search terms.
+2.  TAB shows the students for whom any term matches any part of a name, NUS Student ID,
+    phone, email, tag, or follow-up status, regardless of letter case.
 3.  User identifies the intended student.
 4.  User initiates the desired action on that student.
 
@@ -892,7 +922,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 2.
 
-* 1c. A student matches another student whom TAB already holds, on NUS-ID, email or phone.
+* 1c. A student matches another student whom TAB already holds, on NUS Student ID, email or phone.
 
     * 1c1. TAB shows the match and asks whether to update the existing student record with the imported details.
     * 1c2. User chooses whether to update or skip the existing student record.
@@ -1098,18 +1128,12 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* 3d. The edited details match another student whom TAB already holds, on NUS-ID, email or phone.
+* 3d. The edited normalized name matches another student whom TAB already holds.
 
-    * 3d1. TAB shows the matching student and asks whether both student records refer to the same student.
-    * 3d2. User confirms that they are different students and chooses to apply the edited details.
+    * 3d1. TAB reports that the student already exists and leaves both student
+      records unchanged.
 
-      Use case resumes at step 4.
-
-    * 3d2a. User indicates that a student record already exists for the same student.
-
-        * 3d2a1. TAB leaves both student records unchanged.
-
-          Use case ends.
+      Use case ends.
 
 * 4a. TAB cannot write to the data file.
 
@@ -1223,9 +1247,8 @@ These were raised during requirement gathering and left out of the product.
   command (such as `find` or `list`). Commands taking an Index target records relative to this list.
 * **Follow-up**: An action or response that the User still owes to a student,
   tracked in TAB as a pending status on a student record.
-* **Identity field**: A field used by TAB to identify whether two records refer to the same student. In the core
-  model, student identity is determined by normalized name; warning mechanisms in workflows also check for
-  matching NUS-IDs, phone numbers, or emails.
+* **Identity field**: A field used by TAB to identify whether two records refer to the same student. Student identity
+  is determined by normalized name. NUS Student IDs, phone numbers, and emails are searchable details, not identity keys.
 * **Index**: The 1-based positive integer identifying a student according to their current display position in the
   active/filtered list shown in the GUI, rather than a permanent database identifier or 0-based code index.
 * **Mainstream OS**: Windows, Linux and macOS.
@@ -1233,8 +1256,9 @@ These were raised during requirement gathering and left out of the product.
   sequences consistently.
 * **Normalized field value**: The standard stored form produced by `StringUtil.normalizeFieldValue`, allowing input
   that looks the same to be stored and compared consistently.
-* **NUS-ID**: A unique digital identifier for every student at the National University of Singapore. It has the form
-  `e0123456`.
+* **NUS Student ID**: A unique digital identifier for every student at the National University of Singapore. TAB
+  accepts `A`, exactly 8 ASCII digits, and a final letter from `A` to `Z`, such as `A01234567X`. Lowercase letters
+  are accepted and stored in uppercase.
 * **Option**: See **Command option**.
 * **Person**: A legacy term found in the upstream AddressBook-Level3 project. TAB's model uses `Student` for a student
   record.
@@ -1245,8 +1269,8 @@ These were raised during requirement gathering and left out of the product.
   and the active list is reset in preparation for a new academic term, optionally retaining records with
   pending follow-ups.
 * **Student book**: The collection of student records managed by TAB.
-* **Student record**: The information TAB stores about one student, such as their name, phone number, email address,
-  and tags.
+* **Student record**: The information TAB stores about one student, such as their name, NUS Student ID, phone number, email
+  address, and tags.
 * **TAB**: Teaching Assistant's Book; the desktop student-management application described in this guide.
 * **Tag**: A user-defined label attached to a student record for grouping or filtering students.
 * **Tag alias**: A user-defined shorthand for a longer tag (such as a shortcut for a tutorial group tag), distinct
@@ -1379,6 +1403,91 @@ testers are expected to do more *exploratory* testing.
       `"flag": null`, and no `flag` key. Relaunch TAB.<br>
       Expected: Only the record with `true` shows `Needs follow-up`. The other
       three load as unflagged, including the legacy record with no key.
+
+### NUS Student IDs
+
+1. Adding optional NUS Student IDs with either option spelling
+
+   1. Prerequisites: Launch the JAR from an empty folder, then run `clear` and
+      reply `yes` if confirmation is requested.
+
+   1. Test case: `add Alice Tan -p 91234567 --nus-id a01234567x`<br>
+      Expected: Alice is added. Her card and the command result show
+      `A01234567X`, with the lowercase input normalized to uppercase. Her saved
+      record has `"nusStudentId": "A01234567X"`.
+
+   1. Test case: `add Bob Lim -p 92345678 -i A12345678Y`<br>
+      Expected: Bob is added with `A12345678Y`; `-i` behaves the same as
+      `--nus-id`.
+
+   1. Test case: `add Cara Ng -p 93456789`<br>
+      Expected: Cara is added without a blank placeholder on her card and her
+      saved record has no `nusStudentId` key.
+
+1. Rejecting invalid, missing, and repeated values
+
+   1. Prerequisites: Continue from the preceding test and keep a copy of
+      `data/tab.json`.
+
+   1. Test cases: try adding a differently named student with each of
+      `--nus-id E01234567X`, `--nus-id A0123456X`,
+      `--nus-id A012345678X`, `--nus-id A01234X67Y`, and
+      `--nus-id A01234567`.<br>
+      Expected: No student is added. Each message identifies the NUS Student ID and
+      explains whether its first letter, digit count, non-digit middle, or
+      final letter is invalid. The JSON file matches the copy.
+
+   1. Test cases: `edit 1 --nus-id` and
+      `edit 1 --nus-id A11111111A -i A22222222B`.<br>
+      Expected: Alice stays unchanged. The first message says that
+      `--nus-id NUS_STUDENT_ID` needs a value; the second reports the same field as
+      repeated, because the long and short spellings are aliases.
+
+1. Preserving, replacing, and clearing an NUS Student ID
+
+   1. Prerequisites: Continue with Alice at index 1 and note her other details.
+
+   1. Test case: `edit 1 -p 81112222`<br>
+      Expected: Alice's phone changes and her NUS Student ID remains `A01234567X`.
+
+   1. Test case: `edit 1 -i A76543210Y`<br>
+      Expected: Alice's NUS Student ID becomes `A76543210Y` and no other detail changes.
+
+   1. Test case: `edit 1 --nus-id ""`<br>
+      Expected: Alice's NUS Student ID disappears from her card, feedback, and saved
+      JSON record. All other details remain unchanged. Repeating the command
+      succeeds and still changes nothing else.
+
+1. Finding and persisting NUS Student IDs
+
+   1. Prerequisites: Run `edit 1 -i A01234567X`, then exit and relaunch TAB from
+      the same folder.
+
+   1. Test cases: `find a0123` and `find 23456`.<br>
+      Expected: Each search shows Alice, demonstrating partial,
+      case-insensitive NUS Student ID matching. The ID remains after the restart.
+
+   1. Exit TAB. Back up `data/tab.json`, then give otherwise valid records a
+      `"nusStudentId": null` value and no `nusStudentId` key respectively. Relaunch TAB.<br>
+      Expected: Both records load without an NUS Student ID.
+
+   1. Exit TAB and change one `nusStudentId` value to `A0123456`, then relaunch.<br>
+      Expected: TAB rejects the malformed data file and starts with an empty
+      student book, leaving the invalid file in place. Restore the backup
+      before entering another command.
+
+1. Checking duplicate identity behavior
+
+   1. Prerequisites: Start from an empty book.
+
+   1. Test cases: add `add Alice Tan -p 91234567 -i A01234567X`, then
+      `add Bob Lim -p 92345678 -i A01234567X`.<br>
+      Expected: Both students are added because different normalized names are
+      different identities, even when the NUS Student ID is shared.
+
+   1. Test case: `add Alice Tan -p 93456789 -i A76543210Y`<br>
+      Expected: The addition is rejected as a duplicate name and neither
+      existing record changes.
 
 ### Editing a student
 
