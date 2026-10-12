@@ -464,6 +464,9 @@ anything. Only the exact replies `y` and `yes` invoke
 with either letter, such as `yellow` or `nope`, are invalid. Other input raises
 a `ParseException` with feedback and the prompt repeated and keeps the request
 pending; it is never executed as another command.
+If the reply handler unexpectedly has no request, it raises a
+`CommandException` asking the user to enter `clear`, rather than letting an
+unchecked exception escape. The normal presence guard prevents this case.
 The pending request is cleared before saving so that a storage error cannot
 leave a stale confirmation active. It lives only in memory, so closing and
 restarting TAB cannot confirm a previous request. The existing result area

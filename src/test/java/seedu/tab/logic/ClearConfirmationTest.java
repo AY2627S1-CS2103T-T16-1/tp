@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.tab.logic.commands.ClearCommand;
+import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
@@ -148,6 +149,23 @@ public class ClearConfirmationTest {
             assertEquals(1, saveCount);
             assertThrows(ParseException.class, Messages.MESSAGE_UNKNOWN_COMMAND, () -> logic.execute("yes"));
             assertEquals(1, saveCount);
+        }
+    }
+
+    @Test
+    public void execute_confirmationWithoutRequest_reportsCommandErrorWithoutMutation() throws Exception {
+        // Simulates a confirmation indicator that disagrees with the stored request.
+        logic = new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json")))) {
+            @Override
+            public boolean isAwaitingConfirmation() {
+                return true;
+            }
+        };
+        for (String reply : List.of("yes", "", "no", "maybe")) {
+            assertThrows(CommandException.class, ClearCommand.MESSAGE_NO_PENDING_CONFIRMATION, () ->
+                    logic.execute(reply));
+            assertUnchanged();
         }
     }
 

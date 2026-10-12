@@ -15,6 +15,8 @@ public class ClearCommand extends Command {
     public static final String MESSAGE_CANCELLED = "Clear cancelled. No student records were changed.";
     public static final String MESSAGE_EMPTY = "The student book is already empty. Nothing to clear.";
     public static final String MESSAGE_INVALID_REPLY = "Invalid reply. Enter y/yes or n/no (Enter cancels).";
+    public static final String MESSAGE_NO_PENDING_CONFIRMATION =
+            "No clear confirmation is pending. Enter clear to request one.";
     public static final String MESSAGE_SUCCESS = "Student book has been cleared!";
 
 

@@ -75,12 +75,13 @@ public class LogicManager implements Logic {
      * Handles a reply without parsing it as a command or saving unconfirmed data.
      */
     private CommandResult respondToClearConfirmation(String commandText) throws CommandException, ParseException {
+        ClearCommand clearCommand = pendingClearCommand.orElseThrow(() ->
+                new CommandException(ClearCommand.MESSAGE_NO_PENDING_CONFIRMATION));
         String reply = stripSurroundingWhitespace(commandText);
         if (reply.isEmpty() || reply.equalsIgnoreCase("n") || reply.equalsIgnoreCase("no")) {
             pendingClearCommand = Optional.empty();
             return new CommandResult(ClearCommand.MESSAGE_CANCELLED);
         }
-        ClearCommand clearCommand = pendingClearCommand.orElseThrow();
         if (!reply.equalsIgnoreCase("y") && !reply.equalsIgnoreCase("yes")) {
             throw new ParseException(ClearCommand.MESSAGE_INVALID_REPLY + "\n"
                     + clearCommand.execute(model).getFeedbackToUser());
