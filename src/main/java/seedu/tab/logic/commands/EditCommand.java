@@ -102,15 +102,15 @@ public class EditCommand extends Command {
 
         Name updatedName = editStudentDescriptor.getName().orElse(studentToEdit.getName());
         Phone updatedPhone = editStudentDescriptor.getPhone().orElse(studentToEdit.getPhone());
-        Email updatedEmail = editStudentDescriptor.isEmailEdited()
-                ? editStudentDescriptor.getEmail().orElse(null)
-                : studentToEdit.getEmail().orElse(null);
+        Optional<Email> updatedEmail = editStudentDescriptor.isEmailEdited()
+                ? editStudentDescriptor.getEmail()
+                : studentToEdit.getEmail();
         Set<Tag> updatedTags = editStudentDescriptor.getTags().orElse(studentToEdit.getTags());
         boolean updatedFlag = editStudentDescriptor.shouldToggleFlag()
                 ? !studentToEdit.isFlagged()
                 : studentToEdit.isFlagged();
 
-        return new Student(updatedName, updatedPhone, updatedEmail, updatedTags, updatedFlag);
+        return new Student(updatedName, updatedPhone, updatedEmail.orElse(null), updatedTags, updatedFlag);
     }
 
     @Override
@@ -143,7 +143,7 @@ public class EditCommand extends Command {
     public static class EditStudentDescriptor {
         private Name name;
         private Phone phone;
-        private Email email;
+        private Optional<Email> email = Optional.empty();
         private boolean isEmailEdited;
         private Set<Tag> tags;
         private boolean shouldToggleFlag;
@@ -157,8 +157,9 @@ public class EditCommand extends Command {
         public EditStudentDescriptor(EditStudentDescriptor toCopy) {
             setName(toCopy.name);
             setPhone(toCopy.phone);
-            email = toCopy.email;
-            isEmailEdited = toCopy.isEmailEdited;
+            if (toCopy.isEmailEdited()) {
+                toCopy.getEmail().ifPresentOrElse(this::setEmail, this::clearEmail);
+            }
             setTags(toCopy.tags);
             setFlagToggled(toCopy.shouldToggleFlag);
         }
@@ -187,10 +188,20 @@ public class EditCommand extends Command {
         }
 
         /**
-         * Marks the email as edited. A null value explicitly clears the email.
+         * Sets a replacement email and marks the email as edited.
+         *
+         * @throws NullPointerException if {@code email} is null.
          */
         public void setEmail(Email email) {
-            this.email = email;
+            this.email = Optional.of(requireNonNull(email));
+            isEmailEdited = true;
+        }
+
+        /**
+         * Marks the email for removal without changing any other field.
+         */
+        public void clearEmail() {
+            email = Optional.empty();
             isEmailEdited = true;
         }
 
@@ -199,7 +210,7 @@ public class EditCommand extends Command {
         }
 
         public Optional<Email> getEmail() {
-            return Optional.ofNullable(email);
+            return email;
         }
 
         /**
@@ -240,7 +251,7 @@ public class EditCommand extends Command {
 
             return Objects.equals(name, otherEditStudentDescriptor.name)
                     && Objects.equals(phone, otherEditStudentDescriptor.phone)
-                    && Objects.equals(email, otherEditStudentDescriptor.email)
+                    && email.equals(otherEditStudentDescriptor.email)
                     && isEmailEdited == otherEditStudentDescriptor.isEmailEdited
                     && Objects.equals(tags, otherEditStudentDescriptor.tags)
                     && shouldToggleFlag == otherEditStudentDescriptor.shouldToggleFlag;

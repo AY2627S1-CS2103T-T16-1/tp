@@ -65,7 +65,7 @@ public class EditStudentDescriptorBuilder {
      * Sets the email edit to clear the student's email.
      */
     public EditStudentDescriptorBuilder withoutEmail() {
-        descriptor.setEmail(null);
+        descriptor.clearEmail();
         return this;
     }
 

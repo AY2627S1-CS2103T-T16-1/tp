@@ -16,6 +16,7 @@ import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.tab.logic.parser.exceptions.ParseException;
+import seedu.tab.model.student.Email;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -83,12 +84,26 @@ public class EditCommandParser implements Parser<EditCommand> {
 
         descriptor.setName(problems.collectIfPresent(arguments.getValue(FLAG_NAME), ParserUtil::parseName));
         descriptor.setPhone(problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone));
-        arguments.getValue(FLAG_EMAIL).ifPresent(value ->
-                descriptor.setEmail(value.isEmpty() ? null : problems.collect(() -> ParserUtil.parseEmail(value))));
+        arguments.getValue(FLAG_EMAIL).ifPresent(value -> parseEmailForEdit(problems, value, descriptor));
         parseTagsForEdit(problems, arguments.getAllValues(FLAG_TAG)).ifPresent(descriptor::setTags);
         descriptor.setFlagToggled(arguments.getValue(FLAG_FOLLOW_UP).isPresent());
 
         return descriptor;
+    }
+
+    /**
+     * Describes an explicit email clear or a validated replacement, recording why a value is rejected.
+     */
+    private static void parseEmailForEdit(ParseProblems problems, String value, EditStudentDescriptor descriptor) {
+        if (value.isEmpty()) {
+            descriptor.clearEmail();
+            return;
+        }
+        problems.collect(() -> {
+            Email email = ParserUtil.parseEmail(value);
+            descriptor.setEmail(email);
+            return email;
+        });
     }
 
     /**
