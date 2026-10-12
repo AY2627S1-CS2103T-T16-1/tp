@@ -1,6 +1,7 @@
 package seedu.tab.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
 
@@ -18,6 +19,7 @@ import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.ReadOnlyStudentBook;
+import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.storage.JsonUserPrefsStorage;
@@ -69,6 +71,53 @@ public class ClearConfirmationTest {
         }
         assertThrows(ParseException.class, Messages.MESSAGE_UNKNOWN_COMMAND, () -> logic.execute("yes"));
         assertUnchanged();
+    }
+
+    @Test
+    public void execute_invalidReplies_keepsConfirmationPendingWithoutWriting() throws Exception {
+        logic.execute("clear");
+        for (String reply : List.of("", " ", "\u00A0\u3000", "y", "maybe", "yes no", "\"yes\"",
+                "yes!", "clear", "clear oops", "exit", "help", "delete 1", "add New Student -p 81112222")) {
+            String expected = ClearCommand.MESSAGE_INVALID_REPLY + "\n"
+                    + String.format(ClearCommand.MESSAGE_CONFIRMATION, 2);
+            assertThrows(ParseException.class, expected, () -> logic.execute(reply));
+            assertUnchanged();
+        }
+        assertEquals(ClearCommand.MESSAGE_CANCELLED, logic.execute("no").getFeedbackToUser());
+        assertUnchanged();
+        assertTrue(logic.execute("help").isShowHelp());
+    }
+
+    @Test
+    public void execute_yesReplyVariants_clearsHiddenRecordsAndPersistsOnce() throws Exception {
+        for (String reply : List.of("yes", "YES", "Yes", " \tyes\u00A0\u3000")) {
+            setUp();
+            logic.execute("clear");
+            assertUnchanged();
+            assertEquals(ClearCommand.MESSAGE_SUCCESS, logic.execute(reply).getFeedbackToUser());
+            assertEquals(new StudentBook(), model.getStudentBook());
+            assertTrue(model.getFilteredStudentList().isEmpty());
+            assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
+            assertEquals(1, saveCount);
+            assertThrows(ParseException.class, Messages.MESSAGE_UNKNOWN_COMMAND, () -> logic.execute("yes"));
+            assertEquals(1, saveCount);
+        }
+    }
+
+    @Test
+    public void execute_emptyBook_doesNotPromptOrWrite() throws Exception {
+        model.setStudentBook(new StudentBook());
+        storage.saveStudentBook(model.getStudentBook());
+        saveCount = 0;
+        String emptyJson = Files.readString(storage.getStudentBookFilePath());
+        assertEquals(ClearCommand.MESSAGE_EMPTY, logic.execute("clear").getFeedbackToUser());
+        assertEquals(emptyJson, Files.readString(storage.getStudentBookFilePath()));
+        assertEquals(0, saveCount);
+        assertThrows(ParseException.class, Messages.MESSAGE_UNKNOWN_COMMAND, () -> logic.execute("yes"));
+        Files.delete(storage.getStudentBookFilePath());
+        assertEquals(ClearCommand.MESSAGE_EMPTY, logic.execute("clear").getFeedbackToUser());
+        assertFalse(Files.exists(storage.getStudentBookFilePath()));
+        assertEquals(0, saveCount);
     }
 
     /** Verifies that no data or filter changed and no storage write occurred. */
