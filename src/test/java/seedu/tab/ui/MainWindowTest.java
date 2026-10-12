@@ -52,6 +52,11 @@ public class MainWindowTest {
         }
 
         @Override
+        public boolean isAwaitingConfirmation() {
+            return false;
+        }
+
+        @Override
         public ObservableList<Student> getFilteredStudentList() {
             return students;
         }

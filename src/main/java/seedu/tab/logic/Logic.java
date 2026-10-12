@@ -23,9 +23,7 @@ public interface Logic {
     /**
      * Returns whether the next input is a confirmation reply, including an empty reply.
      */
-    default boolean isAwaitingConfirmation() {
-        return false;
-    }
+    boolean isAwaitingConfirmation();
 
     /** Returns an unmodifiable view of the filtered list of students */
     ObservableList<Student> getFilteredStudentList();
