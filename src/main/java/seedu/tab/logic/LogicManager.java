@@ -7,6 +7,8 @@ import java.util.logging.Logger;
 import javafx.collections.ObservableList;
 import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.commons.core.LogsCenter;
+import seedu.tab.commons.util.StringUtil;
+import seedu.tab.logic.commands.ClearCommand;
 import seedu.tab.logic.commands.Command;
 import seedu.tab.logic.commands.CommandResult;
 import seedu.tab.logic.commands.exceptions.CommandException;
@@ -30,6 +32,7 @@ public class LogicManager implements Logic {
     private final Model model;
     private final Storage storage;
     private final StudentBookParser studentBookParser;
+    private ClearCommand pendingClearCommand;
 
     /**
      * Constructs a {@code LogicManager} with the given {@code Model} and {@code Storage}.
@@ -44,10 +47,45 @@ public class LogicManager implements Logic {
     public CommandResult execute(String commandText) throws CommandException, ParseException {
         logger.info("----------------[USER COMMAND][" + commandText + "]");
 
-        CommandResult commandResult;
+        if (pendingClearCommand != null) {
+            return respondToClearConfirmation(commandText);
+        }
         Command command = studentBookParser.parseCommand(commandText);
-        commandResult = command.execute(model);
+        CommandResult commandResult = command.execute(model);
+        if (command instanceof ClearCommand clearCommand) {
+            if (!model.getStudentBook().getStudentList().isEmpty()) {
+                pendingClearCommand = clearCommand;
+            }
+            return commandResult;
+        }
+        saveStudentBook();
+        return commandResult;
+    }
 
+    /**
+     * Handles a reply without parsing it as a command or saving unconfirmed data.
+     */
+    private CommandResult respondToClearConfirmation(String commandText) throws CommandException, ParseException {
+        String reply = StringUtil.normalizeFieldValue(commandText);
+        if (reply.equalsIgnoreCase("no")) {
+            pendingClearCommand = null;
+            return new CommandResult(ClearCommand.MESSAGE_CANCELLED);
+        }
+        if (!reply.equalsIgnoreCase("yes")) {
+            throw new ParseException(ClearCommand.MESSAGE_INVALID_REPLY + "\n"
+                    + pendingClearCommand.execute(model).getFeedbackToUser());
+        }
+        ClearCommand confirmedCommand = pendingClearCommand;
+        pendingClearCommand = null;
+        CommandResult result = confirmedCommand.executeConfirmed(model);
+        saveStudentBook();
+        return result;
+    }
+
+    /**
+     * Saves the student book and translates storage errors into command feedback.
+     */
+    private void saveStudentBook() throws CommandException {
         try {
             storage.saveStudentBook(model.getStudentBook());
         } catch (AccessDeniedException e) {
@@ -55,8 +93,6 @@ public class LogicManager implements Logic {
         } catch (IOException ioe) {
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
         }
-
-        return commandResult;
     }
 
     @Override

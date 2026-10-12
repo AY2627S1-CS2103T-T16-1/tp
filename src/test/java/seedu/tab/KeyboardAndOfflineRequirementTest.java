@@ -79,7 +79,18 @@ public class KeyboardAndOfflineRequirementTest {
 
         // Clear using keyboard command
         CommandResult clearResult = logic.execute(ClearCommand.COMMAND_WORD);
-        assertEquals(ClearCommand.MESSAGE_SUCCESS, clearResult.getFeedbackToUser());
+        assertEquals(ClearCommand.MESSAGE_EMPTY, clearResult.getFeedbackToUser());
+
+        logic.execute("add Amy Bee -p 85355255");
+        String prompt = String.format(ClearCommand.MESSAGE_CONFIRMATION, 1);
+        assertEquals(prompt, logic.execute("clear").getFeedbackToUser());
+        assertEquals(ClearCommand.MESSAGE_CANCELLED, logic.execute("no").getFeedbackToUser());
+        assertEquals(1, model.getFilteredStudentList().size());
+        assertEquals(1, storage.readStudentBook().orElseThrow().getStudentList().size());
+        assertEquals(prompt, logic.execute("clear").getFeedbackToUser());
+        assertEquals(ClearCommand.MESSAGE_SUCCESS, logic.execute("yes").getFeedbackToUser());
+        assertTrue(model.getStudentBook().getStudentList().isEmpty());
+        assertTrue(storage.readStudentBook().orElseThrow().getStudentList().isEmpty());
 
         // Help using keyboard command
         CommandResult helpResult = logic.execute(HelpCommand.COMMAND_WORD);
