@@ -87,23 +87,6 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_deleteCommand_successAndPersistsToStorage() throws Exception {
-        Student student = new StudentBuilder(AMY).build();
-        model.addStudent(student);
-
-        String deleteCommand = DeleteCommand.COMMAND_WORD + " 1";
-        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS,
-                Messages.format(student));
-        ModelManager expectedModel = new ModelManager();
-
-        assertCommandSuccess(deleteCommand, expectedMessage, expectedModel);
-
-        ReadOnlyStudentBook savedStudentBook =
-                new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json")).readStudentBook().get();
-        assertEquals(0, savedStudentBook.getStudentList().size());
-    }
-
-    @Test
     public void execute_clearEmailAloneOrWithOtherEdits_persistsAndReloads() throws Exception {
         Student student = new StudentBuilder(AMY).withFlag(true).build();
         model.addStudent(student);
@@ -129,6 +112,23 @@ public class LogicManagerTest {
                 Messages.getErrorMessageForInvalidValue("Email", "bob!yahoo",
                         Email.getFailureReason("bob!yahoo")));
         assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+    }
+
+    @Test
+    public void execute_deleteCommand_successAndPersistsToStorage() throws Exception {
+        Student student = new StudentBuilder(AMY).build();
+        model.addStudent(student);
+
+        String deleteCommand = DeleteCommand.COMMAND_WORD + " 1";
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS,
+                Messages.format(student));
+        ModelManager expectedModel = new ModelManager();
+
+        assertCommandSuccess(deleteCommand, expectedMessage, expectedModel);
+
+        ReadOnlyStudentBook savedStudentBook =
+                new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json")).readStudentBook().get();
+        assertEquals(0, savedStudentBook.getStudentList().size());
     }
 
     @Test
