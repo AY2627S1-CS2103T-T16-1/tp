@@ -2,12 +2,14 @@ package seedu.tab.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +29,9 @@ import seedu.tab.storage.StorageManager;
 import seedu.tab.testutil.StudentBuilder;
 
 public class ClearConfirmationTest {
+
+    private static final int LONG_REPLY_LENGTH = 100_000;
+    private static final Duration LONG_REPLY_TIMEOUT = Duration.ofSeconds(5);
 
     @TempDir
     public Path testFolder;
@@ -91,6 +96,41 @@ public class ClearConfirmationTest {
         assertEquals(ClearCommand.MESSAGE_CANCELLED, logic.execute("no").getFeedbackToUser());
         assertUnchanged();
         assertTrue(logic.execute("help").isShowHelp());
+    }
+
+    @Test
+    public void execute_longInvalidReply_rejectsPromptlyWithoutWriting() throws Exception {
+        logic.execute("clear");
+        String expected = ClearCommand.MESSAGE_INVALID_REPLY + "\n"
+                + "Clear all 2 students? This cannot be undone. [y/N]";
+        String reply = "x" + " ".repeat(LONG_REPLY_LENGTH) + "x";
+        assertTimeoutPreemptively(LONG_REPLY_TIMEOUT, () ->
+                assertThrows(ParseException.class, expected, () -> logic.execute(reply)));
+        assertTrue(logic.isAwaitingConfirmation());
+        assertUnchanged();
+    }
+
+    @Test
+    public void execute_longWhitespaceReply_cancelsPromptlyWithoutWriting() throws Exception {
+        logic.execute("clear");
+        String reply = "\u00A0\u3000\u0085".repeat(LONG_REPLY_LENGTH);
+        assertTimeoutPreemptively(LONG_REPLY_TIMEOUT, () ->
+                assertEquals(ClearCommand.MESSAGE_CANCELLED, logic.execute(reply).getFeedbackToUser()));
+        assertFalse(logic.isAwaitingConfirmation());
+        assertUnchanged();
+    }
+
+    @Test
+    public void execute_longSurroundingWhitespace_confirmsAndPersistsOnce() throws Exception {
+        logic.execute("clear");
+        String whitespace = " \u00A0\u0085".repeat(LONG_REPLY_LENGTH);
+        assertTimeoutPreemptively(LONG_REPLY_TIMEOUT, () ->
+                assertEquals(ClearCommand.MESSAGE_SUCCESS,
+                        logic.execute(whitespace + "YeS" + whitespace).getFeedbackToUser()));
+        assertFalse(logic.isAwaitingConfirmation());
+        assertEquals(new StudentBook(), model.getStudentBook());
+        assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
+        assertEquals(1, saveCount);
     }
 
     @Test

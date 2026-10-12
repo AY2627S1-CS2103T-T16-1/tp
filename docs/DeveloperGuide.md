@@ -454,6 +454,9 @@ While the request is pending, it reads the
 next input as a reply to the concise `[y/N]` prompt. Only surrounding Unicode
 whitespace is trimmed; internal characters are kept so a value cannot become
 an accepted word by removing characters from within it. Replies ignore case.
+Trimming scans from both ends with `StringUtil.isWhitespace`, retaining the
+command parser's Unicode whitespace rules. This takes linear time at worst;
+an internal whitespace run is never searched for a trailing match.
 
 An empty reply, `n`, or `no` drops the request without executing or saving
 anything. Only the exact replies `y` and `yes` invoke

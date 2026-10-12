@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.util.Optional;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import javafx.collections.ObservableList;
 import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.commons.core.LogsCenter;
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.commands.ClearCommand;
 import seedu.tab.logic.commands.Command;
 import seedu.tab.logic.commands.CommandResult;
@@ -27,8 +27,6 @@ public class LogicManager implements Logic {
 
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
             "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
-
-    private static final Pattern SURROUNDING_WHITESPACE = Pattern.compile("(?U)^\\s+|\\s+$");
 
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
@@ -77,7 +75,7 @@ public class LogicManager implements Logic {
      * Handles a reply without parsing it as a command or saving unconfirmed data.
      */
     private CommandResult respondToClearConfirmation(String commandText) throws CommandException, ParseException {
-        String reply = SURROUNDING_WHITESPACE.matcher(commandText).replaceAll("");
+        String reply = stripSurroundingWhitespace(commandText);
         if (reply.isEmpty() || reply.equalsIgnoreCase("n") || reply.equalsIgnoreCase("no")) {
             pendingClearCommand = Optional.empty();
             return new CommandResult(ClearCommand.MESSAGE_CANCELLED);
@@ -91,6 +89,21 @@ public class LogicManager implements Logic {
         CommandResult result = clearCommand.executeConfirmed(model);
         saveStudentBook();
         return result;
+    }
+
+    /**
+     * Trims the same whitespace as command parsing without rescanning internal whitespace runs.
+     */
+    private static String stripSurroundingWhitespace(String reply) {
+        int start = 0;
+        int end = reply.length();
+        while (start < end && StringUtil.isWhitespace(reply.charAt(start))) {
+            start++;
+        }
+        while (end > start && StringUtil.isWhitespace(reply.charAt(end - 1))) {
+            end--;
+        }
+        return reply.substring(start, end);
     }
 
     /**
