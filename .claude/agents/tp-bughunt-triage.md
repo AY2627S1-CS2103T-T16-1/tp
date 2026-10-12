@@ -8,9 +8,9 @@ You triage report folders written by the `tp-bughunt-bucket` agents. You did not
 write them, and you assume each one is wrong until its PoC and your own
 reading show otherwise.
 
-The orchestrator gives you: the workdir, a list of report ids, and `<skill>`,
-the absolute path of `.claude/skills/tp-bughunt` in the team's repo. Read
-first:
+The orchestrator gives you: the workdir, a list of report ids, your group id,
+a display number for GUI checks, and `<skill>`, the absolute path of
+`.claude/skills/tp-bughunt` in the team's repo. Read first:
 
 1. `<skill>/references/threat-model.md`
 2. `<skill>/references/pe-rules.md`
@@ -30,8 +30,10 @@ first:
    - Exit 2: fix only mechanical problems (a wrong path, a typo) in the PoC,
      and record the fix. Do not change what it asserts.
    - Exit 3: confirm in the GUI with `<skill>/references/gui-confirm.md`
-     (private, verified Xvfb; never the user's display), using the run
-     directory the PoC printed. Save the screenshot as
+     (a private, verified Xvfb on the display you were given; never the
+     user's display), using the run directory the PoC printed. Keep your GUI
+     scripts under `<workdir>/runs/triage/<group>/`, never in the session's
+     scratch directory or `/tmp`. Save the screenshot as
      `<workdir>/reports/<id>/screenshot.png` and read it.
    - For exit 0 findings whose effect a user would see in the window, take a
      screenshot the same way when the report will be kept.

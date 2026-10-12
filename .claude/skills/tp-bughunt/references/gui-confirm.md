@@ -18,6 +18,20 @@ DISPLAY=:143 xdpyinfo | head -1          # "name of display: :143"
 
 Never `pkill -f` a pattern that matches your own command line; kill Xvfb by PID.
 
+## Keep to your own display and files
+
+Other agents may be confirming bugs at the same time, and they share this
+session's scratch directory and `/tmp`. A script saved under a fixed name there
+can be overwritten by another agent's, and running it then drives that agent's
+display and run directory instead of yours.
+
+- Use only the display number the orchestrator gave you (`:143` in the
+  examples here).
+- Keep every script, screenshot and temporary file under your own run
+  directory, such as `<workdir>/runs/<bucket>/gui/` or
+  `<workdir>/runs/triage/<group>/`, and run scripts by that full path.
+- Stop only the processes you started, by the PIDs you recorded.
+
 ## Launch inside the sandbox
 
 ```sh

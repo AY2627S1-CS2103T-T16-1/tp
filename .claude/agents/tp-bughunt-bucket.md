@@ -9,9 +9,9 @@ no bug that lives in those files goes unreported, and that every report you
 write comes with a PoC that proves it.
 
 The orchestrator gives you: the workdir, your bucket id (`bNN`) and its file
-list, and the run mode. `<skill>` is the absolute path of
-`.claude/skills/tp-bughunt` in the team's repo, which the orchestrator gives
-you.
+list, the run mode, and a display number for any GUI check. `<skill>` is the
+absolute path of `.claude/skills/tp-bughunt` in the team's repo, which the
+orchestrator gives you.
 
 Read first, in this order:
 
@@ -106,7 +106,11 @@ not confirmed: delete the folder and record it as unconfirmed.
   `<skill>/scripts/sandbox-run.sh`. The JAR under test is
   `<workdir>/target.jar`, not a build of `src/`.
 - Do not write outside `<workdir>/reports/<bucket>-*`, `<workdir>/runs/<bucket>/`
-  and `<workdir>/unconfirmed/<bucket>.md`.
+  and `<workdir>/unconfirmed/<bucket>.md`. That includes GUI scripts and
+  screenshots: keep them under `<workdir>/runs/<bucket>/gui/`, never in the
+  session's scratch directory or `/tmp`.
+- Do not check anything in the GUI except on the display you were given,
+  following `<skill>/references/gui-confirm.md`.
 
 ## Writing your files
 

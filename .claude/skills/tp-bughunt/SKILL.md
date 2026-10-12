@@ -174,9 +174,11 @@ bucket count before the fan-out, since it is the number of agents.
 ### S3. Fan out: one agent per bucket
 
 Launch one `tp-bughunt-bucket` agent per bucket, **all in one message**. Give
-each the workdir, the mode, its bucket id and the bucket's file list copied
-from `buckets.json`. Each writes `reports/<bucket>-NN-<slug>/` with
-`report.md` and `poc.py`, and `unconfirmed/<bucket>.md`.
+each the workdir, the mode, its bucket id, the bucket's file list copied from
+`buckets.json`, and a display number of its own for GUI checks (such as `:200`
+plus the bucket number), so that no two agents share a display. Each writes
+`reports/<bucket>-NN-<slug>/` with `report.md` and `poc.py`, and
+`unconfirmed/<bucket>.md`.
 
 If the harness bootstrap failed in step 1, say so in every prompt: the agents
 must then use `poc.needs_gui` and the triage wave does all confirmation in the
@@ -200,8 +202,11 @@ When every bucket agent has returned:
 
 Split the report ids into groups of about five, keeping reports from the same
 area (and suspected duplicates) in the same group. Launch one
-`tp-bughunt-triage` agent per group, **all in one message**. Each writes
-`reports/<id>/triage.md` and confirms GUI-only findings with screenshots.
+`tp-bughunt-triage` agent per group, **all in one message**. Give each a group
+id (`g1`, `g2`, ...) and a display number of its own (such as `:300` plus the
+group number); it keeps its GUI scripts under `runs/triage/<group>/`. Each
+writes `reports/<id>/triage.md` and confirms GUI-only findings with
+screenshots.
 
 Save any `triage.md` a triager returned as text, then rerun
 `report-index.py`; `INDEX.md` is now ranked by verdict and severity.
