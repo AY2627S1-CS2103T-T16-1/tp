@@ -2,6 +2,7 @@ package seedu.tab.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -34,7 +35,7 @@ public class LogicManager implements Logic {
     private final Model model;
     private final Storage storage;
     private final StudentBookParser studentBookParser;
-    private ClearCommand pendingClearCommand;
+    private Optional<ClearCommand> pendingClearCommand = Optional.empty();
 
     /**
      * Constructs a {@code LogicManager} with the given {@code Model} and {@code Storage}.
@@ -49,19 +50,27 @@ public class LogicManager implements Logic {
     public CommandResult execute(String commandText) throws CommandException, ParseException {
         logger.info("----------------[USER COMMAND][" + commandText + "]");
 
-        if (pendingClearCommand != null) {
+        if (isAwaitingConfirmation()) {
             return respondToClearConfirmation(commandText);
         }
         Command command = studentBookParser.parseCommand(commandText);
-        CommandResult commandResult = command.execute(model);
         if (command instanceof ClearCommand clearCommand) {
-            if (!model.getStudentBook().getStudentList().isEmpty()) {
-                pendingClearCommand = clearCommand;
-            }
-            return commandResult;
+            return requestClearConfirmation(clearCommand);
         }
+        CommandResult commandResult = command.execute(model);
         saveStudentBook();
         return commandResult;
+    }
+
+    /**
+     * Prompts without saving and keeps a request only when there are students to clear.
+     */
+    private CommandResult requestClearConfirmation(ClearCommand clearCommand) {
+        CommandResult result = clearCommand.execute(model);
+        if (!model.getStudentBook().getStudentList().isEmpty()) {
+            pendingClearCommand = Optional.of(clearCommand);
+        }
+        return result;
     }
 
     /**
@@ -70,16 +79,16 @@ public class LogicManager implements Logic {
     private CommandResult respondToClearConfirmation(String commandText) throws CommandException, ParseException {
         String reply = SURROUNDING_WHITESPACE.matcher(commandText).replaceAll("");
         if (reply.isEmpty() || reply.equalsIgnoreCase("n") || reply.equalsIgnoreCase("no")) {
-            pendingClearCommand = null;
+            pendingClearCommand = Optional.empty();
             return new CommandResult(ClearCommand.MESSAGE_CANCELLED);
         }
+        ClearCommand clearCommand = pendingClearCommand.orElseThrow();
         if (!reply.equalsIgnoreCase("y") && !reply.equalsIgnoreCase("yes")) {
             throw new ParseException(ClearCommand.MESSAGE_INVALID_REPLY + "\n"
-                    + pendingClearCommand.execute(model).getFeedbackToUser());
+                    + clearCommand.execute(model).getFeedbackToUser());
         }
-        ClearCommand confirmedCommand = pendingClearCommand;
-        pendingClearCommand = null;
-        CommandResult result = confirmedCommand.executeConfirmed(model);
+        pendingClearCommand = Optional.empty();
+        CommandResult result = clearCommand.executeConfirmed(model);
         saveStudentBook();
         return result;
     }
@@ -99,7 +108,7 @@ public class LogicManager implements Logic {
 
     @Override
     public boolean isAwaitingConfirmation() {
-        return pendingClearCommand != null;
+        return pendingClearCommand.isPresent();
     }
 
     @Override

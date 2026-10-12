@@ -447,8 +447,10 @@ needed changing.
 `ClearCommand.execute` returns a prompt containing the whole-book count,
 including students hidden by the current filter. It does not mutate the
 model. An empty book instead returns a no-op message without a prompt.
-`LogicManager` keeps the non-empty request as `pendingClearCommand` and returns
-before its usual storage write. While the request is pending, it reads the
+`LogicManager.requestClearConfirmation` keeps a non-empty book's request in
+`pendingClearCommand`, an `Optional<ClearCommand>`, and returns before the
+usual storage write. `Optional.empty()` represents no pending request.
+While the request is pending, it reads the
 next input as a reply to the concise `[y/N]` prompt. Only surrounding Unicode
 whitespace is trimmed; internal characters are kept so a value cannot become
 an accepted word by removing characters from within it. Replies ignore case.
@@ -465,7 +467,8 @@ restarting TAB cannot confirm a previous request. The existing result area
 and command field provide the prompt and replies without a mouse or dialog.
 `MainWindow` supplies `Logic.isAwaitingConfirmation` to `CommandBox`, which
 submits an empty Enter only during confirmation; otherwise an empty Enter
-keeps its existing no-op behavior.
+keeps its existing no-op behavior. Each `Logic` implementation must supply
+this state explicitly so a default cannot silently suppress cancellation.
 
 ### \[Proposed\] Undo/redo feature
 
