@@ -313,8 +313,9 @@ stay unchanged until you reply in the command line and press Enter:
 * `y` or `yes` deletes all students and saves the empty book. This cannot be undone.
 * `n`, `no`, or Enter without a reply cancels without changing any records or the saved file.
 
-Replies ignore case and surrounding whitespace, and cancellation is the
-`[y/N]` default. Only the exact replies above are accepted: words such as
+Replies ignore case and surrounding whitespace: `Y`, `yEs`, and `yeS` also
+confirm; `N` and `nO` also cancel. Cancellation is the `[y/N]` default.
+Only the exact replies above are accepted: words such as
 `yellow` and `nope` are invalid. Any other reply, including another command,
 leaves the data unchanged and repeats the prompt. Cancel first if you want
 to run a different command. Closing TAB while the prompt is pending also
@@ -373,7 +374,7 @@ _Details coming soon ..._
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [--follow-up]` <br> e.g., `add James Ho -p 22224444 -t friend -t colleague --follow-up`
-**Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel
+**Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [-t TAG]... [--follow-up]`<br> e.g., `edit 2 -n "James Lee" --follow-up`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`

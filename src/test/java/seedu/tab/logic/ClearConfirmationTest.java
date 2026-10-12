@@ -63,7 +63,7 @@ public class ClearConfirmationTest {
     @Test
     public void execute_clearAndCancel_preservesDisplayAndJsonBytes() throws Exception {
         for (String reply : List.of("", " ", "\t\n", "\u00A0\u3000", "n", "N", " \tn\u00A0\u3000",
-                "no", "NO", "No", " \tno\u00A0\u3000")) {
+                "no", "nO", "No", "NO", " \tno\u00A0\u3000")) {
             assertEquals("Clear all 2 students? This cannot be undone. [y/N]",
                     logic.execute("clear").getFeedbackToUser());
             assertTrue(logic.isAwaitingConfirmation());
@@ -95,7 +95,8 @@ public class ClearConfirmationTest {
 
     @Test
     public void execute_yesReplyVariants_clearsHiddenRecordsAndPersistsOnce() throws Exception {
-        for (String reply : List.of("y", "Y", " \tY\u00A0\u3000", "yes", "YES", "Yes", " \tyes\u00A0\u3000")) {
+        for (String reply : List.of("y", "Y", " \tY\u00A0\u3000", "yes", "yeS", "yEs", "yES",
+                "Yes", "YeS", "YEs", "YES", " \tyes\u00A0\u3000")) {
             setUp();
             logic.execute("clear");
             assertUnchanged();
