@@ -133,8 +133,8 @@ Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [--follow-up]`
 <box type="tip" seamless>
 
 **Tip:** The email is optional. Record a student you only have a phone number
-for, rather than inventing an address to satisfy the command. An email cannot
-be removed once set, only replaced.
+for, rather than inventing an address to satisfy the command. To remove an
+email entered by mistake, use `edit INDEX -e ""`.
 
 An address may run to 254 characters, the longest an email address is allowed
 to be, so no real address is turned away. A longer value is refused and TAB
@@ -248,6 +248,9 @@ done to it beyond the quotes any value with spaces takes:
   `-f` alias is also accepted. An unflagged student becomes flagged; a flagged
   student becomes unflagged. Repeating the same command toggles the status back,
   so check the updated card after each edit.
+* To remove a student's email, use `-e ""`. Leaving out `-e` keeps the email
+  unchanged; a bare `-e` is an error. Clearing an already absent email succeeds.
+  Name and phone are required and cannot be cleared.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
 * To remove all of a student's tags, give `-t` an empty value: `-t ""`. A bare
   `-t` with nothing after it is refused, so that a mistyped option is reported
@@ -255,6 +258,7 @@ done to it beyond the quotes any value with spaces takes:
 
 Examples:
 *  `edit 1 -p 91234567 -e johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 1 -e ""` Removes the 1st student's email while keeping all other details.
 *  `edit 2 -n "Betsy Crower" -t ""` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 -n "Ravi s/o Kumaran"` Edits the name of the 1st student to be `Ravi s/o Kumaran`.
 *  `edit 3 -p "+65 9123 4567" -t T1 -t "Lab 3"` Replaces the phone number and both tags of the 3rd student.
@@ -263,7 +267,7 @@ Examples:
 *  `edit 2 -p 91234567 --follow-up` Updates the phone number and toggles
    follow-up in one command.
 
-A cleared tag set and a toggled follow-up status are both saved at once, and
+A cleared email, a cleared tag set, and a toggled follow-up status are saved at once, and
 return as they were when you next launch TAB.
 
 ### Locating students by detail: `find`

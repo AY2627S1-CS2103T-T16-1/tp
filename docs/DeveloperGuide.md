@@ -273,7 +273,8 @@ unclear which field a value belongs to, so each is refused on its own instead
 of being collected with the field errors.
 
 `edit` clears a field with an explicitly empty value rather than with a bare
-option. `-t ""` removes every tag, where AB3's `t/` did so by appearing with
+option. `-e ""` removes the email and `-t ""` removes every tag, where AB3's
+`t/` did so by appearing with
 nothing after it. A bare option cannot mean "clear" here, because a bare option
 is what reports the mistake in `edit 1 -t -e a@b.com`: the `-e` is read as the
 value `-t` was left without, rather than being stored as a tag. An empty quoted
@@ -344,9 +345,15 @@ what to do when there is none.
 The data file simply carries no `email` key. One that holds a malformed address
 is still refused, rather than the address being quietly dropped.
 
-An email cannot be cleared once set. `edit` replaces a value and has no
-spelling for removing one, the way `-t ""` empties the tags. Clearing an email
-is tracked as issue #102.
+`edit INDEX -e ""` clears an email without removing the student or changing
+other fields. `EditStudentDescriptor` records `isEmailEdited` separately from
+the nullable replacement email: false leaves the existing value alone, true
+with null clears it, and true with an address replaces it. Copies and equality
+preserve that intent, and clearing counts as an edit even when the email is
+already absent. The parser sets this intent only when `-e` is present and
+accepts exactly an empty token as the clearing request. A bare option or a
+whitespace-only quoted address is still an error. The saved record omits the
+`email` key and reloads through the existing optional-email storage contract.
 
 `Email.MAX_LENGTH` caps at 254 characters the address a **command** may enter.
 `ParserUtil.parseEmail` checks `Email.isWithinLengthLimit` before
@@ -1344,6 +1351,32 @@ testers are expected to do more *exploratory* testing.
       to edit is needed; the second asks only for a field.
 
 1. _{ more test cases … }_
+
+### Clearing a student's email
+
+1. Removing a mistaken address without removing the record
+
+   1. Prerequisites: Add `add Alice Tan -p 91234567 -e alice@example.com
+      -t T1 --follow-up` as one line and note Alice's displayed `INDEX`.
+
+   1. Test case: `edit INDEX -e ""`<br>
+      Expected: The email disappears from the card and feedback. Name, phone,
+      tags, and follow-up status remain unchanged. Alice's saved record has
+      no `email` key, and the email stays absent after restarting TAB.
+
+   1. Test case: Repeat `edit INDEX -e ""`.<br>
+      Expected: Success with no other changes, even though the email is absent.
+
+   1. Test case: `edit INDEX -e "" -p 81112222 -t "" -f`<br>
+      Expected: The email stays absent, the phone changes, tags are removed,
+      and follow-up is toggled. All changes survive a restart.
+
+   1. Test cases: `edit INDEX -e`, `edit INDEX -e " "`,
+      `edit INDEX -e "" -e alice@example.com`, and `edit INDEX -p "" -e ""`.<br>
+      Expected: Specific feedback for the missing email value, invalid email,
+      repeated option, or required phone respectively. Neither the student
+      nor the JSON file changes. Restore an email with
+      `edit INDEX -e alice@example.com` and check that it is displayed again.
 
 ### Rejecting an over-long email
 
