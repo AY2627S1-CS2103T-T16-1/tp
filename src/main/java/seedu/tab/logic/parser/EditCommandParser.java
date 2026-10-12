@@ -83,11 +83,26 @@ public class EditCommandParser implements Parser<EditCommand> {
 
         descriptor.setName(problems.collectIfPresent(arguments.getValue(FLAG_NAME), ParserUtil::parseName));
         descriptor.setPhone(problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone));
-        descriptor.setEmail(problems.collectIfPresent(arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail));
+        arguments.getValue(FLAG_EMAIL).ifPresent(value -> parseEmailForEdit(problems, value, descriptor));
         parseTagsForEdit(problems, arguments.getAllValues(FLAG_TAG)).ifPresent(descriptor::setTags);
         descriptor.setFlagToggled(arguments.getValue(FLAG_FOLLOW_UP).isPresent());
 
         return descriptor;
+    }
+
+    /**
+     * Describes an explicit email clear or a validated replacement, recording why a value is rejected.
+     */
+    private static void parseEmailForEdit(ParseProblems problems, String value, EditStudentDescriptor descriptor) {
+        if (value.isEmpty()) {
+            descriptor.clearEmail();
+            return;
+        }
+        try {
+            descriptor.setEmail(ParserUtil.parseEmail(value));
+        } catch (ParseException e) {
+            problems.add(e.getMessage());
+        }
     }
 
     /**

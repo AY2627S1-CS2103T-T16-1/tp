@@ -117,6 +117,21 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_clearEmail_preservesOtherDetails() {
+        Student first = model.getFilteredStudentList().get(0);
+        Student edited = new StudentBuilder(first).withoutEmail().build();
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(first, edited);
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withoutEmail().build());
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    @Test
     public void execute_toggleFollowUpFlag_changesFalseToTrue() {
         Student original = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
         Student editedStudent = new StudentBuilder(original).withFlag(true).build();

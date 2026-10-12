@@ -47,7 +47,8 @@ public class EditCommand extends Command {
             + "[" + FLAG_TAG.getLabel() + "]... "
             + "[" + FLAG_FOLLOW_UP.getLabel() + "]\n"
             + "The index comes first. Any option value holding spaces, and any value opening with "
-            + "a hyphen, goes in double quotes. " + FLAG_TAG + " \"\" clears every tag.\n"
+            + "a hyphen, goes in double quotes. " + FLAG_TAG + " \"\" clears every tag; "
+            + FLAG_EMAIL + " \"\" clears the email.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + FLAG_PHONE + " 91234567 "
             + FLAG_EMAIL + " johndoe@example.com";
@@ -101,14 +102,15 @@ public class EditCommand extends Command {
 
         Name updatedName = editStudentDescriptor.getName().orElse(studentToEdit.getName());
         Phone updatedPhone = editStudentDescriptor.getPhone().orElse(studentToEdit.getPhone());
-        Email updatedEmail = editStudentDescriptor.getEmail()
-                .orElseGet(() -> studentToEdit.getEmail().orElse(null));
+        Optional<Email> updatedEmail = editStudentDescriptor.isEmailEdited()
+                ? editStudentDescriptor.getEmail()
+                : studentToEdit.getEmail();
         Set<Tag> updatedTags = editStudentDescriptor.getTags().orElse(studentToEdit.getTags());
         boolean updatedFlag = editStudentDescriptor.shouldToggleFlag()
                 ? !studentToEdit.isFlagged()
                 : studentToEdit.isFlagged();
 
-        return new Student(updatedName, updatedPhone, updatedEmail, updatedTags, updatedFlag);
+        return new Student(updatedName, updatedPhone, updatedEmail.orElse(null), updatedTags, updatedFlag);
     }
 
     @Override
@@ -141,7 +143,8 @@ public class EditCommand extends Command {
     public static class EditStudentDescriptor {
         private Name name;
         private Phone phone;
-        private Email email;
+        private Optional<Email> email = Optional.empty();
+        private boolean isEmailEdited;
         private Set<Tag> tags;
         private boolean shouldToggleFlag;
 
@@ -154,7 +157,9 @@ public class EditCommand extends Command {
         public EditStudentDescriptor(EditStudentDescriptor toCopy) {
             setName(toCopy.name);
             setPhone(toCopy.phone);
-            setEmail(toCopy.email);
+            if (toCopy.isEmailEdited()) {
+                toCopy.getEmail().ifPresentOrElse(this::setEmail, this::clearEmail);
+            }
             setTags(toCopy.tags);
             setFlagToggled(toCopy.shouldToggleFlag);
         }
@@ -163,7 +168,7 @@ public class EditCommand extends Command {
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email, tags) || shouldToggleFlag;
+            return CollectionUtil.isAnyNonNull(name, phone, tags) || isEmailEdited || shouldToggleFlag;
         }
 
         public void setName(Name name) {
@@ -182,12 +187,30 @@ public class EditCommand extends Command {
             return Optional.ofNullable(phone);
         }
 
+        /**
+         * Sets a replacement email and marks the email as edited.
+         *
+         * @throws NullPointerException if {@code email} is null.
+         */
         public void setEmail(Email email) {
-            this.email = email;
+            this.email = Optional.of(email);
+            isEmailEdited = true;
+        }
+
+        /**
+         * Marks the email for removal without changing any other field.
+         */
+        public void clearEmail() {
+            email = Optional.empty();
+            isEmailEdited = true;
+        }
+
+        public boolean isEmailEdited() {
+            return isEmailEdited;
         }
 
         public Optional<Email> getEmail() {
-            return Optional.ofNullable(email);
+            return email;
         }
 
         /**
@@ -228,7 +251,8 @@ public class EditCommand extends Command {
 
             return Objects.equals(name, otherEditStudentDescriptor.name)
                     && Objects.equals(phone, otherEditStudentDescriptor.phone)
-                    && Objects.equals(email, otherEditStudentDescriptor.email)
+                    && email.equals(otherEditStudentDescriptor.email)
+                    && isEmailEdited == otherEditStudentDescriptor.isEmailEdited
                     && Objects.equals(tags, otherEditStudentDescriptor.tags)
                     && shouldToggleFlag == otherEditStudentDescriptor.shouldToggleFlag;
         }
@@ -239,6 +263,7 @@ public class EditCommand extends Command {
                     .add("name", name)
                     .add("phone", phone)
                     .add("email", email)
+                    .add("isEmailEdited", isEmailEdited)
                     .add("tags", tags)
                     .add("shouldToggleFlag", shouldToggleFlag)
                     .toString();
