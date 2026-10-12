@@ -62,11 +62,14 @@ public class ClearConfirmationTest {
 
     @Test
     public void execute_clearAndCancel_preservesDisplayAndJsonBytes() throws Exception {
-        for (String reply : List.of("no", "NO", "No", " \tno\u00A0\u3000")) {
-            assertEquals(String.format(ClearCommand.MESSAGE_CONFIRMATION, 2),
+        for (String reply : List.of("", " ", "\t\n", "\u00A0\u3000", "n", "N", " \tn\u00A0\u3000",
+                "no", "NO", "No", " \tno\u00A0\u3000")) {
+            assertEquals("Clear all 2 students? This cannot be undone. [y/N]",
                     logic.execute("clear").getFeedbackToUser());
+            assertTrue(logic.isAwaitingConfirmation());
             assertUnchanged();
             assertEquals(ClearCommand.MESSAGE_CANCELLED, logic.execute(reply).getFeedbackToUser());
+            assertFalse(logic.isAwaitingConfirmation());
             assertUnchanged();
         }
         assertThrows(ParseException.class, Messages.MESSAGE_UNKNOWN_COMMAND, () -> logic.execute("yes"));
@@ -76,11 +79,13 @@ public class ClearConfirmationTest {
     @Test
     public void execute_invalidReplies_keepsConfirmationPendingWithoutWriting() throws Exception {
         logic.execute("clear");
-        for (String reply : List.of("", " ", "\u00A0\u3000", "y", "maybe", "yes no", "\"yes\"",
-                "yes!", "clear", "clear oops", "exit", "help", "delete 1", "add New Student -p 81112222")) {
+        for (String reply : List.of("yellow", "YESPLEASE", "yep", "yeah", "yess", "yes no", "\"yes\"", "\"y\"",
+                "yes!", "nope", "never", "nothing", "nonsense", "no!", "n o", "n\u200Bo", "y\u200Bes",
+                "maybe", "clear", "clear oops", "exit", "help", "delete 1", "add New Student -p 81112222")) {
             String expected = ClearCommand.MESSAGE_INVALID_REPLY + "\n"
-                    + String.format(ClearCommand.MESSAGE_CONFIRMATION, 2);
+                    + "Clear all 2 students? This cannot be undone. [y/N]";
             assertThrows(ParseException.class, expected, () -> logic.execute(reply));
+            assertTrue(logic.isAwaitingConfirmation());
             assertUnchanged();
         }
         assertEquals(ClearCommand.MESSAGE_CANCELLED, logic.execute("no").getFeedbackToUser());
@@ -90,11 +95,12 @@ public class ClearConfirmationTest {
 
     @Test
     public void execute_yesReplyVariants_clearsHiddenRecordsAndPersistsOnce() throws Exception {
-        for (String reply : List.of("yes", "YES", "Yes", " \tyes\u00A0\u3000")) {
+        for (String reply : List.of("y", "Y", " \tY\u00A0\u3000", "yes", "YES", "Yes", " \tyes\u00A0\u3000")) {
             setUp();
             logic.execute("clear");
             assertUnchanged();
             assertEquals(ClearCommand.MESSAGE_SUCCESS, logic.execute(reply).getFeedbackToUser());
+            assertFalse(logic.isAwaitingConfirmation());
             assertEquals(new StudentBook(), model.getStudentBook());
             assertTrue(model.getFilteredStudentList().isEmpty());
             assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());

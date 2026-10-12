@@ -46,14 +46,14 @@ public class ClearConfirmationUiTest {
                 TextArea feedback = (TextArea) stage.getScene().lookup("#resultDisplay");
                 field.requestFocus();
                 enter(field, "clear");
-                assertEquals(String.format(ClearCommand.MESSAGE_CONFIRMATION, 1), feedback.getText());
+                assertEquals("Clear all 1 student? This cannot be undone. [y/N]", feedback.getText());
                 assertEquals(field, stage.getScene().getFocusOwner());
                 assertEquals(1, model.getStudentBook().getStudentList().size());
-                enter(field, "no");
+                enter(field, "");
                 assertEquals(ClearCommand.MESSAGE_CANCELLED, feedback.getText());
                 assertEquals(1, storage.readStudentBook().orElseThrow().getStudentList().size());
                 enter(field, "clear");
-                enter(field, "yes");
+                enter(field, "Y");
                 assertEquals(ClearCommand.MESSAGE_SUCCESS, feedback.getText());
                 assertTrue(model.getFilteredStudentList().isEmpty());
                 assertTrue(storage.readStudentBook().orElseThrow().getStudentList().isEmpty());

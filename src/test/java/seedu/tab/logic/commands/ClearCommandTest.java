@@ -28,7 +28,7 @@ public class ClearCommandTest {
         model.updateFilteredStudentList(student -> false);
         expectedModel.updateFilteredStudentList(student -> false);
         String prompt = String.format(ClearCommand.MESSAGE_CONFIRMATION,
-                model.getStudentBook().getStudentList().size());
+                model.getStudentBook().getStudentList().size(), "s");
         assertCommandSuccess(new ClearCommand(), model, prompt, expectedModel);
     }
 

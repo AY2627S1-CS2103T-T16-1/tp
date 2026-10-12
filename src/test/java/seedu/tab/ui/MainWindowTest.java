@@ -103,6 +103,19 @@ public class MainWindowTest {
     }
 
     @Test
+    public void commandLine_emptyWithoutConfirmation_keepsResultHidden() throws Exception {
+        MainWindow window = filledWindow();
+        onFxThread(() -> {
+            TextField field = (TextField) window.getRoot().getScene().lookup("#commandTextField");
+            field.fireEvent(new ActionEvent());
+            StackPane pane = (StackPane) window.getRoot().getScene().lookup("#resultDisplayPlaceholder");
+            assertFalse(pane.isVisible());
+            assertFalse(pane.isManaged());
+            return null;
+        });
+    }
+
+    @Test
     public void window_cannotBeMadeSmallerThanWhatIsInIt() throws Exception {
         double[] sizes = onFxThread(() -> {
             MainWindow window = filledWindow2();

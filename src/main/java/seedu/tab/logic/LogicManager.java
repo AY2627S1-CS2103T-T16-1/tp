@@ -3,11 +3,11 @@ package seedu.tab.logic;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javafx.collections.ObservableList;
 import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.commons.core.LogsCenter;
-import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.commands.ClearCommand;
 import seedu.tab.logic.commands.Command;
 import seedu.tab.logic.commands.CommandResult;
@@ -26,6 +26,8 @@ public class LogicManager implements Logic {
 
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
             "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
+
+    private static final Pattern SURROUNDING_WHITESPACE = Pattern.compile("(?U)^\\s+|\\s+$");
 
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
@@ -66,12 +68,12 @@ public class LogicManager implements Logic {
      * Handles a reply without parsing it as a command or saving unconfirmed data.
      */
     private CommandResult respondToClearConfirmation(String commandText) throws CommandException, ParseException {
-        String reply = StringUtil.normalizeFieldValue(commandText);
-        if (reply.equalsIgnoreCase("no")) {
+        String reply = SURROUNDING_WHITESPACE.matcher(commandText).replaceAll("");
+        if (reply.isEmpty() || reply.equalsIgnoreCase("n") || reply.equalsIgnoreCase("no")) {
             pendingClearCommand = null;
             return new CommandResult(ClearCommand.MESSAGE_CANCELLED);
         }
-        if (!reply.equalsIgnoreCase("yes")) {
+        if (!reply.equalsIgnoreCase("y") && !reply.equalsIgnoreCase("yes")) {
             throw new ParseException(ClearCommand.MESSAGE_INVALID_REPLY + "\n"
                     + pendingClearCommand.execute(model).getFeedbackToUser());
         }
@@ -93,6 +95,11 @@ public class LogicManager implements Logic {
         } catch (IOException ioe) {
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
         }
+    }
+
+    @Override
+    public boolean isAwaitingConfirmation() {
+        return pendingClearCommand != null;
     }
 
     @Override

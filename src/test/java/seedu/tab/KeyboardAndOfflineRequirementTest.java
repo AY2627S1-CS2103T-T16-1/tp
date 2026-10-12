@@ -82,7 +82,7 @@ public class KeyboardAndOfflineRequirementTest {
         assertEquals(ClearCommand.MESSAGE_EMPTY, clearResult.getFeedbackToUser());
 
         logic.execute("add Amy Bee -p 85355255");
-        String prompt = String.format(ClearCommand.MESSAGE_CONFIRMATION, 1);
+        String prompt = "Clear all 1 student? This cannot be undone. [y/N]";
         assertEquals(prompt, logic.execute("clear").getFeedbackToUser());
         assertEquals(ClearCommand.MESSAGE_CANCELLED, logic.execute("no").getFeedbackToUser());
         assertEquals(1, model.getFilteredStudentList().size());

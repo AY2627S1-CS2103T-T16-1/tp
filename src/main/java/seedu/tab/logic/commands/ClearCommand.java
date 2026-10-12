@@ -11,11 +11,10 @@ import seedu.tab.model.StudentBook;
 public class ClearCommand extends Command {
 
     public static final String COMMAND_WORD = "clear";
-    public static final String MESSAGE_CONFIRMATION = "Clear all %1$d student(s), including any hidden by a search?\n"
-            + "This cannot be undone. Type yes to delete all records or no to cancel, then press Enter.";
+    public static final String MESSAGE_CONFIRMATION = "Clear all %1$d student%2$s? This cannot be undone. [y/N]";
     public static final String MESSAGE_CANCELLED = "Clear cancelled. No student records were changed.";
     public static final String MESSAGE_EMPTY = "The student book is already empty. Nothing to clear.";
-    public static final String MESSAGE_INVALID_REPLY = "Please type yes to confirm or no to cancel.";
+    public static final String MESSAGE_INVALID_REPLY = "Invalid reply. Enter y/yes or n/no (Enter cancels).";
     public static final String MESSAGE_SUCCESS = "Student book has been cleared!";
 
 
@@ -24,7 +23,7 @@ public class ClearCommand extends Command {
         requireNonNull(model);
         int studentCount = model.getStudentBook().getStudentList().size();
         return new CommandResult(studentCount == 0 ? MESSAGE_EMPTY
-                : String.format(MESSAGE_CONFIRMATION, studentCount));
+                : String.format(MESSAGE_CONFIRMATION, studentCount, studentCount == 1 ? "" : "s"));
     }
 
     /**

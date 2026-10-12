@@ -1,5 +1,7 @@
 package seedu.tab.ui;
 
+import java.util.function.BooleanSupplier;
+
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -33,6 +35,7 @@ public class CommandBox extends UiPart<Region> {
     private static final int BLINK_MILLIS = 530;
 
     private final CommandExecutor commandExecutor;
+    private final BooleanSupplier canSubmitEmptyReply;
 
     @FXML
     private TextField commandTextField;
@@ -53,8 +56,16 @@ public class CommandBox extends UiPart<Region> {
      * Creates a {@code CommandBox} with the given {@code CommandExecutor}.
      */
     public CommandBox(CommandExecutor commandExecutor) {
+        this(commandExecutor, () -> false);
+    }
+
+    /**
+     * Creates a command box that can submit an empty reply while confirmation is pending.
+     */
+    public CommandBox(CommandExecutor commandExecutor, BooleanSupplier canSubmitEmptyReply) {
         super(FXML);
         this.commandExecutor = commandExecutor;
+        this.canSubmitEmptyReply = canSubmitEmptyReply;
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
         commandTextField.textProperty().addListener((unused, old, typed) -> recolour(typed));
@@ -83,7 +94,7 @@ public class CommandBox extends UiPart<Region> {
     @FXML
     private void handleCommandEntered() {
         String commandText = commandTextField.getText();
-        if (commandText.equals("")) {
+        if (commandText.isEmpty() && !canSubmitEmptyReply.getAsBoolean()) {
             return;
         }
 
