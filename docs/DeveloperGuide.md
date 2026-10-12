@@ -273,9 +273,8 @@ unclear which field a value belongs to, so each is refused on its own instead
 of being collected with the field errors.
 
 `edit` clears a field with an explicitly empty value rather than with a bare
-option. `-e ""` removes the email and `-t ""` removes every tag, where AB3's
-`t/` did so by appearing with
-nothing after it. A bare option cannot mean "clear" here, because a bare option
+option. `-e ""` removes the email and `-t ""` removes every tag.
+A bare option cannot mean "clear" here, because a bare option
 is what reports the mistake in `edit 1 -t -e a@b.com`: the `-e` is read as the
 value `-t` was left without, rather than being stored as a tag. An empty quoted
 value also separates a value left empty by accident from one cleared on
@@ -336,24 +335,31 @@ They normalize for different reasons, and the rule each one enforces differs.
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
 
 **The email may be absent.** A student is recorded before an email address is
-known rather than one being invented, so `Student` holds it as null and hands
-it out as `Optional<Email>`. The field is nullable rather than
-`Optional<Email>` because an `Optional` field neither serializes through
-Jackson nor survives a round trip, and returning one obliges a caller to decide
-what to do when there is none.
+known rather than one being invented. `Student` retains its nullable email
+constructor contract and exposes the value as `Optional<Email>` so callers
+handle absence explicitly. `JsonAdaptedStudent` writes the email as a string
+when present; the optional wrapper is not written to JSON.
 
 The data file simply carries no `email` key. One that holds a malformed address
 is still refused, rather than the address being quietly dropped.
 
 `edit INDEX -e ""` clears an email without removing the student or changing
-other fields. `EditStudentDescriptor` records `isEmailEdited` separately from
-the nullable replacement email: false leaves the existing value alone, true
-with null clears it, and true with an address replaces it. Copies and equality
-preserve that intent, and clearing counts as an edit even when the email is
-already absent. The parser sets this intent only when `-e` is present and
-accepts exactly an empty token as the clearing request. A bare option or a
-whitespace-only quoted address is still an error. The saved record omits the
-`email` key and reloads through the existing optional-email storage contract.
+other fields. `EditStudentDescriptor` stores an `Optional<Email>` and records
+`isEmailEdited` separately: false leaves the existing value alone, true with
+an empty optional clears it, and true with an address replaces it. `setEmail`
+requires an address and `clearEmail` explicitly requests removal. Both mark
+the email as edited, so callers cannot toggle the intent independently of the
+replacement value. Copies use those same methods to preserve all three states.
+The descriptor is not persisted, so its optional field does not affect JSON.
+
+The parser leaves the email untouched when `-e` is absent, calls `clearEmail`
+for an explicitly empty token, and sets a replacement only after validation
+succeeds. A rejected value is recorded as a parse problem without assigning a
+null email or requesting a clear. A bare option or a whitespace-only quoted
+address is still an error. Clearing counts as an edit even when the email is
+already absent. `EditCommand` keeps the value optional until the existing
+`Student` constructor boundary. The saved record omits the `email` key and
+reloads through the existing optional-email storage contract.
 
 `Email.MAX_LENGTH` caps at 254 characters the address a **command** may enter.
 `ParserUtil.parseEmail` checks `Email.isWithinLengthLimit` before
