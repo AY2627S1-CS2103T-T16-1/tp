@@ -14,8 +14,8 @@ import seedu.tab.model.tag.Tag;
 
 /**
  * Represents a Student in the student book.
- * Guarantees: field values are validated and immutable. Every detail but the email is
- * present; a student may be held before an email address is known.
+ * Guarantees: field values are validated and immutable. Every detail but the email and NUS Student ID is
+ * present; a student may be held before either optional detail is known.
  */
 public class Student {
     // Identity fields
@@ -24,28 +24,43 @@ public class Student {
 
     /** Null when the teaching assistant has not recorded one. */
     private final Email email;
+    /** Null when the teaching assistant has not recorded one. */
+    private final NusStudentId nusStudentId;
 
     // Data fields
     private final Set<Tag> tags = new HashSet<>();
     private final Flag flag;
 
     /**
-     * Every field but the email must be present and not null. A student may be recorded before
-     * an email address is known, rather than the address being invented to satisfy the command.
+     * Every field but the email and NUS Student ID must be present and not null.
      */
     public Student(Name name, Phone phone, Email email, Set<Tag> tags) {
-        this(name, phone, email, tags, false);
+        this(name, phone, email, null, tags, false);
     }
 
     /**
-     * Every field but the email must be present and not null. A student may be recorded before
-     * an email address is known, rather than the address being invented to satisfy the command.
+     * Every field but the email and NUS Student ID must be present and not null.
      */
     public Student(Name name, Phone phone, Email email, Set<Tag> tags, boolean isFlagged) {
+        this(name, phone, email, null, tags, isFlagged);
+    }
+
+    /**
+     * Every field but the email and NUS Student ID must be present and not null.
+     */
+    public Student(Name name, Phone phone, Email email, NusStudentId nusStudentId, Set<Tag> tags) {
+        this(name, phone, email, nusStudentId, tags, false);
+    }
+
+    /**
+     * Every field but the email and NUS Student ID must be present and not null.
+     */
+    public Student(Name name, Phone phone, Email email, NusStudentId nusStudentId, Set<Tag> tags, boolean isFlagged) {
         requireAllNonNull(name, phone, tags);
         this.name = name;
         this.phone = phone;
         this.email = email;
+        this.nusStudentId = nusStudentId;
         this.tags.addAll(tags);
         this.flag = isFlagged ? new Flag() : null;
     }
@@ -60,6 +75,10 @@ public class Student {
 
     public Optional<Email> getEmail() {
         return Optional.ofNullable(email);
+    }
+
+    public Optional<NusStudentId> getNusStudentId() {
+        return Optional.ofNullable(nusStudentId);
     }
 
     /**
@@ -110,6 +129,7 @@ public class Student {
         return name.equals(otherStudent.name)
                 && phone.equals(otherStudent.phone)
                 && Objects.equals(email, otherStudent.email)
+                && Objects.equals(nusStudentId, otherStudent.nusStudentId)
                 && tags.equals(otherStudent.tags)
                 && Objects.equals(flag, otherStudent.flag);
     }
@@ -117,7 +137,7 @@ public class Student {
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, tags, flag);
+        return Objects.hash(name, phone, email, nusStudentId, tags, flag);
     }
 
     @Override
@@ -126,6 +146,7 @@ public class Student {
                 .add("name", name)
                 .add("phone", phone)
                 .add("email", email)
+                .add("nusStudentId", nusStudentId)
                 .add("tags", tags)
                 .add("isFlagged", isFlagged())
                 .toString();

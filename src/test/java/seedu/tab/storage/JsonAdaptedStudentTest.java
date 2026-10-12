@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import seedu.tab.commons.exceptions.IllegalValueException;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.tag.Flag;
 
@@ -25,11 +26,13 @@ public class JsonAdaptedStudentTest {
     private static final String INVALID_NAME = "---"; // no letter or number
     private static final String INVALID_PHONE = "12"; // fewer than 3 digits
     private static final String INVALID_EMAIL = "example.com";
+    private static final String INVALID_NUS_STUDENT_ID = "A0123456X";
     private static final String INVALID_TAG = "---"; // no letter or number
 
     private static final String VALID_NAME = BENSON.getName().toString();
     private static final String VALID_PHONE = BENSON.getPhone().toString();
     private static final String VALID_EMAIL = BENSON.getEmail().orElseThrow().toString();
+    private static final String VALID_NUS_STUDENT_ID = "A01234567X";
     private static final List<JsonAdaptedTag> VALID_TAGS = BENSON.getTags().stream()
             .map(JsonAdaptedTag::new)
             .collect(Collectors.toList());
@@ -100,6 +103,27 @@ public class JsonAdaptedStudentTest {
     public void toModelType_nullEmail_buildsStudentWithoutOne() throws Exception {
         JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, null, VALID_TAGS, false);
         assertEquals(Optional.empty(), student.toModelType().getEmail());
+    }
+
+    @Test
+    public void toModelType_validNusStudentId_buildsStudentHoldingIt() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_NUS_STUDENT_ID, VALID_TAGS, false);
+        assertEquals(Optional.of(new NusStudentId(VALID_NUS_STUDENT_ID)), student.toModelType().getNusStudentId());
+    }
+
+    @Test
+    public void toModelType_nullNusStudentId_buildsStudentWithoutOne() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, null, VALID_TAGS, false);
+        assertEquals(Optional.empty(), student.toModelType().getNusStudentId());
+    }
+
+    @Test
+    public void toModelType_invalidNusStudentId_throwsIllegalValueExceptionNamingField() {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, INVALID_NUS_STUDENT_ID, VALID_TAGS, false);
+        assertThrows(IllegalValueException.class, NusStudentId.MESSAGE_CONSTRAINTS, student::toModelType);
     }
 
     @Test
