@@ -12,6 +12,8 @@ import seedu.tab.model.student.Student;
 public class Messages {
 
     public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command.";
+    public static final String MESSAGE_UNEXPECTED_ARGUMENTS =
+            "%1$s takes no arguments. Unexpected input: \"%2$s\".";
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
     public static final String MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX = "The student index provided is invalid.";
     public static final String MESSAGE_STUDENTS_LISTED_OVERVIEW = "%1$d student(s) listed!";
@@ -60,6 +62,13 @@ public class Messages {
      */
     public static String getErrorMessageForInvalidValue(String fieldName, String value, String reason) {
         return String.format(MESSAGE_INVALID_VALUE, fieldName, shorten(value), reason);
+    }
+
+    /**
+     * Returns feedback naming the command and unexpected input, shortening long input for readability.
+     */
+    public static String getErrorMessageForUnexpectedArguments(String commandWord, String arguments) {
+        return String.format(MESSAGE_UNEXPECTED_ARGUMENTS, commandWord, shorten(arguments));
     }
 
     /**
