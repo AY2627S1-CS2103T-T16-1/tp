@@ -284,6 +284,17 @@ decision to the field parser, so no tokenizer change was needed.
 `edit`'s `--follow-up` option toggles the flag, as AB3's `f/` did. Setting and
 clearing it explicitly is tracked separately as issue #146.
 
+### Commands with no arguments
+
+`StudentBookParser` rejects non-whitespace input after `clear`, `list`,
+`help`, and `exit` before returning a command. Its existing Unicode
+whitespace rule accepts pasted whitespace as well as spaces and tabs.
+The feedback names the command and unexpected input, with long input
+shortened to keep the reason visible. Quotes do not make an argument absent:
+`clear ""` is refused too. A parse failure reaches neither command execution
+nor `LogicManager`'s storage write, so it preserves both the displayed list
+and the JSON file.
+
 ### Follow-up flag
 
 `Flag` extends `Tag` and uses its validation, normalization, and display
@@ -1229,6 +1240,28 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Rejecting unexpected command arguments
+
+1. Commands that take no parameters
+
+   1. Prerequisites: Add a student, run `find no-such-student` to hide the
+      student, and keep a copy of `data/tab.json`.
+
+   1. Test cases: `clear oops`, `list oops`, `help oops`, and `exit oops`.<br>
+      Expected: Each command reports that it takes no arguments and quotes
+      `oops`. The list stays filtered, no help window opens, TAB stays open,
+      and the JSON file matches the copy byte for byte.
+
+   1. Test cases: `clear "oops"`, `clear ""`, and `clear "unfinished`.<br>
+      Expected: Each reports the unexpected input. The list and JSON file
+      stay unchanged, including for an empty quoted argument.
+
+   1. Test cases: `list` and `help` with only trailing spaces or tabs.<br>
+      Expected: The list shows all students and help opens respectively.
+      `exit` with trailing whitespace closes TAB. Run plain `clear` with
+      trailing whitespace only when the test data can be removed; it follows
+      the documented clear flow.
 
 ### Follow-up status
 
