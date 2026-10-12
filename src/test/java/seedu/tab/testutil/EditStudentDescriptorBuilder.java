@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
@@ -33,7 +34,8 @@ public class EditStudentDescriptorBuilder {
         descriptor = new EditStudentDescriptor();
         descriptor.setName(student.getName());
         descriptor.setPhone(student.getPhone());
-        student.getEmail().ifPresent(descriptor::setEmail);
+        student.getEmail().ifPresentOrElse(descriptor::setEmail, descriptor::clearEmail);
+        student.getNusStudentId().ifPresentOrElse(descriptor::setNusStudentId, descriptor::clearNusStudentId);
         descriptor.setTags(student.getTags());
     }
 
@@ -66,6 +68,22 @@ public class EditStudentDescriptorBuilder {
      */
     public EditStudentDescriptorBuilder withoutEmail() {
         descriptor.clearEmail();
+        return this;
+    }
+
+    /**
+     * Sets the {@code NusStudentId} of the {@code EditStudentDescriptor} that we are building.
+     */
+    public EditStudentDescriptorBuilder withNusStudentId(String nusStudentId) {
+        descriptor.setNusStudentId(new NusStudentId(nusStudentId));
+        return this;
+    }
+
+    /**
+     * Sets the NUS Student ID edit to clear the student's NUS Student ID.
+     */
+    public EditStudentDescriptorBuilder withoutNusStudentId() {
+        descriptor.clearNusStudentId();
         return this;
     }
 

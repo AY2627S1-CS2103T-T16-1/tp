@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.tab.model.student.Email;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 
 public class EditStudentDescriptorTest {
@@ -120,13 +121,42 @@ public class EditStudentDescriptorTest {
     }
 
     @Test
+    public void clearNusStudentId_thenSetNusStudentId_preservesIntentThroughCopies() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        NusStudentId replacement = new NusStudentId("A01234567X");
+        descriptor.setNusStudentId(replacement);
+        assertEquals(Optional.of(replacement), descriptor.getNusStudentId());
+        assertEquals(descriptor, new EditStudentDescriptor(descriptor));
+        descriptor.clearNusStudentId();
+        assertTrue(descriptor.isNusStudentIdEdited());
+        assertEquals(Optional.empty(), descriptor.getNusStudentId());
+        assertEquals(descriptor, new EditStudentDescriptor(descriptor));
+        descriptor.setNusStudentId(replacement);
+        assertTrue(descriptor.isNusStudentIdEdited());
+        assertEquals(Optional.of(replacement), descriptor.getNusStudentId());
+        assertEquals(descriptor, new EditStudentDescriptor(descriptor));
+    }
+
+    @Test
+    public void setNusStudentId_null_rejectsAndPreservesExistingEdit() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setNusStudentId(new NusStudentId("A01234567X"));
+        EditStudentDescriptor expected = new EditStudentDescriptor(descriptor);
+
+        assertThrows(NullPointerException.class, () -> descriptor.setNusStudentId(null));
+        assertEquals(expected, descriptor);
+    }
+
+    @Test
     public void toStringMethod() {
         EditStudentDescriptor editStudentDescriptor = new EditStudentDescriptor();
         String expected = EditStudentDescriptor.class.getCanonicalName() + "{name="
                 + editStudentDescriptor.getName().orElse(null) + ", phone="
                 + editStudentDescriptor.getPhone().orElse(null) + ", email="
                 + editStudentDescriptor.getEmail() + ", isEmailEdited="
-                + editStudentDescriptor.isEmailEdited() + ", tags="
+                + editStudentDescriptor.isEmailEdited() + ", nusStudentId="
+                + editStudentDescriptor.getNusStudentId() + ", isNusStudentIdEdited="
+                + editStudentDescriptor.isNusStudentIdEdited() + ", tags="
                 + editStudentDescriptor.getTags().orElse(null) + ", shouldToggleFlag="
                 + editStudentDescriptor.shouldToggleFlag() + "}";
         assertEquals(expected, editStudentDescriptor.toString());

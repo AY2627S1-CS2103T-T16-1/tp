@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.model.Model.PREDICATE_SHOW_ALL_STUDENTS;
@@ -23,6 +24,7 @@ import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.model.Model;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
@@ -44,14 +46,17 @@ public class EditCommand extends Command {
             + "[" + FLAG_NAME.getLabel() + "] "
             + "[" + FLAG_PHONE.getLabel() + "] "
             + "[" + FLAG_EMAIL.getLabel() + "] "
+            + "[" + FLAG_NUS_STUDENT_ID.getLabel() + "] "
             + "[" + FLAG_TAG.getLabel() + "]... "
             + "[" + FLAG_FOLLOW_UP.getLabel() + "]\n"
             + "The index comes first. Any option value holding spaces, and any value opening with "
             + "a hyphen, goes in double quotes. " + FLAG_TAG + " \"\" clears every tag; "
-            + FLAG_EMAIL + " \"\" clears the email.\n"
+            + FLAG_EMAIL + " \"\" clears the email; "
+            + FLAG_NUS_STUDENT_ID + " \"\" clears the NUS Student ID.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + FLAG_PHONE + " 91234567 "
-            + FLAG_EMAIL + " johndoe@example.com";
+            + FLAG_EMAIL + " johndoe@example.com "
+            + FLAG_NUS_STUDENT_ID + " A01234567X";
 
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
@@ -105,12 +110,16 @@ public class EditCommand extends Command {
         Optional<Email> updatedEmail = editStudentDescriptor.isEmailEdited()
                 ? editStudentDescriptor.getEmail()
                 : studentToEdit.getEmail();
+        Optional<NusStudentId> updatedNusStudentId = editStudentDescriptor.isNusStudentIdEdited()
+                ? editStudentDescriptor.getNusStudentId()
+                : studentToEdit.getNusStudentId();
         Set<Tag> updatedTags = editStudentDescriptor.getTags().orElse(studentToEdit.getTags());
         boolean updatedFlag = editStudentDescriptor.shouldToggleFlag()
                 ? !studentToEdit.isFlagged()
                 : studentToEdit.isFlagged();
 
-        return new Student(updatedName, updatedPhone, updatedEmail.orElse(null), updatedTags, updatedFlag);
+        return new Student(updatedName, updatedPhone, updatedEmail.orElse(null), updatedNusStudentId.orElse(null),
+                updatedTags, updatedFlag);
     }
 
     @Override
@@ -145,6 +154,8 @@ public class EditCommand extends Command {
         private Phone phone;
         private Optional<Email> email = Optional.empty();
         private boolean isEmailEdited;
+        private Optional<NusStudentId> nusStudentId = Optional.empty();
+        private boolean isNusStudentIdEdited;
         private Set<Tag> tags;
         private boolean shouldToggleFlag;
 
@@ -160,6 +171,9 @@ public class EditCommand extends Command {
             if (toCopy.isEmailEdited()) {
                 toCopy.getEmail().ifPresentOrElse(this::setEmail, this::clearEmail);
             }
+            if (toCopy.isNusStudentIdEdited()) {
+                toCopy.getNusStudentId().ifPresentOrElse(this::setNusStudentId, this::clearNusStudentId);
+            }
             setTags(toCopy.tags);
             setFlagToggled(toCopy.shouldToggleFlag);
         }
@@ -168,7 +182,8 @@ public class EditCommand extends Command {
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, tags) || isEmailEdited || shouldToggleFlag;
+            return CollectionUtil.isAnyNonNull(name, phone, tags)
+                    || isEmailEdited || isNusStudentIdEdited || shouldToggleFlag;
         }
 
         public void setName(Name name) {
@@ -214,6 +229,32 @@ public class EditCommand extends Command {
         }
 
         /**
+         * Sets a replacement NUS Student ID and marks the NUS Student ID as edited.
+         *
+         * @throws NullPointerException if {@code nusStudentId} is null.
+         */
+        public void setNusStudentId(NusStudentId nusStudentId) {
+            this.nusStudentId = Optional.of(nusStudentId);
+            isNusStudentIdEdited = true;
+        }
+
+        /**
+         * Marks the NUS Student ID for removal without changing any other field.
+         */
+        public void clearNusStudentId() {
+            nusStudentId = Optional.empty();
+            isNusStudentIdEdited = true;
+        }
+
+        public boolean isNusStudentIdEdited() {
+            return isNusStudentIdEdited;
+        }
+
+        public Optional<NusStudentId> getNusStudentId() {
+            return nusStudentId;
+        }
+
+        /**
          * Sets {@code tags} to this object's {@code tags}.
          * A defensive copy of {@code tags} is used internally.
          */
@@ -253,6 +294,8 @@ public class EditCommand extends Command {
                     && Objects.equals(phone, otherEditStudentDescriptor.phone)
                     && email.equals(otherEditStudentDescriptor.email)
                     && isEmailEdited == otherEditStudentDescriptor.isEmailEdited
+                    && nusStudentId.equals(otherEditStudentDescriptor.nusStudentId)
+                    && isNusStudentIdEdited == otherEditStudentDescriptor.isNusStudentIdEdited
                     && Objects.equals(tags, otherEditStudentDescriptor.tags)
                     && shouldToggleFlag == otherEditStudentDescriptor.shouldToggleFlag;
         }
@@ -264,6 +307,8 @@ public class EditCommand extends Command {
                     .add("phone", phone)
                     .add("email", email)
                     .add("isEmailEdited", isEmailEdited)
+                    .add("nusStudentId", nusStudentId)
+                    .add("isNusStudentIdEdited", isNusStudentIdEdited)
                     .add("tags", tags)
                     .add("shouldToggleFlag", shouldToggleFlag)
                     .toString();

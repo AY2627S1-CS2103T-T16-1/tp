@@ -3,6 +3,7 @@ package seedu.tab.logic.parser;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
@@ -37,8 +38,8 @@ public class EditCommandParser implements Parser<EditCommand> {
      */
     public EditCommand parse(String args) throws ParseException {
         FlagArgumentMap arguments = FlagTokenizer.tokenize(
-                args, FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_TAG, FLAG_FOLLOW_UP);
-        arguments.verifyNoDuplicateFlagsFor(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_FOLLOW_UP);
+                args, FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG, FLAG_FOLLOW_UP);
+        arguments.verifyNoDuplicateFlagsFor(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_FOLLOW_UP);
 
         ParseProblems problems = new ParseProblems();
 
@@ -59,7 +60,7 @@ public class EditCommandParser implements Parser<EditCommand> {
      * that they named no field.
      */
     private static boolean hasAnyField(FlagArgumentMap arguments) {
-        return Stream.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_TAG, FLAG_FOLLOW_UP)
+        return Stream.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG, FLAG_FOLLOW_UP)
                 .anyMatch(flag -> !arguments.getAllValues(flag).isEmpty());
     }
 
@@ -84,6 +85,8 @@ public class EditCommandParser implements Parser<EditCommand> {
         descriptor.setName(problems.collectIfPresent(arguments.getValue(FLAG_NAME), ParserUtil::parseName));
         descriptor.setPhone(problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone));
         arguments.getValue(FLAG_EMAIL).ifPresent(value -> parseEmailForEdit(problems, value, descriptor));
+        arguments.getValue(FLAG_NUS_STUDENT_ID)
+                .ifPresent(value -> parseNusStudentIdForEdit(problems, value, descriptor));
         parseTagsForEdit(problems, arguments.getAllValues(FLAG_TAG)).ifPresent(descriptor::setTags);
         descriptor.setFlagToggled(arguments.getValue(FLAG_FOLLOW_UP).isPresent());
 
@@ -100,6 +103,22 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
         try {
             descriptor.setEmail(ParserUtil.parseEmail(value));
+        } catch (ParseException e) {
+            problems.add(e.getMessage());
+        }
+    }
+
+    /**
+     * Describes an explicit NUS Student ID clear or a validated replacement, recording why a value is rejected.
+     */
+    private static void parseNusStudentIdForEdit(ParseProblems problems, String value,
+            EditStudentDescriptor descriptor) {
+        if (value.isEmpty()) {
+            descriptor.clearNusStudentId();
+            return;
+        }
+        try {
+            descriptor.setNusStudentId(ParserUtil.parseNusStudentId(value));
         } catch (ParseException e) {
             problems.add(e.getMessage());
         }

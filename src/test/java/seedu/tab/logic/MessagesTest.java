@@ -38,6 +38,15 @@ public class MessagesTest {
     }
 
     @Test
+    public void format_studentWithNusStudentId_includesItBeforeContactDetails() {
+        Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withoutEmail().withNusStudentId("A01234567X").withTags().build();
+
+        assertEquals("Alice Pauline; NUS Student ID: A01234567X; Phone: 94351253; Tags: ",
+                Messages.format(student));
+    }
+
+    @Test
     public void format_flaggedStudent_includesFollowUpStatus() {
         Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
                 .withTags("friends").withFlag(true).build();
