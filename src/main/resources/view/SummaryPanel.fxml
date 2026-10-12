@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="summaryPanel" styleClass="summary-panel" spacing="6" minWidth="150" prefWidth="150"
+      maxWidth="150" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <padding>
+    <Insets top="12" right="12" bottom="8" left="16" />
+  </padding>
+
+  <Label text="FOLLOW-UP" styleClass="summary-heading" />
+  <HBox fx:id="flaggedRow" styleClass="summary-row" alignment="CENTER_LEFT">
+    <Label text="Flagged" styleClass="summary-name" />
+    <Region HBox.hgrow="ALWAYS" />
+    <Label fx:id="flaggedCount" styleClass="summary-count" />
+  </HBox>
+
+  <Label text="TAGS" styleClass="summary-heading">
+    <VBox.margin>
+      <Insets top="10" />
+    </VBox.margin>
+  </Label>
+  <!-- a cohort can carry more tags than the window is tall, so the list scrolls within
+       whatever height is left rather than pushing the total off the bottom -->
+  <ScrollPane fx:id="tagScroll" styleClass="summary-scroll" fitToWidth="true"
+              hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+    <VBox fx:id="tagRows" spacing="4" />
+  </ScrollPane>
+
+  <Label fx:id="total" styleClass="summary-total" />
+</VBox>

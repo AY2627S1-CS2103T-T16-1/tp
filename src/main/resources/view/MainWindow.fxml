@@ -8,11 +8,17 @@
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.image.Image?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
+<!-- minWidth is what this window's own content needs rather than a round number: the
+     summary panel takes the width its content asks for whatever the window does, and the
+     list beside it has a minimum of its own, so below 490 the list is squeezed past that
+     and what is in it is cut off at the edge. MainWindowTest checks the window's minimum
+     against its content, so if the content changes the check says so. -->
 <fx:root type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-         title="TAB" minWidth="450" minHeight="600" onCloseRequest="#handleExit">
+         title="TAB" minWidth="490" minHeight="600" onCloseRequest="#handleExit">
   <icons>
     <Image url="@/images/address_book_32.png" />
   </icons>
@@ -51,13 +57,17 @@
         <!-- the list yields height before the reply does: it scrolls, so what it cannot
              show is still reachable, where a reply squeezed below the rows it was given is
              simply cut off -->
-        <VBox fx:id="studentList" styleClass="student-list-pane" minWidth="340" prefWidth="340"
-              minHeight="0" VBox.vgrow="ALWAYS">
-          <padding>
-            <Insets top="4" right="16" bottom="8" left="16" />
-          </padding>
-          <StackPane fx:id="studentListPanelPlaceholder" VBox.vgrow="ALWAYS"/>
-        </VBox>
+        <HBox VBox.vgrow="ALWAYS" minHeight="0">
+          <StackPane fx:id="summaryPanelPlaceholder" HBox.hgrow="NEVER" />
+
+          <VBox fx:id="studentList" styleClass="student-list-pane" minWidth="340" prefWidth="340"
+                minHeight="0" HBox.hgrow="ALWAYS">
+            <padding>
+              <Insets top="4" right="16" bottom="8" left="8" />
+            </padding>
+            <StackPane fx:id="studentListPanelPlaceholder" VBox.vgrow="ALWAYS"/>
+          </VBox>
+        </HBox>
 
         <StackPane fx:id="statusbarPlaceholder" VBox.vgrow="NEVER" />
       </VBox>

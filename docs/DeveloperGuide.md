@@ -72,7 +72,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentListPanel`, `SummaryPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/MainWindow.java).
 
@@ -82,6 +82,24 @@ The `UI` component,
 * listens for changes to `Model` data so that the UI can be updated with the modified data.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
+
+#### Summarising the list
+
+`SummaryPanel` shows the flagged count, a count per tag and the total, beside
+the list. It counts `Logic#getFilteredStudentList()`, which is the only list
+`Logic` exposes, so it summarises **what the list is showing** rather than the
+whole address book: after `find Alex` it counts the matches. That is the
+reading the User Guide documents, and it keeps the panel answering the same
+question as the list it sits beside. Summarising the whole book instead would
+need `Logic` to expose it.
+
+The list is an `ObservableList`, so a listener keeps the counts current
+without the panel being told when a command changes anything. The counting
+itself is static and takes a plain `List<Student>`, so it is tested without a
+toolkit; only the rendering needs one.
+
+Tags counted the same are listed alphabetically ignoring case, because a
+reader does not read `Zoo` as coming before `apple`.
 
 ### Logic component
 
@@ -1322,6 +1340,25 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### The summary beside the list
+
+1. Checking that the summary follows the list
+
+   1. Prerequisites: several students, at least one flagged and several
+      sharing a tag.
+   1. Test case: `list`<br>
+      Expected: The panel's total matches the number of cards. Each tag in use
+      is listed with its count, most used first, and tags with equal counts
+      are in alphabetical order whatever case they were typed in.
+   1. Test case: `find Alex`<br>
+      Expected: The counts fall to cover only the students now listed. The
+      total reads the number of matches.
+   1. Note: the sample data ships no flagged student, so flag one with
+      `edit 1 -f` before checking the flagged count.
+   1. Test case: `clear`<br>
+      Expected: The flagged count and the total read zero, and the tag list is
+      empty rather than the panel disappearing.
 
 ### Saving data
 

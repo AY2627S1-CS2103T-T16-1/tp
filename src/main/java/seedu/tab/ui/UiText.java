@@ -6,7 +6,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 
 /**
- * Text helpers shared by the parts of a student card.
+ * Text helpers for the parts of the window that show a value too long for the room they
+ * have: a card's name and tags, and the tags the summary panel lists.
  */
 final class UiText {
 
@@ -20,8 +21,8 @@ final class UiText {
      *
      * <p>Cutting by a count of characters catches only one of the two ways a value is cut.
      * A value under the count is still cut by the width the label is given, and a tag such
-     * as "attendance-low" beside a long name then reads as "attendan\u2026" with nothing to say
-     * what it was.
+     * as "attendance-low" beside a long name reads as "attendan\u2026", and a tag the panel
+     * lists as "CS2103T-TUTORI\u2026", with nothing in either to say what it was.
      */
     static void showShortenedToFit(Label label, String value, int limit) {
         showShortened(label, value, limit);

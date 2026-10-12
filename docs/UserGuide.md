@@ -74,6 +74,24 @@ TAB is a **desktop application for teaching assistants to manage student records
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
+### Reading the summary beside the list
+
+The panel on the left of the window summarises the students the list is
+showing, so you can see the shape of your cohort without running a command.
+
+* **Flagged** counts the students marked as needing a follow-up.
+* **Tags** lists each tag in use with the number of students carrying it,
+  most used first. Tags used by the same number of students are listed
+  alphabetically, ignoring case.
+* The foot of the panel gives the total.
+
+<box type="tip" seamless>
+
+**Tip:** The summary describes the students currently listed, not the whole
+address book. Run `find Alex` and it counts only the students that match;
+run `list` to see the whole cohort again.
+</box>
+
 ### Viewing help: `help`
 
 Shows a message explaining how to access the help page.
