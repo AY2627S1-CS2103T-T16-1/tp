@@ -74,6 +74,29 @@ TAB is a **desktop application for teaching assistants to manage student records
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
+### Typing a command
+
+The command line marks the parts of a command as you type, so a mistake is
+visible before you press Enter:
+
+* the command word is in the line's accent colour and bold
+* an option such as `-p` is in mauve
+* a value in double quotes is in green
+* anything else is in ordinary text
+
+If a command is refused, the whole line turns red until you start correcting
+it. A command longer than the line scrolls with the caret, so you can always
+see where you are typing, and selecting part of it (for example with
+`Ctrl`+`A`) draws a band behind the selection.
+
+<box type="tip" seamless>
+
+**Tip:** The colours break a command where the parser breaks it, so if a value
+you meant to quote is not coloured as a quoted value, the parser will not read
+it as one either. One exception: `find` splits on spaces and does not honour
+quotes at all, so `find "John Doe"` searches for two words.
+</box>
+
 ### Reading the summary beside the list
 
 The panel on the left of the window summarises the students the list is

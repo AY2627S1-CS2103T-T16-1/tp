@@ -83,6 +83,51 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
+#### Colouring the command line
+
+A `TextField` cannot colour its own content, so `CommandBox` keeps the field
+for input and draws a coloured copy of the command behind it, with the field's
+own text transparent. The field still takes every keystroke and still decides
+which character a click lands on, which keeps editing exactly as it was.
+
+`CommandHighlighter` decides the colours. It returns spans covering every
+character of the command. It walks the command itself, rather than calling
+`CommandTokenizer`, because it has to keep the text exactly as typed, quotes
+and all, where the tokenizer removes them and may refuse an unclosed quote
+that is merely half-typed. It asks the tokenizer the questions the two must
+agree on — `CommandTokenizer#isEscapable`, and `StringUtil#isWhitespace` for
+where a token ends — and `CommandHighlighterTest` runs both over a list of
+awkward commands and compares how many tokens each found. That catches one of
+them splitting a command into a different number of pieces; it does not
+compare where each piece begins and ends, so a boundary that moves without
+changing the count slips through. It never rejects anything: a
+command is coloured while it is still half-typed.
+
+Three things then have to agree with the field, because the User reads our copy
+but interacts with the field:
+
+* **the scroll offset.** The copy is drawn wherever the field is drawing its
+  own text, read from the field's text node rather than worked out again here.
+  A field scrolls by rules that differ between typing, deleting, cutting and
+  undoing, and every attempt to reproduce them was right for some of those and
+  wrong for others; a copy even a pixel out of step shows one character where
+  the field hit-tests another, and clicks land in the wrong place.
+* **the caret.** The field's caret is drawn in its text colour, which is
+  transparent, so the line carries one of its own, sized from a run of the text
+  so it sits where the text does.
+* **the selection.** The field draws its highlight at its own offset, which
+  broke into fragments behind the copy, so it is turned off in the stylesheet
+  and drawn here instead.
+
+`CommandBoxTest` checks the contrast of the selection band against the line,
+and of every colour the line uses against that band, including the one a
+refused command is written in, so that selecting a command cannot hide half of
+it. The bar it holds them to is 3:1 rather than the 4.5:1 WCAG asks of text
+this size: on a window this dark, a band light enough to be seen against the
+line (2.2:1) lightens the background enough that 4.5:1 would need every token
+colour moved towards white, which is not the palette the mockup sets. The
+trade-off is deliberate and worth revisiting if the palette changes.
+
 #### Summarising the list
 
 `SummaryPanel` shows the flagged count, a count per tag and the total, beside
@@ -1340,6 +1385,33 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### The command line
+
+1. Checking what the colours say
+
+   1. Test case: type `add "Siti Nur-Aisyah" -p 98765432 -t T1` without
+      pressing Enter.<br>
+      Expected: `add` is bold and in the accent colour, `"Siti Nur-Aisyah"` is
+      green, `-p` and `-t` are mauve, and the remaining values are in ordinary
+      text.
+   1. Test case: type `addd` and press Enter.<br>
+      Expected: The whole line turns red and the reply says the command is
+      unknown. Typing another character takes the red off again.
+
+1. Checking a command longer than the line
+
+   1. Test case: type a `find` command long enough to run past the right-hand
+      edge, then press `Home`, then `End`.<br>
+      Expected: The line scrolls so the caret stays in view at both ends, the
+      caret is visible at the end rather than cut off by the edge, and the
+      colours stay with the text.
+   1. Test case: with that command still typed, press `Ctrl`+`A`.<br>
+      Expected: A band is drawn behind the whole command, and every part of
+      the command is still readable on top of it.
+   1. Test case: click in the middle of the command.<br>
+      Expected: The caret lands on the character clicked, not one or two away
+      from it.
 
 ### The summary beside the list
 

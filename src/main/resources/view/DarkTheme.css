@@ -18,12 +18,13 @@
     -tab-accent: #68c4ee;          /* the prompt, and the command word after it */
     -tab-highlight: #d4ae40;       /* the follow-up pill */
     -tab-string: #a8c68d;          /* a quoted value on the command line */
-    -tab-option: #ae8ca9;          /* an option on the command line */
+    -tab-option: #cab4c7;          /* an option on the command line */
     -tab-value: #c3d0dc;           /* a plain value on the command line */
     -tab-chip-bg: #2a3945;         /* a tag chip */
     -tab-chip-text: #8cc7e5;
+    -tab-selected-text: rgba(104, 196, 238, 0.36); /* the run of a command the User has selected */
     -tab-shadow: #000000;             /* the well a sunken surface sits in */
-    -tab-danger: #ff6b6b;          /* a refused command */
+    -tab-danger: #ff9090;          /* a refused command */
 }
 
 .background {
@@ -180,7 +181,9 @@
     -fx-padding: 0;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
-    -fx-highlight-fill: -tab-surface-selected;
+    /* the reply is selectable, so it keeps a selection that can be seen. Hiding one is for
+       the command line, whose field carries the input behind a copy of its own */
+    -fx-highlight-fill: -tab-selected-text;
     -fx-text-fill: -tab-text;
     -fx-font-size: 12px;
 }
@@ -516,4 +519,97 @@
 /* a value too long for its row is elided rather than widening the card it sits in */
 .card-name, .card-detail, .card-detail-strong {
     -fx-text-overrun: ellipsis;
+}
+
+/* the command line, drawn as a shell prompt */
+.command-line {
+    -fx-background-color: -tab-surface;
+    -fx-background-radius: 8;
+    -fx-border-color: -tab-border;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+
+.command-prompt {
+    /* the ornament sits low in its own em box, so centring the boxes does not centre what is
+       drawn in them. One point up lines the glyph with the lowercase it introduces. */
+    -fx-translate-y: -1;
+    -fx-text-fill: -tab-accent;
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 15px;
+    -fx-font-weight: normal;
+}
+
+/* inside the line the field is bare: the rounded surface belongs to the line around it */
+.command-line #commandTextField {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 15px;
+    -fx-font-weight: normal;
+    /* the copy over this field carries the text; the field keeps the input, the caret
+       position and the selection, and shows none of them itself. Important, because
+       Extensions.css marks a refused command with an important text fill of its own, and
+       the field would otherwise paint its text in red over the copy, at its own scroll
+       offset rather than the copy's. */
+    -fx-text-fill: transparent !important;
+    -fx-highlight-fill: transparent;
+    -fx-highlight-text-fill: transparent;
+}
+
+/* the same face and size as the field above it: the two are only lined up by matching here,
+   and CommandBoxTest fails if they drift apart */
+.command-token {
+    -fx-font-weight: normal;
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 15px;
+}
+
+.command-command-word {
+    -fx-fill: -tab-accent;
+    -fx-font-weight: bold;
+}
+
+.command-option {
+    -fx-fill: -tab-option;
+}
+
+.command-quoted-value {
+    -fx-fill: -tab-string;
+}
+
+.command-value, .command-space {
+    -fx-fill: -tab-value;
+}
+
+.command-prompt, .command-command-word {
+    -fx-font-weight: bold;
+}
+
+/* the command line's own caret, since the field's is drawn in a text colour that is
+   transparent while the coloured copy is showing */
+.command-caret {
+    -fx-background-color: -tab-accent;
+    -fx-min-width: 2;
+    -fx-pref-width: 2;
+    -fx-max-width: 2;
+    -fx-min-height: 0;
+    -fx-max-height: 100;
+}
+
+/* the selected run of a command, drawn here because the field's own highlight sits at an
+   offset of its own and broke into fragments behind the coloured copy */
+.command-selection {
+    /* the colour the row the User is on is drawn in is a shade off the line behind it, which
+       says nothing about a run of text: selecting the whole command looked no different from
+       not selecting it. This reads as a selection while leaving the command on top of it
+       legible. */
+    -fx-background-color: -tab-selected-text;
+    -fx-background-radius: 2;
+}
+
+/* a refused command is marked on the copy, which is what the User is reading */
+.command-error .command-token {
+    -fx-fill: -tab-danger;
 }

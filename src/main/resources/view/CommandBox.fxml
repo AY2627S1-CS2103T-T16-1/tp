@@ -1,9 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.text.TextFlow?>
 
-<StackPane styleClass="stack-pane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <TextField fx:id="commandTextField" onAction="#handleCommandEntered" promptText="Enter command here..."/>
-</StackPane>
+<HBox fx:id="commandPane" styleClass="command-line" alignment="CENTER_LEFT" spacing="10"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <padding>
+    <Insets top="10" right="14" bottom="10" left="14" />
+  </padding>
 
+  <Label text="❯" styleClass="command-prompt" />
+
+  <StackPane HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+    <!-- the colours are painted here, behind a field whose own text is transparent, because a
+         TextField cannot colour its own content -->
+    <!-- the copy and the caret live in a plain Pane, which neither resizes what it holds nor
+         grows with it. A StackPane does both, so the copy of a long command dragged the whole
+         command box wider than the window. -->
+    <Pane fx:id="lane" maxWidth="Infinity" mouseTransparent="true">
+      <!-- behind the text: the field's own highlight is drawn at the field's scroll offset,
+           which is not ours, so it broke into fragments behind the copy -->
+      <Region fx:id="selection" styleClass="command-selection" />
+      <TextFlow fx:id="highlighted" styleClass="command-highlight" />
+      <Region fx:id="caret" styleClass="command-caret" />
+    </Pane>
+    <TextField fx:id="commandTextField" onAction="#handleCommandEntered"
+               promptText="Enter command here..." />
+  </StackPane>
+</HBox>
