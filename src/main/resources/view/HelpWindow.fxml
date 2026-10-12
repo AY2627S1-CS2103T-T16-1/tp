@@ -9,24 +9,38 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.stage.Stage?>
 
-<fx:root resizable="false" title="Help" type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<!-- resizable, because a window pinned shut at the size it was measured at
+     cannot be put right once the theme has dressed what is in it -->
+<fx:root resizable="true" title="Help" type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
   <icons>
     <Image url="@/images/help_icon.png" />
   </icons>
   <scene>
-    <Scene>
+    <!-- sized here rather than left to the scene's own measurement, which happens when
+         this file is read: before the address is put on the label and before the theme has
+         dressed the button, so the window came up too small for either -->
+    <Scene width="760" height="64">
       <stylesheets>
+        <URL value="@DarkTheme.css" />
         <URL value="@HelpWindow.css" />
       </stylesheets>
 
-      <HBox alignment="CENTER" fx:id="helpMessageContainer">
+      <!-- the row keeps the width and height its content needs. A stage sizes itself to its
+           scene before the stylesheets have dressed what is in it, and this window cannot be
+           resized, so anything the theme adds afterwards would otherwise stay cut off -->
+      <HBox alignment="CENTER" fx:id="helpMessageContainer"
+            minWidth="-Infinity" minHeight="-Infinity">
         <children>
-          <Label fx:id="helpMessage" text="Label">
+          <!-- the address keeps its own width: an address with its end missing is of no
+               use, and this window exists only to carry it -->
+          <Label fx:id="helpMessage" text="Label" minWidth="-Infinity">
             <HBox.margin>
               <Insets right="5.0" />
             </HBox.margin>
           </Label>
-          <Button fx:id="copyButton" mnemonicParsing="false" onAction="#copyUrl" text="Copy URL">
+          <!-- the button keeps its own width, so the address beside it is what gives way -->
+          <Button fx:id="copyButton" mnemonicParsing="false" onAction="#copyUrl" text="Copy URL"
+                  minWidth="-Infinity">
             <HBox.margin>
               <Insets left="5.0" />
             </HBox.margin>

@@ -2,7 +2,9 @@ package seedu.tab.ui;
 
 import java.util.logging.Logger;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.Clipboard;
@@ -34,7 +36,9 @@ public class HelpWindow extends UiPart<Stage> {
      */
     public HelpWindow(Stage root) {
         super(FXML, root);
+        UiFonts.applyTo(root.getScene());
         helpMessage.setText(HELP_MESSAGE);
+        fitToContent();
     }
 
     /**
@@ -65,7 +69,49 @@ public class HelpWindow extends UiPart<Stage> {
     public void show() {
         logger.fine("Showing help page about the application.");
         getRoot().show();
-        getRoot().centerOnScreen();
+        // now that the window has a frame, its size can account for it. On Windows a window
+        // that is already showing takes a moment to resize, so the frame is measured again
+        // on the next pulse, by when the sizes reported are the ones in force
+        fitToContent();
+        Platform.runLater(() -> {
+            fitToContent();
+            getRoot().centerOnScreen();
+        });
+    }
+
+    /**
+     * Sizes the window to what it draws.
+     *
+     * <p>A stage sizes itself to its scene before the stylesheets have dressed what is in
+     * it, so the padding and the border a button takes from the theme arrive after the
+     * window has been measured, and the scene is measured when the layout file is read,
+     * which is before the address is even put on the label. What did not fit stayed cut
+     * off: the address read as "…/UserGuide.ht…" and the button as "Copy U…". The layout
+     * file now gives the scene the size this window needs and the row inside holds its own,
+     * so this is the backstop for a machine whose fonts make it need more.
+     */
+    private void fitToContent() {
+        Stage stage = getRoot();
+        Parent content = stage.getScene().getRoot();
+        content.applyCss();
+        content.layout();
+        // never smaller than what it holds, now that it may be resized
+        stage.setMinWidth(content.prefWidth(-1));
+        stage.setMinHeight(content.prefHeight(-1));
+        // before the window is shown there is no frame to measure, and the scene is the
+        // whole of it; afterwards the frame is whatever the window is wider than its scene
+        double frameWidth = frameAround(stage.getWidth(), stage.getScene().getWidth());
+        double frameHeight = frameAround(stage.getHeight(), stage.getScene().getHeight());
+        stage.setWidth(content.prefWidth(-1) + frameWidth);
+        stage.setHeight(content.prefHeight(-1) + frameHeight);
+    }
+
+    /**
+     * Returns how much of {@code window} is frame rather than {@code scene}. A window that
+     * has not been shown has no size at all to measure, and no frame around it yet either.
+     */
+    static double frameAround(double window, double scene) {
+        return Double.isNaN(window) || Double.isNaN(scene) ? 0 : Math.max(0, window - scene);
     }
 
     /**

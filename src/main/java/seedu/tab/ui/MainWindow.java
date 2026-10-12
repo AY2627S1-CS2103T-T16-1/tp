@@ -65,6 +65,7 @@ public class MainWindow extends UiPart<Stage> {
         this.dataFilePath = dataFilePath;
 
         // Configure the UI
+        UiFonts.applyTo(primaryStage.getScene());
         setWindowDefaultSize(logic.getGuiSettings());
 
         setAccelerators();
@@ -119,6 +120,10 @@ public class MainWindow extends UiPart<Stage> {
 
         resultDisplay = new ResultDisplay();
         resultDisplayPlaceholder.getChildren().add(resultDisplay.getRoot());
+        // the pane carries padding of its own, so it has to collapse with what it holds or the
+        // gap stays behind after the result area has gone
+        resultDisplayPlaceholder.managedProperty().bind(resultDisplay.getRoot().managedProperty());
+        resultDisplayPlaceholder.visibleProperty().bind(resultDisplay.getRoot().visibleProperty());
 
         StatusBarFooter statusBarFooter = new StatusBarFooter(dataFilePath);
         statusbarPlaceholder.getChildren().add(statusBarFooter.getRoot());
