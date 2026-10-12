@@ -68,8 +68,11 @@ TAB is a **desktop application for teaching assistants to manage student records
   spaces goes in double quotes after an option, as does any value opening with
   a hyphen.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`.
+* Commands that take no parameters (`help`, `list`, `exit`, and `clear`)
+  reject unexpected input and report it without executing the command.<br>
+  For example, `help 123` reports `help takes no arguments. Unexpected input:
+  "123".` Whitespace after the command is accepted, but quoted values,
+  including `""`, are still arguments.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>

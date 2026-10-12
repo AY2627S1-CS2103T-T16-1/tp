@@ -13,7 +13,9 @@ import static seedu.tab.testutil.TypicalStudents.AMY;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -98,6 +100,26 @@ public class LogicManagerTest {
         ReadOnlyStudentBook savedStudentBook =
                 new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json")).readStudentBook().get();
         assertEquals(0, savedStudentBook.getStudentList().size());
+    }
+
+    @Test
+    public void execute_unexpectedArguments_preservesFilteredListAndStorage() throws Exception {
+        model.addStudent(new StudentBuilder(AMY).build());
+        model.updateFilteredStudentList(student -> false);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        storage.saveStudentBook(model.getStudentBook());
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.updateFilteredStudentList(student -> false);
+
+        for (String command : List.of("clear", "list", "help", "exit")) {
+            for (String input : List.of("oops", "\"oops\"", "\"\"")) {
+                assertCommandFailure(command + " " + input, ParseException.class,
+                        String.format(Messages.MESSAGE_UNEXPECTED_ARGUMENTS, command, input), expectedModel);
+                assertTrue(model.getFilteredStudentList().isEmpty());
+                assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+            }
+        }
     }
 
     @Test
