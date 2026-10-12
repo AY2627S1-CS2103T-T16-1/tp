@@ -13,6 +13,7 @@ import static seedu.tab.testutil.TypicalStudents.AMY;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.commands.CommandResult;
 import seedu.tab.logic.commands.DeleteCommand;
+import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.ExitCommand;
 import seedu.tab.logic.commands.ListCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
@@ -30,6 +32,7 @@ import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.UserPrefs;
+import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
 import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.storage.JsonUserPrefsStorage;
@@ -98,6 +101,34 @@ public class LogicManagerTest {
         ReadOnlyStudentBook savedStudentBook =
                 new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json")).readStudentBook().get();
         assertEquals(0, savedStudentBook.getStudentList().size());
+    }
+
+    @Test
+    public void execute_clearEmailAloneOrWithOtherEdits_persistsAndReloads() throws Exception {
+        Student student = new StudentBuilder(AMY).withFlag(true).build();
+        model.addStudent(student);
+        Student cleared = new StudentBuilder(student).withoutEmail().build();
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+
+        for (String command : new String[] {"edit 1 -e \"\"", "edit 1 -e \"\"",
+            "edit 1 -e \"\" -p 81112222 -t \"\" -f"}) {
+            if (command.contains("-p")) {
+                cleared = new StudentBuilder(cleared).withPhone("81112222").withTags().withFlag(false).build();
+            }
+            CommandResult result = logic.execute(command);
+            assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(cleared)),
+                    result.getFeedbackToUser());
+            assertEquals(cleared, model.getFilteredStudentList().get(0));
+            assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
+            assertFalse(Files.readString(storage.getStudentBookFilePath()).contains("\"email\""));
+        }
+
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        assertParseException("edit 1 -e", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-e EMAIL"));
+        assertParseException("edit 1 -e bob!yahoo",
+                Messages.getErrorMessageForInvalidValue("Email", "bob!yahoo",
+                        Email.getFailureReason("bob!yahoo")));
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
     }
 
     @Test

@@ -84,7 +84,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         descriptor.setName(problems.collectIfPresent(arguments.getValue(FLAG_NAME), ParserUtil::parseName));
         descriptor.setPhone(problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone));
         arguments.getValue(FLAG_EMAIL).ifPresent(value ->
-                descriptor.setEmail(problems.collect(() -> ParserUtil.parseEmail(value))));
+                descriptor.setEmail(value.isEmpty() ? null : problems.collect(() -> ParserUtil.parseEmail(value))));
         parseTagsForEdit(problems, arguments.getAllValues(FLAG_TAG)).ifPresent(descriptor::setTags);
         descriptor.setFlagToggled(arguments.getValue(FLAG_FOLLOW_UP).isPresent());
 

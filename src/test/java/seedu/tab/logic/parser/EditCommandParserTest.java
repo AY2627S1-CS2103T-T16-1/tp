@@ -31,6 +31,8 @@ import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_THIRD_STUDENT;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.commons.core.index.Index;
@@ -144,6 +146,34 @@ public class EditCommandParserTest {
                 .withPhone(VALID_PHONE_BOB).build();
         assertParseSuccess(parser, " 1 -p " + VALID_PHONE_BOB,
                 new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+    }
+
+    @Test
+    public void parse_clearEmailAloneOrWithOtherFields_success() {
+        EditStudentDescriptor cleared = new EditStudentDescriptorBuilder().withoutEmail().build();
+        assertParseSuccess(parser, "1 -e \"\"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
+        assertParseSuccess(parser, "\u00A01\u00A0-e\u00A0\"\"\u00A0",
+                new EditCommand(INDEX_FIRST_STUDENT, cleared));
+        EditStudentDescriptor combined = new EditStudentDescriptorBuilder().withoutEmail()
+                .withPhone(VALID_PHONE_BOB).withTags().withFlagToggled(true).build();
+        assertParseSuccess(parser, "1 -e \"\" -p " + VALID_PHONE_BOB + " -t \"\" -f",
+                new EditCommand(INDEX_FIRST_STUDENT, combined));
+    }
+
+    @Test
+    public void parse_mistypedEmailClear_reportsSpecificProblem() {
+        for (String input : List.of("1 -e", "1 -e ", "1 -e\u00A0", "1 -e -p 91234567")) {
+            assertParseFailure(parser, input,
+                    String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
+        }
+        assertParseFailure(parser, "1 -e \" \"",
+                Messages.getErrorMessageForInvalidValue("Email", "", Email.getFailureReason("")));
+        assertParseFailure(parser, "1 -e \"\" -e a@b.com",
+                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
+        assertParseFailure(parser, "1 -n \"\" -e \"\"",
+                Messages.getErrorMessageForInvalidValue("Name", "", Name.getFailureReason("")));
+        assertParseFailure(parser, "1 -p \"\" -e \"\"",
+                Messages.getErrorMessageForInvalidValue("Phone", "", Phone.getFailureReason("")));
     }
 
     @Test
