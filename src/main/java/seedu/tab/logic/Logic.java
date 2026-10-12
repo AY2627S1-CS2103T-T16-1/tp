@@ -20,6 +20,11 @@ public interface Logic {
      */
     CommandResult execute(String commandText) throws CommandException, ParseException;
 
+    /**
+     * Returns whether the next input is a confirmation reply, including an empty reply.
+     */
+    boolean isAwaitingConfirmation();
+
     /** Returns an unmodifiable view of the filtered list of students */
     ObservableList<Student> getFilteredStudentList();
 

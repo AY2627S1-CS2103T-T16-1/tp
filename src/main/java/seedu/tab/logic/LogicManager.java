@@ -2,11 +2,14 @@ package seedu.tab.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.collections.ObservableList;
 import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.commons.core.LogsCenter;
+import seedu.tab.commons.util.StringUtil;
+import seedu.tab.logic.commands.ClearCommand;
 import seedu.tab.logic.commands.Command;
 import seedu.tab.logic.commands.CommandResult;
 import seedu.tab.logic.commands.exceptions.CommandException;
@@ -30,6 +33,7 @@ public class LogicManager implements Logic {
     private final Model model;
     private final Storage storage;
     private final StudentBookParser studentBookParser;
+    private Optional<ClearCommand> pendingClearCommand = Optional.empty();
 
     /**
      * Constructs a {@code LogicManager} with the given {@code Model} and {@code Storage}.
@@ -44,10 +48,69 @@ public class LogicManager implements Logic {
     public CommandResult execute(String commandText) throws CommandException, ParseException {
         logger.info("----------------[USER COMMAND][" + commandText + "]");
 
-        CommandResult commandResult;
+        if (isAwaitingConfirmation()) {
+            return respondToClearConfirmation(commandText);
+        }
         Command command = studentBookParser.parseCommand(commandText);
-        commandResult = command.execute(model);
+        if (command instanceof ClearCommand clearCommand) {
+            return requestClearConfirmation(clearCommand);
+        }
+        CommandResult commandResult = command.execute(model);
+        saveStudentBook();
+        return commandResult;
+    }
 
+    /**
+     * Prompts without saving and keeps a request only when there are students to clear.
+     */
+    private CommandResult requestClearConfirmation(ClearCommand clearCommand) {
+        CommandResult result = clearCommand.execute(model);
+        if (!model.getStudentBook().getStudentList().isEmpty()) {
+            pendingClearCommand = Optional.of(clearCommand);
+        }
+        return result;
+    }
+
+    /**
+     * Handles a reply without parsing it as a command or saving unconfirmed data.
+     */
+    private CommandResult respondToClearConfirmation(String commandText) throws CommandException, ParseException {
+        ClearCommand clearCommand = pendingClearCommand.orElseThrow(() ->
+                new CommandException(ClearCommand.MESSAGE_NO_PENDING_CONFIRMATION));
+        String reply = stripSurroundingWhitespace(commandText);
+        if (reply.isEmpty() || reply.equalsIgnoreCase("n") || reply.equalsIgnoreCase("no")) {
+            pendingClearCommand = Optional.empty();
+            return new CommandResult(ClearCommand.MESSAGE_CANCELLED);
+        }
+        if (!reply.equalsIgnoreCase("y") && !reply.equalsIgnoreCase("yes")) {
+            throw new ParseException(ClearCommand.MESSAGE_INVALID_REPLY + "\n"
+                    + clearCommand.execute(model).getFeedbackToUser());
+        }
+        pendingClearCommand = Optional.empty();
+        CommandResult result = clearCommand.executeConfirmed(model);
+        saveStudentBook();
+        return result;
+    }
+
+    /**
+     * Trims the same whitespace as command parsing without rescanning internal whitespace runs.
+     */
+    private static String stripSurroundingWhitespace(String reply) {
+        int start = 0;
+        int end = reply.length();
+        while (start < end && StringUtil.isWhitespace(reply.charAt(start))) {
+            start++;
+        }
+        while (end > start && StringUtil.isWhitespace(reply.charAt(end - 1))) {
+            end--;
+        }
+        return reply.substring(start, end);
+    }
+
+    /**
+     * Saves the student book and translates storage errors into command feedback.
+     */
+    private void saveStudentBook() throws CommandException {
         try {
             storage.saveStudentBook(model.getStudentBook());
         } catch (AccessDeniedException e) {
@@ -55,8 +118,11 @@ public class LogicManager implements Logic {
         } catch (IOException ioe) {
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
         }
+    }
 
-        return commandResult;
+    @Override
+    public boolean isAwaitingConfirmation() {
+        return pendingClearCommand.isPresent();
     }
 
     @Override

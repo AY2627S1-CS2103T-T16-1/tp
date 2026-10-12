@@ -466,6 +466,40 @@ removed and the `a/` prefix with it, and the rest failed until `add` and `edit`
 took positional arguments and command options instead. `Name` itself never
 needed changing.
 
+### Confirming a clear
+
+`ClearCommand.execute` returns a prompt containing the whole-book count,
+including students hidden by the current filter. It does not mutate the
+model. An empty book instead returns a no-op message without a prompt.
+`LogicManager.requestClearConfirmation` keeps a non-empty book's request in
+`pendingClearCommand`, an `Optional<ClearCommand>`, and returns before the
+usual storage write. `Optional.empty()` represents no pending request.
+While the request is pending, it reads the
+next input as a reply to the concise `[y/N]` prompt. Only surrounding Unicode
+whitespace is trimmed; internal characters are kept so a value cannot become
+an accepted word by removing characters from within it. Replies ignore case.
+Trimming scans from both ends with `StringUtil.isWhitespace`, retaining the
+command parser's Unicode whitespace rules. This takes linear time at worst;
+an internal whitespace run is never searched for a trailing match.
+
+An empty reply, `n`, or `no` drops the request without executing or saving
+anything. Only the exact replies `y` and `yes` invoke
+`ClearCommand.executeConfirmed` and save the empty book. Words merely starting
+with either letter, such as `yellow` or `nope`, are invalid. Other input raises
+a `ParseException` with feedback and the prompt repeated and keeps the request
+pending; it is never executed as another command.
+If the reply handler unexpectedly has no request, it raises a
+`CommandException` asking the user to enter `clear`, rather than letting an
+unchecked exception escape. The normal presence guard prevents this case.
+The pending request is cleared before saving so that a storage error cannot
+leave a stale confirmation active. It lives only in memory, so closing and
+restarting TAB cannot confirm a previous request. The existing result area
+and command field provide the prompt and replies without a mouse or dialog.
+`MainWindow` supplies `Logic.isAwaitingConfirmation` to `CommandBox`, which
+submits an empty Enter only during confirmation; otherwise an empty Enter
+keeps its existing no-op behavior. Each `Logic` implementation must supply
+this state explicitly so a default cannot silently suppress cancellation.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -1280,7 +1314,8 @@ testers are expected to do more *exploratory* testing.
 
 1. Adding students with and without follow-up
 
-   1. Prerequisites: Launch the JAR from an empty folder, then run `clear`.
+   1. Prerequisites: Launch the JAR from an empty folder, then run `clear`
+      and reply `yes` if confirmation is requested.
 
    1. Test case: `add Alice Tan -p 91234567`<br>
       Expected: Alice is added. Neither her card nor the command result shows
@@ -1500,9 +1535,48 @@ testers are expected to do more *exploratory* testing.
       total reads the number of matches.
    1. Note: the sample data ships no flagged student, so flag one with
       `edit 1 -f` before checking the flagged count.
-   1. Test case: `clear`<br>
+   1. Test case: `clear`, then `yes`.<br>
       Expected: The flagged count and the total read zero, and the tag list is
       empty rather than the panel disappearing.
+
+### Confirming before clearing all students
+
+1. Confirmation, cancellation, and keyboard use
+
+   1. Prerequisites: Add at least two students, run `find no-such-student`
+      so none is visible, and keep a copy of `data/tab.json`.
+
+   1. Test case: Type `clear` and press Enter.<br>
+      Expected: The prompt counts every student, including the hidden ones,
+      warns that deletion cannot be undone, and ends with `[y/N]`. It uses
+      `student` for one record and `students` for several.
+      Neither the filtered list nor the JSON file changes.
+
+   1. Test cases: Enter `maybe`, `yellow`, `nope`, `"yes"`, or `exit`.<br>
+      Expected: No command executes. Feedback names the accepted replies and
+      repeats the prompt. The filter and JSON file stay unchanged.
+
+   1. Test case: Enter ` NO `. Repeat from a new `clear` request with `n`.<br>
+      Expected: Cancellation is acknowledged. The JSON matches the copy byte
+      for byte. `list` works again and shows all preserved records.
+
+   1. Test case: Enter `clear`, then press Enter without typing a reply.
+      Repeat from a new `clear` request with a whitespace-only reply.<br>
+      Expected: Cancellation is acknowledged, with the filter and JSON file
+      unchanged. This is the default indicated by the capital `N`.
+
+   1. Test case: Enter `clear`, then `y`, pressing Enter each time.
+      Repeat with fresh test records and ` YeS `.<br>
+      Expected: All students disappear, the saved book is empty, and
+      restarting TAB shows an empty list.
+
+   1. Test case: Enter `clear` again.<br>
+      Expected: TAB reports that the book is already empty. No confirmation
+      is pending, so `help` works immediately.
+
+   1. Test case: Add a student, enter `clear`, close TAB before replying,
+      and restart it.<br>
+      Expected: The student is still present and no confirmation is pending.
 
 ### Saving data
 

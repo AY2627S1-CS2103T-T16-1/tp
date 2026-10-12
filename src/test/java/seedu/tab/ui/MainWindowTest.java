@@ -52,6 +52,11 @@ public class MainWindowTest {
         }
 
         @Override
+        public boolean isAwaitingConfirmation() {
+            return false;
+        }
+
+        @Override
         public ObservableList<Student> getFilteredStudentList() {
             return students;
         }
@@ -100,6 +105,19 @@ public class MainWindowTest {
         // or the gap stays behind under the command line
         assertFalse(pane.isManaged());
         assertFalse(pane.isVisible());
+    }
+
+    @Test
+    public void commandLine_emptyWithoutConfirmation_keepsResultHidden() throws Exception {
+        MainWindow window = filledWindow();
+        onFxThread(() -> {
+            TextField field = (TextField) window.getRoot().getScene().lookup("#commandTextField");
+            field.fireEvent(new ActionEvent());
+            StackPane pane = (StackPane) window.getRoot().getScene().lookup("#resultDisplayPlaceholder");
+            assertFalse(pane.isVisible());
+            assertFalse(pane.isManaged());
+            return null;
+        });
     }
 
     @Test

@@ -35,7 +35,8 @@ TAB is a **desktop application for teaching assistants to manage student records
 
    * `delete 3` : Deletes the 3rd student shown in the current list.
 
-   * `clear` : Deletes all students.
+   * `clear` : Asks before deleting all students. Type `y` and press Enter
+     to confirm, or press Enter without a reply to cancel.
 
    * `exit` : Exits the app.
 
@@ -308,9 +309,25 @@ Examples:
 
 ### Clearing all entries: `clear`
 
-Clears all entries from the student book.
+Asks for confirmation before clearing all entries from the student book.
 
 Format: `clear`
+
+TAB shows a prompt such as `Clear all 6 students? This cannot be undone. [y/N]`.
+The count includes students hidden by a search. The records and saved file
+stay unchanged until you reply in the command line and press Enter:
+
+* `y` or `yes` deletes all students and saves the empty book. This cannot be undone.
+* `n`, `no`, or Enter without a reply cancels without changing any records or the saved file.
+
+Replies ignore case and surrounding whitespace: `Y`, `yEs`, and `yeS` also
+confirm; `N` and `nO` also cancel. Cancellation is the `[y/N]` default.
+Only the exact replies above are accepted: words such as
+`yellow` and `nope` are invalid. Any other reply, including another command,
+leaves the data unchanged and repeats the prompt. Cancel first if you want
+to run a different command. Closing TAB while the prompt is pending also
+leaves the student data unchanged. If the book is already empty,
+TAB reports that there is nothing to clear and does not ask for confirmation.
 
 ### Exiting the program: `exit`
 
@@ -320,7 +337,8 @@ Format: `exit`
 
 ### Saving the data
 
-TAB automatically saves data after every command. You do not need to save manually.
+TAB automatically saves changes to student records. You do not need to save manually.
+Clear prompts, cancellation, and invalid replies leave the saved file unchanged.
 
 ### Editing the data file
 
@@ -363,7 +381,7 @@ _Details coming soon ..._
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [--follow-up]` <br> e.g., `add James Ho -p 22224444 -t friend -t colleague --follow-up`
-**Clear**  | `clear`
+**Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [-t TAG]... [--follow-up]`<br> e.g., `edit 2 -n "James Lee" --follow-up`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
