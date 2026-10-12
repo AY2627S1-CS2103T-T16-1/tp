@@ -55,6 +55,7 @@
         "commands-with-no-arguments": "Commands with no arguments",
         "follow-up-flag": "Follow-up flag",
         "field-values": "Field values",
+        "confirming-a-clear": "Confirming a clear",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -74,6 +75,7 @@
         "deleting-a-student": "Deleting a student",
         "the-command-line": "The command line",
         "the-summary-beside-the-list": "The summary beside the list",
+        "confirming-before-clearing-all-students": "Confirming before clearing all students",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
