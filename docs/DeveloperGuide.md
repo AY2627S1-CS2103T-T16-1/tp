@@ -449,16 +449,23 @@ including students hidden by the current filter. It does not mutate the
 model. An empty book instead returns a no-op message without a prompt.
 `LogicManager` keeps the non-empty request as `pendingClearCommand` and returns
 before its usual storage write. While the request is pending, it reads the
-next input as a reply, with case and surrounding whitespace ignored.
+next input as a reply to the concise `[y/N]` prompt. Only surrounding Unicode
+whitespace is trimmed; internal characters are kept so a value cannot become
+an accepted word by removing characters from within it. Replies ignore case.
 
-A `no` reply drops the pending request without executing or saving anything.
-Other input raises a `ParseException` with the instructions repeated and
-keeps the request pending; it is never executed as another command. Only
-`yes` invokes `ClearCommand.executeConfirmed` and saves the empty book.
+An empty reply, `n`, or `no` drops the request without executing or saving
+anything. Only the exact replies `y` and `yes` invoke
+`ClearCommand.executeConfirmed` and save the empty book. Words merely starting
+with either letter, such as `yellow` or `nope`, are invalid. Other input raises
+a `ParseException` with feedback and the prompt repeated and keeps the request
+pending; it is never executed as another command.
 The pending request is cleared before saving so that a storage error cannot
 leave a stale confirmation active. It lives only in memory, so closing and
 restarting TAB cannot confirm a previous request. The existing result area
 and command field provide the prompt and replies without a mouse or dialog.
+`MainWindow` supplies `Logic.isAwaitingConfirmation` to `CommandBox`, which
+submits an empty Enter only during confirmation; otherwise an empty Enter
+keeps its existing no-op behavior.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -1460,18 +1467,25 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: Type `clear` and press Enter.<br>
       Expected: The prompt counts every student, including the hidden ones,
-      warns that deletion cannot be undone, and explains `yes` and `no`.
+      warns that deletion cannot be undone, and ends with `[y/N]`. It uses
+      `student` for one record and `students` for several.
       Neither the filtered list nor the JSON file changes.
 
-   1. Test cases: Enter `maybe`, an empty reply, `"yes"`, or `exit`.<br>
-      Expected: No command executes. Feedback asks for `yes` or `no` and
-      repeats the scope. The filter and JSON file stay unchanged.
+   1. Test cases: Enter `maybe`, `yellow`, `nope`, `"yes"`, or `exit`.<br>
+      Expected: No command executes. Feedback names the accepted replies and
+      repeats the prompt. The filter and JSON file stay unchanged.
 
-   1. Test case: Enter ` NO `.<br>
+   1. Test case: Enter ` NO `. Repeat from a new `clear` request with `n`.<br>
       Expected: Cancellation is acknowledged. The JSON matches the copy byte
       for byte. `list` works again and shows all preserved records.
 
-   1. Test case: Enter `clear`, then ` YeS `, pressing Enter each time.<br>
+   1. Test case: Enter `clear`, then press Enter without typing a reply.
+      Repeat from a new `clear` request with a whitespace-only reply.<br>
+      Expected: Cancellation is acknowledged, with the filter and JSON file
+      unchanged. This is the default indicated by the capital `N`.
+
+   1. Test case: Enter `clear`, then `y`, pressing Enter each time.
+      Repeat with fresh test records and ` YeS `.<br>
       Expected: All students disappear, the saved book is empty, and
       restarting TAB shows an empty list.
 
