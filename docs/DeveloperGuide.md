@@ -287,11 +287,8 @@ clearing it explicitly is tracked separately as issue #146.
 ### Commands with no arguments
 
 `StudentBookParser` rejects non-whitespace input after `clear`, `list`,
-`help`, and `exit` before returning a command. The one-argument
-`parseCommand` entry point dispatches these commands to its three-argument
-overload, which validates the arguments before returning the supplied command.
-Its existing Unicode whitespace rule accepts pasted whitespace as well as
-spaces and tabs.
+`help`, and `exit` before returning a command. Its existing Unicode
+whitespace rule accepts pasted whitespace as well as spaces and tabs.
 The feedback names the command and unexpected input, with long input
 shortened to keep the reason visible. Quotes do not make an argument absent:
 `clear ""` is refused too. A parse failure reaches neither command execution

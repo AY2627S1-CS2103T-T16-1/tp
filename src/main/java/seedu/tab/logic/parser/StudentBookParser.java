@@ -73,11 +73,11 @@ public class StudentBookParser {
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);
-            case ClearCommand.COMMAND_WORD -> parseCommand(commandWord, arguments, new ClearCommand());
+            case ClearCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new ClearCommand());
             case FindCommand.COMMAND_WORD -> new FindCommandParser().parse(arguments);
-            case ListCommand.COMMAND_WORD -> parseCommand(commandWord, arguments, new ListCommand());
-            case ExitCommand.COMMAND_WORD -> parseCommand(commandWord, arguments, new ExitCommand());
-            case HelpCommand.COMMAND_WORD -> parseCommand(commandWord, arguments, new HelpCommand());
+            case ListCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new ListCommand());
+            case ExitCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new ExitCommand());
+            case HelpCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new HelpCommand());
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
@@ -86,10 +86,10 @@ public class StudentBookParser {
     }
 
     /**
-     * Parses a command that takes no arguments, rejecting unexpected input before it can execute.
+     * Rejects unexpected input before a command with no arguments can execute.
      * Whitespace-only input has already been reduced to an empty argument string.
      */
-    private static Command parseCommand(String commandWord, String arguments, Command command)
+    private static Command parseNoArgumentCommand(String commandWord, String arguments, Command command)
             throws ParseException {
         if (!arguments.isEmpty()) {
             throw new ParseException(Messages.getErrorMessageForUnexpectedArguments(
