@@ -129,14 +129,47 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_anyStudent_leavesTheNusIdSlotOut() throws Exception {
+    public void constructor_anyStudent_leavesTheNusStudentIdSlotOut() throws Exception {
         // the card lays the slot out so that the field can fill it without further UI work,
         // and must not show a placeholder in the meantime
-        Label nusId = onFxThread(() -> (Label) new StudentCard(new StudentBuilder().build(), 1)
-                .getRoot().lookup("#nusId"));
+        Label nusStudentId = onFxThread(() -> (Label) new StudentCard(new StudentBuilder().build(), 1)
+                .getRoot().lookup("#nusStudentId"));
 
-        assertFalse(nusId.isManaged());
-        assertFalse(nusId.isVisible());
+        assertFalse(nusStudentId.isManaged());
+        assertFalse(nusStudentId.isVisible());
+    }
+
+    @Test
+    public void constructor_studentWithNusStudentId_showsTheNusStudentId() throws Exception {
+        Student student = new StudentBuilder().withNusStudentId("A01234567X").build();
+        Label nusStudentId = onFxThread(() -> (Label) new StudentCard(student, 1)
+                .getRoot().lookup("#nusStudentId"));
+
+        assertEquals("A01234567X", nusStudentId.getText());
+        assertTrue(nusStudentId.isManaged());
+        assertTrue(nusStudentId.isVisible());
+    }
+
+    @Test
+    public void constructor_narrowCard_keepsNusStudentIdAndPhoneWholeWithoutOverflow() throws Exception {
+        Student base = new StudentBuilder().withPhone("+65 9123 4567")
+                .withEmail("a.very.long.address.indeed@u.nus.edu").build();
+        Student student = new StudentBuilder(base).withNusStudentId("A01234567X").build();
+
+        double[] measured = onFxThread(() -> {
+            Region root = (Region) new StudentCard(student, 1).getRoot();
+            assertNotNull(styledScene(root, 300, 120));
+            Label nusStudentId = (Label) root.lookup("#nusStudentId");
+            Label phone = (Label) root.lookup("#phone");
+            return new double[] {root.getWidth(), nusStudentId.getWidth(), nusStudentId.prefWidth(-1),
+                phone.getWidth(), phone.prefWidth(-1)};
+        });
+
+        assertTrue(measured[0] <= 300.5, "the card overflowed to " + measured[0]);
+        assertTrue(measured[1] >= measured[2] - 0.5,
+                "the NUS Student ID was cut to " + measured[1] + " of " + measured[2]);
+        assertTrue(measured[3] >= measured[4] - 0.5,
+                "the phone was cut to " + measured[3] + " of " + measured[4]);
     }
 
     @Test
