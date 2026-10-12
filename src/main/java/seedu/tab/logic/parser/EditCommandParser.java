@@ -16,7 +16,6 @@ import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.tab.logic.parser.exceptions.ParseException;
-import seedu.tab.model.student.Email;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -99,11 +98,11 @@ public class EditCommandParser implements Parser<EditCommand> {
             descriptor.clearEmail();
             return;
         }
-        problems.collect(() -> {
-            Email email = ParserUtil.parseEmail(value);
-            descriptor.setEmail(email);
-            return email;
-        });
+        try {
+            descriptor.setEmail(ParserUtil.parseEmail(value));
+        } catch (ParseException e) {
+            problems.add(e.getMessage());
+        }
     }
 
     /**

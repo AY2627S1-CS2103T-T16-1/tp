@@ -193,7 +193,7 @@ public class EditCommand extends Command {
          * @throws NullPointerException if {@code email} is null.
          */
         public void setEmail(Email email) {
-            this.email = Optional.of(requireNonNull(email));
+            this.email = Optional.of(email);
             isEmailEdited = true;
         }
 
