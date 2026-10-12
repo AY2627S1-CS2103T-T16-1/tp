@@ -36,7 +36,11 @@ For each candidate:
    justification in the PE Part IV form: which definition it meets and why it
    is above the next lower level.
 
-Append to `<workdir>/verified.md`, one block per candidate:
+Append to `<workdir>/verified.md`, one block per candidate, with Bash
+(`cat >> <workdir>/verified.md <<'EOF'`). The file is the output the
+orchestrator asked for, but the Write tool can refuse Markdown report files
+from a subagent. If no tool can write it, put the blocks in your final message
+and say so on the first line, so the orchestrator can save them.
 
 ```markdown
 ### <id>: <title>

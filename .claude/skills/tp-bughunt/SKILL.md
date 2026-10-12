@@ -186,11 +186,14 @@ GUI.
 
 When every bucket agent has returned:
 
-1. `python3 -I <skill>/scripts/report-index.py <workdir>` writes
+1. Check that every `reports/<id>/` holds both `report.md` and `poc.py`, and
+   that each bucket has `unconfirmed/<bucket>.md`. Save any file an agent
+   returned as text instead, verbatim, before going on.
+2. `python3 -I <skill>/scripts/report-index.py <workdir>` writes
    `reports/INDEX.md`.
-2. Run every PoC once (`python3 -I <workdir>/reports/<id>/poc.py`) and list
+3. Run every PoC once (`python3 -I <workdir>/reports/<id>/poc.py`) and list
    the ones that do not exit 0 or 3. Do not fix them; triage will.
-3. Read the titles and root-cause lines. Note obvious duplicate pairs for the
+4. Read the titles and root-cause lines. Note obvious duplicate pairs for the
    triagers, but do not delete reports.
 
 ### S5. Second wave: triage
@@ -200,7 +203,8 @@ area (and suspected duplicates) in the same group. Launch one
 `tp-bughunt-triage` agent per group, **all in one message**. Each writes
 `reports/<id>/triage.md` and confirms GUI-only findings with screenshots.
 
-Then rerun `report-index.py`; `INDEX.md` is now ranked by verdict and severity.
+Save any `triage.md` a triager returned as text, then rerun
+`report-index.py`; `INDEX.md` is now ranked by verdict and severity.
 
 ### S6. Report to the user
 

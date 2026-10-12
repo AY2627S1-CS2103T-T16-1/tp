@@ -72,6 +72,12 @@ labels-changed: yes | no
 - **Screenshot:** <path, or "not needed">
 ```
 
+Write `triage.md` with Bash, such as `cat > <path> <<'EOF'` (or `>>` to
+append). The orchestrator needs these files, but the Write tool can refuse
+Markdown report files from a subagent. If no tool can write a file, put its
+full contents in your final message under a heading naming its path, and say
+so on the first line, so the orchestrator can save it.
+
 `WEAK` means real but likely to be downgraded or rejected; say what would
 strengthen it. Do not edit `report.md` except to fill the Screenshot section
 with the screenshot path; your corrections belong in `triage.md`.

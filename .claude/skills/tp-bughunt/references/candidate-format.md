@@ -43,6 +43,14 @@ Group inputs that fail for the same reason into one entry and list the extra
 triggers under **Reproduce**. Do not write candidates that are suggestions,
 sabotage, or out of scope per `pe-rules.md`.
 
+## Writing the file
+
+Write the candidates file with Bash, such as `cat > <path> <<'EOF'` (or `>>`
+to append). The orchestrator needs these files, but the Write tool can refuse
+Markdown report files from a subagent. If no tool can write a file, put its
+full contents in your final message under a heading naming its path, and say
+so on the first line, so the orchestrator can save it.
+
 ## Returning
 
 Your final message to the orchestrator: the number of candidates, the three

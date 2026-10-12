@@ -108,6 +108,15 @@ not confirmed: delete the folder and record it as unconfirmed.
 - Do not write outside `<workdir>/reports/<bucket>-*`, `<workdir>/runs/<bucket>/`
   and `<workdir>/unconfirmed/<bucket>.md`.
 
+## Writing your files
+
+Write `report.md` and `unconfirmed/<bucket>.md` with Bash, such as
+`cat > <path> <<'EOF'` (or `>>` to append). The orchestrator needs these
+files, but the Write tool can refuse Markdown report files from a subagent. If
+no tool can write a file, put its full contents in your final message under a
+heading naming its path, and say so on the first line, so the orchestrator can
+save it.
+
 ## Returning
 
 Write `<workdir>/unconfirmed/<bucket>.md` with the hypotheses that did not
