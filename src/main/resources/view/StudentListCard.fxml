@@ -2,35 +2,49 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import seedu.tab.ui.CardHeadline?>
+<?import seedu.tab.ui.TagRow?>
 
-<HBox id="cardPane" fx:id="cardPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <GridPane HBox.hgrow="ALWAYS">
-    <columnConstraints>
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10" prefWidth="150" />
-    </columnConstraints>
-    <VBox alignment="CENTER_LEFT" minHeight="105" GridPane.columnIndex="0">
-      <padding>
-        <Insets top="5" right="5" bottom="5" left="15" />
-      </padding>
-      <HBox spacing="0.5" alignment="CENTER_LEFT">
-        <Label fx:id="id" styleClass="cell_big_label">
-          <minWidth>
-            <!-- Ensures that the label text is never truncated -->
-            <Region fx:constant="USE_PREF_SIZE" />
-          </minWidth>
-        </Label>
-        <Label fx:id="name" text="\$first" styleClass="cell_big_label" />
-      </HBox>
-      <FlowPane fx:id="tags" />
-      <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
-      <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
-      <Label fx:id="followUp" styleClass="cell_small_label" />
-    </VBox>
-  </GridPane>
+<HBox id="cardPane" fx:id="cardPane" alignment="TOP_LEFT" spacing="12"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <padding>
+    <Insets top="12" right="14" bottom="12" left="14" />
+  </padding>
+
+  <Label fx:id="id" styleClass="card-index">
+    <minWidth>
+      <!-- Ensures that the label text is never truncated -->
+      <Region fx:constant="USE_PREF_SIZE" />
+    </minWidth>
+  </Label>
+
+  <VBox fx:id="details" spacing="4" HBox.hgrow="ALWAYS" minWidth="0">
+    <CardHeadline>
+      <!-- the tags sit against the name, so a reader follows one line from the name to
+           what is said about them. The name holds the length the card cuts it to while the
+           line has room for it, and gives way with an ellipsis below that. A row of its own
+           rather than an HBox, which would share a shortfall between the name and the tags
+           and leave neither readable. -->
+      <Label fx:id="name" text="\$first" styleClass="card-name" />
+      <TagRow fx:id="tags" />
+    </CardHeadline>
+
+    <HBox alignment="CENTER_LEFT" spacing="12">
+      <!-- laid out for the NUS ID, and left out of the card until a student carries one -->
+      <Label fx:id="nusId" styleClass="card-detail-strong" minWidth="-Infinity" />
+      <!-- the phone keeps its own width: half a phone number is of no use to anyone, where
+           the start of an email address still says whose it is. A row that shares what it
+           cannot fit between the two showed a flagged student's phone as "9111…" -->
+      <Label fx:id="phone" styleClass="card-detail" text="\$phone" minWidth="-Infinity" />
+      <Label fx:id="email" styleClass="card-detail" text="\$email" />
+    </HBox>
+  </VBox>
+
+  <!-- the pill sits outside the row that gives way, at the card's trailing edge, so a long
+       name or a row of tags can never push it out of the card. It carries the follow-up
+       marker, and takes the age once a follow-up records when it was raised. -->
+  <Label fx:id="followUp" styleClass="card-pill" minWidth="-Infinity" />
 </HBox>
