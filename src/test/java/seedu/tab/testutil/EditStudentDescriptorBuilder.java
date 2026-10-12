@@ -62,6 +62,14 @@ public class EditStudentDescriptorBuilder {
     }
 
     /**
+     * Sets the email edit to clear the student's email.
+     */
+    public EditStudentDescriptorBuilder withoutEmail() {
+        descriptor.setEmail(null);
+        return this;
+    }
+
+    /**
      * Parses the {@code tags} into a {@code Set<Tag>} and sets it to the {@code EditStudentDescriptor}
      * that we are building.
      */

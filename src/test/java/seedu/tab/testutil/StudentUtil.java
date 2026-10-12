@@ -58,8 +58,10 @@ public class StudentUtil {
                 sb.append(FLAG_NAME).append(" ").append(quoted(name.fullName)).append(" "));
         descriptor.getPhone().ifPresent(phone ->
                 sb.append(FLAG_PHONE).append(" ").append(quoted(phone.value)).append(" "));
-        descriptor.getEmail().ifPresent(email ->
-                sb.append(FLAG_EMAIL).append(" ").append(quoted(email.value)).append(" "));
+        if (descriptor.isEmailEdited()) {
+            String email = descriptor.getEmail().map(value -> value.value).orElse("");
+            sb.append(FLAG_EMAIL).append(" ").append(quoted(email)).append(" ");
+        }
         if (descriptor.getTags().isPresent()) {
             Set<Tag> tags = descriptor.getTags().get();
             if (tags.isEmpty()) {

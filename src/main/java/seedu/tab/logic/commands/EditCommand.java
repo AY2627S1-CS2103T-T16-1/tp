@@ -101,8 +101,9 @@ public class EditCommand extends Command {
 
         Name updatedName = editStudentDescriptor.getName().orElse(studentToEdit.getName());
         Phone updatedPhone = editStudentDescriptor.getPhone().orElse(studentToEdit.getPhone());
-        Email updatedEmail = editStudentDescriptor.getEmail()
-                .orElseGet(() -> studentToEdit.getEmail().orElse(null));
+        Email updatedEmail = editStudentDescriptor.isEmailEdited()
+                ? editStudentDescriptor.getEmail().orElse(null)
+                : studentToEdit.getEmail().orElse(null);
         Set<Tag> updatedTags = editStudentDescriptor.getTags().orElse(studentToEdit.getTags());
         boolean updatedFlag = editStudentDescriptor.shouldToggleFlag()
                 ? !studentToEdit.isFlagged()
@@ -142,6 +143,7 @@ public class EditCommand extends Command {
         private Name name;
         private Phone phone;
         private Email email;
+        private boolean isEmailEdited;
         private Set<Tag> tags;
         private boolean shouldToggleFlag;
 
@@ -154,7 +156,8 @@ public class EditCommand extends Command {
         public EditStudentDescriptor(EditStudentDescriptor toCopy) {
             setName(toCopy.name);
             setPhone(toCopy.phone);
-            setEmail(toCopy.email);
+            email = toCopy.email;
+            isEmailEdited = toCopy.isEmailEdited;
             setTags(toCopy.tags);
             setFlagToggled(toCopy.shouldToggleFlag);
         }
@@ -163,7 +166,7 @@ public class EditCommand extends Command {
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email, tags) || shouldToggleFlag;
+            return CollectionUtil.isAnyNonNull(name, phone, tags) || isEmailEdited || shouldToggleFlag;
         }
 
         public void setName(Name name) {
@@ -182,8 +185,16 @@ public class EditCommand extends Command {
             return Optional.ofNullable(phone);
         }
 
+        /**
+         * Marks the email as edited. A null value explicitly clears the email.
+         */
         public void setEmail(Email email) {
             this.email = email;
+            isEmailEdited = true;
+        }
+
+        public boolean isEmailEdited() {
+            return isEmailEdited;
         }
 
         public Optional<Email> getEmail() {
@@ -229,6 +240,7 @@ public class EditCommand extends Command {
             return Objects.equals(name, otherEditStudentDescriptor.name)
                     && Objects.equals(phone, otherEditStudentDescriptor.phone)
                     && Objects.equals(email, otherEditStudentDescriptor.email)
+                    && isEmailEdited == otherEditStudentDescriptor.isEmailEdited
                     && Objects.equals(tags, otherEditStudentDescriptor.tags)
                     && shouldToggleFlag == otherEditStudentDescriptor.shouldToggleFlag;
         }
@@ -239,6 +251,7 @@ public class EditCommand extends Command {
                     .add("name", name)
                     .add("phone", phone)
                     .add("email", email)
+                    .add("isEmailEdited", isEmailEdited)
                     .add("tags", tags)
                     .add("shouldToggleFlag", shouldToggleFlag)
                     .toString();

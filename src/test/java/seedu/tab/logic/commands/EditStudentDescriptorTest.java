@@ -72,12 +72,25 @@ public class EditStudentDescriptorTest {
     }
 
     @Test
+    public void copyConstructor_emailEditIntent_preserved() {
+        EditStudentDescriptor untouched = new EditStudentDescriptor();
+        EditStudentDescriptor cleared = new EditStudentDescriptorBuilder().withoutEmail().build();
+        assertFalse(untouched.isAnyFieldEdited());
+        assertFalse(new EditStudentDescriptor(untouched).isEmailEdited());
+        assertTrue(cleared.isAnyFieldEdited());
+        assertTrue(new EditStudentDescriptor(cleared).isEmailEdited());
+        assertEquals(cleared, new EditStudentDescriptor(cleared));
+        assertFalse(cleared.equals(untouched));
+    }
+
+    @Test
     public void toStringMethod() {
         EditStudentDescriptor editStudentDescriptor = new EditStudentDescriptor();
         String expected = EditStudentDescriptor.class.getCanonicalName() + "{name="
                 + editStudentDescriptor.getName().orElse(null) + ", phone="
                 + editStudentDescriptor.getPhone().orElse(null) + ", email="
-                + editStudentDescriptor.getEmail().orElse(null) + ", tags="
+                + editStudentDescriptor.getEmail().orElse(null) + ", isEmailEdited="
+                + editStudentDescriptor.isEmailEdited() + ", tags="
                 + editStudentDescriptor.getTags().orElse(null) + ", shouldToggleFlag="
                 + editStudentDescriptor.shouldToggleFlag() + "}";
         assertEquals(expected, editStudentDescriptor.toString());
