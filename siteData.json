@@ -69,6 +69,7 @@
         "editing-a-student": "Editing a student",
         "rejecting-an-over-long-email": "Rejecting an over-long email",
         "deleting-a-student": "Deleting a student",
+        "the-summary-beside-the-list": "The summary beside the list",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -116,6 +117,7 @@
         "tab-user-guide": "TAB User Guide",
         "quick-start": "Quick start",
         "features": "Features",
+        "reading-the-summary-beside-the-list": "Reading the summary beside the list",
         "viewing-help-help": "Viewing help: help",
         "adding-a-student-add": "Adding a student: add",
         "listing-all-students-list": "Listing all students: list",
