@@ -35,7 +35,8 @@ TAB is a **desktop application for teaching assistants to manage student records
 
    * `delete 3` : Deletes the 3rd student shown in the current list.
 
-   * `clear` : Deletes all students.
+   * `clear` : Asks before deleting all students. Type `yes` and press Enter
+     to confirm, or `no` and press Enter to cancel.
 
    * `exit` : Exits the app.
 
@@ -301,9 +302,22 @@ Examples:
 
 ### Clearing all entries: `clear`
 
-Clears all entries from the student book.
+Asks for confirmation before clearing all entries from the student book.
 
 Format: `clear`
+
+TAB shows the total number of students that will be removed, including those
+hidden by a search. The records and saved file stay unchanged until you reply
+in the command line and press Enter:
+
+* `yes` deletes all students and saves the empty book. This cannot be undone.
+* `no` cancels without changing any records or the saved file.
+
+Replies ignore case and surrounding whitespace. Any other reply, including
+another command, leaves the data unchanged and repeats the prompt. Reply `no`
+first if you want to run a different command. Closing TAB while the prompt is
+pending also leaves the student data unchanged. If the book is already empty,
+TAB reports that there is nothing to clear and does not ask for confirmation.
 
 ### Exiting the program: `exit`
 
@@ -356,7 +370,7 @@ _Details coming soon ..._
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [--follow-up]` <br> e.g., `add James Ho -p 22224444 -t friend -t colleague --follow-up`
-**Clear**  | `clear`
+**Clear**  | `clear`, then `yes` to confirm or `no` to cancel
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [-t TAG]... [--follow-up]`<br> e.g., `edit 2 -n "James Lee" --follow-up`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`

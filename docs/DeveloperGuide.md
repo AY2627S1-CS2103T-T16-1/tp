@@ -442,6 +442,24 @@ removed and the `a/` prefix with it, and the rest failed until `add` and `edit`
 took positional arguments and command options instead. `Name` itself never
 needed changing.
 
+### Confirming a clear
+
+`ClearCommand.execute` returns a prompt containing the whole-book count,
+including students hidden by the current filter. It does not mutate the
+model. An empty book instead returns a no-op message without a prompt.
+`LogicManager` keeps the non-empty request as `pendingClearCommand` and returns
+before its usual storage write. While the request is pending, it reads the
+next input as a reply, with case and surrounding whitespace ignored.
+
+A `no` reply drops the pending request without executing or saving anything.
+Other input raises a `ParseException` with the instructions repeated and
+keeps the request pending; it is never executed as another command. Only
+`yes` invokes `ClearCommand.executeConfirmed` and saves the empty book.
+The pending request is cleared before saving so that a storage error cannot
+leave a stale confirmation active. It lives only in memory, so closing and
+restarting TAB cannot confirm a previous request. The existing result area
+and command field provide the prompt and replies without a mouse or dialog.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -1234,7 +1252,8 @@ testers are expected to do more *exploratory* testing.
 
 1. Adding students with and without follow-up
 
-   1. Prerequisites: Launch the JAR from an empty folder, then run `clear`.
+   1. Prerequisites: Launch the JAR from an empty folder, then run `clear`
+      and reply `yes` if confirmation is requested.
 
    1. Test case: `add Alice Tan -p 91234567`<br>
       Expected: Alice is added. Neither her card nor the command result shows
@@ -1428,9 +1447,41 @@ testers are expected to do more *exploratory* testing.
       total reads the number of matches.
    1. Note: the sample data ships no flagged student, so flag one with
       `edit 1 -f` before checking the flagged count.
-   1. Test case: `clear`<br>
+   1. Test case: `clear`, then `yes`.<br>
       Expected: The flagged count and the total read zero, and the tag list is
       empty rather than the panel disappearing.
+
+### Confirming before clearing all students
+
+1. Confirmation, cancellation, and keyboard use
+
+   1. Prerequisites: Add at least two students, run `find no-such-student`
+      so none is visible, and keep a copy of `data/tab.json`.
+
+   1. Test case: Type `clear` and press Enter.<br>
+      Expected: The prompt counts every student, including the hidden ones,
+      warns that deletion cannot be undone, and explains `yes` and `no`.
+      Neither the filtered list nor the JSON file changes.
+
+   1. Test cases: Enter `maybe`, an empty reply, `"yes"`, or `exit`.<br>
+      Expected: No command executes. Feedback asks for `yes` or `no` and
+      repeats the scope. The filter and JSON file stay unchanged.
+
+   1. Test case: Enter ` NO `.<br>
+      Expected: Cancellation is acknowledged. The JSON matches the copy byte
+      for byte. `list` works again and shows all preserved records.
+
+   1. Test case: Enter `clear`, then ` YeS `, pressing Enter each time.<br>
+      Expected: All students disappear, the saved book is empty, and
+      restarting TAB shows an empty list.
+
+   1. Test case: Enter `clear` again.<br>
+      Expected: TAB reports that the book is already empty. No confirmation
+      is pending, so `help` works immediately.
+
+   1. Test case: Add a student, enter `clear`, close TAB before replying,
+      and restart it.<br>
+      Expected: The student is still present and no confirmation is pending.
 
 ### Saving data
 
