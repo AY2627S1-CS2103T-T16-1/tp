@@ -87,7 +87,8 @@ public class FlagTokenizer {
             // an option in the value position means the one before it was left empty, not that
             // the user wants to store "-e" as a tag
             if (index + 1 >= tokens.size() || isFlag(tokens.get(index + 1))) {
-                throw new ParseException(String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, flag.getLabel()));
+                throw new ParseException(String.format(
+                        Messages.MESSAGE_FLAG_WITHOUT_VALUE, flag.getLabel(token.value())));
             }
 
             parsed.put(flag, tokens.get(index + 1).value());

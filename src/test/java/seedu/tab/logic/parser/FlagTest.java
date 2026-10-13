@@ -37,6 +37,16 @@ public class FlagTest {
     }
 
     @Test
+    public void valueTakingFlagWithAlias_returnsEveryMarkerAndLabelsEitherOne() {
+        Flag valueTaking = new Flag("-e", List.of("--email"), "EMAIL");
+
+        assertEquals(List.of("-e", "--email"), valueTaking.getMarkers());
+        assertEquals("-e EMAIL", valueTaking.getLabel());
+        assertEquals("--email EMAIL", valueTaking.getLabel("--email"));
+        assertTrue(valueTaking.takesValue());
+    }
+
+    @Test
     public void toString_isJustTheMarker() {
         // the marker alone is what a user typed, so it is what a message quotes back
         assertEquals("-e", new Flag("-e", "EMAIL").toString());
