@@ -73,7 +73,7 @@ public class JsonUtil {
         return Optional.of(jsonFile);
     }
 
-    private static String getJsonProcessingErrorMessage(JsonProcessingException exception) {
+    static String getJsonProcessingErrorMessage(JsonProcessingException exception) {
         JsonLocation location = exception.getLocation();
         String locationMessage = location == null
                 ? ""

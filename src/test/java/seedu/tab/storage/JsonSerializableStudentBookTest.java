@@ -6,6 +6,7 @@ import static seedu.tab.testutil.Assert.assertThrows;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -52,6 +53,16 @@ public class JsonSerializableStudentBookTest {
                 Arrays.asList((JsonAdaptedStudent) null));
 
         assertThrows(IllegalValueException.class, "Student record 1 is missing.", dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_studentWithoutName_reportsRecordNumberWithoutName() {
+        JsonAdaptedStudent studentWithoutName = new JsonAdaptedStudent(
+                null, "91234567", null, List.of(), false);
+        JsonSerializableStudentBook dataFromFile = new JsonSerializableStudentBook(List.of(studentWithoutName));
+
+        assertThrows(IllegalValueException.class, "Student record 1: Name field is missing.",
+                dataFromFile::toModelType);
     }
 
 }

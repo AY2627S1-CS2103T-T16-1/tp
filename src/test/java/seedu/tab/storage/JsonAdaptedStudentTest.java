@@ -55,6 +55,17 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_longInvalidName_shortensValueInError() {
+        String invalidName = "-".repeat(61);
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(invalidName, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
+        String expectedMessage = "Name \"" + "-".repeat(60)
+                + "…\" is invalid: it holds no letter or number";
+
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
     public void toModelType_nullName_throwsIllegalValueException() {
         JsonAdaptedStudent student = new JsonAdaptedStudent(null, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
         String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.class.getSimpleName());
@@ -146,6 +157,16 @@ public class JsonAdaptedStudentTest {
     public void toModelType_nullTag_throwsIllegalValueException() {
         List<JsonAdaptedTag> invalidTags = new ArrayList<>(VALID_TAGS);
         invalidTags.add(null);
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, invalidTags, false);
+
+        assertThrows(IllegalValueException.class, "Tag field is missing.", student::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullTagName_throwsIllegalValueException() {
+        List<JsonAdaptedTag> invalidTags = new ArrayList<>(VALID_TAGS);
+        invalidTags.add(new JsonAdaptedTag((String) null));
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, invalidTags, false);
 

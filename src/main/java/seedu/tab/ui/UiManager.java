@@ -102,7 +102,7 @@ public class UiManager implements Ui {
         alert.showAndWait();
     }
 
-    private static Alert createAlert(Stage owner, AlertType type, String title, String headerText) {
+    static Alert createAlert(Stage owner, AlertType type, String title, String headerText) {
         Alert alert = new Alert(type);
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(UiManager.class.getResource("/view/DarkTheme.css").toExternalForm());
