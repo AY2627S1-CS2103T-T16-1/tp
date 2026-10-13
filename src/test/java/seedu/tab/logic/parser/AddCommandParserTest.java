@@ -57,6 +57,17 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_longAndMixedAliases_success() {
+        Student expected = new StudentBuilder(BOB).withTags(VALID_TAG_FRIEND, "Lab 3").build();
+
+        assertParseSuccess(parser, " " + BOB.getName().fullName
+                + " --phone " + VALID_PHONE_BOB
+                + " --email " + VALID_EMAIL_BOB
+                + " -t " + VALID_TAG_FRIEND
+                + " --tag \"Lab 3\"", new AddCommand(expected));
+    }
+
+    @Test
     public void parse_unquotedNameOfSeveralWords_success() {
         // quoting is only needed for a value that would otherwise be read as something else
         Student expected = new StudentBuilder(BOB).withTags().build();
@@ -202,18 +213,29 @@ public class AddCommandParserTest {
 
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + FOLLOW_UP + FOLLOW_UP,
                 Messages.getErrorMessageForDuplicateFlags(FLAG_FOLLOW_UP));
+
+        assertParseFailure(parser, NAME_BOB + PHONE_AMY + " --phone " + VALID_PHONE_BOB,
+                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE));
+
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + EMAIL_AMY
+                        + " --email " + VALID_EMAIL_BOB,
+                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
     }
 
     @Test
     public void parse_unknownFlag_isRefusedOnItsOwn() {
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " -z something",
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-z"));
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --unknown something",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"));
     }
 
     @Test
     public void parse_flagWithoutValue_namesTheFieldItNeeds() {
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " -e",
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --email",
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel("--email")));
     }
 
     @Test
