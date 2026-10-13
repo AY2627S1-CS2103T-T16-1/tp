@@ -12,6 +12,8 @@ import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalStudents.ALICE;
 import static seedu.tab.testutil.TypicalStudents.BOB;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.model.tag.Flag;
@@ -32,6 +34,25 @@ public class StudentTest {
         Student student = new StudentBuilder(ALICE).withFlag(true).build();
         assertEquals(new Flag(), student.getFlag().orElseThrow());
         assertTrue(student.isFlagged());
+    }
+
+    @Test
+    public void constructor_withoutNusStudentIdAndWithFlag_preservesBothStates() {
+        Student student = new Student(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail().orElse(null), ALICE.getTags(), true);
+
+        assertTrue(student.getNusStudentId().isEmpty());
+        assertTrue(student.isFlagged());
+    }
+
+    @Test
+    public void constructor_withNusStudentIdWithoutFlag_preservesBothStates() {
+        NusStudentId nusStudentId = new NusStudentId("E0123456");
+        Student student = new Student(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail().orElse(null), nusStudentId, ALICE.getTags());
+
+        assertEquals(Optional.of(nusStudentId), student.getNusStudentId());
+        assertFalse(student.isFlagged());
     }
 
     @Test
