@@ -42,16 +42,30 @@ public class MainApp extends Application {
     protected Logic logic;
     protected Storage storage;
     protected Model model;
+    private final Path userPrefsFilePath;
+    private final Path studentBookFilePath;
     private Optional<String> studentBookLoadingError = Optional.empty();
+
+    /**
+     * Creates the application using the default saved-data paths.
+     */
+    public MainApp() {
+        this(USER_PREFS_FILE_PATH, STUDENT_BOOK_FILE_PATH);
+    }
+
+    MainApp(Path userPrefsFilePath, Path studentBookFilePath) {
+        this.userPrefsFilePath = userPrefsFilePath;
+        this.studentBookFilePath = studentBookFilePath;
+    }
 
     @Override
     public void init() throws Exception {
         logger.info("=============================[ Initializing StudentBook ]===========================");
         super.init();
 
-        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(USER_PREFS_FILE_PATH);
+        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(userPrefsFilePath);
         UserPrefs userPrefs = initPrefs(userPrefsStorage);
-        JsonStudentBookStorage studentBookStorage = new JsonStudentBookStorage(STUDENT_BOOK_FILE_PATH);
+        JsonStudentBookStorage studentBookStorage = new JsonStudentBookStorage(studentBookFilePath);
         storage = new StorageManager(studentBookStorage, userPrefsStorage);
 
         model = initModelManager(storage, userPrefs);

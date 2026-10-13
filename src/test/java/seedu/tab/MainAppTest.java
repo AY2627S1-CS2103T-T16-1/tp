@@ -8,6 +8,7 @@ import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.storage.JsonUserPrefsStorage;
 import seedu.tab.storage.Storage;
 import seedu.tab.storage.StorageManager;
+import seedu.tab.ui.UiManager;
 
 public class MainAppTest {
 
@@ -39,6 +41,26 @@ public class MainAppTest {
         Method method = MainApp.class.getDeclaredMethod("initModelManager", Storage.class, ReadOnlyUserPrefs.class);
         method.setAccessible(true);
         return (Model) method.invoke(mainApp, storage, userPrefs);
+    }
+
+    private Optional<String> getUiManagerLoadingError(MainApp initializedApp) throws Exception {
+        var field = UiManager.class.getDeclaredField("studentBookLoadingError");
+        field.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Optional<String> loadingError = (Optional<String>) field.get(initializedApp.ui);
+        return loadingError;
+    }
+
+    @Test
+    public void init_invalidStudentFile_passesLoadingErrorToUiManager() throws Exception {
+        Path invalidFilePath = testFolder.resolve("invalidStudentBook.json");
+        Files.writeString(invalidFilePath, "Invalid JSON content {{{");
+        MainApp initializedApp = new MainApp(testFolder.resolve("prefs.json"), invalidFilePath);
+
+        initializedApp.init();
+
+        assertTrue(initializedApp.ui instanceof UiManager);
+        assertEquals(initializedApp.getStudentBookLoadingError(), getUiManagerLoadingError(initializedApp));
     }
 
     @Test
