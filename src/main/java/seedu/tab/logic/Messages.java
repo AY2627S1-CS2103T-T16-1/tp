@@ -1,5 +1,6 @@
 package seedu.tab.logic;
 
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -92,8 +93,12 @@ public class Messages {
                 .append("; Phone: ")
                 .append(student.getPhone());
         student.getEmail().ifPresent(email -> builder.append("; Email: ").append(email));
-        builder.append("; Tags: ");
-        student.getTags().forEach(builder::append);
+        if (!student.getTags().isEmpty()) {
+            builder.append("; Tags: ");
+            student.getTags().stream()
+                    .sorted(Comparator.comparing(tag -> tag.tagName))
+                    .forEach(builder::append);
+        }
         student.getFlag().ifPresent(flag -> builder.append("; ").append(flag.tagName));
         return builder.toString();
     }

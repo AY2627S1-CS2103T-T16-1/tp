@@ -19,6 +19,7 @@ import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.Student;
+import seedu.tab.testutil.StudentBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) and unit tests for
@@ -39,6 +40,37 @@ public class DeleteCommandTest {
         ModelManager expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
         expectedModel.deleteStudent(studentToDelete);
 
+        assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_studentWithoutEmailOrTags_feedbackIdentifiesStudentWithoutEmptyFields() {
+        Student studentToDelete = new StudentBuilder().withName("Clean Student").withPhone("91234567")
+                .withoutEmail().withTags().build();
+        model.addStudent(studentToDelete);
+        Index targetIndex = Index.fromOneBased(model.getFilteredStudentList().size());
+        DeleteCommand deleteCommand = new DeleteCommand(targetIndex);
+
+        ModelManager expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.deleteStudent(studentToDelete);
+
+        String expectedMessage = "Deleted student: Clean Student; Phone: 91234567";
+        assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_studentWithMultipleTagsAndFollowUp_feedbackIdentifiesSortedTagsAndFollowUp() {
+        Student studentToDelete = new StudentBuilder().withName("Flagged Student").withPhone("91234567")
+                .withoutEmail().withTags("urgent", "lab3").withFlag(true).build();
+        model.addStudent(studentToDelete);
+        Index targetIndex = Index.fromOneBased(model.getFilteredStudentList().size());
+        DeleteCommand deleteCommand = new DeleteCommand(targetIndex);
+
+        ModelManager expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.deleteStudent(studentToDelete);
+
+        String expectedMessage = "Deleted student: Flagged Student; Phone: 91234567; "
+                + "Tags: [lab3][urgent]; Needs follow-up";
         assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
     }
 

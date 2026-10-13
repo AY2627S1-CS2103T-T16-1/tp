@@ -132,6 +132,36 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_clearTags_feedbackOmitsTags() {
+        Student first = model.getFilteredStudentList().get(0);
+        Student edited = new StudentBuilder(first).withoutEmail().withTags().build();
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(first, edited);
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withoutEmail().withTags().build());
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(edited));
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertEquals("Edited student: Alice Pauline; Phone: 94351253", expectedMessage);
+    }
+
+    @Test
+    public void execute_multipleTags_feedbackSortsTagsAlphabetically() {
+        Student first = model.getFilteredStudentList().get(0);
+        Student edited = new StudentBuilder(first).withoutEmail().withTags("urgent", "lab3").build();
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(first, edited);
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withoutEmail().withTags("urgent", "lab3").build());
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(edited));
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertEquals("Edited student: Alice Pauline; Phone: 94351253; Tags: [lab3][urgent]", expectedMessage);
+    }
+
+    @Test
     public void execute_toggleFollowUpFlag_changesFalseToTrue() {
         Student original = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
         Student editedStudent = new StudentBuilder(original).withFlag(true).build();

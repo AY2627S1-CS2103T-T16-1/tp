@@ -39,6 +39,34 @@ public class AddCommandIntegrationTest {
     }
 
     @Test
+    public void execute_newStudentWithoutEmailOrTags_successWithCleanFeedback() {
+        Student validStudent = new StudentBuilder().withName("Bob Choo").withPhone("98765432")
+                .withoutEmail().withTags().build();
+
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.addStudent(validStudent);
+
+        assertCommandSuccess(new AddCommand(validStudent), model,
+                "New student added: Bob Choo; Phone: 98765432",
+                expectedModel);
+    }
+
+    @Test
+    public void execute_newStudentWithMultipleTagsAndFlag_successWithSortedTagsAndFollowUp() {
+        Student validStudent = new StudentBuilder().withName("Bob Choo").withPhone("98765432")
+                .withEmail("bob@example.com").withTags("urgent", "lab3")
+                .withFlag(true).build();
+
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.addStudent(validStudent);
+
+        assertCommandSuccess(new AddCommand(validStudent), model,
+                "New student added: Bob Choo; Phone: 98765432; Email: bob@example.com; "
+                + "Tags: [lab3][urgent]; Needs follow-up",
+                expectedModel);
+    }
+
+    @Test
     public void execute_duplicateStudent_throwsCommandException() {
         Student studentInList = model.getStudentBook().getStudentList().get(0);
         assertCommandFailure(new AddCommand(studentInList), model,
