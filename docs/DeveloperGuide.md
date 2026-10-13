@@ -414,6 +414,13 @@ each keyword against the student's name, phone, email, ordinary tags, and
 optional follow-up flag. Matching is case-insensitive and partial; any keyword
 can match.
 
+`FindCommand` and `ListCommand` report the count of displayed students in
+their execution feedback. `FindCommand` counts only the matching students
+(`Messages.getStudentsFoundOverview`), distinguishing zero (`Found 0 students.`),
+singular (`Found 1 student.`), and plural (`Found <n> students.`) results.
+`ListCommand` reports the number of students displayed after resetting the filter
+(`Listed 0 students.`, `Listed 1 student.`, or `Listed all <n> students.`).
+
 Nothing else is rejected in any of the three. A phone number may hold `+`,
 whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
 script. None of those characters can hinder TAB, because none of these
@@ -1538,6 +1545,33 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `clear`, then `yes`.<br>
       Expected: The flagged count and the total read zero, and the tag list is
       empty rather than the panel disappearing.
+
+### Student counts in list and find feedback
+
+1. Accurate student counts in command feedback
+
+   1. Prerequisites: Clear existing data with `clear`, then confirm with `yes`.
+
+   1. Test case: `list`<br>
+      Expected: Feedback reports `Listed 0 students.` and the displayed list is empty.
+
+   1. Test case: `find Alex`<br>
+      Expected: Feedback reports `Found 0 students.` and no students are displayed.
+
+   1. Test case: `add "Amy Bee" -p 85355255 -e amy@example.com`, then `list`<br>
+      Expected: Feedback reports `Listed 1 student.` with proper singular wording.
+
+   1. Test case: `find Amy`<br>
+      Expected: Feedback reports `Found 1 student.`.
+
+   1. Test case: `add "Bob Choo" -p 88888888 -e bob@example.com`, then `list`<br>
+      Expected: Feedback reports `Listed all 2 students.` with plural wording and accurate count.
+
+   1. Test case: `find Amy Bob`<br>
+      Expected: Feedback reports `Found 2 students.`.
+
+   1. Test case: `delete 1`, then `list`<br>
+      Expected: Feedback reports `Listed 1 student.`.
 
 ### Confirming before clearing all students
 
