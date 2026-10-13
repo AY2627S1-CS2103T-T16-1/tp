@@ -3,7 +3,7 @@ package seedu.tab.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.tab.logic.Messages.MESSAGE_STUDENTS_LISTED_OVERVIEW;
+import static seedu.tab.logic.Messages.MESSAGE_STUDENTS_FOUND_OVERVIEW;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.tab.testutil.TypicalStudents.CARL;
 import static seedu.tab.testutil.TypicalStudents.DANIEL;
@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.logic.Messages;
 import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.UserPrefs;
@@ -56,7 +57,7 @@ public class FindCommandTest {
 
     @Test
     public void execute_zeroKeywords_noStudentFound() {
-        String expectedMessage = String.format(MESSAGE_STUDENTS_LISTED_OVERVIEW, 0);
+        String expectedMessage = Messages.getStudentsFoundOverview(0);
         DetailsContainsKeywordsPredicate predicate = preparePredicate(" ");
         FindCommand command = new FindCommand(predicate);
         expectedModel.updateFilteredStudentList(predicate);
@@ -66,7 +67,7 @@ public class FindCommandTest {
 
     @Test
     public void execute_multipleKeywords_multipleStudentsFound() {
-        String expectedMessage = String.format(MESSAGE_STUDENTS_LISTED_OVERVIEW, 3);
+        String expectedMessage = Messages.getStudentsFoundOverview(3);
         DetailsContainsKeywordsPredicate predicate = preparePredicate("Kurz Elle Kunz");
         FindCommand command = new FindCommand(predicate);
         expectedModel.updateFilteredStudentList(predicate);
@@ -76,12 +77,45 @@ public class FindCommandTest {
 
     @Test
     public void execute_phoneFragment_studentFound() {
-        String expectedMessage = String.format(MESSAGE_STUDENTS_LISTED_OVERVIEW, 1);
+        String expectedMessage = Messages.getStudentsFoundOverview(1);
         DetailsContainsKeywordsPredicate predicate = preparePredicate("52533");
         FindCommand command = new FindCommand(predicate);
         expectedModel.updateFilteredStudentList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
         assertEquals(List.of(DANIEL), model.getFilteredStudentList());
+    }
+
+    @Test
+    public void execute_repeatedSearches_updatesCount() {
+        // First search matches 1 student
+        DetailsContainsKeywordsPredicate firstPredicate = preparePredicate("52533");
+        FindCommand firstCommand = new FindCommand(firstPredicate);
+        expectedModel.updateFilteredStudentList(firstPredicate);
+        assertCommandSuccess(firstCommand, model, Messages.getStudentsFoundOverview(1), expectedModel);
+        assertEquals(List.of(DANIEL), model.getFilteredStudentList());
+
+        // Second search with different keywords matches 3 students
+        DetailsContainsKeywordsPredicate secondPredicate = preparePredicate("Kurz Elle Kunz");
+        FindCommand secondCommand = new FindCommand(secondPredicate);
+        expectedModel.updateFilteredStudentList(secondPredicate);
+        assertCommandSuccess(secondCommand, model, Messages.getStudentsFoundOverview(3), expectedModel);
+        assertEquals(List.of(CARL, ELLE, FIONA), model.getFilteredStudentList());
+
+        // Third search with no matches reports 0 students
+        DetailsContainsKeywordsPredicate thirdPredicate = preparePredicate("nonexistent");
+        FindCommand thirdCommand = new FindCommand(thirdPredicate);
+        expectedModel.updateFilteredStudentList(thirdPredicate);
+        assertCommandSuccess(thirdCommand, model, Messages.getStudentsFoundOverview(0), expectedModel);
+        assertEquals(List.of(), model.getFilteredStudentList());
+    }
+
+    @Test
+    public void getStudentsFoundOverview() {
+        assertEquals("Found 0 students.", Messages.getStudentsFoundOverview(0));
+        assertEquals("Found 1 student.", Messages.getStudentsFoundOverview(1));
+        assertEquals("Found 3 students.", Messages.getStudentsFoundOverview(3));
+        assertEquals(String.format(MESSAGE_STUDENTS_FOUND_OVERVIEW, 0, "s"),
+                Messages.getStudentsFoundOverview(0));
     }
 
     @Test

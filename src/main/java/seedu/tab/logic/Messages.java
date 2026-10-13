@@ -16,7 +16,7 @@ public class Messages {
             "%1$s takes no arguments. Unexpected input: \"%2$s\".";
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
     public static final String MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX = "The student index provided is invalid.";
-    public static final String MESSAGE_STUDENTS_LISTED_OVERVIEW = "%1$d student(s) listed!";
+    public static final String MESSAGE_STUDENTS_FOUND_OVERVIEW = "Found %1$d student%2$s.";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
     public static final String MESSAGE_MISSING_FIELDS = "Missing required field(s): %1$s";
@@ -69,6 +69,16 @@ public class Messages {
      */
     public static String getErrorMessageForUnexpectedArguments(String commandWord, String arguments) {
         return String.format(MESSAGE_UNEXPECTED_ARGUMENTS, commandWord, shorten(arguments));
+    }
+
+    /**
+     * Returns a summary message reporting the number of students found.
+     *
+     * @param count The number of students found.
+     * @return The formatted summary message.
+     */
+    public static String getStudentsFoundOverview(int count) {
+        return String.format(MESSAGE_STUDENTS_FOUND_OVERVIEW, count, count == 1 ? "" : "s");
     }
 
     /**

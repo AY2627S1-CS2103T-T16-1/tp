@@ -12,16 +12,30 @@ public class ListCommand extends Command {
 
     public static final String COMMAND_WORD = "list";
 
-    public static final String MESSAGE_SUCCESS = "Listed all students.";
-    public static final String MESSAGE_EMPTY_LIST = "There is no student in your list.";
+    public static final String MESSAGE_SUCCESS = "Listed all %1$d students.";
+    public static final String MESSAGE_SINGLE_STUDENT = "Listed 1 student.";
+    public static final String MESSAGE_EMPTY_LIST = "Listed 0 students.";
 
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredStudentList(PREDICATE_SHOW_ALL_STUDENTS);
-        if (model.getFilteredStudentList().isEmpty()) {
-            return new CommandResult(MESSAGE_EMPTY_LIST);
+        return new CommandResult(formatSuccessMessage(model.getFilteredStudentList().size()));
+    }
+
+    /**
+     * Returns the success message for the given number of displayed students.
+     *
+     * @param count The number of displayed students.
+     * @return The formatted success message.
+     */
+    public static String formatSuccessMessage(int count) {
+        if (count == 0) {
+            return MESSAGE_EMPTY_LIST;
         }
-        return new CommandResult(MESSAGE_SUCCESS);
+        if (count == 1) {
+            return MESSAGE_SINGLE_STUDENT;
+        }
+        return String.format(MESSAGE_SUCCESS, count);
     }
 }
