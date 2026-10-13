@@ -319,6 +319,113 @@
     -fx-text-fill: -tab-text;
 }
 
+/* The startup data error has no main window behind it, so it carries the same surfaces,
+   spacing and restrained accents as the rest of TAB rather than looking like a platform
+   alert from another application. */
+.data-loading-error-dialog {
+    -fx-pref-width: 540;
+    -fx-background-color: -tab-bg;
+    -fx-border-color: -tab-border;
+    -fx-border-width: 1;
+}
+
+.data-loading-error-dialog > .header-panel {
+    -fx-background-color: -tab-bg;
+    -fx-padding: 22 24 14 24;
+}
+
+.data-loading-error-dialog:header > .header-panel .label {
+    -fx-font-size: 19px;
+    -fx-font-style: normal;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tab-text;
+}
+
+.data-loading-error-dialog > .header-panel > .graphic-container {
+    -fx-padding: 0 14 0 0;
+}
+
+.data-loading-error-icon {
+    -fx-alignment: center;
+    -fx-background-color: derive(-tab-danger, -70%);
+    -fx-background-radius: 20;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-min-height: 30;
+    -fx-min-width: 30;
+    -fx-pref-height: 30;
+    -fx-pref-width: 30;
+    -fx-text-fill: -tab-danger;
+}
+
+.data-loading-error-content {
+    -fx-padding: 0 24 12 24;
+    -fx-spacing: 10;
+}
+
+.data-loading-error-file-caption {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 0 0 0;
+    -fx-text-fill: -tab-text-muted;
+}
+
+.data-loading-error-file {
+    -fx-background-color: -tab-bg-sunken;
+    -fx-background-radius: 6;
+    -fx-border-color: -tab-border;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 12px;
+    -fx-padding: 9 12 9 12;
+    -fx-text-fill: -tab-accent;
+}
+
+.data-loading-error-detail {
+    -fx-background-color: -tab-danger, -tab-surface;
+    -fx-background-insets: 0, 0 0 0 3;
+    -fx-background-radius: 6, 6;
+    -fx-font-size: 13px;
+    -fx-padding: 12 14 12 17;
+    -fx-text-fill: -tab-text;
+}
+
+.data-loading-error-recovery {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 0 0 0;
+    -fx-text-fill: -tab-text;
+}
+
+.data-loading-error-dialog > .button-bar > .container {
+    -fx-background-color: -tab-bg;
+    -fx-border-color: -tab-border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 12 24 16 24;
+}
+
+.data-loading-error-dialog .button {
+    -fx-background-color: -tab-surface-raised;
+    -fx-background-insets: 0;
+    -fx-background-radius: 6;
+    -fx-border-color: -tab-accent;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+    -fx-font-size: 12px;
+    -fx-padding: 7 18 7 18;
+    -fx-text-fill: -tab-text;
+}
+
+.data-loading-error-dialog .button:hover {
+    -fx-background-color: -tab-surface-selected;
+}
+
+.data-loading-error-dialog .button:pressed {
+    -fx-background-color: -tab-accent;
+    -fx-text-fill: -tab-bg;
+}
+
 .scroll-bar {
     -fx-background-color: -tab-bg;
 }

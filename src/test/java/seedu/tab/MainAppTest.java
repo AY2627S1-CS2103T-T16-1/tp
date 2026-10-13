@@ -1,6 +1,7 @@
 package seedu.tab;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
@@ -49,18 +50,47 @@ public class MainAppTest {
 
         Model model = initModelManager(storage, new UserPrefs());
         assertEquals(SampleDataUtil.getSampleStudentBook(), model.getStudentBook());
+        assertTrue(mainApp.getStudentBookLoadingError().isEmpty());
     }
 
     @Test
-    public void initModelManager_corruptedFile_initializesWithEmptyStudentBook() throws Exception {
+    public void initModelManager_corruptedFile_recordsErrorAndPreservesFile() throws Exception {
         Path corruptedFilePath = testFolder.resolve("corruptedStudentBook.json");
-        Files.writeString(corruptedFilePath, "Invalid JSON content {{{");
+        String originalContents = "Invalid JSON content {{{";
+        Files.writeString(corruptedFilePath, originalContents);
         StorageManager storage = new StorageManager(
                 new JsonStudentBookStorage(corruptedFilePath),
                 new JsonUserPrefsStorage(testFolder.resolve("prefs.json")));
 
         Model model = initModelManager(storage, new UserPrefs());
         assertTrue(model.getStudentBook().getStudentList().isEmpty());
+        assertTrue(mainApp.getStudentBookLoadingError().orElseThrow()
+                .contains("The data is not in the expected JSON format"));
+        assertEquals(originalContents, Files.readString(corruptedFilePath));
+    }
+
+    @Test
+    public void initModelManager_invalidStudent_recordsSpecificErrorAndPreservesFile() throws Exception {
+        Path invalidFilePath = testFolder.resolve("invalidStudentBook.json");
+        String originalContents = """
+                {
+                  "students": [ {
+                    "name": "Ravi",
+                    "phone": "12"
+                  } ]
+                }
+                """;
+        Files.writeString(invalidFilePath, originalContents);
+        StorageManager storage = new StorageManager(
+                new JsonStudentBookStorage(invalidFilePath),
+                new JsonUserPrefsStorage(testFolder.resolve("prefs.json")));
+
+        Model model = initModelManager(storage, new UserPrefs());
+
+        assertTrue(model.getStudentBook().getStudentList().isEmpty());
+        assertEquals("Student record 1 (\"Ravi\"): Phone \"12\" is invalid: "
+                + "a phone number needs at least 3 digits", mainApp.getStudentBookLoadingError().orElseThrow());
+        assertEquals(originalContents, Files.readString(invalidFilePath));
     }
 
     @Test
@@ -75,6 +105,7 @@ public class MainAppTest {
 
         Model model = initModelManager(storage, new UserPrefs());
         assertEquals(getTypicalStudentBook(), model.getStudentBook());
+        assertFalse(mainApp.getStudentBookLoadingError().isPresent());
     }
 
     @Test
