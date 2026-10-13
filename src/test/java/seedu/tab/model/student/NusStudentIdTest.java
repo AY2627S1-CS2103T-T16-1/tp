@@ -16,7 +16,7 @@ public class NusStudentIdTest {
 
     @Test
     public void constructor_invalidNusStudentId_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> new NusStudentId("A0123456X"));
+        assertThrows(IllegalArgumentException.class, () -> new NusStudentId("A0123-456X"));
     }
 
     @Test
@@ -29,30 +29,30 @@ public class NusStudentIdTest {
         assertThrows(NullPointerException.class, () -> NusStudentId.isValidNusStudentId(null));
 
         assertFalse(NusStudentId.isValidNusStudentId(""));
-        assertFalse(NusStudentId.isValidNusStudentId("A0123456X"));
-        assertFalse(NusStudentId.isValidNusStudentId("A012345678X"));
-        assertFalse(NusStudentId.isValidNusStudentId("a01234567x7X"));
-        assertFalse(NusStudentId.isValidNusStudentId("A01234X67Y"));
-        assertFalse(NusStudentId.isValidNusStudentId("A012345678"));
+        assertFalse(NusStudentId.isValidNusStudentId("A0123-456X"));
+        assertFalse(NusStudentId.isValidNusStudentId("A0123_456X"));
+        assertFalse(NusStudentId.isValidNusStudentId("A0123!456X"));
+        assertFalse(NusStudentId.isValidNusStudentId("学1234567X"));
         assertFalse(NusStudentId.isValidNusStudentId(" A01234567X "));
 
         assertTrue(NusStudentId.isValidNusStudentId("A01234567X"));
+        assertTrue(NusStudentId.isValidNusStudentId("E0123456"));
         assertTrue(NusStudentId.isValidNusStudentId("a76543210y"));
+        assertTrue(NusStudentId.isValidNusStudentId("A"));
+        assertTrue(NusStudentId.isValidNusStudentId("1"));
     }
 
     @Test
     public void getFailureReason_invalidValues_namesTheActualProblem() {
-        assertEquals("a NUS Student ID cannot be empty", NusStudentId.getFailureReason(""));
-        assertEquals("a NUS Student ID needs to start with A",
-                NusStudentId.getFailureReason("E01234567X"));
-        assertEquals("a NUS Student ID needs 8 digits and a final letter after A",
-                NusStudentId.getFailureReason("A"));
-        assertEquals("a NUS Student ID needs to end with a letter from A to Z",
-                NusStudentId.getFailureReason("A012345678"));
-        assertEquals("the characters between the first A and final letter must all be digits",
-                NusStudentId.getFailureReason("A01234X67Y"));
-        assertEquals("a NUS Student ID needs exactly 8 digits between the first A and final letter",
-                NusStudentId.getFailureReason("A0123456X"));
+        assertEquals(NusStudentId.MESSAGE_EMPTY, NusStudentId.getFailureReason(""));
+        assertEquals(NusStudentId.MESSAGE_NON_ALPHANUMERIC,
+                NusStudentId.getFailureReason("A0123-456X"));
+        assertEquals("", NusStudentId.getFailureReason("E0123456"));
+    }
+
+    @Test
+    public void isValidNusStudentId_veryLongAlphanumericValue_doesNotOverflowStack() {
+        assertTrue(NusStudentId.isValidNusStudentId("A".repeat(100_000)));
     }
 
     @Test

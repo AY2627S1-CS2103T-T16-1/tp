@@ -22,7 +22,7 @@ public class ParserUtilTest {
     private static final String INVALID_NAME = "---"; // no letter or number
     private static final String INVALID_PHONE = "12"; // fewer than 3 digits
     private static final String INVALID_EMAIL = "example.com";
-    private static final String INVALID_NUS_STUDENT_ID = "A0123456X";
+    private static final String INVALID_NUS_STUDENT_ID = "A0123-456X";
     private static final String INVALID_TAG = "---"; // no letter or number
 
     private static final String VALID_NAME = "Rachel Walker";
@@ -130,8 +130,8 @@ public class ParserUtilTest {
 
     @Test
     public void parseNusStudentId_invalidValue_throwsParseExceptionNamingField() {
-        String expected = "NUS Student ID \"A0123456X\" is not valid: "
-                + "a NUS Student ID needs exactly 8 digits between the first A and final letter";
+        String expected = "NUS Student ID \"A0123-456X\" is not valid: "
+                + NusStudentId.MESSAGE_NON_ALPHANUMERIC;
         assertThrows(ParseException.class, expected, () -> ParserUtil.parseNusStudentId(INVALID_NUS_STUDENT_ID));
     }
 

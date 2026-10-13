@@ -91,7 +91,7 @@ public class AddCommandParserTest {
     public void parse_nusStudentIdUsingLongOptionOrAlias_buildsStudentWithNormalizedId() {
         Student expected = new StudentBuilder(BOB).withTags().withoutEmail().withNusStudentId("A01234567X").build();
 
-        assertParseSuccess(parser, NAME_BOB + PHONE_BOB + " --nus-id a01234567x",
+        assertParseSuccess(parser, NAME_BOB + PHONE_BOB + " --id a01234567x",
                 new AddCommand(expected));
         assertParseSuccess(parser, NAME_BOB + PHONE_BOB + " -i A01234567X",
                 new AddCommand(expected));
@@ -151,8 +151,8 @@ public class AddCommandParserTest {
 
         // invalid NUS Student ID
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + INVALID_NUS_STUDENT_ID,
-                Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123456",
-                        NusStudentId.getFailureReason("A0123456")));
+                Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
+                        NusStudentId.getFailureReason("A0123-456")));
     }
 
     @Test
@@ -225,7 +225,7 @@ public class AddCommandParserTest {
                 Messages.getErrorMessageForDuplicateFlags(FLAG_FOLLOW_UP));
 
         assertParseFailure(parser, NAME_BOB + PHONE_BOB
-                + " --nus-id A01234567X -i A76543210Y",
+                + " --id A01234567X -i A76543210Y",
                 Messages.getErrorMessageForDuplicateFlags(FLAG_NUS_STUDENT_ID));
     }
 
@@ -239,7 +239,7 @@ public class AddCommandParserTest {
     public void parse_flagWithoutValue_namesTheFieldItNeeds() {
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " -e",
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
-        assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --nus-id",
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --id",
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_NUS_STUDENT_ID.getLabel()));
     }
 

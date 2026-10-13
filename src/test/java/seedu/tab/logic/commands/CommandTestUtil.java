@@ -58,7 +58,7 @@ public class CommandTestUtil {
     public static final String INVALID_FLAG_NAME = " " + FLAG_NAME + " \"---\""; // no letter or number
     public static final String INVALID_PHONE = " " + FLAG_PHONE + " 12"; // fewer than 3 digits
     public static final String INVALID_EMAIL = " " + FLAG_EMAIL + " bob!yahoo"; // missing '@' symbol
-    public static final String INVALID_NUS_STUDENT_ID = " " + FLAG_NUS_STUDENT_ID + " A0123456";
+    public static final String INVALID_NUS_STUDENT_ID = " " + FLAG_NUS_STUDENT_ID + " A0123-456";
     public static final String INVALID_TAG = " " + FLAG_TAG + " \"---\""; // no letter or number
 
     public static final String PREAMBLE_WHITESPACE = "\t  \r  \n";

@@ -38,10 +38,10 @@ public class FlagTest {
 
     @Test
     public void valueTakingFlagWithAlias_returnsEveryMarkerAndTakesValue() {
-        Flag valueTaking = new Flag("--nus-id", List.of("-i"), "NUS_STUDENT_ID");
+        Flag valueTaking = new Flag("--id", List.of("-i"), "NUS_STUDENT_ID");
 
-        assertEquals(List.of("--nus-id", "-i"), valueTaking.getMarkers());
-        assertEquals("--nus-id NUS_STUDENT_ID", valueTaking.getLabel());
+        assertEquals(List.of("--id", "-i"), valueTaking.getMarkers());
+        assertEquals("--id NUS_STUDENT_ID", valueTaking.getLabel());
         assertTrue(valueTaking.takesValue());
     }
 

@@ -110,7 +110,7 @@ public class EditCommandParserTest {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
         descriptor.setNusStudentId(new NusStudentId("A01234567X"));
 
-        assertParseSuccess(parser, "1 --nus-id a01234567x",
+        assertParseSuccess(parser, "1 --id a01234567x",
                 new EditCommand(INDEX_FIRST_STUDENT, descriptor));
         assertParseSuccess(parser, "1 -i A01234567X",
                 new EditCommand(INDEX_FIRST_STUDENT, descriptor));
@@ -121,7 +121,7 @@ public class EditCommandParserTest {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
         descriptor.clearNusStudentId();
 
-        assertParseSuccess(parser, "1 --nus-id \"\"",
+        assertParseSuccess(parser, "1 --id \"\"",
                 new EditCommand(INDEX_FIRST_STUDENT, descriptor));
         assertParseSuccess(parser, "1 -i \"\"",
                 new EditCommand(INDEX_FIRST_STUDENT, descriptor));
@@ -294,8 +294,8 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1" + INVALID_TAG,
                 Messages.getErrorMessageForInvalidValue("Tag", "---", Tag.getFailureReason("---")));
         assertParseFailure(parser, "1" + INVALID_NUS_STUDENT_ID,
-                Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123456",
-                        NusStudentId.getFailureReason("A0123456")));
+                Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
+                        NusStudentId.getFailureReason("A0123-456")));
     }
 
     @Test
@@ -331,7 +331,7 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1" + PHONE_AMY + EMAIL_AMY + PHONE_BOB + EMAIL_BOB,
                 Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE, FLAG_EMAIL));
 
-        assertParseFailure(parser, "1 --nus-id A01234567X -i A76543210Y",
+        assertParseFailure(parser, "1 --id A01234567X -i A76543210Y",
                 Messages.getErrorMessageForDuplicateFlags(FLAG_NUS_STUDENT_ID));
     }
 
@@ -345,7 +345,7 @@ public class EditCommandParserTest {
     public void parse_flagWithoutValue_namesTheFieldItNeeds() {
         assertParseFailure(parser, "1" + PHONE_BOB + " -e",
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
-        assertParseFailure(parser, "1 --nus-id",
+        assertParseFailure(parser, "1 --id",
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_NUS_STUDENT_ID.getLabel()));
 
         // an option in the value position means the one before it was left empty, rather than

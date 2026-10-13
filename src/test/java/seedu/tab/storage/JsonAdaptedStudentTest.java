@@ -26,7 +26,7 @@ public class JsonAdaptedStudentTest {
     private static final String INVALID_NAME = "---"; // no letter or number
     private static final String INVALID_PHONE = "12"; // fewer than 3 digits
     private static final String INVALID_EMAIL = "example.com";
-    private static final String INVALID_NUS_STUDENT_ID = "A0123456X";
+    private static final String INVALID_NUS_STUDENT_ID = "A0123-456X";
     private static final String INVALID_TAG = "---"; // no letter or number
 
     private static final String VALID_NAME = BENSON.getName().toString();

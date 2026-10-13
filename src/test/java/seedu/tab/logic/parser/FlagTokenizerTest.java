@@ -36,7 +36,7 @@ public class FlagTokenizerTest {
     public void tokenize_valueTakingFlagAlias_readsTheSameField() throws Exception {
         assertEquals(Optional.of("A01234567X"), parse("John -i A01234567X").getValue(FLAG_NUS_STUDENT_ID));
         assertEquals(Optional.of("A76543210Y"),
-                parse("John --nus-id A76543210Y").getValue(FLAG_NUS_STUDENT_ID));
+                parse("John --id A76543210Y").getValue(FLAG_NUS_STUDENT_ID));
     }
 
     @Test
@@ -181,7 +181,7 @@ public class FlagTokenizerTest {
 
     @Test
     public void verifyNoDuplicateFlagsFor_primaryAndAlias_throwsForOneField() throws Exception {
-        FlagArgumentMap parsed = parse("John --nus-id A01234567X -i A76543210Y");
+        FlagArgumentMap parsed = parse("John --id A01234567X -i A76543210Y");
 
         assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags(FLAG_NUS_STUDENT_ID), () ->
                 parsed.verifyNoDuplicateFlagsFor(FLAG_NUS_STUDENT_ID));
