@@ -3,6 +3,7 @@ package seedu.tab.logic.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class FlagTest {
 
         assertEquals(List.of("--follow-up", "-f"), markerOnly.getMarkers());
         assertEquals("--follow-up", markerOnly.getLabel());
+        assertEquals("-f", markerOnly.getLabel("-f"));
     }
 
     @Test
@@ -44,6 +46,13 @@ public class FlagTest {
         assertEquals("-e EMAIL", valueTaking.getLabel());
         assertEquals("--email EMAIL", valueTaking.getLabel("--email"));
         assertTrue(valueTaking.takesValue());
+    }
+
+    @Test
+    public void getLabel_unknownMarker_throwsAssertionError() {
+        Flag valueTaking = new Flag("-e", List.of("--email"), "EMAIL");
+
+        assertThrows(AssertionError.class, () -> valueTaking.getLabel("--phone"));
     }
 
     @Test
