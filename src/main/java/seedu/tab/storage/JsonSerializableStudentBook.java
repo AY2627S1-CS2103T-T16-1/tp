@@ -47,14 +47,32 @@ class JsonSerializableStudentBook {
      */
     public StudentBook toModelType() throws IllegalValueException {
         StudentBook studentBook = new StudentBook();
-        for (JsonAdaptedStudent jsonAdaptedStudent : students) {
-            Student student = jsonAdaptedStudent.toModelType();
+        for (int index = 0; index < students.size(); index++) {
+            JsonAdaptedStudent jsonAdaptedStudent = students.get(index);
+            if (jsonAdaptedStudent == null) {
+                throw new IllegalValueException(String.format("Student record %d is missing.", index + 1));
+            }
+            String recordDescription = getRecordDescription(index, jsonAdaptedStudent);
+            Student student;
+            try {
+                student = jsonAdaptedStudent.toModelType();
+            } catch (IllegalValueException e) {
+                throw new IllegalValueException(recordDescription + ": " + e.getMessage(), e);
+            }
             if (studentBook.hasStudent(student)) {
-                throw new IllegalValueException(MESSAGE_DUPLICATE_STUDENT);
+                throw new IllegalValueException(recordDescription + ": " + MESSAGE_DUPLICATE_STUDENT);
             }
             studentBook.addStudent(student);
         }
         return studentBook;
+    }
+
+    private static String getRecordDescription(int index, JsonAdaptedStudent student) {
+        String name = student.getNameForErrorMessage();
+        if (name == null) {
+            return String.format("Student record %d", index + 1);
+        }
+        return String.format("Student record %d (\"%s\")", index + 1, name);
     }
 
 }

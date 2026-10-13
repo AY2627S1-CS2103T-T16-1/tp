@@ -5,6 +5,7 @@ import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
@@ -40,8 +41,17 @@ public class JsonSerializableStudentBookTest {
     public void toModelType_duplicateStudents_throwsIllegalValueException() throws Exception {
         JsonSerializableStudentBook dataFromFile = JsonUtil.readJsonFile(DUPLICATE_STUDENT_FILE,
                 JsonSerializableStudentBook.class).get();
-        assertThrows(IllegalValueException.class, JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT,
-                dataFromFile::toModelType);
+        String expectedMessage = "Student record 2 (\"Alice Pauline\"): "
+                + JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT;
+        assertThrows(IllegalValueException.class, expectedMessage, dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullStudentRecord_throwsIllegalValueException() {
+        JsonSerializableStudentBook dataFromFile = new JsonSerializableStudentBook(
+                Arrays.asList((JsonAdaptedStudent) null));
+
+        assertThrows(IllegalValueException.class, "Student record 1 is missing.", dataFromFile::toModelType);
     }
 
 }
