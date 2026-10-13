@@ -31,7 +31,7 @@ TAB is a **desktop application for teaching assistants to manage student records
 
    * `list` : Lists all students.
 
-   * `add John Doe -p 98765432 -e johnd@example.com --nus-id A01234567X` : Adds a student named `John Doe` with an NUS Student ID.
+   * `add John Doe -p 98765432 -e johnd@example.com --id A01234567X` : Adds a student named `John Doe` with an NUS Student ID.
 
    * `delete 3` : Deletes the 3rd student shown in the current list.
 
@@ -132,7 +132,7 @@ Format: `help`
 
 Adds a student to the student book.
 
-Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [--nus-id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
+Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
 
 <box type="tip" seamless>
 
@@ -148,11 +148,11 @@ than you meant.
 
 <box type="tip" seamless>
 
-**Tip:** The NUS Student ID is optional. Give it with `--nus-id`, or
-use the shorter `-i` alias. It must be `A`, exactly 8 digits, and a final letter
-from `A` to `Z`, such as `A01234567X`. Lowercase letters are accepted and
-stored as uppercase. To remove an NUS Student ID entered by mistake, use
-`edit INDEX --nus-id ""`.
+**Tip:** The NUS Student ID is optional. Give it with `--id`, or
+use the shorter `-i` alias. It must be non-empty and contain only ASCII letters
+and digits, such as `A01234567X` or `E0123456`. Lowercase letters are accepted
+and stored as uppercase. To remove an NUS Student ID entered by mistake, use
+`edit INDEX --id ""`.
 </box>
 
 <box type="tip" seamless>
@@ -199,7 +199,7 @@ To put a double quote or a backslash inside a value, write `\"` or `\\`:
 
 Examples:
 * `add John Doe -p 98765432 -e johnd@example.com`
-* `add "Betsy Crowe" -t friend -e betsycrowe@example.com -p 1234567 --nus-id A01234567X -t criminal`
+* `add "Betsy Crowe" -t friend -e betsycrowe@example.com -p 1234567 --id A01234567X -t criminal`
 * `add "Ravi s/o Kumaran" -p 91234567 -e e0923841@u.nus.edu`
 * `add Siti Nur-Aisyah -p 84420917 -e e1147203@u.nus.edu -i a11472030k -t T1 -t "Lab 3"`
 * `add Priya Nair -p 91234567 -e priya@example.com --follow-up`
@@ -232,11 +232,11 @@ Missing required field(s): -p PHONE
 Email "e1234567" is not valid: an email needs an @ between the local part and the domain
 ```
 
-For example, an ID with the wrong first letter is rejected specifically:
+For example, an ID containing punctuation is rejected specifically:
 
 ```
-> add John Doe -p 98765432 --nus-id E01234567X
-NUS Student ID "E01234567X" is not valid: a NUS Student ID needs to start with A
+> add John Doe -p 98765432 --id A0123-456X
+NUS Student ID "A0123-456X" is not valid: a NUS Student ID can only contain ASCII letters and digits
 ```
 
 ### Listing all students: `list`
@@ -251,7 +251,7 @@ If the student book is empty, TAB reports that there is no student in your list.
 
 Edits an existing student in the student book.
 
-Format: `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--nus-id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
+Format: `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
 
 <box type="tip" seamless>
 
@@ -271,7 +271,7 @@ done to it beyond the quotes any value with spaces takes:
   so check the updated card after each edit.
 * To remove a student's email, use `-e ""`. Leaving out `-e` keeps the email
   unchanged; a bare `-e` is an error. Clearing an already absent email succeeds.
-* To remove a student's NUS Student ID, use `--nus-id ""` or `-i ""`. Leaving the
+* To remove a student's NUS Student ID, use `--id ""` or `-i ""`. Leaving the
   option out keeps the NUS Student ID unchanged; a bare option is an error. Clearing an
   already absent NUS Student ID succeeds. Name and phone are required and cannot be cleared.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
@@ -282,7 +282,7 @@ done to it beyond the quotes any value with spaces takes:
 Examples:
 *  `edit 1 -p 91234567 -e johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 1 -e ""` Removes the 1st student's email while keeping all other details.
-*  `edit 1 --nus-id A01234567X` Records or replaces the 1st student's NUS Student ID.
+*  `edit 1 --id A01234567X` Records or replaces the 1st student's NUS Student ID.
 *  `edit 1 -i ""` Removes the 1st student's NUS Student ID while keeping all other details.
 *  `edit 2 -n "Betsy Crower" -t ""` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 -n "Ravi s/o Kumaran"` Edits the name of the 1st student to be `Ravi s/o Kumaran`.
@@ -375,8 +375,8 @@ continue to load, with every record that lacks the key treated as unflagged.
 A student with an NUS Student ID has a `"nusStudentId"` string such as
 `"A01234567X"` in their JSON record. The key is optional: a missing key or
 `null` means that no NUS Student ID has been recorded. A non-null value must
-start with `A`, contain exactly 8 ASCII digits, and end with a letter from `A`
-to `Z`. TAB accepts lowercase letters and saves valid IDs in uppercase.
+be non-empty and contain only ASCII letters and digits. TAB accepts lowercase
+letters and saves valid IDs in uppercase.
 
 TAB still identifies duplicate records by normalized name. NUS Student IDs, phone
 numbers, and emails are searchable details rather than identity keys, so two
@@ -414,10 +414,10 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [--nus-id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> e.g., `add James Ho -p 22224444 -i A01234567X -t friend -t colleague --follow-up`
+**Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> e.g., `add James Ho -p 22224444 -i A01234567X -t friend -t colleague --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--nus-id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`<br> e.g., `edit 2 -n "James Lee" --nus-id A01234567X`
+**Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`<br> e.g., `edit 2 -n "James Lee" --id A01234567X`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James A0123`
 **List**   | `list`
 **Help**   | `help`

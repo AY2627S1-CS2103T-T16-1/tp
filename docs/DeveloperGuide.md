@@ -227,8 +227,8 @@ This section describes some noteworthy details on how certain features are imple
 ### How commands read their arguments
 
 `add` and `edit` mark their fields with options,
-`add NAME -p PHONE [-e EMAIL] [--nus-id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
-`edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--nus-id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`,
+`add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
+`edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`,
 where AB3 marked them with prefixes such as `p/`.
 
 A prefix has to be a sequence a value never contains, and no such sequence
@@ -268,11 +268,11 @@ belonging to no option are each reported for what they are, rather than as one
 generic complaint.
 
 `Flag` also lets a value-taking option carry aliases. NUS Student ID uses
-`--nus-id` as its canonical option and the unused `-i` as its typing-friendly
+`--id` as its canonical option and the unused `-i` as its typing-friendly
 alias. Both spellings map to the same `FLAG_NUS_STUDENT_ID`, so giving
 both is rejected as a repeated single-valued field rather than letting one
 silently override the other. Usage labels and error messages use the canonical
-`--nus-id NUS_STUDENT_ID` spelling.
+`--id NUS_STUDENT_ID` spelling.
 
 The shape of the command is settled before any field is read. An unclosed
 quote, an unknown option, or a single-valued option given twice all leave it
@@ -280,7 +280,7 @@ unclear which field a value belongs to, so each is refused on its own instead
 of being collected with the field errors.
 
 `edit` clears a field with an explicitly empty value rather than with a bare
-option. `-e ""` removes the email, `--nus-id ""` removes the NUS Student ID, and
+option. `-e ""` removes the email, `--id ""` removes the NUS Student ID, and
 `-t ""` removes every tag.
 A bare option cannot mean "clear" here, because a bare option
 is what reports the mistake in `edit 1 -t -e a@b.com`: the `-e` is read as the
@@ -353,20 +353,24 @@ They normalize for different reasons, and the rule each one enforces differs.
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
 
-**The NUS Student ID may be absent.** `NusStudentId` accepts `A`, exactly 8
-ASCII digits, and a final letter from `A` to `Z`. Input letters are
-case-insensitive and the value is stored in uppercase, so `a01234567x` and
-`A01234567X` are the same value. This narrow form reflects the identifier being
-recorded rather than an arbitrary external identifier. `Student` holds a
+**The NUS Student ID may be absent.** `NusStudentId` accepts any non-empty
+sequence of ASCII letters and digits. Input letters are case-insensitive and
+the value is stored in uppercase, so `e0123456` and `E0123456` are the same
+value. This accommodates variations in the identifiers issued to different
+groups of students. `Student` holds a
 nullable `NusStudentId` and exposes it as `Optional<NusStudentId>`, matching
 the existing optional-email boundary without inventing a sentinel value.
+`NusStudentId.getFailureReason` performs the single validation scan, and
+`isValidNusStudentId` delegates to it. This keeps the accepted format and the
+specific user-facing error synchronized without maintaining a separate regex.
 
-The add and edit parsers read either `--nus-id` or `-i` through the same flag
+The add and edit parsers read either `--id` or `-i` through the same flag
 and validate with `ParserUtil.parseNusStudentId`. Add leaves the field absent when no
-option is given. For edit, `EditStudentDescriptor` keeps `isNusStudentIdEdited`
-separately from `Optional<NusStudentId>`: an absent option preserves the old value, a
-present non-empty option replaces it, and `--nus-id ""` clears it. Copies use
-`setNusStudentId` or `clearNusStudentId`, preserving all three states.
+option is given. For edit, `EditStudentDescriptor.OptionalFieldEdit` encapsulates
+the value and edit intent as one three-state concept: an absent option preserves
+the old value, a present non-empty option replaces it, and `--id ""` clears it.
+Descriptor copies and equality operate on this encapsulated state, rather than
+repeating knowledge of its internal representation.
 
 `JsonAdaptedStudent` represents the storage property as a nullable string.
 Jackson omits it on save when no ID is present; both a missing `nusStudentId` key and
@@ -1257,8 +1261,8 @@ These were raised during requirement gathering and left out of the product.
 * **Normalized field value**: The standard stored form produced by `StringUtil.normalizeFieldValue`, allowing input
   that looks the same to be stored and compared consistently.
 * **NUS Student ID**: A unique digital identifier for every student at the National University of Singapore. TAB
-  accepts `A`, exactly 8 ASCII digits, and a final letter from `A` to `Z`, such as `A01234567X`. Lowercase letters
-  are accepted and stored in uppercase.
+  accepts any non-empty sequence of ASCII letters and digits, such as `A01234567X` or `E0123456`. Lowercase
+  letters are accepted and stored in uppercase.
 * **Option**: See **Command option**.
 * **Person**: A legacy term found in the upstream AddressBook-Level3 project. TAB's model uses `Student` for a student
   record.
@@ -1411,14 +1415,14 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Launch the JAR from an empty folder, then run `clear` and
       reply `yes` if confirmation is requested.
 
-   1. Test case: `add Alice Tan -p 91234567 --nus-id a01234567x`<br>
+   1. Test case: `add Alice Tan -p 91234567 --id a01234567x`<br>
       Expected: Alice is added. Her card and the command result show
       `A01234567X`, with the lowercase input normalized to uppercase. Her saved
       record has `"nusStudentId": "A01234567X"`.
 
    1. Test case: `add Bob Lim -p 92345678 -i A12345678Y`<br>
       Expected: Bob is added with `A12345678Y`; `-i` behaves the same as
-      `--nus-id`.
+      `--id`.
 
    1. Test case: `add Cara Ng -p 93456789`<br>
       Expected: Cara is added without a blank placeholder on her card and her
@@ -1430,17 +1434,16 @@ testers are expected to do more *exploratory* testing.
       `data/tab.json`.
 
    1. Test cases: try adding a differently named student with each of
-      `--nus-id E01234567X`, `--nus-id A0123456X`,
-      `--nus-id A012345678X`, `--nus-id A01234X67Y`, and
-      `--nus-id A01234567`.<br>
+      `--id ""`, `--id A0123-456X`, `--id A0123_456X`,
+      `--id "A0123 456X"`, and `--id A0123!456X`.<br>
       Expected: No student is added. Each message identifies the NUS Student ID and
-      explains whether its first letter, digit count, non-digit middle, or
-      final letter is invalid. The JSON file matches the copy.
+      explains whether it is empty or contains a character other than an ASCII
+      letter or digit. The JSON file matches the copy.
 
-   1. Test cases: `edit 1 --nus-id` and
-      `edit 1 --nus-id A11111111A -i A22222222B`.<br>
+   1. Test cases: `edit 1 --id` and
+      `edit 1 --id A11111111A -i A22222222B`.<br>
       Expected: Alice stays unchanged. The first message says that
-      `--nus-id NUS_STUDENT_ID` needs a value; the second reports the same field as
+      `--id NUS_STUDENT_ID` needs a value; the second reports the same field as
       repeated, because the long and short spellings are aliases.
 
 1. Preserving, replacing, and clearing an NUS Student ID
@@ -1453,7 +1456,7 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `edit 1 -i A76543210Y`<br>
       Expected: Alice's NUS Student ID becomes `A76543210Y` and no other detail changes.
 
-   1. Test case: `edit 1 --nus-id ""`<br>
+   1. Test case: `edit 1 --id ""`<br>
       Expected: Alice's NUS Student ID disappears from her card, feedback, and saved
       JSON record. All other details remain unchanged. Repeating the command
       succeeds and still changes nothing else.
@@ -1471,7 +1474,7 @@ testers are expected to do more *exploratory* testing.
       `"nusStudentId": null` value and no `nusStudentId` key respectively. Relaunch TAB.<br>
       Expected: Both records load without an NUS Student ID.
 
-   1. Exit TAB and change one `nusStudentId` value to `A0123456`, then relaunch.<br>
+   1. Exit TAB and change one `nusStudentId` value to `A0123-456X`, then relaunch.<br>
       Expected: TAB rejects the malformed data file and starts with an empty
       student book, leaving the invalid file in place. Restore the backup
       before entering another command.
