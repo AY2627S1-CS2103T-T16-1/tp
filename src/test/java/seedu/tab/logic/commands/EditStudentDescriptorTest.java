@@ -52,6 +52,13 @@ public class EditStudentDescriptorTest {
         editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withEmail(VALID_EMAIL_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
 
+        // different NUS Student ID -> returns false
+        editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withNusStudentId("E0123456").build();
+        assertFalse(DESC_AMY.equals(editedAmy));
+
+        // clearing an untouched NUS Student ID is a different edit operation
+        editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withoutNusStudentId().build();
+        assertFalse(DESC_AMY.equals(editedAmy));
 
         // different tags -> returns false
         editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withTags(VALID_TAG_HUSBAND).build();
@@ -125,6 +132,7 @@ public class EditStudentDescriptorTest {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
         NusStudentId replacement = new NusStudentId("A01234567X");
         descriptor.setNusStudentId(replacement);
+        assertTrue(descriptor.isAnyFieldEdited());
         assertEquals(Optional.of(replacement), descriptor.getNusStudentId());
         assertEquals(descriptor, new EditStudentDescriptor(descriptor));
         descriptor.clearNusStudentId();

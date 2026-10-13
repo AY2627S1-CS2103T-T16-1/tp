@@ -1,6 +1,8 @@
 package seedu.tab.testutil;
 
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,8 +36,8 @@ public class EditStudentDescriptorBuilder {
         descriptor = new EditStudentDescriptor();
         descriptor.setName(student.getName());
         descriptor.setPhone(student.getPhone());
-        student.getEmail().ifPresentOrElse(descriptor::setEmail, descriptor::clearEmail);
-        student.getNusStudentId().ifPresentOrElse(descriptor::setNusStudentId, descriptor::clearNusStudentId);
+        copyOptionalField(student.getEmail(), descriptor::setEmail, descriptor::clearEmail);
+        copyOptionalField(student.getNusStudentId(), descriptor::setNusStudentId, descriptor::clearNusStudentId);
         descriptor.setTags(student.getTags());
     }
 
@@ -107,5 +109,12 @@ public class EditStudentDescriptorBuilder {
 
     public EditStudentDescriptor build() {
         return descriptor;
+    }
+
+    /**
+     * Copies an optional field as either a replacement or an explicit clear operation.
+     */
+    private static <T> void copyOptionalField(Optional<T> value, Consumer<T> setter, Runnable clearer) {
+        value.ifPresentOrElse(setter, clearer);
     }
 }
