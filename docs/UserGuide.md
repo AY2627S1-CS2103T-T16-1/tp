@@ -149,10 +149,10 @@ than you meant.
 <box type="tip" seamless>
 
 **Tip:** The NUS Student ID is optional. Give it with `--id`, or
-use the shorter `-i` alias. It must be non-empty and contain only ASCII letters
-and digits, such as `A01234567X` or `E0123456`. Lowercase letters are accepted
-and stored as uppercase. To remove an NUS Student ID entered by mistake, use
-`edit INDEX --id ""`.
+use the shorter `-i` alias. It must contain between 1 and 32 ASCII letters and
+digits, such as `A01234567X` or `E0123456`. Lowercase letters are accepted and
+stored as uppercase. To remove an NUS Student ID entered by mistake, use
+`edit INDEX --id ""`; a value containing only spaces clears it as well.
 </box>
 
 <box type="tip" seamless>
@@ -269,11 +269,13 @@ done to it beyond the quotes any value with spaces takes:
   `-f` alias is also accepted. An unflagged student becomes flagged; a flagged
   student becomes unflagged. Repeating the same command toggles the status back,
   so check the updated card after each edit.
-* To remove a student's email, use `-e ""`. Leaving out `-e` keeps the email
-  unchanged; a bare `-e` is an error. Clearing an already absent email succeeds.
+* To remove a student's email, use `-e ""`. A quoted value containing only spaces
+  also removes it. Leaving out `-e` keeps the email unchanged; a bare `-e` is an
+  error. Clearing an already absent email succeeds.
 * To remove a student's NUS Student ID, use `--id ""` or `-i ""`. Leaving the
-  option out keeps the NUS Student ID unchanged; a bare option is an error. Clearing an
-  already absent NUS Student ID succeeds. Name and phone are required and cannot be cleared.
+  option out keeps the NUS Student ID unchanged; a quoted value containing only
+  spaces removes it, while a bare option is an error. Clearing an already absent
+  NUS Student ID succeeds. Name and phone are required and cannot be cleared.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
 * To remove all of a student's tags, give `-t` an empty value: `-t ""`. A bare
   `-t` with nothing after it is refused, so that a mistyped option is reported
@@ -375,8 +377,8 @@ continue to load, with every record that lacks the key treated as unflagged.
 A student with an NUS Student ID has a `"nusStudentId"` string such as
 `"A01234567X"` in their JSON record. The key is optional: a missing key or
 `null` means that no NUS Student ID has been recorded. A non-null value must
-be non-empty and contain only ASCII letters and digits. TAB accepts lowercase
-letters and saves valid IDs in uppercase.
+contain between 1 and 32 ASCII letters and digits. TAB accepts lowercase letters
+and saves valid IDs in uppercase.
 
 TAB still identifies duplicate records by normalized name. NUS Student IDs, phone
 numbers, and emails are searchable details rather than identity keys, so two

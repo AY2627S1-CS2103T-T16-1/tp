@@ -281,7 +281,8 @@ of being collected with the field errors.
 
 `edit` clears a field with an explicitly empty value rather than with a bare
 option. `-e ""` removes the email, `--id ""` removes the NUS Student ID, and
-`-t ""` removes every tag.
+`-t ""` removes every tag. Email and NUS Student ID values are trimmed before
+this check, so quoted whitespace clears either optional field too.
 A bare option cannot mean "clear" here, because a bare option
 is what reports the mistake in `edit 1 -t -e a@b.com`: the `-e` is read as the
 value `-t` was left without, rather than being stored as a tag. An empty quoted
@@ -353,11 +354,12 @@ They normalize for different reasons, and the rule each one enforces differs.
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
 
-**The NUS Student ID may be absent.** `NusStudentId` accepts any non-empty
-sequence of ASCII letters and digits. Input letters are case-insensitive and
-the value is stored in uppercase, so `e0123456` and `E0123456` are the same
-value. This accommodates variations in the identifiers issued to different
-groups of students. `Student` holds a
+**The NUS Student ID may be absent.** `NusStudentId` accepts between 1 and 32
+ASCII letters and digits. Input letters are case-insensitive and the value is
+stored in uppercase, so `e0123456` and `E0123456` are the same value. This
+accommodates variations in the identifiers issued to different groups of
+students while preventing an accidentally pasted value from hiding the other
+details on a student's card. `Student` holds a
 nullable `NusStudentId` and exposes it as `Optional<NusStudentId>`, matching
 the existing optional-email boundary without inventing a sentinel value.
 `NusStudentId.getFailureReason` performs the single validation scan, and
@@ -369,6 +371,8 @@ and validate with `ParserUtil.parseNusStudentId`. Add leaves the field absent wh
 option is given. For edit, `EditStudentDescriptor.OptionalFieldEdit` encapsulates
 the value and edit intent as one three-state concept: an absent option preserves
 the old value, a present non-empty option replaces it, and `--id ""` clears it.
+The edit parser trims the supplied value before this check, so a quoted value
+containing only spaces also clears the field.
 Descriptor copies and equality operate on this encapsulated state, rather than
 repeating knowledge of its internal representation.
 
@@ -406,11 +410,11 @@ replacement value. Copies use those same methods to preserve all three states.
 The descriptor is not persisted, so its optional field does not affect JSON.
 
 The parser leaves the email untouched when `-e` is absent, calls `clearEmail`
-for an explicitly empty token, and sets a replacement only after validation
-succeeds. A rejected value is recorded as a parse problem without assigning a
-null email or requesting a clear. A bare option or a whitespace-only quoted
-address is still an error. Clearing counts as an edit even when the email is
-already absent. `EditCommand` keeps the value optional until the existing
+for a token that is empty after trimming, and sets a replacement only after
+validation succeeds. A rejected value is recorded as a parse problem without
+assigning a null email or requesting a clear. A bare option is still an error.
+Clearing counts as an edit even when the email is already absent. `EditCommand`
+keeps the value optional until the existing
 `Student` constructor boundary. The saved record omits the `email` key and
 reloads through the existing optional-email storage contract.
 
@@ -1261,8 +1265,8 @@ These were raised during requirement gathering and left out of the product.
 * **Normalized field value**: The standard stored form produced by `StringUtil.normalizeFieldValue`, allowing input
   that looks the same to be stored and compared consistently.
 * **NUS Student ID**: A unique digital identifier for every student at the National University of Singapore. TAB
-  accepts any non-empty sequence of ASCII letters and digits, such as `A01234567X` or `E0123456`. Lowercase
-  letters are accepted and stored in uppercase.
+  accepts between 1 and 32 ASCII letters and digits, such as `A01234567X` or `E0123456`. Lowercase letters are
+  accepted and stored in uppercase.
 * **Option**: See **Command option**.
 * **Person**: A legacy term found in the upstream AddressBook-Level3 project. TAB's model uses `Student` for a student
   record.
@@ -1424,6 +1428,9 @@ testers are expected to do more *exploratory* testing.
       Expected: Bob is added with `A12345678Y`; `-i` behaves the same as
       `--id`.
 
+   1. Test case: `add Daryl Goh -p 94567890 --id ABCDEFGHIJKLMNOPQRSTUVWXYZ123456`<br>
+      Expected: Daryl is added with the 32-character NUS Student ID.
+
    1. Test case: `add Cara Ng -p 93456789`<br>
       Expected: Cara is added without a blank placeholder on her card and her
       saved record has no `nusStudentId` key.
@@ -1435,10 +1442,11 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: try adding a differently named student with each of
       `--id ""`, `--id A0123-456X`, `--id A0123_456X`,
-      `--id "A0123 456X"`, and `--id A0123!456X`.<br>
+      `--id "A0123 456X"`, `--id A0123!456X`, and
+      `--id ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567`.<br>
       Expected: No student is added. Each message identifies the NUS Student ID and
-      explains whether it is empty or contains a character other than an ASCII
-      letter or digit. The JSON file matches the copy.
+      explains whether it is empty, longer than 32 characters, or contains a
+      character other than an ASCII letter or digit. The JSON file matches the copy.
 
    1. Test cases: `edit 1 --id` and
       `edit 1 --id A11111111A -i A22222222B`.<br>
@@ -1460,6 +1468,11 @@ testers are expected to do more *exploratory* testing.
       Expected: Alice's NUS Student ID disappears from her card, feedback, and saved
       JSON record. All other details remain unchanged. Repeating the command
       succeeds and still changes nothing else.
+
+   1. Test case: First restore Alice's ID with `edit 1 -i A01234567X`, then run
+      `edit 1 --id "   "`.<br>
+      Expected: The whitespace-only value is trimmed and Alice's NUS Student ID
+      is cleared again.
 
 1. Finding and persisting NUS Student IDs
 
@@ -1553,14 +1566,18 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Repeat `edit INDEX -e ""`.<br>
       Expected: Success with no other changes, even though the email is absent.
 
+   1. Test case: Restore the email with `edit INDEX -e alice@example.com`, then
+      run `edit INDEX -e "   "`.<br>
+      Expected: The whitespace-only value is trimmed and the email is removed.
+
    1. Test case: `edit INDEX -e "" -p 81112222 -t "" -f`<br>
       Expected: The email stays absent, the phone changes, tags are removed,
       and follow-up is toggled. All changes survive a restart.
 
-   1. Test cases: `edit INDEX -e`, `edit INDEX -e " "`,
-      `edit INDEX -e "" -e alice@example.com`, and `edit INDEX -p "" -e ""`.<br>
-      Expected: Specific feedback for the missing email value, invalid email,
-      repeated option, or required phone respectively. Neither the student
+   1. Test cases: `edit INDEX -e`, `edit INDEX -e "" -e alice@example.com`,
+      and `edit INDEX -p "" -e ""`.<br>
+      Expected: Specific feedback for the missing email value, repeated option,
+      or required phone respectively. Neither the student
       nor the JSON file changes. Restore an email with
       `edit INDEX -e alice@example.com` and check that it is displayed again.
 
