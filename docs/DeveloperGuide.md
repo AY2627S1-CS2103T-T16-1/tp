@@ -434,22 +434,19 @@ forward path, so the bound comes from the domain rather than from the parser,
 and it is the only bound measured to be safe on every stack size tried: on a
 256 KB stack even a 513-character address overflows.
 
-`isValidEmail` deliberately keeps **no** length limit, so the check sits in the
-parser rather than in the field. Storage validates with `isValidEmail`, and a
-narrower rule there would make a file an earlier version had written
-unloadable. A failed load starts an empty book, so the next save would discard
-every record the product had already accepted — a worse outcome than the crash
-being fixed. `JsonAdaptedStudentTest` pins that upgrade path.
-
-One case is therefore left open: a data file hand-edited to hold an address of
-several thousand characters still fails while loading rather than being
-reported. Repairing that belongs with the unreadable-data handling in issue
-#144, which has to treat it as a broken record instead of letting it reach the
-matcher.
+`isValidEmail` deliberately keeps **no** length limit, so each input boundary
+can report length and format failures separately. Both `ParserUtil` and
+`JsonAdaptedStudent` check `Email.MAX_LENGTH` before calling the matcher. A
+saved address of up to 254 characters therefore loads, while a longer one
+raises `IllegalValueException` with its actual and allowed lengths before its
+shape can exhaust the stack. The storage tests cover both sides of that
+boundary.
 
 `Messages.getErrorMessageForInvalidValue` shortens a rejected value past
 `MAX_QUOTED_VALUE_LENGTH` characters, so that a very long value cannot push the
-reason out of view. Every field shares that message, so every field benefits.
+reason out of view. It counts Unicode code points so it does not cut an emoji
+in half. Command parsing and storage share that message, so both paths report
+the same invalid value consistently.
 
 `Phone` is **not** an identity field and **not** a key: two students may hold the
 same number, and `isSameStudent` does not read it. It is normalized only so
@@ -464,6 +461,34 @@ Nothing else is rejected in any of the three. A phone number may hold `+`,
 whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
 script. None of those characters can hinder TAB, because none of these
 fields is parsed, dialled, or used to build a file path.
+
+### Handling an unreadable data file
+
+Startup distinguishes a missing student-book file from an unreadable one. A
+missing `data/tab.json` is a first launch and receives the sample student book.
+An existing file is first parsed as JSON and then every student record and
+field is converted to its model type. Both stages finish before the normal UI
+can accept a command.
+
+`JsonUtil` turns malformed JSON or an incompatible JSON shape into a
+`DataLoadingException` that retains the parser's line and column. During model
+conversion, `JsonAdaptedStudent` identifies the invalid field and
+`JsonSerializableStudentBook` adds the one-based record number and its name
+when available. `JsonStudentBookStorage` carries that explanation through the
+same `DataLoadingException` boundary.
+
+`MainApp` records a student-book loading error and creates an empty model only
+as an internal placeholder so that application shutdown remains safe. It gives
+the error to `UiManager`. Before constructing `MainWindow`, `UiManager` checks
+for that error. If one is present, it shows an error dialog containing the
+data-file path, the specific reason, and recovery guidance. Closing the dialog
+closes TAB because the normal window was never opened. No command, including
+`exit`, can therefore save the placeholder over the unreadable file.
+
+Failing closed was chosen over displaying a partial or read-only student book.
+It keeps recovery small and unambiguous: the User repairs or replaces the file
+and restarts TAB. Loading readable records separately and reloading without a
+restart remain separate future features.
 
 #### Student names
 
@@ -958,11 +983,12 @@ These were raised during requirement gathering and left out of the product.
 **MSS**
 
 1.  User starts TAB.
-2.  TAB informs the User that a student record is unreadable, identifies the student record and the reason, leaves
-    the data file unchanged, and displays the readable student records.
-3.  User repairs the data file.
-4.  User requests to reload the data file.
-5.  TAB reloads the data and confirms that all student records are readable.
+2.  TAB informs the User that a student record is unreadable, identifies the
+    data file, student record and reason, and leaves the data file unchanged.
+3.  User dismisses the error and TAB closes without opening the main window.
+4.  User repairs or replaces the data file.
+5.  User starts TAB again.
+6.  TAB loads the repaired data and opens the main window.
 
     Use case ends.
 
@@ -970,26 +996,20 @@ These were raised during requirement gathering and left out of the product.
 
 * 2a. TAB cannot read the data file at all, for example because it is not a TAB data file.
 
-    * 2a1. TAB reports why and leaves the data file unchanged.
-    * 2a2. User repairs or replaces the data file.
+    * 2a1. TAB identifies the data file and parsing location when available,
+      reports why it is unreadable, and leaves it unchanged.
 
-      Use case resumes at step 4.
+      Use case resumes at step 3.
 
-* 5a. One or more student records are still unreadable.
+* 6a. One or more student records are still unreadable.
 
-    * 5a1. TAB identifies each unreadable student record and the reason, leaves the data file unchanged, and displays
-      the readable student records.
-    * 5a2. User repairs the data file and requests to reload it.
+    * 6a1. TAB reports the first unreadable student record and reason, leaves
+      the data file unchanged, and closes after User dismisses the error.
+    * 6a2. User repairs the data file and starts TAB again.
 
-      Steps 5a1-5a2 are repeated until all student records are readable.
+      Steps 6a1-6a2 are repeated until all student records are readable.
 
-      Use case resumes at step 5.
-
-* 2b. User chooses to abandon the recovery after TAB reports the unreadable data.
-
-    * 2b1. TAB leaves the data file unchanged and continues with any student records it could read.
-
-      Use case ends.
+      Use case resumes at step 6.
 
 #### UC06 - Delete a class no longer taught
 
@@ -1711,6 +1731,43 @@ testers are expected to do more *exploratory* testing.
 
 1. Dealing with missing/corrupted data files
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+   1. Prerequisites: Launch TAB, add a recognizable student, exit, and keep a
+      byte-for-byte copy of `data/tab.json`.
+
+   1. Test case: Replace the file contents with `not json format!` and launch
+      TAB.<br>
+      Expected: An error dialog identifies `data/tab.json`, reports malformed
+      JSON with its line and column, and asks the User to repair or replace it.
+      The main window does not open. After dismissing the dialog, the file still
+      matches the malformed contents byte for byte.
+
+   1. Test case: Replace the file contents with `{}` and launch TAB.<br>
+      Expected: The dialog reports that the student list is missing. The main
+      window does not open and the file remains byte-for-byte unchanged.
+
+   1. Test case: Replace the file with well-formed JSON containing two student
+      records, where the second has a phone value of `12`, and launch TAB.<br>
+      Expected: The dialog identifies student record 2, its name, the Phone
+      field and the three-digit requirement. The main window does not open and
+      the JSON file remains byte-for-byte unchanged.
+
+   1. Test case: In an otherwise valid file, give a student an email longer
+      than 254 characters, such as `a.` repeated 130 times followed by
+      `a@example.com`, and launch TAB.<br>
+      Expected: The dialog identifies the record and Email field, reports the
+      actual and allowed lengths, and TAB exits without a stack trace or file
+      change.
+
+   1. Test case: Repair the invalid value and relaunch TAB.<br>
+      Expected: The main window opens and shows every saved student.
+
+   1. Test case: Move `data/tab.json` elsewhere and relaunch TAB.<br>
+      Expected: TAB treats the missing file as a first launch and opens with
+      sample students instead of showing an error.
+
+   1. Test case: Restore a valid file written before the optional `flag` field
+      existed, including its removed `address` keys, and relaunch TAB.<br>
+      Expected: TAB loads every student, ignores the old address values and
+      treats a missing flag as not needing follow-up.
 
 1. _{ more test cases … }_

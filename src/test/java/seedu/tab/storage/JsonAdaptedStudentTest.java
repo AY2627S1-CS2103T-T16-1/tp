@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
+import seedu.tab.logic.Messages;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
@@ -53,7 +54,18 @@ public class JsonAdaptedStudentTest {
     public void toModelType_invalidName_throwsIllegalValueException() {
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(INVALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
-        String expectedMessage = Name.MESSAGE_CONSTRAINTS;
+        String expectedMessage = "Name \"---\" is not valid: it holds no letter or number";
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
+    public void toModelType_longInvalidName_shortensValueInError() {
+        String invalidName = "-".repeat(61);
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(invalidName, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
+        String expectedMessage = "Name \"" + "-".repeat(Messages.MAX_QUOTED_VALUE_LENGTH)
+                + "…\" is not valid: it holds no letter or number";
+
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
 
@@ -68,7 +80,7 @@ public class JsonAdaptedStudentTest {
     public void toModelType_invalidPhone_throwsIllegalValueException() {
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, INVALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
-        String expectedMessage = Phone.MESSAGE_CONSTRAINTS;
+        String expectedMessage = "Phone \"12\" is not valid: a phone number needs at least 3 digits";
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
 
@@ -83,20 +95,39 @@ public class JsonAdaptedStudentTest {
     public void toModelType_invalidEmail_throwsIllegalValueException() {
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, INVALID_EMAIL, VALID_TAGS, false);
-        String expectedMessage = Email.MESSAGE_CONSTRAINTS;
+        String expectedMessage = "Email \"example.com\" is not valid: "
+                + "an email needs an @ between the local part and the domain";
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
 
     @Test
-    public void toModelType_emailLongerThanACommandMayEnter_stillLoads() {
-        // the length limit belongs to what a command may enter, so a file an earlier version
-        // wrote is not made unloadable by it. Were storage to reject this, a failed load would
-        // start an empty book and the next save would discard the records.
-        String overLimit = "a".repeat(Email.MAX_LENGTH + 1 - "@example.com".length()) + "@example.com";
+    public void toModelType_worstCaseEmailAtStorageLimit_stillLoads() {
+        String atLimit = repeatedLocalPartEmail(Email.MAX_LENGTH);
         JsonAdaptedStudent student =
-                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, overLimit, VALID_TAGS, false);
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, atLimit, VALID_TAGS, false);
 
         assertDoesNotThrow(student::toModelType);
+    }
+
+    @Test
+    public void toModelType_emailOverStorageLimit_throwsIllegalValueExceptionWithoutOverflowing() {
+        String overLimit = repeatedLocalPartEmail(Email.MAX_LENGTH + 1);
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, overLimit, VALID_TAGS, false);
+        String expectedMessage = String.format(
+                "Email field is too long to read safely: it holds %d characters, but saved emails may hold at most %d",
+                overLimit.length(), Email.MAX_LENGTH);
+
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
+    public void toModelType_extremelyLongEmail_throwsIllegalValueExceptionWithoutOverflowing() {
+        String overflowing = "a.".repeat(5000) + "a@example.com";
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, overflowing, VALID_TAGS, false);
+
+        assertThrows(IllegalValueException.class, student::toModelType);
     }
 
     @Test
@@ -141,7 +172,28 @@ public class JsonAdaptedStudentTest {
         invalidTags.add(new JsonAdaptedTag(INVALID_TAG));
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, invalidTags, false);
-        assertThrows(IllegalValueException.class, student::toModelType);
+        assertThrows(IllegalValueException.class,
+                "Tag \"---\" is not valid: it holds no letter or number", student::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullTag_throwsIllegalValueException() {
+        List<JsonAdaptedTag> invalidTags = new ArrayList<>(VALID_TAGS);
+        invalidTags.add(null);
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, invalidTags, false);
+
+        assertThrows(IllegalValueException.class, "Tag field is missing.", student::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullTagName_throwsIllegalValueException() {
+        List<JsonAdaptedTag> invalidTags = new ArrayList<>(VALID_TAGS);
+        invalidTags.add(new JsonAdaptedTag((String) null));
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, invalidTags, false);
+
+        assertThrows(IllegalValueException.class, "Tag field is missing.", student::toModelType);
     }
 
     @Test
@@ -160,6 +212,17 @@ public class JsonAdaptedStudentTest {
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_TAGS, null);
         assertFalse(falseFlag.toModelType().isFlagged());
         assertFalse(nullFlag.toModelType().isFlagged());
+    }
+
+    private static String repeatedLocalPartEmail(int length) {
+        String domain = "@example.com";
+        int localPartLength = length - domain.length();
+        StringBuilder localPart = new StringBuilder(localPartLength);
+        while (localPart.length() + 3 <= localPartLength) {
+            localPart.append("a.");
+        }
+        localPart.append("a".repeat(localPartLength - localPart.length()));
+        return localPart + domain;
     }
 
 }

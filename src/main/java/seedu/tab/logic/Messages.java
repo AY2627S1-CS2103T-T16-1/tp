@@ -76,11 +76,12 @@ public class Messages {
      * longer than a message can show. The length is not reported here, because the field that
      * rejected the value says whatever its own rule makes relevant.
      */
-    private static String shorten(String value) {
-        if (value.length() <= MAX_QUOTED_VALUE_LENGTH) {
+    public static String shorten(String value) {
+        if (value.codePointCount(0, value.length()) <= MAX_QUOTED_VALUE_LENGTH) {
             return value;
         }
-        return value.substring(0, MAX_QUOTED_VALUE_LENGTH) + "…";
+        int endIndex = value.offsetByCodePoints(0, MAX_QUOTED_VALUE_LENGTH);
+        return value.substring(0, endIndex) + "…";
     }
 
     /**

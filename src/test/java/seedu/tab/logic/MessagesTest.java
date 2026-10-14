@@ -81,6 +81,14 @@ public class MessagesTest {
     }
 
     @Test
+    public void shorten_longValueWithEmojiAtBoundary_keepsEmojiIntact() {
+        String prefix = "a".repeat(Messages.MAX_QUOTED_VALUE_LENGTH - 1);
+        String value = prefix + "😀" + "more";
+
+        assertEquals(prefix + "😀…", Messages.shorten(value));
+    }
+
+    @Test
     public void getErrorMessageForMissingFields_noFields_throwsAssertionError() {
         // naming no fields at all would leave the user with "Missing required field(s): "
         assertThrows(AssertionError.class, () -> Messages.getErrorMessageForMissingFields());

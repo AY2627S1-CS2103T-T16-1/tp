@@ -39,8 +39,12 @@ class JsonAdaptedTag {
      * @throws IllegalValueException if there were any data constraints violated in the adapted tag.
      */
     public Tag toModelType() throws IllegalValueException {
+        if (tagName == null) {
+            throw new IllegalValueException("Tag field is missing.");
+        }
         if (!Tag.isValidTagName(tagName)) {
-            throw new IllegalValueException(Tag.MESSAGE_CONSTRAINTS);
+            throw new IllegalValueException(JsonAdaptedStudent.formatInvalidField(
+                    Tag.FIELD_NAME, tagName, Tag.getFailureReason(tagName)));
         }
         return new Tag(tagName);
     }

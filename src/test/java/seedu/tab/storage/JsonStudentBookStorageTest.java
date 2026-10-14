@@ -52,17 +52,65 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void read_notJsonFormat_exceptionThrown() {
-        assertThrows(DataLoadingException.class, () -> readStudentBook("notJsonFormatStudentBook.json"));
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, () -> readStudentBook("notJsonFormatStudentBook.json"));
+
+        assertTrue(exception.getMessage().contains("The data is not in the expected JSON format"));
+        assertTrue(exception.getMessage().contains("line 1, column 4"));
     }
 
     @Test
     public void readStudentBook_invalidStudentStudentBook_throwDataLoadingException() {
-        assertThrows(DataLoadingException.class, () -> readStudentBook("invalidStudentStudentBook.json"));
+        String expectedMessage = "Student record 1 (\"---\"): Name \"---\" is not valid: "
+                + "it holds no letter or number";
+        assertThrows(DataLoadingException.class, expectedMessage, () ->
+                readStudentBook("invalidStudentStudentBook.json"));
     }
 
     @Test
     public void readStudentBook_invalidAndValidStudentStudentBook_throwDataLoadingException() {
-        assertThrows(DataLoadingException.class, () -> readStudentBook("invalidAndValidStudentStudentBook.json"));
+        String expectedMessage = "Student record 2 (\"Student With Invalid Phone Field\"): "
+                + "Phone \"12\" is not valid: a phone number needs at least 3 digits";
+        assertThrows(DataLoadingException.class, expectedMessage, () ->
+                readStudentBook("invalidAndValidStudentStudentBook.json"));
+    }
+
+    @Test
+    public void readStudentBook_missingStudentList_reportsErrorAndPreservesFile() throws Exception {
+        Path filePath = testFolder.resolve("MissingStudentList.json");
+        String originalContents = "{}";
+        Files.writeString(filePath, originalContents);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, storage::readStudentBook);
+
+        assertEquals(JsonSerializableStudentBook.MESSAGE_MISSING_STUDENT_LIST, exception.getMessage());
+        assertEquals(originalContents, Files.readString(filePath));
+    }
+
+    @Test
+    public void readStudentBook_extremelyLongEmail_reportsRecordAndPreservesFile() throws Exception {
+        Path filePath = testFolder.resolve("LongEmail.json");
+        String longEmail = "a.".repeat(300) + "a@example.com";
+        String originalContents = String.format("""
+                {
+                  "students": [ {
+                    "name": "Ravi",
+                    "phone": "91234567",
+                    "email": "%s"
+                  } ]
+                }
+                """, longEmail);
+        Files.writeString(filePath, originalContents);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, storage::readStudentBook);
+
+        assertTrue(exception.getMessage().contains("Student record 1 (\"Ravi\"): Email field"));
+        assertTrue(exception.getMessage().contains(String.valueOf(longEmail.length())));
+        assertEquals(originalContents, Files.readString(filePath));
     }
 
     @Test

@@ -388,8 +388,13 @@ the repeated ID was unintended.
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, TAB starts with an empty student book at the next run. The invalid file remains on disk until you run a command (TAB saves after every command). Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause TAB to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+If your changes make the data file unreadable, TAB shows an error at the next
+run instead of opening the main window. The error identifies `data/tab.json`
+and, when possible, the affected student record or field. TAB leaves the file
+unchanged so that you can repair or replace it, then restart TAB.<br>
+Saved email addresses longer than 254 characters are rejected before validation
+because their shape can otherwise exhaust Java's stack. This is the same limit
+used by commands. We still recommend backing up the file before editing it.
 </box>
 
 ### Archiving data files `[coming in v2.0]`
