@@ -46,6 +46,14 @@ public class MessagesTest {
     }
 
     @Test
+    public void format_studentWithMixedCaseTags_sortsTagsAlphabeticallyIgnoringCase() {
+        Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withoutEmail().withTags("Zebra", "apple", "Banana", "1lab").build();
+        assertEquals("Alice Pauline; Phone: 94351253; Tags: [1lab][apple][Banana][Zebra]",
+                Messages.format(student));
+    }
+
+    @Test
     public void format_flaggedStudent_includesFollowUpStatus() {
         Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
                 .withTags("friends").withFlag(true).build();

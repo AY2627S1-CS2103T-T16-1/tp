@@ -407,7 +407,8 @@ public class StudentCardTest {
             return visibleChipsOf(root);
         });
 
-        assertEquals(List.of("Lab 3", "T1", "needs-follow"), shown);
+        // tags are ordered alphabetically ignoring case: "Lab 3" < "needs-follow" < "T1"
+        assertEquals(List.of("Lab 3", "needs-follow", "T1"), shown);
     }
 
     /**

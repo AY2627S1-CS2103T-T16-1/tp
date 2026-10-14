@@ -328,8 +328,8 @@ load without migration or gratuitous rewrites.
 label both invisible and unmanaged, so the card keeps no blank placeholder
 row. Successful add, edit and delete feedback formats student records
 consistently with the student card: optional fields (email, tags, follow-up
-status) appear only when present, with tags ordered alphabetically, avoiding
-placeholder labels or empty tag markers.
+status) appear only when present, with tags ordered alphabetically ignoring
+case, avoiding placeholder labels or empty tag markers.
 
 ### Field values
 
@@ -1397,9 +1397,11 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add Jane Doe -p 91234567 -t urgent -t lab1 --follow-up`<br>
       Expected: Jane Doe is added with tags and follow-up flag. The status message
       shows `New student added: Jane Doe; Phone: 91234567; Tags: [lab1][urgent]; Needs follow-up`
-      with tags sorted alphabetically.
+      with tags sorted alphabetically ignoring case.
 
 1. Adding a duplicate student
+
+   1. Prerequisites: A student named `John Doe` with phone `98765432` is already in the list.
 
    1. Test case: `add John Doe -p 98765432`<br>
       Expected: No student is added. The status message reports that this student

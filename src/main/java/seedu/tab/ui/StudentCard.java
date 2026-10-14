@@ -1,5 +1,7 @@
 package seedu.tab.ui;
 
+import java.util.Comparator;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -69,7 +71,7 @@ public class StudentCard extends UiPart<Region> {
         clipToItsOwnBox(details);
         tags.setTags(student.getTags().stream()
                 .map(tag -> tag.tagName)
-                .sorted()
+                .sorted(String.CASE_INSENSITIVE_ORDER.thenComparing(Comparator.naturalOrder()))
                 .toList());
     }
 

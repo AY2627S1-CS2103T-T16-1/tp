@@ -205,7 +205,7 @@ When a student is added, the command result displays the new record
 immediately. Consistent with the student card, optional fields appear in the
 result only when present: an unflagged student or a student without an email
 or tags leaves no empty placeholder labels in the message, and tags appear
-in alphabetical order.
+in alphabetical order (ignoring case).
 
 Leading and trailing spaces are removed, repeated spaces inside a name are
 collapsed to one, and invisible characters are discarded, so that a name is
@@ -282,7 +282,7 @@ A cleared email, a cleared tag set, and a toggled follow-up status are saved at 
 return as they were when you next launch TAB. The command result displays the updated
 record (`Edited student: NAME; Phone: PHONE...`) with fields formatted consistently
 with the student card, omitting cleared or absent optional fields and sorting tags
-alphabetically.
+alphabetically (ignoring case).
 
 ### Locating students by detail: `find`
 

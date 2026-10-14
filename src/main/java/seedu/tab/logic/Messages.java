@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 
 import seedu.tab.logic.parser.Flag;
 import seedu.tab.model.student.Student;
+import seedu.tab.model.tag.Tag;
 
 /**
  * Container for user visible messages.
@@ -96,7 +97,8 @@ public class Messages {
         if (!student.getTags().isEmpty()) {
             builder.append("; Tags: ");
             student.getTags().stream()
-                    .sorted(Comparator.comparing(tag -> tag.tagName))
+                    .sorted(Comparator.<Tag, String>comparing(tag -> tag.tagName, String.CASE_INSENSITIVE_ORDER)
+                            .thenComparing(tag -> tag.tagName))
                     .forEach(builder::append);
         }
         student.getFlag().ifPresent(flag -> builder.append("; ").append(flag.tagName));

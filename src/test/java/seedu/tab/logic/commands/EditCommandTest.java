@@ -140,10 +140,8 @@ public class EditCommandTest {
         EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
                 new EditStudentDescriptorBuilder().withoutEmail().withTags().build());
 
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
-                Messages.format(edited));
+        String expectedMessage = "Edited student: Alice Pauline; Phone: 94351253";
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
-        assertEquals("Edited student: Alice Pauline; Phone: 94351253", expectedMessage);
     }
 
     @Test
@@ -155,10 +153,8 @@ public class EditCommandTest {
         EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
                 new EditStudentDescriptorBuilder().withoutEmail().withTags("urgent", "lab3").build());
 
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
-                Messages.format(edited));
+        String expectedMessage = "Edited student: Alice Pauline; Phone: 94351253; Tags: [lab3][urgent]";
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
-        assertEquals("Edited student: Alice Pauline; Phone: 94351253; Tags: [lab3][urgent]", expectedMessage);
     }
 
     @Test
