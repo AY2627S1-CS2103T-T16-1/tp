@@ -100,10 +100,10 @@ public class EditStudentDescriptorBuilder {
     }
 
     /**
-     * Sets whether the {@code EditStudentDescriptor} should toggle the follow-up flag.
+     * Sets whether the {@code EditStudentDescriptor} should set or clear the follow-up flag.
      */
-    public EditStudentDescriptorBuilder withFlagToggled(boolean shouldToggleFlag) {
-        descriptor.setFlagToggled(shouldToggleFlag);
+    public EditStudentDescriptorBuilder withFlag(boolean isFlagged) {
+        descriptor.setFlagged(isFlagged);
         return this;
     }
 

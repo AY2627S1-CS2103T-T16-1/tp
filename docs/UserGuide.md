@@ -56,6 +56,9 @@ TAB is a **desktop application for teaching assistants to manage student records
 * Items in square brackets are optional.<br>
   For example, `NAME [-t TAG]` can be used as `John Doe -t friend` or as `John Doe`.
 
+* A vertical bar `|` separates alternatives; choose at most one and do not type the bar.<br>
+  For example, `[--follow-up | --no-follow-up]` allows either option or neither.
+
 * Items followed by `...` can appear zero or more times.<br>
   For example, `[-t TAG]...` may be omitted, or written as `-t friend` or as
   `-t friend -t family`.
@@ -251,12 +254,11 @@ If the student book is empty, TAB reports that there is no student in your list.
 
 Edits an existing student in the student book.
 
-Format: `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
+Format: `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`
 
 <box type="tip" seamless>
 
-**Tip:** `edit` takes the same options as `add`, so a value reads the same way
-in both commands. A name holding slashes, hyphens or apostrophes needs nothing
+**Tip:** `edit` reads field values the same way as `add`. A name holding slashes, hyphens or apostrophes needs nothing
 done to it beyond the quotes any value with spaces takes:
 `edit 1 -n "Ravi s/o Kumaran"`.
 </box>
@@ -265,10 +267,12 @@ done to it beyond the quotes any value with spaces takes:
 * The index comes first, before any option.
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
-* `--follow-up` takes no value and toggles the follow-up status, and the shorter
-  `-f` alias is also accepted. An unflagged student becomes flagged; a flagged
-  student becomes unflagged. Repeating the same command toggles the status back,
-  so check the updated card after each edit.
+* `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it and is
+  available only with `edit`. New students are unflagged by default when added.
+  Both options take no value. Repeating either request succeeds and keeps the requested state.
+  Leaving both out preserves the student's follow-up status.
+* Choose at most one follow-up option. Combining `--follow-up` or `-f` with
+  `--no-follow-up` or `-nf` is rejected without changing any student details.
 * To remove a student's email, use `-e ""`. A quoted value containing only spaces
   also removes it. Leaving out `-e` keeps the email unchanged; a bare `-e` is an
   error. Clearing an already absent email succeeds.
@@ -289,12 +293,13 @@ Examples:
 *  `edit 2 -n "Betsy Crower" -t ""` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 -n "Ravi s/o Kumaran"` Edits the name of the 1st student to be `Ravi s/o Kumaran`.
 *  `edit 3 -p "+65 9123 4567" -t T1 -t "Lab 3"` Replaces the phone number and both tags of the 3rd student.
-*  `edit 1 --follow-up` Flags the 1st student for follow-up. Running
-   `edit 1 --follow-up` again clears the flag.
-*  `edit 2 -p 91234567 --follow-up` Updates the phone number and toggles
-   follow-up in one command.
+*  `edit 1 --follow-up` Flags the 1st student for follow-up. Repeating it keeps the flag set.
+*  `edit 1 -f` Also sets follow-up, even if the student is already flagged.
+*  `edit 1 --no-follow-up` Clears the flag. Repeating it keeps the flag cleared.
+*  `edit 1 -nf` Also clears follow-up, even if the student is already unflagged.
+*  `edit 2 -p 91234567 --follow-up` Updates the phone number and sets follow-up in one command.
 
-A cleared email or NUS Student ID, a cleared tag set, and a toggled follow-up status are
+A cleared email or NUS Student ID, a cleared tag set, and an explicitly set or cleared follow-up status are
 saved at once, and return as they were when you next launch TAB.
 
 ### Locating students by detail: `find`
@@ -424,7 +429,7 @@ Action     | Format, Examples
 **Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> e.g., `add James Ho -p 22224444 -i A01234567X -t friend -t colleague --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`<br> e.g., `edit 2 -n "James Lee" --id A01234567X`
+**Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 -n "James Lee" --id A01234567X`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James A0123`
 **List**   | `list`
 **Help**   | `help`

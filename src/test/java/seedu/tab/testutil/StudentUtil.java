@@ -3,6 +3,7 @@ package seedu.tab.testutil;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
@@ -79,9 +80,8 @@ public class StudentUtil {
                         sb.append(FLAG_TAG).append(" ").append(quoted(tag.tagName)).append(" "));
             }
         }
-        if (descriptor.shouldToggleFlag()) {
-            sb.append(FLAG_FOLLOW_UP);
-        }
+        descriptor.getFlagged().ifPresent(isFlagged ->
+                sb.append(isFlagged ? FLAG_FOLLOW_UP : FLAG_NO_FOLLOW_UP));
         return sb.toString();
     }
 }
