@@ -56,6 +56,15 @@ public class JsonSerializableStudentBookTest {
     }
 
     @Test
+    public void toModelType_missingStudentList_throwsIllegalValueException() {
+        JsonSerializableStudentBook dataFromFile =
+                new JsonSerializableStudentBook((List<JsonAdaptedStudent>) null);
+
+        assertThrows(IllegalValueException.class, JsonSerializableStudentBook.MESSAGE_MISSING_STUDENT_LIST,
+                dataFromFile::toModelType);
+    }
+
+    @Test
     public void toModelType_studentWithoutName_reportsRecordNumberWithoutName() {
         JsonAdaptedStudent studentWithoutName = new JsonAdaptedStudent(
                 null, "91234567", null, List.of(), false);

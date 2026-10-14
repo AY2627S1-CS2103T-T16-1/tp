@@ -20,15 +20,16 @@ import seedu.tab.model.student.Student;
 class JsonSerializableStudentBook {
 
     public static final String MESSAGE_DUPLICATE_STUDENT = "Students list contains duplicate student(s).";
+    public static final String MESSAGE_MISSING_STUDENT_LIST = "Student list is missing.";
 
-    private final List<JsonAdaptedStudent> students = new ArrayList<>();
+    private final List<JsonAdaptedStudent> students;
 
     /**
      * Constructs a {@code JsonSerializableStudentBook} with the given students.
      */
     @JsonCreator
     public JsonSerializableStudentBook(@JsonProperty("students") List<JsonAdaptedStudent> students) {
-        this.students.addAll(students);
+        this.students = students == null ? null : new ArrayList<>(students);
     }
 
     /**
@@ -37,7 +38,7 @@ class JsonSerializableStudentBook {
      * @param source future changes to this will not affect the created {@code JsonSerializableStudentBook}.
      */
     public JsonSerializableStudentBook(ReadOnlyStudentBook source) {
-        students.addAll(source.getStudentList().stream().map(JsonAdaptedStudent::new).collect(Collectors.toList()));
+        students = source.getStudentList().stream().map(JsonAdaptedStudent::new).collect(Collectors.toList());
     }
 
     /**
@@ -46,6 +47,10 @@ class JsonSerializableStudentBook {
      * @throws IllegalValueException if there were any data constraints violated.
      */
     public StudentBook toModelType() throws IllegalValueException {
+        if (students == null) {
+            throw new IllegalValueException(MESSAGE_MISSING_STUDENT_LIST);
+        }
+
         StudentBook studentBook = new StudentBook();
         for (int index = 0; index < students.size(); index++) {
             JsonAdaptedStudent jsonAdaptedStudent = students.get(index);
