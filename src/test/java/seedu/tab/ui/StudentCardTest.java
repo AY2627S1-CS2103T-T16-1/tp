@@ -21,6 +21,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -151,25 +152,40 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_narrowCard_keepsNusStudentIdAndPhoneWholeWithoutOverflow() throws Exception {
+    public void constructor_narrowCard_keepsAllDetailsVisible() throws Exception {
         Student base = new StudentBuilder().withPhone("+65 9123 4567")
                 .withEmail("a.very.long.address.indeed@u.nus.edu").build();
-        Student student = new StudentBuilder(base).withNusStudentId("A01234567X").build();
+        Student student = new StudentBuilder(base)
+                .withNusStudentId("A".repeat(NusStudentId.MAX_LENGTH)).build();
 
-        double[] measured = onFxThread(() -> {
+        Bounds[] measured = onFxThread(() -> {
             Region root = (Region) new StudentCard(student, 1).getRoot();
             assertNotNull(styledScene(root, 300, 120));
+            Region details = (Region) root.lookup("#details");
             Label nusStudentId = (Label) root.lookup("#nusStudentId");
             Label phone = (Label) root.lookup("#phone");
-            return new double[] {root.getWidth(), nusStudentId.getWidth(), nusStudentId.prefWidth(-1),
-                phone.getWidth(), phone.prefWidth(-1)};
+            Label email = (Label) root.lookup("#email");
+            return new Bounds[] {
+                details.localToScene(details.getBoundsInLocal()),
+                nusStudentId.localToScene(nusStudentId.getBoundsInLocal()),
+                phone.localToScene(phone.getBoundsInLocal()),
+                email.localToScene(email.getBoundsInLocal())
+            };
         });
 
-        assertTrue(measured[0] <= 300.5, "the card overflowed to " + measured[0]);
-        assertTrue(measured[1] >= measured[2] - 0.5,
-                "the NUS Student ID was cut to " + measured[1] + " of " + measured[2]);
-        assertTrue(measured[3] >= measured[4] - 0.5,
-                "the phone was cut to " + measured[3] + " of " + measured[4]);
+        assertHorizontallyInside(measured[0], measured[1], "NUS Student ID");
+        assertHorizontallyInside(measured[0], measured[2], "phone");
+        assertHorizontallyInside(measured[0], measured[3], "email");
+    }
+
+    /** Verifies that a field has visible width and is drawn inside its details container. */
+    private static void assertHorizontallyInside(Bounds container, Bounds field, String fieldName) {
+        assertTrue(field.getWidth() > 0, "the " + fieldName + " has no visible width");
+        assertTrue(field.getMinX() >= container.getMinX() - 0.5,
+                "the " + fieldName + " starts before the details container");
+        assertTrue(field.getMaxX() <= container.getMaxX() + 0.5,
+                "the " + fieldName + " ends at " + field.getMaxX()
+                        + ", past the details container's " + container.getMaxX());
     }
 
     @Test
