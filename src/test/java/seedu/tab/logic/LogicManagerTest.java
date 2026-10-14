@@ -22,10 +22,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.tab.logic.commands.AddCommand;
+import seedu.tab.logic.commands.ClearCommand;
 import seedu.tab.logic.commands.CommandResult;
 import seedu.tab.logic.commands.DeleteCommand;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.ExitCommand;
+import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.ListCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.exceptions.ParseException;
@@ -74,7 +76,50 @@ public class LogicManagerTest {
     @Test
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
-        assertCommandSuccess(listCommand, ListCommand.MESSAGE_EMPTY_LIST, model);
+        assertCommandSuccess(listCommand, ListCommand.formatSuccessMessage(0), model);
+    }
+
+    @Test
+    public void execute_studentCountAgreesWithList_afterAddDeleteClear() throws Exception {
+        // Initial empty state
+        CommandResult result = logic.execute(ListCommand.COMMAND_WORD);
+        assertEquals(ListCommand.formatSuccessMessage(0), result.getFeedbackToUser());
+        assertEquals(0, model.getFilteredStudentList().size());
+
+        // Add first student
+        logic.execute(AddCommand.COMMAND_WORD + NAME_AMY + PHONE_AMY + EMAIL_AMY);
+        result = logic.execute(ListCommand.COMMAND_WORD);
+        assertEquals(ListCommand.formatSuccessMessage(1), result.getFeedbackToUser());
+        assertEquals(1, model.getFilteredStudentList().size());
+
+        // Add second student
+        logic.execute(AddCommand.COMMAND_WORD + " \"Bob Choo\" -p 88888888 -e bob@example.com");
+        result = logic.execute(ListCommand.COMMAND_WORD);
+        assertEquals(ListCommand.formatSuccessMessage(2), result.getFeedbackToUser());
+        assertEquals(2, model.getFilteredStudentList().size());
+
+        // Find matches
+        result = logic.execute(FindCommand.COMMAND_WORD + " Amy");
+        assertEquals(Messages.getStudentsFoundOverview(1), result.getFeedbackToUser());
+        assertEquals(1, model.getFilteredStudentList().size());
+
+        result = logic.execute(FindCommand.COMMAND_WORD + " Nonexistent");
+        assertEquals(Messages.getStudentsFoundOverview(0), result.getFeedbackToUser());
+        assertEquals(0, model.getFilteredStudentList().size());
+
+        // Delete first student
+        logic.execute(ListCommand.COMMAND_WORD);
+        logic.execute(DeleteCommand.COMMAND_WORD + " 1");
+        result = logic.execute(ListCommand.COMMAND_WORD);
+        assertEquals(ListCommand.formatSuccessMessage(1), result.getFeedbackToUser());
+        assertEquals(1, model.getFilteredStudentList().size());
+
+        // Clear all students
+        logic.execute(ClearCommand.COMMAND_WORD);
+        logic.execute("yes");
+        result = logic.execute(ListCommand.COMMAND_WORD);
+        assertEquals(ListCommand.formatSuccessMessage(0), result.getFeedbackToUser());
+        assertEquals(0, model.getFilteredStudentList().size());
     }
 
     @Test

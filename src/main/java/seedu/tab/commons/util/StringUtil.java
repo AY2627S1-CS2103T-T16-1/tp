@@ -103,4 +103,14 @@ public class StringUtil {
             return false;
         }
     }
+
+    /**
+     * Returns an empty string if {@code count} is 1 (singular), or "s" for any other count (plural).
+     *
+     * @param count The item count.
+     * @return The plural suffix ("" for singular, "s" for plural).
+     */
+    public static String getPluralSuffix(int count) {
+        return count == 1 ? "" : "s";
+    }
 }

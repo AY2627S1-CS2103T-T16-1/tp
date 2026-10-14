@@ -262,7 +262,8 @@ Shows a list of all students in the student book.
 
 Format: `list`
 
-If the student book is empty, TAB reports that there is no student in your list.
+TAB reports the number of displayed students: `Listed 0 students.` when the list is empty,
+`Listed 1 student.` for a single student, and `Listed 24 students.` for several.
 
 ### Editing a student: `edit`
 
@@ -337,6 +338,8 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
   flagged students, and `find a0123` can find a student with NUS Student ID `A01234567X`.
 * Parts of details match; for example, `Han` matches `Hans`, and `912` matches the phone number `91234567`.
 * Students matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+* TAB reports the number of matches found: `Found 0 students.` when none match,
+  `Found 1 student.` for a single match, and `Found 3 students.` for multiple matches.
 
 Examples:
 * `find john` returns `john` and `John Doe`

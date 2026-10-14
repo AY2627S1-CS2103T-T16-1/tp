@@ -146,4 +146,19 @@ public class MessagesTest {
                 Messages.getErrorMessageForDuplicateFlags("-e"));
     }
 
+    @Test
+    public void getStudentsFoundOverview_zeroStudents_formatsPlural() {
+        assertEquals("Found 0 students.", Messages.getStudentsFoundOverview(0));
+    }
+
+    @Test
+    public void getStudentsFoundOverview_oneStudent_formatsSingular() {
+        assertEquals("Found 1 student.", Messages.getStudentsFoundOverview(1));
+    }
+
+    @Test
+    public void getStudentsFoundOverview_multipleStudents_formatsPlural() {
+        assertEquals("Found 24 students.", Messages.getStudentsFoundOverview(24));
+    }
+
 }

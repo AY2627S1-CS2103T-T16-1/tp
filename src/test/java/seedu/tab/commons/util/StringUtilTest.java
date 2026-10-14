@@ -189,4 +189,18 @@ public class StringUtilTest {
         assertFalse(StringUtil.isWhitespace('\u001C'), "a file separator is not a space");
     }
 
+    //---------------- Tests for getPluralSuffix --------------------------------------
+
+    @Test
+    public void getPluralSuffix_singularCount_returnsEmptyString() {
+        assertEquals("", StringUtil.getPluralSuffix(1));
+    }
+
+    @Test
+    public void getPluralSuffix_zeroOrMultipleCount_returnsPluralSuffix() {
+        assertEquals("s", StringUtil.getPluralSuffix(0));
+        assertEquals("s", StringUtil.getPluralSuffix(2));
+        assertEquals("s", StringUtil.getPluralSuffix(24));
+    }
+
 }
