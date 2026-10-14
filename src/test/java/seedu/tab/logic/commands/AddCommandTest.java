@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalStudents.ALICE;
 
@@ -28,7 +29,7 @@ public class AddCommandTest {
 
     @Test
     public void messageUsage_includesNusStudentIdAlias() {
-        assertTrue(AddCommand.MESSAGE_USAGE.contains("--id (alias -i)"));
+        assertTrue(AddCommand.MESSAGE_USAGE.contains(FLAG_NUS_STUDENT_ID.getMarkerSummary()));
     }
 
     @Test
@@ -56,7 +57,7 @@ public class AddCommandTest {
         CommandResult commandResult = new AddCommand(flaggedStudent).execute(modelStub);
 
         assertEquals("New student added: Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
-                + "Tags: ; Needs follow-up", commandResult.getFeedbackToUser());
+                + "Needs follow-up", commandResult.getFeedbackToUser());
         assertEquals(List.of(flaggedStudent), modelStub.studentsAdded);
     }
 

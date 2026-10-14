@@ -22,7 +22,6 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
-import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
@@ -60,6 +59,17 @@ public class AddCommandParserTest {
         assertParseSuccess(parser,
                 NAME_BOB + PHONE_BOB + EMAIL_BOB + NUS_STUDENT_ID_BOB + TAG_HUSBAND + TAG_FRIEND,
                 new AddCommand(expectedStudentMultipleTags));
+    }
+
+    @Test
+    public void parse_longAndMixedAliases_success() {
+        Student expected = new StudentBuilder(BOB).withTags(VALID_TAG_FRIEND, "Lab 3").build();
+
+        assertParseSuccess(parser, " " + BOB.getName().fullName
+                + " --phone " + VALID_PHONE_BOB
+                + " --email " + VALID_EMAIL_BOB
+                + " -t " + VALID_TAG_FRIEND
+                + " --tag \"Lab 3\"", new AddCommand(expected));
     }
 
     @Test
@@ -216,23 +226,35 @@ public class AddCommandParserTest {
         // the shape of the command is settled before any field is read, so the bad email
         // alongside the repeated phone is not collected with it
         assertParseFailure(parser, NAME_BOB + PHONE_AMY + PHONE_BOB + " -e nope",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE));
+                Messages.getErrorMessageForDuplicateFlags("-p"));
 
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + EMAIL_AMY + EMAIL_BOB,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
+                Messages.getErrorMessageForDuplicateFlags("-e"));
 
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + FOLLOW_UP + FOLLOW_UP,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_FOLLOW_UP));
+                Messages.getErrorMessageForDuplicateFlags("--follow-up"));
+
+        assertParseFailure(parser, NAME_BOB + PHONE_AMY + " --phone " + VALID_PHONE_BOB,
+                Messages.getErrorMessageForDuplicateFlags("-p"));
+
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + EMAIL_AMY
+                        + " --email " + VALID_EMAIL_BOB,
+                Messages.getErrorMessageForDuplicateFlags("-e"));
+
+        assertParseFailure(parser, NAME_BOB + " --phone 11111111 --phone 22222222",
+                Messages.getErrorMessageForDuplicateFlags("--phone"));
 
         assertParseFailure(parser, NAME_BOB + PHONE_BOB
                 + " --id A01234567X -i A76543210Y",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_NUS_STUDENT_ID));
+                Messages.getErrorMessageForDuplicateFlags("--id"));
     }
 
     @Test
     public void parse_unknownFlag_isRefusedOnItsOwn() {
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " -z something",
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-z"));
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --unknown something",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"));
         for (String option : new String[] {"--no-follow-up", "-nf"}) {
             assertParseFailure(parser, NAME_BOB + PHONE_BOB + " " + option,
                     String.format(Messages.MESSAGE_UNKNOWN_FLAG, option));
@@ -243,6 +265,8 @@ public class AddCommandParserTest {
     public void parse_flagWithoutValue_namesTheFieldItNeeds() {
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " -e",
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --email",
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel("--email")));
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --id",
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_NUS_STUDENT_ID.getLabel()));
     }

@@ -12,6 +12,9 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.tab.logic.commands.CommandTestUtil.showStudentAtIndex;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
@@ -43,7 +46,13 @@ public class EditCommandTest {
 
     @Test
     public void messageUsage_includesNusStudentIdAlias() {
-        assertTrue(EditCommand.MESSAGE_USAGE.contains("--id (alias -i)"));
+        assertTrue(EditCommand.MESSAGE_USAGE.contains(FLAG_NUS_STUDENT_ID.getMarkerSummary()));
+    }
+
+    @Test
+    public void messageUsage_includesFollowUpAliases() {
+        assertTrue(EditCommand.MESSAGE_USAGE.contains(FLAG_FOLLOW_UP.getMarkerSummary()));
+        assertTrue(EditCommand.MESSAGE_USAGE.contains(FLAG_NO_FOLLOW_UP.getMarkerSummary()));
     }
 
     @Test
@@ -136,6 +145,33 @@ public class EditCommandTest {
                 String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
         assertCommandSuccess(command, model,
                 String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    @Test
+    public void execute_clearTags_feedbackOmitsTags() {
+        Student first = model.getFilteredStudentList().get(0);
+        Student edited = new StudentBuilder(first).withoutEmail().withTags().build();
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(first, edited);
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withoutEmail().withTags().build());
+
+        String expectedMessage = "Edited student: Alice Pauline; NUS Student ID: A12345678C; Phone: 94351253";
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_multipleTags_feedbackSortsTagsAlphabetically() {
+        Student first = model.getFilteredStudentList().get(0);
+        Student edited = new StudentBuilder(first).withoutEmail().withTags("urgent", "lab3").build();
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(first, edited);
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withoutEmail().withTags("urgent", "lab3").build());
+
+        String expectedMessage = "Edited student: Alice Pauline; NUS Student ID: A12345678C; Phone: 94351253; "
+                + "Tags: [lab3][urgent]";
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
     }
 
     @Test

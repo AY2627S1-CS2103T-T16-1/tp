@@ -161,6 +161,27 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_unknownOrIncompleteLongOption_preservesModelAndStorage() throws Exception {
+        Student student = new StudentBuilder(AMY).build();
+        model.addStudent(student);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        storage.saveStudentBook(model.getStudentBook());
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+
+        assertCommandFailure("add Bob --phone", ParseException.class,
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "--phone PHONE"), expectedModel);
+        assertCommandFailure("add Bob --unknown value", ParseException.class,
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"), expectedModel);
+        assertCommandFailure("edit 1 --phone", ParseException.class,
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "--phone PHONE"), expectedModel);
+        assertCommandFailure("edit 1 --unknown value", ParseException.class,
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"), expectedModel);
+
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+    }
+
+    @Test
     public void execute_explicitFollowUpEdits_idempotentAndPersistAcrossReloads() throws Exception {
         Student original = new StudentBuilder(AMY).withNusStudentId("A01234567X").withFlag(false).build();
         model.addStudent(original);

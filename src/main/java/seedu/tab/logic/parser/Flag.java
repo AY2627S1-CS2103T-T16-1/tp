@@ -51,20 +51,15 @@ public class Flag {
      * @param fieldName The name of the field, such as {@code EMAIL}.
      */
     public Flag(String flag, String fieldName) {
-        requireNonNull(flag);
-        requireNonNull(fieldName);
-        this.flag = flag;
-        this.aliases = List.of();
-        this.fieldName = fieldName;
-        this.takesValue = true;
+        this(flag, List.of(), fieldName);
     }
 
     /**
-     * Constructs a value-taking flag with alternative markers for the same named field.
+     * Constructs a flag with alternative markers that all mark the same named field.
      *
      * @param flag The primary characters that mark the field.
      * @param aliases Alternative characters that mark the same field.
-     * @param fieldName The name of the field.
+     * @param fieldName The name of the field, such as {@code EMAIL}.
      */
     public Flag(String flag, List<String> aliases, String fieldName) {
         requireNonNull(flag);
@@ -87,6 +82,13 @@ public class Flag {
         return Stream.concat(Stream.of(flag), aliases.stream()).toList();
     }
 
+    /**
+     * Returns every marker separated by slashes for compact use in command usage messages.
+     */
+    public String getMarkerSummary() {
+        return String.join("/", getMarkers());
+    }
+
     public boolean takesValue() {
         return takesValue;
     }
@@ -97,6 +99,17 @@ public class Flag {
      */
     public String getLabel() {
         return takesValue ? flag + " " + fieldName : flag;
+    }
+
+    /**
+     * Returns {@code marker} together with this value-taking flag's field name. This lets
+     * feedback quote the spelling the User supplied rather than replacing an alias with the
+     * primary marker.
+     */
+    String getLabel(String marker) {
+        requireNonNull(marker);
+        assert getMarkers().contains(marker);
+        return marker + " " + fieldName;
     }
 
     @Override
