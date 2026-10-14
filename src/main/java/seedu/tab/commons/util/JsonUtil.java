@@ -3,6 +3,7 @@ package seedu.tab.commons.util;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -10,6 +11,7 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,12 +63,31 @@ public class JsonUtil {
 
         try {
             jsonFile = deserializeObjectFromJsonFile(filePath, classOfObjectToDeserialize);
+        } catch (JsonProcessingException e) {
+            logger.warning("Error parsing jsonFile file " + filePath + ": " + e);
+            throw new DataLoadingException(getJsonProcessingErrorMessage(e), e);
         } catch (IOException e) {
             logger.warning("Error reading from jsonFile file " + filePath + ": " + e);
-            throw new DataLoadingException(e);
+            throw new DataLoadingException(getIoErrorMessage(e), e);
         }
 
         return Optional.of(jsonFile);
+    }
+
+    static String getJsonProcessingErrorMessage(JsonProcessingException exception) {
+        JsonLocation location = exception.getLocation();
+        String locationMessage = location == null
+                ? ""
+                : String.format(" at line %d, column %d", location.getLineNr(), location.getColumnNr());
+        return "The data is not in the expected JSON format" + locationMessage
+                + ": " + exception.getOriginalMessage();
+    }
+
+    static String getIoErrorMessage(IOException exception) {
+        if (exception instanceof AccessDeniedException) {
+            return "TAB does not have permission to read this file.";
+        }
+        return "The file could not be read: " + exception.getMessage();
     }
 
     /**

@@ -5,20 +5,24 @@ import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.FOLLOW_UP;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_EMAIL;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NAME;
+import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NUS_STUDENT_ID;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_PHONE;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_TAG;
 import static seedu.tab.logic.commands.CommandTestUtil.NAME_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.NAME_BOB;
+import static seedu.tab.logic.commands.CommandTestUtil.NUS_STUDENT_ID_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.PHONE_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.PREAMBLE_WHITESPACE;
 import static seedu.tab.logic.commands.CommandTestUtil.TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.TAG_HUSBAND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
+import static seedu.tab.logic.commands.CommandTestUtil.VALID_NUS_STUDENT_ID_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -31,6 +35,7 @@ import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
@@ -41,17 +46,18 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_allFieldsPresent_success() {
-        Student expectedStudent = new StudentBuilder(BOB).withTags(VALID_TAG_FRIEND).build();
+        Student expectedStudent = new StudentBuilder(BOB).withTags(VALID_TAG_FRIEND)
+                .withNusStudentId(VALID_NUS_STUDENT_ID_BOB).build();
 
         // leading whitespace
         assertParseSuccess(parser, PREAMBLE_WHITESPACE + NAME_BOB + PHONE_BOB + EMAIL_BOB
-                + TAG_FRIEND, new AddCommand(expectedStudent));
+                + NUS_STUDENT_ID_BOB + TAG_FRIEND, new AddCommand(expectedStudent));
 
         // multiple tags - all accepted
-        Student expectedStudentMultipleTags = new StudentBuilder(BOB).withTags(VALID_TAG_FRIEND, VALID_TAG_HUSBAND)
-                .build();
+        Student expectedStudentMultipleTags = new StudentBuilder(BOB)
+                .withNusStudentId(VALID_NUS_STUDENT_ID_BOB).withTags(VALID_TAG_FRIEND, VALID_TAG_HUSBAND).build();
         assertParseSuccess(parser,
-                NAME_BOB + PHONE_BOB + EMAIL_BOB + TAG_HUSBAND + TAG_FRIEND,
+                NAME_BOB + PHONE_BOB + EMAIL_BOB + NUS_STUDENT_ID_BOB + TAG_HUSBAND + TAG_FRIEND,
                 new AddCommand(expectedStudentMultipleTags));
     }
 
@@ -89,6 +95,16 @@ public class AddCommandParserTest {
         Student tagged = new StudentBuilder(AMY).withTags(VALID_TAG_FRIEND).withoutEmail().build();
         assertParseSuccess(parser, NAME_AMY + PHONE_AMY + TAG_FRIEND,
                 new AddCommand(tagged));
+    }
+
+    @Test
+    public void parse_nusStudentIdUsingLongOptionOrAlias_buildsStudentWithNormalizedId() {
+        Student expected = new StudentBuilder(BOB).withTags().withoutEmail().withNusStudentId("A01234567X").build();
+
+        assertParseSuccess(parser, NAME_BOB + PHONE_BOB + " --id a01234567x",
+                new AddCommand(expected));
+        assertParseSuccess(parser, NAME_BOB + PHONE_BOB + " -i A01234567X",
+                new AddCommand(expected));
     }
 
     @Test
@@ -142,6 +158,11 @@ public class AddCommandParserTest {
         // invalid tag
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + EMAIL_BOB + INVALID_TAG + TAG_FRIEND,
                 Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, "---", Tag.getFailureReason("---")));
+
+        // invalid NUS Student ID
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + INVALID_NUS_STUDENT_ID,
+                Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
+                        NusStudentId.getFailureReason("A0123-456")));
     }
 
     @Test
@@ -222,6 +243,10 @@ public class AddCommandParserTest {
 
         assertParseFailure(parser, NAME_BOB + " --phone 11111111 --phone 22222222",
                 Messages.getErrorMessageForDuplicateFlags("--phone"));
+
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB
+                + " --id A01234567X -i A76543210Y",
+                Messages.getErrorMessageForDuplicateFlags("--id"));
     }
 
     @Test
@@ -238,6 +263,8 @@ public class AddCommandParserTest {
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --email",
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel("--email")));
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --id",
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_NUS_STUDENT_ID.getLabel()));
     }
 
     @Test
@@ -309,4 +336,5 @@ public class AddCommandParserTest {
         assertParseSuccess(parser, NAME_BOB + PHONE_BOB + EMAIL_BOB + " -t \"Lab 3\"",
                 new AddCommand(expected));
     }
+
 }

@@ -432,3 +432,22 @@ PlantUML sources under `docs/diagrams/`.
 - Run `./gradlew check` before reporting a task complete, and report failures
   honestly rather than describing intended behaviour.
 - Prefer small, reviewable commits that each do one thing.
+
+## Agent skills
+
+Workflows for the conventions above live in `.claude/skills/`, and the
+subagents they launch in `.claude/agents/`. Claude Code picks both up from
+the repo; other tools can read the `SKILL.md` files as instructions.
+
+| Skill | Use it to |
+| --- | --- |
+| `tp-git` | write a commit message, name a branch, or open or merge a PR |
+| `tp-triage` | label, size or triage an issue |
+| `tp-review` | review a PR, or reply to review comments |
+| `tp-feature` | add or change a command, option or field end to end |
+| `tp-release` | cut a release, from the version bump to the milestone |
+| `tp-style` | check a change for style and code quality Checkstyle misses |
+| `tp-bughunt` | hunt bugs in a tP JAR, for PE or before our own release |
+
+Change a skill through a PR like any other file, and keep it in step with
+this file when a convention changes.

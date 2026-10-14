@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalStudents.ALICE;
 
@@ -25,6 +26,11 @@ import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
 public class AddCommandTest {
+
+    @Test
+    public void messageUsage_includesNusStudentIdAlias() {
+        assertTrue(AddCommand.MESSAGE_USAGE.contains(FLAG_NUS_STUDENT_ID.getMarkerSummary()));
+    }
 
     @Test
     public void constructor_nullStudent_throwsNullPointerException() {

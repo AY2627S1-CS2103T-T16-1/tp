@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.model.Model.PREDICATE_SHOW_ALL_STUDENTS;
@@ -23,6 +24,7 @@ import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.model.Model;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
@@ -44,17 +46,21 @@ public class EditCommand extends Command {
             + "[" + FLAG_NAME.getLabel() + "] "
             + "[" + FLAG_PHONE.getLabel() + "] "
             + "[" + FLAG_EMAIL.getLabel() + "] "
+            + "[" + FLAG_NUS_STUDENT_ID.getLabel() + "] "
             + "[" + FLAG_TAG.getLabel() + "]... "
             + "[" + FLAG_FOLLOW_UP.getLabel() + "]\n"
             + "The index comes first. Any option value holding spaces, and any value opening with "
             + "a hyphen, goes in double quotes. The value options accept either spelling: "
             + FLAG_NAME.getMarkerSummary() + ", " + FLAG_PHONE.getMarkerSummary() + ", "
-            + FLAG_EMAIL.getMarkerSummary() + " and " + FLAG_TAG.getMarkerSummary() + ". "
+            + FLAG_EMAIL.getMarkerSummary() + ", " + FLAG_NUS_STUDENT_ID.getMarkerSummary() + " and "
+            + FLAG_TAG.getMarkerSummary() + ". "
             + FLAG_TAG + " \"\" clears every tag; "
-            + FLAG_EMAIL + " \"\" clears the email.\n"
+            + FLAG_EMAIL + " \"\" clears the email; "
+            + FLAG_NUS_STUDENT_ID + " \"\" clears it.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + FLAG_PHONE + " 91234567 "
-            + FLAG_EMAIL + " johndoe@example.com";
+            + FLAG_EMAIL + " johndoe@example.com "
+            + FLAG_NUS_STUDENT_ID + " A01234567X";
 
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
@@ -108,12 +114,16 @@ public class EditCommand extends Command {
         Optional<Email> updatedEmail = editStudentDescriptor.isEmailEdited()
                 ? editStudentDescriptor.getEmail()
                 : studentToEdit.getEmail();
+        Optional<NusStudentId> updatedNusStudentId = editStudentDescriptor.isNusStudentIdEdited()
+                ? editStudentDescriptor.getNusStudentId()
+                : studentToEdit.getNusStudentId();
         Set<Tag> updatedTags = editStudentDescriptor.getTags().orElse(studentToEdit.getTags());
         boolean updatedFlag = editStudentDescriptor.shouldToggleFlag()
                 ? !studentToEdit.isFlagged()
                 : studentToEdit.isFlagged();
 
-        return new Student(updatedName, updatedPhone, updatedEmail.orElse(null), updatedTags, updatedFlag);
+        return new Student(updatedName, updatedPhone, updatedEmail.orElse(null), updatedNusStudentId.orElse(null),
+                updatedTags, updatedFlag);
     }
 
     @Override
@@ -146,23 +156,29 @@ public class EditCommand extends Command {
     public static class EditStudentDescriptor {
         private Name name;
         private Phone phone;
-        private Optional<Email> email = Optional.empty();
-        private boolean isEmailEdited;
+        private final OptionalFieldEdit<Email> emailEdit;
+        private final OptionalFieldEdit<NusStudentId> nusStudentIdEdit;
         private Set<Tag> tags;
         private boolean shouldToggleFlag;
 
-        public EditStudentDescriptor() {}
+        /**
+         * Constructs an empty descriptor whose optional fields have not been edited.
+         */
+        public EditStudentDescriptor() {
+            emailEdit = new OptionalFieldEdit<>();
+            nusStudentIdEdit = new OptionalFieldEdit<>();
+        }
 
         /**
          * Copy constructor.
          * A defensive copy of {@code tags} is used internally.
          */
         public EditStudentDescriptor(EditStudentDescriptor toCopy) {
+            requireNonNull(toCopy);
+            emailEdit = new OptionalFieldEdit<>(toCopy.emailEdit);
+            nusStudentIdEdit = new OptionalFieldEdit<>(toCopy.nusStudentIdEdit);
             setName(toCopy.name);
             setPhone(toCopy.phone);
-            if (toCopy.isEmailEdited()) {
-                toCopy.getEmail().ifPresentOrElse(this::setEmail, this::clearEmail);
-            }
             setTags(toCopy.tags);
             setFlagToggled(toCopy.shouldToggleFlag);
         }
@@ -171,7 +187,8 @@ public class EditCommand extends Command {
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, tags) || isEmailEdited || shouldToggleFlag;
+            return CollectionUtil.isAnyNonNull(name, phone, tags)
+                    || emailEdit.isEdited() || nusStudentIdEdit.isEdited() || shouldToggleFlag;
         }
 
         public void setName(Name name) {
@@ -196,24 +213,46 @@ public class EditCommand extends Command {
          * @throws NullPointerException if {@code email} is null.
          */
         public void setEmail(Email email) {
-            this.email = Optional.of(email);
-            isEmailEdited = true;
+            emailEdit.set(requireNonNull(email));
         }
 
         /**
          * Marks the email for removal without changing any other field.
          */
         public void clearEmail() {
-            email = Optional.empty();
-            isEmailEdited = true;
+            emailEdit.clear();
         }
 
         public boolean isEmailEdited() {
-            return isEmailEdited;
+            return emailEdit.isEdited();
         }
 
         public Optional<Email> getEmail() {
-            return email;
+            return emailEdit.getValue();
+        }
+
+        /**
+         * Sets a replacement NUS Student ID and marks the NUS Student ID as edited.
+         *
+         * @throws NullPointerException if {@code nusStudentId} is null.
+         */
+        public void setNusStudentId(NusStudentId nusStudentId) {
+            nusStudentIdEdit.set(requireNonNull(nusStudentId));
+        }
+
+        /**
+         * Marks the NUS Student ID for removal without changing any other field.
+         */
+        public void clearNusStudentId() {
+            nusStudentIdEdit.clear();
+        }
+
+        public boolean isNusStudentIdEdited() {
+            return nusStudentIdEdit.isEdited();
+        }
+
+        public Optional<NusStudentId> getNusStudentId() {
+            return nusStudentIdEdit.getValue();
         }
 
         /**
@@ -254,8 +293,8 @@ public class EditCommand extends Command {
 
             return Objects.equals(name, otherEditStudentDescriptor.name)
                     && Objects.equals(phone, otherEditStudentDescriptor.phone)
-                    && email.equals(otherEditStudentDescriptor.email)
-                    && isEmailEdited == otherEditStudentDescriptor.isEmailEdited
+                    && emailEdit.hasSameStateAs(otherEditStudentDescriptor.emailEdit)
+                    && nusStudentIdEdit.hasSameStateAs(otherEditStudentDescriptor.nusStudentIdEdit)
                     && Objects.equals(tags, otherEditStudentDescriptor.tags)
                     && shouldToggleFlag == otherEditStudentDescriptor.shouldToggleFlag;
         }
@@ -265,11 +304,53 @@ public class EditCommand extends Command {
             return new ToStringBuilder(this)
                     .add("name", name)
                     .add("phone", phone)
-                    .add("email", email)
-                    .add("isEmailEdited", isEmailEdited)
+                    .add("email", emailEdit.getValue())
+                    .add("isEmailEdited", emailEdit.isEdited())
+                    .add("nusStudentId", nusStudentIdEdit.getValue())
+                    .add("isNusStudentIdEdited", nusStudentIdEdit.isEdited())
                     .add("tags", tags)
                     .add("shouldToggleFlag", shouldToggleFlag)
                     .toString();
+        }
+
+        /**
+         * Encapsulates the three states of an optional field in an edit: unchanged, cleared,
+         * or replaced with a value.
+         */
+        private static final class OptionalFieldEdit<T> {
+            private Optional<T> value;
+            private boolean isEdited;
+
+            private OptionalFieldEdit() {
+                value = Optional.empty();
+            }
+
+            private OptionalFieldEdit(OptionalFieldEdit<T> toCopy) {
+                value = toCopy.value;
+                isEdited = toCopy.isEdited;
+            }
+
+            private void set(T value) {
+                this.value = Optional.of(value);
+                isEdited = true;
+            }
+
+            private void clear() {
+                value = Optional.empty();
+                isEdited = true;
+            }
+
+            private boolean isEdited() {
+                return isEdited;
+            }
+
+            private Optional<T> getValue() {
+                return value;
+            }
+
+            private boolean hasSameStateAs(OptionalFieldEdit<?> other) {
+                return isEdited == other.isEdited && value.equals(other.value);
+            }
         }
     }
 }

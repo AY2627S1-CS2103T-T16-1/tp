@@ -12,6 +12,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.tab.logic.commands.CommandTestUtil.showStudentAtIndex;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
@@ -28,6 +29,8 @@ import seedu.tab.model.ModelManager;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.Email;
+import seedu.tab.model.student.NusStudentId;
+import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 import seedu.tab.testutil.StudentBuilder;
@@ -38,6 +41,11 @@ import seedu.tab.testutil.StudentBuilder;
 public class EditCommandTest {
 
     private Model model = new ModelManager(getTypicalStudentBook(), new UserPrefs());
+
+    @Test
+    public void messageUsage_includesNusStudentIdAlias() {
+        assertTrue(EditCommand.MESSAGE_USAGE.contains(FLAG_NUS_STUDENT_ID.getMarkerSummary()));
+    }
 
     @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
@@ -127,6 +135,54 @@ public class EditCommandTest {
 
         assertCommandSuccess(command, model,
                 String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    @Test
+    public void execute_setNusStudentId_addsItToStudent() {
+        Student original = model.getFilteredStudentList().get(0);
+        Student edited = new StudentBuilder(original).withNusStudentId("A01234567X").build();
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setNusStudentId(new NusStudentId("A01234567X"));
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT, descriptor);
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(original, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    @Test
+    public void execute_unrelatedEdit_preservesNusStudentId() {
+        Student original = model.getFilteredStudentList().get(0);
+        Student withNusStudentId = new StudentBuilder(original).withNusStudentId("A01234567X").build();
+        model.setStudent(original, withNusStudentId);
+        Student edited = new Student(withNusStudentId.getName(), new Phone(VALID_PHONE_BOB),
+                withNusStudentId.getEmail().orElse(null),
+                withNusStudentId.getNusStudentId().orElse(null),
+                withNusStudentId.getTags(), withNusStudentId.isFlagged());
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(withNusStudentId, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    @Test
+    public void execute_clearNusStudentId_removesItAndPreservesOtherDetails() {
+        Student original = model.getFilteredStudentList().get(0);
+        Student withNusStudentId = new StudentBuilder(original).withNusStudentId("A01234567X").build();
+        model.setStudent(original, withNusStudentId);
+        Student edited = new StudentBuilder(withNusStudentId).withoutNusStudentId().build();
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.clearNusStudentId();
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT, descriptor);
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(withNusStudentId, edited);
+
         assertCommandSuccess(command, model,
                 String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
     }

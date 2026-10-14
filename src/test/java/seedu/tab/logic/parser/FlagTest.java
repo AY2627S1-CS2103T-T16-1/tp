@@ -50,6 +50,17 @@ public class FlagTest {
     }
 
     @Test
+    public void valueTakingFlagWithShortAlias_returnsEveryMarkerAndLabelsEitherOne() {
+        Flag valueTaking = new Flag("--id", List.of("-i"), "NUS_STUDENT_ID");
+
+        assertEquals(List.of("--id", "-i"), valueTaking.getMarkers());
+        assertEquals("--id/-i", valueTaking.getMarkerSummary());
+        assertEquals("--id NUS_STUDENT_ID", valueTaking.getLabel());
+        assertEquals("-i NUS_STUDENT_ID", valueTaking.getLabel("-i"));
+        assertTrue(valueTaking.takesValue());
+    }
+
+    @Test
     public void getLabel_unknownMarker_throwsAssertionError() {
         Flag valueTaking = new Flag("-e", List.of("--email"), "EMAIL");
 

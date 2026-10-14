@@ -16,6 +16,7 @@ Class UniqueStudentList
 Class Student
 Class Email
 Class Name
+Class NusStudentId
 Class Phone
 Class Tag
 Class Flag
@@ -40,6 +41,7 @@ UniqueStudentList --> "~* all" Student
 Student *--> Name
 Student *--> Phone
 Student *--> "0..1" Email
+Student *--> "0..1" NusStudentId
 Student *--> "*" Tag
 Student *--> "0..1" Flag
 Flag --|> Tag
@@ -49,6 +51,7 @@ UniqueStudentList -[hidden]right-> I
 
 Name -[hidden]right-> Phone
 Phone -[hidden]right-> Email
+Email -[hidden]right-> NusStudentId
 
 ModelManager --> "~* filtered" Student
 @enduml

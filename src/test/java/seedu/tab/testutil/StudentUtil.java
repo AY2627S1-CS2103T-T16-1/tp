@@ -3,6 +3,7 @@ package seedu.tab.testutil;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
@@ -35,6 +36,8 @@ public class StudentUtil {
         sb.append(FLAG_PHONE).append(" ").append(quoted(student.getPhone().value)).append(" ");
         student.getEmail().ifPresent(email ->
                 sb.append(FLAG_EMAIL).append(" ").append(quoted(email.value)).append(" "));
+        student.getNusStudentId().ifPresent(nusStudentId ->
+                sb.append(FLAG_NUS_STUDENT_ID).append(" ").append(quoted(nusStudentId.value)).append(" "));
         student.getTags().forEach(tag ->
                 sb.append(FLAG_TAG).append(" ").append(quoted(tag.tagName)).append(" "));
         if (student.isFlagged()) {
@@ -61,6 +64,10 @@ public class StudentUtil {
         if (descriptor.isEmailEdited()) {
             String email = descriptor.getEmail().map(value -> value.value).orElse("");
             sb.append(FLAG_EMAIL).append(" ").append(quoted(email)).append(" ");
+        }
+        if (descriptor.isNusStudentIdEdited()) {
+            String nusStudentId = descriptor.getNusStudentId().map(value -> value.value).orElse("");
+            sb.append(FLAG_NUS_STUDENT_ID).append(" ").append(quoted(nusStudentId)).append(" ");
         }
         if (descriptor.getTags().isPresent()) {
             Set<Tag> tags = descriptor.getTags().get();
