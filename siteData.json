@@ -55,6 +55,7 @@
         "commands-with-no-arguments": "Commands with no arguments",
         "follow-up-flag": "Follow-up flag",
         "field-values": "Field values",
+        "handling-an-unreadable-data-file": "Handling an unreadable data file",
         "confirming-a-clear": "Confirming a clear",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
