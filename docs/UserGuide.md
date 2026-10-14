@@ -267,12 +267,12 @@ done to it beyond the quotes any value with spaces takes:
 * The index comes first, before any option.
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
-* `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` clears it and is
+* `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it and is
   available only with `edit`. New students are unflagged by default when added.
   Both options take no value. Repeating either request succeeds and keeps the requested state.
   Leaving both out preserves the student's follow-up status.
 * Choose at most one follow-up option. Combining `--follow-up` or `-f` with
-  `--no-follow-up` is rejected without changing any student details.
+  `--no-follow-up` or `-nf` is rejected without changing any student details.
 * To remove a student's email, use `-e ""`. A quoted value containing only spaces
   also removes it. Leaving out `-e` keeps the email unchanged; a bare `-e` is an
   error. Clearing an already absent email succeeds.
@@ -296,6 +296,7 @@ Examples:
 *  `edit 1 --follow-up` Flags the 1st student for follow-up. Repeating it keeps the flag set.
 *  `edit 1 -f` Also sets follow-up, even if the student is already flagged.
 *  `edit 1 --no-follow-up` Clears the flag. Repeating it keeps the flag cleared.
+*  `edit 1 -nf` Also clears follow-up, even if the student is already unflagged.
 *  `edit 2 -p 91234567 --follow-up` Updates the phone number and sets follow-up in one command.
 
 A cleared email or NUS Student ID, a cleared tag set, and an explicitly set or cleared follow-up status are
@@ -428,7 +429,7 @@ Action     | Format, Examples
 **Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> e.g., `add James Ho -p 22224444 -i A01234567X -t friend -t colleague --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> e.g., `edit 2 -n "James Lee" --id A01234567X`
+**Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 -n "James Lee" --id A01234567X`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James A0123`
 **List**   | `list`
 **Help**   | `help`

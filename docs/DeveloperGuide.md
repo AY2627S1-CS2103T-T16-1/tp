@@ -260,7 +260,7 @@ words needs no quotes unless it would otherwise be misread, and the index for
 `EditCommand.FIELD_INDEX`, rather than the shared `CliFlags` doing it for
 them. Value-taking options take the token after them,
 and `-t` repeats. The presence-only `--follow-up` option (alias `-f`) and edit-only
-`--no-follow-up` instead record an empty value and consume no following token. This lets
+`--no-follow-up` (alias `-nf`) instead record an empty value and consume no following token. This lets
 `FlagArgumentMap` distinguish an
 absent option from a present marker without a separate representation. An
 unknown option, a value-taking option left without a value, and a token
@@ -291,12 +291,11 @@ purpose. `CommandTokenizer` produces an empty token for `""` and leaves the
 decision to the field parser, so no tokenizer change was needed.
 
 `edit` sets follow-up with `--follow-up` (alias `-f`) and clears it with
-`--no-follow-up`. The parser rejects contradictory options before describing
+`--no-follow-up` (alias `-nf`). The parser rejects contradictory options before describing
 any edit, so neither the model nor the saved book changes on that error.
-Clearing keeps only the descriptive long form: `-F` would make opposite actions
-differ only in case, while another alias such as `-nf` would add a spelling to
-remember. This favors a clear distinction between setting and clearing over
-equally short commands for both actions.
+The `-nf` alias makes clearing quick to type without making opposite actions
+differ only in case, as `-f` and `-F` would. Both clear spellings map to the
+same option, so mixing them is also detected as a duplicate.
 
 ### Commands with no arguments
 
@@ -1406,9 +1405,9 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `edit 1 -p 81112222`<br>
       Expected: Alice's phone changes and `Needs follow-up` remains.
 
-   1. Test case: Run `edit 1 --no-follow-up` twice.<br>
+   1. Test case: Run `edit 1 -nf` twice, then `edit 1 --no-follow-up`.<br>
       Expected: Alice no longer shows `Needs follow-up`, with no blank row
-      left in its place. Repeating the command keeps the flag cleared.
+      left in its place. Repeating either spelling keeps the flag cleared.
 
    1. Test case: `edit 1 -p 82223333`<br>
       Expected: Alice's phone changes and she stays unflagged.
@@ -1433,12 +1432,12 @@ testers are expected to do more *exploratory* testing.
       `--follow-up`; the second reports that `true` belongs to no option.
 
    1. Test cases: `edit 1 --follow-up --no-follow-up` and
-      `edit 1 --no-follow-up -f -p 89998888`<br>
+      `edit 1 -nf -f -p 89998888`<br>
       Expected: Both report that the follow-up options cannot be used together.
       Neither changes Alice's phone, flag, other fields, or saved record.
 
-   1. Test cases: `edit 1 --no-follow-up --no-follow-up` and
-      `edit 1 --no-follow-up false`<br>
+   1. Test cases: `edit 1 --no-follow-up -nf` and
+      `edit 1 -nf false`<br>
       Expected: The first reports a repeated `--no-follow-up`; the second
       reports that `false` belongs to no option. No data changes.
 

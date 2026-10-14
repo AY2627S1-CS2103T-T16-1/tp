@@ -42,7 +42,7 @@ public class EditCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the student identified "
             + "by the index number used in the displayed student list. "
             + "Existing values will be overwritten by the input values, while " + FLAG_FOLLOW_UP
-            + " sets follow-up and " + FLAG_NO_FOLLOW_UP + " clears it.\n"
+            + " (alias -f) sets follow-up and " + FLAG_NO_FOLLOW_UP + " (alias -nf) clears it.\n"
             + "Parameters: " + FIELD_INDEX + " (must be a positive integer) "
             + "[" + FLAG_NAME.getLabel() + "] "
             + "[" + FLAG_PHONE.getLabel() + "] "
@@ -65,7 +65,7 @@ public class EditCommand extends Command {
     public static final String MESSAGE_DUPLICATE_STUDENT = "This student already exists in the student book.";
 
     public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP
-            + " (or -f) and " + FLAG_NO_FOLLOW_UP + " cannot be used together. Choose one.";
+            + " (or -f) and " + FLAG_NO_FOLLOW_UP + " (or -nf) cannot be used together. Choose one.";
 
     private final Index index;
     private final EditStudentDescriptor editStudentDescriptor;

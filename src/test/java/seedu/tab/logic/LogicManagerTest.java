@@ -126,12 +126,14 @@ public class LogicManagerTest {
         flagged = new StudentBuilder(flagged).withPhone("81112222").build();
         assertFollowUpEditPersists("edit 1 -p 81112222", flagged);
         Student cleared = new StudentBuilder(flagged).withFlag(false).build();
-        for (String command : List.of("edit 1 --no-follow-up", "edit 1 --no-follow-up")) {
+        for (String command : List.of("edit 1 -nf", "edit 1 -nf", "edit 1 --no-follow-up")) {
             assertFollowUpEditPersists(command, cleared);
         }
         cleared = new StudentBuilder(cleared).withPhone("82223333").build();
         assertFollowUpEditPersists("edit 1 -p 82223333", cleared);
         assertFollowUpEditPersists("edit 1 --no-follow-up -p 82223333", cleared);
+        assertFollowUpEditPersists("edit 1 --follow-up", new StudentBuilder(cleared).withFlag(true).build());
+        assertFollowUpEditPersists("edit 1 --no-follow-up", cleared);
     }
 
     @Test
@@ -147,7 +149,8 @@ public class LogicManagerTest {
             Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
             expectedModel.updateFilteredStudentList(student -> false);
             for (String options : List.of("--follow-up --no-follow-up", "--no-follow-up --follow-up",
-                    "-f --no-follow-up", "--no-follow-up -f -p 81112222")) {
+                    "-f --no-follow-up", "--no-follow-up -f -p 81112222", "--follow-up -nf", "-nf --follow-up",
+                    "-f -nf", "-nf -f -p 81112222")) {
                 assertCommandFailure("edit 1 " + options, ParseException.class,
                         EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP, expectedModel);
                 assertTrue(model.getFilteredStudentList().isEmpty());

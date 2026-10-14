@@ -233,6 +233,10 @@ public class AddCommandParserTest {
     public void parse_unknownFlag_isRefusedOnItsOwn() {
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " -z something",
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-z"));
+        for (String option : new String[] {"--no-follow-up", "-nf"}) {
+            assertParseFailure(parser, NAME_BOB + PHONE_BOB + " " + option,
+                    String.format(Messages.MESSAGE_UNKNOWN_FLAG, option));
+        }
     }
 
     @Test
