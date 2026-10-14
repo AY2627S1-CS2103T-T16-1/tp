@@ -2,9 +2,11 @@ package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import seedu.tab.logic.commands.FindCommand;
+import seedu.tab.logic.parser.CommandTokenizer.Token;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 
@@ -19,15 +21,23 @@ public class FindCommandParser implements Parser<FindCommand> {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public FindCommand parse(String args) throws ParseException {
-        String trimmedArgs = args.trim();
-        if (trimmedArgs.isEmpty()) {
+        List<Token> tokens = CommandTokenizer.tokenize(args);
+        if (tokens.isEmpty()) {
             throw new ParseException(
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
 
-        String[] keywords = trimmedArgs.split("\\s+");
+        List<String> keywords = new ArrayList<>();
+        for (Token token : tokens) {
+            String keyword = token.value().trim();
+            if (keyword.isEmpty()) {
+                throw new ParseException(
+                        String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+            }
+            keywords.add(keyword);
+        }
 
-        return new FindCommand(new DetailsContainsKeywordsPredicate(List.of(keywords)));
+        return new FindCommand(new DetailsContainsKeywordsPredicate(List.copyOf(keywords)));
     }
 
 }
