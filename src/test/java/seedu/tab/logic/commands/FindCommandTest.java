@@ -117,6 +117,15 @@ public class FindCommandTest {
         assertEquals(String.format(MESSAGE_STUDENTS_FOUND_OVERVIEW, 0, "s"),
                 Messages.getStudentsFoundOverview(0));
     }
+    @Test
+    public void execute_nusStudentIdFragmentIgnoringCase_studentFound() {
+        String expectedMessage = String.format(MESSAGE_STUDENTS_LISTED_OVERVIEW, 1);
+        DetailsContainsKeywordsPredicate predicate = preparePredicate("a2345");
+        FindCommand command = new FindCommand(predicate);
+        expectedModel.updateFilteredStudentList(predicate);
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertEquals(List.of(CARL), model.getFilteredStudentList());
+    }
 
     @Test
     public void toStringMethod() {

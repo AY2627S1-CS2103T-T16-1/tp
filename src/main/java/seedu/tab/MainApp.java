@@ -42,31 +42,48 @@ public class MainApp extends Application {
     protected Logic logic;
     protected Storage storage;
     protected Model model;
+    private final Path userPrefsFilePath;
+    private final Path studentBookFilePath;
+    private Optional<String> studentBookLoadingError = Optional.empty();
+
+    /**
+     * Creates the application using the default saved-data paths.
+     */
+    public MainApp() {
+        this(USER_PREFS_FILE_PATH, STUDENT_BOOK_FILE_PATH);
+    }
+
+    MainApp(Path userPrefsFilePath, Path studentBookFilePath) {
+        this.userPrefsFilePath = userPrefsFilePath;
+        this.studentBookFilePath = studentBookFilePath;
+    }
 
     @Override
     public void init() throws Exception {
         logger.info("=============================[ Initializing StudentBook ]===========================");
         super.init();
 
-        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(USER_PREFS_FILE_PATH);
+        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(userPrefsFilePath);
         UserPrefs userPrefs = initPrefs(userPrefsStorage);
-        JsonStudentBookStorage studentBookStorage = new JsonStudentBookStorage(STUDENT_BOOK_FILE_PATH);
+        JsonStudentBookStorage studentBookStorage = new JsonStudentBookStorage(studentBookFilePath);
         storage = new StorageManager(studentBookStorage, userPrefsStorage);
 
         model = initModelManager(storage, userPrefs);
 
         logic = new LogicManager(model, storage);
 
-        ui = new UiManager(logic, storage.getStudentBookFilePath());
+        ui = new UiManager(logic, storage.getStudentBookFilePath(), studentBookLoadingError);
     }
 
     /**
      * Returns a {@code ModelManager} with the data from {@code storage}'s student book and {@code userPrefs}. <br>
-     * The data from the sample student book will be used instead if {@code storage}'s student book is not found,
-     * or an empty student book will be used instead if errors occur when reading {@code storage}'s student book.
+     * The data from the sample student book will be used instead if {@code storage}'s student book is not found.
+     * An unreadable student book is represented internally by an empty book, but its error prevents the normal UI
+     * from starting and therefore prevents the empty book from being saved over the unreadable file.
      */
     private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
         logger.info("Using data file : " + storage.getStudentBookFilePath());
+        studentBookLoadingError = Optional.empty();
 
         Optional<ReadOnlyStudentBook> studentBookOptional;
         ReadOnlyStudentBook initialData;
@@ -79,11 +96,16 @@ public class MainApp extends Application {
             initialData = studentBookOptional.orElseGet(SampleDataUtil::getSampleStudentBook);
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getStudentBookFilePath() + " could not be loaded."
-                    + " Will be starting with an empty StudentBook.");
+                    + " The normal UI will not be started. " + e.getMessage());
+            studentBookLoadingError = Optional.of(e.getMessage());
             initialData = new StudentBook();
         }
 
         return new ModelManager(initialData, userPrefs);
+    }
+
+    Optional<String> getStudentBookLoadingError() {
+        return studentBookLoadingError;
     }
 
     /**
