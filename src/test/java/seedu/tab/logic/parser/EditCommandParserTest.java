@@ -117,13 +117,15 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_emptyNusStudentId_clearsIt() {
+    public void parse_emptyOrWhitespaceOnlyNusStudentId_clearsIt() {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
         descriptor.clearNusStudentId();
 
         assertParseSuccess(parser, "1 --id \"\"",
                 new EditCommand(INDEX_FIRST_STUDENT, descriptor));
         assertParseSuccess(parser, "1 -i \"\"",
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+        assertParseSuccess(parser, "1 --id \"   \"",
                 new EditCommand(INDEX_FIRST_STUDENT, descriptor));
     }
 
@@ -185,6 +187,7 @@ public class EditCommandParserTest {
     public void parse_clearEmailAloneOrWithOtherFields_success() {
         EditStudentDescriptor cleared = new EditStudentDescriptorBuilder().withoutEmail().build();
         assertParseSuccess(parser, "1 -e \"\"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
+        assertParseSuccess(parser, "1 -e \"   \"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
         assertParseSuccess(parser, "\u00A01\u00A0-e\u00A0\"\"\u00A0",
                 new EditCommand(INDEX_FIRST_STUDENT, cleared));
         EditStudentDescriptor combined = new EditStudentDescriptorBuilder().withoutEmail()
@@ -199,8 +202,6 @@ public class EditCommandParserTest {
             assertParseFailure(parser, input,
                     String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
         }
-        assertParseFailure(parser, "1 -e \" \"",
-                Messages.getErrorMessageForInvalidValue("Email", "", Email.getFailureReason("")));
         assertParseFailure(parser, "1 -e \"\" -e a@b.com",
                 Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
         assertParseFailure(parser, "1 -n \"\" -e \"\"",

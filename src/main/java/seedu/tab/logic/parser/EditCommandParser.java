@@ -97,12 +97,13 @@ public class EditCommandParser implements Parser<EditCommand> {
      * Describes an explicit email clear or a validated replacement, recording why a value is rejected.
      */
     private static void parseEmailForEdit(ParseProblems problems, String value, EditStudentDescriptor descriptor) {
-        if (value.isEmpty()) {
+        String trimmedValue = value.trim();
+        if (trimmedValue.isEmpty()) {
             descriptor.clearEmail();
             return;
         }
         try {
-            descriptor.setEmail(ParserUtil.parseEmail(value));
+            descriptor.setEmail(ParserUtil.parseEmail(trimmedValue));
         } catch (ParseException e) {
             problems.add(e.getMessage());
         }
@@ -113,12 +114,13 @@ public class EditCommandParser implements Parser<EditCommand> {
      */
     private static void parseNusStudentIdForEdit(ParseProblems problems, String value,
             EditStudentDescriptor descriptor) {
-        if (value.isEmpty()) {
+        String trimmedValue = value.trim();
+        if (trimmedValue.isEmpty()) {
             descriptor.clearNusStudentId();
             return;
         }
         try {
-            descriptor.setNusStudentId(ParserUtil.parseNusStudentId(value));
+            descriptor.setNusStudentId(ParserUtil.parseNusStudentId(trimmedValue));
         } catch (ParseException e) {
             problems.add(e.getMessage());
         }
