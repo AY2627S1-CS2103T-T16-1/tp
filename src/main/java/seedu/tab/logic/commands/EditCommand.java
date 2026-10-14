@@ -41,8 +41,9 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the student identified "
             + "by the index number used in the displayed student list. "
-            + "Existing values will be overwritten by the input values, while " + FLAG_FOLLOW_UP
-            + " (alias -f) sets follow-up and " + FLAG_NO_FOLLOW_UP + " (alias -nf) clears it.\n"
+            + "Existing values will be overwritten by the input values, while "
+            + FLAG_FOLLOW_UP.getMarkerSummary() + " sets follow-up and "
+            + FLAG_NO_FOLLOW_UP.getMarkerSummary() + " clears it.\n"
             + "Parameters: " + FIELD_INDEX + " (must be a positive integer) "
             + "[" + FLAG_NAME.getLabel() + "] "
             + "[" + FLAG_PHONE.getLabel() + "] "
