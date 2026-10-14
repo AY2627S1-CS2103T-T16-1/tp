@@ -3,6 +3,7 @@ package seedu.tab.logic;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.parser.Flag;
 import seedu.tab.model.student.Student;
 
@@ -78,7 +79,7 @@ public class Messages {
      * @return The formatted summary message.
      */
     public static String getStudentsFoundOverview(int count) {
-        return String.format(MESSAGE_STUDENTS_FOUND_OVERVIEW, count, count == 1 ? "" : "s");
+        return String.format(MESSAGE_STUDENTS_FOUND_OVERVIEW, count, StringUtil.getPluralSuffix(count));
     }
 
     /**

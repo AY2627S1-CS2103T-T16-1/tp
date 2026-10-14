@@ -2,6 +2,7 @@ package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.model.Model;
 import seedu.tab.model.StudentBook;
 
@@ -25,7 +26,7 @@ public class ClearCommand extends Command {
         requireNonNull(model);
         int studentCount = model.getStudentBook().getStudentList().size();
         return new CommandResult(studentCount == 0 ? MESSAGE_EMPTY
-                : String.format(MESSAGE_CONFIRMATION, studentCount, studentCount == 1 ? "" : "s"));
+                : String.format(MESSAGE_CONFIRMATION, studentCount, StringUtil.getPluralSuffix(studentCount)));
     }
 
     /**
