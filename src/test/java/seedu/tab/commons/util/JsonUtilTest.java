@@ -1,8 +1,8 @@
 package seedu.tab.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -54,7 +54,7 @@ public class JsonUtilTest {
         DataLoadingException exception = assertThrows(
                 DataLoadingException.class, () -> JsonUtil.readJsonFile(testFolder, SerializableTestClass.class));
 
-        assertTrue(exception.getMessage().startsWith("The file could not be read:"));
+        assertInstanceOf(IOException.class, exception.getCause());
     }
 
     @Test
@@ -70,6 +70,14 @@ public class JsonUtilTest {
         AccessDeniedException exception = new AccessDeniedException("data/tab.json");
 
         assertEquals("TAB does not have permission to read this file.", JsonUtil.getIoErrorMessage(exception));
+    }
+
+    @Test
+    public void getIoErrorMessage_otherIoFailure_includesDetails() {
+        IOException exception = new IOException("The device is unavailable");
+
+        assertEquals("The file could not be read: The device is unavailable",
+                JsonUtil.getIoErrorMessage(exception));
     }
 
     //TODO: @Test jsonUtil_readJsonStringToObjectInstance_correctObject()
