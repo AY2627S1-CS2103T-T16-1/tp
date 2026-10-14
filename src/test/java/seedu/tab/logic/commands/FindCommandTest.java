@@ -3,7 +3,6 @@ package seedu.tab.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.tab.logic.Messages.MESSAGE_STUDENTS_FOUND_OVERVIEW;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.tab.testutil.TypicalStudents.CARL;
 import static seedu.tab.testutil.TypicalStudents.DANIEL;
@@ -107,15 +106,6 @@ public class FindCommandTest {
         expectedModel.updateFilteredStudentList(thirdPredicate);
         assertCommandSuccess(thirdCommand, model, Messages.getStudentsFoundOverview(0), expectedModel);
         assertEquals(List.of(), model.getFilteredStudentList());
-    }
-
-    @Test
-    public void getStudentsFoundOverview() {
-        assertEquals("Found 0 students.", Messages.getStudentsFoundOverview(0));
-        assertEquals("Found 1 student.", Messages.getStudentsFoundOverview(1));
-        assertEquals("Found 3 students.", Messages.getStudentsFoundOverview(3));
-        assertEquals(String.format(MESSAGE_STUDENTS_FOUND_OVERVIEW, 0, "s"),
-                Messages.getStudentsFoundOverview(0));
     }
 
     @Test

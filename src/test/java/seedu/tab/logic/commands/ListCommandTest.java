@@ -31,7 +31,7 @@ public class ListCommandTest {
 
     @Test
     public void execute_listIsNotFiltered_showsSameList() {
-        String expectedMessage = String.format(ListCommand.MESSAGE_SUCCESS,
+        String expectedMessage = ListCommand.formatSuccessMessage(
                 model.getFilteredStudentList().size());
         assertCommandSuccess(new ListCommand(), model, expectedMessage, expectedModel);
     }
@@ -39,7 +39,7 @@ public class ListCommandTest {
     @Test
     public void execute_listIsFiltered_showsEverything() {
         showStudentAtIndex(model, INDEX_FIRST_STUDENT);
-        String expectedMessage = String.format(ListCommand.MESSAGE_SUCCESS,
+        String expectedMessage = ListCommand.formatSuccessMessage(
                 expectedModel.getFilteredStudentList().size());
         assertCommandSuccess(new ListCommand(), model, expectedMessage, expectedModel);
     }
@@ -50,20 +50,20 @@ public class ListCommandTest {
         studentBook.addStudent(ALICE);
         model = new ModelManager(studentBook, new UserPrefs());
         expectedModel = new ModelManager(studentBook, new UserPrefs());
-        assertCommandSuccess(new ListCommand(), model, ListCommand.MESSAGE_SINGLE_STUDENT, expectedModel);
+        assertCommandSuccess(new ListCommand(), model, ListCommand.formatSuccessMessage(1), expectedModel);
     }
 
     @Test
     public void execute_emptyStudentBook_showsEmptyListMessage() {
         model = new ModelManager();
         expectedModel = new ModelManager();
-        assertCommandSuccess(new ListCommand(), model, ListCommand.MESSAGE_EMPTY_LIST, expectedModel);
+        assertCommandSuccess(new ListCommand(), model, ListCommand.formatSuccessMessage(0), expectedModel);
     }
 
     @Test
     public void formatSuccessMessage() {
         assertEquals("Listed 0 students.", ListCommand.formatSuccessMessage(0));
         assertEquals("Listed 1 student.", ListCommand.formatSuccessMessage(1));
-        assertEquals("Listed all 24 students.", ListCommand.formatSuccessMessage(24));
+        assertEquals("Listed 24 students.", ListCommand.formatSuccessMessage(24));
     }
 }

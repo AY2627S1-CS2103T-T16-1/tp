@@ -3,6 +3,7 @@ package seedu.tab.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.model.Model.PREDICATE_SHOW_ALL_STUDENTS;
 
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.model.Model;
 
 /**
@@ -12,9 +13,7 @@ public class ListCommand extends Command {
 
     public static final String COMMAND_WORD = "list";
 
-    public static final String MESSAGE_SUCCESS = "Listed all %1$d students.";
-    public static final String MESSAGE_SINGLE_STUDENT = "Listed 1 student.";
-    public static final String MESSAGE_EMPTY_LIST = "Listed 0 students.";
+    public static final String MESSAGE_SUCCESS = "Listed %1$d student%2$s.";
 
     @Override
     public CommandResult execute(Model model) {
@@ -30,12 +29,6 @@ public class ListCommand extends Command {
      * @return The formatted success message.
      */
     public static String formatSuccessMessage(int count) {
-        if (count == 0) {
-            return MESSAGE_EMPTY_LIST;
-        }
-        if (count == 1) {
-            return MESSAGE_SINGLE_STUDENT;
-        }
-        return String.format(MESSAGE_SUCCESS, count);
+        return String.format(MESSAGE_SUCCESS, count, StringUtil.getPluralSuffix(count));
     }
 }

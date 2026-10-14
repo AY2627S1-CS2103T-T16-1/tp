@@ -478,7 +478,7 @@ their execution feedback. `FindCommand` counts only the matching students
 (`Messages.getStudentsFoundOverview`), distinguishing zero (`Found 0 students.`),
 singular (`Found 1 student.`), and plural (`Found <n> students.`) results.
 `ListCommand` reports the number of students displayed after resetting the filter
-(`Listed 0 students.`, `Listed 1 student.`, or `Listed all <n> students.`).
+(`Listed 0 students.`, `Listed 1 student.`, or `Listed <n> students.`).
 
 Nothing else is rejected in any of the three. A phone number may hold `+`,
 whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
@@ -1803,7 +1803,8 @@ testers are expected to do more *exploratory* testing.
 
 1. Accurate student counts in command feedback
 
-   1. Prerequisites: Clear existing data with `clear`, then confirm with `yes`.
+   1. Prerequisites: An empty student book. Run `clear` and confirm with `yes`
+      if any students remain.
 
    1. Test case: `list`<br>
       Expected: Feedback reports `Listed 0 students.` and the displayed list is empty.
@@ -1818,7 +1819,7 @@ testers are expected to do more *exploratory* testing.
       Expected: Feedback reports `Found 1 student.`.
 
    1. Test case: `add "Bob Choo" -p 88888888 -e bob@example.com`, then `list`<br>
-      Expected: Feedback reports `Listed all 2 students.` with plural wording and accurate count.
+      Expected: Feedback reports `Listed 2 students.` with plural wording and accurate count.
 
    1. Test case: `find Amy Bob`<br>
       Expected: Feedback reports `Found 2 students.`.

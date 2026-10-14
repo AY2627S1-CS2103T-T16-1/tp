@@ -59,7 +59,7 @@ public class KeyboardAndOfflineRequirementTest {
 
         // List students using keyboard command
         CommandResult listResult = logic.execute(ListCommand.COMMAND_WORD);
-        assertEquals(ListCommand.MESSAGE_SINGLE_STUDENT, listResult.getFeedbackToUser());
+        assertEquals(ListCommand.formatSuccessMessage(1), listResult.getFeedbackToUser());
 
         // Find student using keyboard command
         CommandResult findResult = logic.execute(FindCommand.COMMAND_WORD + " Amy");

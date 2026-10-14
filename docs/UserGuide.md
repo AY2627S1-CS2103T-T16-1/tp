@@ -263,7 +263,7 @@ Shows a list of all students in the student book.
 Format: `list`
 
 TAB reports the number of displayed students: `Listed 0 students.` when the list is empty,
-`Listed 1 student.` for a single student, and `Listed all 24 students.` for multiple students.
+`Listed 1 student.` for a single student, and `Listed 24 students.` for several.
 
 ### Editing a student: `edit`
 
