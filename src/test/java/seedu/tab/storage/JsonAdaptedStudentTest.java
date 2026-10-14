@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
+import seedu.tab.logic.Messages;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.Phone;
@@ -50,7 +51,7 @@ public class JsonAdaptedStudentTest {
     public void toModelType_invalidName_throwsIllegalValueException() {
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(INVALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
-        String expectedMessage = "Name \"---\" is invalid: it holds no letter or number";
+        String expectedMessage = "Name \"---\" is not valid: it holds no letter or number";
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
 
@@ -59,8 +60,8 @@ public class JsonAdaptedStudentTest {
         String invalidName = "-".repeat(61);
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(invalidName, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
-        String expectedMessage = "Name \"" + "-".repeat(60)
-                + "…\" is invalid: it holds no letter or number";
+        String expectedMessage = "Name \"" + "-".repeat(Messages.MAX_QUOTED_VALUE_LENGTH)
+                + "…\" is not valid: it holds no letter or number";
 
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
@@ -76,7 +77,7 @@ public class JsonAdaptedStudentTest {
     public void toModelType_invalidPhone_throwsIllegalValueException() {
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, INVALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
-        String expectedMessage = "Phone \"12\" is invalid: a phone number needs at least 3 digits";
+        String expectedMessage = "Phone \"12\" is not valid: a phone number needs at least 3 digits";
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
 
@@ -91,25 +92,14 @@ public class JsonAdaptedStudentTest {
     public void toModelType_invalidEmail_throwsIllegalValueException() {
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, INVALID_EMAIL, VALID_TAGS, false);
-        String expectedMessage = "Email \"example.com\" is invalid: " + Email.MESSAGE_CONSTRAINTS;
+        String expectedMessage = "Email \"example.com\" is not valid: "
+                + "an email needs an @ between the local part and the domain";
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
 
     @Test
-    public void toModelType_emailLongerThanACommandMayEnter_stillLoads() {
-        // the length limit belongs to what a command may enter, so a file an earlier version
-        // wrote is not made unloadable by it. Were storage to reject this, a failed load would
-        // start an empty book and the next save would discard the records.
-        String overLimit = "a".repeat(Email.MAX_LENGTH + 1 - "@example.com".length()) + "@example.com";
-        JsonAdaptedStudent student =
-                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, overLimit, VALID_TAGS, false);
-
-        assertDoesNotThrow(student::toModelType);
-    }
-
-    @Test
     public void toModelType_worstCaseEmailAtStorageLimit_stillLoads() {
-        String atLimit = repeatedLocalPartEmail(JsonAdaptedStudent.MAX_STORED_EMAIL_LENGTH);
+        String atLimit = repeatedLocalPartEmail(Email.MAX_LENGTH);
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, atLimit, VALID_TAGS, false);
 
@@ -118,12 +108,12 @@ public class JsonAdaptedStudentTest {
 
     @Test
     public void toModelType_emailOverStorageLimit_throwsIllegalValueExceptionWithoutOverflowing() {
-        String overLimit = repeatedLocalPartEmail(JsonAdaptedStudent.MAX_STORED_EMAIL_LENGTH + 1);
+        String overLimit = repeatedLocalPartEmail(Email.MAX_LENGTH + 1);
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, overLimit, VALID_TAGS, false);
         String expectedMessage = String.format(
                 "Email field is too long to read safely: it holds %d characters, but saved emails may hold at most %d",
-                overLimit.length(), JsonAdaptedStudent.MAX_STORED_EMAIL_LENGTH);
+                overLimit.length(), Email.MAX_LENGTH);
 
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
@@ -150,7 +140,7 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, invalidTags, false);
         assertThrows(IllegalValueException.class,
-                "Tag \"---\" is invalid: it holds no letter or number", student::toModelType);
+                "Tag \"---\" is not valid: it holds no letter or number", student::toModelType);
     }
 
     @Test

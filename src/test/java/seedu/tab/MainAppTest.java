@@ -110,7 +110,7 @@ public class MainAppTest {
         Model model = initModelManager(storage, new UserPrefs());
 
         assertTrue(model.getStudentBook().getStudentList().isEmpty());
-        assertEquals("Student record 1 (\"Ravi\"): Phone \"12\" is invalid: "
+        assertEquals("Student record 1 (\"Ravi\"): Phone \"12\" is not valid: "
                 + "a phone number needs at least 3 digits", mainApp.getStudentBookLoadingError().orElseThrow());
         assertEquals(originalContents, Files.readString(invalidFilePath));
     }

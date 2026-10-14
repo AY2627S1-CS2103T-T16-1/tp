@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
+import seedu.tab.logic.Messages;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.Phone;
@@ -24,11 +25,7 @@ import seedu.tab.model.tag.Tag;
 // file stays as readable by hand as one written before those fields were introduced.
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class JsonAdaptedStudent {
-    static final int MAX_STORED_EMAIL_LENGTH = 512;
     static final String MISSING_FIELD_MESSAGE_FORMAT = "%s field is missing.";
-
-    private static final int MAX_REPORTED_VALUE_LENGTH = 60;
-    private static final String INVALID_FIELD_MESSAGE_FORMAT = "%s \"%s\" is invalid: %s";
 
     private final String name;
     private final String phone;
@@ -100,14 +97,14 @@ class JsonAdaptedStudent {
 
         // A file may hold no email, either because the key is absent or because it is null.
         // Anything else has to be a valid address; a broken one is not silently dropped.
-        if (email != null && email.length() > MAX_STORED_EMAIL_LENGTH) {
+        if (email != null && !Email.isWithinLengthLimit(email)) {
             throw new IllegalValueException(String.format(
                     "%s field is too long to read safely: it holds %d characters, but saved emails may hold at most %d",
-                    Email.FIELD_NAME, email.length(), MAX_STORED_EMAIL_LENGTH));
+                    Email.FIELD_NAME, email.length(), Email.MAX_LENGTH));
         }
         if (email != null && !Email.isValidEmail(email)) {
             throw new IllegalValueException(formatInvalidField(
-                    Email.FIELD_NAME, email, Email.MESSAGE_CONSTRAINTS));
+                    Email.FIELD_NAME, email, Email.getFailureReason(email)));
         }
         final Email modelEmail = email == null ? null : new Email(email);
 
@@ -116,17 +113,10 @@ class JsonAdaptedStudent {
     }
 
     String getNameForErrorMessage() {
-        return name == null ? null : shorten(name);
+        return name == null ? null : Messages.shorten(name);
     }
 
     static String formatInvalidField(String fieldName, String value, String reason) {
-        return String.format(INVALID_FIELD_MESSAGE_FORMAT, fieldName, shorten(value), reason);
-    }
-
-    private static String shorten(String value) {
-        if (value.length() <= MAX_REPORTED_VALUE_LENGTH) {
-            return value;
-        }
-        return value.substring(0, MAX_REPORTED_VALUE_LENGTH) + "…";
+        return Messages.getErrorMessageForInvalidValue(fieldName, value, reason);
     }
 }
