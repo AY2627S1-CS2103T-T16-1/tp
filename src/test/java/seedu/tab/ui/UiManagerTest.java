@@ -82,17 +82,13 @@ public class UiManagerTest {
 
     @Test
     public void showDataLoadingErrorDialogAndWait_dialogDismissed_returns() throws Exception {
-        boolean hasNoShowingWindow = FxToolkit.onFxThread(() -> {
-            UiManager uiManager = new UiManager(null, DATA_FILE_PATH, Optional.of("Invalid data"));
-            Platform.runLater(() -> List.copyOf(Window.getWindows()).stream()
-                    .filter(Window::isShowing)
-                    .forEach(Window::hide));
-
+        boolean isOwnAlertClosed = FxToolkit.onFxThread(() -> {
+            AutoClosingUiManager uiManager = new AutoClosingUiManager();
             uiManager.showDataLoadingErrorDialogAndWait("Invalid data");
-            return Window.getWindows().stream().noneMatch(Window::isShowing);
+            return !uiManager.alert.isShowing();
         });
 
-        assertTrue(hasNoShowingWindow);
+        assertTrue(isOwnAlertClosed);
     }
 
     @Test
@@ -119,7 +115,7 @@ public class UiManagerTest {
 
     @Test
     public void createDataLoadingErrorAlert_usesTabThemeAndActionableContent() throws Exception {
-        String error = "Student record 4 (\"Yun\"): Phone \"09\" is invalid: "
+        String error = "Student record 4 (\"Yun\"): Phone \"09\" is not valid: "
                 + "a phone number needs at least 3 digits";
         UiManager uiManager = new UiManager(null, DATA_FILE_PATH, Optional.of(error));
 
@@ -202,6 +198,21 @@ public class UiManagerTest {
         @Override
         public void setGuiSettings(GuiSettings guiSettings) {
             // This UI test never changes the window settings.
+        }
+    }
+
+    private static class AutoClosingUiManager extends UiManager {
+        private Alert alert;
+
+        AutoClosingUiManager() {
+            super(null, DATA_FILE_PATH, Optional.of("Invalid data"));
+        }
+
+        @Override
+        Alert createDataLoadingErrorAlert(String error) {
+            alert = super.createDataLoadingErrorAlert(error);
+            Platform.runLater(alert::close);
+            return alert;
         }
     }
 
