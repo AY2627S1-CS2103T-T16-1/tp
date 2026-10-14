@@ -110,12 +110,13 @@ public class StudentBookParserTest {
                 + StudentUtil.getEditStudentDescriptorDetails(clearNusStudentIdDescriptor));
         assertEquals(new EditCommand(INDEX_FIRST_STUDENT, clearNusStudentIdDescriptor), clearNusStudentIdCommand);
 
-        EditStudentDescriptor toggleDescriptor = new EditStudentDescriptorBuilder()
-                .withFlagToggled(true).build();
-        EditCommand toggleCommand = (EditCommand) parser.parseCommand(EditCommand.COMMAND_WORD + " "
-                + INDEX_FIRST_STUDENT.getOneBased() + " "
-                + StudentUtil.getEditStudentDescriptorDetails(toggleDescriptor));
-        assertEquals(new EditCommand(INDEX_FIRST_STUDENT, toggleDescriptor), toggleCommand);
+        for (boolean isFlagged : new boolean[] {true, false}) {
+            EditStudentDescriptor flagDescriptor = new EditStudentDescriptorBuilder().withFlag(isFlagged).build();
+            EditCommand flagCommand = (EditCommand) parser.parseCommand(EditCommand.COMMAND_WORD + " "
+                    + INDEX_FIRST_STUDENT.getOneBased() + " "
+                    + StudentUtil.getEditStudentDescriptorDetails(flagDescriptor));
+            assertEquals(new EditCommand(INDEX_FIRST_STUDENT, flagDescriptor), flagCommand);
+        }
     }
 
     @Test

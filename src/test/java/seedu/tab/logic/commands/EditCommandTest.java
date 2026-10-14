@@ -187,11 +187,11 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_toggleFollowUpFlag_changesFalseToTrue() {
+    public void execute_setFollowUpFlag_changesFalseToTrue() {
         Student original = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
         Student editedStudent = new StudentBuilder(original).withFlag(true).build();
         EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
-                new EditStudentDescriptorBuilder().withFlagToggled(true).build());
+                new EditStudentDescriptorBuilder().withFlag(true).build());
 
         Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
         expectedModel.setStudent(original, editedStudent);
@@ -199,22 +199,24 @@ public class EditCommandTest {
                 Messages.format(editedStudent));
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
     }
 
     @Test
-    public void execute_toggleFollowUpFlag_changesTrueToFalse() {
+    public void execute_clearFollowUpFlag_changesTrueToFalse() {
         Student original = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
         Student flaggedStudent = new StudentBuilder(original).withFlag(true).build();
         model.setStudent(original, flaggedStudent);
         Student editedStudent = new StudentBuilder(flaggedStudent).withFlag(false).build();
         EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
-                new EditStudentDescriptorBuilder().withFlagToggled(true).build());
+                new EditStudentDescriptorBuilder().withFlag(false).build());
 
         Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
         expectedModel.setStudent(flaggedStudent, editedStudent);
         String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
                 Messages.format(editedStudent));
 
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
     }
 
@@ -237,12 +239,12 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_toggleFollowUpFlagInFilteredList_changesDisplayedStudent() {
+    public void execute_setFollowUpFlagInFilteredList_changesDisplayedStudent() {
         showStudentAtIndex(model, INDEX_FIRST_STUDENT);
         Student original = model.getFilteredStudentList().get(0);
         Student editedStudent = new StudentBuilder(original).withFlag(true).build();
         EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
-                new EditStudentDescriptorBuilder().withFlagToggled(true).build());
+                new EditStudentDescriptorBuilder().withFlag(true).build());
 
         Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
         expectedModel.setStudent(original, editedStudent);
@@ -314,10 +316,10 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_invalidStudentIndexWithToggle_failureWithoutMutation() {
+    public void execute_invalidStudentIndexWithFollowUp_failureWithoutMutation() {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredStudentList().size() + 1);
         EditCommand editCommand = new EditCommand(outOfBoundIndex,
-                new EditStudentDescriptorBuilder().withFlagToggled(true).build());
+                new EditStudentDescriptorBuilder().withFlag(true).build());
 
         assertCommandFailure(editCommand, model, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
     }
