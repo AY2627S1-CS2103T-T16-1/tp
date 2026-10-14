@@ -133,7 +133,7 @@ trade-off is deliberate and worth revisiting if the palette changes.
 `SummaryPanel` shows the flagged count, a count per tag and the total, beside
 the list. It counts `Logic#getFilteredStudentList()`, which is the only list
 `Logic` exposes, so it summarises **what the list is showing** rather than the
-whole address book: after `find Alex` it counts the matches. That is the
+whole student book: after `find Alex` it counts the matches. That is the
 reading the User Guide documents, and it keeps the panel answering the same
 question as the list it sits beside. Summarising the whole book instead would
 need `Logic` to expose it.
