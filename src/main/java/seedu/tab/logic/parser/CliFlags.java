@@ -14,6 +14,7 @@ public class CliFlags {
     public static final Flag FLAG_NUS_STUDENT_ID = new Flag("--id", List.of("-i"), "NUS_STUDENT_ID");
     public static final Flag FLAG_TAG = new Flag("-t", "TAG");
     public static final Flag FLAG_FOLLOW_UP = new Flag("--follow-up", List.of("-f"));
+    public static final Flag FLAG_NO_FOLLOW_UP = new Flag("--no-follow-up", List.of("-nf"));
 
     private CliFlags() {} // this class only holds flags
 }

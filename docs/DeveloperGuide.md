@@ -228,7 +228,7 @@ This section describes some noteworthy details on how certain features are imple
 
 `add` and `edit` mark their fields with options,
 `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
-`edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`,
+`edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`,
 where AB3 marked them with prefixes such as `p/`.
 
 A prefix has to be a sequence a value never contains, and no such sequence
@@ -259,8 +259,8 @@ words needs no quotes unless it would otherwise be misread, and the index for
 `edit`. Each command names its own, in `AddCommand.FIELD_NAME` and
 `EditCommand.FIELD_INDEX`, rather than the shared `CliFlags` doing it for
 them. Value-taking options take the token after them,
-and `-t` repeats. The presence-only `--follow-up` option and its `-f` alias
-instead record an empty value and consume no following token. This lets
+and `-t` repeats. The presence-only `--follow-up` option (alias `-f`) and edit-only
+`--no-follow-up` (alias `-nf`) instead record an empty value and consume no following token. This lets
 `FlagArgumentMap` distinguish an
 absent option from a present marker without a separate representation. An
 unknown option, a value-taking option left without a value, and a token
@@ -290,8 +290,12 @@ value also separates a value left empty by accident from one cleared on
 purpose. `CommandTokenizer` produces an empty token for `""` and leaves the
 decision to the field parser, so no tokenizer change was needed.
 
-`edit`'s `--follow-up` option toggles the flag, as AB3's `f/` did. Setting and
-clearing it explicitly is tracked separately as issue #146.
+`edit` sets follow-up with `--follow-up` (alias `-f`) and clears it with
+`--no-follow-up` (alias `-nf`). The parser rejects contradictory options before describing
+any edit, so neither the model nor the saved book changes on that error.
+The `-nf` alias makes clearing quick to type without making opposite actions
+differ only in case, as `-f` and `-F` would. Both clear spellings map to the
+same option, so mixing them is also detected as a duplicate.
 
 ### Commands with no arguments
 
@@ -321,10 +325,12 @@ inherited `tagName` values. The student card and command feedback display the
 same value, while the card keeps the flag in its separate follow-up row.
 
 The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
-For edit, the `EditStudentDescriptor` stores `shouldToggleFlag` rather than a
-replacement value. `EditCommand` applies that intent to the selected student's existing
-state. This keeps an unrelated edit from resetting the flag and makes the
-non-idempotent `--follow-up` behavior explicit.
+For edit, the `EditStudentDescriptor` stores a nullable `Boolean isFlagged`:
+null preserves the existing state, true sets follow-up, and false clears it.
+`getFlagged()` exposes this as an `Optional<Boolean>`. `EditCommand` uses the
+requested value when present, otherwise the selected student's existing state.
+This makes either request safe to repeat while preserving follow-up during
+unrelated edits. Descriptor copies and equality retain all three states.
 
 `JsonAdaptedStudent` uses a nullable `Boolean flag` at the storage boundary.
 Only `Boolean.TRUE` creates a `Flag` in the model; a missing key, JSON `null`, and
@@ -890,12 +896,12 @@ These were raised during requirement gathering and left out of the product.
 **MSS**
 
 1.  <u>User finds and identifies a student who needs a response (UC02).</u>
-2.  User requests to toggle follow-up for that student.
+2.  User requests to mark that student as needing follow-up.
 3.  TAB saves the student as needing follow-up.
 4.  TAB shows the updated student record with `Needs follow-up`.
 5.  Later, <u>User finds and identifies the same student after responding
     (UC02).</u>
-6.  User requests to toggle follow-up for that student.
+6.  User requests to clear follow-up for that student.
 7.  TAB saves the student as not needing follow-up.
 8.  TAB shows the updated student record without `Needs follow-up`.
 
@@ -1127,7 +1133,7 @@ These were raised during requirement gathering and left out of the product.
 1.  <u>User finds and identifies the intended student (UC02).</u>
 2.  User requests to edit the student.
 3.  User specifies changes to the student's details, follow-up status, or both.
-4.  TAB updates the provided details, toggles follow-up if requested, and
+4.  TAB updates the provided details, sets or clears follow-up if requested, and
     preserves the other details.
 5.  TAB shows the updated student record.
 
@@ -1387,23 +1393,29 @@ testers are expected to do more *exploratory* testing.
       Expected: Each search shows Bob and excludes Alice, matching part of
       the flag's displayed name without regard to case.
 
-1. Toggling follow-up while editing
+1. Setting and clearing follow-up while editing
 
    1. Prerequisites: Run `list` after the preceding search, restoring Alice
       at index 1 and Bob at index 2.
 
-   1. Test case: `edit 1 --follow-up`<br>
-      Expected: Alice now shows `Needs follow-up`.
+   1. Test case: Run `edit 1 --follow-up` twice, then `edit 1 -f`.<br>
+      Expected: Alice shows `Needs follow-up` after each command; repeating
+      either spelling keeps the flag set. Her other fields stay unchanged.
 
    1. Test case: `edit 1 -p 81112222`<br>
       Expected: Alice's phone changes and `Needs follow-up` remains.
 
-   1. Test case: `edit 1 -f`<br>
+   1. Test case: Run `edit 1 -nf` twice, then `edit 1 --no-follow-up`.<br>
       Expected: Alice no longer shows `Needs follow-up`, with no blank row
-      left in its place. The alias marks the same option as `--follow-up`.
+      left in its place. Repeating either spelling keeps the flag cleared.
 
-   1. Test case: `edit 2 --follow-up`<br>
-      Expected: Bob no longer shows `Needs follow-up`.
+   1. Test case: `edit 1 -p 82223333`<br>
+      Expected: Alice's phone changes and she stays unflagged.
+
+   1. Test case: `edit 2 --follow-up` followed by `edit 2 --no-follow-up`.<br>
+      Expected: Bob stays flagged after the first command and becomes
+      unflagged after the second. Exit and relaunch TAB; both Alice and Bob
+      remain unflagged and Alice's phone remains `82223333`.
 
 1. Rejecting invalid or repeated follow-up markers
 
@@ -1418,6 +1430,16 @@ testers are expected to do more *exploratory* testing.
    1. Test cases: `edit 1 --follow-up -f` and `edit 1 --follow-up true`<br>
       Expected: Neither command changes Alice. The first reports a repeated
       `--follow-up`; the second reports that `true` belongs to no option.
+
+   1. Test cases: `edit 1 --follow-up --no-follow-up` and
+      `edit 1 -nf -f -p 89998888`<br>
+      Expected: Both report that the follow-up options cannot be used together.
+      Neither changes Alice's phone, flag, other fields, or saved record.
+
+   1. Test cases: `edit 1 --no-follow-up -nf` and
+      `edit 1 -nf false`<br>
+      Expected: The first reports a repeated `--no-follow-up`; the second
+      reports that `false` belongs to no option. No data changes.
 
 1. Persisting and loading follow-up status
 
@@ -1590,9 +1612,9 @@ testers are expected to do more *exploratory* testing.
       run `edit INDEX -e "   "`.<br>
       Expected: The whitespace-only value is trimmed and the email is removed.
 
-   1. Test case: `edit INDEX -e "" -p 81112222 -t "" -f`<br>
+   1. Test case: `edit INDEX -e "" -p 81112222 -t "" --no-follow-up`<br>
       Expected: The email stays absent, the phone changes, tags are removed,
-      and follow-up is toggled. All changes survive a restart.
+      and follow-up is cleared. All changes survive a restart.
 
    1. Test cases: `edit INDEX -e`, `edit INDEX -e "" -e alice@example.com`,
       and `edit INDEX -p "" -e ""`.<br>

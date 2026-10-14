@@ -3,6 +3,7 @@ package seedu.tab.logic.parser;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
@@ -38,8 +39,13 @@ public class EditCommandParser implements Parser<EditCommand> {
      */
     public EditCommand parse(String args) throws ParseException {
         FlagArgumentMap arguments = FlagTokenizer.tokenize(
-                args, FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG, FLAG_FOLLOW_UP);
-        arguments.verifyNoDuplicateFlagsFor(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_FOLLOW_UP);
+                args, FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG,
+                FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
+        arguments.verifyNoDuplicateFlagsFor(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
+                FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
+        if (arguments.getValue(FLAG_FOLLOW_UP).isPresent() && arguments.getValue(FLAG_NO_FOLLOW_UP).isPresent()) {
+            throw new ParseException(EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP);
+        }
 
         ParseProblems problems = new ParseProblems();
 
@@ -60,7 +66,8 @@ public class EditCommandParser implements Parser<EditCommand> {
      * that they named no field.
      */
     private static boolean hasAnyField(FlagArgumentMap arguments) {
-        return Stream.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG, FLAG_FOLLOW_UP)
+        return Stream.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG,
+                FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP)
                 .anyMatch(flag -> !arguments.getAllValues(flag).isEmpty());
     }
 
@@ -88,7 +95,11 @@ public class EditCommandParser implements Parser<EditCommand> {
         arguments.getValue(FLAG_NUS_STUDENT_ID)
                 .ifPresent(value -> parseNusStudentIdForEdit(problems, value, descriptor));
         parseTagsForEdit(problems, arguments.getAllValues(FLAG_TAG)).ifPresent(descriptor::setTags);
-        descriptor.setFlagToggled(arguments.getValue(FLAG_FOLLOW_UP).isPresent());
+        if (arguments.getValue(FLAG_FOLLOW_UP).isPresent()) {
+            descriptor.setFlagged(true);
+        } else if (arguments.getValue(FLAG_NO_FOLLOW_UP).isPresent()) {
+            descriptor.setFlagged(false);
+        }
 
         return descriptor;
     }
