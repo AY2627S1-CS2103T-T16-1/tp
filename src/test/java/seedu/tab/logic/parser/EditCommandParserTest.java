@@ -205,7 +205,7 @@ public class EditCommandParserTest {
         assertParseSuccess(parser, "\u00A01\u00A0-e\u00A0\"\"\u00A0",
                 new EditCommand(INDEX_FIRST_STUDENT, cleared));
         EditStudentDescriptor combined = new EditStudentDescriptorBuilder().withoutEmail()
-                .withPhone(VALID_PHONE_BOB).withTags().withFlagToggled(true).build();
+                .withPhone(VALID_PHONE_BOB).withTags().withFlag(true).build();
         assertParseSuccess(parser, "1 -e \"\" -p " + VALID_PHONE_BOB + " -t \"\" -f",
                 new EditCommand(INDEX_FIRST_STUDENT, combined));
     }
@@ -238,18 +238,64 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_followUpAloneOrWithAnotherEdit_success() {
-        EditStudentDescriptor toggleOnly = new EditStudentDescriptorBuilder()
-                .withFlagToggled(true).build();
+        EditStudentDescriptor flagOnly = new EditStudentDescriptorBuilder()
+                .withFlag(true).build();
         assertParseSuccess(parser, "1" + FOLLOW_UP,
-                new EditCommand(INDEX_FIRST_STUDENT, toggleOnly));
+                new EditCommand(INDEX_FIRST_STUDENT, flagOnly));
 
         // the short alias marks the same option
-        assertParseSuccess(parser, "1 -f", new EditCommand(INDEX_FIRST_STUDENT, toggleOnly));
+        assertParseSuccess(parser, "1 -f", new EditCommand(INDEX_FIRST_STUDENT, flagOnly));
 
-        EditStudentDescriptor toggleAndPhone = new EditStudentDescriptorBuilder()
-                .withPhone(VALID_PHONE_BOB).withFlagToggled(true).build();
+        EditStudentDescriptor flagAndPhone = new EditStudentDescriptorBuilder()
+                .withPhone(VALID_PHONE_BOB).withFlag(true).build();
         assertParseSuccess(parser, "1" + PHONE_BOB + FOLLOW_UP,
-                new EditCommand(INDEX_FIRST_STUDENT, toggleAndPhone));
+                new EditCommand(INDEX_FIRST_STUDENT, flagAndPhone));
+    }
+
+    @Test
+    public void parse_noFollowUpAloneOrWithOtherEdits_success() {
+        EditStudentDescriptor clearOnly = new EditStudentDescriptorBuilder().withFlag(false).build();
+        assertParseSuccess(parser, "1 --no-follow-up", new EditCommand(INDEX_FIRST_STUDENT, clearOnly));
+        assertParseSuccess(parser, "1 -nf", new EditCommand(INDEX_FIRST_STUDENT, clearOnly));
+        assertParseSuccess(parser, "  1\u00a0-nf  ", new EditCommand(INDEX_FIRST_STUDENT, clearOnly));
+        assertParseSuccess(parser, "  1\u00a0--no-follow-up  ", new EditCommand(INDEX_FIRST_STUDENT, clearOnly));
+        EditStudentDescriptor clearAndPhone = new EditStudentDescriptorBuilder()
+                .withPhone(VALID_PHONE_BOB).withFlag(false).build();
+        assertParseSuccess(parser, "1 --no-follow-up" + PHONE_BOB,
+                new EditCommand(INDEX_FIRST_STUDENT, clearAndPhone));
+        assertParseSuccess(parser, "1 -nf" + PHONE_BOB,
+                new EditCommand(INDEX_FIRST_STUDENT, clearAndPhone));
+    }
+
+    @Test
+    public void parse_contradictoryFollowUpOptions_failure() {
+        for (String options : new String[] {"--follow-up --no-follow-up", "--no-follow-up --follow-up",
+            "-f --no-follow-up", "--no-follow-up -f -p 81112222", "--follow-up -nf", "-nf --follow-up",
+            "-f -nf", "-nf -f -p 81112222"}) {
+            assertParseFailure(parser, "1 " + options, EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP);
+        }
+    }
+
+    @Test
+    public void parse_noFollowUpWithValueOrRepeated_failure() {
+        for (String value : new String[] {"false", "true", "\"\"", "\"   \""}) {
+            assertParseFailure(parser, "1 --no-follow-up " + value,
+                    String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, value.replace("\"", "")));
+            assertParseFailure(parser, "1 -nf " + value,
+                    String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, value.replace("\"", "")));
+        }
+        assertParseFailure(parser, "1 --no-follow-up --no-follow-up",
+                Messages.getErrorMessageForDuplicateFlags("--no-follow-up"));
+        assertParseFailure(parser, "1 -nf -nf",
+                Messages.getErrorMessageForDuplicateFlags("-nf"));
+        assertParseFailure(parser, "1 --no-follow-up -nf",
+                Messages.getErrorMessageForDuplicateFlags("--no-follow-up"));
+        assertParseFailure(parser, "1 -nf --no-follow-up",
+                Messages.getErrorMessageForDuplicateFlags("-nf"));
+        assertParseFailure(parser, "1 --follow-up -f",
+                Messages.getErrorMessageForDuplicateFlags("--follow-up"));
+        assertParseFailure(parser, "1 --NO-FOLLOW-UP",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--NO-FOLLOW-UP"));
     }
 
     @Test

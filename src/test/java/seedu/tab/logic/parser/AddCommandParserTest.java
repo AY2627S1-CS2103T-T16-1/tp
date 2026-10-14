@@ -255,6 +255,10 @@ public class AddCommandParserTest {
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-z"));
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --unknown something",
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"));
+        for (String option : new String[] {"--no-follow-up", "-nf"}) {
+            assertParseFailure(parser, NAME_BOB + PHONE_BOB + " " + option,
+                    String.format(Messages.MESSAGE_UNKNOWN_FLAG, option));
+        }
     }
 
     @Test
