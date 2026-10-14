@@ -54,6 +54,15 @@ public class MessagesTest {
     }
 
     @Test
+    public void format_studentWithNusStudentId_includesItBeforeContactDetails() {
+        Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withoutEmail().withNusStudentId("A01234567X").withTags().build();
+
+        assertEquals("Alice Pauline; NUS Student ID: A01234567X; Phone: 94351253",
+                Messages.format(student));
+    }
+
+    @Test
     public void format_flaggedStudent_includesFollowUpStatus() {
         Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
                 .withTags("friends").withFlag(true).build();
@@ -92,6 +101,14 @@ public class MessagesTest {
         assertEquals("Email \"" + "a".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…\" is not valid: too long",
                 message);
         assertTrue(message.length() < 200, "the message is still far too long: " + message.length());
+    }
+
+    @Test
+    public void shorten_longValueWithEmojiAtBoundary_keepsEmojiIntact() {
+        String prefix = "a".repeat(Messages.MAX_QUOTED_VALUE_LENGTH - 1);
+        String value = prefix + "😀" + "more";
+
+        assertEquals(prefix + "😀…", Messages.shorten(value));
     }
 
     @Test

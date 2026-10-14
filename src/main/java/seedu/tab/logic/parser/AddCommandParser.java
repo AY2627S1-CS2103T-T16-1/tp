@@ -2,6 +2,7 @@ package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
@@ -14,6 +15,7 @@ import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
@@ -36,8 +38,8 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     public AddCommand parse(String args) throws ParseException {
         FlagArgumentMap arguments = FlagTokenizer.tokenize(
-                args, FLAG_PHONE, FLAG_EMAIL, FLAG_TAG, FLAG_FOLLOW_UP);
-        arguments.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL, FLAG_FOLLOW_UP);
+                args, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG, FLAG_FOLLOW_UP);
+        arguments.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_FOLLOW_UP);
 
         ParseProblems problems = new ParseProblems();
 
@@ -49,12 +51,14 @@ public class AddCommandParser implements Parser<AddCommand> {
         Name name = parseName(problems, arguments.getPreamble());
         Phone phone = problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone);
         Email email = problems.collectIfPresent(arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail);
+        NusStudentId nusStudentId = problems.collectIfPresent(
+                arguments.getValue(FLAG_NUS_STUDENT_ID), ParserUtil::parseNusStudentId);
         Set<Tag> tagList = problems.collectEach(arguments.getAllValues(FLAG_TAG), ParserUtil::parseTag);
 
         problems.throwIfAny();
 
         boolean isFlagged = arguments.getValue(FLAG_FOLLOW_UP).isPresent();
-        Student student = new Student(name, phone, email, tagList, isFlagged);
+        Student student = new Student(name, phone, email, nusStudentId, tagList, isFlagged);
 
         return new AddCommand(student);
     }

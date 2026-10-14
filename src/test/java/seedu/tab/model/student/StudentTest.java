@@ -12,6 +12,8 @@ import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalStudents.ALICE;
 import static seedu.tab.testutil.TypicalStudents.BOB;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.model.tag.Flag;
@@ -32,6 +34,25 @@ public class StudentTest {
         Student student = new StudentBuilder(ALICE).withFlag(true).build();
         assertEquals(new Flag(), student.getFlag().orElseThrow());
         assertTrue(student.isFlagged());
+    }
+
+    @Test
+    public void constructor_withoutNusStudentIdAndWithFlag_preservesBothStates() {
+        Student student = new Student(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail().orElse(null), ALICE.getTags(), true);
+
+        assertTrue(student.getNusStudentId().isEmpty());
+        assertTrue(student.isFlagged());
+    }
+
+    @Test
+    public void constructor_withNusStudentIdWithoutFlag_preservesBothStates() {
+        NusStudentId nusStudentId = new NusStudentId("E0123456");
+        Student student = new Student(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail().orElse(null), nusStudentId, ALICE.getTags());
+
+        assertEquals(Optional.of(nusStudentId), student.getNusStudentId());
+        assertFalse(student.isFlagged());
     }
 
     @Test
@@ -135,9 +156,27 @@ public class StudentTest {
     }
 
     @Test
+    public void isSameStudent_differentNusStudentId_stillTheSameStudent() {
+        Student withNusStudentId = new StudentBuilder(ALICE).withNusStudentId("A01234567X").build();
+        Student withDifferentNusStudentId = new StudentBuilder(ALICE).withNusStudentId("A76543210Y").build();
+
+        assertTrue(withNusStudentId.isSameStudent(withDifferentNusStudentId));
+        assertTrue(ALICE.isSameStudent(withNusStudentId));
+    }
+
+    @Test
+    public void isSameStudent_sameNusStudentIdDifferentName_returnsFalse() {
+        Student alice = new StudentBuilder(ALICE).withNusStudentId("A01234567X").build();
+        Student bob = new StudentBuilder(ALICE).withName(VALID_NAME_BOB).withNusStudentId("A01234567X").build();
+
+        assertFalse(alice.isSameStudent(bob));
+    }
+
+    @Test
     public void toStringMethod() {
         String expected = Student.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
-                + ", email=" + ALICE.getEmail().orElse(null) + ", tags=" + ALICE.getTags()
+                + ", email=" + ALICE.getEmail().orElse(null) + ", nusStudentId=" + ALICE.getNusStudentId().orElse(null)
+                + ", tags=" + ALICE.getTags()
                 + ", isFlagged=" + ALICE.isFlagged() + "}";
         assertEquals(expected, ALICE.toString());
     }
@@ -163,5 +202,14 @@ public class StudentTest {
                 .build().hashCode());
         assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withFlag(!ALICE.isFlagged())
                 .build().hashCode());
+        assertNotEquals(ALICE.hashCode(), new StudentBuilder(ALICE).withNusStudentId("A01234567X").build().hashCode());
+    }
+
+    @Test
+    public void equals_differentNusStudentId_returnsFalse() {
+        Student first = new StudentBuilder(ALICE).withNusStudentId("A01234567X").build();
+        Student second = new StudentBuilder(ALICE).withNusStudentId("A76543210Y").build();
+        assertFalse(first.equals(second));
+        assertFalse(ALICE.equals(first));
     }
 }
