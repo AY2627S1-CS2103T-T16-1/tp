@@ -356,10 +356,9 @@ If your changes make the data file unreadable, TAB shows an error at the next
 run instead of opening the main window. The error identifies `data/tab.json`
 and, when possible, the affected student record or field. TAB leaves the file
 unchanged so that you can repair or replace it, then restart TAB.<br>
-Saved email addresses longer than 512 characters are rejected before validation
-because their shape can otherwise exhaust Java's stack. Commands already limit
-new email addresses to 254 characters. We still recommend backing up the file
-before editing it.
+Saved email addresses longer than 254 characters are rejected before validation
+because their shape can otherwise exhaust Java's stack. This is the same limit
+used by commands. We still recommend backing up the file before editing it.
 </box>
 
 ### Archiving data files `[coming in v2.0]`

@@ -388,19 +388,19 @@ forward path, so the bound comes from the domain rather than from the parser,
 and it is the only bound measured to be safe on every stack size tried: on a
 256 KB stack even a 513-character address overflows.
 
-`isValidEmail` deliberately keeps **no** length limit, so the check sits in the
-parser rather than in the field. Storage validates with `isValidEmail`, and a
-narrower rule there would make a file an earlier version had written
-unloadable. `JsonAdaptedStudent` instead applies a separate 512-character
-storage safety limit before calling the matcher. This remains more than twice
-the command limit, so legacy values just beyond 254 characters still load,
-while an extreme hand-edited value cannot exhaust the stack. A worst-case
-address at the storage limit is tested with a 256 KB Java stack; a value over
-the limit raises `IllegalValueException` before the matcher runs.
+`isValidEmail` deliberately keeps **no** length limit, so each input boundary
+can report length and format failures separately. Both `ParserUtil` and
+`JsonAdaptedStudent` check `Email.MAX_LENGTH` before calling the matcher. A
+saved address of up to 254 characters therefore loads, while a longer one
+raises `IllegalValueException` with its actual and allowed lengths before its
+shape can exhaust the stack. The storage tests cover both sides of that
+boundary.
 
 `Messages.getErrorMessageForInvalidValue` shortens a rejected value past
 `MAX_QUOTED_VALUE_LENGTH` characters, so that a very long value cannot push the
-reason out of view. Every field shares that message, so every field benefits.
+reason out of view. It counts Unicode code points so it does not cut an emoji
+in half. Command parsing and storage share that message, so both paths report
+the same invalid value consistently.
 
 `Phone` is **not** an identity field and **not** a key: two students may hold the
 same number, and `isSameStudent` does not read it. It is normalized only so
@@ -1612,6 +1612,10 @@ testers are expected to do more *exploratory* testing.
       The main window does not open. After dismissing the dialog, the file still
       matches the malformed contents byte for byte.
 
+   1. Test case: Replace the file contents with `{}` and launch TAB.<br>
+      Expected: The dialog reports that the student list is missing. The main
+      window does not open and the file remains byte-for-byte unchanged.
+
    1. Test case: Replace the file with well-formed JSON containing two student
       records, where the second has a phone value of `12`, and launch TAB.<br>
       Expected: The dialog identifies student record 2, its name, the Phone
@@ -1619,7 +1623,7 @@ testers are expected to do more *exploratory* testing.
       the JSON file remains byte-for-byte unchanged.
 
    1. Test case: In an otherwise valid file, give a student an email longer
-      than 512 characters, such as `a.` repeated 300 times followed by
+      than 254 characters, such as `a.` repeated 130 times followed by
       `a@example.com`, and launch TAB.<br>
       Expected: The dialog identifies the record and Email field, reports the
       actual and allowed lengths, and TAB exits without a stack trace or file
