@@ -267,8 +267,9 @@ done to it beyond the quotes any value with spaces takes:
 * The index comes first, before any option.
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
-* `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` clears it. Both
-  take no value. Repeating either request succeeds and keeps the requested state.
+* `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` clears it and is
+  available only with `edit`. New students are unflagged by default when added.
+  Both options take no value. Repeating either request succeeds and keeps the requested state.
   Leaving both out preserves the student's follow-up status.
 * Choose at most one follow-up option. Combining `--follow-up` or `-f` with
   `--no-follow-up` is rejected without changing any student details.

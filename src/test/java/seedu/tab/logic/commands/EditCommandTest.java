@@ -199,6 +199,7 @@ public class EditCommandTest {
                 Messages.format(editedStudent));
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        // Repeating the request keeps the flag set.
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
     }
 
@@ -217,6 +218,7 @@ public class EditCommandTest {
                 Messages.format(editedStudent));
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        // Repeating the request keeps the flag cleared.
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
     }
 

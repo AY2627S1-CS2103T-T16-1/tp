@@ -293,6 +293,10 @@ decision to the field parser, so no tokenizer change was needed.
 `edit` sets follow-up with `--follow-up` (alias `-f`) and clears it with
 `--no-follow-up`. The parser rejects contradictory options before describing
 any edit, so neither the model nor the saved book changes on that error.
+Clearing keeps only the descriptive long form: `-F` would make opposite actions
+differ only in case, while another alias such as `-nf` would add a spelling to
+remember. This favors a clear distinction between setting and clearing over
+equally short commands for both actions.
 
 ### Commands with no arguments
 
