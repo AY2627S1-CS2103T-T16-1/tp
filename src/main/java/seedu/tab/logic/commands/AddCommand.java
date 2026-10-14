@@ -30,8 +30,10 @@ public class AddCommand extends Command {
             + "[" + FLAG_FOLLOW_UP.getLabel() + "]\n"
             + "The name comes first and may hold spaces as it is. Any option value holding "
             + "spaces, and any value opening with a hyphen, goes in double quotes. "
-            + "--phone, --email and --tag are aliases for -p, -e and -t. "
-            + FLAG_FOLLOW_UP + " (alias -f) takes no value and marks the student as needing follow-up.\n"
+            + "The value options accept either spelling: " + FLAG_PHONE.getMarkerSummary() + ", "
+            + FLAG_EMAIL.getMarkerSummary() + " and " + FLAG_TAG.getMarkerSummary() + ". "
+            + FLAG_FOLLOW_UP.getMarkerSummary()
+            + " takes no value and marks the student as needing follow-up.\n"
             + "Example: " + COMMAND_WORD + " \"Siti Nur-Aisyah\" "
             + FLAG_PHONE + " 98765432 "
             + FLAG_EMAIL + " e1147203@u.nus.edu "
