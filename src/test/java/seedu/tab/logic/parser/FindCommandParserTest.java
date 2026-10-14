@@ -3,6 +3,7 @@ package seedu.tab.logic.parser;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.tab.logic.parser.FindCommandParser.MESSAGE_EMPTY_KEYWORD;
 
 import java.util.List;
 
@@ -24,20 +25,19 @@ public class FindCommandParserTest {
     @Test
     public void parse_emptyOrBlankQuotedTerm_throwsParseException() {
         // empty quoted string
-        assertParseFailure(parser, "\"\"",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "\"\"", MESSAGE_EMPTY_KEYWORD);
 
         // whitespace-only quoted string
-        assertParseFailure(parser, "\"   \"",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "\"   \"", MESSAGE_EMPTY_KEYWORD);
+
+        // zero-width space inside quotes
+        assertParseFailure(parser, "\"\u200B\"", MESSAGE_EMPTY_KEYWORD);
 
         // mixed valid keyword with empty quoted string
-        assertParseFailure(parser, "Alice \"\"",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "Alice \"\"", MESSAGE_EMPTY_KEYWORD);
 
         // mixed valid keyword with whitespace-only quoted string
-        assertParseFailure(parser, "Alice \"   \" Bob",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "Alice \"   \" Bob", MESSAGE_EMPTY_KEYWORD);
     }
 
     @Test
@@ -63,6 +63,22 @@ public class FindCommandParserTest {
 
         // quoted phrase with surrounding whitespace inside the quotes trimmed
         assertParseSuccess(parser, "\"  Lab 3  \"", expectedPhraseCommand);
+
+        // quoted phrase with multiple internal spaces collapsed
+        assertParseSuccess(parser, "\"Lab   3\"", expectedPhraseCommand);
+
+        // quoted phrase with internal non-breaking space collapsed to normal space
+        assertParseSuccess(parser, "\"Lab\u00A03\"", expectedPhraseCommand);
+
+        // zero-width spaces stripped
+        FindCommand expectedStrippedZeroWidthCommand =
+                new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Lab3")));
+        assertParseSuccess(parser, "\"Lab\u200B3\"", expectedStrippedZeroWidthCommand);
+
+        // decomposed unicode characters composed to NFC
+        FindCommand expectedComposedCommand =
+                new FindCommand(new DetailsContainsKeywordsPredicate(List.of("caf\u00E9")));
+        assertParseSuccess(parser, "\"caf\u0065\u0301\"", expectedComposedCommand);
 
         // mixed unquoted words and quoted phrase
         FindCommand expectedMixedCommand =

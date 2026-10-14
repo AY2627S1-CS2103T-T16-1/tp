@@ -471,8 +471,9 @@ that a number typed with unusual whitespace is stored consistently.
 `FindCommandParser` reads search arguments using `CommandTokenizer`, allowing
 keywords to be enclosed in double quotes to match phrases containing spaces
 (such as `"Lab 3"`). Unterminated quotes report `CommandTokenizer.MESSAGE_UNCLOSED_QUOTE`,
-while empty or whitespace-only quoted terms are rejected with `MESSAGE_INVALID_COMMAND_FORMAT`.
-It creates a `DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
+while empty or whitespace-only quoted terms are rejected with `MESSAGE_EMPTY_KEYWORD`.
+Search terms are normalized with `StringUtil.normalizeFieldValue`, collapsing internal
+whitespace runs and applying Unicode NFC normalization. It creates a `DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
 against the student's name, NUS Student ID, phone, email, ordinary tags,
 and optional follow-up flag. Matching is case-insensitive and partial; any
 keyword can match.
@@ -1851,12 +1852,20 @@ testers are expected to do more *exploratory* testing.
       Expected: Error reported: `A quoted value is never closed. Add the closing " or remove the opening one.`
       The displayed student list remains unchanged.
 
+   1. Test case: `find "Lab  3"` (two spaces inside the quotes)<br>
+      Expected: Matches `Alice Tan` (`Found 1 student.`), because search terms are normalized
+      like stored field values, collapsing interior whitespace runs.
+
    1. Test case: `find ""` or `find "   "`<br>
-      Expected: Error reported: `Invalid command format! ...`
+      Expected: Error reported: `A search term is empty. Remove the empty quotes or put a value between them.`
       The displayed student list remains unchanged.
 
    1. Test case: `find Alice ""` or `find Alice "   "`<br>
-      Expected: Error reported: `Invalid command format! ...`
+      Expected: Error reported: `A search term is empty. Remove the empty quotes or put a value between them.`
+      The displayed student list remains unchanged.
+
+   1. Test case: `find` or `find    ` (with no search terms)<br>
+      Expected: Error reported: `Invalid command format! ...` followed by find usage instructions.
       The displayed student list remains unchanged.
 
 ### Confirming before clearing all students

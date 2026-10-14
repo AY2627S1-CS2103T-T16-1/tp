@@ -336,6 +336,7 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 * Multiple terms perform an `OR` search across individual words and quoted phrases; for example, `find Hans Bo` returns `Hans Gruber` and `Bo Yang`, while `find Alice "Lab 3"` returns students matching `Alice` or the phrase `Lab 3`.
 * To include a literal double quote or backslash inside a search term, escape it with a backslash: `\"` or `\\`.
 * An unclosed quote (for example, leaving off the closing quote in `"Lab 3`) or an empty search term (such as `""` or `"   "`) is refused without changing the current student list.
+* Repeated spaces inside a quoted phrase are collapsed to a single space, matching how student details are stored; for example, `find "Lab  3"` matches `Lab 3`.
 * The search covers all details of a student: name, NUS Student ID, phone number, email
   address, tags and follow-up status. For example, `find follow-up` can find
   flagged students, and `find a0123` can find a student with NUS Student ID `A01234567X`.
@@ -463,6 +464,6 @@ Action     | Format, Examples
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name "James Lee" --id A01234567X`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3"`
+**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
 **List**   | `list`
 **Help**   | `help`
