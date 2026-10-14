@@ -27,6 +27,11 @@ import seedu.tab.testutil.StudentBuilder;
 public class AddCommandTest {
 
     @Test
+    public void messageUsage_includesNusStudentIdAlias() {
+        assertTrue(AddCommand.MESSAGE_USAGE.contains("--id (alias -i)"));
+    }
+
+    @Test
     public void constructor_nullStudent_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new AddCommand(null));
     }

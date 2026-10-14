@@ -33,8 +33,9 @@
     </CardHeadline>
 
     <HBox alignment="CENTER_LEFT" spacing="12">
-      <!-- laid out for the NUS ID, and left out of the card until a student carries one -->
-      <Label fx:id="nusId" styleClass="card-detail-strong" minWidth="-Infinity" />
+      <!-- left out until a student carries one, and allowed to elide before it can push the
+           required phone or optional email outside the details row -->
+      <Label fx:id="nusStudentId" styleClass="card-detail-strong" minWidth="0" />
       <!-- the phone keeps its own width: half a phone number is of no use to anyone, where
            the start of an email address still says whose it is. A row that shares what it
            cannot fit between the two showed a flagged student's phone as "9111…" -->

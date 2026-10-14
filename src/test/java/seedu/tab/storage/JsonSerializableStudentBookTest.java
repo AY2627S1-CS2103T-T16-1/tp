@@ -5,6 +5,8 @@ import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +42,35 @@ public class JsonSerializableStudentBookTest {
     public void toModelType_duplicateStudents_throwsIllegalValueException() throws Exception {
         JsonSerializableStudentBook dataFromFile = JsonUtil.readJsonFile(DUPLICATE_STUDENT_FILE,
                 JsonSerializableStudentBook.class).get();
-        assertThrows(IllegalValueException.class, JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT,
+        String expectedMessage = "Student record 2 (\"Alice Pauline\"): "
+                + JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT;
+        assertThrows(IllegalValueException.class, expectedMessage, dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullStudentRecord_throwsIllegalValueException() {
+        JsonSerializableStudentBook dataFromFile = new JsonSerializableStudentBook(
+                Arrays.asList((JsonAdaptedStudent) null));
+
+        assertThrows(IllegalValueException.class, "Student record 1 is missing.", dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_missingStudentList_throwsIllegalValueException() {
+        JsonSerializableStudentBook dataFromFile =
+                new JsonSerializableStudentBook((List<JsonAdaptedStudent>) null);
+
+        assertThrows(IllegalValueException.class, JsonSerializableStudentBook.MESSAGE_MISSING_STUDENT_LIST,
+                dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_studentWithoutName_reportsRecordNumberWithoutName() {
+        JsonAdaptedStudent studentWithoutName = new JsonAdaptedStudent(
+                null, "91234567", null, List.of(), false);
+        JsonSerializableStudentBook dataFromFile = new JsonSerializableStudentBook(List.of(studentWithoutName));
+
+        assertThrows(IllegalValueException.class, "Student record 1: Name field is missing.",
                 dataFromFile::toModelType);
     }
 

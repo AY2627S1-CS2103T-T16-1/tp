@@ -119,6 +119,16 @@ public class FindCommandTest {
     }
 
     @Test
+    public void execute_nusStudentIdFragmentIgnoringCase_studentFound() {
+        String expectedMessage = Messages.getStudentsFoundOverview(1);
+        DetailsContainsKeywordsPredicate predicate = preparePredicate("a2345");
+        FindCommand command = new FindCommand(predicate);
+        expectedModel.updateFilteredStudentList(predicate);
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertEquals(List.of(CARL), model.getFilteredStudentList());
+    }
+
+    @Test
     public void toStringMethod() {
         DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of("keyword"));
         FindCommand findCommand = new FindCommand(predicate);
