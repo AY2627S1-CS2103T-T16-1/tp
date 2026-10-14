@@ -214,6 +214,13 @@ command feedback. A student without one has no placeholder or blank gap there.
 A flagged student's card carries a `Needs follow-up` marker at its right-hand
 edge, on the same line as the name, and the command result says so too.
 
+When a student is added, the command result displays the new record
+(`New student added: NAME; Phone: PHONE...`) so you can confirm the details
+immediately. Consistent with the student card, optional fields appear in the
+result only when present: an unflagged student or a student without an email
+or tags leaves no empty placeholder labels in the message, and tags appear
+in alphabetical order (ignoring case).
+
 Leading and trailing spaces are removed, repeated spaces inside a name are
 collapsed to one, and invisible characters are discarded, so that a name is
 always stored the way it looks.
@@ -301,7 +308,10 @@ Examples:
 *  `edit 2 -p 91234567 --follow-up` Updates the phone number and sets follow-up in one command.
 
 A cleared email or NUS Student ID, a cleared tag set, and an explicitly set or cleared follow-up status are
-saved at once, and return as they were when you next launch TAB.
+saved at once, and return as they were when you next launch TAB. The command result displays the updated
+record (`Edited student: NAME; Phone: PHONE...`) with fields formatted consistently
+with the student card, omitting cleared or absent optional fields and sorting tags
+alphabetically (ignoring case).
 
 ### Locating students by detail: `find`
 
@@ -331,6 +341,8 @@ Deletes the specified student from the student book.
 Format: `delete INDEX`
 
 * Deletes the student at the specified `INDEX`.
+* The command result identifies the removed record (`Deleted student: NAME; Phone: PHONE...`)
+  so you can verify exactly which student was deleted from the book.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
 
