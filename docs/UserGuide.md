@@ -102,8 +102,7 @@ see where you are typing, and selecting part of it (for example with
 
 **Tip:** The colours break a command where the parser breaks it, so if a value
 you meant to quote is not coloured as a quoted value, the parser will not read
-it as one either. One exception: `find` splits on spaces and does not honour
-quotes at all, so `find "John Doe"` searches for two words.
+it as one either.
 </box>
 
 ### Reading the summary beside the list
@@ -333,16 +332,21 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 
 * The search is case-insensitive; for example, `hans` matches `Hans`.
 * Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
+* Enclose a phrase in double quotes to search for words with spaces together; for example, `find "Lab 3"` matches only details containing the full phrase `Lab 3` and excludes records with only separate `Lab` and `3` fragments.
+* Multiple terms perform an `OR` search across individual words and quoted phrases; for example, `find Hans Bo` returns `Hans Gruber` and `Bo Yang`, while `find Alice "Lab 3"` returns students matching `Alice` or the phrase `Lab 3`.
+* To include a literal double quote or backslash inside a search term, escape it with a backslash: `\"` or `\\`.
+* An unclosed quote (for example, leaving off the closing quote in `"Lab 3`) or an empty search term (such as `""` or `"   "`) is refused without changing the current student list.
 * The search covers all details of a student: name, NUS Student ID, phone number, email
   address, tags and follow-up status. For example, `find follow-up` can find
   flagged students, and `find a0123` can find a student with NUS Student ID `A01234567X`.
 * Parts of details match; for example, `Han` matches `Hans`, and `912` matches the phone number `91234567`.
-* Students matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
 * TAB reports the number of matches found: `Found 0 students.` when none match,
   `Found 1 student.` for a single match, and `Found 3 students.` for multiple matches.
 
 Examples:
 * `find john` returns `john` and `John Doe`
+* `find "Lab 3"` returns students whose details contain the exact phrase `Lab 3`
+* `find Alice "Lab 3"` returns students whose details contain `Alice` or the phrase `Lab 3`
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 * `find 91234 friend` returns students whose phone numbers or tags contain `91234` or `friend`
@@ -459,6 +463,6 @@ Action     | Format, Examples
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name "James Lee" --id A01234567X`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James A0123`
+**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3"`
 **List**   | `list`
 **Help**   | `help`

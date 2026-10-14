@@ -468,8 +468,12 @@ the same invalid value consistently.
 same number, and `isSameStudent` does not read it. It is normalized only so
 that a number typed with unusual whitespace is stored consistently.
 
-`FindCommandParser` creates a `DetailsContainsKeywordsPredicate`, which checks
-each keyword against the student's name, NUS Student ID, phone, email, ordinary tags,
+`FindCommandParser` reads search arguments using `CommandTokenizer`, allowing
+keywords to be enclosed in double quotes to match phrases containing spaces
+(such as `"Lab 3"`). Unterminated quotes report `CommandTokenizer.MESSAGE_UNCLOSED_QUOTE`,
+while empty or whitespace-only quoted terms are rejected with `MESSAGE_INVALID_COMMAND_FORMAT`.
+It creates a `DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
+against the student's name, NUS Student ID, phone, email, ordinary tags,
 and optional follow-up flag. Matching is case-insensitive and partial; any
 keyword can match.
 
@@ -1331,7 +1335,7 @@ These were raised during requirement gathering and left out of the product.
   `U+000D`, `U+0020`, `U+0085`, `U+00A0`, `U+1680`, `U+2000` to `U+200A`, `U+2028` to `U+2029`, `U+202F`, `U+205F`
   and `U+3000`. This set excludes the zero-width space (`U+200B`), byte order mark (`U+FEFF`), zero-width non-joiner
   (`U+200C`) and zero-width joiner (`U+200D`). It governs `CommandTokenizer` and normalized field values, not every
-  parser: top-level command parsing and `find` retain narrower ASCII-oriented rules.
+  parser: top-level command parsing retains narrower ASCII-oriented rules.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -1826,6 +1830,34 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `delete 1`, then `list`<br>
       Expected: Feedback reports `Listed 1 student.`.
+
+### Locating students with quoted phrases and error handling
+
+1. Quoted phrases, mixed terms, and unclosed quotes
+
+   1. Prerequisites: Clear all students (`clear`, then `yes`). Add two students:
+      `add "Alice Tan" -p 91111111 -t "Lab 3"` and
+      `add "Bob Lee" -p 93333333 -t Lab`.
+
+   1. Test case: `find "Lab 3"`<br>
+      Expected: Matches only `Alice Tan` (`Found 1 student.`). `Bob Lee` is excluded because
+      the phrase "Lab 3" does not match separate "Lab" and "3" fragments.
+
+   1. Test case: `find Bob "Lab 3"`<br>
+      Expected: Matches both `Alice Tan` and `Bob Lee` (`Found 2 students.`), showing OR matching
+      across words and quoted phrases.
+
+   1. Test case: `find "Lab 3`<br>
+      Expected: Error reported: `A quoted value is never closed. Add the closing " or remove the opening one.`
+      The displayed student list remains unchanged.
+
+   1. Test case: `find ""` or `find "   "`<br>
+      Expected: Error reported: `Invalid command format! ...`
+      The displayed student list remains unchanged.
+
+   1. Test case: `find Alice ""` or `find Alice "   "`<br>
+      Expected: Error reported: `Invalid command format! ...`
+      The displayed student list remains unchanged.
 
 ### Confirming before clearing all students
 

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.commands.EditCommand;
+import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.parser.exceptions.ParseException;
 
 /**
@@ -40,6 +41,11 @@ public class UserGuideExamplesTest {
     @Test
     public void userGuide_everyEditExample_parses() throws IOException {
         assertEveryExampleParses(EditCommand.COMMAND_WORD, new EditCommandParser());
+    }
+
+    @Test
+    public void userGuide_everyFindExample_parses() throws IOException {
+        assertEveryExampleParses(FindCommand.COMMAND_WORD, new FindCommandParser());
     }
 
     /**

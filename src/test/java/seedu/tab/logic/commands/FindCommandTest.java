@@ -17,8 +17,11 @@ import org.junit.jupiter.api.Test;
 import seedu.tab.logic.Messages;
 import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
+import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.Student;
+import seedu.tab.testutil.StudentBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) for {@code FindCommand}.
@@ -116,6 +119,55 @@ public class FindCommandTest {
         expectedModel.updateFilteredStudentList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
         assertEquals(List.of(CARL), model.getFilteredStudentList());
+    }
+
+    @Test
+    public void execute_quotedPhrase_matchesWholePhraseAndExcludesSeparateFragments() {
+        Student phraseStudent = new StudentBuilder().withName("Alice Tan")
+                .withPhone("91111111").withTags("Lab 3").build();
+        Student fragmentStudent = new StudentBuilder().withName("Bob Lee")
+                .withPhone("93333333").withTags("Lab").build();
+        StudentBook studentBook = new StudentBook();
+        studentBook.addStudent(phraseStudent);
+        studentBook.addStudent(fragmentStudent);
+
+        Model localModel = new ModelManager(studentBook, new UserPrefs());
+        Model localExpectedModel = new ModelManager(studentBook, new UserPrefs());
+
+        DetailsContainsKeywordsPredicate predicate =
+                new DetailsContainsKeywordsPredicate(List.of("Lab 3"));
+        FindCommand command = new FindCommand(predicate);
+        localExpectedModel.updateFilteredStudentList(predicate);
+
+        assertCommandSuccess(command, localModel,
+                Messages.getStudentsFoundOverview(1), localExpectedModel);
+        assertEquals(List.of(phraseStudent), localModel.getFilteredStudentList());
+    }
+
+    @Test
+    public void execute_mixedPhraseAndKeyword_matchesEither() {
+        Student phraseStudent = new StudentBuilder().withName("Alice Tan")
+                .withPhone("91111111").withTags("Lab 3").build();
+        Student keywordStudent = new StudentBuilder().withName("Bob Lee")
+                .withPhone("93333333").withTags("Tutorial").build();
+        Student nonMatchingStudent = new StudentBuilder().withName("Charlie Lim")
+                .withPhone("94444444").withTags("Lecture").build();
+        StudentBook studentBook = new StudentBook();
+        studentBook.addStudent(phraseStudent);
+        studentBook.addStudent(keywordStudent);
+        studentBook.addStudent(nonMatchingStudent);
+
+        Model localModel = new ModelManager(studentBook, new UserPrefs());
+        Model localExpectedModel = new ModelManager(studentBook, new UserPrefs());
+
+        DetailsContainsKeywordsPredicate predicate =
+                new DetailsContainsKeywordsPredicate(List.of("Lab 3", "Bob"));
+        FindCommand command = new FindCommand(predicate);
+        localExpectedModel.updateFilteredStudentList(predicate);
+
+        assertCommandSuccess(command, localModel,
+                Messages.getStudentsFoundOverview(2), localExpectedModel);
+        assertEquals(List.of(phraseStudent, keywordStudent), localModel.getFilteredStudentList());
     }
 
     @Test
