@@ -3,6 +3,7 @@ package seedu.tab.commons.util;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -67,7 +68,7 @@ public class JsonUtil {
             throw new DataLoadingException(getJsonProcessingErrorMessage(e), e);
         } catch (IOException e) {
             logger.warning("Error reading from jsonFile file " + filePath + ": " + e);
-            throw new DataLoadingException("The file could not be read: " + e.getMessage(), e);
+            throw new DataLoadingException(getIoErrorMessage(e), e);
         }
 
         return Optional.of(jsonFile);
@@ -80,6 +81,13 @@ public class JsonUtil {
                 : String.format(" at line %d, column %d", location.getLineNr(), location.getColumnNr());
         return "The data is not in the expected JSON format" + locationMessage
                 + ": " + exception.getOriginalMessage();
+    }
+
+    static String getIoErrorMessage(IOException exception) {
+        if (exception instanceof AccessDeniedException) {
+            return "TAB does not have permission to read this file.";
+        }
+        return "The file could not be read: " + exception.getMessage();
     }
 
     /**

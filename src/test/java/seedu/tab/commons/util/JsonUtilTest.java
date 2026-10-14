@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
@@ -62,6 +63,13 @@ public class JsonUtilTest {
 
         assertEquals("The data is not in the expected JSON format: Invalid content without a location",
                 JsonUtil.getJsonProcessingErrorMessage(exception));
+    }
+
+    @Test
+    public void getIoErrorMessage_accessDenied_explainsPermissionFailure() {
+        AccessDeniedException exception = new AccessDeniedException("data/tab.json");
+
+        assertEquals("TAB does not have permission to read this file.", JsonUtil.getIoErrorMessage(exception));
     }
 
     //TODO: @Test jsonUtil_readJsonStringToObjectInstance_correctObject()
