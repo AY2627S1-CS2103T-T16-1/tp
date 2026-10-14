@@ -1401,8 +1401,8 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `edit 1 --name "Alice Lim" -p 81112222
       --email alice.lim@example.com --tag T2` as one line.<br>
-      Expected: Every named field changes. The unmentioned `Lab 3` tag is
-      removed because an edit replaces the tag set.
+      Expected: Every named field changes. The unmentioned `T1` and `Lab 3`
+      tags are removed because an edit replaces the tag set.
 
    1. Test cases: `edit 1 --email ""` and then `edit 1 --tag ""`.<br>
       Expected: The first command removes Alice's email, and the second removes

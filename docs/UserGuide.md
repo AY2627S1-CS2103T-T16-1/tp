@@ -137,7 +137,8 @@ Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [-t TAG]... [--follow-up]`
 
 The value options also accept their long aliases: `--phone` for `-p`,
 `--email` for `-e`, and `--tag` for `-t`. The two spellings may be mixed in
-one command.
+one command, but giving the same field twice is an error even when the two
+spellings differ.
 
 <box type="tip" seamless>
 
