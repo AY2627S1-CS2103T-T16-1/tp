@@ -19,7 +19,6 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
-import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -206,20 +205,23 @@ public class AddCommandParserTest {
         // the shape of the command is settled before any field is read, so the bad email
         // alongside the repeated phone is not collected with it
         assertParseFailure(parser, NAME_BOB + PHONE_AMY + PHONE_BOB + " -e nope",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE));
+                Messages.getErrorMessageForDuplicateFlags("-p"));
 
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + EMAIL_AMY + EMAIL_BOB,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
+                Messages.getErrorMessageForDuplicateFlags("-e"));
 
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + FOLLOW_UP + FOLLOW_UP,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_FOLLOW_UP));
+                Messages.getErrorMessageForDuplicateFlags("--follow-up"));
 
         assertParseFailure(parser, NAME_BOB + PHONE_AMY + " --phone " + VALID_PHONE_BOB,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE));
+                Messages.getErrorMessageForDuplicateFlags("-p"));
 
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + EMAIL_AMY
                         + " --email " + VALID_EMAIL_BOB,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
+                Messages.getErrorMessageForDuplicateFlags("-e"));
+
+        assertParseFailure(parser, NAME_BOB + " --phone 11111111 --phone 22222222",
+                Messages.getErrorMessageForDuplicateFlags("--phone"));
     }
 
     @Test

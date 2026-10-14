@@ -183,16 +183,16 @@ public class FlagTokenizerTest {
         FlagArgumentMap parsed = parse("John -e a@b.com -e c@d.com");
 
         assertEquals(Optional.of("c@d.com"), parsed.getValue(FLAG_EMAIL));
-        assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL), () ->
+        assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags("-e"), () ->
                 parsed.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL));
     }
 
     @Test
     public void verifyNoDuplicateFlagsFor_mixedAliasesOfOneFlag_throws() throws Exception {
-        FlagArgumentMap parsed = parse("John -e a@b.com --email c@d.com");
+        FlagArgumentMap parsed = parse("John --email a@b.com -e c@d.com");
 
         assertEquals(Optional.of("c@d.com"), parsed.getValue(FLAG_EMAIL));
-        assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL), () ->
+        assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags("--email"), () ->
                 parsed.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL));
     }
 

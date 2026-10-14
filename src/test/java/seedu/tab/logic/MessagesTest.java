@@ -2,7 +2,6 @@ package seedu.tab.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.testutil.Assert.assertThrows;
 
@@ -92,19 +91,19 @@ public class MessagesTest {
     public void getErrorMessageForDuplicateFlags_severalFlags_namesEachInTheOrderGiven() {
         // a set would let the order vary between runs, which makes the message unpredictable
         assertEquals("Multiple values specified for the following single-valued field(s): -p -e",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE, FLAG_EMAIL));
+                Messages.getErrorMessageForDuplicateFlags("-p", "-e"));
     }
 
     @Test
     public void getErrorMessageForDuplicateFlags_repeatedFlag_namesItOnce() {
         assertEquals("Multiple values specified for the following single-valued field(s): -e",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL, FLAG_EMAIL));
+                Messages.getErrorMessageForDuplicateFlags("-e", "-e"));
     }
 
     @Test
     public void getErrorMessageForDuplicateFlags_oneFlag_namesTheField() {
         assertEquals("Multiple values specified for the following single-valued field(s): -e",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
+                Messages.getErrorMessageForDuplicateFlags("-e"));
     }
 
 }

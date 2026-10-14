@@ -21,7 +21,6 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
-import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
@@ -184,7 +183,7 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1 -e \" \"",
                 Messages.getErrorMessageForInvalidValue("Email", "", Email.getFailureReason("")));
         assertParseFailure(parser, "1 -e \"\" -e a@b.com",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
+                Messages.getErrorMessageForDuplicateFlags("-e"));
         assertParseFailure(parser, "1 -n \"\" -e \"\"",
                 Messages.getErrorMessageForInvalidValue("Name", "", Name.getFailureReason("")));
         assertParseFailure(parser, "1 -p \"\" -e \"\"",
@@ -299,27 +298,30 @@ public class EditCommandParserTest {
     @Test
     public void parse_repeatedSingleValuedField_failure() {
         assertParseFailure(parser, "1" + PHONE_AMY + PHONE_BOB,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE));
+                Messages.getErrorMessageForDuplicateFlags("-p"));
 
         assertParseFailure(parser, "1" + FOLLOW_UP + FOLLOW_UP,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_FOLLOW_UP));
+                Messages.getErrorMessageForDuplicateFlags("--follow-up"));
 
         // a repeated option is refused before any field is read, since it leaves it unclear
         // which value belongs to the field
         assertParseFailure(parser, "1" + INVALID_PHONE + PHONE_BOB,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE));
+                Messages.getErrorMessageForDuplicateFlags("-p"));
 
         assertParseFailure(parser, "1" + PHONE_AMY + EMAIL_AMY + PHONE_BOB + EMAIL_BOB,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE, FLAG_EMAIL));
+                Messages.getErrorMessageForDuplicateFlags("-p", "-e"));
 
         assertParseFailure(parser, "1 -n \"Amy Bee\" --name \"Bob Choo\"",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_NAME));
+                Messages.getErrorMessageForDuplicateFlags("-n"));
 
         assertParseFailure(parser, "1" + PHONE_AMY + " --phone " + VALID_PHONE_BOB,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE));
+                Messages.getErrorMessageForDuplicateFlags("-p"));
 
         assertParseFailure(parser, "1" + EMAIL_AMY + " --email bob@example.com",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
+                Messages.getErrorMessageForDuplicateFlags("-e"));
+
+        assertParseFailure(parser, "1 --name \"Amy Bee\" --name \"Bob Choo\"",
+                Messages.getErrorMessageForDuplicateFlags("--name"));
     }
 
     @Test

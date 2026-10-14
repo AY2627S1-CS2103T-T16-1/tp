@@ -80,7 +80,7 @@ public class FlagTokenizer {
                 throw new ParseException(String.format(Messages.MESSAGE_UNKNOWN_FLAG, token.value()));
             }
             if (!flag.takesValue()) {
-                parsed.put(flag, "");
+                parsed.put(flag, token.value(), "");
                 index++;
                 continue;
             }
@@ -91,7 +91,7 @@ public class FlagTokenizer {
                         Messages.MESSAGE_FLAG_WITHOUT_VALUE, flag.getLabel(token.value())));
             }
 
-            parsed.put(flag, tokens.get(index + 1).value());
+            parsed.put(flag, token.value(), tokens.get(index + 1).value());
             index += 2;
         }
     }
