@@ -82,6 +82,13 @@ public class Flag {
         return Stream.concat(Stream.of(flag), aliases.stream()).toList();
     }
 
+    /**
+     * Returns every marker separated by slashes for compact use in command usage messages.
+     */
+    public String getMarkerSummary() {
+        return String.join("/", getMarkers());
+    }
+
     public boolean takesValue() {
         return takesValue;
     }
@@ -95,13 +102,14 @@ public class Flag {
     }
 
     /**
-     * Returns {@code marker} together with this flag's field name. This lets feedback quote
-     * the spelling the User supplied rather than replacing an alias with the primary marker.
+     * Returns {@code marker} together with this value-taking flag's field name. This lets
+     * feedback quote the spelling the User supplied rather than replacing an alias with the
+     * primary marker.
      */
     String getLabel(String marker) {
         requireNonNull(marker);
         assert getMarkers().contains(marker);
-        return takesValue ? marker + " " + fieldName : marker;
+        return marker + " " + fieldName;
     }
 
     @Override

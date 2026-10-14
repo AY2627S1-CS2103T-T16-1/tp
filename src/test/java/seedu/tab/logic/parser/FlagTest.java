@@ -29,8 +29,8 @@ public class FlagTest {
         Flag markerOnly = new Flag("--follow-up", List.of("-f"));
 
         assertEquals(List.of("--follow-up", "-f"), markerOnly.getMarkers());
+        assertEquals("--follow-up/-f", markerOnly.getMarkerSummary());
         assertEquals("--follow-up", markerOnly.getLabel());
-        assertEquals("-f", markerOnly.getLabel("-f"));
     }
 
     @Test
@@ -43,6 +43,7 @@ public class FlagTest {
         Flag valueTaking = new Flag("-e", List.of("--email"), "EMAIL");
 
         assertEquals(List.of("-e", "--email"), valueTaking.getMarkers());
+        assertEquals("-e/--email", valueTaking.getMarkerSummary());
         assertEquals("-e EMAIL", valueTaking.getLabel());
         assertEquals("--email EMAIL", valueTaking.getLabel("--email"));
         assertTrue(valueTaking.takesValue());
