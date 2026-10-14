@@ -348,7 +348,10 @@ load without migration or gratuitous rewrites.
 
 `StudentCard` shows a `Needs follow-up` label for true. For false it makes the
 label both invisible and unmanaged, so the card keeps no blank placeholder
-row. Successful add and edit feedback uses the same wording.
+row. Successful add, edit and delete feedback formats student records
+consistently with the student card: optional fields (email, tags, follow-up
+status) appear only when present, with tags ordered alphabetically ignoring
+case, avoiding placeholder labels or empty tag markers.
 
 ### Field values
 
@@ -1461,6 +1464,30 @@ testers are expected to do more *exploratory* testing.
       Expected: Only the record with `true` shows `Needs follow-up`. The other
       three load as unflagged, including the legacy record with no key.
 
+### Adding a student
+
+1. Adding a student with minimal fields
+
+   1. Test case: `add John Doe -p 98765432`<br>
+      Expected: John Doe is added to the student book and appears in the list.
+      The status message shows `New student added: John Doe; Phone: 98765432`
+      without placeholder labels for absent email or tags.
+
+1. Adding a student with tags and follow-up
+
+   1. Test case: `add Jane Doe -p 91234567 -t urgent -t lab1 --follow-up`<br>
+      Expected: Jane Doe is added with tags and follow-up flag. The status message
+      shows `New student added: Jane Doe; Phone: 91234567; Tags: [lab1][urgent]; Needs follow-up`
+      with tags sorted alphabetically ignoring case.
+
+1. Adding a duplicate student
+
+   1. Prerequisites: A student named `John Doe` with phone `98765432` is already in the list.
+
+   1. Test case: `add John Doe -p 98765432`<br>
+      Expected: No student is added. The status message reports that this student
+      already exists in the student book, and no record is mutated.
+
 ### Long value-option names
 
 1. Adding and editing with long aliases
@@ -1707,11 +1734,12 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: List all students using the `list` command, with multiple students in the list.
 
    1. Test case: `delete 1`<br>
-      Expected: The first student record is deleted from the list. The status message shows the deleted student
-      record's details.
+      Expected: The first student record is deleted from the list. The status message identifies
+      the removed student and shows their details (`Deleted student: NAME; Phone: PHONE...`).
 
    1. Test case: `delete 0`<br>
-      Expected: No student is deleted. The status message shows error details.
+      Expected: No student is deleted. The status message shows error details, and the student book
+      remains unchanged.
 
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.

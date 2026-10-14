@@ -140,6 +140,33 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_clearTags_feedbackOmitsTags() {
+        Student first = model.getFilteredStudentList().get(0);
+        Student edited = new StudentBuilder(first).withoutEmail().withTags().build();
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(first, edited);
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withoutEmail().withTags().build());
+
+        String expectedMessage = "Edited student: Alice Pauline; NUS Student ID: A12345678C; Phone: 94351253";
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_multipleTags_feedbackSortsTagsAlphabetically() {
+        Student first = model.getFilteredStudentList().get(0);
+        Student edited = new StudentBuilder(first).withoutEmail().withTags("urgent", "lab3").build();
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(first, edited);
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withoutEmail().withTags("urgent", "lab3").build());
+
+        String expectedMessage = "Edited student: Alice Pauline; NUS Student ID: A12345678C; Phone: 94351253; "
+                + "Tags: [lab3][urgent]";
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+    }
+
+    @Test
     public void execute_setNusStudentId_addsItToStudent() {
         Student original = model.getFilteredStudentList().get(0);
         Student edited = new StudentBuilder(original).withNusStudentId("A01234567X").build();

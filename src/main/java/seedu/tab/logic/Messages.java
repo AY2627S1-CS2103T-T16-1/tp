@@ -1,9 +1,11 @@
 package seedu.tab.logic;
 
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import seedu.tab.model.student.Student;
+import seedu.tab.model.tag.Tag;
 
 /**
  * Container for user visible messages.
@@ -92,8 +94,13 @@ public class Messages {
         builder.append("; Phone: ")
                 .append(student.getPhone());
         student.getEmail().ifPresent(email -> builder.append("; Email: ").append(email));
-        builder.append("; Tags: ");
-        student.getTags().forEach(builder::append);
+        if (!student.getTags().isEmpty()) {
+            builder.append("; Tags: ");
+            student.getTags().stream()
+                    .sorted(Comparator.<Tag, String>comparing(tag -> tag.tagName, String.CASE_INSENSITIVE_ORDER)
+                            .thenComparing(tag -> tag.tagName))
+                    .forEach(builder::append);
+        }
         student.getFlag().ifPresent(flag -> builder.append("; ").append(flag.tagName));
         return builder.toString();
     }

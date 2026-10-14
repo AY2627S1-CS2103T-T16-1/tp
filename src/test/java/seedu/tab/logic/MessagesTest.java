@@ -30,10 +30,26 @@ public class MessagesTest {
     }
 
     @Test
-    public void format_studentWithoutEmailOrTags_endsAtTheTagLabel() {
+    public void format_studentWithoutEmailOrTags_omitsBothFields() {
         Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
                 .withTags().withoutEmail().build();
-        assertEquals("Alice Pauline; Phone: 94351253; Tags: ", Messages.format(student));
+        assertEquals("Alice Pauline; Phone: 94351253", Messages.format(student));
+    }
+
+    @Test
+    public void format_studentWithMultipleTags_sortsTagsAlphabetically() {
+        Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withoutEmail().withTags("urgent", "friends", "colleague").build();
+        assertEquals("Alice Pauline; Phone: 94351253; Tags: [colleague][friends][urgent]",
+                Messages.format(student));
+    }
+
+    @Test
+    public void format_studentWithMixedCaseTags_sortsTagsAlphabeticallyIgnoringCase() {
+        Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withoutEmail().withTags("Zebra", "apple", "Banana", "1lab").build();
+        assertEquals("Alice Pauline; Phone: 94351253; Tags: [1lab][apple][Banana][Zebra]",
+                Messages.format(student));
     }
 
     @Test
@@ -41,7 +57,7 @@ public class MessagesTest {
         Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
                 .withoutEmail().withNusStudentId("A01234567X").withTags().build();
 
-        assertEquals("Alice Pauline; NUS Student ID: A01234567X; Phone: 94351253; Tags: ",
+        assertEquals("Alice Pauline; NUS Student ID: A01234567X; Phone: 94351253",
                 Messages.format(student));
     }
 
@@ -51,6 +67,13 @@ public class MessagesTest {
                 .withTags("friends").withFlag(true).build();
         assertEquals("Alice Pauline; Phone: 94351253; Email: amy@gmail.com; Tags: [friends]; Needs follow-up",
                 Messages.format(student));
+    }
+
+    @Test
+    public void format_flaggedStudentWithoutTags_omitsTagFieldAndIncludesFollowUp() {
+        Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
+                .withoutEmail().withTags().withFlag(true).build();
+        assertEquals("Alice Pauline; Phone: 94351253; Needs follow-up", Messages.format(student));
     }
 
     @Test

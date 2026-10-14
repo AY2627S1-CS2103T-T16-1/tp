@@ -57,7 +57,7 @@ public class AddCommandTest {
         CommandResult commandResult = new AddCommand(flaggedStudent).execute(modelStub);
 
         assertEquals("New student added: Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
-                + "Tags: ; Needs follow-up", commandResult.getFeedbackToUser());
+                + "Needs follow-up", commandResult.getFeedbackToUser());
         assertEquals(List.of(flaggedStudent), modelStub.studentsAdded);
     }
 
