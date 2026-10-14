@@ -6,9 +6,11 @@ import static seedu.tab.logic.commands.CommandTestUtil.FLAG_NAME_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.FOLLOW_UP;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_EMAIL;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_FLAG_NAME;
+import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NUS_STUDENT_ID;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_PHONE;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_TAG;
 import static seedu.tab.logic.commands.CommandTestUtil.NO_TAGS;
+import static seedu.tab.logic.commands.CommandTestUtil.NUS_STUDENT_ID_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.PHONE_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.PREAMBLE_WHITESPACE;
@@ -16,6 +18,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.TAG_HUSBAND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_EMAIL_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_NAME_AMY;
+import static seedu.tab.logic.commands.CommandTestUtil.VALID_NUS_STUDENT_ID_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
@@ -23,6 +26,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
@@ -41,6 +45,7 @@ import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.tag.Tag;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
@@ -53,10 +58,11 @@ public class EditCommandParserTest {
     public void parse_allFieldsSpecified_success() {
         Index targetIndex = INDEX_SECOND_STUDENT;
         String userInput = targetIndex.getOneBased() + PHONE_BOB + TAG_HUSBAND
-                + EMAIL_AMY + FLAG_NAME_AMY + TAG_FRIEND;
+                + EMAIL_AMY + NUS_STUDENT_ID_AMY + FLAG_NAME_AMY + TAG_FRIEND;
 
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withName(VALID_NAME_AMY)
                 .withPhone(VALID_PHONE_BOB).withEmail(VALID_EMAIL_AMY)
+                .withNusStudentId(VALID_NUS_STUDENT_ID_AMY)
                 .withTags(VALID_TAG_HUSBAND, VALID_TAG_FRIEND).build();
 
         assertParseSuccess(parser, userInput, new EditCommand(targetIndex, descriptor));
@@ -89,9 +95,38 @@ public class EditCommandParserTest {
         assertParseSuccess(parser, targetIndex.getOneBased() + EMAIL_AMY,
                 new EditCommand(targetIndex, email));
 
+        EditStudentDescriptor nusStudentId = new EditStudentDescriptorBuilder()
+                .withNusStudentId(VALID_NUS_STUDENT_ID_AMY).build();
+        assertParseSuccess(parser, targetIndex.getOneBased() + NUS_STUDENT_ID_AMY,
+                new EditCommand(targetIndex, nusStudentId));
+
         EditStudentDescriptor tag = new EditStudentDescriptorBuilder().withTags(VALID_TAG_FRIEND).build();
         assertParseSuccess(parser, targetIndex.getOneBased() + TAG_FRIEND,
                 new EditCommand(targetIndex, tag));
+    }
+
+    @Test
+    public void parse_nusStudentIdUsingLongOptionOrAlias_setsNormalizedId() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setNusStudentId(new NusStudentId("A01234567X"));
+
+        assertParseSuccess(parser, "1 --id a01234567x",
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+        assertParseSuccess(parser, "1 -i A01234567X",
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+    }
+
+    @Test
+    public void parse_emptyOrWhitespaceOnlyNusStudentId_clearsIt() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.clearNusStudentId();
+
+        assertParseSuccess(parser, "1 --id \"\"",
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+        assertParseSuccess(parser, "1 -i \"\"",
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+        assertParseSuccess(parser, "1 --id \"   \"",
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
     }
 
     @Test
@@ -152,6 +187,7 @@ public class EditCommandParserTest {
     public void parse_clearEmailAloneOrWithOtherFields_success() {
         EditStudentDescriptor cleared = new EditStudentDescriptorBuilder().withoutEmail().build();
         assertParseSuccess(parser, "1 -e \"\"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
+        assertParseSuccess(parser, "1 -e \"   \"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
         assertParseSuccess(parser, "\u00A01\u00A0-e\u00A0\"\"\u00A0",
                 new EditCommand(INDEX_FIRST_STUDENT, cleared));
         EditStudentDescriptor combined = new EditStudentDescriptorBuilder().withoutEmail()
@@ -166,8 +202,6 @@ public class EditCommandParserTest {
             assertParseFailure(parser, input,
                     String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
         }
-        assertParseFailure(parser, "1 -e \" \"",
-                Messages.getErrorMessageForInvalidValue("Email", "", Email.getFailureReason("")));
         assertParseFailure(parser, "1 -e \"\" -e a@b.com",
                 Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
         assertParseFailure(parser, "1 -n \"\" -e \"\"",
@@ -260,6 +294,9 @@ public class EditCommandParserTest {
                         Email.getFailureReason("bob!yahoo")));
         assertParseFailure(parser, "1" + INVALID_TAG,
                 Messages.getErrorMessageForInvalidValue("Tag", "---", Tag.getFailureReason("---")));
+        assertParseFailure(parser, "1" + INVALID_NUS_STUDENT_ID,
+                Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
+                        NusStudentId.getFailureReason("A0123-456")));
     }
 
     @Test
@@ -294,6 +331,9 @@ public class EditCommandParserTest {
 
         assertParseFailure(parser, "1" + PHONE_AMY + EMAIL_AMY + PHONE_BOB + EMAIL_BOB,
                 Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE, FLAG_EMAIL));
+
+        assertParseFailure(parser, "1 --id A01234567X -i A76543210Y",
+                Messages.getErrorMessageForDuplicateFlags(FLAG_NUS_STUDENT_ID));
     }
 
     @Test
@@ -306,6 +346,8 @@ public class EditCommandParserTest {
     public void parse_flagWithoutValue_namesTheFieldItNeeds() {
         assertParseFailure(parser, "1" + PHONE_BOB + " -e",
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
+        assertParseFailure(parser, "1 --id",
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_NUS_STUDENT_ID.getLabel()));
 
         // an option in the value position means the one before it was left empty, rather than
         // "-e" being stored as a tag

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import seedu.tab.commons.exceptions.IllegalValueException;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
@@ -29,6 +30,7 @@ class JsonAdaptedStudent {
     private final String name;
     private final String phone;
     private final String email;
+    private final String nusStudentId;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final Boolean flag;
 
@@ -38,15 +40,25 @@ class JsonAdaptedStudent {
     @JsonCreator
     public JsonAdaptedStudent(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email,
+            @JsonProperty("nusStudentId") String nusStudentId,
             @JsonProperty("tags") List<JsonAdaptedTag> tags,
             @JsonProperty("flag") Boolean flag) {
         this.name = name;
         this.phone = phone;
         this.email = email;
+        this.nusStudentId = nusStudentId;
         if (tags != null) {
             this.tags.addAll(tags);
         }
         this.flag = flag;
+    }
+
+    /**
+     * Constructs a {@code JsonAdaptedStudent} without a NUS Student ID.
+     */
+    public JsonAdaptedStudent(String name, String phone, String email,
+            List<JsonAdaptedTag> tags, Boolean flag) {
+        this(name, phone, email, null, tags, flag);
     }
 
     /**
@@ -56,6 +68,7 @@ class JsonAdaptedStudent {
         name = source.getName().fullName;
         phone = source.getPhone().value;
         email = source.getEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
+        nusStudentId = source.getNusStudentId().map(sourceNusStudentId -> sourceNusStudentId.value).orElse(null);
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -96,7 +109,14 @@ class JsonAdaptedStudent {
         }
         final Email modelEmail = email == null ? null : new Email(email);
 
+        // A missing or null key represents an ID that has not been recorded. A malformed
+        // value is rejected rather than being silently discarded from the student record.
+        if (nusStudentId != null && !NusStudentId.isValidNusStudentId(nusStudentId)) {
+            throw new IllegalValueException(NusStudentId.MESSAGE_CONSTRAINTS);
+        }
+        final NusStudentId modelNusStudentId = nusStudentId == null ? null : new NusStudentId(nusStudentId);
+
         final Set<Tag> modelTags = new HashSet<>(studentTags);
-        return new Student(modelName, modelPhone, modelEmail, modelTags, Boolean.TRUE.equals(flag));
+        return new Student(modelName, modelPhone, modelEmail, modelNusStudentId, modelTags, Boolean.TRUE.equals(flag));
     }
 }

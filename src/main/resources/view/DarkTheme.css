@@ -444,7 +444,7 @@
     -fx-font-size: 12px;
 }
 
-/* the NUS ID, which reads as an identifier rather than as prose */
+/* the NUS Student ID, which reads as an identifier rather than as prose */
 .card-detail-strong {
     -fx-text-fill: -tab-text-muted;
     -fx-font-family: "Monospaced";
