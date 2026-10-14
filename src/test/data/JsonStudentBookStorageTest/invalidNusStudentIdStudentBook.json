@@ -1,7 +1,0 @@
-{
-  "students": [ {
-    "name": "Student With Invalid NUS Student ID",
-    "phone": "9482424",
-    "nusStudentId": "A0123-456X"
-  } ]
-}

@@ -18,8 +18,9 @@ public class Email {
      *
      * <p>The limit exists because {@link #VALIDATION_REGEX} nests one quantifier inside another
      * and Java matches a repeated group by recursion, so a long enough address exhausts the
-     * stack. It is deliberately not applied by {@link #isValidEmail(String)} so callers can
-     * report a length failure separately from a format failure.
+     * stack. It is deliberately **not** applied by {@link #isValidEmail(String)}: storage
+     * validates with that method, and narrowing it would make a file written by an earlier
+     * version unloadable, discarding records the product had already accepted.
      */
     public static final int MAX_LENGTH = 254;
 
@@ -64,7 +65,7 @@ public class Email {
     /**
      * Returns true if a given string is a valid email.
      *
-     * <p>Callers taking an address from an untrusted source must clear
+     * <p>Callers taking an address from the User must clear
      * {@link #isWithinLengthLimit(String)} first: this matches {@link #VALIDATION_REGEX} as a
      * whole, which exhausts the stack on a long enough address.
      */

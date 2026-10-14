@@ -8,7 +8,6 @@ import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
-import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
@@ -20,17 +19,17 @@ public class SampleDataUtil {
     public static Student[] getSampleStudents() {
         return new Student[] {
             new Student(new Name("Alex Yeoh"), new Phone("87438807"), new Email("alexyeoh@example.com"),
-                new NusStudentId("A01234567X"), getTagSet("friends")),
+                getTagSet("friends")),
             new Student(new Name("Bernice Yu"), new Phone("99272758"), new Email("berniceyu@example.com"),
                 getTagSet("colleagues", "friends")),
             new Student(new Name("Charlotte Oliveiro"), new Phone("93210283"), new Email("charlotte@example.com"),
-                new NusStudentId("A02345678G"), getTagSet("neighbours")),
+                getTagSet("neighbours")),
             new Student(new Name("David Li"), new Phone("91031282"), new Email("lidavid@example.com"),
-                new NusStudentId("A03456789H"), getTagSet("family")),
+                getTagSet("family")),
             new Student(new Name("Irfan Ibrahim"), new Phone("92492021"), new Email("irfan@example.com"),
                 getTagSet("classmates")),
             new Student(new Name("Roy Balakrishnan"), new Phone("92624417"), new Email("royb@example.com"),
-                new NusStudentId("A04567890J"), getTagSet("colleagues"))
+                getTagSet("colleagues"))
         };
     }
 

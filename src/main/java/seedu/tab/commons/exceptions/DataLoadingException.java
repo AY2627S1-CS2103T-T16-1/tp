@@ -8,11 +8,4 @@ public class DataLoadingException extends Exception {
         super(cause);
     }
 
-    /**
-     * Creates an exception with a user-readable explanation and its underlying cause.
-     */
-    public DataLoadingException(String message, Exception cause) {
-        super(message, cause);
-    }
-
 }

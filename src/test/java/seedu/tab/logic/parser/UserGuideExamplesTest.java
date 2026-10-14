@@ -27,7 +27,7 @@ public class UserGuideExamplesTest {
 
     /** The placeholders a format line holds, which mark it as something other than an example. */
     private static final List<String> PLACEHOLDERS =
-            List.of("INDEX", "NAME", "PHONE_NUMBER", "EMAIL", "NUS_STUDENT_ID", "TAG", "KEYWORD");
+            List.of("INDEX", "NAME", "PHONE_NUMBER", "EMAIL", "TAG", "KEYWORD");
 
     /** Enough that the guide has stopped showing a command if it drops below. */
     private static final int MINIMUM_EXAMPLES = 5;

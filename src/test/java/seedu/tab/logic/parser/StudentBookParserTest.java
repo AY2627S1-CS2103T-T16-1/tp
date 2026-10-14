@@ -38,7 +38,7 @@ public class StudentBookParserTest {
 
     @Test
     public void parseCommand_add() throws Exception {
-        Student student = new StudentBuilder().withNusStudentId("A01234567X").build();
+        Student student = new StudentBuilder().build();
         AddCommand command = (AddCommand) parser.parseCommand(StudentUtil.getAddCommand(student));
         assertEquals(new AddCommand(student), command);
 
@@ -97,26 +97,18 @@ public class StudentBookParserTest {
 
     @Test
     public void parseCommand_edit() throws Exception {
-        Student student = new StudentBuilder().withNusStudentId("A01234567X").build();
+        Student student = new StudentBuilder().build();
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder(student).build();
         EditCommand command = (EditCommand) parser.parseCommand(EditCommand.COMMAND_WORD + " "
                 + INDEX_FIRST_STUDENT.getOneBased() + " " + StudentUtil.getEditStudentDescriptorDetails(descriptor));
         assertEquals(new EditCommand(INDEX_FIRST_STUDENT, descriptor), command);
 
-        EditStudentDescriptor clearNusStudentIdDescriptor = new EditStudentDescriptorBuilder()
-                .withoutNusStudentId().build();
-        EditCommand clearNusStudentIdCommand = (EditCommand) parser.parseCommand(EditCommand.COMMAND_WORD + " "
+        EditStudentDescriptor toggleDescriptor = new EditStudentDescriptorBuilder()
+                .withFlagToggled(true).build();
+        EditCommand toggleCommand = (EditCommand) parser.parseCommand(EditCommand.COMMAND_WORD + " "
                 + INDEX_FIRST_STUDENT.getOneBased() + " "
-                + StudentUtil.getEditStudentDescriptorDetails(clearNusStudentIdDescriptor));
-        assertEquals(new EditCommand(INDEX_FIRST_STUDENT, clearNusStudentIdDescriptor), clearNusStudentIdCommand);
-
-        for (boolean isFlagged : new boolean[] {true, false}) {
-            EditStudentDescriptor flagDescriptor = new EditStudentDescriptorBuilder().withFlag(isFlagged).build();
-            EditCommand flagCommand = (EditCommand) parser.parseCommand(EditCommand.COMMAND_WORD + " "
-                    + INDEX_FIRST_STUDENT.getOneBased() + " "
-                    + StudentUtil.getEditStudentDescriptorDetails(flagDescriptor));
-            assertEquals(new EditCommand(INDEX_FIRST_STUDENT, flagDescriptor), flagCommand);
-        }
+                + StudentUtil.getEditStudentDescriptorDetails(toggleDescriptor));
+        assertEquals(new EditCommand(INDEX_FIRST_STUDENT, toggleDescriptor), toggleCommand);
     }
 
     @Test

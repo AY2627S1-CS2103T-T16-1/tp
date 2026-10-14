@@ -87,12 +87,11 @@ public class Messages {
      * longer than a message can show. The length is not reported here, because the field that
      * rejected the value says whatever its own rule makes relevant.
      */
-    public static String shorten(String value) {
-        if (value.codePointCount(0, value.length()) <= MAX_QUOTED_VALUE_LENGTH) {
+    private static String shorten(String value) {
+        if (value.length() <= MAX_QUOTED_VALUE_LENGTH) {
             return value;
         }
-        int endIndex = value.offsetByCodePoints(0, MAX_QUOTED_VALUE_LENGTH);
-        return value.substring(0, endIndex) + "…";
+        return value.substring(0, MAX_QUOTED_VALUE_LENGTH) + "…";
     }
 
     /**
@@ -100,9 +99,8 @@ public class Messages {
      */
     public static String format(Student student) {
         final StringBuilder builder = new StringBuilder();
-        builder.append(student.getName());
-        student.getNusStudentId().ifPresent(nusStudentId -> builder.append("; NUS Student ID: ").append(nusStudentId));
-        builder.append("; Phone: ")
+        builder.append(student.getName())
+                .append("; Phone: ")
                 .append(student.getPhone());
         student.getEmail().ifPresent(email -> builder.append("; Email: ").append(email));
         builder.append("; Tags: ");

@@ -12,7 +12,6 @@ import seedu.tab.logic.Messages;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
-import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.tag.Tag;
 
@@ -83,22 +82,6 @@ public class ParserUtil {
                     Email.FIELD_NAME, trimmedEmail, Email.getFailureReason(trimmedEmail)));
         }
         return new Email(trimmedEmail);
-    }
-
-    /**
-     * Parses a {@code String nusStudentId} into a {@code NusStudentId}.
-     * Leading and trailing whitespaces will be trimmed.
-     *
-     * @throws ParseException if the given {@code nusStudentId} is invalid.
-     */
-    public static NusStudentId parseNusStudentId(String nusStudentId) throws ParseException {
-        requireNonNull(nusStudentId);
-        String trimmedNusStudentId = nusStudentId.trim();
-        if (!NusStudentId.isValidNusStudentId(trimmedNusStudentId)) {
-            throw new ParseException(Messages.getErrorMessageForInvalidValue(
-                    NusStudentId.FIELD_NAME, trimmedNusStudentId, NusStudentId.getFailureReason(trimmedNusStudentId)));
-        }
-        return new NusStudentId(trimmedNusStudentId);
     }
 
     /**

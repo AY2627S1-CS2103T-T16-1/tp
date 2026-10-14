@@ -5,7 +5,6 @@ import java.util.Set;
 
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
-import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
@@ -23,7 +22,6 @@ public class StudentBuilder {
     private Name name;
     private Phone phone;
     private Email email;
-    private NusStudentId nusStudentId;
     private Set<Tag> tags;
     private boolean isFlagged;
 
@@ -45,7 +43,6 @@ public class StudentBuilder {
         name = studentToCopy.getName();
         phone = studentToCopy.getPhone();
         email = studentToCopy.getEmail().orElse(null);
-        nusStudentId = studentToCopy.getNusStudentId().orElse(null);
         tags = new HashSet<>(studentToCopy.getTags());
         isFlagged = studentToCopy.isFlagged();
     }
@@ -91,22 +88,6 @@ public class StudentBuilder {
     }
 
     /**
-     * Sets the {@code NusStudentId} of the {@code Student} that we are building.
-     */
-    public StudentBuilder withNusStudentId(String nusStudentId) {
-        this.nusStudentId = new NusStudentId(nusStudentId);
-        return this;
-    }
-
-    /**
-     * Leaves the {@code Student} that we are building without an NUS Student ID.
-     */
-    public StudentBuilder withoutNusStudentId() {
-        this.nusStudentId = null;
-        return this;
-    }
-
-    /**
      * Sets whether the {@code Student} that we are building needs follow-up.
      */
     public StudentBuilder withFlag(boolean isFlagged) {
@@ -115,7 +96,7 @@ public class StudentBuilder {
     }
 
     public Student build() {
-        return new Student(name, phone, email, nusStudentId, tags, isFlagged);
+        return new Student(name, phone, email, tags, isFlagged);
     }
 
 }

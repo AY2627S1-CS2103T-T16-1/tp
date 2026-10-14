@@ -140,7 +140,7 @@ public class LogicManagerTest {
         JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
 
         for (String command : new String[] {"edit 1 -e \"\"", "edit 1 -e \"\"",
-            "edit 1 -e \"\" -p 81112222 -t \"\" --no-follow-up"}) {
+            "edit 1 -e \"\" -p 81112222 -t \"\" -f"}) {
             if (command.contains("-p")) {
                 cleared = new StudentBuilder(cleared).withPhone("81112222").withTags().withFlag(false).build();
             }
@@ -158,66 +158,6 @@ public class LogicManagerTest {
                 Messages.getErrorMessageForInvalidValue("Email", "bob!yahoo",
                         Email.getFailureReason("bob!yahoo")));
         assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
-    }
-
-    @Test
-    public void execute_explicitFollowUpEdits_idempotentAndPersistAcrossReloads() throws Exception {
-        Student original = new StudentBuilder(AMY).withNusStudentId("A01234567X").withFlag(false).build();
-        model.addStudent(original);
-        Student flagged = new StudentBuilder(original).withFlag(true).build();
-        for (String command : List.of("edit 1 --follow-up", "edit 1 --follow-up", "edit 1 -f")) {
-            assertFollowUpEditPersists(command, flagged);
-        }
-        flagged = new StudentBuilder(flagged).withPhone("81112222").build();
-        assertFollowUpEditPersists("edit 1 -p 81112222", flagged);
-        Student cleared = new StudentBuilder(flagged).withFlag(false).build();
-        for (String command : List.of("edit 1 -nf", "edit 1 -nf", "edit 1 --no-follow-up")) {
-            assertFollowUpEditPersists(command, cleared);
-        }
-        cleared = new StudentBuilder(cleared).withPhone("82223333").build();
-        assertFollowUpEditPersists("edit 1 -p 82223333", cleared);
-        assertFollowUpEditPersists("edit 1 --no-follow-up -p 82223333", cleared);
-        assertFollowUpEditPersists("edit 1 --follow-up", new StudentBuilder(cleared).withFlag(true).build());
-        assertFollowUpEditPersists("edit 1 --no-follow-up", cleared);
-    }
-
-    @Test
-    public void execute_conflictingFollowUpEdits_preservesFilteredListAndStorage() throws Exception {
-        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
-        for (boolean isFlagged : new boolean[] {true, false}) {
-            model = new ModelManager();
-            setUp();
-            model.addStudent(new StudentBuilder(AMY).withFlag(isFlagged).build());
-            storage.saveStudentBook(model.getStudentBook());
-            String savedJson = Files.readString(storage.getStudentBookFilePath());
-            model.updateFilteredStudentList(student -> false);
-            Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
-            expectedModel.updateFilteredStudentList(student -> false);
-            for (String options : List.of("--follow-up --no-follow-up", "--no-follow-up --follow-up",
-                    "-f --no-follow-up", "--no-follow-up -f -p 81112222", "--follow-up -nf", "-nf --follow-up",
-                    "-f -nf", "-nf -f -p 81112222")) {
-                assertCommandFailure("edit 1 " + options, ParseException.class,
-                        EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP, expectedModel);
-                assertTrue(model.getFilteredStudentList().isEmpty());
-                assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
-            }
-        }
-    }
-
-    /**
-     * Checks feedback, all student fields, saved data, and a fresh model loaded from that data.
-     */
-    private void assertFollowUpEditPersists(String command, Student expected) throws Exception {
-        CommandResult result = logic.execute(command);
-        assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(expected)),
-                result.getFeedbackToUser());
-        assertEquals(List.of(expected), model.getFilteredStudentList());
-        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
-        ReadOnlyStudentBook saved = storage.readStudentBook().orElseThrow();
-        assertEquals(model.getStudentBook(), saved);
-        model = new ModelManager(saved, new UserPrefs());
-        setUp();
-        assertEquals(List.of(expected), model.getFilteredStudentList());
     }
 
     @Test

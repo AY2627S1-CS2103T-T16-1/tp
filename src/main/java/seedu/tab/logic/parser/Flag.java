@@ -59,23 +59,6 @@ public class Flag {
         this.takesValue = true;
     }
 
-    /**
-     * Constructs a value-taking flag with alternative markers for the same named field.
-     *
-     * @param flag The primary characters that mark the field.
-     * @param aliases Alternative characters that mark the same field.
-     * @param fieldName The name of the field.
-     */
-    public Flag(String flag, List<String> aliases, String fieldName) {
-        requireNonNull(flag);
-        requireNonNull(aliases);
-        requireNonNull(fieldName);
-        this.flag = flag;
-        this.aliases = List.copyOf(aliases);
-        this.fieldName = fieldName;
-        this.takesValue = true;
-    }
-
     public String getFlag() {
         return flag;
     }

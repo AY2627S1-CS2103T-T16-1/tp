@@ -3,7 +3,6 @@ package seedu.tab.logic.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
-import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.testutil.Assert.assertThrows;
@@ -19,7 +18,7 @@ import seedu.tab.logic.parser.exceptions.ParseException;
 public class FlagTokenizerTest {
 
     private static FlagArgumentMap parse(String arguments) throws ParseException {
-        return FlagTokenizer.tokenize(arguments, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG, FLAG_FOLLOW_UP);
+        return FlagTokenizer.tokenize(arguments, FLAG_PHONE, FLAG_EMAIL, FLAG_TAG, FLAG_FOLLOW_UP);
     }
 
     @Test
@@ -30,13 +29,6 @@ public class FlagTokenizerTest {
         assertEquals(Optional.of("98765432"), parsed.getValue(FLAG_PHONE));
         assertEquals(Optional.of("john@example.com"), parsed.getValue(FLAG_EMAIL));
         assertEquals(List.of("T1"), parsed.getAllValues(FLAG_TAG));
-    }
-
-    @Test
-    public void tokenize_valueTakingFlagAlias_readsTheSameField() throws Exception {
-        assertEquals(Optional.of("A01234567X"), parse("John -i A01234567X").getValue(FLAG_NUS_STUDENT_ID));
-        assertEquals(Optional.of("A76543210Y"),
-                parse("John --id A76543210Y").getValue(FLAG_NUS_STUDENT_ID));
     }
 
     @Test
@@ -177,14 +169,6 @@ public class FlagTokenizerTest {
         assertEquals(Optional.of("c@d.com"), parsed.getValue(FLAG_EMAIL));
         assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL), () ->
                 parsed.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL));
-    }
-
-    @Test
-    public void verifyNoDuplicateFlagsFor_primaryAndAlias_throwsForOneField() throws Exception {
-        FlagArgumentMap parsed = parse("John --id A01234567X -i A76543210Y");
-
-        assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags(FLAG_NUS_STUDENT_ID), () ->
-                parsed.verifyNoDuplicateFlagsFor(FLAG_NUS_STUDENT_ID));
     }
 
     @Test

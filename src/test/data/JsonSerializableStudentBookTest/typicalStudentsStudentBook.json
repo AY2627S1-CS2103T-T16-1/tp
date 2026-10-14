@@ -4,7 +4,6 @@
     "name" : "Alice Pauline",
     "phone" : "94351253",
     "email" : "alice@example.com",
-    "nusStudentId" : "A12345678C",
     "tags" : [ "friends" ]
   }, {
     "name" : "Benson Meier",
@@ -15,13 +14,11 @@
     "name" : "Carl Kurz",
     "phone" : "95352563",
     "email" : "heinz@example.com",
-    "nusStudentId" : "A23456789D",
     "tags" : [ ]
   }, {
     "name" : "Daniel Meier",
     "phone" : "87652533",
     "email" : "cornelia@example.com",
-    "nusStudentId" : "A34567890E",
     "tags" : [ "friends" ]
   }, {
     "name" : "Elle Meyer",
@@ -32,7 +29,6 @@
     "name" : "Fiona Kunz",
     "phone" : "9482427",
     "email" : "lydia@example.com",
-    "nusStudentId" : "A45678901F",
     "tags" : [ ]
   }, {
     "name" : "George Best",

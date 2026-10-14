@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
-import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.tag.Tag;
 
@@ -22,13 +21,11 @@ public class ParserUtilTest {
     private static final String INVALID_NAME = "---"; // no letter or number
     private static final String INVALID_PHONE = "12"; // fewer than 3 digits
     private static final String INVALID_EMAIL = "example.com";
-    private static final String INVALID_NUS_STUDENT_ID = "A0123-456X";
     private static final String INVALID_TAG = "---"; // no letter or number
 
     private static final String VALID_NAME = "Rachel Walker";
     private static final String VALID_PHONE = "123456";
     private static final String VALID_EMAIL = "rachel@example.com";
-    private static final String VALID_NUS_STUDENT_ID = "A01234567X";
     private static final String VALID_TAG_1 = "friend";
     private static final String VALID_TAG_2 = "neighbour";
 
@@ -121,33 +118,6 @@ public class ParserUtilTest {
         String emailWithWhitespace = WHITESPACE + VALID_EMAIL + WHITESPACE;
         Email expectedEmail = new Email(VALID_EMAIL);
         assertEquals(expectedEmail, ParserUtil.parseEmail(emailWithWhitespace));
-    }
-
-    @Test
-    public void parseNusStudentId_null_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> ParserUtil.parseNusStudentId(null));
-    }
-
-    @Test
-    public void parseNusStudentId_invalidValue_throwsParseExceptionNamingField() {
-        String expected = "NUS Student ID \"A0123-456X\" is not valid: "
-                + NusStudentId.MESSAGE_NON_ALPHANUMERIC;
-        assertThrows(ParseException.class, expected, () -> ParserUtil.parseNusStudentId(INVALID_NUS_STUDENT_ID));
-    }
-
-    @Test
-    public void parseNusStudentId_tooLongValue_throwsParseExceptionNamingLimit() {
-        String tooLong = "A".repeat(NusStudentId.MAX_LENGTH + 1);
-        String expected = "NUS Student ID \"" + tooLong + "\" is not valid: "
-                + NusStudentId.MESSAGE_TOO_LONG;
-
-        assertThrows(ParseException.class, expected, () -> ParserUtil.parseNusStudentId(tooLong));
-    }
-
-    @Test
-    public void parseNusStudentId_validValueWithWhitespace_returnsNormalizedNusStudentId() throws Exception {
-        String nusStudentIdWithWhitespace = WHITESPACE + VALID_NUS_STUDENT_ID.toLowerCase() + WHITESPACE;
-        assertEquals(new NusStudentId(VALID_NUS_STUDENT_ID), ParserUtil.parseNusStudentId(nusStudentIdWithWhitespace));
     }
 
     @Test

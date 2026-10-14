@@ -7,7 +7,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import seedu.tab.model.student.Email;
-import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
 
 /**
@@ -50,7 +49,7 @@ public class StudentCard extends UiPart<Region> {
     @FXML
     private Label followUp;
     @FXML
-    private Label nusStudentId;
+    private Label nusId;
     @FXML
     private TagRow tags;
 
@@ -65,7 +64,8 @@ public class StudentCard extends UiPart<Region> {
         phone.setText(student.getPhone().value);
         show(email, student.getEmail().map(Email::toString).orElse(null));
         show(followUp, student.getFlag().map(flag -> flag.tagName).orElse(null));
-        show(nusStudentId, student.getNusStudentId().map(NusStudentId::toString).orElse(null));
+        // a student carries no NUS ID yet, so the slot the card lays out for it stays empty
+        show(nusId, null);
         clipToItsOwnBox(details);
         tags.setTags(student.getTags().stream()
                 .map(tag -> tag.tagName)

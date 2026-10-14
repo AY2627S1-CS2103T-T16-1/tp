@@ -52,70 +52,17 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void read_notJsonFormat_exceptionThrown() {
-        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
-                DataLoadingException.class, () -> readStudentBook("notJsonFormatStudentBook.json"));
-
-        assertTrue(exception.getMessage().contains("The data is not in the expected JSON format"));
-        assertTrue(exception.getMessage().contains("line 1, column 4"));
+        assertThrows(DataLoadingException.class, () -> readStudentBook("notJsonFormatStudentBook.json"));
     }
 
     @Test
     public void readStudentBook_invalidStudentStudentBook_throwDataLoadingException() {
-        String expectedMessage = "Student record 1 (\"---\"): Name \"---\" is not valid: "
-                + "it holds no letter or number";
-        assertThrows(DataLoadingException.class, expectedMessage, () ->
-                readStudentBook("invalidStudentStudentBook.json"));
+        assertThrows(DataLoadingException.class, () -> readStudentBook("invalidStudentStudentBook.json"));
     }
 
     @Test
     public void readStudentBook_invalidAndValidStudentStudentBook_throwDataLoadingException() {
-        String expectedMessage = "Student record 2 (\"Student With Invalid Phone Field\"): "
-                + "Phone \"12\" is not valid: a phone number needs at least 3 digits";
-        assertThrows(DataLoadingException.class, expectedMessage, () ->
-                readStudentBook("invalidAndValidStudentStudentBook.json"));
-    }
-
-    @Test
-    public void readStudentBook_missingStudentList_reportsErrorAndPreservesFile() throws Exception {
-        Path filePath = testFolder.resolve("MissingStudentList.json");
-        String originalContents = "{}";
-        Files.writeString(filePath, originalContents);
-        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
-
-        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
-                DataLoadingException.class, storage::readStudentBook);
-
-        assertEquals(JsonSerializableStudentBook.MESSAGE_MISSING_STUDENT_LIST, exception.getMessage());
-        assertEquals(originalContents, Files.readString(filePath));
-    }
-
-    @Test
-    public void readStudentBook_extremelyLongEmail_reportsRecordAndPreservesFile() throws Exception {
-        Path filePath = testFolder.resolve("LongEmail.json");
-        String longEmail = "a.".repeat(300) + "a@example.com";
-        String originalContents = String.format("""
-                {
-                  "students": [ {
-                    "name": "Ravi",
-                    "phone": "91234567",
-                    "email": "%s"
-                  } ]
-                }
-                """, longEmail);
-        Files.writeString(filePath, originalContents);
-        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
-
-        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
-                DataLoadingException.class, storage::readStudentBook);
-
-        assertTrue(exception.getMessage().contains("Student record 1 (\"Ravi\"): Email field"));
-        assertTrue(exception.getMessage().contains(String.valueOf(longEmail.length())));
-        assertEquals(originalContents, Files.readString(filePath));
-    }
-
-    @Test
-    public void readStudentBook_invalidNusStudentIdStudentBook_throwDataLoadingException() {
-        assertThrows(DataLoadingException.class, () -> readStudentBook("invalidNusStudentIdStudentBook.json"));
+        assertThrows(DataLoadingException.class, () -> readStudentBook("invalidAndValidStudentStudentBook.json"));
     }
 
     @Test
@@ -140,20 +87,6 @@ public class JsonStudentBookStorageTest {
                 .withTags("friends").withoutEmail().build();
         Student keyLeftOut = new StudentBuilder().withName("Benson Meier").withPhone("98765432")
                 .withTags("owesMoney").withoutEmail().build();
-
-        assertEquals(2, loaded.getStudentList().size());
-        assertEquals(explicitNull, loaded.getStudentList().get(0));
-        assertEquals(keyLeftOut, loaded.getStudentList().get(1));
-    }
-
-    @Test
-    public void readStudentBook_handEditedNullNusStudentId_loadsWithoutOne() throws Exception {
-        ReadOnlyStudentBook loaded = readStudentBook("nullNusStudentIdStudentBook.json").get();
-
-        Student explicitNull = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
-                .withTags("friends").withoutEmail().withoutNusStudentId().build();
-        Student keyLeftOut = new StudentBuilder().withName("Benson Meier").withPhone("98765432")
-                .withTags("owesMoney").withoutEmail().withoutNusStudentId().build();
 
         assertEquals(2, loaded.getStudentList().size());
         assertEquals(explicitNull, loaded.getStudentList().get(0));
@@ -238,25 +171,6 @@ public class JsonStudentBookStorageTest {
         ReadOnlyStudentBook readBack = storage.readStudentBook(filePath).get();
         assertEquals(original, new StudentBook(readBack));
         assertEquals(Optional.empty(), readBack.getStudentList().get(0).getEmail());
-    }
-
-    @Test
-    public void readAndSaveStudentBook_optionalNusStudentId_roundTripsAndLeavesAbsentKeyOut() throws Exception {
-        Path filePath = testFolder.resolve("OptionalNusStudentId.json");
-        Student withNusStudentId = new StudentBuilder().withName("Wong Mei Ling").withPhone("91234567")
-                .withNusStudentId("A01234567X").build();
-        Student withoutNusStudentId = new StudentBuilder().withName("Ravi Kumar").withPhone("91234568").build();
-        StudentBook original = new StudentBook();
-        original.addStudent(withNusStudentId);
-        original.addStudent(withoutNusStudentId);
-
-        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
-        storage.saveStudentBook(original, filePath);
-
-        String savedJson = Files.readString(filePath);
-        assertTrue(savedJson.contains("\"nusStudentId\" : \"A01234567X\""));
-        assertEquals(1, savedJson.split("\"nusStudentId\"", -1).length - 1);
-        assertEquals(original, new StudentBook(storage.readStudentBook(filePath).get()));
     }
 
     @Test

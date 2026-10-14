@@ -11,10 +11,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
-import seedu.tab.logic.Messages;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
-import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
@@ -26,12 +24,11 @@ import seedu.tab.model.tag.Tag;
 // file stays as readable by hand as one written before those fields were introduced.
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class JsonAdaptedStudent {
-    static final String MISSING_FIELD_MESSAGE_FORMAT = "%s field is missing.";
+    public static final String MISSING_FIELD_MESSAGE_FORMAT = "Student's %s field is missing!";
 
     private final String name;
     private final String phone;
     private final String email;
-    private final String nusStudentId;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final Boolean flag;
 
@@ -41,25 +38,15 @@ class JsonAdaptedStudent {
     @JsonCreator
     public JsonAdaptedStudent(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email,
-            @JsonProperty("nusStudentId") String nusStudentId,
             @JsonProperty("tags") List<JsonAdaptedTag> tags,
             @JsonProperty("flag") Boolean flag) {
         this.name = name;
         this.phone = phone;
         this.email = email;
-        this.nusStudentId = nusStudentId;
         if (tags != null) {
             this.tags.addAll(tags);
         }
         this.flag = flag;
-    }
-
-    /**
-     * Constructs a {@code JsonAdaptedStudent} without a NUS Student ID.
-     */
-    public JsonAdaptedStudent(String name, String phone, String email,
-            List<JsonAdaptedTag> tags, Boolean flag) {
-        this(name, phone, email, null, tags, flag);
     }
 
     /**
@@ -69,7 +56,6 @@ class JsonAdaptedStudent {
         name = source.getName().fullName;
         phone = source.getPhone().value;
         email = source.getEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
-        nusStudentId = source.getNusStudentId().map(sourceNusStudentId -> sourceNusStudentId.value).orElse(null);
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -84,59 +70,33 @@ class JsonAdaptedStudent {
     public Student toModelType() throws IllegalValueException {
         final List<Tag> studentTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
-            if (tag == null) {
-                throw new IllegalValueException("Tag field is missing.");
-            }
             studentTags.add(tag.toModelType());
         }
 
         if (name == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.FIELD_NAME));
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.class.getSimpleName()));
         }
         if (!Name.isValidName(name)) {
-            throw new IllegalValueException(formatInvalidField(
-                    Name.FIELD_NAME, name, Name.getFailureReason(name)));
+            throw new IllegalValueException(Name.MESSAGE_CONSTRAINTS);
         }
         final Name modelName = new Name(name);
 
         if (phone == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.FIELD_NAME));
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName()));
         }
         if (!Phone.isValidPhone(phone)) {
-            throw new IllegalValueException(formatInvalidField(
-                    Phone.FIELD_NAME, phone, Phone.getFailureReason(phone)));
+            throw new IllegalValueException(Phone.MESSAGE_CONSTRAINTS);
         }
         final Phone modelPhone = new Phone(phone);
 
         // A file may hold no email, either because the key is absent or because it is null.
         // Anything else has to be a valid address; a broken one is not silently dropped.
-        if (email != null && !Email.isWithinLengthLimit(email)) {
-            throw new IllegalValueException(String.format(
-                    "%s field is too long to read safely: it holds %d characters, but saved emails may hold at most %d",
-                    Email.FIELD_NAME, email.length(), Email.MAX_LENGTH));
-        }
         if (email != null && !Email.isValidEmail(email)) {
-            throw new IllegalValueException(formatInvalidField(
-                    Email.FIELD_NAME, email, Email.getFailureReason(email)));
+            throw new IllegalValueException(Email.MESSAGE_CONSTRAINTS);
         }
         final Email modelEmail = email == null ? null : new Email(email);
 
-        // A missing or null key represents an ID that has not been recorded. A malformed
-        // value is rejected rather than being silently discarded from the student record.
-        if (nusStudentId != null && !NusStudentId.isValidNusStudentId(nusStudentId)) {
-            throw new IllegalValueException(NusStudentId.MESSAGE_CONSTRAINTS);
-        }
-        final NusStudentId modelNusStudentId = nusStudentId == null ? null : new NusStudentId(nusStudentId);
-
         final Set<Tag> modelTags = new HashSet<>(studentTags);
-        return new Student(modelName, modelPhone, modelEmail, modelNusStudentId, modelTags, Boolean.TRUE.equals(flag));
-    }
-
-    String getNameForErrorMessage() {
-        return name == null ? null : Messages.shorten(name);
-    }
-
-    static String formatInvalidField(String fieldName, String value, String reason) {
-        return Messages.getErrorMessageForInvalidValue(fieldName, value, reason);
+        return new Student(modelName, modelPhone, modelEmail, modelTags, Boolean.TRUE.equals(flag));
     }
 }

@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.tab.model.student.Email;
-import seedu.tab.model.student.NusStudentId;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 
 public class EditStudentDescriptorTest {
@@ -52,39 +51,28 @@ public class EditStudentDescriptorTest {
         editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withEmail(VALID_EMAIL_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
 
-        // different NUS Student ID -> returns false
-        editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withNusStudentId("E0123456").build();
-        assertFalse(DESC_AMY.equals(editedAmy));
-
-        // clearing an untouched NUS Student ID is a different edit operation
-        editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withoutNusStudentId().build();
-        assertFalse(DESC_AMY.equals(editedAmy));
 
         // different tags -> returns false
         editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(DESC_AMY.equals(editedAmy));
 
-        // different follow-up state -> returns false
-        editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withFlag(true).build();
+        // different toggle intent -> returns false
+        editedAmy = new EditStudentDescriptorBuilder(DESC_AMY).withFlagToggled(true).build();
         assertFalse(DESC_AMY.equals(editedAmy));
     }
 
     @Test
-    public void copyConstructor_followUpStates_preservedAndIndependent() {
-        EditStudentDescriptor untouched = new EditStudentDescriptor();
-        assertEquals(untouched, new EditStudentDescriptor(untouched));
-        assertFalse(untouched.isAnyFieldEdited());
-        for (boolean isFlagged : new boolean[] {true, false}) {
-            EditStudentDescriptor source = new EditStudentDescriptorBuilder().withFlag(isFlagged).build();
-            EditStudentDescriptor copy = new EditStudentDescriptor(source);
-            assertEquals(source, copy);
-            assertFalse(source.equals(untouched));
-            assertTrue(copy.isAnyFieldEdited());
-            assertEquals(Optional.of(isFlagged), copy.getFlagged());
-            source.setFlagged(!isFlagged);
-            assertFalse(source.equals(copy));
-            assertEquals(Optional.of(isFlagged), copy.getFlagged());
-        }
+    public void copyConstructor_toggleIntent_copied() {
+        EditStudentDescriptor source = new EditStudentDescriptorBuilder()
+                .withFlagToggled(true).build();
+        assertEquals(source, new EditStudentDescriptor(source));
+    }
+
+    @Test
+    public void isAnyFieldEdited_toggleIntentOnly_returnsTrue() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder()
+                .withFlagToggled(true).build();
+        assertTrue(descriptor.isAnyFieldEdited());
     }
 
     @Test
@@ -132,45 +120,15 @@ public class EditStudentDescriptorTest {
     }
 
     @Test
-    public void clearNusStudentId_thenSetNusStudentId_preservesIntentThroughCopies() {
-        EditStudentDescriptor descriptor = new EditStudentDescriptor();
-        NusStudentId replacement = new NusStudentId("A01234567X");
-        descriptor.setNusStudentId(replacement);
-        assertTrue(descriptor.isAnyFieldEdited());
-        assertEquals(Optional.of(replacement), descriptor.getNusStudentId());
-        assertEquals(descriptor, new EditStudentDescriptor(descriptor));
-        descriptor.clearNusStudentId();
-        assertTrue(descriptor.isNusStudentIdEdited());
-        assertEquals(Optional.empty(), descriptor.getNusStudentId());
-        assertEquals(descriptor, new EditStudentDescriptor(descriptor));
-        descriptor.setNusStudentId(replacement);
-        assertTrue(descriptor.isNusStudentIdEdited());
-        assertEquals(Optional.of(replacement), descriptor.getNusStudentId());
-        assertEquals(descriptor, new EditStudentDescriptor(descriptor));
-    }
-
-    @Test
-    public void setNusStudentId_null_rejectsAndPreservesExistingEdit() {
-        EditStudentDescriptor descriptor = new EditStudentDescriptor();
-        descriptor.setNusStudentId(new NusStudentId("A01234567X"));
-        EditStudentDescriptor expected = new EditStudentDescriptor(descriptor);
-
-        assertThrows(NullPointerException.class, () -> descriptor.setNusStudentId(null));
-        assertEquals(expected, descriptor);
-    }
-
-    @Test
     public void toStringMethod() {
         EditStudentDescriptor editStudentDescriptor = new EditStudentDescriptor();
         String expected = EditStudentDescriptor.class.getCanonicalName() + "{name="
                 + editStudentDescriptor.getName().orElse(null) + ", phone="
                 + editStudentDescriptor.getPhone().orElse(null) + ", email="
                 + editStudentDescriptor.getEmail() + ", isEmailEdited="
-                + editStudentDescriptor.isEmailEdited() + ", nusStudentId="
-                + editStudentDescriptor.getNusStudentId() + ", isNusStudentIdEdited="
-                + editStudentDescriptor.isNusStudentIdEdited() + ", tags="
-                + editStudentDescriptor.getTags().orElse(null) + ", isFlagged="
-                + editStudentDescriptor.getFlagged().orElse(null) + "}";
+                + editStudentDescriptor.isEmailEdited() + ", tags="
+                + editStudentDescriptor.getTags().orElse(null) + ", shouldToggleFlag="
+                + editStudentDescriptor.shouldToggleFlag() + "}";
         assertEquals(expected, editStudentDescriptor.toString());
     }
 }

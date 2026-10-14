@@ -4,8 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
-import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
-import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.model.Model.PREDICATE_SHOW_ALL_STUDENTS;
@@ -25,7 +23,6 @@ import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.model.Model;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
-import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
@@ -42,30 +39,23 @@ public class EditCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the student identified "
             + "by the index number used in the displayed student list. "
             + "Existing values will be overwritten by the input values, while " + FLAG_FOLLOW_UP
-            + " (alias -f) sets follow-up and " + FLAG_NO_FOLLOW_UP + " (alias -nf) clears it.\n"
+            + " toggles whether the student needs follow-up.\n"
             + "Parameters: " + FIELD_INDEX + " (must be a positive integer) "
             + "[" + FLAG_NAME.getLabel() + "] "
             + "[" + FLAG_PHONE.getLabel() + "] "
             + "[" + FLAG_EMAIL.getLabel() + "] "
-            + "[" + FLAG_NUS_STUDENT_ID.getLabel() + "] "
             + "[" + FLAG_TAG.getLabel() + "]... "
-            + "[" + FLAG_FOLLOW_UP.getLabel() + " | " + FLAG_NO_FOLLOW_UP.getLabel() + "]\n"
+            + "[" + FLAG_FOLLOW_UP.getLabel() + "]\n"
             + "The index comes first. Any option value holding spaces, and any value opening with "
             + "a hyphen, goes in double quotes. " + FLAG_TAG + " \"\" clears every tag; "
-            + FLAG_EMAIL + " \"\" clears the email; "
-            + FLAG_NUS_STUDENT_ID + " (alias -i) records or replaces the NUS Student ID; "
-            + FLAG_NUS_STUDENT_ID + " \"\" clears it.\n"
+            + FLAG_EMAIL + " \"\" clears the email.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + FLAG_PHONE + " 91234567 "
-            + FLAG_EMAIL + " johndoe@example.com "
-            + FLAG_NUS_STUDENT_ID + " A01234567X";
+            + FLAG_EMAIL + " johndoe@example.com";
 
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_STUDENT = "This student already exists in the student book.";
-
-    public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP
-            + " (or -f) and " + FLAG_NO_FOLLOW_UP + " (or -nf) cannot be used together. Choose one.";
 
     private final Index index;
     private final EditStudentDescriptor editStudentDescriptor;
@@ -115,14 +105,12 @@ public class EditCommand extends Command {
         Optional<Email> updatedEmail = editStudentDescriptor.isEmailEdited()
                 ? editStudentDescriptor.getEmail()
                 : studentToEdit.getEmail();
-        Optional<NusStudentId> updatedNusStudentId = editStudentDescriptor.isNusStudentIdEdited()
-                ? editStudentDescriptor.getNusStudentId()
-                : studentToEdit.getNusStudentId();
         Set<Tag> updatedTags = editStudentDescriptor.getTags().orElse(studentToEdit.getTags());
-        boolean updatedFlag = editStudentDescriptor.getFlagged().orElse(studentToEdit.isFlagged());
+        boolean updatedFlag = editStudentDescriptor.shouldToggleFlag()
+                ? !studentToEdit.isFlagged()
+                : studentToEdit.isFlagged();
 
-        return new Student(updatedName, updatedPhone, updatedEmail.orElse(null), updatedNusStudentId.orElse(null),
-                updatedTags, updatedFlag);
+        return new Student(updatedName, updatedPhone, updatedEmail.orElse(null), updatedTags, updatedFlag);
     }
 
     @Override
@@ -155,39 +143,32 @@ public class EditCommand extends Command {
     public static class EditStudentDescriptor {
         private Name name;
         private Phone phone;
-        private final OptionalFieldEdit<Email> emailEdit;
-        private final OptionalFieldEdit<NusStudentId> nusStudentIdEdit;
+        private Optional<Email> email = Optional.empty();
+        private boolean isEmailEdited;
         private Set<Tag> tags;
-        private Boolean isFlagged;
+        private boolean shouldToggleFlag;
 
-        /**
-         * Constructs an empty descriptor whose optional fields have not been edited.
-         */
-        public EditStudentDescriptor() {
-            emailEdit = new OptionalFieldEdit<>();
-            nusStudentIdEdit = new OptionalFieldEdit<>();
-        }
+        public EditStudentDescriptor() {}
 
         /**
          * Copy constructor.
          * A defensive copy of {@code tags} is used internally.
          */
         public EditStudentDescriptor(EditStudentDescriptor toCopy) {
-            requireNonNull(toCopy);
-            emailEdit = new OptionalFieldEdit<>(toCopy.emailEdit);
-            nusStudentIdEdit = new OptionalFieldEdit<>(toCopy.nusStudentIdEdit);
             setName(toCopy.name);
             setPhone(toCopy.phone);
+            if (toCopy.isEmailEdited()) {
+                toCopy.getEmail().ifPresentOrElse(this::setEmail, this::clearEmail);
+            }
             setTags(toCopy.tags);
-            isFlagged = toCopy.isFlagged;
+            setFlagToggled(toCopy.shouldToggleFlag);
         }
 
         /**
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, tags, isFlagged)
-                    || emailEdit.isEdited() || nusStudentIdEdit.isEdited();
+            return CollectionUtil.isAnyNonNull(name, phone, tags) || isEmailEdited || shouldToggleFlag;
         }
 
         public void setName(Name name) {
@@ -212,46 +193,24 @@ public class EditCommand extends Command {
          * @throws NullPointerException if {@code email} is null.
          */
         public void setEmail(Email email) {
-            emailEdit.set(requireNonNull(email));
+            this.email = Optional.of(email);
+            isEmailEdited = true;
         }
 
         /**
          * Marks the email for removal without changing any other field.
          */
         public void clearEmail() {
-            emailEdit.clear();
+            email = Optional.empty();
+            isEmailEdited = true;
         }
 
         public boolean isEmailEdited() {
-            return emailEdit.isEdited();
+            return isEmailEdited;
         }
 
         public Optional<Email> getEmail() {
-            return emailEdit.getValue();
-        }
-
-        /**
-         * Sets a replacement NUS Student ID and marks the NUS Student ID as edited.
-         *
-         * @throws NullPointerException if {@code nusStudentId} is null.
-         */
-        public void setNusStudentId(NusStudentId nusStudentId) {
-            nusStudentIdEdit.set(requireNonNull(nusStudentId));
-        }
-
-        /**
-         * Marks the NUS Student ID for removal without changing any other field.
-         */
-        public void clearNusStudentId() {
-            nusStudentIdEdit.clear();
-        }
-
-        public boolean isNusStudentIdEdited() {
-            return nusStudentIdEdit.isEdited();
-        }
-
-        public Optional<NusStudentId> getNusStudentId() {
-            return nusStudentIdEdit.getValue();
+            return email;
         }
 
         /**
@@ -271,15 +230,12 @@ public class EditCommand extends Command {
             return (tags != null) ? Optional.of(Collections.unmodifiableSet(tags)) : Optional.empty();
         }
 
-        public void setFlagged(boolean isFlagged) {
-            this.isFlagged = isFlagged;
+        public void setFlagToggled(boolean shouldToggleFlag) {
+            this.shouldToggleFlag = shouldToggleFlag;
         }
 
-        /**
-         * Returns the requested follow-up state, or empty if it should remain unchanged.
-         */
-        public Optional<Boolean> getFlagged() {
-            return Optional.ofNullable(isFlagged);
+        public boolean shouldToggleFlag() {
+            return shouldToggleFlag;
         }
 
         @Override
@@ -295,10 +251,10 @@ public class EditCommand extends Command {
 
             return Objects.equals(name, otherEditStudentDescriptor.name)
                     && Objects.equals(phone, otherEditStudentDescriptor.phone)
-                    && emailEdit.hasSameStateAs(otherEditStudentDescriptor.emailEdit)
-                    && nusStudentIdEdit.hasSameStateAs(otherEditStudentDescriptor.nusStudentIdEdit)
+                    && email.equals(otherEditStudentDescriptor.email)
+                    && isEmailEdited == otherEditStudentDescriptor.isEmailEdited
                     && Objects.equals(tags, otherEditStudentDescriptor.tags)
-                    && Objects.equals(isFlagged, otherEditStudentDescriptor.isFlagged);
+                    && shouldToggleFlag == otherEditStudentDescriptor.shouldToggleFlag;
         }
 
         @Override
@@ -306,53 +262,11 @@ public class EditCommand extends Command {
             return new ToStringBuilder(this)
                     .add("name", name)
                     .add("phone", phone)
-                    .add("email", emailEdit.getValue())
-                    .add("isEmailEdited", emailEdit.isEdited())
-                    .add("nusStudentId", nusStudentIdEdit.getValue())
-                    .add("isNusStudentIdEdited", nusStudentIdEdit.isEdited())
+                    .add("email", email)
+                    .add("isEmailEdited", isEmailEdited)
                     .add("tags", tags)
-                    .add("isFlagged", isFlagged)
+                    .add("shouldToggleFlag", shouldToggleFlag)
                     .toString();
-        }
-
-        /**
-         * Encapsulates the three states of an optional field in an edit: unchanged, cleared,
-         * or replaced with a value.
-         */
-        private static final class OptionalFieldEdit<T> {
-            private Optional<T> value;
-            private boolean isEdited;
-
-            private OptionalFieldEdit() {
-                value = Optional.empty();
-            }
-
-            private OptionalFieldEdit(OptionalFieldEdit<T> toCopy) {
-                value = toCopy.value;
-                isEdited = toCopy.isEdited;
-            }
-
-            private void set(T value) {
-                this.value = Optional.of(value);
-                isEdited = true;
-            }
-
-            private void clear() {
-                value = Optional.empty();
-                isEdited = true;
-            }
-
-            private boolean isEdited() {
-                return isEdited;
-            }
-
-            private Optional<T> getValue() {
-                return value;
-            }
-
-            private boolean hasSameStateAs(OptionalFieldEdit<?> other) {
-                return isEdited == other.isEdited && value.equals(other.value);
-            }
         }
     }
 }

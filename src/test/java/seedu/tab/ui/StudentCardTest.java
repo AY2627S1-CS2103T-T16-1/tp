@@ -21,7 +21,6 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
-import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -130,62 +129,14 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_anyStudent_leavesTheNusStudentIdSlotOut() throws Exception {
+    public void constructor_anyStudent_leavesTheNusIdSlotOut() throws Exception {
         // the card lays the slot out so that the field can fill it without further UI work,
         // and must not show a placeholder in the meantime
-        Label nusStudentId = onFxThread(() -> (Label) new StudentCard(new StudentBuilder().build(), 1)
-                .getRoot().lookup("#nusStudentId"));
+        Label nusId = onFxThread(() -> (Label) new StudentCard(new StudentBuilder().build(), 1)
+                .getRoot().lookup("#nusId"));
 
-        assertFalse(nusStudentId.isManaged());
-        assertFalse(nusStudentId.isVisible());
-    }
-
-    @Test
-    public void constructor_studentWithNusStudentId_showsTheNusStudentId() throws Exception {
-        Student student = new StudentBuilder().withNusStudentId("A01234567X").build();
-        Label nusStudentId = onFxThread(() -> (Label) new StudentCard(student, 1)
-                .getRoot().lookup("#nusStudentId"));
-
-        assertEquals("A01234567X", nusStudentId.getText());
-        assertTrue(nusStudentId.isManaged());
-        assertTrue(nusStudentId.isVisible());
-    }
-
-    @Test
-    public void constructor_narrowCard_keepsAllDetailsVisible() throws Exception {
-        Student base = new StudentBuilder().withPhone("+65 9123 4567")
-                .withEmail("a.very.long.address.indeed@u.nus.edu").build();
-        Student student = new StudentBuilder(base)
-                .withNusStudentId("A".repeat(NusStudentId.MAX_LENGTH)).build();
-
-        Bounds[] measured = onFxThread(() -> {
-            Region root = (Region) new StudentCard(student, 1).getRoot();
-            assertNotNull(styledScene(root, 300, 120));
-            Region details = (Region) root.lookup("#details");
-            Label nusStudentId = (Label) root.lookup("#nusStudentId");
-            Label phone = (Label) root.lookup("#phone");
-            Label email = (Label) root.lookup("#email");
-            return new Bounds[] {
-                details.localToScene(details.getBoundsInLocal()),
-                nusStudentId.localToScene(nusStudentId.getBoundsInLocal()),
-                phone.localToScene(phone.getBoundsInLocal()),
-                email.localToScene(email.getBoundsInLocal())
-            };
-        });
-
-        assertHorizontallyInside(measured[0], measured[1], "NUS Student ID");
-        assertHorizontallyInside(measured[0], measured[2], "phone");
-        assertHorizontallyInside(measured[0], measured[3], "email");
-    }
-
-    /** Verifies that a field has visible width and is drawn inside its details container. */
-    private static void assertHorizontallyInside(Bounds container, Bounds field, String fieldName) {
-        assertTrue(field.getWidth() > 0, "the " + fieldName + " has no visible width");
-        assertTrue(field.getMinX() >= container.getMinX() - 0.5,
-                "the " + fieldName + " starts before the details container");
-        assertTrue(field.getMaxX() <= container.getMaxX() + 0.5,
-                "the " + fieldName + " ends at " + field.getMaxX()
-                        + ", past the details container's " + container.getMaxX());
+        assertFalse(nusId.isManaged());
+        assertFalse(nusId.isVisible());
     }
 
     @Test

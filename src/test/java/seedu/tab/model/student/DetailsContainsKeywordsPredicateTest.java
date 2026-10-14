@@ -111,17 +111,6 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
-    public void test_partialNusStudentIdIgnoringCase_matchesOnlyStudentHoldingIt() {
-        Student withoutNusStudentId = new StudentBuilder().withName("Alice").withoutNusStudentId().build();
-        Student withNusStudentId = new StudentBuilder(withoutNusStudentId).withNusStudentId("A01234567X").build();
-        DetailsContainsKeywordsPredicate predicate =
-                new DetailsContainsKeywordsPredicate(List.of("a0123"));
-
-        assertTrue(predicate.test(withNusStudentId));
-        assertFalse(predicate.test(withoutNusStudentId));
-    }
-
-    @Test
     public void test_keywordsMatchingDifferentDetails_returnsTrue() {
         // One keyword matches the name, another only the phone number
         DetailsContainsKeywordsPredicate predicate =
@@ -151,5 +140,4 @@ public class DetailsContainsKeywordsPredicateTest {
         String expected = DetailsContainsKeywordsPredicate.class.getCanonicalName() + "{keywords=" + keywords + "}";
         assertEquals(expected, predicate.toString());
     }
-
 }
