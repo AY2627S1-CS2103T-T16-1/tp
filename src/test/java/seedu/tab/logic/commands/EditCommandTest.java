@@ -42,6 +42,11 @@ public class EditCommandTest {
     private Model model = new ModelManager(getTypicalStudentBook(), new UserPrefs());
 
     @Test
+    public void messageUsage_includesNusStudentIdAlias() {
+        assertTrue(EditCommand.MESSAGE_USAGE.contains("--id (alias -i)"));
+    }
+
+    @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
         Student editedStudent = new StudentBuilder().build();
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder(editedStudent).build();
