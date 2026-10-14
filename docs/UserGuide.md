@@ -120,7 +120,7 @@ showing, so you can see the shape of your cohort without running a command.
 <box type="tip" seamless>
 
 **Tip:** The summary describes the students currently listed, not the whole
-address book. Run `find Alex` and it counts only the students that match;
+student book. Run `find Alex` and it counts only the students that match;
 run `list` to see the whole cohort again.
 </box>
 
@@ -381,10 +381,12 @@ Replies ignore case and surrounding whitespace: `Y`, `yEs`, and `yeS` also
 confirm; `N` and `nO` also cancel. Cancellation is the `[y/N]` default.
 Only the exact replies above are accepted: words such as
 `yellow` and `nope` are invalid. Any other reply, including another command,
-leaves the data unchanged and repeats the prompt. Cancel first if you want
-to run a different command. Closing TAB while the prompt is pending also
-leaves the student data unchanged. If the book is already empty,
-TAB reports that there is nothing to clear and does not ask for confirmation.
+leaves the data unchanged and answers `Invalid reply. Enter y/yes or n/no
+(Enter cancels).` The request to clear stays pending until you confirm or
+cancel, so cancel first if you want to run a different command. Closing TAB
+while the prompt is pending also leaves the student data unchanged. If the
+book is already empty, TAB reports that there is nothing to clear and does
+not ask for confirmation.
 
 ### Exiting the program: `exit`
 
