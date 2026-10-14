@@ -23,7 +23,8 @@ TAB is a **desktop application for teaching assistants to manage student records
 1. Copy the file to the folder you want to use as the _home folder_ for TAB.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar tab.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
+   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.
+   The picture shows TAB in use, so a fresh launch has an empty command box and no reply above the list.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
