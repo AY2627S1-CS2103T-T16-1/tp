@@ -71,6 +71,7 @@
         "rejecting-unexpected-command-arguments": "Rejecting unexpected command arguments",
         "follow-up-status": "Follow-up status",
         "adding-a-student": "Adding a student",
+        "long-value-option-names": "Long value-option names",
         "nus-student-ids": "NUS Student IDs",
         "editing-a-student": "Editing a student",
         "clearing-a-student-s-email": "Clearing a student's email",
