@@ -127,6 +127,15 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_tooLongNusStudentId_throwsIllegalValueExceptionNamingField() {
+        String tooLong = "A".repeat(NusStudentId.MAX_LENGTH + 1);
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, tooLong, VALID_TAGS, false);
+
+        assertThrows(IllegalValueException.class, NusStudentId.MESSAGE_CONSTRAINTS, student::toModelType);
+    }
+
+    @Test
     public void toModelType_invalidTags_throwsIllegalValueException() {
         List<JsonAdaptedTag> invalidTags = new ArrayList<>(VALID_TAGS);
         invalidTags.add(new JsonAdaptedTag(INVALID_TAG));

@@ -136,6 +136,15 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseNusStudentId_tooLongValue_throwsParseExceptionNamingLimit() {
+        String tooLong = "A".repeat(NusStudentId.MAX_LENGTH + 1);
+        String expected = "NUS Student ID \"" + tooLong + "\" is not valid: "
+                + NusStudentId.MESSAGE_TOO_LONG;
+
+        assertThrows(ParseException.class, expected, () -> ParserUtil.parseNusStudentId(tooLong));
+    }
+
+    @Test
     public void parseNusStudentId_validValueWithWhitespace_returnsNormalizedNusStudentId() throws Exception {
         String nusStudentIdWithWhitespace = WHITESPACE + VALID_NUS_STUDENT_ID.toLowerCase() + WHITESPACE;
         assertEquals(new NusStudentId(VALID_NUS_STUDENT_ID), ParserUtil.parseNusStudentId(nusStudentIdWithWhitespace));

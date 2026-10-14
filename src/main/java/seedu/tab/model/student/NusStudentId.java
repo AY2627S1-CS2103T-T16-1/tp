@@ -14,10 +14,17 @@ public class NusStudentId {
     /** How this field is named when a value of it is reported as invalid. */
     public static final String FIELD_NAME = "NUS Student ID";
 
+    /** Longest supported ID, keeping the other details on a student's card visible. */
+    public static final int MAX_LENGTH = 32;
+
     public static final String MESSAGE_CONSTRAINTS =
-            "NUS Student IDs should be non-empty and contain only ASCII letters and digits";
+            "NUS Student IDs should be non-empty, contain only ASCII letters and digits, "
+                    + "and be at most " + MAX_LENGTH + " characters long";
 
     public static final String MESSAGE_EMPTY = "a NUS Student ID cannot be empty";
+
+    public static final String MESSAGE_TOO_LONG =
+            "a NUS Student ID may hold at most " + MAX_LENGTH + " characters";
 
     public static final String MESSAGE_NON_ALPHANUMERIC =
             "a NUS Student ID can only contain ASCII letters and digits";
@@ -50,6 +57,9 @@ public class NusStudentId {
 
         if (test.isEmpty()) {
             return MESSAGE_EMPTY;
+        }
+        if (test.length() > MAX_LENGTH) {
+            return MESSAGE_TOO_LONG;
         }
         if (!test.chars().allMatch(character -> character < 128 && Character.isLetterOrDigit(character))) {
             return MESSAGE_NON_ALPHANUMERIC;

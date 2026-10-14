@@ -34,12 +34,14 @@ public class NusStudentIdTest {
         assertFalse(NusStudentId.isValidNusStudentId("A0123!456X"));
         assertFalse(NusStudentId.isValidNusStudentId("学1234567X"));
         assertFalse(NusStudentId.isValidNusStudentId(" A01234567X "));
+        assertFalse(NusStudentId.isValidNusStudentId("A".repeat(NusStudentId.MAX_LENGTH + 1)));
 
         assertTrue(NusStudentId.isValidNusStudentId("A01234567X"));
         assertTrue(NusStudentId.isValidNusStudentId("E0123456"));
         assertTrue(NusStudentId.isValidNusStudentId("a76543210y"));
         assertTrue(NusStudentId.isValidNusStudentId("A"));
         assertTrue(NusStudentId.isValidNusStudentId("1"));
+        assertTrue(NusStudentId.isValidNusStudentId("A".repeat(NusStudentId.MAX_LENGTH)));
     }
 
     @Test
@@ -47,12 +49,14 @@ public class NusStudentIdTest {
         assertEquals(NusStudentId.MESSAGE_EMPTY, NusStudentId.getFailureReason(""));
         assertEquals(NusStudentId.MESSAGE_NON_ALPHANUMERIC,
                 NusStudentId.getFailureReason("A0123-456X"));
+        assertEquals(NusStudentId.MESSAGE_TOO_LONG,
+                NusStudentId.getFailureReason("A".repeat(NusStudentId.MAX_LENGTH + 1)));
         assertEquals("", NusStudentId.getFailureReason("E0123456"));
     }
 
     @Test
-    public void isValidNusStudentId_veryLongAlphanumericValue_doesNotOverflowStack() {
-        assertTrue(NusStudentId.isValidNusStudentId("A".repeat(100_000)));
+    public void isValidNusStudentId_veryLongAlphanumericValue_rejectsWithoutStackOverflow() {
+        assertFalse(NusStudentId.isValidNusStudentId("A".repeat(100_000)));
     }
 
     @Test
