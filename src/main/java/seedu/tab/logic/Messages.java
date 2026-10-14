@@ -4,7 +4,6 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import seedu.tab.logic.parser.Flag;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
 
@@ -36,11 +35,10 @@ public class Messages {
     /**
      * Returns an error message indicating the flags that were given more than once.
      */
-    public static String getErrorMessageForDuplicateFlags(Flag... duplicateFlags) {
+    public static String getErrorMessageForDuplicateFlags(String... duplicateFlags) {
         assert duplicateFlags.length > 0;
 
         String duplicateFields = Stream.of(duplicateFlags)
-                .map(Flag::toString)
                 .distinct()
                 .collect(Collectors.joining(" "));
 

@@ -19,16 +19,20 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  */
 public class FlagArgumentMap {
 
-    private final Map<Flag, List<String>> values = new HashMap<>();
+    private final Map<Flag, List<FlagValue>> values = new HashMap<>();
     private String preamble = "";
 
+    private record FlagValue(String marker, String value) {}
+
     /**
-     * Associates {@code value} with {@code flag}, after any value already given for it.
+     * Associates {@code value} with the spelling of {@code flag} that introduced it, after
+     * any value already given for that flag.
      */
-    public void put(Flag flag, String value) {
+    public void put(Flag flag, String marker, String value) {
         requireNonNull(flag);
+        requireNonNull(marker);
         requireNonNull(value);
-        values.computeIfAbsent(flag, key -> new ArrayList<>()).add(value);
+        values.computeIfAbsent(flag, key -> new ArrayList<>()).add(new FlagValue(marker, value));
     }
 
     public void setPreamble(String preamble) {
@@ -58,16 +62,19 @@ public class FlagArgumentMap {
         if (!values.containsKey(flag)) {
             return new ArrayList<>();
         }
-        return new ArrayList<>(values.get(flag));
+        List<String> flagValues = new ArrayList<>();
+        values.get(flag).forEach(flagValue -> flagValues.add(flagValue.value()));
+        return flagValues;
     }
 
     /**
      * Throws a {@code ParseException} if any flag in {@code flags} was given more than once.
      */
     public void verifyNoDuplicateFlagsFor(Flag... flags) throws ParseException {
-        Flag[] duplicated = Stream.of(flags).distinct()
+        String[] duplicated = Stream.of(flags).distinct()
                 .filter(flag -> getAllValues(flag).size() > 1)
-                .toArray(Flag[]::new);
+                .map(flag -> values.get(flag).getFirst().marker())
+                .toArray(String[]::new);
 
         if (duplicated.length > 0) {
             throw new ParseException(Messages.getErrorMessageForDuplicateFlags(duplicated));

@@ -24,9 +24,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
-import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
-import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
@@ -67,6 +65,20 @@ public class EditCommandParserTest {
                 .withTags(VALID_TAG_HUSBAND, VALID_TAG_FRIEND).build();
 
         assertParseSuccess(parser, userInput, new EditCommand(targetIndex, descriptor));
+    }
+
+    @Test
+    public void parse_longAndMixedAliases_success() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withName(VALID_NAME_AMY)
+                .withPhone(VALID_PHONE_BOB).withEmail(VALID_EMAIL_AMY)
+                .withTags(VALID_TAG_HUSBAND, VALID_TAG_FRIEND).build();
+
+        assertParseSuccess(parser, "2 --name \"" + VALID_NAME_AMY + "\""
+                + " --phone " + VALID_PHONE_BOB
+                + " --email " + VALID_EMAIL_AMY
+                + " --tag " + VALID_TAG_HUSBAND
+                + " -t " + VALID_TAG_FRIEND,
+                new EditCommand(INDEX_SECOND_STUDENT, descriptor));
     }
 
     @Test
@@ -188,6 +200,7 @@ public class EditCommandParserTest {
     public void parse_clearEmailAloneOrWithOtherFields_success() {
         EditStudentDescriptor cleared = new EditStudentDescriptorBuilder().withoutEmail().build();
         assertParseSuccess(parser, "1 -e \"\"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
+        assertParseSuccess(parser, "1 --email \"\"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
         assertParseSuccess(parser, "1 -e \"   \"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
         assertParseSuccess(parser, "\u00A01\u00A0-e\u00A0\"\"\u00A0",
                 new EditCommand(INDEX_FIRST_STUDENT, cleared));
@@ -204,7 +217,7 @@ public class EditCommandParserTest {
                     String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
         }
         assertParseFailure(parser, "1 -e \"\" -e a@b.com",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL));
+                Messages.getErrorMessageForDuplicateFlags("-e"));
         assertParseFailure(parser, "1 -n \"\" -e \"\"",
                 Messages.getErrorMessageForInvalidValue("Name", "", Name.getFailureReason("")));
         assertParseFailure(parser, "1 -p \"\" -e \"\"",
@@ -218,6 +231,8 @@ public class EditCommandParserTest {
 
         // an explicitly empty value asks for the tags to be cleared, where a bare -t is an error
         assertParseSuccess(parser, targetIndex.getOneBased() + NO_TAGS,
+                new EditCommand(targetIndex, descriptor));
+        assertParseSuccess(parser, targetIndex.getOneBased() + " --tag \"\"",
                 new EditCommand(targetIndex, descriptor));
     }
 
@@ -270,13 +285,15 @@ public class EditCommandParserTest {
                     String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, value.replace("\"", "")));
         }
         assertParseFailure(parser, "1 --no-follow-up --no-follow-up",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_NO_FOLLOW_UP));
-        for (String options : new String[] {"-nf -nf", "--no-follow-up -nf", "-nf --no-follow-up"}) {
-            assertParseFailure(parser, "1 " + options,
-                    Messages.getErrorMessageForDuplicateFlags(FLAG_NO_FOLLOW_UP));
-        }
+                Messages.getErrorMessageForDuplicateFlags("--no-follow-up"));
+        assertParseFailure(parser, "1 -nf -nf",
+                Messages.getErrorMessageForDuplicateFlags("-nf"));
+        assertParseFailure(parser, "1 --no-follow-up -nf",
+                Messages.getErrorMessageForDuplicateFlags("--no-follow-up"));
+        assertParseFailure(parser, "1 -nf --no-follow-up",
+                Messages.getErrorMessageForDuplicateFlags("-nf"));
         assertParseFailure(parser, "1 --follow-up -f",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_FOLLOW_UP));
+                Messages.getErrorMessageForDuplicateFlags("--follow-up"));
         assertParseFailure(parser, "1 --NO-FOLLOW-UP",
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--NO-FOLLOW-UP"));
     }
@@ -364,27 +381,41 @@ public class EditCommandParserTest {
     @Test
     public void parse_repeatedSingleValuedField_failure() {
         assertParseFailure(parser, "1" + PHONE_AMY + PHONE_BOB,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE));
+                Messages.getErrorMessageForDuplicateFlags("-p"));
 
         assertParseFailure(parser, "1" + FOLLOW_UP + FOLLOW_UP,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_FOLLOW_UP));
+                Messages.getErrorMessageForDuplicateFlags("--follow-up"));
 
         // a repeated option is refused before any field is read, since it leaves it unclear
         // which value belongs to the field
         assertParseFailure(parser, "1" + INVALID_PHONE + PHONE_BOB,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE));
+                Messages.getErrorMessageForDuplicateFlags("-p"));
 
         assertParseFailure(parser, "1" + PHONE_AMY + EMAIL_AMY + PHONE_BOB + EMAIL_BOB,
-                Messages.getErrorMessageForDuplicateFlags(FLAG_PHONE, FLAG_EMAIL));
+                Messages.getErrorMessageForDuplicateFlags("-p", "-e"));
+
+        assertParseFailure(parser, "1 -n \"Amy Bee\" --name \"Bob Choo\"",
+                Messages.getErrorMessageForDuplicateFlags("-n"));
+
+        assertParseFailure(parser, "1" + PHONE_AMY + " --phone " + VALID_PHONE_BOB,
+                Messages.getErrorMessageForDuplicateFlags("-p"));
+
+        assertParseFailure(parser, "1" + EMAIL_AMY + " --email bob@example.com",
+                Messages.getErrorMessageForDuplicateFlags("-e"));
+
+        assertParseFailure(parser, "1 --name \"Amy Bee\" --name \"Bob Choo\"",
+                Messages.getErrorMessageForDuplicateFlags("--name"));
 
         assertParseFailure(parser, "1 --id A01234567X -i A76543210Y",
-                Messages.getErrorMessageForDuplicateFlags(FLAG_NUS_STUDENT_ID));
+                Messages.getErrorMessageForDuplicateFlags("--id"));
     }
 
     @Test
     public void parse_unknownFlag_isRefusedOnItsOwn() {
         assertParseFailure(parser, "1" + PHONE_BOB + " -z something",
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-z"));
+        assertParseFailure(parser, "1" + PHONE_BOB + " --unknown something",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"));
     }
 
     @Test
@@ -398,6 +429,12 @@ public class EditCommandParserTest {
         // "-e" being stored as a tag
         assertParseFailure(parser, "1 -t -e a@b.com",
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_TAG.getLabel()));
+
+        assertParseFailure(parser, "1 --email",
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel("--email")));
+
+        assertParseFailure(parser, "1 --tag --email a@b.com",
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_TAG.getLabel("--tag")));
     }
 
     @Test

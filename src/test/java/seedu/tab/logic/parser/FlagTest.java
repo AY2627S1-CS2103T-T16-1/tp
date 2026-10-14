@@ -3,6 +3,7 @@ package seedu.tab.logic.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class FlagTest {
         Flag markerOnly = new Flag("--follow-up", List.of("-f"));
 
         assertEquals(List.of("--follow-up", "-f"), markerOnly.getMarkers());
+        assertEquals("--follow-up/-f", markerOnly.getMarkerSummary());
         assertEquals("--follow-up", markerOnly.getLabel());
     }
 
@@ -37,12 +39,32 @@ public class FlagTest {
     }
 
     @Test
-    public void valueTakingFlagWithAlias_returnsEveryMarkerAndTakesValue() {
+    public void valueTakingFlagWithAlias_returnsEveryMarkerAndLabelsEitherOne() {
+        Flag valueTaking = new Flag("-e", List.of("--email"), "EMAIL");
+
+        assertEquals(List.of("-e", "--email"), valueTaking.getMarkers());
+        assertEquals("-e/--email", valueTaking.getMarkerSummary());
+        assertEquals("-e EMAIL", valueTaking.getLabel());
+        assertEquals("--email EMAIL", valueTaking.getLabel("--email"));
+        assertTrue(valueTaking.takesValue());
+    }
+
+    @Test
+    public void valueTakingFlagWithShortAlias_returnsEveryMarkerAndLabelsEitherOne() {
         Flag valueTaking = new Flag("--id", List.of("-i"), "NUS_STUDENT_ID");
 
         assertEquals(List.of("--id", "-i"), valueTaking.getMarkers());
+        assertEquals("--id/-i", valueTaking.getMarkerSummary());
         assertEquals("--id NUS_STUDENT_ID", valueTaking.getLabel());
+        assertEquals("-i NUS_STUDENT_ID", valueTaking.getLabel("-i"));
         assertTrue(valueTaking.takesValue());
+    }
+
+    @Test
+    public void getLabel_unknownMarker_throwsAssertionError() {
+        Flag valueTaking = new Flag("-e", List.of("--email"), "EMAIL");
+
+        assertThrows(AssertionError.class, () -> valueTaking.getLabel("--phone"));
     }
 
     @Test

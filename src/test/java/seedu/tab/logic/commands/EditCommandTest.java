@@ -12,6 +12,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.tab.logic.commands.CommandTestUtil.showStudentAtIndex;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
@@ -43,7 +44,7 @@ public class EditCommandTest {
 
     @Test
     public void messageUsage_includesNusStudentIdAlias() {
-        assertTrue(EditCommand.MESSAGE_USAGE.contains("--id (alias -i)"));
+        assertTrue(EditCommand.MESSAGE_USAGE.contains(FLAG_NUS_STUDENT_ID.getMarkerSummary()));
     }
 
     @Test

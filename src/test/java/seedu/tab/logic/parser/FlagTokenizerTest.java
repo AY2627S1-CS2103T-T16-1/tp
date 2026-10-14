@@ -33,6 +33,17 @@ public class FlagTokenizerTest {
     }
 
     @Test
+    public void tokenize_longAliases_readsTheSameFlags() throws Exception {
+        FlagArgumentMap parsed = parse(
+                "John --phone 98765432 --email john@example.com --tag T1 -t \"Lab 3\"");
+
+        assertEquals("John", parsed.getPreamble());
+        assertEquals(Optional.of("98765432"), parsed.getValue(FLAG_PHONE));
+        assertEquals(Optional.of("john@example.com"), parsed.getValue(FLAG_EMAIL));
+        assertEquals(List.of("T1", "Lab 3"), parsed.getAllValues(FLAG_TAG));
+    }
+
+    @Test
     public void tokenize_valueTakingFlagAlias_readsTheSameField() throws Exception {
         assertEquals(Optional.of("A01234567X"), parse("John -i A01234567X").getValue(FLAG_NUS_STUDENT_ID));
         assertEquals(Optional.of("A76543210Y"),
@@ -103,6 +114,8 @@ public class FlagTokenizerTest {
     public void tokenize_unknownFlag_saysThereIsNoSuchOption() {
         assertThrows(ParseException.class, String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-z"), () ->
                 parse("John -z something"));
+        assertThrows(ParseException.class, String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"), () ->
+                parse("John --unknown something"));
     }
 
     @Test
@@ -110,6 +123,9 @@ public class FlagTokenizerTest {
         assertThrows(ParseException.class,
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()), () ->
                     parse("John -e"));
+        assertThrows(ParseException.class,
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel("--email")), () ->
+                    parse("John --email"));
     }
 
     @Test
@@ -175,7 +191,16 @@ public class FlagTokenizerTest {
         FlagArgumentMap parsed = parse("John -e a@b.com -e c@d.com");
 
         assertEquals(Optional.of("c@d.com"), parsed.getValue(FLAG_EMAIL));
-        assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags(FLAG_EMAIL), () ->
+        assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags("-e"), () ->
+                parsed.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL));
+    }
+
+    @Test
+    public void verifyNoDuplicateFlagsFor_mixedAliasesOfOneFlag_throws() throws Exception {
+        FlagArgumentMap parsed = parse("John --email a@b.com -e c@d.com");
+
+        assertEquals(Optional.of("c@d.com"), parsed.getValue(FLAG_EMAIL));
+        assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags("--email"), () ->
                 parsed.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL));
     }
 
@@ -183,13 +208,16 @@ public class FlagTokenizerTest {
     public void verifyNoDuplicateFlagsFor_primaryAndAlias_throwsForOneField() throws Exception {
         FlagArgumentMap parsed = parse("John --id A01234567X -i A76543210Y");
 
-        assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags(FLAG_NUS_STUDENT_ID), () ->
+        assertThrows(ParseException.class, Messages.getErrorMessageForDuplicateFlags("--id"), () ->
                 parsed.verifyNoDuplicateFlagsFor(FLAG_NUS_STUDENT_ID));
     }
 
     @Test
     public void verifyNoDuplicateFlagsFor_repeatedTagFlag_doesNotThrow() throws Exception {
-        parse("John -t T1 -t T2").verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL);
+        FlagArgumentMap parsed = parse("John -t T1 --tag T2");
+
+        parsed.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL);
+        assertEquals(List.of("T1", "T2"), parsed.getAllValues(FLAG_TAG));
     }
 
     @Test

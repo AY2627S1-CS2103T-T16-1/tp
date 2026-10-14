@@ -230,6 +230,9 @@ This section describes some noteworthy details on how certain features are imple
 `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
 `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`,
 where AB3 marked them with prefixes such as `p/`.
+The value options have descriptive long aliases: `--name`, `--phone`,
+`--email`, and `--tag` correspond to `-n`, `-p`, `-e`, and `-t` respectively.
+`add` takes its name in the preamble, so `--name` applies only to `edit`.
 
 A prefix has to be a sequence a value never contains, and no such sequence
 exists for a name. `s/o`, `d/o`, `a/l` and `a/p` are ordinary parts of
@@ -258,9 +261,12 @@ whatever it takes in that position: the name for `add`, so a name of several
 words needs no quotes unless it would otherwise be misread, and the index for
 `edit`. Each command names its own, in `AddCommand.FIELD_NAME` and
 `EditCommand.FIELD_INDEX`, rather than the shared `CliFlags` doing it for
-them. Value-taking options take the token after them,
-and `-t` repeats. The presence-only `--follow-up` option (alias `-f`) and edit-only
-`--no-follow-up` (alias `-nf`) instead record an empty value and consume no following token. This lets
+them. Each short and long marker resolves to the same `Flag`, so mixed aliases
+for a single-valued field are duplicates rather than independent fields.
+Value-taking options take the token after them, and `-t` or `--tag` repeats.
+The presence-only `--follow-up` option (alias `-f`) and edit-only
+`--no-follow-up` option (alias `-nf`) instead record an empty value and consume
+no following token. This lets
 `FlagArgumentMap` distinguish an
 absent option from a present marker without a separate representation. An
 unknown option, a value-taking option left without a value, and a token
@@ -275,7 +281,8 @@ silently override the other. Usage labels and error messages use the canonical
 `--id NUS_STUDENT_ID` spelling.
 
 The shape of the command is settled before any field is read. An unclosed
-quote, an unknown option, or a single-valued option given twice all leave it
+quote, an unknown option, or a single-valued option given twice, including
+once under each alias, all leave it
 unclear which field a value belongs to, so each is refused on its own instead
 of being collected with the field errors.
 
@@ -1273,8 +1280,8 @@ These were raised during requirement gathering and left out of the product.
 * **Class**: In the product domain, a tutorial or lab group taught by the User. This is distinct from a Java class.
 * **Class tag**: A tag used to identify a class.
 * **CLI (Command-Line Interface)**: The keyboard-driven interface through which the User enters commands into TAB.
-* **Command option**: A separate, hyphen-prefixed token, such as `-p`, that identifies the value following it. The
-  `add` and `edit` commands use options.
+* **Command option**: A separate, hyphen-prefixed token, such as `-p` or `--phone`, that identifies the value
+  following it. The `add` and `edit` commands use options.
 * **Command prefix**: A marker attached to the beginning of a field value, such as `p/`. AB3 marked its fields with
   prefixes, where TAB uses options.
 * **Course**: An academic subject (e.g., CS2103T) taught by the User.
@@ -1480,6 +1487,53 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add John Doe -p 98765432`<br>
       Expected: No student is added. The status message reports that this student
       already exists in the student book, and no record is mutated.
+
+### Long value-option names
+
+1. Adding and editing with long aliases
+
+   1. Prerequisites: Launch the JAR, run `clear`, and reply `yes` if
+      confirmation is requested.
+
+   1. Test case: `add Alice Tan --phone 91234567 --email alice@example.com
+      --tag T1 -t "Lab 3"` as one line.<br>
+      Expected: Alice is added with the given phone, email, and both tags. The
+      quoted tag retains its space, and the short and long tag spellings work
+      together.
+
+   1. Test case: `edit 1 --name "Alice Lim" -p 81112222
+      --email alice.lim@example.com --tag T2` as one line.<br>
+      Expected: Every named field changes. The unmentioned `T1` and `Lab 3`
+      tags are removed because an edit replaces the tag set.
+
+   1. Test cases: `edit 1 --email ""` and then `edit 1 --tag ""`.<br>
+      Expected: The first command removes Alice's email, and the second removes
+      every tag. No other field changes.
+
+1. Treating aliases as one logical field
+
+   1. Prerequisites: Continue with Alice at index 1 and note all her details.
+
+   1. Test case: `edit 1 -p 81112222 --phone 82223333`.<br>
+      Expected: No change. TAB reports that the phone was given more than once,
+      even though the two values use different aliases.
+
+   1. Test case: `add Bob Lim -p 92345678 --phone 93456789`.<br>
+      Expected: Bob is not added. TAB reports the same duplicate-phone problem.
+
+   1. Test case: `edit 1 -t T1 --tag "Lab 3"`.<br>
+      Expected: The edit succeeds with both tags because a tag option may
+      repeat, including under different aliases.
+
+1. Rejecting malformed long options without changing data
+
+   1. Prerequisites: Note Alice's details and the contents of `data/tab.json`.
+
+   1. Test cases: `add Bob Lim --phone`, `add Bob Lim --unknown value`,
+      `edit 1 --phone`, and `edit 1 --unknown value`.<br>
+      Expected: Neither Bob nor any edit is saved. Each missing value names
+      `--phone PHONE`; each unknown option names `--unknown`. Alice's details
+      and `data/tab.json` remain unchanged.
 
 ### NUS Student IDs
 

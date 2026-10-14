@@ -69,9 +69,10 @@ TAB is a **desktop application for teaching assistants to manage student records
   `-e EMAIL -p PHONE_NUMBER` is also acceptable. A parameter given before any
   option, such as the name in `add`, keeps its place at the front.
 
-* Every command marks its fields with options such as `-p`. A value holding
-  spaces goes in double quotes after an option, as does any value opening with
-  a hyphen.
+* Every command marks its fields with options such as `-p`. Value options also
+  have descriptive long aliases such as `--phone`; the command-specific
+  sections list them. A value holding spaces goes in double quotes after an
+  option, as does any value opening with a hyphen.
 
 * Commands that take no parameters (`help`, `list`, `exit`, and `clear`)
   reject unexpected input and report it without executing the command.<br>
@@ -138,6 +139,11 @@ Adds a student to the student book.
 
 Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
 
+The value options accept these equivalent spellings: `-p` and `--phone`,
+`-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`. The spellings may
+be mixed in one command, but giving the same field twice is an error even when
+the two spellings differ.
+
 <box type="tip" seamless>
 
 **Tip:** The email is optional. Record a student you only have a phone number
@@ -203,7 +209,7 @@ To put a double quote or a backslash inside a value, write `\"` or `\\`:
 
 Examples:
 * `add John Doe -p 98765432 -e johnd@example.com`
-* `add "Betsy Crowe" -t friend -e betsycrowe@example.com -p 1234567 --id A01234567X -t criminal`
+* `add "Betsy Crowe" --tag friend --email betsycrowe@example.com --phone 1234567 --id A01234567X -t criminal`
 * `add "Ravi s/o Kumaran" -p 91234567 -e e0923841@u.nus.edu`
 * `add Siti Nur-Aisyah -p 84420917 -e e1147203@u.nus.edu -i a11472030k -t T1 -t "Lab 3"`
 * `add Priya Nair -p 91234567 -e priya@example.com --follow-up`
@@ -264,6 +270,11 @@ Edits an existing student in the student book.
 
 Format: `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`
 
+The value options accept these equivalent spellings: `-n` and `--name`, `-p`
+and `--phone`, `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`.
+The spellings may be mixed in one command, but giving the same field twice is
+an error even when the two spellings differ.
+
 <box type="tip" seamless>
 
 **Tip:** `edit` reads field values the same way as `add`. A name holding slashes, hyphens or apostrophes needs nothing
@@ -294,11 +305,11 @@ done to it beyond the quotes any value with spaces takes:
   rather than read as a request to clear.
 
 Examples:
-*  `edit 1 -p 91234567 -e johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 1 -e ""` Removes the 1st student's email while keeping all other details.
+*  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 1 --email ""` Removes the 1st student's email while keeping all other details.
+*  `edit 2 --name "Betsy Crower" --tag ""` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 --id A01234567X` Records or replaces the 1st student's NUS Student ID.
 *  `edit 1 -i ""` Removes the 1st student's NUS Student ID while keeping all other details.
-*  `edit 2 -n "Betsy Crower" -t ""` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 -n "Ravi s/o Kumaran"` Edits the name of the 1st student to be `Ravi s/o Kumaran`.
 *  `edit 3 -p "+65 9123 4567" -t T1 -t "Lab 3"` Replaces the phone number and both tags of the 3rd student.
 *  `edit 1 --follow-up` Flags the 1st student for follow-up. Repeating it keeps the flag set.
@@ -439,10 +450,10 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> e.g., `add James Ho -p 22224444 -i A01234567X -t friend -t colleague --follow-up`
+**Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> e.g., `add James Ho --phone 22224444 -i A01234567X --tag friend -t colleague --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 -n "James Lee" --id A01234567X`
+**Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name "James Lee" --id A01234567X`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James A0123`
 **List**   | `list`
 **Help**   | `help`
