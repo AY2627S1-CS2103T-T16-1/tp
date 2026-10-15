@@ -40,7 +40,8 @@ jobs:
           echo "DISPLAY=:99" >> "$GITHUB_ENV"
 
       - name: Build and check with Gradle
-        run: ./gradlew check coverage
+        timeout-minutes: 5
+        run: ./gradlew check coverage --info
 
       - name: Upload coverage reports to Codecov
         if: runner.os == 'Linux'
