@@ -158,9 +158,16 @@ public class StudentCardTest {
         Student student = new StudentBuilder(base)
                 .withNusStudentId("A".repeat(NusStudentId.MAX_LENGTH)).build();
 
+        // Neighboring widths exercise different rounding when JavaFX shrinks the detail row.
+        for (int width = 298; width <= 320; width++) {
+            assertDetailsInside(student, width);
+        }
+    }
+
+    private static void assertDetailsInside(Student student, double width) throws Exception {
         Bounds[] measured = onFxThread(() -> {
             Region root = (Region) new StudentCard(student, 1).getRoot();
-            assertNotNull(styledScene(root, 300, 120));
+            assertNotNull(styledScene(root, width, 120));
             Region details = (Region) root.lookup("#details");
             Label nusStudentId = (Label) root.lookup("#nusStudentId");
             Label phone = (Label) root.lookup("#phone");

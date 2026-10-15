@@ -33,6 +33,11 @@
     </CardHeadline>
 
     <HBox alignment="CENTER_LEFT" spacing="12">
+      <!-- JavaFX 17 can leave one pixel undistributed when shrinking an HBox.
+           Reserve it so the last label stays inside the details container. -->
+      <padding>
+        <Insets right="1" />
+      </padding>
       <!-- left out until a student carries one, and allowed to elide before it can push the
            required phone or optional email outside the details row -->
       <Label fx:id="nusStudentId" styleClass="card-detail-strong" minWidth="0" />

@@ -90,6 +90,11 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
+The student card's secondary row reserves one pixel at its right edge because
+JavaFX 17's `HBox` can leave one pixel undistributed when shrinking children.
+This keeps the email inside the details area at narrow widths, including when
+platform fonts produce different preferred label widths.
+
 #### Colouring the command line
 
 A `TextField` cannot colour its own content, so `CommandBox` keeps the field
@@ -1368,7 +1373,15 @@ testers are expected to do more *exploratory* testing.
    1. Relaunch TAB by double-clicking the JAR file.<br>
        Expected: The most recent window size and location are retained.
 
-1. _{ more test cases … }_
+1. Narrow student cards
+
+   1. Add a student with
+      `add Narrow Card -p "+65 9123 4567" -e a.very.long.address.indeed@u.nus.edu --id AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`.
+
+   1. Resize the window to its minimum width, then widen it slowly.<br>
+      Expected: The ID and email shorten as needed, the phone remains readable,
+      and the email stays inside the card's details area. Check on Windows as
+      well as Linux and macOS, since font widths differ.
 
 ### Rejecting unexpected command arguments
 
