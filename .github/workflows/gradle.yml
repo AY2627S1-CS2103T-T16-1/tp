@@ -26,7 +26,8 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '25'
-          java-package: jdk+fx
+          # Use Gradle's JavaFX 17.0.7 dependencies instead of bundled JavaFX.
+          java-package: jdk
 
       - name: Start a virtual display
         if: runner.os == 'Linux'

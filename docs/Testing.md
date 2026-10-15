@@ -13,6 +13,17 @@
 
 ## Running tests
 
+Use a **JDK 25 without bundled JavaFX** for both the IntelliJ project SDK and
+Gradle JVM. CI uses Zulu JDK 25 with the `jdk` package, rather than `jdk+fx`.
+Gradle supplies the supported JavaFX version, **17.0.7**, from `build.gradle`.
+A JDK that bundles JavaFX can override these dependencies and produce different
+UI behavior.
+
+To reproduce CI locally, set `JAVA_HOME` to this JDK and put its `bin` directory
+first on `PATH`, then run `./gradlew clean check coverage` (Windows:
+`gradlew clean check coverage`). On Linux, use a graphical session or run under
+a virtual display, for example `xvfb-run -a ./gradlew clean check coverage`.
+
 You can run tests in two ways.
 
 * **Method 1: Using IntelliJ JUnit test runner**
