@@ -23,11 +23,15 @@
 Refer to the guide [_Setting up and getting started_](SettingUp.md).
 
 TAB supports JavaFX **17.0.7**, supplied by Gradle and bundled in the release
-JAR. Use a JDK 25 without bundled JavaFX to build, test, and run TAB. A JDK with
+JAR. Use an x64 JDK 25 without bundled JavaFX to build, test, and run TAB. A JDK with
 its own JavaFX (such as Zulu `jdk+fx` 25) can override the bundled version and
 change UI behavior. CI uses the plain Zulu `jdk` package so its tests use the
 same JavaFX version as the release JAR. See the [testing guide](Testing.md) for
 the matching local setup.
+
+The bundled JavaFX native libraries target x64. Apple Silicon Macs therefore
+need an x64 JDK running under Rosetta; an ARM64 JDK cannot load these libraries.
+CI explicitly selects x64 to match this packaging constraint.
 
 --------------------------------------------------------------------------------------------------------------------
 

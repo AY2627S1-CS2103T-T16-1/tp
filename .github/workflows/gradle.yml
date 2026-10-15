@@ -28,6 +28,8 @@ jobs:
           java-version: '25'
           # Use Gradle's JavaFX 17.0.7 dependencies instead of bundled JavaFX.
           java-package: jdk
+          # The packaged JavaFX native libraries target x64, including on macOS.
+          architecture: x64
 
       - name: Start a virtual display
         if: runner.os == 'Linux'

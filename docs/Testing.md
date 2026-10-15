@@ -13,11 +13,15 @@
 
 ## Running tests
 
-Use a **JDK 25 without bundled JavaFX** for both the IntelliJ project SDK and
+Use an **x64 JDK 25 without bundled JavaFX** for both the IntelliJ project SDK and
 Gradle JVM. CI uses Zulu JDK 25 with the `jdk` package, rather than `jdk+fx`.
 Gradle supplies the supported JavaFX version, **17.0.7**, from `build.gradle`.
 A JDK that bundles JavaFX can override these dependencies and produce different
 UI behavior.
+
+The JavaFX native libraries bundled by this project target x64. On Apple
+Silicon, use the x64 JDK under Rosetta rather than an ARM64 JDK; CI explicitly
+selects x64 even when its macOS runner uses Apple Silicon.
 
 To reproduce CI locally, set `JAVA_HOME` to this JDK and put its `bin` directory
 first on `PATH`, then run `./gradlew clean check coverage` (Windows:
