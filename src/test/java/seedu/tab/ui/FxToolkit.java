@@ -14,7 +14,8 @@ import javafx.application.Platform;
  */
 final class FxToolkit {
 
-    private static final int TIMEOUT_SECONDS = 10;
+    // Cold window initialization under Rosetta can exceed ten seconds on hosted macOS runners.
+    private static final int TIMEOUT_SECONDS = 60;
 
     private FxToolkit() {} // this class only starts the toolkit
 

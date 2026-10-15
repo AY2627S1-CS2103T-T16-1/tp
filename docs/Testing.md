@@ -23,6 +23,12 @@ The JavaFX native libraries bundled by this project target x64. On Apple
 Silicon, use the x64 JDK under Rosetta rather than an ARM64 JDK; CI explicitly
 selects x64 even when its macOS runner uses Apple Silicon.
 
+UI tests allow up to 60 seconds for work on the JavaFX thread. Cold window
+initialization under Rosetta can exceed ten seconds on hosted macOS runners;
+these tests verify behavior rather than enforce a startup performance target.
+CI also limits the complete Gradle build step to five minutes to catch a
+stalled native toolkit.
+
 To reproduce CI locally, set `JAVA_HOME` to this JDK and put its `bin` directory
 first on `PATH`, then run `./gradlew clean check coverage` (Windows:
 `gradlew clean check coverage`). On Linux, use a graphical session or run under
