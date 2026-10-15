@@ -31,7 +31,8 @@ the matching local setup.
 
 The bundled JavaFX native libraries target x64. Apple Silicon Macs therefore
 need an x64 JDK running under Rosetta; an ARM64 JDK cannot load these libraries.
-CI explicitly selects x64 to match this packaging constraint.
+CI explicitly selects x64 and an Intel macOS runner to match this packaging
+constraint without emulation overhead during UI tests.
 
 --------------------------------------------------------------------------------------------------------------------
 
