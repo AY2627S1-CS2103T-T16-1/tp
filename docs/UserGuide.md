@@ -16,7 +16,14 @@ TAB is a **desktop application for teaching assistants to manage student records
 ## Quick start
 
 1. Ensure that Java `25` or later is installed on your computer.<br>
-   **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
+   TAB includes JavaFX `17.0.7`, used with an x64 JDK without bundled JavaFX
+   (for Zulu, choose the `jdk` package).<br>
+   **Mac users:** You can instead use Zulu JDK+FX `25.0.3`, installed by the
+   [course's Mac setup guide](https://se-education.org/guides/tutorials/javaInstallationMac.html).
+   This setup uses the JDK's JavaFX `25` and runs natively on Apple Silicon.<br>
+   **Apple Silicon users choosing plain JDK + JavaFX 17:** Use an x64 JDK under
+   Rosetta, as TAB's bundled JavaFX libraries target Intel Macs. This requirement
+   does not apply to the course's native JDK+FX setup.
 
 1. Download the latest `.jar` file from [here](https://github.com/AY2627S1-CS2103T-T16-1/tp/releases).
 

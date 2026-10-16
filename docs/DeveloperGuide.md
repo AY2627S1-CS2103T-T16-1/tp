@@ -22,6 +22,18 @@
 
 Refer to the guide [_Setting up and getting started_](SettingUp.md).
 
+TAB supports JavaFX **17.0.7**, supplied by Gradle and bundled in the release
+JAR. Use an x64 JDK 25 without bundled JavaFX to build and test this baseline.
+CI tests it on Linux, macOS, and Windows. TAB also supports the course's Mac
+setup, Zulu JDK+FX **25.0.3**, which uses the JDK's JavaFX **25** instead.
+A separate macOS CI job tests that setup on Apple Silicon. See the
+[testing guide](Testing.md) for the matching local setups.
+
+The bundled JavaFX native libraries target x64. Apple Silicon Macs therefore
+need an x64 JDK running under Rosetta when using plain JDK + JavaFX 17.
+An ARM64 plain JDK cannot load these libraries. The course's native ARM64
+JDK+FX setup supplies its own JavaFX libraries and does not need Rosetta.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Design**
@@ -82,6 +94,11 @@ The `UI` component,
 * listens for changes to `Model` data so that the UI can be updated with the modified data.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
+
+The student card's secondary row reserves one pixel at its right edge because
+JavaFX 17's `HBox` can leave one pixel undistributed when shrinking children.
+This keeps the email inside the details area at narrow widths, including when
+platform fonts produce different preferred label widths.
 
 #### Colouring the command line
 
@@ -1367,7 +1384,15 @@ testers are expected to do more *exploratory* testing.
    1. Relaunch TAB by double-clicking the JAR file.<br>
        Expected: The most recent window size and location are retained.
 
-1. _{ more test cases … }_
+1. Narrow student cards
+
+   1. Add a student with
+      `add Narrow Card -p "+65 9123 4567" -e a.very.long.address.indeed@u.nus.edu --id AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`.
+
+   1. Resize the window to its minimum width, then widen it slowly.<br>
+      Expected: The ID and email shorten as needed, the phone remains readable,
+      and the email stays inside the card's details area. Check on Windows as
+      well as Linux and macOS, since font widths differ.
 
 ### Rejecting unexpected command arguments
 
