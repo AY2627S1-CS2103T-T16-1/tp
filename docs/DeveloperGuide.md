@@ -473,7 +473,8 @@ keywords to be enclosed in double quotes to match phrases containing spaces
 (such as `"Lab 3"`). Unterminated quotes report `CommandTokenizer.MESSAGE_UNCLOSED_QUOTE`,
 while empty or whitespace-only quoted terms are rejected with `MESSAGE_EMPTY_KEYWORD`.
 Search terms are normalized with `StringUtil.normalizeFieldValue`, collapsing internal
-whitespace runs and applying Unicode NFC normalization. It creates a `DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
+whitespace runs and applying Unicode NFC normalization. It creates a
+`DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
 against the student's name, NUS Student ID, phone, email, ordinary tags,
 and optional follow-up flag. Matching is case-insensitive and partial; any
 keyword can match.
