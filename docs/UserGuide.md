@@ -115,16 +115,21 @@ it as one either.
 ### Mistyping a command word
 
 If the first word of a command is not one TAB knows, the reply names the word
-you typed, and names the command it was likely meant to be whenever one is a
-near enough match:
+you typed, and names the commands it was likely meant to be whenever any of
+them is a near enough match:
 
 * `delte 3` answers `Unknown command "delte". Did you mean delete?`
+* `eit` answers `Unknown command "eit". Did you mean edit or exit?`
 * `qwerty` answers `Unknown command "qwerty". Enter help to see every command.`
 
-The comparison ignores case, so `Delte 3` is answered in the same way. A
-suggestion is worth making only for a near miss, so a short command word is
-suggested for a single slip alone: `delte` and `dlte` both point to `delete`,
-while `fit` points nowhere, being as much an attempt at `find` as at `list`.
+A word is a near enough match when at most two letters have to be added,
+removed, swapped or replaced to turn it into a command word, so `ls` reaches
+`list` and `dlte` reaches `delete`. Every command that close is named, because
+TAB cannot tell which of them you meant. A word that close to four or more
+commands, such as `fit`, says too little to name any of them, and is answered
+with the pointer to `help` instead.
+
+The comparison ignores case, so `Delte 3` is answered in the same way.
 
 <box type="warning" seamless>
 
