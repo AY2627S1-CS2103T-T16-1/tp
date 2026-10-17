@@ -171,6 +171,15 @@ public class TagRowTest {
     }
 
     @Test
+    public void setTags_threeTagsWithNoRoomForAChip_showsExactlyThreeTags() throws Exception {
+        List<TagRow> rows = rowsDrawingOnlyTheCount(List.of("attendance-low", "bravo", "charlie"));
+
+        for (TagRow row : rows) {
+            assertEquals(List.of("3 tags"), drawnChipsOf(row));
+        }
+    }
+
+    @Test
     public void setTags_aRowShowingNoChip_doesNotSayTheTagsAreMore() throws Exception {
         // nothing precedes the count there, so "more" would be more than what. Swept
         // rather than probed at one width, because which branch the row takes moves with
