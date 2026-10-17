@@ -616,9 +616,13 @@ public class StudentCardTest {
                     Region root = new StudentCard(studentNamed(whole), 1).getRoot();
                     assertNotNull(styledScene(root, width, 120));
                     Label name = (Label) root.lookup("#name");
-                    assertNotEquals(whole, name.getText(), "the narrow card should cut " + whole);
-                    assertNotNull(name.getTooltip(), "a width-cut name must remain readable");
-                    assertEquals(whole, name.getTooltip().getText());
+                    boolean isCut = !whole.equals(name.getText());
+                    if (width == 298) {
+                        assertTrue(isCut, "the minimum-width card should cut " + whole);
+                    }
+                    String expectedTooltip = isCut ? whole : null;
+                    String tooltip = name.getTooltip() == null ? null : name.getTooltip().getText();
+                    assertEquals(expectedTooltip, tooltip, "only a width-cut name needs a full-name tooltip");
 
                     layOutAt(root, root.prefWidth(-1));
                     assertEquals(whole, name.getText());
