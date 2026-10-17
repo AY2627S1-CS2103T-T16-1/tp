@@ -52,7 +52,7 @@ public class UserGuideExamplesTest {
     @Test
     public void userGuide_mistypedCommandReplies_areWhatTheParserSays() throws IOException {
         String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
-        for (String mistyped : List.of("delte 3", "eit", "qwerty")) {
+        for (String mistyped : List.of("del 3", "delte 3", "eit", "qwerty")) {
             String reply = reasonForRefusing(mistyped);
             assertTrue(guide.contains(reply),
                     "the User Guide does not show `" + reply + "`, which TAB answers " + mistyped + " with");

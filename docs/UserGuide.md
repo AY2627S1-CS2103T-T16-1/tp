@@ -115,21 +115,27 @@ it as one either.
 ### Mistyping a command word
 
 If the first word of a command is not one TAB knows, the reply names the word
-you typed, and names the commands it was likely meant to be whenever any of
-them is a near enough match:
+you typed, and names the commands it was likely meant to be:
 
+* `del 3` answers `Unknown command "del". Did you mean delete?`
 * `delte 3` answers `Unknown command "delte". Did you mean delete?`
 * `eit` answers `Unknown command "eit". Did you mean edit or exit?`
 * `qwerty` answers `Unknown command "qwerty". Enter help to see every command.`
 
-A word is a near enough match when at most two letters have to be added,
-removed, swapped or replaced to turn it into a command word, so `ls` reaches
-`list` and `dlte` reaches `delete`. Every command that close is named, because
-TAB cannot tell which of them you meant. A word that close to four or more
-commands, such as `fit`, says too little to name any of them, and is answered
-with the pointer to `help` instead.
+A word that opens a command is read as that command being typed: `del` and
+`dele` reach `delete`, `cle` reaches `clear`, and `e` reaches both `edit` and
+`exit`. Every command the word opens is named, because TAB cannot tell which
+of them you meant.
 
-The comparison ignores case, so `Delte 3` is answered in the same way.
+Any other word is matched letter by letter, and reaches a command when at most
+two letters have to be added, removed, swapped or replaced to turn it into
+that command, so `ls` reaches `list` and `dlte` reaches `delete`. A word that
+is two letters out has to start with the same letter as the command, since the
+first letter is the one you are least likely to get wrong. A word that is one
+letter out may differ in it, so `felete` still reaches `delete`.
+
+The comparison ignores case, so `Delte 3` is answered in the same way. A word
+that reaches nothing, such as `dlt`, is answered with the pointer to `help`.
 
 <box type="warning" seamless>
 
