@@ -132,8 +132,10 @@ but interacts with the field:
   that node once is not enough, because the field's skin re-scrolls it after a
   delete, a replace or a change of width, which is after the caret and the
   text the colouring was told about have both settled. The copy therefore
-  follows the node's own position, and the node is looked up again rather than
-  kept, since an empty line shows the prompt in a node of the same kind.
+  follows the node's own position. The node is the one the field is drawing
+  in, since an empty line shows the prompt in a node of the same kind which
+  the field hides rather than throws away, and a command reading as the
+  prompt would otherwise be taken for the hidden one.
 * **the caret.** The field's caret is drawn in its text colour, which is
   transparent, so the line carries one of its own, sized from a run of the text
   so it sits where the text does.
