@@ -128,7 +128,14 @@ but interacts with the field:
   A field scrolls by rules that differ between typing, deleting, cutting and
   undoing, and every attempt to reproduce them was right for some of those and
   wrong for others; a copy even a pixel out of step shows one character where
-  the field hit-tests another, and clicks land in the wrong place.
+  the field hit-tests another, and clicks land in the wrong place. Reading
+  that node once is not enough, because the field's skin re-scrolls it after a
+  delete, a replace or a change of width, which is after the caret and the
+  text the colouring was told about have both settled. The copy therefore
+  follows the node's own position. The node is the one the field is drawing
+  in, since an empty line shows the prompt in a node of the same kind which
+  the field hides rather than throws away, and a command reading as the
+  prompt would otherwise be taken for the hidden one.
 * **the caret.** The field's caret is drawn in its text colour, which is
   transparent, so the line carries one of its own, sized from a run of the text
   so it sits where the text does.
@@ -464,10 +471,13 @@ stack. `StackOverflowError` is an `Error` that no parser catches, and
 `CommandBox` catches only `CommandException` and `ParseException`, so the User
 saw no feedback at all. 254 is the limit RFC 5321 section 4.5.3.1 puts on a
 forward path, so the bound comes from the domain rather than from the parser.
-`Name`, `Phone` and `Tag` are bounded by patterns of their own; this bound is
-the one that keeps `VALIDATION_REGEX` from walking an address long enough to
-exhaust the stack, and the longest measured to be safe on every stack size
-tried: on a 256 KB stack even a 513-character address overflows.
+It is not the product's only bound: a `NusStudentId` holds at most 32
+characters, while `Name`, `Phone` and `Tag` are checked for the content they
+hold rather than for their length, and take a value of any size. What is
+particular to this bound is its purpose, which is to keep `VALIDATION_REGEX`
+from walking an address long enough to exhaust the stack, and 254 is the
+longest measured to be safe on every stack size tried: on a 256 KB stack even
+a 513-character address overflows.
 
 `isValidEmail` deliberately keeps **no** length limit, so each input boundary
 can report length and format failures separately. Both `ParserUtil` and
@@ -1887,6 +1897,15 @@ testers are expected to do more *exploratory* testing.
    1. Test case: click in the middle of the command.<br>
       Expected: The caret lands on the character clicked, not one or two away
       from it.
+   1. Test case: with that command still typed, press `End`, then `Backspace`
+      three times, then `Ctrl`+`Backspace`, then click in the middle of what
+      is left.<br>
+      Expected: The caret lands on the character clicked after each of those
+      edits, rather than a few characters away from it.
+   1. Test case: with that command still typed, drag the right-hand edge of
+      the window in to narrow it, then click in the middle of the command.<br>
+      Expected: The command still runs to the edge of the line with the caret
+      in view, and the caret lands on the character clicked.
 
 ### The summary beside the list
 
