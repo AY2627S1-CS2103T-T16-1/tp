@@ -12,12 +12,11 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import seedu.tab.MainApp;
 import seedu.tab.commons.core.LogsCenter;
+import seedu.tab.commons.util.AppUtil;
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.Logic;
 
@@ -70,7 +69,7 @@ public class UiManager implements Ui {
         }
 
         //Set the application icon.
-        primaryStage.getIcons().add(getImage(ICON_APPLICATION));
+        primaryStage.getIcons().add(AppUtil.getImage(ICON_APPLICATION));
 
         try {
             mainWindow = new MainWindow(primaryStage, logic, dataFilePath);
@@ -81,10 +80,6 @@ public class UiManager implements Ui {
             logger.severe(StringUtil.getDetails(e));
             showFatalErrorDialogAndShutdown("Fatal error during initializing", e);
         }
-    }
-
-    private Image getImage(String imagePath) {
-        return new Image(MainApp.class.getResourceAsStream(imagePath));
     }
 
     void showAlertDialogAndWait(Alert.AlertType type, String title, String headerText, String contentText) {
