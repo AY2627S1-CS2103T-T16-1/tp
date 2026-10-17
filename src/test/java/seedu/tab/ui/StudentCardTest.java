@@ -892,4 +892,19 @@ public class StudentCardTest {
         // count they cannot see
         assertTrue(unreadable.isEmpty(), "the name was squeezed away at: " + unreadable);
     }
+
+    @Test
+    public void setText_null_leavesTheNameHoldingNothingRatherThanFailing() throws Exception {
+        // a Label takes a null text, and a name that kept one would carry it into the width
+        // it reports and into the cut it makes from it
+        double empty = onFxThread(() -> {
+            CardName name = new CardName();
+            name.setText("Alexander Bernard Christopher");
+            name.setText(null);
+            return name.prefWidth(-1);
+        });
+
+        double never = onFxThread(() -> new CardName().prefWidth(-1));
+        assertEquals(never, empty, "a name given null should ask for the room an empty one does");
+    }
 }
