@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
@@ -39,102 +38,115 @@ public class CommandWordsTest {
     }
 
     @Test
-    public void findClosestTo_commandWordItself_returnsThatWord() {
+    public void suggestFor_commandWordItself_returnsThatWord() {
         for (String commandWord : CommandWords.COMMAND_WORDS) {
-            assertEquals(Optional.of(commandWord), CommandWords.findClosestTo(commandWord));
+            assertEquals(List.of(commandWord), CommandWords.suggestFor(commandWord));
         }
     }
 
     @Test
-    public void findClosestTo_missingLetter_returnsTheIntendedWord() {
-        assertEquals(Optional.of("delete"), CommandWords.findClosestTo("delte"));
-        assertEquals(Optional.of("find"), CommandWords.findClosestTo("fnd"));
-        assertEquals(Optional.of("clear"), CommandWords.findClosestTo("clar"));
+    public void suggestFor_missingLetter_returnsTheIntendedWord() {
+        assertEquals(List.of("delete"), CommandWords.suggestFor("delte"));
+        assertEquals(List.of("find"), CommandWords.suggestFor("fnd"));
+        assertEquals(List.of("clear"), CommandWords.suggestFor("clar"));
     }
 
     @Test
-    public void findClosestTo_extraLetter_returnsTheIntendedWord() {
-        assertEquals(Optional.of("list"), CommandWords.findClosestTo("liist"));
-        assertEquals(Optional.of("add"), CommandWords.findClosestTo("addd"));
-        assertEquals(Optional.of("delete"), CommandWords.findClosestTo("deleete"));
+    public void suggestFor_extraLetter_returnsTheIntendedWord() {
+        assertEquals(List.of("list"), CommandWords.suggestFor("liist"));
+        assertEquals(List.of("add"), CommandWords.suggestFor("addd"));
+        assertEquals(List.of("delete"), CommandWords.suggestFor("deleete"));
     }
 
     @Test
-    public void findClosestTo_swappedLetters_returnsTheIntendedWord() {
-        assertEquals(Optional.of("list"), CommandWords.findClosestTo("lsit"));
-        assertEquals(Optional.of("help"), CommandWords.findClosestTo("hepl"));
-        assertEquals(Optional.of("delete"), CommandWords.findClosestTo("deelte"));
+    public void suggestFor_swappedLetters_returnsTheIntendedWord() {
+        assertEquals(List.of("list"), CommandWords.suggestFor("lsit"));
+        assertEquals(List.of("help"), CommandWords.suggestFor("hepl"));
+        assertEquals(List.of("delete"), CommandWords.suggestFor("deelte"));
     }
 
     @Test
-    public void findClosestTo_wrongLetter_returnsTheIntendedWord() {
-        assertEquals(Optional.of("find"), CommandWords.findClosestTo("fine"));
-        assertEquals(Optional.of("edit"), CommandWords.findClosestTo("edut"));
-        assertEquals(Optional.of("clear"), CommandWords.findClosestTo("clexr"));
+    public void suggestFor_wrongLetter_returnsTheIntendedWord() {
+        assertEquals(List.of("find"), CommandWords.suggestFor("fine"));
+        assertEquals(List.of("edit"), CommandWords.suggestFor("edut"));
+        assertEquals(List.of("clear"), CommandWords.suggestFor("clexr"));
     }
 
     @Test
-    public void findClosestTo_differentCase_returnsTheLowercaseWord() {
-        assertEquals(Optional.of("list"), CommandWords.findClosestTo("LIST"));
-        assertEquals(Optional.of("delete"), CommandWords.findClosestTo("Delte"));
-        assertEquals(Optional.of("add"), CommandWords.findClosestTo("Add"));
+    public void suggestFor_differentCase_returnsTheLowercaseWord() {
+        assertEquals(List.of("list"), CommandWords.suggestFor("LIST"));
+        assertEquals(List.of("delete"), CommandWords.suggestFor("Delte"));
+        assertEquals(List.of("add"), CommandWords.suggestFor("Add"));
     }
 
     @Test
-    public void findClosestTo_twoEditsFromALongWord_returnsThatWord() {
-        assertEquals(Optional.of("delete"), CommandWords.findClosestTo("dlte"));
-        assertEquals(Optional.of("clear"), CommandWords.findClosestTo("clr"));
+    public void suggestFor_twoEditsAway_returnsTheNearestWord() {
+        assertEquals(List.of("list"), CommandWords.suggestFor("ls"));
+        assertEquals(List.of("delete"), CommandWords.suggestFor("dlte"));
+        assertEquals(List.of("clear"), CommandWords.suggestFor("clr"));
     }
 
     @Test
-    public void findClosestTo_twoEditsFromAShortWord_returnsNothing() {
-        // half of a four-letter word is too little to go on: "fit" is as much an attempt at
-        // "find" as at "list", and "ls" at "list" as at nothing at all
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("fit"));
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("ls"));
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("hp"));
+    public void suggestFor_oneEditAwayFromOneWordAndTwoFromAnother_returnsTheNearerOne() {
+        // "exit" is two edits from "edut" and "edit" one, so the nearer word is named alone
+        assertEquals(List.of("edit"), CommandWords.suggestFor("edut"));
+        assertEquals(List.of("list"), CommandWords.suggestFor("lsit"));
     }
 
     @Test
-    public void findClosestTo_equallyNearWords_returnsTheAlphabeticallyFirst() {
-        // dropping the second letter of either leaves a word one edit from both
-        assertEquals(Optional.of("edit"), CommandWords.findClosestTo("eit"));
-        assertEquals(Optional.of("edit"), CommandWords.findClosestTo("elit"));
+    public void suggestFor_equallyNearWords_namesEveryOneOfThem() {
+        // dropping the second letter of either leaves a word one edit from both, and which of
+        // the two was meant is the User's to say rather than ours to pick
+        assertEquals(List.of("edit", "exit"), CommandWords.suggestFor("eit"));
+        assertEquals(List.of("edit", "exit"), CommandWords.suggestFor("ewit"));
+        assertEquals(List.of("add", "edit"), CommandWords.suggestFor("ed"));
     }
 
     @Test
-    public void findClosestTo_wordFarFromEveryCommand_returnsNothing() {
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("qwerty"));
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("uicfhmowqewca"));
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("remove"));
+    public void suggestFor_asManyWordsAsAreWorthNaming_namesThemAll() {
+        assertEquals(List.of("edit", "exit", "help"), CommandWords.suggestFor("eli"));
     }
 
     @Test
-    public void findClosestTo_oneCharacter_returnsNothing() {
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("a"));
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("l"));
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("?"));
+    public void suggestFor_moreWordsThanAreWorthNaming_returnsNothing() {
+        // "fit" is two edits from edit, exit, find and list alike, and a list of four says
+        // only that TAB has no idea which was meant
+        assertEquals(List.of(), CommandWords.suggestFor("fit"));
     }
 
     @Test
-    public void findClosestTo_nonAsciiWord_returnsNothing() {
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("日本語"));
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("удалить"));
-        assertEquals(Optional.empty(), CommandWords.findClosestTo("🙂🙂"));
+    public void suggestFor_wordFarFromEveryCommand_returnsNothing() {
+        assertEquals(List.of(), CommandWords.suggestFor("qwerty"));
+        assertEquals(List.of(), CommandWords.suggestFor("uicfhmowqewca"));
+        assertEquals(List.of(), CommandWords.suggestFor("remove"));
     }
 
     @Test
-    public void findClosestTo_pastedParagraph_returnsNothingPromptly() {
+    public void suggestFor_oneCharacter_returnsOnlyAWordTwoEditsAway() {
+        assertEquals(List.of("add"), CommandWords.suggestFor("a"));
+        assertEquals(List.of(), CommandWords.suggestFor("l"));
+        assertEquals(List.of(), CommandWords.suggestFor("?"));
+    }
+
+    @Test
+    public void suggestFor_nonAsciiWord_returnsNothing() {
+        assertEquals(List.of(), CommandWords.suggestFor("日本語"));
+        assertEquals(List.of(), CommandWords.suggestFor("удалить"));
+        assertEquals(List.of(), CommandWords.suggestFor("🙂🙂"));
+    }
+
+    @Test
+    public void suggestFor_pastedParagraph_returnsNothingPromptly() {
         String pasted = "lorem ipsum ".repeat(100_000);
         long startTime = System.nanoTime();
-        assertEquals(Optional.empty(), CommandWords.findClosestTo(pasted));
+        assertEquals(List.of(), CommandWords.suggestFor(pasted));
         long elapsedMillis = (System.nanoTime() - startTime) / 1_000_000;
         assertTrue(elapsedMillis < 1000, "measuring a pasted paragraph took " + elapsedMillis + "ms");
     }
 
     @Test
-    public void findClosestTo_null_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> CommandWords.findClosestTo(null));
+    public void suggestFor_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> CommandWords.suggestFor(null));
     }
 
 }

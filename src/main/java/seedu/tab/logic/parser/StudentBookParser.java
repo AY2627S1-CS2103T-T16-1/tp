@@ -2,6 +2,7 @@ package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import seedu.tab.commons.core.LogsCenter;
@@ -86,14 +87,16 @@ public class StudentBookParser {
 
     /**
      * Returns what to tell the User about a word that is no command, naming the word they
-     * typed and, when one is close, the command it was likely meant to be. The suggestion is
-     * only ever named: running it would act on a word the User never typed, and a word two
-     * edits from {@code delete} is a guess.
+     * typed and the commands it was likely meant to be. Those are only ever named: running
+     * one would act on a word the User never typed, and a word two edits from {@code delete}
+     * is a guess even when it is the only guess going.
      */
     private static String describeUnknownCommand(String commandWord) {
-        return CommandWords.findClosestTo(commandWord)
-                .map(suggestion -> Messages.getErrorMessageForMistypedCommand(commandWord, suggestion))
-                .orElseGet(() -> Messages.getErrorMessageForUnknownCommand(commandWord));
+        List<String> suggestions = CommandWords.suggestFor(commandWord);
+        if (suggestions.isEmpty()) {
+            return Messages.getErrorMessageForUnknownCommand(commandWord);
+        }
+        return Messages.getErrorMessageForMistypedCommand(commandWord, suggestions);
     }
 
     /**

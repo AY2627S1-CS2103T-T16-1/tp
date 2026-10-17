@@ -2,10 +2,8 @@ package seedu.tab.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.commands.AddCommand;
@@ -24,8 +22,8 @@ import seedu.tab.logic.commands.ListCommand;
 public class CommandWords {
 
     /**
-     * Every command word, in alphabetical order, which is also the order a tie between two
-     * equally near words is settled in.
+     * Every command word, in alphabetical order, which is also the order several equally
+     * likely ones are named in.
      *
      * <p>{@code StudentBookParser} dispatches on these same words. The two are held to each
      * other by a test rather than by the compiler, because a word missing from here would
@@ -41,29 +39,52 @@ public class CommandWords {
             HelpCommand.COMMAND_WORD,
             ListCommand.COMMAND_WORD);
 
-    /** The longest a command word can be while two edits would leave too little of it. */
-    private static final int SHORT_COMMAND_WORD_LENGTH = 4;
+    /** How far from a command word a typed word may be and still be read as a mistyping of it. */
     private static final int MAX_EDITS = 2;
-    private static final int MAX_EDITS_FOR_SHORT_COMMAND_WORD = 1;
+
+    /** How many equally likely words are worth naming before a list of them stops being help. */
+    private static final int MAX_SUGGESTIONS = 3;
 
     /**
-     * Returns the command word {@code typedWord} was most likely meant to be, or nothing when
-     * it is too far from every one of them for a guess to be worth making. Case is ignored, so
-     * {@code LIST} is read as an attempt at {@code list}.
+     * Returns the command words {@code typedWord} is a likely attempt at: those nearest to
+     * it, in the alphabetical order of {@link #COMMAND_WORDS}. The list is empty when the
+     * word is too far from every command word, and when so many of them are equally near
+     * that naming them all helps nobody. Case is ignored, so {@code LIST} is read as an
+     * attempt at {@code list}.
      *
-     * <p>The nearest word wins, and the alphabetically first of several equally near ones, so
-     * that the same typo is always answered with the same word. A near miss is only ever
-     * reported back: no suggestion is acted on, because a word two edits from {@code delete}
-     * is a guess, and guessing wrong would remove a student the User never named.
+     * <p>Words equally near the typed one are all returned rather than one of them being
+     * chosen. A word two edits from several commands says nothing about which was meant, and
+     * naming one of them would dress a guess up as help; naming them all says what is known.
+     *
+     * <p>A suggestion is only ever reported back. None of them is acted on, because acting on
+     * a guess would remove a student the User never named.
      */
-    public static Optional<String> findClosestTo(String typedWord) {
+    public static List<String> suggestFor(String typedWord) {
         requireNonNull(typedWord);
 
-        String typed = typedWord.toLowerCase(Locale.ROOT);
-        return COMMAND_WORDS.stream()
+        List<String> nearest = wordsNearestTo(typedWord.toLowerCase(Locale.ROOT));
+        return nearest.size() > MAX_SUGGESTIONS ? List.of() : nearest;
+    }
+
+    /**
+     * Returns the command words {@code typed} is nearest to, among those near enough to be a
+     * mistyping of one, or an empty list when none of them is.
+     */
+    private static List<String> wordsNearestTo(String typed) {
+        List<String> nearMisses = COMMAND_WORDS.stream()
                 .filter(commandWord -> isLikelyAttemptAt(commandWord, typed))
-                .min(Comparator.comparingInt((String commandWord) -> StringUtil.editDistance(typed, commandWord))
-                        .thenComparing(Comparator.naturalOrder()));
+                .toList();
+        if (nearMisses.isEmpty()) {
+            return List.of();
+        }
+
+        int nearestDistance = nearMisses.stream()
+                .mapToInt(commandWord -> StringUtil.editDistance(typed, commandWord))
+                .min()
+                .orElseThrow();
+        return nearMisses.stream()
+                .filter(commandWord -> StringUtil.editDistance(typed, commandWord) == nearestDistance)
+                .toList();
     }
 
     /**
@@ -72,21 +93,10 @@ public class CommandWords {
      * word without measuring it against any of them.
      */
     private static boolean isLikelyAttemptAt(String commandWord, String typed) {
-        int allowedEdits = allowedEditsFor(commandWord);
-        if (Math.abs(commandWord.length() - typed.length()) > allowedEdits) {
+        if (Math.abs(commandWord.length() - typed.length()) > MAX_EDITS) {
             return false;
         }
-        return StringUtil.editDistance(typed, commandWord) <= allowedEdits;
-    }
-
-    /**
-     * Returns how far from {@code commandWord} a word may be and still be read as a mistyping
-     * of it. Two edits in a word of four letters or fewer change half of it, which leaves too
-     * little of the word to tell a slip from a word the User meant to type, so a short command
-     * word is only ever suggested for a single slip.
-     */
-    private static int allowedEditsFor(String commandWord) {
-        return commandWord.length() > SHORT_COMMAND_WORD_LENGTH ? MAX_EDITS : MAX_EDITS_FOR_SHORT_COMMAND_WORD;
+        return StringUtil.editDistance(typed, commandWord) <= MAX_EDITS;
     }
 
 }
