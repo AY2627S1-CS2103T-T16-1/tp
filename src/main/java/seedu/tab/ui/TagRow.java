@@ -58,13 +58,13 @@ public class TagRow extends Region {
     }
 
     /**
-     * Fills the row with a chip for each of {@code names}, in the order given.
+     * Fills the row with up to {@code MAX_CHIPS} chips in the order given, retaining all names for overflow.
      */
     public void setTags(List<String> names) {
         tagNames = List.copyOf(names);
         chips.clear();
         getChildren().clear();
-        for (String tagName : tagNames) {
+        for (String tagName : tagNames.subList(0, Math.min(tagNames.size(), MAX_CHIPS))) {
             Label chip = new Label();
             UiText.showShortenedToFit(chip, tagName, MAX_TAG_CHARACTERS);
             chips.add(chip);
@@ -79,7 +79,7 @@ public class TagRow extends Region {
     protected double computePrefWidth(double height) {
         // only what the row would ever draw, since a student with twenty tags would otherwise
         // ask for a row twenty chips wide and leave the name beside it nothing to shrink into
-        return widthOf(Math.min(chips.size(), MAX_CHIPS));
+        return widthOf(chips.size());
     }
 
     @Override
@@ -89,7 +89,7 @@ public class TagRow extends Region {
         }
         // enough for the start of one tag and a count of the others, since a row showing
         // one chip and no count says nothing about the tags it left out
-        double forACount = chips.size() > 1 ? widthOfTheRest(1) + SPACING : 0;
+        double forACount = tagNames.size() > 1 ? widthOfTheRest(1) + SPACING : 0;
         return Math.min(computePrefWidth(height), RECOGNISABLE_CHIP_WIDTH + forACount);
     }
 
@@ -122,7 +122,7 @@ public class TagRow extends Region {
         for (int i = 0; i < shown; i++) {
             x = place(chips.get(i), x);
         }
-        if (shown < chips.size()) {
+        if (shown < tagNames.size()) {
             place(overflow, x);
         }
     }
@@ -137,7 +137,7 @@ public class TagRow extends Region {
      * row, where it read as "1 m".
      */
     private void showOneCutChip() {
-        if (chips.size() == 1) {
+        if (tagNames.size() == 1) {
             // one tag and nothing to count, so the row goes to it, cut to what there is
             place(chips.get(0), 0, getWidth());
             return;
@@ -163,7 +163,7 @@ public class TagRow extends Region {
      * it cannot show them all, or none when not even one chip and that trailing chip fit.
      */
     private int countThatFit() {
-        for (int shown = Math.min(chips.size(), MAX_CHIPS); shown > 0; shown--) {
+        for (int shown = chips.size(); shown > 0; shown--) {
             if (fits(shown)) {
                 return shown;
             }
@@ -184,7 +184,7 @@ public class TagRow extends Region {
         for (int i = 0; i < shown; i++) {
             needed += drawnWidthOf(chips.get(i)) + SPACING;
         }
-        if (shown < chips.size()) {
+        if (shown < tagNames.size()) {
             needed += widthOfTheRest(shown) + SPACING;
         }
         return Math.max(0, needed - SPACING);
@@ -211,11 +211,11 @@ public class TagRow extends Region {
      */
     private void describeTheRest(int shown) {
         overflow.setText(textForTheRest(shown));
-        overflow.getTooltip().setText(String.join(", ", tagNames.subList(shown, chips.size())));
+        overflow.getTooltip().setText(String.join(", ", tagNames.subList(shown, tagNames.size())));
     }
 
     private String textForTheRest(int shown) {
-        return (chips.size() - shown) + " more…";
+        return (tagNames.size() - shown) + " more…";
     }
 
     /**

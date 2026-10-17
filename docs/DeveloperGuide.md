@@ -104,6 +104,10 @@ JavaFX 17's `HBox` can leave one pixel undistributed when shrinking children.
 This keeps the email inside the details area at narrow widths, including when
 platform fonts produce different preferred label widths.
 
+The student card's `TagRow` retains every tag name, but creates at most three
+tag labels. Layout uses the full name count to size the overflow chip and
+list all hidden tags in its tooltip, even when fewer labels are created.
+
 #### Colouring the command line
 
 A `TextField` cannot colour its own content, so `CommandBox` keeps the field
