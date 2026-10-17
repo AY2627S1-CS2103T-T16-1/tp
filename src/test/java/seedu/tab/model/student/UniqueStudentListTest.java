@@ -56,6 +56,37 @@ public class UniqueStudentListTest {
     }
 
     @Test
+    public void add_sameNameDifferentNusStudentIds_addsBothStudents() {
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withNusStudentId("A01234567X").build();
+        Student second = new StudentBuilder(first).withNusStudentId("A76543210Y").build();
+
+        uniqueStudentList.add(first);
+        uniqueStudentList.add(second);
+
+        assertEquals(List.of(first, second), uniqueStudentList.asUnmodifiableObservableList());
+    }
+
+    @Test
+    public void add_sameNameWithoutNusStudentIds_addsBothStudents() {
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).withoutNusStudentId().build();
+
+        uniqueStudentList.add(first);
+        uniqueStudentList.add(second);
+
+        assertEquals(List.of(first, second), uniqueStudentList.asUnmodifiableObservableList());
+    }
+
+    @Test
+    public void add_sameNusStudentIdDifferentNames_throwsDuplicateStudentException() {
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withNusStudentId("A01234567X").build();
+        Student second = new StudentBuilder(first).withName("Lee Wei Ming").build();
+        uniqueStudentList.add(first);
+
+        assertThrows(DuplicateStudentException.class, () -> uniqueStudentList.add(second));
+    }
+
+    @Test
     public void setStudent_nullTargetStudent_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> uniqueStudentList.setStudent(null, ALICE));
     }
@@ -103,7 +134,10 @@ public class UniqueStudentListTest {
     public void setStudent_editedStudentHasNonUniqueIdentity_throwsDuplicateStudentException() {
         uniqueStudentList.add(ALICE);
         uniqueStudentList.add(BOB);
-        assertThrows(DuplicateStudentException.class, () -> uniqueStudentList.setStudent(ALICE, BOB));
+        Student editedBob = new StudentBuilder(BOB)
+                .withNusStudentId(ALICE.getNusStudentId().orElseThrow().value).build();
+
+        assertThrows(DuplicateStudentException.class, () -> uniqueStudentList.setStudent(BOB, editedBob));
     }
 
     @Test

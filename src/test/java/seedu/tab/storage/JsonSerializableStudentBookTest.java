@@ -21,6 +21,7 @@ public class JsonSerializableStudentBookTest {
     private static final Path TYPICAL_STUDENTS_FILE = TEST_DATA_FOLDER.resolve("typicalStudentsStudentBook.json");
     private static final Path INVALID_STUDENT_FILE = TEST_DATA_FOLDER.resolve("invalidStudentStudentBook.json");
     private static final Path DUPLICATE_STUDENT_FILE = TEST_DATA_FOLDER.resolve("duplicateStudentStudentBook.json");
+    private static final Path SAME_NAME_STUDENTS_FILE = TEST_DATA_FOLDER.resolve("sameNameStudentsStudentBook.json");
 
     @Test
     public void toModelType_typicalStudentsFile_success() throws Exception {
@@ -42,9 +43,17 @@ public class JsonSerializableStudentBookTest {
     public void toModelType_duplicateStudents_throwsIllegalValueException() throws Exception {
         JsonSerializableStudentBook dataFromFile = JsonUtil.readJsonFile(DUPLICATE_STUDENT_FILE,
                 JsonSerializableStudentBook.class).get();
-        String expectedMessage = "Student record 2 (\"Alice Pauline\"): "
-                + JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT;
+        String expectedMessage = "Student record 2 (\"Bob Lim\"): "
+                + String.format(JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT, "A01234567X");
         assertThrows(IllegalValueException.class, expectedMessage, dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_sameNameWithDifferentOrAbsentNusStudentIds_success() throws Exception {
+        JsonSerializableStudentBook dataFromFile = JsonUtil.readJsonFile(SAME_NAME_STUDENTS_FILE,
+                JsonSerializableStudentBook.class).get();
+
+        assertEquals(3, dataFromFile.toModelType().getStudentList().size());
     }
 
     @Test

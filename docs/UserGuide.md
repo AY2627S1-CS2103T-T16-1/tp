@@ -222,6 +222,30 @@ use the shorter `-i` alias. It must contain between 1 and 32 ASCII letters and
 digits, such as `A01234567X` or `E0123456`. Lowercase letters are accepted and
 stored as uppercase. To remove an NUS Student ID entered by mistake, use
 `edit INDEX --id ""`; a value containing only spaces clears it as well.
+
+TAB uses the NUS Student ID to detect duplicate student records. Two students
+may share a name, and students without an NUS Student ID are not treated as
+duplicates. An `add` or `edit` is refused only when another student already
+has the same NUS Student ID, ignoring letter case; the error names that ID.
+</box>
+
+<box type="tip" seamless>
+
+**Tip:** After a successful `add` or `edit`, TAB warns you when another student
+has the same name, phone number, or email address. The record is still saved.
+Each note names the matching field and the other student, for example:
+
+`WARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.com). Delete one if they are the same person.`
+
+Names and emails are compared without regard to letter case. Repeated,
+leading, and trailing whitespace in names is insignificant, as are spaces in
+phone numbers. Each matching field produces a separate note.
+
+The warning is only a hint. It does not prove that two records describe the
+same person, and it does not find misspelled names, email aliases, or phone
+numbers whose punctuation differs. Review the records before deleting either
+one. A matching NUS Student ID is handled separately and still refuses the
+command, as described above.
 </box>
 
 <box type="tip" seamless>
@@ -371,6 +395,11 @@ done to it beyond the quotes any value with spaces takes:
   option out keeps the NUS Student ID unchanged; a quoted value containing only
   spaces removes it, while a bare option is an error. Clearing an already absent
   NUS Student ID succeeds. Name and phone are required and cannot be cleared.
+* An edit may give two students the same name, but cannot give a student an NUS
+  Student ID already held by another record. NUS Student ID matching ignores case.
+  A saved edit produces the same likely-duplicate notes described under `add`
+  when its name, phone number, or email matches another student; the edited
+  student is not compared with its own earlier record.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
 * To remove all of a student's tags, give `-t` an empty value: `-t ""`. A bare
   `-t` with nothing after it is refused, so that a mistyped option is reported
@@ -491,10 +520,11 @@ A student with an NUS Student ID has a `"nusStudentId"` string such as
 contain between 1 and 32 ASCII letters and digits. TAB accepts lowercase letters
 and saves valid IDs in uppercase.
 
-TAB still identifies duplicate records by normalized name. NUS Student IDs, phone
-numbers, and emails are searchable details rather than identity keys, so two
-students with different names may hold the same NUS Student ID. Check such records if
-the repeated ID was unintended.
+TAB identifies duplicate records by NUS Student ID, ignoring letter case. Two
+records with the same name load when their NUS Student IDs differ or either ID
+is absent. Two records with the same NUS Student ID make the file unreadable;
+the startup error names the repeated ID so that you can correct it. Phone
+numbers and emails are searchable details rather than identity keys.
 
 <box type="warning" seamless>
 
