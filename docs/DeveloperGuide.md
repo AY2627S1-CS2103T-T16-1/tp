@@ -104,12 +104,17 @@ JavaFX 17's `HBox` can leave one pixel undistributed when shrinking children.
 This keeps the email inside the details area at narrow widths, including when
 platform fonts produce different preferred label widths.
 
+Student-card email labels use `UiText.showToFit` to retain their full text
+and show a tooltip only while the available width cuts the address. Width
+listeners remove the tooltip when widening the card makes it unnecessary.
+
 `HelpWindow` re-fits its scene after the first rendering pulse, allowing
 for native frame sizes, then uses `sizeToScene()` without fixed FXML scene
-dimensions. This lets JavaFX include native decoration sizes correctly. Its copy button keeps the same border insets when focused, so the
-focus indicator does not increase the content's preferred size. The
-regression test waits for rendering and native resize events, then measures
-the scene rather than its surrounding frame.
+dimensions. This lets JavaFX include native decoration sizes correctly.
+Its copy button keeps the same border insets when focused, so the focus
+indicator does not increase the content's preferred size. The regression
+test waits for rendering and native resize events, then measures the scene
+rather than its surrounding frame.
 
 #### Colouring the command line
 
@@ -1754,6 +1759,16 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add Jonathan Chuah Wei Ming -p 93456789`.<br>
       Expected: The card shows the whole name with no ellipsis, because a cut
       this close to the limit would save no room.
+
+### Reading a clipped email address
+
+1. Add `add Siti Nur-Aisyah -p "6516-2727 ext 21" -e siti.nuraisyah.binte.ahmad@gmail.com -t T1 -f`.
+1. Narrow the window until the email is cut and hover over it.<br>
+   Expected: The tooltip shows `siti.nuraisyah.binte.ahmad@gmail.com` in full.
+1. Widen the window until the address fits.<br>
+   Expected: The whole address is visible and the tooltip is removed.
+1. Clear the email with `edit 1 -e ""` (use the new student's actual index).<br>
+   Expected: The email label disappears without a placeholder or a tooltip.
 
 ### Long value-option names
 
