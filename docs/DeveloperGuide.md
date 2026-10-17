@@ -613,18 +613,27 @@ other half.
 
 Two cuts reach the name and they have to agree on where they take text from.
 The count is the card's own and is applied before the card is laid out, so it
-depends on the name alone. The row's overrun is JavaFX's, applied to whatever
-the label was handed once the line knows how much room it has, so it depends
-on what the card carries beside the name. `DarkTheme.css` therefore gives
-`.card-name` `-fx-text-overrun: center-ellipsis`, so that the second cut takes
-its text out of the middle as the first one did. With the trailing default, a
-card at the window's smallest width drew both `Mohamed Abdul Rahman bin
-Ismail` and `Mohamed Abdul Rahman bin Ahmad` as `Mohamed Abd...`, taking the
-end of the name straight back off. The same rule sets `-fx-ellipsis-string` to
-the character the card cuts with, so a name that both cuts reach does not
-carry two kinds of ellipsis. The overrun has to live in the stylesheet: an
-author stylesheet overrides what code sets on a styleable property, so a
+depends on the name alone. The second is taken once the line knows how much
+room it has, and so depends on what the card carries beside the name.
+`CardName` takes that second cut itself, from the middle and through the same
+`StringUtil` counting, rather than leaving it to the label. A cut at the end
+would read as the same text on two cards: at the window's smallest width both
+`Mohamed Abdul Rahman bin Ismail` and `Mohamed Abdul Rahman bin Ahmad` drew as
+`Mohamed Abd...`. A label told to elide from the middle instead cuts at a
+character index, which falls between the two halves of a character Java stores
+in two, so `Alexander 𠮷田` drew as `Ale…` with the back half of its fourth
+character after it.
+
+`DarkTheme.css` therefore tells `.card-name` to clip, so that a cut `CardName`
+gets a pixel wrong shows a glyph against the edge rather than a broken one.
+That belongs in the stylesheet rather than beside the cut: an author
+stylesheet overrides what code sets on a styleable property, so a
 `setTextOverrun` call on the label would be dropped without a word.
+
+`CardName` asks for the room the whole name needs however little of it is
+drawn. The row shares its width out from what the name asks for, so a name
+that asked only for what it is drawn at would be handed less room on every
+pass, and the name and the tags beside it would chase each other down.
 
 ### Confirming a clear
 
