@@ -105,7 +105,8 @@
       "src": "Logging.md",
       "title": "Logging guide",
       "headings": {
-        "logging-guide": "Logging guide"
+        "logging-guide": "Logging guide",
+        "what-tab-logs": "What TAB logs"
       },
       "headingKeywords": {}
     },
