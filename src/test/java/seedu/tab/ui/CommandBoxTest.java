@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import javafx.event.ActionEvent;
 import javafx.geometry.Point2D;
@@ -26,16 +29,24 @@ import javafx.scene.control.skin.TextInputControlSkin.TextUnit;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import seedu.tab.logic.LogicManager;
+import seedu.tab.logic.commands.ClearCommand;
 import seedu.tab.logic.commands.CommandResult;
 import seedu.tab.logic.parser.StudentBookParser;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.ModelManager;
+import seedu.tab.storage.JsonStudentBookStorage;
+import seedu.tab.storage.JsonUserPrefsStorage;
+import seedu.tab.storage.StorageManager;
+import seedu.tab.testutil.StudentBuilder;
 
 public class CommandBoxTest {
 
@@ -59,6 +70,9 @@ public class CommandBoxTest {
     /** Where a click is aimed along the line, and how far apart those aims are. */
     private static final double FIRST_AIM = 20;
     private static final double BETWEEN_AIMS = 37;
+
+    @TempDir
+    public Path temporaryFolder;
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -370,6 +384,127 @@ public class CommandBoxTest {
             }
         }
         return contents;
+    }
+
+    @Test
+    public void history_successfulCommandsAndDraft_recallsBothDirections() throws Exception {
+        List<String> submitted = new ArrayList<>();
+        CommandBox box = boxExecutedBy(submitted, false);
+        onFxThread(() -> setTextOf(box, "list"));
+        pressEnter(box);
+        onFxThread(() -> setTextOf(box, "find \"Siti Nur-Aisyah\""));
+        pressEnter(box);
+        onFxThread(() -> setTextOf(box, "add 陈"));
+
+        assertHistoryKey(box, KeyCode.UP, "find \"Siti Nur-Aisyah\"");
+        assertHistoryKey(box, KeyCode.UP, "list");
+        assertHistoryKey(box, KeyCode.UP, "list");
+        assertHistoryKey(box, KeyCode.DOWN, "find \"Siti Nur-Aisyah\"");
+        assertHistoryKey(box, KeyCode.DOWN, "add 陈");
+        assertHistoryKey(box, KeyCode.DOWN, "add 陈");
+        assertEquals(List.of("list", "find \"Siti Nur-Aisyah\""), submitted);
+    }
+
+    @Test
+    public void history_rejectedCommandsAndRepeatedSubmission_recallsOneCopy() throws Exception {
+        CommandBox box = boxExecutedBy(new ArrayList<>(), true);
+        onFxThread(() -> setTextOf(box, "bad"));
+        pressEnter(box);
+        onFxThread(() -> setTextOf(box, "add -p"));
+        pressEnter(box);
+        pressEnter(box);
+        onFxThread(() -> setTextOf(box, "draft"));
+
+        assertHistoryKey(box, KeyCode.UP, "add -p");
+        assertHistoryKey(box, KeyCode.UP, "bad");
+        assertHistoryKey(box, KeyCode.DOWN, "add -p");
+        assertHistoryKey(box, KeyCode.DOWN, "draft");
+    }
+
+    @Test
+    public void history_immediatelyAfterRejection_skipsRetainedText() throws Exception {
+        ModelManager model = new ModelManager();
+        CommandBox box = onFxThread(() -> new CommandBox(command ->
+                new StudentBookParser().parseCommand(command).execute(model)));
+        onFxThread(() -> setTextOf(box, "list"));
+        pressEnter(box);
+        onFxThread(() -> setTextOf(box, "addd"));
+        pressEnter(box);
+        assertTrue(styleClassesOf(box, "#commandTextField").contains(CommandBox.ERROR_STYLE_CLASS));
+
+        assertHistoryKey(box, KeyCode.UP, "list");
+        assertFalse(styleClassesOf(box, "#commandTextField").contains(CommandBox.ERROR_STYLE_CLASS));
+        assertHistoryKey(box, KeyCode.DOWN, "addd");
+        assertHistoryKey(box, KeyCode.DOWN, "addd");
+        assertTrue(model.getStudentBook().getStudentList().isEmpty());
+    }
+
+    @Test
+    public void history_blankClearReply_recallsClearWithoutBlankEntry() throws Exception {
+        for (String reply : List.of("", "  ", "\u00a0")) {
+            ModelManager model = new ModelManager();
+            model.addStudent(new StudentBuilder().build());
+            StorageManager storage = new StorageManager(
+                    new JsonStudentBookStorage(temporaryFolder.resolve("students.json")),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json")));
+            LogicManager logic = new LogicManager(model, storage);
+            List<String> feedback = new ArrayList<>();
+            CommandBox box = onFxThread(() -> new CommandBox(command -> {
+                CommandResult result = logic.execute(command);
+                feedback.add(result.getFeedbackToUser());
+                return result;
+            }, logic::isAwaitingConfirmation));
+            onFxThread(() -> setTextOf(box, "clear"));
+            pressEnter(box);
+            assertTrue(logic.isAwaitingConfirmation());
+            onFxThread(() -> setTextOf(box, reply));
+            pressEnter(box);
+
+            assertFalse(logic.isAwaitingConfirmation());
+            assertEquals(ClearCommand.MESSAGE_CANCELLED, feedback.getLast());
+            assertEquals(List.of(new StudentBuilder().build()), model.getStudentBook().getStudentList());
+            assertFalse(Files.exists(temporaryFolder.resolve("students.json")));
+            assertHistoryKey(box, KeyCode.UP, "clear");
+            assertHistoryKey(box, KeyCode.DOWN, "");
+        }
+    }
+
+    @Test
+    public void history_newCommandBox_keepsAnEmptyHistory() throws Exception {
+        CommandBox box = boxShowing("draft");
+        assertHistoryKey(box, KeyCode.UP, "draft");
+        assertHistoryKey(box, KeyCode.DOWN, "draft");
+    }
+
+    @Test
+    public void history_modifiedArrow_keepsTheDraft() throws Exception {
+        CommandBox box = boxExecutedBy(new ArrayList<>(), false);
+        onFxThread(() -> setTextOf(box, "list"));
+        pressEnter(box);
+        onFxThread(() -> {
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            field.setText("draft");
+            for (KeyCode modifier : List.of(KeyCode.SHIFT, KeyCode.CONTROL, KeyCode.ALT, KeyCode.META)) {
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.UP,
+                        modifier == KeyCode.SHIFT, modifier == KeyCode.CONTROL,
+                        modifier == KeyCode.ALT, modifier == KeyCode.META));
+                assertEquals("draft", field.getText());
+            }
+            field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.LEFT, false, false, false, false));
+            assertEquals("draft", field.getText());
+            return null;
+        });
+    }
+
+    private static void assertHistoryKey(CommandBox box, KeyCode key, String expected) throws Exception {
+        onFxThread(() -> {
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", key, false, false, false, false));
+            assertEquals(expected, field.getText());
+            assertEquals(expected.length(), field.getCaretPosition());
+            assertEquals(expected, String.join("", colouredTextOf(box)));
+            return null;
+        });
     }
 
     @Test
