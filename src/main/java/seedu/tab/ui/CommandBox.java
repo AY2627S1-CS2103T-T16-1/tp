@@ -180,9 +180,7 @@ public class CommandBox extends UiPart<Region> {
         double middle = lane.getHeight() / 2;
         showSelection(-drawnFrom, middle);
         highlighted.relocate(drawnFrom, middle - highlighted.getHeight() / 2);
-        // the caret is centred on the point it marks, as the field's own caret is, except
-        // at the very start of the line where half of it would fall outside
-        caret.relocate(Math.max(0, drawnFrom + caretAt - caret.getWidth() / 2),
+        caret.relocate(inTheLine(drawnFrom + caretAt - caret.getWidth() / 2),
                 middle - caret.getHeight() / 2);
         caret.setVisible(commandTextField.isFocused());
     }
@@ -201,6 +199,19 @@ public class CommandBox extends UiPart<Region> {
     private double whereTheFieldDrawsItsText() {
         Text drawn = fieldText();
         return drawn == null ? halfACaret() : drawn.getLayoutX() + drawn.getTranslateX();
+    }
+
+    /**
+     * Returns where a caret wanting to be drawn from {@code left} is drawn instead.
+     *
+     * <p>The caret is centred on the point it marks, as the field's own caret is, except at
+     * either edge of the line, where half of it would fall outside and the lane's clip would
+     * take that half away. How far in from the right edge a field scrolls the end of a
+     * command differs between JavaFX releases, so a caret there lands outside the line on
+     * one of them and is never seen.
+     */
+    private double inTheLine(double left) {
+        return Math.clamp(left, 0, Math.max(0, lane.getWidth() - caret.getWidth()));
     }
 
     /**
