@@ -1,8 +1,8 @@
 package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.tab.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import seedu.tab.commons.core.LogsCenter;
@@ -80,9 +80,23 @@ public class StudentBookParser {
             case HelpCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new HelpCommand());
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
-                throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
+                throw new ParseException(describeUnknownCommand(commandWord));
             }
         };
+    }
+
+    /**
+     * Returns what to tell the User about a word that is no command, naming the word they
+     * typed and the commands it was likely meant to be. Those are only ever named: running
+     * one would act on a word the User never typed, and a word two edits from {@code delete}
+     * is a guess even when it is the only guess going.
+     */
+    private static String describeUnknownCommand(String commandWord) {
+        List<String> suggestions = CommandWords.suggestFor(commandWord);
+        if (suggestions.isEmpty()) {
+            return Messages.getErrorMessageForUnknownCommand(commandWord);
+        }
+        return Messages.getErrorMessageForMistypedCommand(commandWord, suggestions);
     }
 
     /**

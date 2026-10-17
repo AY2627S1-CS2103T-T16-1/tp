@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.model.student.Student;
@@ -153,6 +155,44 @@ public class MessagesTest {
     public void getErrorMessageForDuplicateFlags_oneFlag_namesTheField() {
         assertEquals("Multiple values specified for the following single-valued field(s): -e",
                 Messages.getErrorMessageForDuplicateFlags("-e"));
+    }
+
+    @Test
+    public void getErrorMessageForMistypedCommand_oneSuggestion_namesIt() {
+        assertEquals("Unknown command \"delte\". Did you mean delete?",
+                Messages.getErrorMessageForMistypedCommand("delte", List.of("delete")));
+    }
+
+    @Test
+    public void getErrorMessageForMistypedCommand_twoSuggestions_joinsThemWithOr() {
+        assertEquals("Unknown command \"eit\". Did you mean edit or exit?",
+                Messages.getErrorMessageForMistypedCommand("eit", List.of("edit", "exit")));
+    }
+
+    @Test
+    public void getErrorMessageForMistypedCommand_threeSuggestions_commasAllButTheLast() {
+        // the command words TAB has today cannot produce three, but the message must read as
+        // a sentence whenever a later one does
+        assertEquals("Unknown command \"adi\". Did you mean add, edit or exit?",
+                Messages.getErrorMessageForMistypedCommand("adi", List.of("add", "edit", "exit")));
+    }
+
+    @Test
+    public void getErrorMessageForMistypedCommand_noSuggestions_throwsAssertionError() {
+        assertThrows(AssertionError.class, () -> Messages.getErrorMessageForMistypedCommand("adi", List.of()));
+    }
+
+    @Test
+    public void getErrorMessageForMistypedCommand_longWord_isShortenedLikeAnyOtherValue() {
+        String typed = "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH + 1);
+        assertEquals("Unknown command \"" + "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…\". Did you mean add?",
+                Messages.getErrorMessageForMistypedCommand(typed, List.of("add")));
+    }
+
+    @Test
+    public void getErrorMessageForUnknownCommand_word_namesItAndPointsToHelp() {
+        assertEquals("Unknown command \"qwerty\". Enter help to see every command.",
+                Messages.getErrorMessageForUnknownCommand("qwerty"));
     }
 
     @Test
