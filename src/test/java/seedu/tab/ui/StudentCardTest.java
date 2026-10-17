@@ -609,6 +609,31 @@ public class StudentCardTest {
     }
 
     @Test
+    public void constructor_shortNamesInNarrowCards_showTheirWholeNamesOnHover() throws Exception {
+        for (String whole : List.of("Wong Wei Ming Jonathan", "Siti Nur-Aisyah Hassan", "Siti Nur-Aisyah Hamid")) {
+            for (double width : List.of(298.0, 368.0, 448.0)) {
+                onFxThread(() -> {
+                    Region root = new StudentCard(studentNamed(whole), 1).getRoot();
+                    assertNotNull(styledScene(root, width, 120));
+                    Label name = (Label) root.lookup("#name");
+                    boolean isCut = !whole.equals(name.getText());
+                    if (width == 298) {
+                        assertTrue(isCut, "the minimum-width card should cut " + whole);
+                    }
+                    String expectedTooltip = isCut ? whole : null;
+                    String tooltip = name.getTooltip() == null ? null : name.getTooltip().getText();
+                    assertEquals(expectedTooltip, tooltip, "only a width-cut name needs a full-name tooltip");
+
+                    layOutAt(root, root.prefWidth(-1));
+                    assertEquals(whole, name.getText());
+                    assertNull(name.getTooltip(), "widening the card should remove an unnecessary tooltip");
+                    return null;
+                });
+            }
+        }
+    }
+
+    @Test
     public void constructor_aNameTheRowClips_isNamedOnHover() throws Exception {
         // a name the count leaves whole, on a line too narrow to draw all of it beside the
         // tags and the pill. The count takes nothing off it and the line clips it anyway
