@@ -12,6 +12,14 @@ final class UiText {
 
     private static final String ELLIPSIS = "…";
 
+    /**
+     * How many characters a cut from the middle keeps from the close of a value. Two names
+     * collide where a reader starts reading them, so what tells them apart is their close:
+     * nine characters hold a final word with the particle in front of it, as in "bin Ahmad".
+     * The rest of the count goes to the opening, which is what a reader scans the list by.
+     */
+    private static final int CLOSING_CHARACTERS = 9;
+
     private UiText() {} // this class only holds helpers
 
     /**
@@ -52,6 +60,30 @@ final class UiText {
         // the ellipsis reads as part of the word it follows, so it does not sit off
         // behind a space the cut happened to land on
         label.setText(shown.stripTrailing() + ELLIPSIS);
+        label.setTooltip(new Tooltip(value));
+    }
+
+    /**
+     * Puts {@code value} on {@code label}, cut from its middle to {@code limit} characters with
+     * an ellipsis stood in for what was taken, if it runs longer. Both ends of the value stay
+     * on the label, so two values that agree over their opening still read as two, and the
+     * whole of it is a hover away as the label's tooltip.
+     *
+     * <p>The ellipsis takes a place of its own, so a value one character over {@code limit} is
+     * no shorter cut than whole. A value that close to the count is shown whole rather than
+     * hiding a character behind a mark that buys no room back.
+     */
+    static void showMiddleShortened(Label label, String value, int limit) {
+        if (StringUtil.firstCharacters(value, limit + 1).equals(value)) {
+            label.setText(value);
+            return;
+        }
+        int closing = Math.min(CLOSING_CHARACTERS, limit / 2);
+        String opening = StringUtil.firstCharacters(value, limit - closing);
+        // the ellipsis reads as part of the words it joins, so it sits against both of them
+        // rather than off behind a space either cut happened to land on
+        label.setText(opening.stripTrailing() + ELLIPSIS
+                + StringUtil.lastCharacters(value, closing).stripLeading());
         label.setTooltip(new Tooltip(value));
     }
 }
