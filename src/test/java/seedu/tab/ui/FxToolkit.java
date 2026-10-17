@@ -38,13 +38,19 @@ final class FxToolkit {
         Platform.runLater(() -> Platform.setImplicitExit(false));
     }
 
-    /** Runs {@code work} after a pulse has processed native window and layout changes. */
+    /** Runs {@code work} after rendering and a following pulse have processed native resize events. */
     static <T> T afterPulse(Callable<T> work) throws Exception {
         FutureTask<T> task = new FutureTask<>(work);
         onFxThread(() -> {
             new AnimationTimer() {
+                private boolean hasPulsed;
+
                 @Override
                 public void handle(long now) {
+                    if (!hasPulsed) {
+                        hasPulsed = true;
+                        return;
+                    }
                     stop();
                     Platform.runLater(task);
                 }

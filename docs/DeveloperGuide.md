@@ -104,10 +104,11 @@ JavaFX 17's `HBox` can leave one pixel undistributed when shrinking children.
 This keeps the email inside the details area at narrow widths, including when
 platform fonts produce different preferred label widths.
 
-`HelpWindow` re-fits its scene after the first rendering pulse, when focus
-styling and native frame dimensions are available. Measuring before that
-pulse can leave content clipped even when the outer window appears wide enough.
-The regression test measures scene dimensions after a pulse as well.
+`HelpWindow` re-fits its scene after showing, allowing for native frame
+sizes. Its copy button keeps the same border insets when focused, so the
+focus indicator does not increase the content's preferred size. The
+regression test waits for rendering and native resize events, then measures
+the scene rather than its surrounding frame.
 
 #### Colouring the command line
 
