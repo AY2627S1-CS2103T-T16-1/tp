@@ -105,7 +105,8 @@ This keeps the email inside the details area at narrow widths, including when
 platform fonts produce different preferred label widths.
 
 `HelpWindow` re-fits its scene after the first rendering pulse, allowing
-for native frame sizes. Its copy button keeps the same border insets when focused, so the
+for native frame sizes, then uses `sizeToScene()` without fixed FXML scene
+dimensions. This lets JavaFX include native decoration sizes correctly. Its copy button keeps the same border insets when focused, so the
 focus indicator does not increase the content's preferred size. The
 regression test waits for rendering and native resize events, then measures
 the scene rather than its surrounding frame.

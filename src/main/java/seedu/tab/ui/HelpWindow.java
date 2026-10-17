@@ -78,6 +78,7 @@ public class HelpWindow extends UiPart<Stage> {
                 stop();
                 Platform.runLater(() -> {
                     fitToContent();
+                    getRoot().sizeToScene();
                     getRoot().centerOnScreen();
                 });
             }
@@ -85,15 +86,8 @@ public class HelpWindow extends UiPart<Stage> {
     }
 
     /**
-     * Sizes the window to what it draws.
-     *
-     * <p>A stage sizes itself to its scene before the stylesheets have dressed what is in
-     * it, so the padding and the border a button takes from the theme arrive after the
-     * window has been measured, and the scene is measured when the layout file is read,
-     * which is before the address is even put on the label. What did not fit stayed cut
-     * off: the address read as "…/UserGuide.ht…" and the button as "Copy U…". The layout
-     * file now gives the scene the size this window needs and the row inside holds its own,
-     * so this is the backstop for a machine whose fonts make it need more.
+     * Sizes the window to its styled content and the frame measured so far. Once native
+     * dimensions settle, the deferred fit also asks JavaFX to size the scene itself.
      */
     private void fitToContent() {
         Stage stage = getRoot();
