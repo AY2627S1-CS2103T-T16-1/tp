@@ -40,6 +40,13 @@ public class TagCommandTest {
     }
 
     @Test
+    public void hashCode_equalCommands_returnsSameHashCode() {
+        TagCommand command = new TagCommand(INDEX_FIRST_STUDENT, new Tag("T1"), Action.REMOVE);
+        TagCommand equalCommand = new TagCommand(INDEX_FIRST_STUDENT, new Tag("T1"), Action.REMOVE);
+        assertEquals(command.hashCode(), equalCommand.hashCode());
+    }
+
+    @Test
     public void equals_nullOrDifferentType_returnsFalse() {
         TagCommand command = new TagCommand(INDEX_FIRST_STUDENT, new Tag("T1"));
         assertFalse(command.equals(null));
