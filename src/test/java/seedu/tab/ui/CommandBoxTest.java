@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -21,6 +23,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.skin.TextFieldSkin;
 import javafx.scene.control.skin.TextInputControlSkin.Direction;
 import javafx.scene.control.skin.TextInputControlSkin.TextUnit;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -28,7 +33,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import seedu.tab.logic.commands.CommandResult;
+import seedu.tab.logic.parser.StudentBookParser;
 import seedu.tab.logic.parser.exceptions.ParseException;
+import seedu.tab.model.ModelManager;
 
 public class CommandBoxTest {
 
@@ -309,6 +316,60 @@ public class CommandBoxTest {
 
     private static List<String> styleClassesOf(CommandBox box, String id) {
         return List.copyOf(box.getRoot().lookup(id).getStyleClass());
+    }
+
+    @Test
+    public void replaceSelection_pastedSeparators_preservesWordBoundariesAndColours() throws Exception {
+        for (String separator : List.of("\t", "\t\t", "\n", "\r", "\r\n", " ")) {
+            CommandBox box = boxShowing("add ");
+            onFxThread(() -> {
+                TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+                field.positionCaret(field.getLength());
+                field.replaceSelection("Wei Ming" + separator + "Tan");
+                String expected = "add Wei Ming" + (separator.equals("\t\t") ? "  " : " ") + "Tan";
+                assertEquals(expected, field.getText());
+                assertEquals(expected.length(), field.getCaretPosition());
+                assertEquals(expected, String.join("", colouredTextOf(box)));
+                return null;
+            });
+        }
+    }
+
+    @Test
+    public void paste_tabSeparatedName_replacesSelectionAndAddsSeparateWords() throws Exception {
+        onFxThread(() -> {
+            ModelManager model = new ModelManager();
+            CommandBox box = new CommandBox(command -> new StudentBookParser().parseCommand(command).execute(model));
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            field.setText("add old -p 91234567");
+            field.selectRange(4, 7);
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            Map<DataFormat, Object> previous = clipboardContents(clipboard);
+            try {
+                ClipboardContent pasted = new ClipboardContent();
+                pasted.putString("Wei Ming\tTan");
+                assertTrue(clipboard.setContent(pasted));
+                field.paste();
+                assertEquals("add Wei Ming Tan -p 91234567", field.getText());
+                field.fireEvent(new ActionEvent());
+                assertEquals("Wei Ming Tan", model.getFilteredStudentList().getFirst().getName().fullName);
+                assertEquals("", field.getText());
+            } finally {
+                clipboard.setContent(previous);
+            }
+            return null;
+        });
+    }
+
+    private static Map<DataFormat, Object> clipboardContents(Clipboard clipboard) {
+        Map<DataFormat, Object> contents = new HashMap<>();
+        for (DataFormat type : clipboard.getContentTypes()) {
+            Object content = clipboard.getContent(type);
+            if (content != null) {
+                contents.put(type, content);
+            }
+        }
+        return contents;
     }
 
     @Test
