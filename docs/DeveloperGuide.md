@@ -106,6 +106,11 @@ platform fonts produce different preferred label widths.
 
 #### Colouring the command line
 
+`CommandTextField` converts tab and line separators to spaces in text
+replacement before JavaFX filters control characters. It preserves pasted
+word boundaries while keeping the command on one line, including when a
+paste replaces selected text. CRLF is treated as one separator.
+
 A `TextField` cannot colour its own content, so `CommandBox` keeps the field
 for input and draws a coloured copy of the command behind it, with the field's
 own text transparent. The field still takes every keystroke and still decides
@@ -1998,6 +2003,18 @@ testers are expected to do more *exploratory* testing.
 1. _{ more test cases … }_
 
 ### The command line
+
+1. Pasting spreadsheet cells
+
+   1. Copy two adjacent spreadsheet cells containing `Wei Ming` and `Tan`.
+   1. Type `add `, paste the cells, then type ` -p 91234567`.<br>
+      Expected: The field reads `add Wei Ming Tan -p 91234567`, with a space
+      between the cell values and matching command colours.
+   1. Press Enter.<br>
+      Expected: One student named `Wei Ming Tan` is added.
+   1. Paste two lines into a selected part of another command.<br>
+      Expected: Line breaks become spaces, the selection is replaced, and
+      the caret follows the inserted text. Nothing runs before Enter.
 
 1. Checking what the colours say
 
