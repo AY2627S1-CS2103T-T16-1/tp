@@ -2,6 +2,7 @@ package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.CollectionUtil.requireAllNonNull;
+import static seedu.tab.logic.parser.CliFlags.FLAG_ADD_TAG;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -26,13 +27,15 @@ public class TagCommand extends Command {
     public static final String FIELD_INDEX = "INDEX";
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Adds one tag to the student at the displayed index, preserving all other fields.\n"
-            + "Parameters: INDEX (a positive integer) -a TAG (or --add TAG)\n"
-            + "Use double quotes for a tag containing spaces.\n"
-            + "Example: " + COMMAND_WORD + " 1 -a \"Lab 3\"";
+            + "Parameters: " + FIELD_INDEX + " (a positive integer) " + FLAG_ADD_TAG.getLabel() + "\n"
+            + "Use double quotes for a tag containing spaces. Either spelling is accepted: "
+            + FLAG_ADD_TAG.getMarkerSummary() + ".\n"
+            + "Example: " + COMMAND_WORD + " 1 " + FLAG_ADD_TAG + " \"Lab 3\"";
     public static final String MESSAGE_SUCCESS = "Added tag [%1$s]: %2$s";
     public static final String MESSAGE_ALREADY_PRESENT = "This student already has tag [%1$s]. No changes made.";
     public static final String MESSAGE_ADD_GUIDANCE =
-            "To add a tag, use -a or --add, e.g. tag 1 -a \"Lab 3\".";
+            "To add a tag, use " + String.join(" or ", FLAG_ADD_TAG.getMarkers())
+                    + ", e.g. " + COMMAND_WORD + " 1 " + FLAG_ADD_TAG + " \"Lab 3\".";
 
     private final Index targetIndex;
     private final Tag tag;
