@@ -72,23 +72,33 @@ final class UiText {
      * an ellipsis stood in for what was taken, if it runs longer. Both ends of the value stay
      * on the label, so two values that agree over their opening still read as two, and the
      * whole of it is a hover away as the label's tooltip.
-     *
-     * <p>The ellipsis takes a place of its own, so a value one character over {@code limit} is
-     * no shorter cut than whole. A value that close to the count is shown whole rather than
-     * hiding a character behind a mark that buys no room back.
      */
     static void showMiddleShortened(Label label, String value, int limit) {
+        String shown = middleShortened(value, limit);
+        label.setText(shown);
+        if (!shown.equals(value)) {
+            label.setTooltip(new Tooltip(value));
+        }
+    }
+
+    /**
+     * Returns {@code value} cut from its middle to {@code limit} characters with an ellipsis
+     * stood in for what was taken, or {@code value} itself when it is already that short.
+     *
+     * <p>The ellipsis takes a place of its own, so a value one character over {@code limit} is
+     * no shorter cut than whole. A value that close to the count is left whole rather than
+     * hiding a character behind a mark that buys no room back.
+     */
+    static String middleShortened(String value, int limit) {
         if (StringUtil.firstCharacters(value, limit + 1).equals(value)) {
-            label.setText(value);
-            return;
+            return value;
         }
         int closing = Math.min(CLOSING_CHARACTERS, limit / 2);
         String opening = StringUtil.firstCharacters(value, limit - closing);
         // the ellipsis reads as part of the words it joins, so it sits against both of them
         // rather than off behind a space either cut happened to land on
-        label.setText(opening.stripTrailing() + ELLIPSIS
-                + StringUtil.lastCharacters(value, closing).stripLeading());
-        label.setTooltip(new Tooltip(value));
+        return opening.stripTrailing() + ELLIPSIS
+                + StringUtil.lastCharacters(value, closing).stripLeading();
     }
 
     /**
