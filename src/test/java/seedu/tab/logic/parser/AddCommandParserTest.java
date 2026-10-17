@@ -1,13 +1,16 @@
 package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_AMY;
+import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_AT_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_BOB;
+import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_OVER_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.FOLLOW_UP;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_EMAIL;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NAME;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NUS_STUDENT_ID;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_PHONE;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_TAG;
+import static seedu.tab.logic.commands.CommandTestUtil.MESSAGE_EMAIL_OVER_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.NAME_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.NAME_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.NUS_STUDENT_ID_BOB;
@@ -16,6 +19,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.PHONE_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.PREAMBLE_WHITESPACE;
 import static seedu.tab.logic.commands.CommandTestUtil.TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.TAG_HUSBAND;
+import static seedu.tab.logic.commands.CommandTestUtil.VALID_EMAIL_AT_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_NUS_STUDENT_ID_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
@@ -163,6 +167,20 @@ public class AddCommandParserTest {
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + INVALID_NUS_STUDENT_ID,
                 Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
                         NusStudentId.getFailureReason("A0123-456")));
+    }
+
+    @Test
+    public void parse_emailAtTheLengthLimit_success() {
+        Student expected = new StudentBuilder(BOB).withTags().withEmail(VALID_EMAIL_AT_MAX_LENGTH).build();
+
+        assertParseSuccess(parser, NAME_BOB + PHONE_BOB + EMAIL_AT_MAX_LENGTH, new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_emailOneCharacterOverTheLengthLimit_failure() {
+        // the longest address RFC 5321 allows is accepted, and the next character is not
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + EMAIL_OVER_MAX_LENGTH,
+                MESSAGE_EMAIL_OVER_MAX_LENGTH);
     }
 
     @Test

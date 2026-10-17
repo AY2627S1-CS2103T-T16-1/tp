@@ -2,6 +2,9 @@ package seedu.tab.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.tab.logic.commands.CommandTestUtil.INVALID_EMAIL_OVER_MAX_LENGTH;
+import static seedu.tab.logic.commands.CommandTestUtil.MESSAGE_EMAIL_OVER_MAX_LENGTH;
+import static seedu.tab.logic.commands.CommandTestUtil.VALID_EMAIL_AT_MAX_LENGTH;
 import static seedu.tab.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
@@ -121,6 +124,19 @@ public class ParserUtilTest {
         String emailWithWhitespace = WHITESPACE + VALID_EMAIL + WHITESPACE;
         Email expectedEmail = new Email(VALID_EMAIL);
         assertEquals(expectedEmail, ParserUtil.parseEmail(emailWithWhitespace));
+    }
+
+    @Test
+    public void parseEmail_addressAtTheLengthLimit_returnsEmail() throws Exception {
+        assertEquals(new Email(VALID_EMAIL_AT_MAX_LENGTH), ParserUtil.parseEmail(VALID_EMAIL_AT_MAX_LENGTH));
+    }
+
+    @Test
+    public void parseEmail_addressOneCharacterOverTheLengthLimit_throwsParseException() {
+        // the limit is applied here rather than in Email.isValidEmail, so that a longer
+        // address a data file already holds still loads
+        assertThrows(ParseException.class, MESSAGE_EMAIL_OVER_MAX_LENGTH, () ->
+                ParserUtil.parseEmail(INVALID_EMAIL_OVER_MAX_LENGTH));
     }
 
     @Test
