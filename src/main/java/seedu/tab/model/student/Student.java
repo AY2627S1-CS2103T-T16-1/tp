@@ -18,7 +18,7 @@ import seedu.tab.model.tag.Tag;
  * present; a student may be held before either optional detail is known.
  */
 public class Student {
-    // Identity fields
+    // Required fields
     private final Name name;
     private final Phone phone;
 
@@ -99,16 +99,15 @@ public class Student {
     }
 
     /**
-     * Returns true if both students have the same name.
-     * This defines a weaker notion of equality between two students.
+     * Returns true if both students have the same NUS Student ID.
+     * Students without an NUS Student ID do not have enough information to be
+     * considered the same student. This rule is used to detect duplicate records,
+     * while {@link #equals(Object)} compares every field.
      */
     public boolean isSameStudent(Student otherStudent) {
-        if (otherStudent == this) {
-            return true;
-        }
-
         return otherStudent != null
-                && otherStudent.getName().equals(getName());
+                && nusStudentId != null
+                && nusStudentId.equals(otherStudent.nusStudentId);
     }
 
     /**
