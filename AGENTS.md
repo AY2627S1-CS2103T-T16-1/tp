@@ -435,9 +435,12 @@ PlantUML sources under `docs/diagrams/`.
 
 ## Agent skills
 
-Workflows for the conventions above live in `.claude/skills/`, and the
-subagents they launch in `.claude/agents/`. Claude Code picks both up from
-the repo; other tools can read the `SKILL.md` files as instructions.
+Optional local workflows for the conventions above may be installed in
+`.claude/skills/`, with subagents in `.claude/agents/`. The `.claude/`
+directory is ignored by Git and is not included in a fresh clone. When
+available, Claude Code can use these local files; other tools can read
+the `SKILL.md` files as instructions. Without them, follow the guidance
+in this file directly.
 
 | Skill | Use it to |
 | --- | --- |
@@ -449,5 +452,6 @@ the repo; other tools can read the `SKILL.md` files as instructions.
 | `tp-style` | check a change for style and code quality Checkstyle misses |
 | `tp-bughunt` | hunt bugs in a tP JAR, for PE or before our own release |
 
-Change a skill through a PR like any other file, and keep it in step with
-this file when a convention changes.
+Skill changes stay local and are not submitted through repository PRs.
+When a shared convention changes, update this file through a PR and keep
+any local skills in step with it.
