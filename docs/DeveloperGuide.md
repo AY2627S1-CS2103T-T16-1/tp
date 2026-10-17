@@ -592,7 +592,10 @@ and the follow-up pill, so a name longer than `StudentCard.MAX_NAME_CHARACTERS`
 is cut and the whole of it is left on the card as a tooltip. The count is fixed
 rather than taken from the room the row has left over, so the same name breaks
 off in the same place on every card instead of moving as the rest of the card
-changes.
+changes. A name within the count is cut all the same where the row runs out of
+room, so the name goes on the card through `UiText.showMiddleShortenedToFit`,
+which hands the label the whole name on hover whenever it is drawn narrower
+than its text needs. The tags take that path for the same reason.
 
 The cut is taken from the middle, keeping 13 characters of the start and 9 of
 the end. A cut at the close alone puts `Mohamed Abdul Rahman bin Ismail` and
