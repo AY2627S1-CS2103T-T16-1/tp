@@ -142,6 +142,18 @@ public class UiTextTest {
     }
 
     @Test
+    public void showMiddleShortened_aCountTooSmallToHoldBothEnds_keepsTheOpeningLonger() throws Exception {
+        Label label = onFxThread(() -> {
+            Label narrow = new Label();
+            UiText.showMiddleShortened(narrow, "Mohamed Abdul Rahman bin Ismail", 5);
+            return narrow;
+        });
+
+        // the opening is what a reader scans by, so the close never takes more than half
+        assertEquals("Moh\u2026il", label.getText());
+    }
+
+    @Test
     public void showMiddleShortened_anEmojiAtEitherCut_keepsItWhole() throws Exception {
         String graduate = "\uD83C\uDF93";
         Label atTheOpening = middleShortened("A".repeat(8) + graduate + "B".repeat(20) + "C".repeat(9));
