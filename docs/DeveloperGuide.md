@@ -128,7 +128,12 @@ but interacts with the field:
   A field scrolls by rules that differ between typing, deleting, cutting and
   undoing, and every attempt to reproduce them was right for some of those and
   wrong for others; a copy even a pixel out of step shows one character where
-  the field hit-tests another, and clicks land in the wrong place.
+  the field hit-tests another, and clicks land in the wrong place. Reading
+  that node once is not enough, because the field's skin re-scrolls it after a
+  delete, a replace or a change of width, which is after the caret and the
+  text the colouring was told about have both settled. The copy therefore
+  follows the node's own position, and the node is looked up again rather than
+  kept, since an empty line shows the prompt in a node of the same kind.
 * **the caret.** The field's caret is drawn in its text colour, which is
   transparent, so the line carries one of its own, sized from a run of the text
   so it sits where the text does.
@@ -1810,6 +1815,15 @@ testers are expected to do more *exploratory* testing.
    1. Test case: click in the middle of the command.<br>
       Expected: The caret lands on the character clicked, not one or two away
       from it.
+   1. Test case: with that command still typed, press `End`, then `Backspace`
+      three times, then `Ctrl`+`Backspace`, then click in the middle of what
+      is left.<br>
+      Expected: The caret lands on the character clicked after each of those
+      edits, rather than a few characters away from it.
+   1. Test case: with that command still typed, drag the right-hand edge of
+      the window in to narrow it, then click in the middle of the command.<br>
+      Expected: The command still runs to the edge of the line with the caret
+      in view, and the caret lands on the character clicked.
 
 ### The summary beside the list
 
