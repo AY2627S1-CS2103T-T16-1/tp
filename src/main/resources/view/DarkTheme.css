@@ -544,6 +544,12 @@
     -fx-text-fill: -tab-text;
     -fx-font-weight: bold;
     -fx-font-size: 15px;
+    /* the name gives way in its middle, as the card's own cut of a long name does. Taken off
+       the end instead, the row would undo that cut and draw two students who share the start
+       of a name as the same text. The mark is the one the card cuts with, so a name that both
+       of them reach reads with one kind of ellipsis rather than two */
+    -fx-text-overrun: center-ellipsis;
+    -fx-ellipsis-string: "…";
 }
 
 .card-detail {
@@ -623,8 +629,9 @@
     -fx-background-insets: 0;
 }
 
-/* a value too long for its row is elided rather than widening the card it sits in */
-.card-name, .card-detail, .card-detail-strong {
+/* a value too long for its row is elided rather than widening the card it sits in. The
+   detail line gives way at its end: the start of an ID or an address still says whose it is */
+.card-detail, .card-detail-strong {
     -fx-text-overrun: ellipsis;
 }
 
