@@ -8,6 +8,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_REMOVE_TAG;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -36,7 +37,7 @@ public class TagCommand extends Command {
             + "Use double quotes for a tag containing spaces. Accepted options: "
             + FLAG_ADD_TAG.getMarkerSummary() + " or " + FLAG_REMOVE_TAG.getMarkerSummary() + ".\n"
             + "Example: " + COMMAND_WORD + " 1 " + FLAG_ADD_TAG + " \"Lab 3\"";
-    public static final String MESSAGE_SUCCESS = "Added tag [%1$s]: %2$s";
+    public static final String MESSAGE_ADD_SUCCESS = "Added tag [%1$s]: %2$s";
     public static final String MESSAGE_ALREADY_PRESENT = "This student already has tag [%1$s]. No changes made.";
     public static final String MESSAGE_REMOVE_SUCCESS = "Removed tag [%1$s]: %2$s";
     public static final String MESSAGE_NOT_PRESENT = "This student does not have tag [%1$s]. No changes made.";
@@ -89,7 +90,7 @@ public class TagCommand extends Command {
         }
         Student updatedStudent = createUpdatedStudent(student);
         model.setStudent(student, updatedStudent);
-        String message = action == Action.ADD ? MESSAGE_SUCCESS : MESSAGE_REMOVE_SUCCESS;
+        String message = action == Action.ADD ? MESSAGE_ADD_SUCCESS : MESSAGE_REMOVE_SUCCESS;
         Tag changedTag = action == Action.ADD ? tag : existingTag.orElseThrow();
         return new CommandResult(String.format(message, Messages.shorten(changedTag.tagName),
                 Messages.format(updatedStudent)));
@@ -118,6 +119,11 @@ public class TagCommand extends Command {
                 && targetIndex.equals(otherCommand.targetIndex)
                 && tag.equals(otherCommand.tag)
                 && action == otherCommand.action;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(targetIndex, tag, action);
     }
 
     @Override
