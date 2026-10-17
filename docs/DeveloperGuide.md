@@ -477,8 +477,10 @@ boundary.
 
 `Messages.getErrorMessageForInvalidValue` shortens a rejected value past
 `MAX_QUOTED_VALUE_LENGTH` characters, so that a very long value cannot push the
-reason out of view. It counts Unicode code points so it does not cut an emoji
-in half. Command parsing and storage share that message, so both paths report
+reason out of view. It counts characters through `StringUtil.firstCharacters`,
+as a reader counts them, so it separates neither an emoji nor a letter from the
+accent that belongs to it; a student card cuts a name or a tag with the same
+helper. Command parsing and storage share that message, so both paths report
 the same invalid value consistently.
 
 `Phone` is **not** an identity field and **not** a key: two students may hold the

@@ -88,11 +88,11 @@ public class Messages {
      * rejected the value says whatever its own rule makes relevant.
      */
     public static String shorten(String value) {
-        if (value.codePointCount(0, value.length()) <= MAX_QUOTED_VALUE_LENGTH) {
+        String shown = StringUtil.firstCharacters(value, MAX_QUOTED_VALUE_LENGTH);
+        if (shown.equals(value)) {
             return value;
         }
-        int endIndex = value.offsetByCodePoints(0, MAX_QUOTED_VALUE_LENGTH);
-        return value.substring(0, endIndex) + "…";
+        return shown + "…";
     }
 
     /**
