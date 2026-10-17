@@ -30,6 +30,10 @@ public class StudentCardTest {
     private static final double CARD_WIDTH = 420;
     /** What the card cuts a name to, as the card states it. */
     private static final int MAX_NAME_CHARACTERS_UNDER_TEST = 22;
+    /** What a cut name keeps from its end, and what it keeps from its start, as UiText states it. */
+    private static final int NAME_CLOSING_CHARACTERS_UNDER_TEST = 9;
+    private static final int NAME_OPENING_CHARACTERS_UNDER_TEST =
+            MAX_NAME_CHARACTERS_UNDER_TEST - NAME_CLOSING_CHARACTERS_UNDER_TEST;
     /**
      * About what the list gives a card when the window opens at its default 740 width,
      * once the sidebar beside it has taken its own. The window's own minimum of 490 leaves
@@ -66,6 +70,11 @@ public class StudentCardTest {
 
     private static Label followUpLabelOf(Student student) throws Exception {
         return onFxThread(() -> (Label) new StudentCard(student, 1).getRoot().lookup("#followUp"));
+    }
+
+    private static Label nameLabelOf(String name) throws Exception {
+        return onFxThread(() -> (Label) new StudentCard(
+                new StudentBuilder().withName(name).build(), 1).getRoot().lookup("#name"));
     }
 
     @Test
@@ -350,19 +359,62 @@ public class StudentCardTest {
     @Test
     public void constructor_aNameLongerThanTheCard_isCutWithTheWholeOnHover() throws Exception {
         String whole = "Siti Nur-Aisyah Binte Test Test Test Test Test Test Test";
-        Label shown = onFxThread(() -> (Label) new StudentCard(
-                new StudentBuilder().withName(whole).build(), 1).getRoot().lookup("#name"));
+        Label shown = nameLabelOf(whole);
 
-        assertTrue(shown.getText().length() < whole.length(), "the name should be cut");
-        assertTrue(shown.getText().endsWith("\u2026"), "and marked as cut");
+        assertEquals("Siti Nur-Aisy\u2026Test Test", shown.getText(), "both ends should be kept");
         assertNotNull(shown.getTooltip(), "the whole name should still be reachable");
         assertEquals(whole, shown.getTooltip().getText());
     }
 
     @Test
+    public void constructor_namesSharingTheirStart_readDifferently() throws Exception {
+        Label ismail = nameLabelOf("Mohamed Abdul Rahman bin Ismail");
+        Label ahmad = nameLabelOf("Mohamed Abdul Rahman bin Ahmad");
+
+        assertEquals("Mohamed Abdul\u2026in Ismail", ismail.getText());
+        assertEquals("Mohamed Abdul\u2026bin Ahmad", ahmad.getText());
+    }
+
+    @Test
+    public void constructor_aNameAtOrOneOverTheCount_isShownWhole() throws Exception {
+        Label atTheCount = nameLabelOf("Jonathan Chua Wei Ming");
+        // one over, where the ellipsis would take back the one place the cut saves
+        Label oneOver = nameLabelOf("Jonathan Chuah Wei Ming");
+
+        assertEquals("Jonathan Chua Wei Ming", atTheCount.getText());
+        assertNull(atTheCount.getTooltip(), "a name that fits needs no tooltip");
+        assertEquals("Jonathan Chuah Wei Ming", oneOver.getText());
+        assertNull(oneOver.getTooltip(), "a name that fits needs no tooltip");
+    }
+
+    @Test
+    public void constructor_aNameTwoOverTheCount_isCut() throws Exception {
+        Label shown = nameLabelOf("Jonathan Cheong Wei Ming");
+
+        assertEquals("Jonathan Cheo\u2026Wei Ming", shown.getText());
+    }
+
+    @Test
+    public void constructor_aLongNameOfOneWord_isCutFromItsMiddle() throws Exception {
+        Label shown = nameLabelOf("Thirunavukkarasusubramaniam");
+
+        assertEquals("Thirunavukkar\u2026bramaniam", shown.getText());
+    }
+
+    @Test
+    public void constructor_aLongNameInAnotherScript_isCutFromItsMiddle() throws Exception {
+        Label shown = nameLabelOf("\u9648\u4F1F\u660E\u674E\u5C0F\u9F99\u738B\u5927\u9524"
+                + "\u5F20\u4E09\u4E30\u8D75\u56DB\u4E5D\u5B59\u609F\u7A7A\u8BF8\u845B"
+                + "\u4EAE\u5468\u6770\u502B");
+
+        assertEquals("\u9648\u4F1F\u660E\u674E\u5C0F\u9F99\u738B\u5927\u9524"
+                + "\u5F20\u4E09\u4E30\u8D75\u2026\u5B59\u609F\u7A7A\u8BF8\u845B"
+                + "\u4EAE\u5468\u6770\u502B", shown.getText());
+    }
+
+    @Test
     public void constructor_aShortName_isShownWholeAndWithoutATooltip() throws Exception {
-        Label shown = onFxThread(() -> (Label) new StudentCard(
-                new StudentBuilder().withName("Alex Yeoh").build(), 1).getRoot().lookup("#name"));
+        Label shown = nameLabelOf("Alex Yeoh");
 
         assertEquals("Alex Yeoh", shown.getText());
         assertNull(shown.getTooltip(), "a name that fits needs no tooltip");
@@ -395,7 +447,7 @@ public class StudentCardTest {
         }
 
         assertEquals(List.of(cut.get(0), cut.get(0), cut.get(0)), cut);
-        assertEquals("Siti Nur-Aisyah Binte\u2026", cut.get(0));
+        assertEquals("Siti Nur-Aisy\u2026ah Rahman", cut.get(0));
     }
 
     @Test
@@ -483,12 +535,13 @@ public class StudentCardTest {
     @Test
     public void constructor_aNameHoldingAnEmoji_doesNotCutItInHalf() throws Exception {
         // an emoji is two characters as Java stores it, so cutting at an index can leave half
-        // of one behind, which is drawn as a broken glyph. This one sits exactly where the
-        // card cuts the name
-        String whole = "A".repeat(MAX_NAME_CHARACTERS_UNDER_TEST - 1)
-                + "\uD83C\uDF93 and more besides";
-        Label shown = onFxThread(() -> (Label) new StudentCard(
-                new StudentBuilder().withName(whole).build(), 1).getRoot().lookup("#name"));
+        // of one behind, which is drawn as a broken glyph. One of these sits exactly where
+        // the card opens its cut and the other exactly where it closes it
+        String graduate = "\uD83C\uDF93";
+        String whole = "A".repeat(NAME_OPENING_CHARACTERS_UNDER_TEST - 1) + graduate
+                + " and more besides " + graduate
+                + "B".repeat(NAME_CLOSING_CHARACTERS_UNDER_TEST - 1);
+        Label shown = nameLabelOf(whole);
 
         String cut = shown.getText();
         assertTrue(holdsOnlyWholeCharacters(cut), "half an emoji was left behind in " + cut);
