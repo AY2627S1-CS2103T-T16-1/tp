@@ -52,6 +52,11 @@ TAB is a **desktop application for teaching assistants to manage student records
 
 --------------------------------------------------------------------------------------------------------------------
 
+Text pasted into the command box keeps its word boundaries: tabs and line
+breaks become spaces. This lets you paste names or values from spreadsheet
+cells without joining their words. Pasted text remains one command; inspect
+it before pressing Enter.
+
 ## Features
 
 <box type="info" seamless>
@@ -275,7 +280,10 @@ A name too long for a card is shortened with an ellipsis in its middle, which
 keeps both the start and the end of the name, so two students whose names begin
 alike still read as two. Hover over any name the card cannot show in full,
 whether it was shortened this way or left narrow by a crowded row, to see the
-whole of it.
+whole of it. A cut email address also shows its full value on hover.
+At narrow widths, the name keeps its opening letters while tags give way to
+a count of those hidden. When no chip fits, the count reads `N tags`; otherwise
+it reads `N more…`. Hover over the count to read the hidden tag names.
 
 When a student is added, the command result displays the new record
 (`New student added: NAME; Phone: PHONE...`) so you can confirm the details

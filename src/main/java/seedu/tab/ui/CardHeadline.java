@@ -12,7 +12,9 @@ import javafx.scene.layout.Region;
  * order instead. The name is drawn at the length the card cuts it to while the row has space
  * for it, so the same name breaks off at the same place from one card to the next. Below
  * that, the name gives way and is cut again with an ellipsis, down to the point where it
- * would crowd out the tags: a card that has tags always shows at least the start of one.
+ * would crowd out the tags. What the tags then do with the room is the row's own
+ * decision: it shows the chips that fit whole, falls back to one cut chip and a count,
+ * and on a line too narrow for even that counts the tags instead.
  */
 public class CardHeadline extends Pane {
 

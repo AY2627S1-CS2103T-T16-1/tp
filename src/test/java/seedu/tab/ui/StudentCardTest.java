@@ -111,6 +111,25 @@ public class StudentCardTest {
     }
 
     @Test
+    public void constructor_emailCutByWidth_showsWholeAddressUntilWidened() throws Exception {
+        Student student = new StudentBuilder().withEmail("siti.nuraisyah.binte.ahmad@gmail.com")
+                .withFlag(true).build();
+        onFxThread(() -> {
+            Region root = new StudentCard(student, 1).getRoot();
+            assertNotNull(styledScene(root, 298, 120));
+            Label email = (Label) root.lookup("#email");
+            assertTrue(email.getWidth() < email.prefWidth(-1), "the card should cut the email");
+            assertNotNull(email.getTooltip());
+            assertEquals(student.getEmail().orElseThrow().toString(), email.getTooltip().getText());
+
+            layOutAt(root, root.prefWidth(-1));
+            assertTrue(email.getWidth() >= email.prefWidth(-1) - 0.5);
+            assertNull(email.getTooltip(), "an address that fits needs no tooltip");
+            return null;
+        });
+    }
+
+    @Test
     public void constructor_studentWithoutEmail_leavesTheRowOut() throws Exception {
         Student student = new StudentBuilder().withoutEmail().build();
         Label email = emailLabelOf(student);
@@ -590,6 +609,31 @@ public class StudentCardTest {
     }
 
     @Test
+    public void constructor_shortNamesInNarrowCards_showTheirWholeNamesOnHover() throws Exception {
+        for (String whole : List.of("Wong Wei Ming Jonathan", "Siti Nur-Aisyah Hassan", "Siti Nur-Aisyah Hamid")) {
+            for (double width : List.of(298.0, 368.0, 448.0)) {
+                onFxThread(() -> {
+                    Region root = new StudentCard(studentNamed(whole), 1).getRoot();
+                    assertNotNull(styledScene(root, width, 120));
+                    Label name = (Label) root.lookup("#name");
+                    boolean isCut = !whole.equals(name.getText());
+                    if (width == 298) {
+                        assertTrue(isCut, "the minimum-width card should cut " + whole);
+                    }
+                    String expectedTooltip = isCut ? whole : null;
+                    String tooltip = name.getTooltip() == null ? null : name.getTooltip().getText();
+                    assertEquals(expectedTooltip, tooltip, "only a width-cut name needs a full-name tooltip");
+
+                    layOutAt(root, root.prefWidth(-1));
+                    assertEquals(whole, name.getText());
+                    assertNull(name.getTooltip(), "widening the card should remove an unnecessary tooltip");
+                    return null;
+                });
+            }
+        }
+    }
+
+    @Test
     public void constructor_aNameTheRowClips_isNamedOnHover() throws Exception {
         // a name the count leaves whole, on a line too narrow to draw all of it beside the
         // tags and the pill. The count takes nothing off it and the line clips it anyway
@@ -838,8 +882,11 @@ public class StudentCardTest {
                 assertNotNull(styledScene(root, at, 120));
                 return visibleChipsOf(root);
             });
-            boolean saysMore = chips.stream().anyMatch(chip -> chip.endsWith("more\u2026"));
-            if (chips.size() < 3 && !saysMore) {
+            // the row counts what it left out while a chip is shown, and counts the tags
+            // themselves once it has given up its last chip; either says how many there are
+            boolean hasHiddenCount = chips.stream()
+                    .anyMatch(chip -> chip.endsWith("more\u2026") || chip.equals("3 tags"));
+            if (chips.size() < 3 && !hasHiddenCount) {
                 silent.add(at + ": " + chips);
             }
         }
@@ -864,6 +911,48 @@ public class StudentCardTest {
         assertFalse(chips.isEmpty(), "the row should name a tag");
         assertTrue(chips.get(0).startsWith("AY2627"),
                 "the row should lead with the tag, not a count: " + chips);
+    }
+
+    @Test
+    public void constructor_narrowCards_keepNameLettersAndCompleteTagCounts() throws Exception {
+        List<String> allTags = List.of("attendance-low", "consult", "follow-up", "lab", "midterm", "tutorial");
+        for (int tagCount : List.of(1, 2, 4, 6)) {
+            List<String> names = allTags.subList(0, tagCount);
+            for (boolean isFlagged : new boolean[] {false, true}) {
+                Student student = new StudentBuilder().withName("Bernice Yu")
+                        .withTags(names.toArray(String[]::new)).withFlag(isFlagged).build();
+                onFxThread(() -> {
+                    Region root = new StudentCard(student, 2).getRoot();
+                    assertNotNull(styledScene(root, DEFAULT_CARD_WIDTH, 120));
+                    for (int width = 298; width <= DEFAULT_CARD_WIDTH; width++) {
+                        layOutAt(root, width);
+                        Label name = (Label) root.lookup("#name");
+                        assertTrue(drawnTextOf(name).startsWith("Be"),
+                                "the name should keep its opening letters at width " + width);
+                        assertHiddenTagsCounted((TagRow) root.lookup("#tags"), names);
+                    }
+                    return null;
+                });
+            }
+        }
+    }
+
+    private static void assertHiddenTagsCounted(TagRow tags, List<String> names) {
+        Label overflow = (Label) tags.getChildrenUnmodifiable().stream()
+                .filter(node -> node.getStyleClass().contains("tag-overflow")).findFirst().orElseThrow();
+        int shown = (int) tags.getChildrenUnmodifiable().stream()
+                .filter(Node::isVisible).filter(node -> node != overflow).count();
+        if (shown == names.size()) {
+            assertFalse(overflow.isVisible());
+            return;
+        }
+        assertTrue(overflow.isVisible(), "hidden tags must be counted");
+        String expectedCount = (names.size() - shown) + (shown == 0 ? " tags" : " more\u2026");
+        assertEquals(expectedCount, overflow.getText());
+        assertTrue(overflow.getWidth() >= overflow.prefWidth(-1) - 0.5,
+                "the count must fit in full: " + overflow.getText() + " in " + overflow.getWidth());
+        assertTrue(overflow.getBoundsInParent().getMaxX() <= tags.getWidth() + 0.5);
+        assertEquals(String.join(", ", names.subList(shown, names.size())), overflow.getTooltip().getText());
     }
 
     @Test

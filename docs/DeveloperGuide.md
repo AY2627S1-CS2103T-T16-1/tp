@@ -104,7 +104,35 @@ JavaFX 17's `HBox` can leave one pixel undistributed when shrinking children.
 This keeps the email inside the details area at narrow widths, including when
 platform fonts produce different preferred label widths.
 
+The student card's `TagRow` retains every tag name, but creates at most three
+tag labels. Layout uses the full name count to size the overflow chip and
+list all hidden tags in its tooltip, even when fewer labels are created.
+
+Student-card email labels use `UiText.showToFit` to retain their full text
+and show a tooltip only while the available width cuts the address. Width
+listeners remove the tooltip when widening the card makes it unnecessary.
+
+`HelpWindow` re-fits its scene after the first rendering pulse, allowing
+for native frame sizes, then uses `sizeToScene()` without fixed FXML scene
+dimensions. This lets JavaFX include native decoration sizes correctly.
+Its copy button keeps the same border insets when focused, so the focus
+indicator does not increase the content's preferred size. The regression
+test waits for rendering and native resize events, then measures the scene
+rather than its surrounding frame.
+
+#### Fitting names and tags on a card
+
+`CardHeadline` reserves a readable start of the name before allocating room
+to tags. When that leaves no room for a tag chip, `TagRow` uses the shorter
+`N tags` total instead of `N more…`, preserving a complete count beside the
+name. Its tooltip still lists every hidden tag.
+
 #### Colouring the command line
+
+`CommandTextField` converts tab and line separators to spaces in text
+replacement before JavaFX filters control characters. It preserves pasted
+word boundaries while keeping the command on one line, including when a
+paste replaces selected text. CRLF is treated as one separator.
 
 A `TextField` cannot colour its own content, so `CommandBox` keeps the field
 for input and draws a coloured copy of the command behind it, with the field's
@@ -1522,6 +1550,15 @@ testers are expected to do more *exploratory* testing.
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample student records. The window size may not be optimal.
 
+1. Help window sizing
+
+   1. Run `help` and wait for the window to open.<br>
+      Expected: The whole User Guide address and `Copy URL` button are visible.
+      Check Windows, Linux and macOS because frame sizes and focus styling differ.
+
+   1. Close the help window and run `help` again.<br>
+      Expected: Both remain fully visible after reopening.
+
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
@@ -1746,11 +1783,43 @@ testers are expected to do more *exploratory* testing.
       its end around the ellipsis as the cards shrink, rather than both ending
       up as the same text, and hovering still shows the whole name.
 
+1. Keeping names readable beside tags and a follow-up marker
+
+   1. Add `add Bernice Xu -p 81234567 -t attendance-low -t consult -t follow-up -t lab -t midterm -t tutorial -f`.
+   1. Narrow the window to its minimum width, then widen it slowly.<br>
+      Expected: The name retains its opening letters. At the minimum width,
+      the count-only chip reads `6 tags`. When one or more chips appear, the
+      count reads `N more…`, where N is the number of hidden tags. Hovering
+      over the count lists all hidden tags.
+   1. Remove the follow-up marker with `edit INDEX -nf`, using the new student's
+      index, then resize again.<br>
+      Expected: The name remains readable and any hidden tags remain counted.
+
+1. Reading a short name cut by a narrow card
+
+   1. Add `add Siti Nur-Aisyah Hassan -p 91234567 -t T01 -t "Lab 3" -f` and
+      `add Siti Nur-Aisyah Hamid -p 98765432 -t T02 -t "Lab 4" -f`.
+   1. Narrow the window to its minimum width and hover over each shortened name.<br>
+      Expected: Each tooltip shows the corresponding complete name, even though
+      neither name exceeds the card's character limit.
+   1. Widen the window until both names fit.<br>
+      Expected: Each name appears in full and its tooltip is removed.
+
 1. Leaving a name that nearly fits alone
 
    1. Test case: `add Jonathan Chuah Wei Ming -p 93456789`.<br>
       Expected: The card shows the whole name with no ellipsis, because a cut
       this close to the limit would save no room.
+
+### Reading a clipped email address
+
+1. Add `add Siti Nur-Aisyah -p "6516-2727 ext 21" -e siti.nuraisyah.binte.ahmad@gmail.com -t T1 -f`.
+1. Narrow the window until the email is cut and hover over it.<br>
+   Expected: The tooltip shows `siti.nuraisyah.binte.ahmad@gmail.com` in full.
+1. Widen the window until the address fits.<br>
+   Expected: The whole address is visible and the tooltip is removed.
+1. Clear the email with `edit 1 -e ""` (use the new student's actual index).<br>
+   Expected: The email label disappears without a placeholder or a tooltip.
 
 ### Long value-option names
 
@@ -2028,6 +2097,19 @@ testers are expected to do more *exploratory* testing.
       command. Correcting or recalling input does not execute it before Enter.
    1. Close and reopen TAB, type `draft`, and press Up.<br>
       Expected: `draft` stays unchanged; history does not survive a restart.
+
+1. Pasting spreadsheet cells
+
+   1. Copy two adjacent spreadsheet cells containing `Wei Ming` and `Tan`.
+   1. Type `add `, paste the cells, then type ` -p 91234567`.<br>
+      Expected: `Wei Ming` and `Tan` remain separate words, with matching
+      command colours. A trailing line break copied by the spreadsheet can
+      leave an extra space before `-p`; this does not change the command.
+   1. Press Enter.<br>
+      Expected: One student named `Wei Ming Tan` is added.
+   1. Paste two lines into a selected part of another command.<br>
+      Expected: Line breaks become spaces, the selection is replaced, and
+      the caret follows the inserted text. Nothing runs before Enter.
 
 1. Checking what the colours say
 
