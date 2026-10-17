@@ -36,6 +36,9 @@ public class ThemeTest {
     private static final Path HELP_WINDOW = Paths.get(
             "src", "main", "resources", "view", "HelpWindow.css");
 
+    /** The stylesheets the window is dressed with, whichever others it may name besides. */
+    private static final List<String> INTENDED_STYLESHEETS = List.of("DarkTheme.css", "Extensions.css");
+
     /**
      * A colour written in place of a palette name, which the palette exists to prevent. Any
      * property can carry one, not only the ones named "color": a rule setting
@@ -64,7 +67,11 @@ public class ThemeTest {
         Matcher matcher = Pattern.compile("<URL value=\"@([^\"]+)\" */>").matcher(fxml);
 
         List<String> named = matcher.results().map(result -> result.group(1)).toList();
-        assertEquals(2, named.size(), "expected the dark theme and the extensions");
+        // the loop below checks nothing at all when the window names no stylesheet, which is
+        // one of the ways it comes up unstyled, so the ones it is meant to name are asked for
+        // by name rather than counted
+        assertTrue(named.containsAll(INTENDED_STYLESHEETS),
+                "expected the window to name " + INTENDED_STYLESHEETS + ", but it names " + named);
 
         for (String stylesheet : named) {
             URL resolved = ThemeTest.class.getResource("/view/" + stylesheet);
@@ -84,23 +91,122 @@ public class ThemeTest {
     }
 
     @Test
-    public void darkTheme_setsEachRuleOnce() throws IOException {
-        String css = Files.readString(DARK_THEME, StandardCharsets.UTF_8);
-        List<String> selectors = Pattern.compile("(?m)^([.#][^{\\n]*?)\\s*\\{").matcher(css)
-                .results()
-                .map(result -> result.group(1).trim())
-                .toList();
-
+    public void darkTheme_setsEachPropertyOncePerSelector() throws IOException {
+        // a property set a second time for the same selector wins silently, wherever in the
+        // file the two sit, leaving the first one reading as though it were in force. The
+        // rules of one selector may be written in several blocks, which is an organisation
+        // of the file rather than a change to it, so the property is what is counted
         Set<String> seen = new TreeSet<>();
         Set<String> twice = new TreeSet<>();
-        for (String selector : selectors) {
-            if (!seen.add(selector)) {
-                twice.add(selector);
+        for (String declaration : declarationsIn(DARK_THEME)) {
+            if (!seen.add(declaration)) {
+                twice.add(declaration);
             }
         }
 
-        // the same selector written twice leaves which colour wins to the order of the file
-        assertTrue(twice.isEmpty(), "these selectors are set more than once: " + twice);
+        assertTrue(twice.isEmpty(), "these are set more than once, and only the last counts: " + twice);
+    }
+
+    @Test
+    public void declarationsIn_aSelectorListOverSeveralLines_countsEverySelector() {
+        // six rules in the stylesheet head their selectors a line at a time, and a reading
+        // that starts at the brace sees only the last of them
+        List<String> declarations = declarationsIn("""
+                .one,
+                .two > .child {
+                    -fx-background-color: red;
+                }
+                """);
+
+        assertEquals(List.of(".one: -fx-background-color", ".two > .child: -fx-background-color"),
+                declarations);
+    }
+
+    @Test
+    public void declarationsIn_twoDeclarationsOnOneLine_countsBoth() {
+        List<String> declarations = declarationsIn(".one { -fx-text-fill: red; -fx-text-fill: blue; }");
+
+        assertEquals(List.of(".one: -fx-text-fill", ".one: -fx-text-fill"), declarations);
+    }
+
+    @Test
+    public void declarationsIn_aRuleCommentedOut_countsNothing() {
+        // a rule someone has put out of action sets nothing, so reading it as a duplicate
+        // would report a clash that the window never sees
+        List<String> declarations = declarationsIn("""
+                /*
+                .one {
+                    -fx-text-fill: red;
+                }
+                */
+                .two {
+                    -fx-text-fill: blue;
+                }
+                """);
+
+        assertEquals(List.of(".two: -fx-text-fill"), declarations);
+    }
+
+    @Test
+    public void declarationsIn_aColonInsideAValue_isNotReadAsAProperty() {
+        // reading a body declaration at a time rather than a line at a time puts a colon in
+        // a value within reach of the name, so this holds the name to what precedes it
+        List<String> declarations = declarationsIn(".one { -fx-background-image: url(\"a:/b.png\"); }");
+
+        assertEquals(List.of(".one: -fx-background-image"), declarations);
+    }
+
+    /**
+     * Every property the stylesheet sets, written as "selector: property". A block heading
+     * several selectors sets the property on each of them.
+     */
+    private static List<String> declarationsIn(Path stylesheet) throws IOException {
+        return declarationsIn(Files.readString(stylesheet, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Every property {@code css} sets, written as "selector: property". A block heading
+     * several selectors sets the property on each of them.
+     *
+     * <p>Comments go first, so a rule someone has commented out is not read as one in force.
+     * A selector list may run over several lines, and a line may hold more than one
+     * declaration, so neither the rule nor the property is looked for a line at a time.
+     */
+    private static List<String> declarationsIn(String css) {
+        String withoutComments = css.replaceAll("(?s)/\\*.*?\\*/", "");
+        Matcher rules = Pattern.compile("([.#*][^{}]*?)\\s*\\{([^{}]*)\\}").matcher(withoutComments);
+
+        List<String> declarations = new ArrayList<>();
+        while (rules.find()) {
+            for (String selector : rules.group(1).split(",")) {
+                for (String property : propertiesSetIn(rules.group(2))) {
+                    declarations.add(selector.trim() + ": " + property);
+                }
+            }
+        }
+        return declarations;
+    }
+
+    /**
+     * The properties a rule's body sets, in the order it sets them.
+     *
+     * <p>The body is read declaration by declaration rather than line by line, because a
+     * line may hold several, and the name is taken from before the colon so that a colon
+     * inside a value is not read as one.
+     */
+    private static List<String> propertiesSetIn(String body) {
+        List<String> properties = new ArrayList<>();
+        for (String declaration : body.split(";")) {
+            int colon = declaration.indexOf(':');
+            if (colon < 0) {
+                continue;
+            }
+            String name = declaration.substring(0, colon).trim();
+            if (name.matches("-?[a-zA-Z][a-zA-Z0-9-]*")) {
+                properties.add(name);
+            }
+        }
+        return properties;
     }
 
     /** The palette names the stylesheet defines, which is what the top block is for. */
