@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
+import seedu.tab.commons.util.StringUtil;
 
 /**
  * A row of tag chips that shows as many whole chips as the row has room for, and counts the
@@ -17,7 +18,8 @@ import javafx.scene.shape.Rectangle;
  * them. Dropping the chips that do not fit keeps the ones that are shown readable, and the
  * trailing chip says how many are missing and names them on hover. A row with space for
  * neither shows the first tag alone, cut to the row: which tag it is says more than how
- * many there are.
+ * many there are. Narrower again, where what is left of a chip would be an ellipsis and
+ * little else, the row counts the tags instead and names them on hover.
  */
 public class TagRow extends Region {
 
@@ -214,8 +216,20 @@ public class TagRow extends Region {
         overflow.getTooltip().setText(String.join(", ", tagNames.subList(shown, chips.size())));
     }
 
+    /**
+     * Returns what the trailing chip says about the {@code chips.size() - shown} tags the
+     * row leaves out.
+     *
+     * <p>A row too narrow for even a cut chip draws this chip alone, and there is then
+     * nothing for the tags to be more <em>than</em>, so it counts them rather than
+     * counting what it left out.
+     */
     private String textForTheRest(int shown) {
-        return (chips.size() - shown) + " more…";
+        int leftOut = chips.size() - shown;
+        if (shown == 0) {
+            return leftOut + " tag" + StringUtil.getPluralSuffix(leftOut);
+        }
+        return leftOut + " more…";
     }
 
     /**

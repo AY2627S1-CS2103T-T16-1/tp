@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -113,6 +114,63 @@ public class TagRowTest {
         assertEquals("2 more" + ELLIPSIS, chips.get(chips.size() - 1));
         // what survives is drawn whole, rather than every chip being cut to a letter or two
         assertEquals("alpha", chips.get(0));
+    }
+
+    @Test
+    public void setTags_aRowTooNarrowForEvenACutChip_countsTheTagsInstead() throws Exception {
+        // what is left of a chip here would be an ellipsis and little else, which names no
+        // tag, so the row says how many there are instead
+        TagRow row = narrowRowOf(60, List.of("attendance-low", "bravo"));
+
+        assertEquals(List.of("2 tags"), chipsOf(row));
+    }
+
+    @Test
+    public void setTags_aRowShowingNoChip_doesNotSayTheTagsAreMore() throws Exception {
+        // nothing precedes the count there, so "more" would be more than what. Swept
+        // rather than probed at one width, because which branch the row takes moves with
+        // the glyphs the platform draws
+        List<String> saidMore = new ArrayList<>();
+        for (double width = 20; width <= 110; width += 2) {
+            List<String> chips = chipsOf(narrowRowOf(width, List.of("attendance-low", "bravo")));
+            if (chips.size() == 1 && chips.get(0).contains("more")) {
+                saidMore.add(width + ": " + chips);
+            }
+        }
+
+        assertTrue(saidMore.isEmpty(), "the row counted what it left out at: " + saidMore);
+    }
+
+    @Test
+    public void setTags_aRowShowingNoChip_namesTheTagsOnHover() throws Exception {
+        TagRow row = narrowRowOf(60, List.of("attendance-low", "bravo"));
+
+        Label trailing = (Label) row.getChildrenUnmodifiable().stream()
+                .filter(node -> node.getStyleClass().contains("tag-overflow"))
+                .findFirst().orElseThrow();
+        // the chips are gone, so the hover is the only way left to read the tags
+        assertEquals("attendance-low, bravo", trailing.getTooltip().getText());
+    }
+
+    /**
+     * A row laid out at {@code width} whatever it asks for, as the card's first line lays
+     * it out. A holder would not go below the row's own minimum, so the widths at which
+     * the row gives up its last chip are only reachable this way.
+     */
+    private static TagRow narrowRowOf(double width, List<String> names) throws Exception {
+        return onFxThread(() -> {
+            TagRow row = new TagRow();
+            row.setTags(names);
+            Region holder = new StackPane(row);
+            Scene scene = new Scene(holder, Math.max(width, 400), 40);
+            scene.getStylesheets().add(
+                    UiPart.class.getResource("/view/DarkTheme.css").toExternalForm());
+            holder.applyCss();
+            holder.layout();
+            row.resizeRelocate(0, 0, width, row.getHeight());
+            row.layout();
+            return row;
+        });
     }
 
     @Test
