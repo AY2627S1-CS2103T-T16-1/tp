@@ -133,8 +133,8 @@ public class ParserUtilTest {
 
     @Test
     public void parseEmail_addressOneCharacterOverTheLengthLimit_throwsParseException() {
-        // the limit is applied here rather than in Email.isValidEmail, so that a longer
-        // address a data file already holds still loads
+        // the limit is applied here rather than in Email.isValidEmail, so that each input
+        // boundary can report a length failure separately from a format failure
         assertThrows(ParseException.class, MESSAGE_EMAIL_OVER_MAX_LENGTH, () ->
                 ParserUtil.parseEmail(INVALID_EMAIL_OVER_MAX_LENGTH));
     }
