@@ -38,6 +38,10 @@ final class UiText {
 
     private static void nameWhatIsCutAsItIsDrawn(Label label, String value) {
         label.widthProperty().addListener((unused, old, width) -> nameWhatIsCut(label, value));
+        // the width is known before the text that goes in it: a label that cuts its own text
+        // to the room it has does so while laying out, after the width has changed, so a
+        // check made on the width alone reads the text the label is about to replace
+        label.textProperty().addListener((unused, old, text) -> nameWhatIsCut(label, value));
         nameWhatIsCut(label, value);
     }
 

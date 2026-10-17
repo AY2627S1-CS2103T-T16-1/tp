@@ -907,4 +907,28 @@ public class StudentCardTest {
         double never = onFxThread(() -> new CardName().prefWidth(-1));
         assertEquals(never, empty, "a name given null should ask for the room an empty one does");
     }
+
+    @Test
+    public void constructor_aClippedNameGivenItsRoomBack_losesTheTooltip() throws Exception {
+        Student student = new StudentBuilder().withName("Alex Yeoh").withPhone("91234567")
+                .withTags("attendance-low", "bravo").withFlag(true).build();
+
+        String tooltips = onFxThread(() -> {
+            Region root = (Region) new StudentCard(student, 1).getRoot();
+            assertNotNull(styledScene(root, 900, 120));
+            Label name = (Label) root.lookup("#name");
+            root.resize(300, 120);
+            root.layout();
+            // the row has to have taken something, or widening again proves nothing
+            assertNotEquals("Alex Yeoh", name.getText(), "the row should have cut the name");
+            String whenCut = name.getTooltip() == null ? "none" : "set";
+            root.resize(900, 120);
+            root.layout();
+            assertEquals("Alex Yeoh", name.getText(), "the row should have given the name back");
+            return whenCut + "," + (name.getTooltip() == null ? "none" : "set");
+        });
+
+        // the whole name is on the card again, so naming it on hover says nothing further
+        assertEquals("set,none", tooltips);
+    }
 }
