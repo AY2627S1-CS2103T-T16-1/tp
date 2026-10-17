@@ -125,7 +125,7 @@ public class EditCommand extends Command {
         Set<Tag> updatedTags = editStudentDescriptor.getTags().orElse(studentToEdit.getTags());
         boolean updatedFlag = editStudentDescriptor.getFlagged().orElse(studentToEdit.isFlagged());
 
-        return new Student(updatedName, updatedPhone, updatedEmail.orElse(null), updatedNusStudentId.orElse(null),
+        return new Student(updatedName, updatedPhone, updatedEmail, updatedNusStudentId,
                 updatedTags, updatedFlag);
     }
 
