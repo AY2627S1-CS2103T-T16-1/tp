@@ -18,14 +18,11 @@ public class TagCommandParser implements Parser<TagCommand> {
         FlagArgumentMap arguments = FlagTokenizer.tokenize(args, FLAG_TAG);
         arguments.verifyNoDuplicateFlagsFor(FLAG_TAG);
         ParseProblems problems = new ParseProblems();
-        if (arguments.getPreamble().isEmpty()) {
-            problems.add(Messages.getErrorMessageForMissingFields(TagCommand.FIELD_INDEX));
-        }
+        Index index = problems.collect(() -> ParserUtil.parseRequiredIndex(
+                arguments.getPreamble(), TagCommand.FIELD_INDEX));
         if (arguments.getValue(FLAG_TAG).isEmpty()) {
             problems.add(Messages.getErrorMessageForMissingFields(FLAG_TAG.getLabel()));
         }
-        Index index = arguments.getPreamble().isEmpty() ? null
-                : problems.collect(() -> ParserUtil.parseIndex(arguments.getPreamble()));
         Tag tag = problems.collectIfPresent(arguments.getValue(FLAG_TAG), ParserUtil::parseTag);
         problems.throwIfAny();
         return new TagCommand(index, tag);

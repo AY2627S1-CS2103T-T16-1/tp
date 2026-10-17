@@ -38,6 +38,26 @@ public class ParserUtilTest {
     private static final String WHITESPACE = " \t\r\n";
 
     @Test
+    public void parseRequiredIndex_missingInput_namesSuppliedField() {
+        assertThrows(ParseException.class, "Missing required field(s): STUDENT_INDEX", () ->
+                ParserUtil.parseRequiredIndex("", "STUDENT_INDEX"));
+    }
+
+    @Test
+    public void parseRequiredIndex_invalidInput_throwsParseException() {
+        for (String index : List.of(" ", "0", "-1", "abc", "1 2", "2147483648")) {
+            assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
+                    ParserUtil.parseRequiredIndex(index, "STUDENT_INDEX"));
+        }
+    }
+
+    @Test
+    public void parseRequiredIndex_validInput_returnsIndex() throws Exception {
+        assertEquals(INDEX_FIRST_STUDENT, ParserUtil.parseRequiredIndex("1", "STUDENT_INDEX"));
+        assertEquals(INDEX_FIRST_STUDENT, ParserUtil.parseRequiredIndex("  1  ", "STUDENT_INDEX"));
+    }
+
+    @Test
     public void parseIndex_invalidInput_throwsParseException() {
         assertThrows(ParseException.class, () -> ParserUtil.parseIndex("10 a"));
     }
