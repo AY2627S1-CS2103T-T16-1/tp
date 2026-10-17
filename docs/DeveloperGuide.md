@@ -99,18 +99,9 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
-The student card's secondary row reserves one pixel at its right edge because
-JavaFX 17's `HBox` can leave one pixel undistributed when shrinking children.
-This keeps the email inside the details area at narrow widths, including when
-platform fonts produce different preferred label widths.
-
 The student card's `TagRow` retains every tag name, but creates at most three
 tag labels. Layout uses the full name count to size the overflow chip and
 list all hidden tags in its tooltip, even when fewer labels are created.
-
-Student-card email labels use `UiText.showToFit` to retain their full text
-and show a tooltip only while the available width cuts the address. Width
-listeners remove the tooltip when widening the card makes it unnecessary.
 
 `HelpWindow` re-fits its scene after the first rendering pulse, allowing
 for native frame sizes, then uses `sizeToScene()` without fixed FXML scene
@@ -126,6 +117,23 @@ rather than its surrounding frame.
 to tags. When that leaves no room for a tag chip, `TagRow` uses the shorter
 `N tags` total instead of `N more…`, preserving a complete count beside the
 name. Its tooltip still lists every hidden tag.
+
+#### Keeping contact details readable
+
+`StudentListCard.fxml` puts NUS Student ID, phone and email in `ContactRow`,
+a `FlowPane` that reports the natural width of one unwrapped row. This lets
+the containing boxes measure height at the allocated width on both JavaFX
+17 and 25, rather than reserving rows based on a fixed preferred wrap length.
+Labels keep their preferred widths and share a line when they fit; a label
+that does not fit the remaining space moves to the next line. Each label's
+maximum width follows the pane's width, so a value longer than an entire
+line shrinks with an ellipsis instead of overflowing the card.
+
+This keeps ordinary cards compact while allowing crowded cards to grow by
+only the rows they need. `UiText.showToFit` gives all three fields their full
+values on hover when clipped, and removes the tooltip when widening makes
+it unnecessary. Absent optional fields remain unmanaged, reserving no space.
+The details container's clip remains a backstop protecting the follow-up pill.
 
 #### Colouring the command line
 
@@ -1835,6 +1843,33 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add John Doe -p 98765432`<br>
       Expected: No student is added. The status message reports that this student
       already exists in the student book, and no record is mutated.
+
+### Long contact details on a card
+
+1. Reading an annotated phone and an email
+
+   1. Test case: `add Priya Nair -p "1234 5678 (HP) 1111-3333 (Office)" -e e0923841@u.nus.edu -t T1 --follow-up`.
+      Narrow the window to its minimum width (490 px).<br>
+      Expected: Phone and email remain visible, wrapping when needed. A value too
+      wide for its line ends with an ellipsis. Hovering shows the complete
+      corresponding phone or email, including the text after the cut.
+   1. Test case: `add Ravi Kumar -p "+65 6516 2727 ext 21 (office, Mon-Fri 9-5), +65 9123 4567 (HP, after 6pm)" -e e0923841@u.nus.edu`.<br>
+      Expected: Both contacts remain visible at default and minimum widths,
+      including without a follow-up marker. Add `--id A01234567X` with `edit`
+      and check that the ID wraps when necessary without hiding either contact.
+   1. Widen the window until both contacts fit.<br>
+      Expected: Details return to one line when they all fit. Complete values
+      appear without ellipses, and their hover tooltips are removed. Exit and
+      reopen TAB; the full contact values remain stored, regardless of how much
+      was visible before exiting.
+   1. Test case: `add Mei Lin -p 91234567`.<br>
+      Expected: The ordinary phone remains readable. Absent email and NUS
+      Student ID leave no blank lines.
+   1. Add ten students with short names, ordinary phones, email addresses and
+      NUS Student IDs. Compare the list at the default 740 by 600 window size
+      with a list of phone-only students.<br>
+      Expected: Details that fit share one line. These ordinary cards retain
+      the compact height; optional fields do not force extra rows.
 
 ### Long names on a card
 
