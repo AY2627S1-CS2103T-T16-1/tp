@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -145,19 +147,38 @@ public class CommandLoggingTest {
 
     @Test
     public void execute_everyCommand_writesNoFieldOfAStudent() throws Exception {
-        Student alice = model.getFilteredStudentList().get(0);
+        Student newcomer = new StudentBuilder().withName("Zoe Quartermain").withPhone("87654321")
+                .withEmail("zoe@example.com").withNusStudentId("A09876543Z").build();
+        String replacementPhone = "91234567";
+        Set<String> details = new HashSet<>();
+        model.getStudentBook().getStudentList().forEach(student -> details.addAll(fieldsOf(student)));
+        details.addAll(fieldsOf(newcomer));
+        details.add(replacementPhone);
+
+        new AddCommand(newcomer).execute(model);
         new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Alice"))).execute(model);
-        new EditCommand(FIRST, new EditStudentDescriptorBuilder().withPhone("91234567").build())
+        new EditCommand(FIRST, new EditStudentDescriptorBuilder().withPhone(replacementPhone).build())
                 .execute(model);
         new DeleteCommand(FIRST).execute(model);
+        new ClearCommand().executeConfirmed(model);
 
         // the command text LogicManager writes already holds whatever was typed; these
         // entries are not the place to put a second copy of someone's details
         List<String> leaked = writtenAnywhere().stream()
-                .filter(message -> message.contains(alice.getName().fullName)
-                        || message.contains(alice.getPhone().value))
+                .filter(message -> details.stream().anyMatch(message::contains))
                 .toList();
         assertTrue(leaked.isEmpty(), "a student's own details reached the log: " + leaked);
+    }
+
+    /** Everything about {@code student} that belongs to the student rather than to the book. */
+    private static Set<String> fieldsOf(Student student) {
+        Set<String> fields = new HashSet<>();
+        fields.add(student.getName().fullName);
+        fields.add(student.getPhone().value);
+        student.getEmail().ifPresent(email -> fields.add(email.value));
+        student.getNusStudentId().ifPresent(id -> fields.add(id.value));
+        student.getTags().forEach(tag -> fields.add(tag.tagName));
+        return fields;
     }
 
     private List<String> writtenAnywhere() {
