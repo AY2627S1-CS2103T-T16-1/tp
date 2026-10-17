@@ -25,6 +25,7 @@ docs/_site/
 
 # AI Agents
 # AGENTS.md and CLAUDE.md are tracked; local tool files are not.
+/.agents/
 /.claude/
 /.codex/
 __pycache__/
