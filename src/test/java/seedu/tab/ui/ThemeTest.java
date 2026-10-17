@@ -91,23 +91,48 @@ public class ThemeTest {
     }
 
     @Test
-    public void darkTheme_setsEachRuleOnce() throws IOException {
-        String css = Files.readString(DARK_THEME, StandardCharsets.UTF_8);
-        List<String> selectors = Pattern.compile("(?m)^([.#][^{\\n]*?)\\s*\\{").matcher(css)
-                .results()
-                .map(result -> result.group(1).trim())
-                .toList();
-
+    public void darkTheme_setsEachPropertyOncePerSelector() throws IOException {
+        // a property set a second time for the same selector wins silently, wherever in the
+        // file the two sit, leaving the first one reading as though it were in force. The
+        // rules of one selector may be written in several blocks, which is an organisation
+        // of the file rather than a change to it, so the property is what is counted
         Set<String> seen = new TreeSet<>();
         Set<String> twice = new TreeSet<>();
-        for (String selector : selectors) {
-            if (!seen.add(selector)) {
-                twice.add(selector);
+        for (String declaration : declarationsIn(DARK_THEME)) {
+            if (!seen.add(declaration)) {
+                twice.add(declaration);
             }
         }
 
-        // the same selector written twice leaves which colour wins to the order of the file
-        assertTrue(twice.isEmpty(), "these selectors are set more than once: " + twice);
+        assertTrue(twice.isEmpty(), "these are set more than once, and only the last counts: " + twice);
+    }
+
+    /**
+     * Every property the stylesheet sets, written as "selector: property". A block heading
+     * several selectors sets the property on each of them.
+     */
+    private static List<String> declarationsIn(Path stylesheet) throws IOException {
+        String css = Files.readString(stylesheet, StandardCharsets.UTF_8);
+        Matcher rules = Pattern.compile("(?m)^([.#*][^{\\n]*?)\\s*\\{([^}]*)\\}").matcher(css);
+
+        List<String> declarations = new ArrayList<>();
+        while (rules.find()) {
+            for (String selector : rules.group(1).split(",")) {
+                for (String property : propertiesSetIn(rules.group(2))) {
+                    declarations.add(selector.trim() + ": " + property);
+                }
+            }
+        }
+        return declarations;
+    }
+
+    /** The properties a rule's body sets, in the order it sets them. */
+    private static List<String> propertiesSetIn(String body) {
+        String withoutComments = body.replaceAll("(?s)/\\*.*?\\*/", "");
+        return Pattern.compile("(?m)^\\s*(-?[a-zA-Z][a-zA-Z0-9-]*)\\s*:").matcher(withoutComments)
+                .results()
+                .map(result -> result.group(1))
+                .toList();
     }
 
     /** The palette names the stylesheet defines, which is what the top block is for. */
