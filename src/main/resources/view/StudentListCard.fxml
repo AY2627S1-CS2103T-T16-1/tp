@@ -2,12 +2,12 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import seedu.tab.ui.CardHeadline?>
 <?import seedu.tab.ui.CardName?>
+<?import seedu.tab.ui.ContactRow?>
 <?import seedu.tab.ui.TagRow?>
 
 <HBox id="cardPane" fx:id="cardPane" alignment="TOP_LEFT" spacing="12"
@@ -36,11 +36,11 @@
 
     <!-- Keep short details on one line, wrapping whole labels before shortening a value
          that is wider than the entire line. -->
-    <FlowPane fx:id="contacts" hgap="12" vgap="4" minWidth="0">
+    <ContactRow fx:id="contacts" hgap="12" vgap="4" minWidth="0">
       <Label fx:id="nusStudentId" styleClass="card-detail-strong" minWidth="0" />
       <Label fx:id="phone" styleClass="card-detail" text="\$phone" minWidth="0" />
       <Label fx:id="email" styleClass="card-detail" text="\$email" minWidth="0" />
-    </FlowPane>
+    </ContactRow>
   </VBox>
 
   <!-- the pill sits outside the row that gives way, at the card's trailing edge, so a long
