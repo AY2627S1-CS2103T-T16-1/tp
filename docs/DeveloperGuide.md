@@ -92,6 +92,11 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/MainWindow.java).
 
+`CardHeadline` reserves a readable start of the name before allocating room
+to tags. When that leaves no room for a tag chip, `TagRow` uses the shorter
+`N tags` total instead of `N more…`, preserving a complete count beside the
+name. Its tooltip still lists every hidden tag.
+
 The `UI` component,
 
 * executes commands entered by the User using the `Logic` component.
@@ -1736,6 +1741,16 @@ testers are expected to do more *exploratory* testing.
       Expected: The two names stay distinguishable. Each keeps its start and
       its end around the ellipsis as the cards shrink, rather than both ending
       up as the same text, and hovering still shows the whole name.
+
+1. Keeping names readable beside tags and a follow-up marker
+
+   1. Add `add Bernice Xu -p 81234567 -t attendance-low -t consult -t follow-up -t lab -t midterm -t tutorial -f`.
+   1. Narrow the window to its minimum width, then widen it slowly.<br>
+      Expected: The name retains its opening letters. Hidden tags are always
+      signalled by a complete count; hovering over it lists all hidden tags.
+   1. Remove the follow-up marker with `edit INDEX -nf`, using the new student's
+      index, then resize again.<br>
+      Expected: The name remains readable and any hidden tags remain counted.
 
 1. Leaving a name that nearly fits alone
 

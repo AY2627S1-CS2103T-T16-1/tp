@@ -215,7 +215,8 @@ public class TagRow extends Region {
     }
 
     private String textForTheRest(int shown) {
-        return (chips.size() - shown) + " more…";
+        int hidden = tagNames.size() - shown;
+        return hidden + (shown == 0 ? " tags" : " more…");
     }
 
     /**
