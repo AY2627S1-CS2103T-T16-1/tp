@@ -5,6 +5,7 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.text.BreakIterator;
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -33,6 +34,71 @@ public class StringUtil {
     }
 
     /**
+     * Returns the first {@code limit} characters of {@code value}, counted as a reader counts them
+     * rather than as Java stores them, or {@code value} itself when it holds no more than
+     * {@code limit} of them.
+     *
+     * <p>Cutting the string at an index cuts it between the two halves of an emoji, or between a
+     * letter and the accent that belongs to it, and what is left is drawn as a broken glyph. A
+     * name, a tag and a value quoted back as invalid may each hold either. Counting the same way
+     * also keeps a value that is long in the way Java stores it, and short in the way it reads,
+     * from being reported as cut when nothing was taken off it.
+     *
+     * @param value The value to cut.
+     * @param limit The greatest number of characters to keep.
+     * @return The opening characters of {@code value}, or {@code value} itself when it is already
+     *         within {@code limit}.
+     */
+    public static String firstCharacters(String value, int limit) {
+        requireNonNull(value);
+        checkArgument(limit >= 0, "negative limit");
+
+        BreakIterator characters = BreakIterator.getCharacterInstance();
+        characters.setText(value);
+        int end = characters.first();
+        for (int counted = 0; counted < limit; counted++) {
+            int next = characters.next();
+            if (next == BreakIterator.DONE) {
+                return value;
+            }
+            end = next;
+        }
+        return value.substring(0, end);
+    }
+
+    /**
+     * Returns the last {@code limit} characters of {@code value}, counted as a reader counts them
+     * rather than as Java stores them, or {@code value} itself when it holds no more than
+     * {@code limit} of them.
+     *
+     * <p>Counting back from the end carries the same trap as counting forward from the start: the
+     * index {@code limit} places from the end falls between the two halves of an emoji, or between
+     * a letter and the accent that belongs to it, and what is left is drawn as a broken glyph. A
+     * caller that keeps both ends of a value needs the two ends counted the same way.
+     *
+     * @param value The value to cut.
+     * @param limit The greatest number of characters to keep.
+     * @return The closing characters of {@code value}, or {@code value} itself when it is already
+     *         within {@code limit}.
+     */
+    public static String lastCharacters(String value, int limit) {
+        requireNonNull(value);
+        checkArgument(limit >= 0, "negative limit");
+
+        BreakIterator characters = BreakIterator.getCharacterInstance();
+        characters.setText(value);
+        int start = characters.last();
+        for (int counted = 0; counted < limit; counted++) {
+            int previous = characters.previous();
+            if (previous == BreakIterator.DONE) {
+                return value;
+            }
+            start = previous;
+        }
+        return value.substring(start);
+    }
+
+    /**
      * Returns true if {@code sentence} contains {@code keyword}, ignoring case.
      * A partial match is allowed (e.g. "Hans" contains "Han").
      *
@@ -45,6 +111,58 @@ public class StringUtil {
         checkArgument(!keyword.isEmpty(), "empty keyword");
 
         return sentence.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Returns how many single-character edits turn {@code source} into {@code target}, counting
+     * an insertion, a deletion, a substitution and a swap of two neighbouring characters as one
+     * edit each. Comparison is by character, so case and accents matter; a caller that wants to
+     * ignore either folds both strings first.
+     *
+     * <p>Swaps are counted because a fast typist makes them as readily as the other three, and
+     * measuring {@code lsit} as two edits away from {@code list} would put an everyday slip out
+     * of reach of any threshold a wilder guess stays outside of.
+     *
+     * <p>No stretch of the string is edited twice, which is what the literature calls the
+     * optimal string alignment distance. The count differs from the unrestricted one only when
+     * a swapped pair is edited again between its two characters, as in {@code ca} and
+     * {@code abc}, which this counts as three edits rather than two. Such a string has two
+     * things wrong with it in the same place, so counting it as the further of the two is the
+     * reading a caller looking for a likely typo wants.
+     */
+    public static int editDistance(String source, String target) {
+        requireNonNull(source);
+        requireNonNull(target);
+
+        int[][] distances = new int[source.length() + 1][target.length() + 1];
+        for (int i = 0; i <= source.length(); i++) {
+            distances[i][0] = i;
+        }
+        for (int j = 0; j <= target.length(); j++) {
+            distances[0][j] = j;
+        }
+        for (int i = 1; i <= source.length(); i++) {
+            for (int j = 1; j <= target.length(); j++) {
+                distances[i][j] = cheapestEdit(distances, source, target, i, j);
+            }
+        }
+        return distances[source.length()][target.length()];
+    }
+
+    /**
+     * Returns the fewest edits that align the first {@code i} characters of {@code source} with
+     * the first {@code j} of {@code target}, given the answers for every shorter pair.
+     */
+    private static int cheapestEdit(int[][] distances, String source, String target, int i, int j) {
+        int substitutionCost = source.charAt(i - 1) == target.charAt(j - 1) ? 0 : 1;
+        int cheapest = Math.min(
+                Math.min(distances[i - 1][j] + 1, distances[i][j - 1] + 1),
+                distances[i - 1][j - 1] + substitutionCost);
+
+        boolean isSwap = i > 1 && j > 1
+                && source.charAt(i - 1) == target.charAt(j - 2)
+                && source.charAt(i - 2) == target.charAt(j - 1);
+        return isSwap ? Math.min(cheapest, distances[i - 2][j - 2] + 1) : cheapest;
     }
 
     /**

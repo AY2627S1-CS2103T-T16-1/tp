@@ -1,7 +1,9 @@
 package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_AMY;
+import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_AT_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_BOB;
+import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_OVER_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.FLAG_NAME_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.FOLLOW_UP;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_EMAIL;
@@ -9,6 +11,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.INVALID_FLAG_NAME;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NUS_STUDENT_ID;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_PHONE;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_TAG;
+import static seedu.tab.logic.commands.CommandTestUtil.MESSAGE_EMAIL_OVER_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.NO_TAGS;
 import static seedu.tab.logic.commands.CommandTestUtil.NUS_STUDENT_ID_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.PHONE_AMY;
@@ -17,6 +20,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.PREAMBLE_WHITESPACE;
 import static seedu.tab.logic.commands.CommandTestUtil.TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.TAG_HUSBAND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_EMAIL_AMY;
+import static seedu.tab.logic.commands.CommandTestUtil.VALID_EMAIL_AT_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_NAME_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_NUS_STUDENT_ID_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_PHONE_AMY;
@@ -359,6 +363,22 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1" + INVALID_NUS_STUDENT_ID,
                 Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
                         NusStudentId.getFailureReason("A0123-456")));
+    }
+
+    @Test
+    public void parse_emailAtTheLengthLimit_success() {
+        Index targetIndex = INDEX_FIRST_STUDENT;
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder()
+                .withEmail(VALID_EMAIL_AT_MAX_LENGTH).build();
+
+        assertParseSuccess(parser, targetIndex.getOneBased() + EMAIL_AT_MAX_LENGTH,
+                new EditCommand(targetIndex, descriptor));
+    }
+
+    @Test
+    public void parse_emailOneCharacterOverTheLengthLimit_failure() {
+        // edit enters an address the same way add does, so it holds the same limit
+        assertParseFailure(parser, "1" + EMAIL_OVER_MAX_LENGTH, MESSAGE_EMAIL_OVER_MAX_LENGTH);
     }
 
     @Test

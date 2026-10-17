@@ -1,6 +1,7 @@
 package seedu.tab.logic;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -13,7 +14,9 @@ import seedu.tab.model.tag.Tag;
  */
 public class Messages {
 
-    public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command.";
+    public static final String MESSAGE_UNKNOWN_COMMAND =
+            "Unknown command \"%1$s\". Enter help to see every command.";
+    public static final String MESSAGE_MISTYPED_COMMAND = "Unknown command \"%1$s\". Did you mean %2$s?";
     public static final String MESSAGE_UNEXPECTED_ARGUMENTS =
             "%1$s takes no arguments. Unexpected input: \"%2$s\".";
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
@@ -66,6 +69,38 @@ public class Messages {
     }
 
     /**
+     * Returns feedback naming the word that is no command of TAB's, and where to find the ones
+     * that are. A word too long to read is shortened, so that the pointer stays in sight.
+     */
+    public static String getErrorMessageForUnknownCommand(String commandWord) {
+        return String.format(MESSAGE_UNKNOWN_COMMAND, shorten(commandWord));
+    }
+
+    /**
+     * Returns feedback naming the word that is no command of TAB's and the commands it was
+     * likely meant to be. Every equally likely command is named, because choosing between
+     * them is the User's to make. They are shown rather than run, so that a wrong reading
+     * costs the User nothing but the retyping they were facing anyway.
+     */
+    public static String getErrorMessageForMistypedCommand(String commandWord, List<String> suggestions) {
+        assert !suggestions.isEmpty();
+
+        return String.format(MESSAGE_MISTYPED_COMMAND, shorten(commandWord), listAlternatives(suggestions));
+    }
+
+    /**
+     * Returns {@code alternatives} as a sentence reads them: "list", "find or list", or
+     * "edit, find or list".
+     */
+    private static String listAlternatives(List<String> alternatives) {
+        int lastIndex = alternatives.size() - 1;
+        if (lastIndex == 0) {
+            return alternatives.get(0);
+        }
+        return String.join(", ", alternatives.subList(0, lastIndex)) + " or " + alternatives.get(lastIndex);
+    }
+
+    /**
      * Returns feedback naming the command and unexpected input, shortening long input for readability.
      */
     public static String getErrorMessageForUnexpectedArguments(String commandWord, String arguments) {
@@ -88,11 +123,11 @@ public class Messages {
      * rejected the value says whatever its own rule makes relevant.
      */
     public static String shorten(String value) {
-        if (value.codePointCount(0, value.length()) <= MAX_QUOTED_VALUE_LENGTH) {
+        String shown = StringUtil.firstCharacters(value, MAX_QUOTED_VALUE_LENGTH);
+        if (shown.equals(value)) {
             return value;
         }
-        int endIndex = value.offsetByCodePoints(0, MAX_QUOTED_VALUE_LENGTH);
-        return value.substring(0, endIndex) + "…";
+        return shown + "…";
     }
 
     /**

@@ -1,5 +1,6 @@
 package seedu.tab.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -46,6 +47,23 @@ public class UserGuideExamplesTest {
     @Test
     public void userGuide_everyFindExample_parses() throws IOException {
         assertEveryExampleParses(FindCommand.COMMAND_WORD, new FindCommandParser());
+    }
+
+    @Test
+    public void userGuide_mistypedCommandReplies_areWhatTheParserSays() throws IOException {
+        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
+        for (String mistyped : List.of("del 3", "delte 3", "eit", "qwerty")) {
+            String reply = reasonForRefusing(mistyped);
+            assertTrue(guide.contains(reply),
+                    "the User Guide does not show `" + reply + "`, which TAB answers " + mistyped + " with");
+        }
+    }
+
+    /** Returns why the parser refuses {@code input}, failing if it accepts it. */
+    private static String reasonForRefusing(String input) {
+        ParseException refusal = assertThrows(ParseException.class, ()
+                -> new StudentBookParser().parseCommand(input));
+        return refusal.getMessage();
     }
 
     /**

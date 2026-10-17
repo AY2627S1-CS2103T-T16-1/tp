@@ -36,6 +36,10 @@ public class CommandBox extends UiPart<Region> {
 
     private final CommandExecutor commandExecutor;
     private final BooleanSupplier canSubmitEmptyReply;
+    private final ChangeListener<Number> theFieldScrolled = (unused, old, now) -> layOutColours();
+
+    /** The node the field draws its own text in, once the copy is following it. */
+    private Text followed;
 
     @FXML
     private TextField commandTextField;
@@ -142,14 +146,16 @@ public class CommandBox extends UiPart<Region> {
     }
 
     /**
-     * Lays the coloured copy out on one line and scrolls it so that the caret is in view.
+     * Lays the coloured copy out on one line, where the field is drawing its own text.
      *
      * <p>A TextFlow wraps at the width it is given, which would turn a long command into
      * several lines and grow the box. It is sized to its content instead and the lane around
-     * it is clipped, so the copy runs off the edge the way the field's own text does, and
-     * it is drawn wherever the field is drawing its own text.
+     * it is clipped, so the copy runs off the edge the way the field's own text does. Which
+     * part of a long command is in view is the field's to decide, and the copy is drawn
+     * wherever the field has decided rather than scrolled by any rule of its own.
      */
     private void layOutColours() {
+        followTheFieldsText();
         // JavaFX moves the caret before it reports the new text, so this runs once against
         // the copy of the previous command. The recolour that follows puts it right.
         if (!copyMatchesField()) {
@@ -175,9 +181,7 @@ public class CommandBox extends UiPart<Region> {
         double middle = lane.getHeight() / 2;
         showSelection(-drawnFrom, middle);
         highlighted.relocate(drawnFrom, middle - highlighted.getHeight() / 2);
-        // the caret is centred on the point it marks, as the field's own caret is, except
-        // at the very start of the line where half of it would fall outside
-        caret.relocate(Math.max(0, drawnFrom + caretAt - caret.getWidth() / 2),
+        caret.relocate(inTheLine(drawnFrom + caretAt - caret.getWidth() / 2),
                 middle - caret.getHeight() / 2);
         caret.setVisible(commandTextField.isFocused());
     }
@@ -187,8 +191,8 @@ public class CommandBox extends UiPart<Region> {
      *
      * <p>The field and the lane sit on each other, so the copy belongs wherever the field's
      * text is. Asking the field means the two can never drift: it insets its text by half a
-     * caret, it scrolls when the caret would leave the line, and it leaves its offset alone
-     * when a cut shortens the command, and none of that has to be worked out again here.
+     * caret and it re-scrolls on rules of its own, which differ between typing, deleting and
+     * cutting and between JavaFX releases, and none of that has to be worked out again here.
      *
      * <p>Before the field has a skin there is nothing to ask, so the copy falls back to the
      * inset the field will use.
@@ -199,15 +203,53 @@ public class CommandBox extends UiPart<Region> {
     }
 
     /**
+     * Returns where a caret wanting to be drawn from {@code left} is drawn instead.
+     *
+     * <p>The caret is centred on the point it marks, as the field's own caret is, except at
+     * either edge of the line, where half of it would fall outside and the lane's clip would
+     * take that half away. How far in from the right edge a field scrolls the end of a
+     * command differs between JavaFX releases, so a caret there lands outside the line on
+     * one of them and is never seen.
+     */
+    private double inTheLine(double left) {
+        return Math.clamp(left, 0, Math.max(0, lane.getWidth() - caret.getWidth()));
+    }
+
+    /**
+     * Follows the node the field draws its own text in, from the moment it has one.
+     *
+     * <p>The field's skin moves that node on its own account, after a delete, a replace or a
+     * change of width, and long after the caret and the text it was told about have settled.
+     * Nothing else says that it has, so the copy would be left where the command used to be
+     * drawn and a click would land on the character the command used to have there.
+     *
+     * <p>The node arrives with the skin rather than with the box, which is why it is looked
+     * for on each pass rather than once in the constructor. A field draws in the one node
+     * for as long as it keeps that skin, so there is never a second one to move to.
+     */
+    private void followTheFieldsText() {
+        Text drawn = fieldText();
+        if (drawn == null || drawn == followed) {
+            return;
+        }
+        followed = drawn;
+        drawn.layoutXProperty().addListener(theFieldScrolled);
+        drawn.translateXProperty().addListener(theFieldScrolled);
+    }
+
+    /**
      * Returns the node the field draws its own text in, or null before it has a skin.
      *
-     * <p>An empty line shows the prompt, which the field draws in a node of the same kind,
-     * so the one carrying the command is the one whose text is the command.
+     * <p>An empty line shows the prompt, which the field draws in a node of the same kind
+     * and then hides rather than throws away, so the one carrying the command is the one
+     * the field is drawing in whose text is the command. A command that reads as the prompt
+     * matches the hidden node as well, and the field never scrolls that one.
      */
     private Text fieldText() {
         return commandTextField.lookupAll(".text").stream()
                 .filter(Text.class::isInstance)
                 .map(Text.class::cast)
+                .filter(Node::isVisible)
                 .filter(text -> text.getText().equals(commandTextField.getText()))
                 .findFirst()
                 .orElse(null);
@@ -219,7 +261,7 @@ public class CommandBox extends UiPart<Region> {
      *
      * <p>A text field leaves half a caret's width at each edge, so that a caret at either
      * end of the command is drawn rather than cut in half by the edge. The copy is drawn
-     * over the field's own text, so it is drawn at the same inset.
+     * behind the field's own text, so it is drawn at the same inset.
      */
     private double halfACaret() {
         return Math.max(caret.getWidth(), caret.prefWidth(-1)) / 2;
@@ -265,7 +307,7 @@ public class CommandBox extends UiPart<Region> {
     }
 
     /**
-     * Gives the caret the height and the vertical place of the text beside it.
+     * Gives the caret the height of the text beside it.
      *
      * <p>A bar of a fixed height centred in the line does not sit where the text does: a
      * font's ink is not centred in its line box, so the two are out by a point or so. Taking
@@ -288,9 +330,6 @@ public class CommandBox extends UiPart<Region> {
         Bounds ink = run.getLayoutBounds();
         caret.setPrefHeight(ink.getHeight());
         caret.autosize();
-        // the run is laid out in the same StackPane cell, so matching its centre lines the
-        // two up without having to know anything about the font's metrics
-
     }
 
     /**
