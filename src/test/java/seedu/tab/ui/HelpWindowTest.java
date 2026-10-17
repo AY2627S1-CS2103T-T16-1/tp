@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -55,14 +56,14 @@ public class HelpWindowTest {
     }
 
     @Test
-    public void window_atTheSizeItOpens_showsTheWholeAddressAndButton() throws Exception {
+    public void window_contentAtItsPreferredSize_showsTheWholeAddressAndButton() throws Exception {
         boolean[] whole = onFxThread(() -> {
             Stage stage = new Stage();
             HelpWindow window = new HelpWindow(stage);
             Region content = (Region) stage.getScene().getRoot();
             content.applyCss();
-            // the size the window opens at, as the layout file sets it
-            content.resize(stage.getScene().getWidth(), stage.getScene().getHeight());
+            // Check the content itself here; the show test checks the actual native scene.
+            content.resize(content.prefWidth(-1), content.prefHeight(-1));
             content.layout();
 
             Label message = (Label) content.lookup("#helpMessage");
@@ -110,6 +111,31 @@ public class HelpWindowTest {
         assertEquals(0, HelpWindow.frameAround(736, Double.NaN), 0.01);
         // nor can a scene be wider than the window around it
         assertEquals(0, HelpWindow.frameAround(700, 720), 0.01);
+    }
+
+    @Test
+    public void show_contentUpdatedAfterShowing_refitsOnTheDeferredPass() throws Exception {
+        HelpWindow window = onFxThread(() -> {
+            HelpWindow helpWindow = new HelpWindow(new Stage());
+            helpWindow.show();
+            // Model content metrics arriving after show(), as native styling and fonts can.
+            Platform.runLater(() -> ((Button) helpWindow.getRoot().getScene().getRoot()
+                    .lookup("#copyButton")).setText("Copy the complete User Guide address"));
+            return helpWindow;
+        });
+        try {
+            FxToolkit.afterPulse(() -> {
+                Stage stage = window.getRoot();
+                assertTrue(stage.getScene().getWidth() >= stage.getScene().getRoot().prefWidth(-1) - 0.5,
+                        "the deferred fit should include content metrics arriving after show()");
+                return null;
+            });
+        } finally {
+            onFxThread(() -> {
+                window.hide();
+                return null;
+            });
+        }
     }
 
     @Test
