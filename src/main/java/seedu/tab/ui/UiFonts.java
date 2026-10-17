@@ -26,6 +26,13 @@ final class UiFonts {
     private UiFonts() {} // this class only chooses a font
 
     /**
+     * Returns the families the window prefers, in the order it prefers them.
+     */
+    static List<String> preferredFamilies() {
+        return PREFERRED;
+    }
+
+    /**
      * Returns the first preferred family the machine has, or the font it would use anyway.
      */
     static String bodyFamily() {
