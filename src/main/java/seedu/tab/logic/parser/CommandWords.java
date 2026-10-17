@@ -14,6 +14,7 @@ import seedu.tab.logic.commands.ExitCommand;
 import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.ListCommand;
+import seedu.tab.logic.commands.TagCommand;
 
 /**
  * The words TAB answers to, and which of them a word it does not answer to was likely meant to
@@ -37,7 +38,8 @@ public class CommandWords {
             ExitCommand.COMMAND_WORD,
             FindCommand.COMMAND_WORD,
             HelpCommand.COMMAND_WORD,
-            ListCommand.COMMAND_WORD);
+            ListCommand.COMMAND_WORD,
+            TagCommand.COMMAND_WORD);
 
     /** How far from a command word a typed word may be and still be read as a mistyping of it. */
     private static final int MAX_EDITS = 2;

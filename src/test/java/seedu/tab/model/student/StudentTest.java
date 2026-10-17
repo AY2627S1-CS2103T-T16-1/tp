@@ -206,6 +206,15 @@ public class StudentTest {
     }
 
     @Test
+    public void isSameStudent_bothWithoutNusStudentIdDifferentNames_returnsFalse() {
+        Student alice = new StudentBuilder(ALICE).withoutNusStudentId().build();
+        Student bob = new StudentBuilder(BOB).withoutNusStudentId().build();
+
+        assertFalse(alice.isSameStudent(bob));
+        assertFalse(bob.isSameStudent(alice));
+    }
+
+    @Test
     public void isSameStudent_sameNusStudentIdDifferentName_returnsFalse() {
         Student alice = new StudentBuilder(ALICE).withNusStudentId("A01234567X").build();
         Student bob = new StudentBuilder(ALICE).withName(VALID_NAME_BOB).withNusStudentId("A01234567X").build();

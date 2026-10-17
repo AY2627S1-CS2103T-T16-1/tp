@@ -99,18 +99,9 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
-The student card's secondary row reserves one pixel at its right edge because
-JavaFX 17's `HBox` can leave one pixel undistributed when shrinking children.
-This keeps the email inside the details area at narrow widths, including when
-platform fonts produce different preferred label widths.
-
 The student card's `TagRow` retains every tag name, but creates at most three
 tag labels. Layout uses the full name count to size the overflow chip and
 list all hidden tags in its tooltip, even when fewer labels are created.
-
-Student-card email labels use `UiText.showToFit` to retain their full text
-and show a tooltip only while the available width cuts the address. Width
-listeners remove the tooltip when widening the card makes it unnecessary.
 
 `HelpWindow` re-fits its scene after the first rendering pulse, allowing
 for native frame sizes, then uses `sizeToScene()` without fixed FXML scene
@@ -126,6 +117,23 @@ rather than its surrounding frame.
 to tags. When that leaves no room for a tag chip, `TagRow` uses the shorter
 `N tags` total instead of `N more…`, preserving a complete count beside the
 name. Its tooltip still lists every hidden tag.
+
+#### Keeping contact details readable
+
+`StudentListCard.fxml` puts NUS Student ID, phone and email in `ContactRow`,
+a `FlowPane` that reports the natural width of one unwrapped row. This lets
+the containing boxes measure height at the allocated width on both JavaFX
+17 and 25, rather than reserving rows based on a fixed preferred wrap length.
+Labels keep their preferred widths and share a line when they fit; a label
+that does not fit the remaining space moves to the next line. Each label's
+maximum width follows the pane's width, so a value longer than an entire
+line shrinks with an ellipsis instead of overflowing the card.
+
+This keeps ordinary cards compact while allowing crowded cards to grow by
+only the rows they need. `UiText.showToFit` gives all three fields their full
+values on hover when clipped, and removes the tooltip when widening makes
+it unnecessary. Absent optional fields remain unmanaged, reserving no space.
+The details container's clip remains a backstop protecting the follow-up pill.
 
 #### Colouring the command line
 
@@ -333,7 +341,8 @@ words needs no quotes unless it would otherwise be misread, and the index for
 `EditCommand.FIELD_INDEX`, rather than the shared `CliFlags` doing it for
 them. Each short and long marker resolves to the same `Flag`, so mixed aliases
 for a single-valued field are duplicates rather than independent fields.
-Value-taking options take the token after them, and `-t` or `--tag` repeats.
+Value-taking options take the token after them, and `-t` or `--tag` repeats
+for `add` and `edit`. The `tag` command takes exactly one tag through `-a` or `--add`.
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
@@ -373,6 +382,35 @@ any edit, so neither the model nor the saved book changes on that error.
 The `-nf` alias makes clearing quick to type without making opposite actions
 differ only in case, as `-f` and `-F` would. Both clear spellings map to the
 same option, so mixing them is also detected as a duplicate.
+
+### Adding one tag without replacing existing tags
+
+`TagCommandParser` reads `tag INDEX -a TAG` (alias `--add`) with the existing
+`FlagTokenizer` and `ParserUtil`. The option names the action: both spellings
+map to `FLAG_ADD_TAG`. Exactly one add option is accepted; repeated options,
+including mixed aliases, are rejected. Missing fields and invalid field values
+are collected before a command is created.
+`TagCommandParser` and `EditCommandParser` share `ParserUtil.parseRequiredIndex`
+to distinguish a missing index from an invalid one; each collects its errors
+with `ParseProblems` and applies its own tag rules.
+Both use `FlagTokenizer.tokenizeWithIndex`, which reports an unquoted negative
+number as both an invalid index and an unknown option. A value following a valid
+index is reported separately by `parseRequiredIndex`. Tag syntax failures and
+a missing add option include guidance for `-a`/`--add`.
+
+`TagCommand` resolves the index against the displayed list. It compares the
+normalized tag names ignoring case before copying the existing tag set and
+constructing a replacement student with every other field preserved. The
+search filter stays active. Tag equality and storage remain unchanged, so
+existing case variants are preserved rather than merged. A general tag named
+`Needs follow-up` remains separate from the follow-up flag.
+Duplicate feedback uses a matching stored tag's spelling. If several case
+variants match, it chooses the first in the card's tag display order.
+
+Invalid indexes and existing tags throw `CommandException` before mutation;
+invalid syntax or values throw `ParseException`. These paths never reach
+`LogicManager`'s save. A successful addition uses the normal JSON save path.
+The paired single-tag removal feature remains tracked in issue #141.
 
 ### Commands with no arguments
 
@@ -1749,6 +1787,47 @@ testers are expected to do more *exploratory* testing.
       Expected: Only the record with `true` shows `Needs follow-up`. The other
       three load as unflagged, including the legacy record with no key.
 
+### Adding one tag
+
+1. Preserving the selected student's other details and saving the new tag
+
+   1. Prerequisites: Add a uniquely named student with `add Tag Test -p 91234567
+      -e tag@example.com --id A01234567X -t T1 --follow-up` as one line.
+      Run `find "Tag Test"` and confirm only this student is shown.
+
+   1. Test case: `tag 1 --add "Lab 3"`.<br>
+      Expected: Feedback starts with `Added tag [Lab 3]:`. The student has both
+      `T1` and `Lab 3`, and all other details and follow-up status are unchanged.
+      The search stays active. Exit TAB and relaunch the same JAR from the same
+      folder; the tags and every other field remain as recorded.
+
+1. Rejecting duplicates and invalid input without mutation
+
+   1. Prerequisites: Continue with the student above and run `find "Tag Test"`.
+      Back up `data/tab.json` and compare it after each refused command.
+
+   1. Test case: `tag 1 -a "  lab   3  "`.<br>
+      Expected: `This student already has tag [Lab 3]. No changes made.` The
+      existing `Lab 3` spelling, all other details, displayed list and saved
+      file stay unchanged.
+
+   1. Test cases: `tag 0 -a T2`, `tag 2 -a T2`, `tag 2147483648 -a T2`,
+      `tag 1 -a ""`, `tag 1 -a "---"`, `tag 1 -a`, and `tag 1 -a T2 --add T3`.<br>
+      Expected: Each is refused with an index, invalid-tag, missing-value or
+      duplicate-option error as appropriate. No student or displayed list
+      changes, and `data/tab.json` stays unchanged.
+
+   1. Test cases: `tag -1 -a T2` and `edit -1 -p 91234567`.<br>
+      Expected: Both report `Index must be a positive integer.` and
+      `There is no -1 option.` The tag command also shows the add guidance.
+      No record, displayed list or saved file changes.
+
+   1. Test cases: `tag 1 -t T2` and `tag 1 lab4`.<br>
+      Expected: Both show `To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3".`
+      The first names the unknown `-t` option; the second names `lab4` as an
+      unexpected value after the index. No record, displayed list or saved
+      file changes.
+
 ### Adding a student
 
 1. Adding a student with minimal fields
@@ -1772,6 +1851,33 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add John Doe -p 98765432`<br>
       Expected: No student is added. The status message reports that this student
       already exists in the student book, and no record is mutated.
+
+### Long contact details on a card
+
+1. Reading an annotated phone and an email
+
+   1. Test case: `add Priya Nair -p "1234 5678 (HP) 1111-3333 (Office)" -e e0923841@u.nus.edu -t T1 --follow-up`.
+      Narrow the window to its minimum width (490 px).<br>
+      Expected: Phone and email remain visible, wrapping when needed. A value too
+      wide for its line ends with an ellipsis. Hovering shows the complete
+      corresponding phone or email, including the text after the cut.
+   1. Test case: `add Ravi Kumar -p "+65 6516 2727 ext 21 (office, Mon-Fri 9-5), +65 9123 4567 (HP, after 6pm)" -e e0923841@u.nus.edu`.<br>
+      Expected: Both contacts remain visible at default and minimum widths,
+      including without a follow-up marker. Add `--id A01234567X` with `edit`
+      and check that the ID wraps when necessary without hiding either contact.
+   1. Widen the window until both contacts fit.<br>
+      Expected: Details return to one line when they all fit. Complete values
+      appear without ellipses, and their hover tooltips are removed. Exit and
+      reopen TAB; the full contact values remain stored, regardless of how much
+      was visible before exiting.
+   1. Test case: `add Mei Lin -p 91234567`.<br>
+      Expected: The ordinary phone remains readable. Absent email and NUS
+      Student ID leave no blank lines.
+   1. Add ten students with short names, ordinary phones, email addresses and
+      NUS Student IDs. Compare the list at the default 740 by 600 window size
+      with a list of phone-only students.<br>
+      Expected: Details that fit share one line. These ordinary cards retain
+      the compact height; optional fields do not force extra rows.
 
 ### Long names on a card
 
