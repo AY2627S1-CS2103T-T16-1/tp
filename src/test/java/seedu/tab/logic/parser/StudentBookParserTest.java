@@ -257,15 +257,32 @@ public class StudentBookParserTest {
         // read as knowledge TAB does not have
         assertThrows(ParseException.class, "Unknown command \"eit\". Did you mean edit or exit?", ()
             -> parser.parseCommand("eit"));
-        assertThrows(ParseException.class, "Unknown command \"eli\". Did you mean edit, exit or help?", ()
-            -> parser.parseCommand("eli"));
+        assertThrows(ParseException.class, "Unknown command \"e\". Did you mean edit or exit?", ()
+            -> parser.parseCommand("e"));
     }
 
     @Test
-    public void parseCommand_moreNearCommandsThanAreWorthNaming_pointsToHelp() {
-        // "fit" is two edits from edit, exit, find and list alike
-        assertThrows(ParseException.class, Messages.getErrorMessageForUnknownCommand("fit"), ()
-            -> parser.parseCommand("fit"));
+    public void parseCommand_partTypedCommandWord_suggestsWhatItOpens() {
+        assertThrows(ParseException.class, "Unknown command \"del\". Did you mean delete?", ()
+            -> parser.parseCommand("del 3"));
+        assertThrows(ParseException.class, "Unknown command \"cle\". Did you mean clear?", ()
+            -> parser.parseCommand("cle"));
+    }
+
+    @Test
+    public void parseCommand_mistypedFirstLetter_suggestsTheWordWhenNothingElseDiffers() {
+        assertThrows(ParseException.class, "Unknown command \"felete\". Did you mean delete?", ()
+            -> parser.parseCommand("felete 3"));
+        assertThrows(ParseException.class, "Unknown command \"edlete\". Did you mean delete?", ()
+            -> parser.parseCommand("edlete 3"));
+    }
+
+    @Test
+    public void parseCommand_wordOpeningUnlikeEveryNearCommand_pointsToHelp() {
+        // "dlt" is two edits from "edit" and nothing else is within reach, which says more
+        // about the arithmetic than about what the User meant
+        assertThrows(ParseException.class, Messages.getErrorMessageForUnknownCommand("dlt"), ()
+            -> parser.parseCommand("dlt 3"));
     }
 
     @Test
