@@ -1,6 +1,7 @@
 package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Callable;
@@ -112,26 +113,31 @@ public class HelpWindowTest {
     }
 
     @Test
-    public void show_sizesTheWindowToWhatItDrawsAndItsFrame() throws Exception {
-        double[] measured = onFxThread(() -> {
-            Stage stage = new Stage();
-            HelpWindow window = new HelpWindow(stage);
-            Region content = (Region) stage.getScene().getRoot();
-            double beforeShowing = stage.getWidth();
-            window.show();
-            double shown = stage.getWidth();
-            double sceneWidth = stage.getScene().getWidth();
-            boolean showing = window.isShowing();
-            window.hide();
-            return new double[] {beforeShowing, shown, sceneWidth, showing ? 1 : 0,
-                window.isShowing() ? 1 : 0, content.prefWidth(-1)};
+    public void show_afterDeferredResize_fitsContentInsideTheScene() throws Exception {
+        HelpWindow window = onFxThread(() -> {
+            HelpWindow helpWindow = new HelpWindow(new Stage());
+            helpWindow.show();
+            return helpWindow;
         });
-
-        assertEquals(1, measured[3], "the window should be showing once shown");
-        assertEquals(0, measured[4], "and not once hidden");
-        // sized again once there is a frame to measure, which is wider on some platforms
-        // than others, so what is checked is that the window still holds what it draws
-        assertTrue(measured[1] >= measured[5] - 0.5,
-                "the window is " + measured[1] + " wide for content needing " + measured[5]);
+        try {
+            // A second dispatch runs after show()'s queued re-fit, while the window stays open.
+            double[] measured = onFxThread(() -> {
+                assertTrue(window.isShowing(), "the window should stay open until it is measured");
+                Stage stage = window.getRoot();
+                Region content = (Region) stage.getScene().getRoot();
+                return new double[] {stage.getScene().getWidth(), content.prefWidth(-1),
+                    stage.getScene().getHeight(), content.prefHeight(-1)};
+            });
+            assertTrue(measured[0] >= measured[1] - 0.5,
+                    "the scene is " + measured[0] + " wide for content needing " + measured[1]);
+            assertTrue(measured[2] >= measured[3] - 0.5,
+                    "the scene is " + measured[2] + " tall for content needing " + measured[3]);
+        } finally {
+            onFxThread(() -> {
+                window.hide();
+                assertFalse(window.isShowing(), "the window should be hidden after the test");
+                return null;
+            });
+        }
     }
 }
