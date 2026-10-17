@@ -2,7 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TextField?>
+<?import seedu.tab.ui.CommandTextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.Pane?>
@@ -30,7 +30,7 @@
       <TextFlow fx:id="highlighted" styleClass="command-highlight" />
       <Region fx:id="caret" styleClass="command-caret" />
     </Pane>
-    <TextField fx:id="commandTextField" onAction="#handleCommandEntered"
+    <CommandTextField fx:id="commandTextField" onAction="#handleCommandEntered"
                promptText="Enter command here..." />
   </StackPane>
 </HBox>
