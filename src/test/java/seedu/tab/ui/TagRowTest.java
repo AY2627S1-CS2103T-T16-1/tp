@@ -113,7 +113,10 @@ public class TagRowTest {
             return null;
         });
 
-        assertEquals(List.of("20 more" + ELLIPSIS), chipsOf(row));
+        List<String> visibleChips = chipsOf(row);
+        assertEquals(1, visibleChips.size());
+        // The allocation cap must not cap the total, regardless of count-only wording.
+        assertEquals(20, Integer.parseInt(visibleChips.getFirst().split(" ")[0]));
         Label overflow = (Label) row.getChildrenUnmodifiable().get(3);
         assertEquals(String.join(", ", names), overflow.getTooltip().getText());
     }
