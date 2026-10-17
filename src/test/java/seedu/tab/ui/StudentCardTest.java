@@ -111,6 +111,25 @@ public class StudentCardTest {
     }
 
     @Test
+    public void constructor_emailCutByWidth_showsWholeAddressUntilWidened() throws Exception {
+        Student student = new StudentBuilder().withEmail("siti.nuraisyah.binte.ahmad@gmail.com")
+                .withFlag(true).build();
+        onFxThread(() -> {
+            Region root = new StudentCard(student, 1).getRoot();
+            assertNotNull(styledScene(root, 298, 120));
+            Label email = (Label) root.lookup("#email");
+            assertTrue(email.getWidth() < email.prefWidth(-1), "the card should cut the email");
+            assertNotNull(email.getTooltip());
+            assertEquals(student.getEmail().orElseThrow().toString(), email.getTooltip().getText());
+
+            layOutAt(root, root.prefWidth(-1));
+            assertTrue(email.getWidth() >= email.prefWidth(-1) - 0.5);
+            assertNull(email.getTooltip(), "an address that fits needs no tooltip");
+            return null;
+        });
+    }
+
+    @Test
     public void constructor_studentWithoutEmail_leavesTheRowOut() throws Exception {
         Student student = new StudentBuilder().withoutEmail().build();
         Label email = emailLabelOf(student);

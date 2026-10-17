@@ -452,6 +452,22 @@ in this file directly.
 | `tp-style` | check a change for style and code quality Checkstyle misses |
 | `tp-bughunt` | hunt bugs in a tP JAR, for PE or before our own release |
 
+When they are installed, Codex reaches the same files by linking
+`.agents/skills` to `../.claude/skills`, so both tools read one copy of
+the skills, references, scripts and harness. Invoke them as `$tp-git`,
+`$tp-feature`, and so on. The link is local, like `.claude/` itself, and
+is ignored rather than committed.
+
+Where a skill delegates to a named agent, read `.claude/agents/<name>.md`
+and pass its instructions and the task context to a Codex subagent. Its
+`tools` frontmatter names Claude tools, so use the Codex equivalents
+while keeping any read-only restriction the agent is given. Batch agents
+to the concurrency the host allows; where delegation is unavailable, take
+the same roles in turn and say in the report that this was done. Resolve
+`<skill>` to the absolute `.claude/skills/<name>` directory, including
+when working outside this repo. For `tp-review`, stand Codex's own review
+in place of Claude's `/code-review`, or review for correctness directly.
+
 Skill changes stay local and are not submitted through repository PRs.
 When a shared convention changes, update this file through a PR and keep
 any local skills in step with it.
