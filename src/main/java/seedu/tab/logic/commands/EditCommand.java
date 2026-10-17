@@ -108,7 +108,8 @@ public class EditCommand extends Command {
 
         model.setStudent(studentToEdit, editedStudent);
         model.updateFilteredStudentList(PREDICATE_SHOW_ALL_STUDENTS);
-        logger.info("Edited the student shown at " + index.getOneBased());
+        logger.info("Edited the student shown at " + index.getOneBased()
+                + "; the book now holds " + model.getStudentBook().getStudentList().size());
         return new CommandResult(String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)));
     }
 
