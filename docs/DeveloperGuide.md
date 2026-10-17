@@ -334,7 +334,8 @@ words needs no quotes unless it would otherwise be misread, and the index for
 them. Each short and long marker resolves to the same `Flag`, so mixed aliases
 for a single-valued field are duplicates rather than independent fields.
 Value-taking options take the token after them, and `-t` or `--tag` repeats
-for `add` and `edit`. The `tag` command takes exactly one tag through `-a` or `--add`.
+for `add` and `edit`. The `tag` command takes exactly one tag through `-a`/`--add`
+for addition or `-r`/`--remove` for removal.
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
@@ -375,34 +376,43 @@ The `-nf` alias makes clearing quick to type without making opposite actions
 differ only in case, as `-f` and `-F` would. Both clear spellings map to the
 same option, so mixing them is also detected as a duplicate.
 
-### Adding one tag without replacing existing tags
+### Adding or removing one tag
 
-`TagCommandParser` reads `tag INDEX -a TAG` (alias `--add`) with the existing
+`TagCommandParser` reads `tag INDEX -a TAG` (alias `--add`) or
+`tag INDEX -r TAG` (alias `--remove`) with the existing
 `FlagTokenizer` and `ParserUtil`. The option names the action: both spellings
-map to `FLAG_ADD_TAG`. Exactly one add option is accepted; repeated options,
-including mixed aliases, are rejected. Missing fields and invalid field values
-are collected before a command is created.
+map to `FLAG_ADD_TAG` or `FLAG_REMOVE_TAG`, respectively. Exactly one action
+option is accepted; conflicting actions and repeated options, including mixed
+aliases, are rejected. Missing fields and invalid field values are collected
+before a command is created.
 `TagCommandParser` and `EditCommandParser` share `ParserUtil.parseRequiredIndex`
 to distinguish a missing index from an invalid one; each collects its errors
 with `ParseProblems` and applies its own tag rules.
 Both use `FlagTokenizer.tokenizeWithIndex`, which reports an unquoted negative
 number as both an invalid index and an unknown option. A value following a valid
 index is reported separately by `parseRequiredIndex`. Tag syntax failures and
-a missing add option include guidance for `-a`/`--add`.
+a missing action option include guidance for both addition and removal.
 
 `TagCommand` resolves the index against the displayed list. It compares the
 normalized tag names ignoring case before copying the existing tag set and
 constructing a replacement student with every other field preserved. The
-search filter stays active. Tag equality and storage remain unchanged, so
-existing case variants are preserved rather than merged. A general tag named
-`Needs follow-up` remains separate from the follow-up flag.
-Duplicate feedback uses a matching stored tag's spelling. If several case
-variants match, it chooses the first in the card's tag display order.
+search filter stays active; removing a tag used by that filter may hide the
+student from the displayed list. `TagCommand.Action` selects addition or
+removal while sharing index lookup, matching, student replacement and feedback.
+Tag equality and storage remain unchanged. Addition preserves existing case
+variants; removal removes every matching variant of the requested group while
+retaining unrelated tags. A general tag named `Needs follow-up` remains separate
+from the follow-up flag. Duplicate and successful removal feedback use a matching
+stored tag's spelling. If several case variants match, the reply chooses the
+first in the card's tag display order.
 
-Invalid indexes and existing tags throw `CommandException` before mutation;
-invalid syntax or values throw `ParseException`. These paths never reach
-`LogicManager`'s save. A successful addition uses the normal JSON save path.
-The paired single-tag removal feature remains tracked in issue #141.
+Invalid indexes, existing tags on addition and absent tags on removal throw
+`CommandException` before mutation; invalid syntax or values throw
+`ParseException`. These paths never reach
+`LogicManager`'s save. Successful additions and removals use the normal JSON
+save path without changing the schema. Integration tests exercise reloads,
+human-edited case and whitespace variants, absent optional fields and unchanged
+saved bytes on failure.
 
 ### Commands with no arguments
 
@@ -1803,14 +1813,68 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `tag -1 -a T2` and `edit -1 -p 91234567`.<br>
       Expected: Both report `Index must be a positive integer.` and
-      `There is no -1 option.` The tag command also shows the add guidance.
+      `There is no -1 option.` The tag command also shows the action guidance.
       No record, displayed list or saved file changes.
 
    1. Test cases: `tag 1 -t T2` and `tag 1 lab4`.<br>
-      Expected: Both show `To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3".`
+      Expected: Both show guidance for `-a`/`--add` and `-r`/`--remove` with examples.
       The first names the unknown `-t` option; the second names `lab4` as an
       unexpected value after the index. No record, displayed list or saved
       file changes.
+
+### Removing one tag
+
+1. Preserving other details and persisting removal
+
+   1. Prerequisites: Complete the single-tag addition tests above. Run
+      `find "Tag Test"`; the student has `T1`, `Lab 3` and follow-up enabled.
+
+   1. Test case: `tag 1 --remove "  LAB   3  "`.<br>
+      Expected: Feedback starts with `Removed tag [Lab 3]:`. Only `Lab 3` is
+      removed; `T1`, name, phone, email, NUS Student ID and follow-up status
+      remain unchanged. The search stays active. Exit and relaunch TAB from
+      the same folder; confirm every remaining field is preserved.
+
+   1. Test case: `tag 1 -r T1`.<br>
+      Expected: The student has no general tags and still needs follow-up.
+      After restarting TAB, that state remains.
+
+1. Reporting absent tags and invalid input without saving
+
+   1. Prerequisites: Run `find "Tag Test"` again. Back up `data/tab.json`
+      and compare it after every refused command below.
+
+   1. Test cases: `tag 1 -r "Lab 3"`, `tag 1 --remove "  lab   3  "`.<br>
+      Expected: `This student does not have tag [Lab 3]. No changes made.`
+      and `This student does not have tag [lab 3]. No changes made.`,
+      respectively. Record, displayed list and saved bytes stay unchanged.
+
+   1. Test cases: `tag 0 -r T1`, `tag 2 -r T1`, `tag 2147483648 -r T1`,
+      `tag 1 -r ""`, `tag 1 -r "---"`, `tag 1 -r`,
+      `tag 1 -r T1 --remove T2` and `tag 1 -a T2 -r T1`.<br>
+      Expected: Specific index, invalid-tag, missing-value, duplicate-option
+      or conflicting-action errors. No record, displayed list or file changes.
+
+1. Removing a tag that supplies the search match
+
+   1. Test case: Run `tag 1 -a "Lab 3"`, `find "Lab 3"`, then
+      `tag 1 -r "Lab 3"`.<br>
+      Expected: The student disappears from the filtered list. Run `list`
+      to see the preserved student without `Lab 3`.
+
+1. Removing variants from a human-edited data file
+
+   1. Prerequisites: Exit TAB. Back up the data file, then set Tag Test's
+      `tags` array to `["Lab 3", "  lab   3  ", "T1", "Needs follow-up"]`.
+      Keep `"flag": true` and restart TAB. Run `find "Tag Test"`.
+
+   1. Test case: `tag 1 -r "LAB 3"`.<br>
+      Expected: Both case variants disappear. `T1`, `Needs follow-up`, the
+      follow-up flag and all other fields remain after restart.
+
+   1. Test case: `tag 1 -r "needs follow-up"`.<br>
+      Expected: Only the general tag disappears. `T1` and the follow-up flag
+      remain. Restore the backup when finished.
 
 ### Adding a student
 
