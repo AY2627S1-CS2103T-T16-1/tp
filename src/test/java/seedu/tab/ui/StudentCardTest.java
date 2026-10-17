@@ -387,6 +387,46 @@ public class StudentCardTest {
         assertNull(oneOver.getTooltip(), "a name that fits needs no tooltip");
     }
 
+    /** Returns the name on a card {@code cardWidth} wide, having checked that the row clips it. */
+    private static Label clippedNameLabelOf(Student student, double cardWidth) throws Exception {
+        return onFxThread(() -> {
+            Region root = (Region) new StudentCard(student, 1).getRoot();
+            assertNotNull(styledScene(root, cardWidth, 120));
+            Label name = (Label) root.lookup("#name");
+            assertTrue(name.getWidth() < name.prefWidth(-1) - 0.5,
+                    "the row left the name its whole " + name.prefWidth(-1) + ", so nothing is clipped");
+            return name;
+        });
+    }
+
+    @Test
+    public void constructor_aNameTheRowClips_isNamedOnHover() throws Exception {
+        // a name inside the count the card cuts to, on a card too narrow to draw all of it
+        // beside the tags and the pill. The count leaves it alone and the row takes it anyway
+        String whole = "Jonathan Chuah Wei Ming";
+        Student student = new StudentBuilder().withName(whole)
+                .withTags("alpha", "bravo").withFlag(true).build();
+
+        Label shown = clippedNameLabelOf(student, 300);
+
+        assertEquals(whole, shown.getText(), "the count should have taken nothing off the name");
+        assertNotNull(shown.getTooltip(), "a name the row clipped should still be readable");
+        assertEquals(whole, shown.getTooltip().getText());
+    }
+
+    @Test
+    public void constructor_aShortNameTheRowClips_isNamedOnHover() throws Exception {
+        String whole = "Alex Yeoh";
+        Student student = new StudentBuilder().withName(whole)
+                .withTags("alpha", "bravo").withFlag(true).build();
+
+        Label shown = clippedNameLabelOf(student, 200);
+
+        assertEquals(whole, shown.getText());
+        assertNotNull(shown.getTooltip(), "a short name the row clipped should be readable too");
+        assertEquals(whole, shown.getTooltip().getText());
+    }
+
     @Test
     public void constructor_aNameTwoOverTheCount_isCut() throws Exception {
         Label shown = nameLabelOf("Jonathan Cheong Wei Ming");

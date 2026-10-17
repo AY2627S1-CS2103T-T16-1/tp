@@ -33,6 +33,10 @@ final class UiText {
      */
     static void showShortenedToFit(Label label, String value, int limit) {
         showShortened(label, value, limit);
+        nameWhatIsCutAsItIsDrawn(label, value);
+    }
+
+    private static void nameWhatIsCutAsItIsDrawn(Label label, String value) {
         label.widthProperty().addListener((unused, old, width) -> nameWhatIsCut(label, value));
         nameWhatIsCut(label, value);
     }
@@ -85,5 +89,19 @@ final class UiText {
         label.setText(opening.stripTrailing() + ELLIPSIS
                 + StringUtil.lastCharacters(value, closing).stripLeading());
         label.setTooltip(new Tooltip(value));
+    }
+
+    /**
+     * Puts {@code value} on {@code label} cut from its middle, and names the whole of it on
+     * hover whenever the label shows less than all of it: cut to the count, or drawn narrower
+     * than the text it holds needs.
+     *
+     * <p>A value within the count is cut all the same by the room its row has left over, and
+     * the label's own ellipsis says nothing about what it took. A name is worse off for that
+     * than a tag is, since a card holds nothing else that would identify the student.
+     */
+    static void showMiddleShortenedToFit(Label label, String value, int limit) {
+        showMiddleShortened(label, value, limit);
+        nameWhatIsCutAsItIsDrawn(label, value);
     }
 }

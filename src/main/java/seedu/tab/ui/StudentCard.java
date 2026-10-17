@@ -68,7 +68,7 @@ public class StudentCard extends UiPart<Region> {
         super(FXML);
         this.student = student;
         id.setText(String.valueOf(displayedIndex));
-        UiText.showMiddleShortened(name, student.getName().fullName, MAX_NAME_CHARACTERS);
+        UiText.showMiddleShortenedToFit(name, student.getName().fullName, MAX_NAME_CHARACTERS);
         phone.setText(student.getPhone().value);
         show(email, student.getEmail().map(Email::toString).orElse(null));
         show(followUp, student.getFlag().map(flag -> flag.tagName).orElse(null));
