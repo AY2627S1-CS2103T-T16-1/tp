@@ -285,6 +285,46 @@ public class StringUtilTest {
         assertThrows(NullPointerException.class, () -> StringUtil.firstCharacters(null, 3));
     }
 
+    //---------------- Tests for lastCharacters --------------------------------------
+
+    @Test
+    public void lastCharacters_valueWithinTheLimit_returnsTheWholeValue() {
+        assertEquals("Lab 3", StringUtil.lastCharacters("Lab 3", 10));
+        assertEquals("Lab 3", StringUtil.lastCharacters("Lab 3", 5), "a value exactly at the limit");
+        assertEquals("", StringUtil.lastCharacters("", 5));
+    }
+
+    @Test
+    public void lastCharacters_valueOverTheLimit_keepsTheClosingCharacters() {
+        assertEquals("ance-low", StringUtil.lastCharacters("attendance-low", 8));
+        assertEquals("", StringUtil.lastCharacters("attendance-low", 0));
+    }
+
+    @Test
+    public void lastCharacters_emojiAtTheLimit_keepsItWhole() {
+        // an emoji is one character to a reader and two to Java, and half of one draws as a box
+        assertEquals("\uD83D\uDE00cd", StringUtil.lastCharacters("ab\uD83D\uDE00cd", 3));
+        assertEquals("cd", StringUtil.lastCharacters("ab\uD83D\uDE00cd", 2));
+    }
+
+    @Test
+    public void lastCharacters_combiningAccentAtTheLimit_keepsItOnItsLetter() {
+        String value = "aie\u0301ou"; // "ai\u00E9ou", with the accent held as a separate code point
+
+        assertEquals("e\u0301ou", StringUtil.lastCharacters(value, 3));
+        assertEquals("ou", StringUtil.lastCharacters(value, 2));
+    }
+
+    @Test
+    public void lastCharacters_negativeLimit_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> StringUtil.lastCharacters("abc", -1));
+    }
+
+    @Test
+    public void lastCharacters_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StringUtil.lastCharacters(null, 3));
+    }
+
     //---------------- Tests for getPluralSuffix --------------------------------------
 
     @Test

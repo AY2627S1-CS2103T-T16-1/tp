@@ -67,6 +67,38 @@ public class StringUtil {
     }
 
     /**
+     * Returns the last {@code limit} characters of {@code value}, counted as a reader counts them
+     * rather than as Java stores them, or {@code value} itself when it holds no more than
+     * {@code limit} of them.
+     *
+     * <p>Counting back from the end carries the same trap as counting forward from the start: the
+     * index {@code limit} places from the end falls between the two halves of an emoji, or between
+     * a letter and the accent that belongs to it, and what is left is drawn as a broken glyph. A
+     * caller that keeps both ends of a value needs the two ends counted the same way.
+     *
+     * @param value The value to cut.
+     * @param limit The greatest number of characters to keep.
+     * @return The closing characters of {@code value}, or {@code value} itself when it is already
+     *         within {@code limit}.
+     */
+    public static String lastCharacters(String value, int limit) {
+        requireNonNull(value);
+        checkArgument(limit >= 0, "negative limit");
+
+        BreakIterator characters = BreakIterator.getCharacterInstance();
+        characters.setText(value);
+        int start = characters.last();
+        for (int counted = 0; counted < limit; counted++) {
+            int previous = characters.previous();
+            if (previous == BreakIterator.DONE) {
+                return value;
+            }
+            start = previous;
+        }
+        return value.substring(start);
+    }
+
+    /**
      * Returns true if {@code sentence} contains {@code keyword}, ignoring case.
      * A partial match is allowed (e.g. "Hans" contains "Han").
      *

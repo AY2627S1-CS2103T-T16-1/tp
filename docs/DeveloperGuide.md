@@ -667,6 +667,54 @@ removed and the `a/` prefix with it, and the rest failed until `add` and `edit`
 took positional arguments and command options instead. `Name` itself never
 needed changing.
 
+**Showing a long name.** A card gives the name one line, shared with the tags
+and the follow-up pill, so a name longer than `StudentCard.MAX_NAME_CHARACTERS`
+is cut and the whole of it is left on the card as a tooltip. The count is fixed
+rather than taken from the room the row has left over, so the same name breaks
+off in the same place on every card instead of moving as the rest of the card
+changes. A name within the count is cut all the same where the row runs out of
+room, so the name goes on the card through `UiText.showMiddleShortenedToFit`,
+which hands the label the whole name on hover whenever it is drawn narrower
+than its text needs. The tags take that path for the same reason.
+
+The cut is taken from the middle, keeping 13 characters of the start and 9 of
+the end. A cut at the close alone puts `Mohamed Abdul Rahman bin Ismail` and
+`Mohamed Abdul Rahman bin Ahmad` on two cards as the same text, and a reader
+scanning the list has nothing to tell the rows apart by; the end of a name is
+where two such students differ, which is what the 9 characters buy. Wrapping
+the name to a second line was weighed and dropped, because it lets any card
+grow to two lines tall and so costs the list more rows than the collision costs
+a reader, and the pill and the tags still have to fit beside the name. A name
+within one character of the count is left whole, since the ellipsis takes a
+place of its own and the cut would save no room. `UiText` counts both ends with
+`StringUtil.firstCharacters` and `StringUtil.lastCharacters`, so neither cut
+separates a letter from the accent that belongs to it nor an emoji from its
+other half.
+
+Two cuts reach the name and they have to agree on where they take text from.
+The count is the card's own and is applied before the card is laid out, so it
+depends on the name alone. The second is taken once the line knows how much
+room it has, and so depends on what the card carries beside the name.
+`CardName` takes that second cut itself, from the middle and through the same
+`StringUtil` counting, rather than leaving it to the label. A cut at the end
+would read as the same text on two cards: at the window's smallest width both
+`Mohamed Abdul Rahman bin Ismail` and `Mohamed Abdul Rahman bin Ahmad` drew as
+`Mohamed Abd...`. A label told to elide from the middle instead cuts at a
+character index, which falls between the two halves of a character Java stores
+in two, so `Alexander 𠮷田` drew as `Ale…` with the back half of its fourth
+character after it.
+
+`DarkTheme.css` therefore tells `.card-name` to clip, so that a cut `CardName`
+gets a pixel wrong shows a glyph against the edge rather than a broken one.
+That belongs in the stylesheet rather than beside the cut: an author
+stylesheet overrides what code sets on a styleable property, so a
+`setTextOverrun` call on the label would be dropped without a word.
+
+`CardName` asks for the room the whole name needs however little of it is
+drawn. The row shares its width out from what the name asks for, so a name
+that asked only for what it is drawn at would be handed less room on every
+pass, and the name and the tags beside it would chase each other down.
+
 ### Confirming a clear
 
 `ClearCommand.execute` returns a prompt containing the whole-book count,
@@ -1665,6 +1713,31 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add John Doe -p 98765432`<br>
       Expected: No student is added. The status message reports that this student
       already exists in the student book, and no record is mutated.
+
+### Long names on a card
+
+1. Telling apart two names that share a start
+
+   1. Prerequisites: Launch the JAR and widen the window until a card has room
+      for a long name.
+
+   1. Test case: `add Mohamed Abdul Rahman bin Ismail -p 91234567`, then
+      `add Mohamed Abdul Rahman bin Ahmad -p 92345678`.<br>
+      Expected: The two cards read `Mohamed Abdul…in Ismail` and
+      `Mohamed Abdul…bin Ahmad`, so the names are distinguishable without
+      reading the index. Hovering over either name shows the whole of it.
+
+   1. Test case: narrow the window to its smallest width with both students
+      listed.<br>
+      Expected: The two names stay distinguishable. Each keeps its start and
+      its end around the ellipsis as the cards shrink, rather than both ending
+      up as the same text, and hovering still shows the whole name.
+
+1. Leaving a name that nearly fits alone
+
+   1. Test case: `add Jonathan Chuah Wei Ming -p 93456789`.<br>
+      Expected: The card shows the whole name with no ellipsis, because a cut
+      this close to the limit would save no room.
 
 ### Long value-option names
 
