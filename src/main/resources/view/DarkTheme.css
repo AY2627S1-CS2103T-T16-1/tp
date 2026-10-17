@@ -544,6 +544,11 @@
     -fx-text-fill: -tab-text;
     -fx-font-weight: bold;
     -fx-font-size: 15px;
+    /* CardName cuts the name down to the room the row leaves it, from the middle and by
+       whole characters. JavaFX cuts at a character index wherever it elides, which leaves
+       half an emoji behind, so the label is told to clip: a cut a pixel out then shows a
+       glyph against the edge rather than a broken one */
+    -fx-text-overrun: clip;
 }
 
 .card-detail {
@@ -623,8 +628,9 @@
     -fx-background-insets: 0;
 }
 
-/* a value too long for its row is elided rather than widening the card it sits in */
-.card-name, .card-detail, .card-detail-strong {
+/* a value too long for its row is elided rather than widening the card it sits in. The
+   detail line gives way at its end: the start of an ID or an address still says whose it is */
+.card-detail, .card-detail-strong {
     -fx-text-overrun: ellipsis;
 }
 
