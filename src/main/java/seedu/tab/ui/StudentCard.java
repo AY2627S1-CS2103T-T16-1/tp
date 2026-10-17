@@ -68,7 +68,7 @@ public class StudentCard extends UiPart<Region> {
         this.student = student;
         id.setText(String.valueOf(displayedIndex));
         UiText.showMiddleShortenedToFit(name, student.getName().fullName, MAX_NAME_CHARACTERS);
-        phone.setText(student.getPhone().value);
+        UiText.showToFit(phone, student.getPhone().value);
         if (student.getEmail().isPresent()) {
             UiText.showToFit(email, student.getEmail().orElseThrow().toString());
         } else {
