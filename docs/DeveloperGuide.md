@@ -104,6 +104,11 @@ JavaFX 17's `HBox` can leave one pixel undistributed when shrinking children.
 This keeps the email inside the details area at narrow widths, including when
 platform fonts produce different preferred label widths.
 
+`HelpWindow` re-fits its scene after the first rendering pulse, when focus
+styling and native frame dimensions are available. Measuring before that
+pulse can leave content clipped even when the outer window appears wide enough.
+The regression test measures scene dimensions after a pulse as well.
+
 #### Colouring the command line
 
 A `TextField` cannot colour its own content, so `CommandBox` keeps the field
@@ -1508,6 +1513,15 @@ testers are expected to do more *exploratory* testing.
 
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample student records. The window size may not be optimal.
+
+1. Help window sizing
+
+   1. Run `help` and wait for the window to open.<br>
+      Expected: The whole User Guide address and `Copy URL` button are visible.
+      Check Windows, Linux and macOS because frame sizes and focus styling differ.
+
+   1. Close the help window and run `help` again.<br>
+      Expected: Both remain fully visible after reopening.
 
 1. Saving window preferences
 
