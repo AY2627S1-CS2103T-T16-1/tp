@@ -24,9 +24,9 @@ public class TagCommand extends Command {
     public static final String FIELD_INDEX = "INDEX";
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Adds one tag to the student at the displayed index, preserving all other fields.\n"
-            + "Parameters: INDEX (a positive integer) -t TAG (or --tag TAG)\n"
+            + "Parameters: INDEX (a positive integer) -a TAG (or --add TAG)\n"
             + "Use double quotes for a tag containing spaces.\n"
-            + "Example: " + COMMAND_WORD + " 1 -t \"Lab 3\"";
+            + "Example: " + COMMAND_WORD + " 1 -a \"Lab 3\"";
     public static final String MESSAGE_SUCCESS = "Added tag [%1$s]: %2$s";
     public static final String MESSAGE_ALREADY_PRESENT = "This student already has tag [%1$s]. No changes made.";
 

@@ -69,7 +69,7 @@ public class TagCommandIntegrationTest {
         Student expected = new StudentBuilder(student).withTags("T1", "Lab 3", "New group").build();
         assertEquals("Added tag [New group]: Amy Bee; NUS Student ID: A01234567X; Phone: 85355255; "
                 + "Email: amy@gmail.com; Tags: [Lab 3][New group][T1]; Needs follow-up",
-                logic.execute("tag 1 --tag \"  New\u00a0  group  \"").getFeedbackToUser());
+                logic.execute("tag 1 --add \"  New\u00a0  group  \"").getFeedbackToUser());
         assertEquals(List.of(expected), model.getFilteredStudentList());
         assertEquals(List.of(otherStudent, expected), model.getStudentBook().getStudentList());
         Model restartedModel = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
@@ -82,7 +82,7 @@ public class TagCommandIntegrationTest {
     @Test
     public void execute_minimalStudent_preservesAbsentFieldsAndDoesNotSetFollowUp() throws Exception {
         model.updateFilteredStudentList(shown -> shown.getName().equals(otherStudent.getName()));
-        logic.execute("tag 1 -t \"Needs follow-up\"");
+        logic.execute("tag 1 -a \"Needs follow-up\"");
         Student expected = new StudentBuilder(otherStudent).withTags("Needs follow-up").build();
         assertEquals(List.of(expected, student), storage.readStudentBook().orElseThrow().getStudentList());
         assertEquals(List.of(expected), model.getFilteredStudentList());
@@ -91,7 +91,7 @@ public class TagCommandIntegrationTest {
     @Test
     public void execute_duplicateVariants_preservesModelDisplayAndSavedBytes() throws Exception {
         for (String tag : List.of("Lab 3", "lab 3", "LAB 3", "  lAb\t 3\u00a0", "T1")) {
-            assertFailureWithoutMutation("tag 1 -t \"" + tag + "\"", CommandException.class,
+            assertFailureWithoutMutation("tag 1 -a \"" + tag + "\"", CommandException.class,
                     "This student already has tag [" + new Tag(tag).tagName
                             + "]. No changes made.");
         }
@@ -100,20 +100,22 @@ public class TagCommandIntegrationTest {
     @Test
     public void execute_invalidInput_preservesModelDisplayAndSavedBytes() throws Exception {
         Map<String, String> errors = Map.of(
-                "tag 0 -t T2", "Index must be a positive integer.",
-                "tag 2147483648 -t T2", "Index must be a positive integer.",
-                "tag 1 -t \"\"", "Tag \"\" is not valid: it holds no letter or number",
-                "tag 1 -t \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
-                "tag 1 -t T2 --tag T3", "Multiple values specified for the following single-valued field(s): -t");
+                "tag 1 -t T2", "There is no -t option.",
+                "tag 1 --tag T2", "There is no --tag option.",
+                "tag 0 -a T2", "Index must be a positive integer.",
+                "tag 2147483648 -a T2", "Index must be a positive integer.",
+                "tag 1 -a \"\"", "Tag \"\" is not valid: it holds no letter or number",
+                "tag 1 -a \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
+                "tag 1 -a T2 --add T3", "Multiple values specified for the following single-valued field(s): -a");
         for (Map.Entry<String, String> error : errors.entrySet()) {
             assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());
         }
         for (String index : List.of("2", "2147483647")) {
-            assertFailureWithoutMutation("tag " + index + " -t T2", CommandException.class,
+            assertFailureWithoutMutation("tag " + index + " -a T2", CommandException.class,
                     Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
         }
         model.updateFilteredStudentList(shown -> false);
-        assertFailureWithoutMutation("tag 1 -t T2", CommandException.class,
+        assertFailureWithoutMutation("tag 1 -a T2", CommandException.class,
                 Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
     }
 
@@ -128,9 +130,9 @@ public class TagCommandIntegrationTest {
         Files.writeString(storage.getStudentBookFilePath(), json);
         model.setStudentBook(storage.readStudentBook().orElseThrow());
         saveCount = 0;
-        assertFailureWithoutMutation("tag 1 -t \" CAFE\u0301 \"", CommandException.class,
+        assertFailureWithoutMutation("tag 1 -a \" CAFE\u0301 \"", CommandException.class,
                 "This student already has tag [CAFÉ]. No changes made.");
-        logic.execute("tag 1 -t T2");
+        logic.execute("tag 1 -a T2");
         Student expected = new StudentBuilder(legacy).withTags("Lab 3", "lab 3", "Café", "T2").build();
         assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
     }
