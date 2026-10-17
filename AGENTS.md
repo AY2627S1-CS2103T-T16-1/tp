@@ -158,7 +158,13 @@ Follow the
   rebase, because rewriting commit timestamps interferes with course progress
   tracking.
 - Give the merge commit a traceable subject, using this format
-  consistently: `Issue title #IssueNumber (#PrNumber)`.
+  consistently: `Summary #IssueNumber (#PrNumber)`, or `Summary (#PrNumber)`
+  for a PR without an issue. The summary is a short imperative description of
+  the whole change, e.g. `Recall recent commands with Up and Down #225 (#259)`,
+  not the issue title, which is often a long user story or a description of
+  the bug. Put the full issue title in the merge commit body instead.
+- Keep the whole merge subject within the 72-character hard limit. GitHub's
+  merge button does not run our hooks, so count it before merging.
 - After merging, close the issue, pull `upstream/master` into local `master`,
   push it to `origin/master`, then merge `master` into every unmerged branch
   that needs the update. Keep all merged PR branches.
