@@ -10,15 +10,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.logic.commands.Command;
+
 public class CommandWordsTest {
 
+    /** Relative because Gradle runs the tests from the project root. */
     private static final Path PARSER_SOURCE = Paths.get("src", "main", "java", "seedu", "tab",
             "logic", "parser", "StudentBookParser.java");
+
+    /** A case of the parser's dispatch, however its arms are spaced or wrapped. */
+    private static final Pattern DISPATCHED_COMMAND =
+            Pattern.compile("case\\s+(\\w+Command)\\s*\\.\\s*COMMAND_WORD");
 
     @Test
     public void commandWords_areInAlphabeticalOrderWithoutRepeats() {
@@ -29,12 +39,31 @@ public class CommandWordsTest {
     }
 
     @Test
-    public void commandWords_coverEveryWordTheParserDispatchesOn() throws IOException {
+    public void commandWords_coverEveryWordTheParserDispatchesOn() throws ReflectiveOperationException,
+            IOException {
         // a command word left out of the list would work when typed while being suggested to
         // nobody, which no test of either class on its own would notice
+        assertEquals(Set.copyOf(CommandWords.COMMAND_WORDS), wordsTheParserDispatchesOn());
+    }
+
+    /**
+     * Returns the command words the parser's own cases name, read out of its source and
+     * resolved to the values the command classes declare.
+     */
+    private static Set<String> wordsTheParserDispatchesOn() throws ReflectiveOperationException, IOException {
         String source = Files.readString(PARSER_SOURCE, StandardCharsets.UTF_8);
-        long dispatchedWords = Pattern.compile("case \\w+Command\\.COMMAND_WORD").matcher(source).results().count();
-        assertEquals(dispatchedWords, CommandWords.COMMAND_WORDS.size());
+        Matcher matcher = DISPATCHED_COMMAND.matcher(source);
+        Set<String> dispatchedWords = new HashSet<>();
+        while (matcher.find()) {
+            dispatchedWords.add(commandWordDeclaredBy(matcher.group(1)));
+        }
+        return dispatchedWords;
+    }
+
+    /** Returns the COMMAND_WORD that the command class named {@code className} declares. */
+    private static String commandWordDeclaredBy(String className) throws ReflectiveOperationException {
+        Class<?> commandClass = Class.forName(Command.class.getPackageName() + "." + className);
+        return (String) commandClass.getField("COMMAND_WORD").get(null);
     }
 
     @Test
