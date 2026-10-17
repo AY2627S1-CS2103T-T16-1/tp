@@ -124,18 +124,12 @@ public class TagRowTest {
         // tag, so the row says how many there are instead. The width is found rather than
         // picked: a label holds its text whatever room it has, so the only widths that say
         // anything are the ones where what is drawn is the whole of it
-        List<String> readable = new ArrayList<>();
-        for (double width = 20; width <= 110; width += 2) {
-            TagRow row = narrowRowOf(width, List.of("attendance-low", "bravo"));
-            List<String> drawn = drawnChipsOf(row);
-            if (drawn.size() == 1 && drawn.equals(chipsOf(row))) {
-                readable.add(drawn.get(0));
-            }
-        }
+        List<String> readable = rowsDrawingOnlyTheCount(List.of("attendance-low", "bravo")).stream()
+                .map(row -> drawnChipsOf(row).get(0))
+                .distinct()
+                .toList();
 
-        assertFalse(readable.isEmpty(), "no width drew the count in full, so nothing was checked");
-        assertEquals(List.of("2 tags"), readable.stream().distinct().toList(),
-                "the row drew: " + readable.stream().distinct().toList());
+        assertEquals(List.of("2 tags"), readable, "the row drew: " + readable);
     }
 
     @Test
@@ -156,14 +150,37 @@ public class TagRowTest {
 
     @Test
     public void setTags_aRowShowingNoChip_namesTheTagsOnHover() throws Exception {
-        TagRow row = narrowRowOf(60, List.of("attendance-low", "bravo"));
+        TagRow row = rowsDrawingOnlyTheCount(List.of("attendance-low", "bravo")).get(0);
 
-        assertEquals(List.of("2 tags"), drawnChipsOf(row), "held: " + chipsOf(row));
         Label trailing = (Label) row.getChildrenUnmodifiable().stream()
                 .filter(node -> node.getStyleClass().contains("tag-overflow"))
                 .findFirst().orElseThrow();
         // the chips are gone, so the hover is the only way left to read the tags
         assertEquals("attendance-low, bravo", trailing.getTooltip().getText());
+    }
+
+    /**
+     * Every row, across the narrow widths, that has given up its last chip and draws the
+     * whole of the count it put there instead.
+     *
+     * <p>The widths are found rather than picked. A label holds all of its text however
+     * little room it has, so a row drawn at a width named in pixels may be showing an
+     * ellipsis on one platform and the whole count on another, and a check made there
+     * reads the same either way. Only a width whose drawn text is the whole of the held
+     * text says anything, and this fails rather than returning none.
+     */
+    private static List<TagRow> rowsDrawingOnlyTheCount(List<String> names) throws Exception {
+        List<TagRow> rows = new ArrayList<>();
+        for (double width = 20; width <= 110; width += 2) {
+            TagRow row = narrowRowOf(width, names);
+            List<String> drawn = drawnChipsOf(row);
+            if (drawn.size() == 1 && drawn.equals(chipsOf(row))) {
+                rows.add(row);
+            }
+        }
+
+        assertFalse(rows.isEmpty(), "no width drew the count in full, so nothing was checked");
+        return rows;
     }
 
     /**
