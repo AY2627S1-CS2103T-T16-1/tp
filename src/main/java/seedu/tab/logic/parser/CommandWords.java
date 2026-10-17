@@ -46,15 +46,20 @@ public class CommandWords {
     private static final int MAX_SUGGESTIONS = 3;
 
     /**
-     * Returns the command words {@code typedWord} is a likely attempt at: those nearest to
-     * it, in the alphabetical order of {@link #COMMAND_WORDS}. The list is empty when the
-     * word is too far from every command word, and when so many of them are equally near
-     * that naming them all helps nobody. Case is ignored, so {@code LIST} is read as an
-     * attempt at {@code list}.
+     * Returns the command words {@code typedWord} is a likely attempt at, in the alphabetical
+     * order of {@link #COMMAND_WORDS}. The list is empty when the word stands for none of
+     * them, and when so many of them are equally likely that naming them all helps nobody.
+     * Case is ignored, so {@code LIST} is read as an attempt at {@code list}.
      *
-     * <p>Words equally near the typed one are all returned rather than one of them being
-     * chosen. A word two edits from several commands says nothing about which was meant, and
-     * naming one of them would dress a guess up as help; naming them all says what is known.
+     * <p>A word that opens a command word is read as that command word being typed: {@code
+     * del} stands for {@code delete} rather than for {@code help}, which is the nearer of the
+     * two by edits alone. What was typed is right as far as it goes, which says more about
+     * what was meant than how many edits away something else sits. Only a word that opens
+     * nothing is measured for edits.
+     *
+     * <p>Words equally likely are all returned rather than one of them being chosen. A word
+     * that stands for several commands says nothing about which was meant, and naming one of
+     * them would dress a guess up as help; naming them all says what is known.
      *
      * <p>A suggestion is only ever reported back. None of them is acted on, because acting on
      * a guess would remove a student the User never named.
@@ -62,8 +67,20 @@ public class CommandWords {
     public static List<String> suggestFor(String typedWord) {
         requireNonNull(typedWord);
 
-        List<String> nearest = wordsNearestTo(typedWord.toLowerCase(Locale.ROOT));
-        return nearest.size() > MAX_SUGGESTIONS ? List.of() : nearest;
+        String typed = typedWord.toLowerCase(Locale.ROOT);
+        List<String> opened = wordsOpenedBy(typed);
+        List<String> suggestions = opened.isEmpty() ? wordsNearestTo(typed) : opened;
+        return suggestions.size() > MAX_SUGGESTIONS ? List.of() : suggestions;
+    }
+
+    /**
+     * Returns the command words {@code typed} is the opening of, which is every one of them
+     * when {@code typed} is empty.
+     */
+    private static List<String> wordsOpenedBy(String typed) {
+        return COMMAND_WORDS.stream()
+                .filter(commandWord -> commandWord.startsWith(typed))
+                .toList();
     }
 
     /**

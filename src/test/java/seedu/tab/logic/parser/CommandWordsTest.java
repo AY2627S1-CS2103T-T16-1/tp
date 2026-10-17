@@ -74,6 +74,34 @@ public class CommandWordsTest {
     }
 
     @Test
+    public void suggestFor_openingOfOneCommandWord_returnsThatWord() {
+        assertEquals(List.of("delete"), CommandWords.suggestFor("del"));
+        assertEquals(List.of("delete"), CommandWords.suggestFor("dele"));
+        assertEquals(List.of("clear"), CommandWords.suggestFor("cle"));
+        assertEquals(List.of("list"), CommandWords.suggestFor("li"));
+    }
+
+    @Test
+    public void suggestFor_openingOfSeveralCommandWords_returnsEveryOneOfThem() {
+        assertEquals(List.of("edit", "exit"), CommandWords.suggestFor("e"));
+        assertEquals(List.of("edit", "exit"), CommandWords.suggestFor("E"));
+    }
+
+    @Test
+    public void suggestFor_openingWithTheWrongLettersForIt_isMeasuredByEdits() {
+        // "ls" opens no command word, so it has to reach "list" by edits
+        assertEquals(List.of("list"), CommandWords.suggestFor("ls"));
+        assertEquals(List.of("delete"), CommandWords.suggestFor("dlte"));
+    }
+
+    @Test
+    public void suggestFor_everyCommandWordAtOnce_returnsNothing() {
+        // the empty word opens all of them, which names nothing in particular; the parser
+        // never hands one over, but nothing here may depend on that
+        assertEquals(List.of(), CommandWords.suggestFor(""));
+    }
+
+    @Test
     public void suggestFor_missingLetter_returnsTheIntendedWord() {
         assertEquals(List.of("delete"), CommandWords.suggestFor("delte"));
         assertEquals(List.of("find"), CommandWords.suggestFor("fnd"));
@@ -128,7 +156,6 @@ public class CommandWordsTest {
         // the two was meant is the User's to say rather than ours to pick
         assertEquals(List.of("edit", "exit"), CommandWords.suggestFor("eit"));
         assertEquals(List.of("edit", "exit"), CommandWords.suggestFor("ewit"));
-        assertEquals(List.of("add", "edit"), CommandWords.suggestFor("ed"));
     }
 
     @Test
@@ -151,9 +178,9 @@ public class CommandWordsTest {
     }
 
     @Test
-    public void suggestFor_oneCharacter_returnsOnlyAWordTwoEditsAway() {
+    public void suggestFor_oneCharacter_returnsTheWordsItOpens() {
         assertEquals(List.of("add"), CommandWords.suggestFor("a"));
-        assertEquals(List.of(), CommandWords.suggestFor("l"));
+        assertEquals(List.of("list"), CommandWords.suggestFor("l"));
         assertEquals(List.of(), CommandWords.suggestFor("?"));
     }
 
