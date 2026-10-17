@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.FindCommand;
+import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.parser.exceptions.ParseException;
 
 /**
@@ -47,6 +48,11 @@ public class UserGuideExamplesTest {
     @Test
     public void userGuide_everyFindExample_parses() throws IOException {
         assertEveryExampleParses(FindCommand.COMMAND_WORD, new FindCommandParser());
+    }
+
+    @Test
+    public void userGuide_everyTagExample_parses() throws IOException {
+        assertEveryExampleParses(TagCommand.COMMAND_WORD, new TagCommandParser());
     }
 
     @Test

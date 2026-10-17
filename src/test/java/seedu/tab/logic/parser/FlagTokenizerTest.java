@@ -23,6 +23,28 @@ public class FlagTokenizerTest {
     }
 
     @Test
+    public void tokenizeWithIndex_negativeNumber_reportsInvalidIndexAndOption() {
+        for (String value : List.of("-1", "-0", "-1.5", "-2147483649", "-" + "9".repeat(100))) {
+            String expected = ParserUtil.MESSAGE_INVALID_INDEX + "\n"
+                    + String.format(Messages.MESSAGE_UNKNOWN_FLAG, Messages.shorten(value));
+            assertThrows(ParseException.class, expected, () ->
+                    FlagTokenizer.tokenizeWithIndex(value + " -p 123", FLAG_PHONE));
+        }
+    }
+
+    @Test
+    public void tokenizeWithIndex_nonNegativePreamble_usesNormalFlagRules() throws Exception {
+        assertEquals("", FlagTokenizer.tokenizeWithIndex("", FLAG_PHONE).getPreamble());
+        assertEquals("", FlagTokenizer.tokenizeWithIndex("-p 123", FLAG_PHONE).getPreamble());
+        assertEquals("1", FlagTokenizer.tokenizeWithIndex("1 -p 123", FLAG_PHONE).getPreamble());
+        assertEquals("-1", FlagTokenizer.tokenizeWithIndex("\"-1\" -p 123", FLAG_PHONE).getPreamble());
+        assertThrows(ParseException.class, "There is no -x option.", () ->
+                FlagTokenizer.tokenizeWithIndex("-x -p 123", FLAG_PHONE));
+        assertThrows(ParseException.class, String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-p PHONE"), () ->
+                FlagTokenizer.tokenizeWithIndex("1 -p -1", FLAG_PHONE));
+    }
+
+    @Test
     public void tokenize_nameThenFlags_readsBoth() throws Exception {
         FlagArgumentMap parsed = parse("John -p 98765432 -e john@example.com -t T1");
 
