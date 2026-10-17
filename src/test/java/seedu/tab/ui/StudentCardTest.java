@@ -21,6 +21,7 @@ import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import seedu.tab.model.student.NusStudentId;
@@ -163,12 +164,107 @@ public class StudentCardTest {
             }
             assertEquals(student.getPhone().value, phone.getText());
             assertEquals(student.getEmail().orElseThrow().toString(), email.getText());
-            assertTrue(phone.getBoundsInParent().getMaxY() <= email.getBoundsInParent().getMinY());
-            layOutAt(root, root.prefWidth(-1));
+            assertContactsDoNotOverlap(phone, email);
+            layOutAt(root, widthForAllContacts(root));
             assertNull(phone.getTooltip(), "a phone that fits needs no tooltip");
             assertNull(email.getTooltip(), "an email that fits needs no tooltip");
             return null;
         });
+    }
+
+    private static void assertContactsDoNotOverlap(Label first, Label second) {
+        Bounds before = first.getBoundsInParent();
+        Bounds after = second.getBoundsInParent();
+        assertTrue(before.getMaxY() <= after.getMinY() || before.getMaxX() <= after.getMinX(),
+                "contact fields overlap");
+    }
+
+    private static double widthForAllContacts(Region root) {
+        FlowPane contacts = (FlowPane) root.lookup("#contacts");
+        List<Node> fields = contacts.getChildren().stream().filter(Node::isManaged).toList();
+        double fieldsWidth = fields.stream().mapToDouble(field -> field.prefWidth(-1)).sum();
+        return root.getWidth() - contacts.getWidth() + fieldsWidth
+                + contacts.getHgap() * (fields.size() - 1) + ONE_PIXEL;
+    }
+
+    @Test
+    public void constructor_shortContacts_keepsOrdinaryCardsCompact() throws Exception {
+        for (boolean isFlagged : List.of(false, true)) {
+            Student shortContacts = new StudentBuilder().withPhone("91234567").withEmail("e0923841@u.nus.edu")
+                    .withNusStudentId("A01234567X").withFlag(isFlagged).build();
+            onFxThread(() -> {
+                Region compact = new StudentCard(shortContacts, 1).getRoot();
+                assertNotNull(styledScene(compact, DEFAULT_CARD_WIDTH, 160));
+                FlowPane contacts = (FlowPane) compact.lookup("#contacts");
+                double singleRowHeight = contacts.getChildren().stream().filter(Node::isManaged)
+                        .mapToDouble(field -> field.prefHeight(-1)).max().orElseThrow();
+                assertTrue(contacts.getHeight() <= singleRowHeight + ONE_PIXEL,
+                        "fitting details must not add rows to an ordinary card");
+                return null;
+            });
+        }
+    }
+
+    @Test
+    public void constructor_longContacts_exercisesClippingAndRestoresTooltipsAfterResizing() throws Exception {
+        Student student = new StudentBuilder().withPhone(
+                "+65 6516 2727 ext 21 (office, Mon-Fri 9-5), +65 9123 4567 (HP, after 6pm)")
+                .withEmail("a.very.long.student.email.address@u.nus.edu")
+                .withNusStudentId("W".repeat(NusStudentId.MAX_LENGTH)).withFlag(true).build();
+        onFxThread(() -> {
+            Region root = new StudentCard(student, 99).getRoot();
+            assertNotNull(styledScene(root, 298, 160));
+            List<Label> fields = List.of((Label) root.lookup("#nusStudentId"),
+                    (Label) root.lookup("#phone"), (Label) root.lookup("#email"));
+            assertContactsClipped(fields);
+            double narrowHeight = root.prefHeight(298);
+            layOutAt(root, widthForAllContacts(root));
+            for (Label field : fields) {
+                assertNull(field.getTooltip(), "a field that fits needs no tooltip");
+                assertTrue(field.getWidth() >= field.prefWidth(-1) - 0.5);
+            }
+            assertTrue(root.prefHeight(root.getWidth()) < narrowHeight, "widening must remove wrapped rows");
+            layOutAt(root, 298);
+            assertContactsClipped(fields);
+            return null;
+        });
+    }
+
+    @Test
+    public void resize_contactRowAcrossWidths_keepsEveryFieldInsideWithoutOverlap() throws Exception {
+        Student student = new StudentBuilder().withPhone("1234 5678 (HP) 1111-3333 (Office)")
+                .withEmail("e0923841@u.nus.edu").withNusStudentId("W".repeat(NusStudentId.MAX_LENGTH))
+                .withFlag(true).build();
+        onFxThread(() -> {
+            Region root = new StudentCard(student, 99).getRoot();
+            assertNotNull(styledScene(root, 298, 160));
+            List<Label> fields = List.of((Label) root.lookup("#nusStudentId"),
+                    (Label) root.lookup("#phone"), (Label) root.lookup("#email"));
+            for (double width = 298; width <= DEFAULT_CARD_WIDTH; width += ONE_PIXEL) {
+                layOutAt(root, width);
+                Region contacts = (Region) root.lookup("#contacts");
+                Bounds area = contacts.localToScene(contacts.getBoundsInLocal());
+                for (Label field : fields) {
+                    Bounds drawn = field.localToScene(field.getBoundsInLocal());
+                    assertHorizontallyInside(area, drawn, field.getId());
+                    assertTrue(drawn.getMaxY() <= area.getMaxY() + 0.5, "a wrapped field escapes its row");
+                }
+                assertContactsDoNotOverlap(fields.get(0), fields.get(1));
+                assertContactsDoNotOverlap(fields.get(1), fields.get(2));
+            }
+            return null;
+        });
+    }
+
+    private static void assertContactsClipped(List<Label> fields) {
+        for (Label field : fields) {
+            assertTrue(field.getWidth() < field.prefWidth(-1) - 0.5,
+                    "the long " + field.getId() + " must exercise clipping");
+            assertNotNull(field.getTooltip());
+            assertEquals(field.getText(), field.getTooltip().getText());
+            assertTrue(field.lookupAll(".text").stream().filter(Text.class::isInstance).map(Text.class::cast)
+                    .anyMatch(text -> text.getText().endsWith(field.getEllipsisString())));
+        }
     }
 
     @Test
@@ -299,7 +395,7 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_phoneAndEmail_haveSeparateLines() throws Exception {
+    public void constructor_shortPhoneAndEmail_shareTheLine() throws Exception {
         Student student = new StudentBuilder().withPhone("91234567")
                 .withEmail("alice@example.com").build();
         StudentCard card = onFxThread(() -> new StudentCard(student, 1));
@@ -308,7 +404,8 @@ public class StudentCardTest {
 
         onFxThread(() -> {
             assertNotNull(styledScene(card.getRoot(), CARD_WIDTH, 120));
-            assertTrue(phone.getBoundsInParent().getMaxY() <= email.getBoundsInParent().getMinY());
+            assertEquals(phone.getLayoutY(), email.getLayoutY(), 0.5);
+            assertContactsDoNotOverlap(phone, email);
             assertTrue(phone.isVisible());
             assertTrue(email.isVisible());
             return null;

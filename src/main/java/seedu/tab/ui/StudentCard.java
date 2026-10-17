@@ -4,6 +4,7 @@ import java.util.Comparator;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -46,6 +47,8 @@ public class StudentCard extends UiPart<Region> {
     @FXML
     private VBox details;
     @FXML
+    private FlowPane contacts;
+    @FXML
     private Label name;
     @FXML
     private Label id;
@@ -76,6 +79,9 @@ public class StudentCard extends UiPart<Region> {
         }
         show(followUp, student.getFlag().map(flag -> flag.tagName).orElse(null));
         show(nusStudentId, student.getNusStudentId().map(NusStudentId::toString).orElse(null));
+        for (Label contact : new Label[] {nusStudentId, phone, email}) {
+            contact.maxWidthProperty().bind(contacts.widthProperty());
+        }
         clipToItsOwnBox(details);
         tags.setTags(student.getTags().stream()
                 .map(tag -> tag.tagName)
@@ -106,6 +112,6 @@ public class StudentCard extends UiPart<Region> {
             label.setVisible(false);
             return;
         }
-        label.setText(value);
+        UiText.showToFit(label, value);
     }
 }
