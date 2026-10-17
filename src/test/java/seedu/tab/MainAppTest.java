@@ -150,6 +150,31 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_nullGuiSettings_repairsPrefsAndPreservesStudentsAcrossLaunches() throws Exception {
+        Path prefsPath = testFolder.resolve("prefs.json");
+        Files.writeString(prefsPath, "{\"guiSettings\": null}");
+        JsonUserPrefsStorage prefsStorage = new JsonUserPrefsStorage(prefsPath);
+        Path studentsPath = testFolder.resolve("students.json");
+        new JsonStudentBookStorage(studentsPath).saveStudentBook(getTypicalStudentBook());
+        String savedStudents = Files.readString(studentsPath);
+        MainApp firstLaunch = new MainApp(prefsPath, studentsPath);
+
+        firstLaunch.init();
+
+        assertEquals(new GuiSettings(), firstLaunch.model.getGuiSettings());
+        assertEquals(getTypicalStudentBook(), firstLaunch.model.getStudentBook());
+        assertEquals(new UserPrefs(), prefsStorage.readUserPrefs().orElseThrow());
+
+        MainApp secondLaunch = new MainApp(prefsPath, studentsPath);
+        secondLaunch.init();
+
+        assertEquals(new GuiSettings(), secondLaunch.model.getGuiSettings());
+        assertEquals(getTypicalStudentBook(), secondLaunch.model.getStudentBook());
+        assertEquals(new UserPrefs(), prefsStorage.readUserPrefs().orElseThrow());
+        assertEquals(savedStudents, Files.readString(studentsPath));
+    }
+
+    @Test
     public void initPrefs_validFile_initializesWithSavedPrefs() throws Exception {
         Path validPrefsPath = testFolder.resolve("validPrefs.json");
         JsonUserPrefsStorage prefsStorage = new JsonUserPrefsStorage(validPrefsPath);

@@ -292,6 +292,12 @@ The `Storage` component,
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonStudentBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
+`JsonUserPrefsStorage` rejects an explicit `null` for `guiSettings` with a
+`DataLoadingException`; a missing setting retains the `UserPrefs` defaults.
+`MainApp.initPrefs` handles invalid preferences by restoring and saving
+defaults before constructing the model. Student data is stored separately
+and is unchanged by preference recovery.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.tab.commons` package.
@@ -1604,6 +1610,22 @@ testers are expected to do more *exploratory* testing.
 
    1. Relaunch TAB by double-clicking the JAR file.<br>
        Expected: The most recent window size and location are retained.
+
+1. Recovering from null window settings
+
+   1. Prerequisites: Add a recognizable student, close TAB, and keep a backup
+      of `data/tab.json`.
+
+   1. Replace the contents of `preferences.json` with `{"guiSettings": null}`
+      and run `java -jar tab.jar`.<br>
+      Expected: The main window opens with default window settings and shows
+      the saved student. The terminal reports that the preference file could
+      not be loaded and defaults are being used. The preferences file now
+      contains a non-null `guiSettings` object.
+
+   1. Close TAB and launch it again.<br>
+      Expected: The window opens normally again. The saved student is still
+      present, and `data/tab.json` matches the backup.
 
 1. Narrow student cards
 
