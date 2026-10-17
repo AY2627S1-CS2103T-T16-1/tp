@@ -2,6 +2,8 @@ package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class CommandHistoryTest {
@@ -37,8 +39,45 @@ public class CommandHistoryTest {
         assertEquals("LIST", history.previous("list"));
         assertEquals("list", history.previous("LIST"));
         assertEquals("oldest", history.previous("oldest"));
-        history.add("  ");
-        assertEquals("  ", history.previous("new draft"));
-        assertEquals("new draft", history.next("  "));
+        history.add("find 陈");
+        assertEquals("find 陈", history.previous("new draft"));
+        assertEquals("new draft", history.next("find 陈"));
+    }
+
+    @Test
+    public void previous_textMatchesNewest_skipsItAndRestoresDraft() {
+        CommandHistory history = new CommandHistory();
+        history.add("list");
+        history.add("addd");
+        assertEquals("list", history.previous("addd"));
+        assertEquals("list", history.previous("list"));
+        assertEquals("addd", history.next("list"));
+        assertEquals("addd", history.next("addd"));
+    }
+
+    @Test
+    public void previous_onlyEntryMatchesText_keepsItAvailable() {
+        CommandHistory history = new CommandHistory();
+        history.add("addd");
+        assertEquals("addd", history.previous("addd"));
+        assertEquals("corrected", history.previous("corrected"));
+        assertEquals("addd", history.next("corrected"));
+    }
+
+    @Test
+    public void add_blankInput_skipsEntryAndResetsNavigation() {
+        for (String blank : List.of("", "  ", "\t", "\u00a0", "\u2003")) {
+            CommandHistory history = new CommandHistory();
+            history.add(blank);
+            assertEquals("draft", history.previous("draft"));
+            history.add("list");
+            history.add("clear");
+            assertEquals("clear", history.previous(""));
+            history.add(blank);
+            assertEquals("clear", history.previous("new draft"));
+            assertEquals("list", history.previous("clear"));
+            assertEquals("clear", history.next("list"));
+            assertEquals("new draft", history.next("clear"));
+        }
     }
 }

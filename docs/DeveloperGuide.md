@@ -189,8 +189,9 @@ trade-off is deliberate and worth revisiting if the palette changes.
 `CommandBox` records each submitted line in `CommandHistory` before execution,
 so rejected input can be recalled too. The helper stores submissions separately
 from the draft captured when Up first leaves the newest position. Down past
-the newest submission restores that draft. Only consecutive identical
-submissions are skipped; editing a recalled entry does not alter stored text.
+the newest submission restores that draft. Up skips the newest submission when
+it already matches the text in the box and an earlier entry exists. Blank
+submissions and consecutive identical submissions are skipped; editing a recalled entry does not alter stored text.
 
 The command box consumes unmodified Up/Down key presses before the text field
 handles them. Recalled text uses the existing text listener for colouring, and
@@ -2092,9 +2093,16 @@ testers are expected to do more *exploratory* testing.
       `list`. Each recalled line has matching colours and its caret at the end.
    1. Press Down twice.<br>
       Expected: The find command reappears, then the unsent `add draft` returns.
-   1. Submit `addd` twice, then type `another draft` and press Up twice.<br>
-      Expected: The rejected `addd` is recalled once, followed by the find
-      command. Correcting or recalling input does not execute it before Enter.
+   1. Submit `addd` twice and press Up without changing the rejected text.<br>
+      Expected: The find command appears immediately. Down restores `addd`;
+      another Down keeps it. Correcting or recalling input does not execute it.
+   1. Type `another draft` and press Up twice.<br>
+      Expected: The rejected `addd` is recalled once, followed by the find command.
+   1. Run `clear` with at least one student present, then press Enter on the
+      empty reply. Press Up.<br>
+      Expected: Clear is cancelled without changing any students. Up recalls
+      `clear` immediately, without a blank entry. Repeat with spaces as the reply;
+      the result is the same.
    1. Close and reopen TAB, type `draft`, and press Up.<br>
       Expected: `draft` stays unchanged; history does not survive a restart.
 

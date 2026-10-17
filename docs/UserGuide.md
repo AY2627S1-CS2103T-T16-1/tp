@@ -125,7 +125,10 @@ were typing before pressing `Up`. The caret moves to the end of recalled text,
 and its colours follow the command shown. Press Enter to submit it again.
 
 Rejected commands are included so you can correct a typo. Consecutive identical
-submissions appear once. At the oldest entry, `Up` keeps the text unchanged;
+submissions appear once; blank and whitespace-only replies are omitted. If the
+box already shows the newest submission (for example after a rejection), the
+first `Up` skips to the preceding entry when there is one. `Down` still returns
+the rejected text. At the oldest entry, `Up` keeps the text unchanged;
 with no history, both keys keep the text unchanged. Editing a recalled entry
 does not change the saved command, and navigating away discards that edit.
 History lasts only until TAB closes and is not saved in the data file.
