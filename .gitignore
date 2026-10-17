@@ -24,11 +24,8 @@ src/test/data/sandbox/
 docs/_site/
 
 # AI Agents
-# AGENTS.md, CLAUDE.md and the shared skills and agents under .claude/ are
-# tracked by team decision; per-member tool state is not.
-/.claude/*
-!/.claude/skills/
-!/.claude/agents/
+# AGENTS.md and CLAUDE.md are tracked; local tool files are not.
+/.claude/
 /.codex/
 __pycache__/
 
