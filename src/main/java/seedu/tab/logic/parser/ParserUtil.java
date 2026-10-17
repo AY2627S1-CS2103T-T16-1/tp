@@ -36,6 +36,18 @@ public class ParserUtil {
     }
 
     /**
+     * Parses a required index, reporting an empty preamble as the missing {@code fieldName}.
+     *
+     * @throws ParseException if the index is missing or invalid.
+     */
+    public static Index parseRequiredIndex(String oneBasedIndex, String fieldName) throws ParseException {
+        if (oneBasedIndex.isEmpty()) {
+            throw new ParseException(Messages.getErrorMessageForMissingFields(fieldName));
+        }
+        return parseIndex(oneBasedIndex);
+    }
+
+    /**
      * Parses a {@code String name} into a {@code Name}.
      * Leading and trailing whitespaces will be trimmed.
      *

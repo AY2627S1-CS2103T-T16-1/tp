@@ -367,6 +367,9 @@ same option, so mixing them is also detected as a duplicate.
 `FlagTokenizer` and `ParserUtil`. Unlike `add` and `edit`, it rejects repeated
 tag options, including mixed aliases. Missing fields and invalid field values
 are collected before a command is created.
+`TagCommandParser` and `EditCommandParser` share `ParserUtil.parseRequiredIndex`
+to distinguish a missing index from an invalid one; each collects its errors
+with `ParseProblems` and applies its own tag rules.
 
 `TagCommand` resolves the index against the displayed list. It compares the
 normalized tag names ignoring case before copying the existing tag set and

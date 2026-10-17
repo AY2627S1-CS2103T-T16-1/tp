@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import seedu.tab.commons.core.index.Index;
-import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.tab.logic.parser.exceptions.ParseException;
@@ -49,7 +48,8 @@ public class EditCommandParser implements Parser<EditCommand> {
 
         ParseProblems problems = new ParseProblems();
 
-        Index index = parseIndex(problems, arguments.getPreamble());
+        Index index = problems.collect(() -> ParserUtil.parseRequiredIndex(
+                arguments.getPreamble(), EditCommand.FIELD_INDEX));
         if (!hasAnyField(arguments)) {
             problems.add(EditCommand.MESSAGE_NOT_EDITED);
         }
@@ -69,18 +69,6 @@ public class EditCommandParser implements Parser<EditCommand> {
         return Stream.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG,
                 FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP)
                 .anyMatch(flag -> !arguments.getAllValues(flag).isEmpty());
-    }
-
-    /**
-     * Parses the index given before the first option, recording why if it is rejected. An index
-     * that was left out is reported as a missing field rather than as a malformed one.
-     */
-    private static Index parseIndex(ParseProblems problems, String index) {
-        if (index.isEmpty()) {
-            problems.add(Messages.getErrorMessageForMissingFields(EditCommand.FIELD_INDEX));
-            return null;
-        }
-        return problems.collect(() -> ParserUtil.parseIndex(index));
     }
 
     /**
