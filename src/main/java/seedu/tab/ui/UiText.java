@@ -36,6 +36,12 @@ final class UiText {
         nameWhatIsCutAsItIsDrawn(label, value);
     }
 
+    /** Shows {@code value} in full, with a tooltip whenever the available width cuts it. */
+    static void showToFit(Label label, String value) {
+        label.setText(value);
+        nameWhatIsCutAsItIsDrawn(label, value);
+    }
+
     private static void nameWhatIsCutAsItIsDrawn(Label label, String value) {
         label.widthProperty().addListener((unused, old, width) -> nameWhatIsCut(label, value));
         // the width is known before the text that goes in it: a label that cuts its own text

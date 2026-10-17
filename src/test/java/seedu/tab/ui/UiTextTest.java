@@ -6,38 +6,25 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 
 public class UiTextTest {
 
-    private static final int TIMEOUT_SECONDS = 10;
     private static final int LIMIT = 18;
 
     @BeforeAll
     public static void startToolkit() throws Exception {
-        CountDownLatch started = new CountDownLatch(1);
-        try {
-            Platform.startup(started::countDown);
-        } catch (IllegalStateException alreadyRunning) {
-            started.countDown();
-        }
-        assertTrue(started.await(TIMEOUT_SECONDS, TimeUnit.SECONDS), "the toolkit did not start");
+        FxToolkit.start();
     }
 
     private static <T> T onFxThread(Callable<T> work) throws Exception {
-        FutureTask<T> task = new FutureTask<>(work);
-        Platform.runLater(task);
-        return task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        return FxToolkit.onFxThread(work);
     }
 
     /** Returns a label holding {@code value} cut from the middle to {@code LIMIT}. */
