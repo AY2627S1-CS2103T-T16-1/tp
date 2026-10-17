@@ -181,10 +181,7 @@ public class StudentCardTest {
 
     private static double widthForAllContacts(Region root) {
         FlowPane contacts = (FlowPane) root.lookup("#contacts");
-        List<Node> fields = contacts.getChildren().stream().filter(Node::isManaged).toList();
-        double fieldsWidth = fields.stream().mapToDouble(field -> field.prefWidth(-1)).sum();
-        return root.getWidth() - contacts.getWidth() + fieldsWidth
-                + contacts.getHgap() * (fields.size() - 1) + ONE_PIXEL;
+        return root.getWidth() - contacts.getWidth() + contacts.prefWidth(-1) + ONE_PIXEL;
     }
 
     @Test

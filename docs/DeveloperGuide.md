@@ -120,7 +120,10 @@ name. Its tooltip still lists every hidden tag.
 
 #### Keeping contact details readable
 
-`StudentListCard.fxml` puts NUS Student ID, phone and email in a `FlowPane`.
+`StudentListCard.fxml` puts NUS Student ID, phone and email in `ContactRow`,
+a `FlowPane` that reports the natural width of one unwrapped row. This lets
+the containing boxes measure height at the allocated width on both JavaFX
+17 and 25, rather than reserving rows based on a fixed preferred wrap length.
 Labels keep their preferred widths and share a line when they fit; a label
 that does not fit the remaining space moves to the next line. Each label's
 maximum width follows the pane's width, so a value longer than an entire
