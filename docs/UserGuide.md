@@ -117,6 +117,22 @@ you meant to quote is not coloured as a quoted value, the parser will not read
 it as one either.
 </box>
 
+### Reusing recent commands
+
+In the command box, press `Up` to recall the previous submitted command and
+`Down` to move forward. Moving past the newest command restores the draft you
+were typing before pressing `Up`. The caret moves to the end of recalled text,
+and its colours follow the command shown. Press Enter to submit it again.
+
+Rejected commands are included so you can correct a typo. Consecutive identical
+submissions appear once; blank and whitespace-only replies are omitted. If the
+box already shows the newest submission (for example after a rejection), the
+first `Up` skips to the preceding entry when there is one. `Down` still returns
+the rejected text. At the oldest entry, `Up` keeps the text unchanged;
+with no history, both keys keep the text unchanged. Editing a recalled entry
+does not change the saved command, and navigating away discards that edit.
+History lasts only until TAB closes and is not saved in the data file.
+
 ### Mistyping a command word
 
 If the first word of a command is not one TAB knows, the reply names the word
@@ -523,3 +539,4 @@ Action     | Format, Examples
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
 **List**   | `list`
 **Help**   | `help`
+**Recall** | `Up` / `Down` in the command box; session only
