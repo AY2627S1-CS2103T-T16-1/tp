@@ -113,6 +113,15 @@ public class MessagesTest {
     }
 
     @Test
+    public void shorten_longValueWithCombiningAccentAtBoundary_keepsTheAccentOnItsLetter() {
+        // a letter and the accent that follows it are two code points and one character
+        String prefix = "a".repeat(Messages.MAX_QUOTED_VALUE_LENGTH - 1);
+        String value = prefix + "e\u0301" + "more";
+
+        assertEquals(prefix + "e\u0301…", Messages.shorten(value));
+    }
+
+    @Test
     public void getErrorMessageForMissingFields_noFields_throwsAssertionError() {
         // naming no fields at all would leave the user with "Missing required field(s): "
         assertThrows(AssertionError.class, () -> Messages.getErrorMessageForMissingFields());

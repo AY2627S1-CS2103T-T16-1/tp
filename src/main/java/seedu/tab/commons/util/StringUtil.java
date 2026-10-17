@@ -5,6 +5,7 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.text.BreakIterator;
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -30,6 +31,39 @@ public class StringUtil {
      */
     public static boolean isWhitespace(char character) {
         return WHITESPACE.matcher(String.valueOf(character)).matches();
+    }
+
+    /**
+     * Returns the first {@code limit} characters of {@code value}, counted as a reader counts them
+     * rather than as Java stores them, or {@code value} itself when it holds no more than
+     * {@code limit} of them.
+     *
+     * <p>Cutting the string at an index cuts it between the two halves of an emoji, or between a
+     * letter and the accent that belongs to it, and what is left is drawn as a broken glyph. A
+     * name, a tag and a value quoted back as invalid may each hold either. Counting the same way
+     * also keeps a value that is long in the way Java stores it, and short in the way it reads,
+     * from being reported as cut when nothing was taken off it.
+     *
+     * @param value The value to cut.
+     * @param limit The greatest number of characters to keep.
+     * @return The opening characters of {@code value}, or {@code value} itself when it is already
+     *         within {@code limit}.
+     */
+    public static String firstCharacters(String value, int limit) {
+        requireNonNull(value);
+        checkArgument(limit >= 0, "negative limit");
+
+        BreakIterator characters = BreakIterator.getCharacterInstance();
+        characters.setText(value);
+        int end = characters.first();
+        for (int counted = 0; counted < limit; counted++) {
+            int next = characters.next();
+            if (next == BreakIterator.DONE) {
+                return value;
+            }
+            end = next;
+        }
+        return value.substring(0, end);
     }
 
     /**

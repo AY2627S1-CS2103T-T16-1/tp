@@ -18,9 +18,13 @@ import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
+import javafx.scene.control.skin.TextFieldSkin;
+import javafx.scene.control.skin.TextInputControlSkin.Direction;
+import javafx.scene.control.skin.TextInputControlSkin.TextUnit;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -33,6 +37,26 @@ import seedu.tab.logic.parser.exceptions.ParseException;
 public class CommandBoxTest {
 
     private static final int TIMEOUT_SECONDS = 10;
+    /** A command that runs past the right-hand edge of a line of either width below. */
+    private static final String LONG_COMMAND =
+            "find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides thousand";
+    private static final double NARROW_LINE = 490;
+    private static final double WIDE_LINE = 1000;
+    private static final double LINE_HEIGHT = 60;
+    /** A line too short for the prompt's own text, so a command reading as it scrolls. */
+    private static final double TIGHT_LINE = 190;
+    /** How much narrower a window dragged in by its edge is left, as 1000 px becomes 850. */
+    private static final double DRAGGED_IN_BY = 150;
+    private static final int A_CUT = 8;
+    private static final int TWO_WORDS = 12;
+    private static final int A_FEW_CHARACTERS = 4;
+    /** Every state the field re-scrolls its own text in, by what leaves it there. */
+    private static final List<String> RESCROLLING_EDITS = List.of(
+            "backspace", "backspace thrice", "ctrl-backspace", "select and type",
+            "cut the end", "delete", "narrow the line");
+    /** Where a click is aimed along the line, and how far apart those aims are. */
+    private static final double FIRST_AIM = 20;
+    private static final double BETWEEN_AIMS = 37;
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -627,6 +651,231 @@ public class CommandBoxTest {
                 .map(node -> (Text) node)
                 .findFirst()
                 .orElse(null);
+    }
+
+    /** What has to hold of the command line once the field has re-scrolled its own text. */
+    private interface LineCheck {
+        /** Returns what is wrong with the line as it stands, or nothing if it is right. */
+        String complaintAbout(Region root, TextField field, TextFieldSkin skin);
+    }
+
+    /**
+     * Returns what {@code check} finds wrong in each state the field re-scrolls its text in,
+     * at each of the two widths the line is checked at.
+     */
+    private static List<String> complaintsIn(LineCheck check) throws Exception {
+        return onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            assertNotNull(styledScene(root, WIDE_LINE, LINE_HEIGHT));
+            TextField field = (TextField) root.lookup("#commandTextField");
+            TextFieldSkin skin = (TextFieldSkin) field.getSkin();
+            assertNotNull(skin, "an edit can only be driven through a skin the field has");
+
+            List<String> complaints = new ArrayList<>();
+            for (double width : List.of(NARROW_LINE, WIDE_LINE)) {
+                for (String edit : RESCROLLING_EDITS) {
+                    putTheLineIn(edit, width, root, field, skin);
+                    String wrong = check.complaintAbout(root, field, skin);
+                    if (!wrong.isEmpty()) {
+                        complaints.add(edit + " at " + width + ": " + wrong);
+                    }
+                }
+            }
+            return complaints;
+        });
+    }
+
+    /**
+     * Leaves a command longer than the line in the state {@code edit} names, laid out.
+     *
+     * <p>The field's skin re-scrolls its text after the edit it was given, so the line only
+     * reaches the state the User would see it in once that layout has run.
+     */
+    private static void putTheLineIn(String edit, double width, Region root,
+            TextField field, TextFieldSkin skin) {
+        root.resize(width, LINE_HEIGHT);
+        root.layout();
+        field.setText(LONG_COMMAND);
+        field.positionCaret(field.getLength());
+        root.layout();
+        if (edit.equals("narrow the line")) {
+            root.resize(width - DRAGGED_IN_BY, LINE_HEIGHT);
+        } else {
+            editThroughTheSkin(edit, field, skin);
+        }
+        root.layout();
+    }
+
+    /**
+     * Does to {@code field} what the key {@code edit} names would, through its skin.
+     *
+     * <p>A {@code TextField} method goes round the skin, which is what re-scrolls the text
+     * after a delete or a replace, so an edit driven that way leaves the line in a state the
+     * product never reaches.
+     */
+    private static void editThroughTheSkin(String edit, TextField field, TextFieldSkin skin) {
+        if (edit.equals("backspace")) {
+            skin.deleteChar(true);
+        } else if (edit.equals("backspace thrice")) {
+            skin.deleteChar(true);
+            skin.deleteChar(true);
+            skin.deleteChar(true);
+        } else if (edit.equals("ctrl-backspace")) {
+            field.selectPreviousWord();
+            skin.replaceText(field.getSelection().getStart(), field.getSelection().getEnd(), "");
+        } else if (edit.equals("select and type")) {
+            skin.replaceText(field.getLength() - TWO_WORDS, field.getLength(), "x");
+        } else if (edit.equals("cut the end")) {
+            skin.replaceText(field.getLength() - A_CUT, field.getLength(), "");
+        } else if (edit.equals("delete")) {
+            field.positionCaret(field.getLength() / 2);
+            skin.deleteChar(false);
+        } else {
+            throw new IllegalArgumentException(edit);
+        }
+    }
+
+    @Test
+    public void editsThroughTheSkin_atEitherWidth_leaveTheCopyOnTheFieldsOwnText() throws Exception {
+        // the skin re-scrolls the field's text after a delete, a replace or a change of
+        // width, after the caret and the text the colouring was told about have settled.
+        // Nothing else says it has, so a copy that is not following the field's own text
+        // node is left drawing the command over characters the field no longer has there
+        List<String> adrift = complaintsIn((root, field, skin) -> {
+            Text drawn = fieldTextOf(field);
+            assertNotNull(drawn, "the field should be drawing its own text");
+            TextFlow copy = (TextFlow) root.lookup("#highlighted");
+            double apart = Math.abs(copy.getLayoutX()
+                    - (drawn.getLayoutX() + drawn.getTranslateX()));
+            return apart > 0.5 ? "the copy is " + apart + " from the field's own text" : "";
+        });
+
+        assertTrue(adrift.isEmpty(), "the copy left the field's own text: " + adrift);
+    }
+
+    @Test
+    public void click_afterAnEditOrAResize_landsOnTheCharacterUnderThePointer() throws Exception {
+        // the field decides which character a click lands on, from where it draws its own
+        // text, while the User aims at the copy. The two have to read a point alike
+        List<String> misread = complaintsIn((root, field, skin) -> {
+            TextFlow copy = (TextFlow) root.lookup("#highlighted");
+            StringBuilder wrong = new StringBuilder();
+            for (double aim = FIRST_AIM; aim < field.getWidth() - FIRST_AIM; aim += BETWEEN_AIMS) {
+                int byTheField = skin.getIndex(aim, field.getHeight() / 2).getInsertionIndex();
+                double onTheCopy = copy.sceneToLocal(field.localToScene(aim, 0)).getX();
+                int byTheCopy = copy.hitTest(new Point2D(onTheCopy, copy.getHeight() / 2))
+                        .getInsertionIndex();
+                if (byTheField != byTheCopy) {
+                    wrong.append(" at ").append(aim).append(" the field reads ").append(byTheField)
+                            .append(" where the copy shows ").append(byTheCopy);
+                }
+            }
+            return wrong.toString();
+        });
+
+        assertTrue(misread.isEmpty(), "a click lands on a character it was not aimed at:" + misread);
+    }
+
+    @Test
+    public void caretPastTheEnd_isDrawnInsideTheLineWithTheCopyOnTheFieldsText() throws Exception {
+        double[] measured = onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            assertNotNull(styledScene(root, NARROW_LINE, LINE_HEIGHT));
+            TextField field = (TextField) root.lookup("#commandTextField");
+            TextFlow copy = (TextFlow) root.lookup("#highlighted");
+            Region mark = (Region) root.lookup("#caret");
+            Region lane = (Region) root.lookup("#lane");
+
+            field.setText(LONG_COMMAND);
+            field.positionCaret(field.getLength());
+            root.layout();
+
+            Text drawn = fieldTextOf(field);
+            assertNotNull(drawn, "the field should be drawing its own text");
+            return new double[] {copy.getLayoutX(), drawn.getLayoutX() + drawn.getTranslateX(),
+                mark.getLayoutX() + mark.getWidth(), lane.getWidth(), mark.getWidth()};
+        });
+
+        // both at once: the copy where the field's own text sits, so that a click lands
+        // where it was aimed, and the caret inside the line, where the lane is not clipped
+        // away and there is something of it left to see
+        assertEquals(measured[1], measured[0], 0.5,
+                "the copy is drawn from " + measured[0] + " against the field's " + measured[1]);
+        assertTrue(measured[4] > 0, "the caret should have a width to be seen by");
+        assertTrue(measured[2] <= measured[3] + 0.01,
+                "the caret ends at " + measured[2] + ", past the line's " + measured[3]);
+    }
+
+    @Test
+    public void caretMovedLeft_inACommandLongerThanTheLine_leavesTheLineWhereItIs() throws Exception {
+        double[] drawnFrom = onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            assertNotNull(styledScene(root, NARROW_LINE, LINE_HEIGHT));
+            TextField field = (TextField) root.lookup("#commandTextField");
+            TextFlow copy = (TextFlow) root.lookup("#highlighted");
+            TextFieldSkin skin = (TextFieldSkin) field.getSkin();
+
+            field.setText(LONG_COMMAND);
+            field.positionCaret(field.getLength());
+            root.layout();
+            Text drawn = fieldTextOf(field);
+            assertNotNull(drawn, "the field should be drawing its own text");
+            double atTheEnd = copy.getLayoutX();
+            double fieldAtTheEnd = drawn.getLayoutX() + drawn.getTranslateX();
+
+            for (int step = 0; step < A_FEW_CHARACTERS; step++) {
+                skin.moveCaret(TextUnit.CHARACTER, Direction.LEFT, false);
+            }
+            root.layout();
+            return new double[] {atTheEnd, copy.getLayoutX(), fieldAtTheEnd,
+                drawn.getLayoutX() + drawn.getTranslateX()};
+        });
+
+        // the field scrolls only when the caret would leave the line, so a copy that scrolls
+        // on every move shows a different part of the command from the one the field
+        // hit-tests a click against, and a click then lands on the wrong character. What it
+        // is held to is the field's own text node rather than a guess at where the field
+        // ought to have scrolled to, which says nothing on a runner that gives it no focus
+        assertEquals(drawnFrom[2], drawnFrom[0], 0.5, "the copy should start on the field's own text");
+        assertEquals(drawnFrom[3], drawnFrom[1], 0.5, "the copy should stay on the field's own text");
+        assertEquals(drawnFrom[0], drawnFrom[1], 0.5,
+                "moving the caret back within the line moved it from " + drawnFrom[0]
+                + " to " + drawnFrom[1]);
+    }
+
+    @Test
+    public void typing_theLinesOwnPromptText_leavesTheCopyOnTheFieldsOwnText() throws Exception {
+        double[] measured = onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            assertNotNull(styledScene(root, TIGHT_LINE, LINE_HEIGHT));
+            TextField field = (TextField) root.lookup("#commandTextField");
+            TextFlow copy = (TextFlow) root.lookup("#highlighted");
+
+            // the field's own text node is named while nothing else can be taken for it,
+            // so that the prompt's node cannot stand in for it once the two read alike
+            field.setText("list");
+            root.layout();
+            Text drawn = fieldTextOf(field);
+            assertNotNull(drawn, "the field should be drawing its own text");
+
+            field.setText(field.getPromptText());
+            field.positionCaret(field.getLength());
+            root.layout();
+            return new double[] {copy.getLayoutX(), drawn.getLayoutX() + drawn.getTranslateX()};
+        });
+
+        // an empty line shows the prompt, and the field keeps the node it drew that in and
+        // hides it rather than throwing it away. A command that reads as the prompt matches
+        // that node too, and the field leaves it where it is however far the command runs
+        // past the edge, so a copy drawn on it shows one character where the field
+        // hit-tests another
+        assertEquals(measured[1], measured[0], 0.5,
+                "the copy is drawn from " + measured[0] + " where the field's text is at "
+                + measured[1]);
     }
 
     @Test
