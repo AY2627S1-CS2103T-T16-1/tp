@@ -358,14 +358,17 @@ public class EditCommandTest {
         expectedModel.setStudent(original, edited);
 
         assertCommandSuccess(command, model,
-                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited))
+                        + "\n\nWARNING: Possible duplicate student: " + firstStudent.getName() + " has the same name ("
+                        + edited.getName() + "). Delete one if they are the same person.", expectedModel);
     }
 
     @Test
     public void execute_sameNameWithoutNusStudentIds_editOneSuccess() {
         Student first = new StudentBuilder().withName("Tan Wei Ming").withPhone("91234567")
                 .withoutNusStudentId().build();
-        Student second = new StudentBuilder(first).withPhone("92345678").build();
+        Student second = new StudentBuilder(first).withPhone("92345678")
+                .withEmail("second@example.com").build();
         StudentBook sameNameStudentBook = new StudentBook();
         sameNameStudentBook.addStudent(first);
         sameNameStudentBook.addStudent(second);
@@ -377,7 +380,9 @@ public class EditCommandTest {
         expectedModel.setStudent(second, edited);
 
         assertCommandSuccess(command, model,
-                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited))
+                        + "\n\nWARNING: Possible duplicate student: Tan Wei Ming has the same name (Tan Wei Ming). "
+                        + "Delete one if they are the same person.", expectedModel);
     }
 
     @Test
