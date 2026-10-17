@@ -36,6 +36,9 @@ public class ThemeTest {
     private static final Path HELP_WINDOW = Paths.get(
             "src", "main", "resources", "view", "HelpWindow.css");
 
+    /** The stylesheets the window is dressed with, whichever others it may name besides. */
+    private static final List<String> INTENDED_STYLESHEETS = List.of("DarkTheme.css", "Extensions.css");
+
     /**
      * A colour written in place of a palette name, which the palette exists to prevent. Any
      * property can carry one, not only the ones named "color": a rule setting
@@ -64,7 +67,11 @@ public class ThemeTest {
         Matcher matcher = Pattern.compile("<URL value=\"@([^\"]+)\" */>").matcher(fxml);
 
         List<String> named = matcher.results().map(result -> result.group(1)).toList();
-        assertEquals(2, named.size(), "expected the dark theme and the extensions");
+        // the loop below checks nothing at all when the window names no stylesheet, which is
+        // one of the ways it comes up unstyled, so the ones it is meant to name are asked for
+        // by name rather than counted
+        assertTrue(named.containsAll(INTENDED_STYLESHEETS),
+                "expected the window to name " + INTENDED_STYLESHEETS + ", but it names " + named);
 
         for (String stylesheet : named) {
             URL resolved = ThemeTest.class.getResource("/view/" + stylesheet);
