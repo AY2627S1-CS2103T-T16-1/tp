@@ -9,14 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
@@ -36,7 +32,6 @@ import seedu.tab.logic.parser.exceptions.ParseException;
 
 public class CommandBoxTest {
 
-    private static final int TIMEOUT_SECONDS = 10;
     /** A command that runs past the right-hand edge of a line of either width below. */
     private static final String LONG_COMMAND =
             "find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides thousand";
@@ -60,19 +55,11 @@ public class CommandBoxTest {
 
     @BeforeAll
     public static void startToolkit() throws Exception {
-        CountDownLatch started = new CountDownLatch(1);
-        try {
-            Platform.startup(started::countDown);
-        } catch (IllegalStateException alreadyRunning) {
-            started.countDown();
-        }
-        assertTrue(started.await(TIMEOUT_SECONDS, TimeUnit.SECONDS), "the toolkit did not start");
+        FxToolkit.start();
     }
 
     private static <T> T onFxThread(Callable<T> work) throws Exception {
-        FutureTask<T> task = new FutureTask<>(work);
-        Platform.runLater(task);
-        return task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        return FxToolkit.onFxThread(work);
     }
 
     /**
