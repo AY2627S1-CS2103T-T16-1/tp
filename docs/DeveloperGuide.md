@@ -339,26 +339,33 @@ and the JSON file.
 ### Suggesting a command word
 
 A command word TAB does not dispatch on is answered with the word the User
-typed and, when one command word reads as a likely attempt at it, with that
-command word as well. `CommandWords` holds every word the parser dispatches
-on and returns the nearest of them, measured by `StringUtil.editDistance`:
-how many insertions, deletions, substitutions and swaps of neighbouring
-characters turn one word into the other. A swap counts as one edit because a
-fast typist makes them as readily as the other three, and `lsit` would
-otherwise sit two edits from `list`, as far away as a wilder guess.
+typed and the command words it is a likely attempt at. `CommandWords` holds
+every word the parser dispatches on and returns those nearest the typed one,
+measured by `StringUtil.editDistance`: how many insertions, deletions,
+substitutions and swaps of neighbouring characters turn one word into the
+other. A swap counts as one edit because a fast typist makes them as readily
+as the other three, and `lsit` would otherwise sit two edits from `list`, as
+far away as a wilder guess.
 
-How near is near enough depends on the length of the command word. A word of
-four letters or fewer is suggested for a single edit only, while `clear` and
-`delete` are suggested for two. Two edits change half of a four-letter word,
-which is no longer evidence of a slip: `fit` is as much an attempt at `find`
-as at `list`, and naming either would be a guess dressed up as help. The
-longer words keep the two edits the user story asks for, which covers `dlte`
-as well as `delte`.
+Two edits is the budget for every command word, whatever its length. That is
+what the user story asks for, and it is what reaches the words a teaching
+assistant types: `ls` is two insertions short of `list`, and `dlte` two
+deletions from `delete`. A budget that shrank with the length of the command
+word would turn both away in order to avoid the ambiguity a short word
+brings, and that trades away cases users meet for one they can simply be told
+about.
 
-The nearest word wins, and the alphabetically first of several equally near
-ones. `eit` is a letter short of both `edit` and `exit`, and a message naming
-whichever of them the parser happened to reach first would vary for no reason
-the User could see.
+The ambiguity is answered by naming it rather than by hiding it. Every command
+word equally near the typed one is named: `eit` is a letter short of both
+`edit` and `exit`, and answering with `edit` alone would read as knowledge TAB
+does not have, with the other ruled out. Choosing between equally likely words
+dresses a guess up as help, while naming them all says exactly what is known.
+They are named in the alphabetical order of `COMMAND_WORDS`, so one typo
+always draws one reply.
+
+Past three equally likely words the list stops being help. `fit` is two edits
+from `edit`, `exit`, `find` and `list` alike, and reading out all four says
+only that TAB cannot tell, so such a word falls back to the pointer to `help`.
 
 The comparison folds case, so `LIST` is read as an attempt at `list`, while
 the message quotes the word as it was typed, because a User who typed capitals
@@ -376,8 +383,8 @@ saved file and the typed text in the command box as they were.
 The parser dispatches with a `switch` rather than from
 `CommandWords.COMMAND_WORDS`, so the two can disagree: a word missing from the
 list would work when typed while being suggested to nobody. `CommandWordsTest`
-compares the list against the parser's cases rather than leaving that to be
-noticed.
+resolves the command words out of the parser's own cases and compares them
+against the list rather than leaving that to be noticed.
 
 ### Follow-up flag
 
@@ -1485,13 +1492,24 @@ testers are expected to do more *exploratory* testing.
       None of them runs: the list is unchanged, no help window opens, and no
       student is added.
 
-   1. Test case: `eit`<br>
-      Expected: `edit` is suggested, and suggested again on every repeat,
-      rather than `exit` on some of them.
+   1. Test cases: `ls` and `dlte 1`<br>
+      Expected: Two letters out is still near enough, so `list` and `delete`
+      are suggested. Neither runs, and the list is unchanged.
+
+1. A command word that several commands answer to
+
+   1. Test cases: `eit` and `eli`<br>
+      Expected: `eit` names both `edit` and `exit`, and `eli` names `edit`,
+      `exit` and `help`, each in that order and in the same order every time
+      the word is entered again.
+
+   1. Test case: `fit`<br>
+      Expected: The pointer to `help` rather than a list, since `fit` is two
+      letters out from `edit`, `exit`, `find` and `list` alike.
 
 1. A command word resembling nothing TAB knows
 
-   1. Test cases: `qwerty`, `fit`, `a`, and `日本語`<br>
+   1. Test cases: `qwerty`, `rm`, and `日本語`<br>
       Expected: Each reply quotes the word typed and points to `help`, with no
       suggestion offered. No help window opens until `help` itself is run.
 
