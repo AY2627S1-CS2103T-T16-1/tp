@@ -135,9 +135,12 @@ public class CommandWords {
      * Returns true if {@code commandWord} and {@code typed} open with the same character.
      * {@code typed} has been folded to lower case, as the command words are written, so the
      * two characters are compared in the one case.
+     *
+     * <p>{@code typed} holds something, because every command word opens with the empty
+     * string, so an empty one is answered by {@link #wordsOpenedBy} and never measured here.
      */
     private static boolean opensTheSameWay(String commandWord, String typed) {
-        return !typed.isEmpty() && commandWord.charAt(0) == typed.charAt(0);
+        return commandWord.charAt(0) == typed.charAt(0);
     }
 
 }
