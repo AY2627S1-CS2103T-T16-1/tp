@@ -124,11 +124,11 @@ public class HelpWindowTest {
             return helpWindow;
         });
         try {
-            FxToolkit.afterPulse(() -> {
+            FxToolkit.awaitAssertion(() -> {
                 Stage stage = window.getRoot();
                 assertTrue(stage.getScene().getWidth() >= stage.getScene().getRoot().prefWidth(-1) - 0.5,
-                        "the deferred fit should include content metrics arriving after show()");
-                return null;
+                        "the scene is " + stage.getScene().getWidth() + " wide for content needing "
+                                + stage.getScene().getRoot().prefWidth(-1) + " after the deferred fit");
             });
         } finally {
             onFxThread(() -> {
@@ -146,18 +146,18 @@ public class HelpWindowTest {
             return helpWindow;
         });
         try {
-            // Wait for native window changes and layout, keeping the window open for measurement.
-            double[] measured = FxToolkit.afterPulse(() -> {
+            // Native resizing can need more than two pulses, so wait for the scene to fit.
+            FxToolkit.awaitAssertion(() -> {
                 assertTrue(window.isShowing(), "the window should stay open until it is measured");
                 Stage stage = window.getRoot();
                 Region content = (Region) stage.getScene().getRoot();
-                return new double[] {stage.getScene().getWidth(), content.prefWidth(-1),
-                    stage.getScene().getHeight(), content.prefHeight(-1)};
+                assertTrue(stage.getScene().getWidth() >= content.prefWidth(-1) - 0.5,
+                        "the scene is " + stage.getScene().getWidth()
+                                + " wide for content needing " + content.prefWidth(-1));
+                assertTrue(stage.getScene().getHeight() >= content.prefHeight(-1) - 0.5,
+                        "the scene is " + stage.getScene().getHeight()
+                                + " tall for content needing " + content.prefHeight(-1));
             });
-            assertTrue(measured[0] >= measured[1] - 0.5,
-                    "the scene is " + measured[0] + " wide for content needing " + measured[1]);
-            assertTrue(measured[2] >= measured[3] - 0.5,
-                    "the scene is " + measured[2] + " tall for content needing " + measured[3]);
         } finally {
             onFxThread(() -> {
                 window.hide();
