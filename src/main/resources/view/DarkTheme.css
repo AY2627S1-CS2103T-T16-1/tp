@@ -544,12 +544,11 @@
     -fx-text-fill: -tab-text;
     -fx-font-weight: bold;
     -fx-font-size: 15px;
-    /* the name gives way in its middle, as the card's own cut of a long name does. Taken off
-       the end instead, the row would undo that cut and draw two students who share the start
-       of a name as the same text. The mark is the one the card cuts with, so a name that both
-       of them reach reads with one kind of ellipsis rather than two */
-    -fx-text-overrun: center-ellipsis;
-    -fx-ellipsis-string: "…";
+    /* CardName cuts the name down to the room the row leaves it, from the middle and by
+       whole characters. JavaFX cuts at a character index wherever it elides, which leaves
+       half an emoji behind, so the label is told to clip: a cut a pixel out then shows a
+       glyph against the edge rather than a broken one */
+    -fx-text-overrun: clip;
 }
 
 .card-detail {
