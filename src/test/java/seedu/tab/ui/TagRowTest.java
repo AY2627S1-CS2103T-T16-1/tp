@@ -1,6 +1,7 @@
 package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -22,6 +23,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.text.Text;
 
 public class TagRowTest {
 
@@ -119,10 +121,21 @@ public class TagRowTest {
     @Test
     public void setTags_aRowTooNarrowForEvenACutChip_countsTheTagsInstead() throws Exception {
         // what is left of a chip here would be an ellipsis and little else, which names no
-        // tag, so the row says how many there are instead
-        TagRow row = narrowRowOf(60, List.of("attendance-low", "bravo"));
+        // tag, so the row says how many there are instead. The width is found rather than
+        // picked: a label holds its text whatever room it has, so the only widths that say
+        // anything are the ones where what is drawn is the whole of it
+        List<String> readable = new ArrayList<>();
+        for (double width = 20; width <= 110; width += 2) {
+            TagRow row = narrowRowOf(width, List.of("attendance-low", "bravo"));
+            List<String> drawn = drawnChipsOf(row);
+            if (drawn.size() == 1 && drawn.equals(chipsOf(row))) {
+                readable.add(drawn.get(0));
+            }
+        }
 
-        assertEquals(List.of("2 tags"), chipsOf(row));
+        assertFalse(readable.isEmpty(), "no width drew the count in full, so nothing was checked");
+        assertEquals(List.of("2 tags"), readable.stream().distinct().toList(),
+                "the row drew: " + readable.stream().distinct().toList());
     }
 
     @Test
@@ -132,7 +145,7 @@ public class TagRowTest {
         // the glyphs the platform draws
         List<String> saidMore = new ArrayList<>();
         for (double width = 20; width <= 110; width += 2) {
-            List<String> chips = chipsOf(narrowRowOf(width, List.of("attendance-low", "bravo")));
+            List<String> chips = drawnChipsOf(narrowRowOf(width, List.of("attendance-low", "bravo")));
             if (chips.size() == 1 && chips.get(0).contains("more")) {
                 saidMore.add(width + ": " + chips);
             }
@@ -145,11 +158,36 @@ public class TagRowTest {
     public void setTags_aRowShowingNoChip_namesTheTagsOnHover() throws Exception {
         TagRow row = narrowRowOf(60, List.of("attendance-low", "bravo"));
 
+        assertEquals(List.of("2 tags"), drawnChipsOf(row), "held: " + chipsOf(row));
         Label trailing = (Label) row.getChildrenUnmodifiable().stream()
                 .filter(node -> node.getStyleClass().contains("tag-overflow"))
                 .findFirst().orElseThrow();
         // the chips are gone, so the hover is the only way left to read the tags
         assertEquals("attendance-low, bravo", trailing.getTooltip().getText());
+    }
+
+    /**
+     * The text the row's visible chips are drawn with, which is what a reader sees. A
+     * label holds its whole text however little of it the label is given room to draw,
+     * so asking the label says nothing about what reached the window.
+     */
+    private static List<String> drawnChipsOf(TagRow row) {
+        assertTrue(drawnInside(row), "a chip was drawn outside the row");
+        return row.getChildrenUnmodifiable().stream()
+                .filter(Node::isVisible)
+                .map(node -> (Label) node)
+                .sorted(Comparator.comparingDouble(Label::getLayoutX))
+                .map(TagRowTest::drawnTextOf)
+                .toList();
+    }
+
+    /** What {@code label} actually draws, read from the text node inside it. */
+    private static String drawnTextOf(Label label) {
+        return label.lookupAll(".text").stream()
+                .filter(Text.class::isInstance)
+                .map(node -> ((Text) node).getText())
+                .findFirst()
+                .orElse("");
     }
 
     /**
@@ -160,6 +198,9 @@ public class TagRowTest {
     private static TagRow narrowRowOf(double width, List<String> names) throws Exception {
         return onFxThread(() -> {
             TagRow row = new TagRow();
+            // the stylesheet dresses the chips through #tags, so a row without the id is
+            // measured in a font and padding the product never uses
+            row.setId("tags");
             row.setTags(names);
             Region holder = new StackPane(row);
             Scene scene = new Scene(holder, Math.max(width, 400), 40);
