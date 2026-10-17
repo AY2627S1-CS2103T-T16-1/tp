@@ -2,6 +2,7 @@ package seedu.tab.ui;
 
 import java.util.logging.Logger;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
@@ -69,14 +70,18 @@ public class HelpWindow extends UiPart<Stage> {
     public void show() {
         logger.fine("Showing help page about the application.");
         getRoot().show();
-        // now that the window has a frame, its size can account for it. On Windows a window
-        // that is already showing takes a moment to resize, so the frame is measured again
-        // on the next pulse, by when the sizes reported are the ones in force
         fitToContent();
-        Platform.runLater(() -> {
-            fitToContent();
-            getRoot().centerOnScreen();
-        });
+        // Native frame sizes can arrive during the first pulse after the window is shown.
+        new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                stop();
+                Platform.runLater(() -> {
+                    fitToContent();
+                    getRoot().centerOnScreen();
+                });
+            }
+        }.start();
     }
 
     /**
