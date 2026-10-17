@@ -45,7 +45,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseRequiredIndex_invalidInput_throwsParseException() {
-        for (String index : List.of(" ", "0", "-1", "abc", "1 2", "2147483648")) {
+        for (String index : List.of(" ", "0", "-1", "abc", "2147483648")) {
             assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
                     ParserUtil.parseRequiredIndex(index, "STUDENT_INDEX"));
         }
@@ -55,6 +55,17 @@ public class ParserUtilTest {
     public void parseRequiredIndex_validInput_returnsIndex() throws Exception {
         assertEquals(INDEX_FIRST_STUDENT, ParserUtil.parseRequiredIndex("1", "STUDENT_INDEX"));
         assertEquals(INDEX_FIRST_STUDENT, ParserUtil.parseRequiredIndex("  1  ", "STUDENT_INDEX"));
+    }
+
+    @Test
+    public void parseRequiredIndex_extraValue_reportsValueWithoutMisidentifyingIndex() {
+        for (String separator : List.of(" ", "\t", "\u00a0")) {
+            assertThrows(ParseException.class,
+                    "Unexpected value after STUDENT_INDEX: \"Alex\". Put field values after an option.", () ->
+                    ParserUtil.parseRequiredIndex("1" + separator + "Alex", "STUDENT_INDEX"));
+        }
+        assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
+                ParserUtil.parseRequiredIndex("0 Alex", "STUDENT_INDEX"));
     }
 
     @Test

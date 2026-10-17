@@ -371,6 +371,10 @@ are collected before a command is created.
 `TagCommandParser` and `EditCommandParser` share `ParserUtil.parseRequiredIndex`
 to distinguish a missing index from an invalid one; each collects its errors
 with `ParseProblems` and applies its own tag rules.
+Both use `FlagTokenizer.tokenizeWithIndex`, which reports an unquoted negative
+number as both an invalid index and an unknown option. A value following a valid
+index is reported separately by `parseRequiredIndex`. Tag syntax failures and
+a missing add option include guidance for `-a`/`--add`.
 
 `TagCommand` resolves the index against the displayed list. It compares the
 normalized tag names ignoring case before copying the existing tag set and
@@ -378,6 +382,8 @@ constructing a replacement student with every other field preserved. The
 search filter stays active. Tag equality and storage remain unchanged, so
 existing case variants are preserved rather than merged. A general tag named
 `Needs follow-up` remains separate from the follow-up flag.
+Duplicate feedback uses a matching stored tag's spelling. If several case
+variants match, it chooses the first in the card's tag display order.
 
 Invalid indexes and existing tags throw `CommandException` before mutation;
 invalid syntax or values throw `ParseException`. These paths never reach
@@ -1771,7 +1777,7 @@ testers are expected to do more *exploratory* testing.
       Back up `data/tab.json` and compare it after each refused command.
 
    1. Test case: `tag 1 -a "  lab   3  "`.<br>
-      Expected: `This student already has tag [lab 3]. No changes made.` The
+      Expected: `This student already has tag [Lab 3]. No changes made.` The
       existing `Lab 3` spelling, all other details, displayed list and saved
       file stay unchanged.
 
@@ -1780,6 +1786,17 @@ testers are expected to do more *exploratory* testing.
       Expected: Each is refused with an index, invalid-tag, missing-value or
       duplicate-option error as appropriate. No student or displayed list
       changes, and `data/tab.json` stays unchanged.
+
+   1. Test cases: `tag -1 -a T2` and `edit -1 -p 91234567`.<br>
+      Expected: Both report `Index must be a positive integer.` and
+      `There is no -1 option.` The tag command also shows the add guidance.
+      No record, displayed list or saved file changes.
+
+   1. Test cases: `tag 1 -t T2` and `tag 1 lab4`.<br>
+      Expected: Both show `To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3".`
+      The first names the unknown `-t` option; the second names `lab4` as an
+      unexpected value after the index. No record, displayed list or saved
+      file changes.
 
 ### Adding a student
 

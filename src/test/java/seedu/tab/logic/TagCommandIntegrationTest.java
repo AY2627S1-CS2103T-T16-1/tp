@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.Model;
@@ -22,7 +23,6 @@ import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.Student;
-import seedu.tab.model.tag.Tag;
 import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.storage.JsonUserPrefsStorage;
 import seedu.tab.storage.StorageManager;
@@ -90,18 +90,19 @@ public class TagCommandIntegrationTest {
 
     @Test
     public void execute_duplicateVariants_preservesModelDisplayAndSavedBytes() throws Exception {
-        for (String tag : List.of("Lab 3", "lab 3", "LAB 3", "  lAb\t 3\u00a0", "T1")) {
-            assertFailureWithoutMutation("tag 1 -a \"" + tag + "\"", CommandException.class,
-                    "This student already has tag [" + new Tag(tag).tagName
-                            + "]. No changes made.");
+        Map<String, String> storedSpellings = Map.of("Lab 3", "Lab 3", "lab 3", "Lab 3", "LAB 3", "Lab 3",
+                "  lAb\t 3\u00a0", "Lab 3", "T1", "T1", "t1", "T1");
+        for (Map.Entry<String, String> spelling : storedSpellings.entrySet()) {
+            assertFailureWithoutMutation("tag 1 -a \"" + spelling.getKey() + "\"", CommandException.class,
+                    "This student already has tag [" + spelling.getValue() + "]. No changes made.");
         }
     }
 
     @Test
     public void execute_invalidInput_preservesModelDisplayAndSavedBytes() throws Exception {
         Map<String, String> errors = Map.of(
-                "tag 1 -t T2", "There is no -t option.",
-                "tag 1 --tag T2", "There is no --tag option.",
+                "tag 1 -t T2", "There is no -t option.\n" + TagCommand.MESSAGE_ADD_GUIDANCE,
+                "tag 1 --tag T2", "There is no --tag option.\n" + TagCommand.MESSAGE_ADD_GUIDANCE,
                 "tag 0 -a T2", "Index must be a positive integer.",
                 "tag 2147483648 -a T2", "Index must be a positive integer.",
                 "tag 1 -a \"\"", "Tag \"\" is not valid: it holds no letter or number",
@@ -120,6 +121,23 @@ public class TagCommandIntegrationTest {
     }
 
     @Test
+    public void execute_negativeIndexOrMissingAction_preservesModelDisplayAndSavedBytes() throws Exception {
+        String hint = "\n" + TagCommand.MESSAGE_ADD_GUIDANCE;
+        Map<String, String> errors = Map.of(
+                "tag -1 -a T2", "Index must be a positive integer.\nThere is no -1 option." + hint,
+                "tag -1 --add T2", "Index must be a positive integer.\nThere is no -1 option." + hint,
+                "edit -1 -p 91234567", "Index must be a positive integer.\nThere is no -1 option.",
+                "tag 1 lab4", "Unexpected value after INDEX: \"lab4\". Put field values after an option.\n"
+                        + "Missing required field(s): -a TAG" + hint,
+                "tag 1", "Missing required field(s): -a TAG" + hint,
+                "edit 1 Alex -p 91234567",
+                        "Unexpected value after INDEX: \"Alex\". Put field values after an option.");
+        for (Map.Entry<String, String> error : errors.entrySet()) {
+            assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());
+        }
+    }
+
+    @Test
     public void execute_humanEditedLegacyTags_normalizesWithoutDiscardingExistingVariants() throws Exception {
         // Legacy/edit records may contain two case variants. Tagging must retain both.
         model.updateFilteredStudentList(shown -> shown.getName().equals(student.getName()));
@@ -131,7 +149,9 @@ public class TagCommandIntegrationTest {
         model.setStudentBook(storage.readStudentBook().orElseThrow());
         saveCount = 0;
         assertFailureWithoutMutation("tag 1 -a \" CAFE\u0301 \"", CommandException.class,
-                "This student already has tag [CAFÉ]. No changes made.");
+                "This student already has tag [Café]. No changes made.");
+        assertFailureWithoutMutation("tag 1 -a \"LAB 3\"", CommandException.class,
+                "This student already has tag [Lab 3]. No changes made.");
         logic.execute("tag 1 -a T2");
         Student expected = new StudentBuilder(legacy).withTags("Lab 3", "lab 3", "Café", "T2").build();
         assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());

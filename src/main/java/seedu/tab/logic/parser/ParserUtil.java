@@ -21,6 +21,8 @@ import seedu.tab.model.tag.Tag;
  */
 public class ParserUtil {
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+    public static final String MESSAGE_VALUE_AFTER_INDEX =
+            "Unexpected value after %1$s: \"%2$s\". Put field values after an option.";
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
@@ -44,7 +46,12 @@ public class ParserUtil {
         if (oneBasedIndex.isEmpty()) {
             throw new ParseException(Messages.getErrorMessageForMissingFields(fieldName));
         }
-        return parseIndex(oneBasedIndex);
+        String[] values = oneBasedIndex.trim().split("(?U)\\s+", 2);
+        Index index = parseIndex(values[0]);
+        if (values.length > 1) {
+            throw new ParseException(String.format(MESSAGE_VALUE_AFTER_INDEX, fieldName, Messages.shorten(values[1])));
+        }
+        return index;
     }
 
     /**
