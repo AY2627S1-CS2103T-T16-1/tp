@@ -104,6 +104,10 @@ JavaFX 17's `HBox` can leave one pixel undistributed when shrinking children.
 This keeps the email inside the details area at narrow widths, including when
 platform fonts produce different preferred label widths.
 
+The student card's `TagRow` retains every tag name, but creates at most three
+tag labels. Layout uses the full name count to size the overflow chip and
+list all hidden tags in its tooltip, even when fewer labels are created.
+
 Student-card email labels use `UiText.showToFit` to retain their full text
 and show a tooltip only while the available width cuts the address. Width
 listeners remove the tooltip when widening the card makes it unnecessary.

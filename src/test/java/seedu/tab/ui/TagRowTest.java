@@ -95,6 +95,57 @@ public class TagRowTest {
     }
 
     @Test
+    public void setTags_manyTags_createsOnlyDisplayableLabels() throws Exception {
+        List<String> names = IntStream.range(0, 20).mapToObj(i -> "tag" + i).toList();
+        TagRow row = rowOf(1000, names);
+
+        assertEquals(4, row.getChildrenUnmodifiable().size(), "three tag labels and one overflow label");
+        assertEquals(List.of("tag0", "tag1", "tag2", "17 more" + ELLIPSIS), chipsOf(row));
+        Label overflow = (Label) row.getChildrenUnmodifiable().get(3);
+        assertEquals(String.join(", ", names.subList(3, names.size())), overflow.getTooltip().getText());
+        assertEquals(row.prefHeight(-1), rowOf(1000, names.subList(0, 3)).prefHeight(-1), 0.5);
+    }
+
+    @Test
+    public void setTags_manyTagsInANarrowRow_countsAndNamesEveryHiddenTag() throws Exception {
+        List<String> names = IntStream.range(0, 20).mapToObj(i -> "tag" + i).toList();
+        TagRow row = rowOf(400, names);
+        onFxThread(() -> {
+            row.resize(60, row.getHeight());
+            row.layout();
+            return null;
+        });
+
+        List<String> visibleChips = chipsOf(row);
+        assertEquals(1, visibleChips.size());
+        // The allocation cap must not cap the total, regardless of count-only wording.
+        assertEquals(20, Integer.parseInt(visibleChips.getFirst().split(" ")[0]));
+        Label overflow = (Label) row.getChildrenUnmodifiable().get(3);
+        assertEquals(String.join(", ", names), overflow.getTooltip().getText());
+    }
+
+    @Test
+    public void setTags_replacingManyTags_replacesLabelsAndOverflow() throws Exception {
+        TagRow row = rowOf(1000, List.of("alpha", "bravo", "charlie", "delta", "echo"));
+        for (List<String> names : List.of(List.of("Lab 3"), List.<String>of(),
+                List.of("T1", "T2", "T3", "T4"))) {
+            onFxThread(() -> {
+                row.setTags(names);
+                row.getParent().applyCss();
+                row.getParent().layout();
+                return null;
+            });
+
+            assertEquals(Math.min(names.size(), 3) + 1, row.getChildrenUnmodifiable().size());
+            List<String> expected = names.size() <= 3 ? names : List.of("T1", "T2", "T3", "1 more" + ELLIPSIS);
+            assertEquals(expected, chipsOf(row));
+            Label overflow = (Label) row.getChildrenUnmodifiable().getLast();
+            assertEquals(String.join(", ", names.subList(Math.min(names.size(), 3), names.size())),
+                    overflow.getTooltip().getText());
+        }
+    }
+
+    @Test
     public void setTags_aNarrowRow_dropsChipsRatherThanSqueezingThem() throws Exception {
         TagRow row = rowOf(130, List.of("alpha", "bravo", "charlie"));
 
