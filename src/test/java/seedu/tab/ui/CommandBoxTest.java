@@ -328,7 +328,8 @@ public class CommandBoxTest {
 
     @Test
     public void history_successfulCommandsAndDraft_recallsBothDirections() throws Exception {
-        CommandBox box = boxExecutedBy(new ArrayList<>(), false);
+        List<String> submitted = new ArrayList<>();
+        CommandBox box = boxExecutedBy(submitted, false);
         onFxThread(() -> setTextOf(box, "list"));
         pressEnter(box);
         onFxThread(() -> setTextOf(box, "find \"Siti Nur-Aisyah\""));
@@ -341,6 +342,7 @@ public class CommandBoxTest {
         assertHistoryKey(box, KeyCode.DOWN, "find \"Siti Nur-Aisyah\"");
         assertHistoryKey(box, KeyCode.DOWN, "add 陈");
         assertHistoryKey(box, KeyCode.DOWN, "add 陈");
+        assertEquals(List.of("list", "find \"Siti Nur-Aisyah\""), submitted);
     }
 
     @Test
@@ -374,7 +376,13 @@ public class CommandBoxTest {
         onFxThread(() -> {
             TextField field = (TextField) box.getRoot().lookup("#commandTextField");
             field.setText("draft");
-            field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.UP, true, false, false, false));
+            for (KeyCode modifier : List.of(KeyCode.SHIFT, KeyCode.CONTROL, KeyCode.ALT, KeyCode.META)) {
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.UP,
+                        modifier == KeyCode.SHIFT, modifier == KeyCode.CONTROL,
+                        modifier == KeyCode.ALT, modifier == KeyCode.META));
+                assertEquals("draft", field.getText());
+            }
+            field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.LEFT, false, false, false, false));
             assertEquals("draft", field.getText());
             return null;
         });
