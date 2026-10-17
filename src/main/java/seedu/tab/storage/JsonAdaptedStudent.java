@@ -3,6 +3,7 @@ package seedu.tab.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -119,14 +120,14 @@ class JsonAdaptedStudent {
             throw new IllegalValueException(formatInvalidField(
                     Email.FIELD_NAME, email, Email.getFailureReason(email)));
         }
-        final Email modelEmail = email == null ? null : new Email(email);
+        final Optional<Email> modelEmail = Optional.ofNullable(email).map(Email::new);
 
         // A missing or null key represents an ID that has not been recorded. A malformed
         // value is rejected rather than being silently discarded from the student record.
         if (nusStudentId != null && !NusStudentId.isValidNusStudentId(nusStudentId)) {
             throw new IllegalValueException(NusStudentId.MESSAGE_CONSTRAINTS);
         }
-        final NusStudentId modelNusStudentId = nusStudentId == null ? null : new NusStudentId(nusStudentId);
+        final Optional<NusStudentId> modelNusStudentId = Optional.ofNullable(nusStudentId).map(NusStudentId::new);
 
         final Set<Tag> modelTags = new HashSet<>(studentTags);
         return new Student(modelName, modelPhone, modelEmail, modelNusStudentId, modelTags, Boolean.TRUE.equals(flag));
