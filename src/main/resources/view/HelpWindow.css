@@ -25,3 +25,10 @@
 #copyButton:armed {
     -fx-background-color: -tab-surface;
 }
+
+/* Keep focus visible without inheriting the global button's extra border insets. */
+#copyButton:focused {
+    -fx-border-color: -tab-accent;
+    -fx-border-insets: 0;
+    -fx-border-style: solid;
+}
