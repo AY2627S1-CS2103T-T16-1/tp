@@ -156,6 +156,19 @@ line (2.2:1) lightens the background enough that 4.5:1 would need every token
 colour moved towards white, which is not the palette the mockup sets. The
 trade-off is deliberate and worth revisiting if the palette changes.
 
+#### Recalling session commands
+
+`CommandBox` records each submitted line in `CommandHistory` before execution,
+so rejected input can be recalled too. The helper stores submissions separately
+from the draft captured when Up first leaves the newest position. Down past
+the newest submission restores that draft. Only consecutive identical
+submissions are skipped; editing a recalled entry does not alter stored text.
+
+The command box consumes unmodified Up/Down key presses before the text field
+handles them. Recalled text uses the existing text listener for colouring, and
+the caret moves to its end. This UI state is session-only and never enters the
+student model or persisted data.
+
 #### Summarising the list
 
 `SummaryPanel` shows the flagged count, a count per tag and the total, beside
@@ -1998,6 +2011,23 @@ testers are expected to do more *exploratory* testing.
 1. _{ more test cases … }_
 
 ### The command line
+
+1. Recalling commands and restoring a draft
+
+   1. In a fresh session, type `draft` and press Up and Down.<br>
+      Expected: The text remains `draft` because no command has been submitted.
+   1. Replace it with `list` and press Enter. Run `find "Siti Nur-Aisyah"`,
+      then type `add draft` without submitting it.
+   1. Press Up twice, then Up again.<br>
+      Expected: The line recalls the find command, then `list`, then stays at
+      `list`. Each recalled line has matching colours and its caret at the end.
+   1. Press Down twice.<br>
+      Expected: The find command reappears, then the unsent `add draft` returns.
+   1. Submit `addd` twice, then type `another draft` and press Up twice.<br>
+      Expected: The rejected `addd` is recalled once, followed by the find
+      command. Correcting or recalling input does not execute it before Enter.
+   1. Close and reopen TAB, type `draft`, and press Up.<br>
+      Expected: `draft` stays unchanged; history does not survive a restart.
 
 1. Checking what the colours say
 
