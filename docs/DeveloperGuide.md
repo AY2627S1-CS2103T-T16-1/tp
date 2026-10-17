@@ -319,7 +319,8 @@ words needs no quotes unless it would otherwise be misread, and the index for
 `EditCommand.FIELD_INDEX`, rather than the shared `CliFlags` doing it for
 them. Each short and long marker resolves to the same `Flag`, so mixed aliases
 for a single-valued field are duplicates rather than independent fields.
-Value-taking options take the token after them, and `-t` or `--tag` repeats.
+Value-taking options take the token after them, and `-t` or `--tag` repeats
+for `add` and `edit`. The `tag` command instead takes exactly one tag.
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
@@ -359,6 +360,25 @@ any edit, so neither the model nor the saved book changes on that error.
 The `-nf` alias makes clearing quick to type without making opposite actions
 differ only in case, as `-f` and `-F` would. Both clear spellings map to the
 same option, so mixing them is also detected as a duplicate.
+
+### Adding one tag without replacing existing tags
+
+`TagCommandParser` reads `tag INDEX -t TAG` (alias `--tag`) with the existing
+`FlagTokenizer` and `ParserUtil`. Unlike `add` and `edit`, it rejects repeated
+tag options, including mixed aliases. Missing fields and invalid field values
+are collected before a command is created.
+
+`TagCommand` resolves the index against the displayed list. It compares the
+normalized tag names ignoring case before copying the existing tag set and
+constructing a replacement student with every other field preserved. The
+search filter stays active. Tag equality and storage remain unchanged, so
+existing case variants are preserved rather than merged. A general tag named
+`Needs follow-up` remains separate from the follow-up flag.
+
+Invalid indexes and existing tags throw `CommandException` before mutation;
+invalid syntax or values throw `ParseException`. These paths never reach
+`LogicManager`'s save. A successful addition uses the normal JSON save path.
+The paired single-tag removal feature remains tracked in issue #141.
 
 ### Commands with no arguments
 
@@ -1726,6 +1746,36 @@ testers are expected to do more *exploratory* testing.
       `"flag": null`, and no `flag` key. Relaunch TAB.<br>
       Expected: Only the record with `true` shows `Needs follow-up`. The other
       three load as unflagged, including the legacy record with no key.
+
+### Adding one tag
+
+1. Preserving the selected student's other details and saving the new tag
+
+   1. Prerequisites: Add a uniquely named student with `add Tag Test -p 91234567
+      -e tag@example.com --id A01234567X -t T1 --follow-up` as one line.
+      Run `find "Tag Test"` and confirm only this student is shown.
+
+   1. Test case: `tag 1 --tag "Lab 3"`.<br>
+      Expected: Feedback starts with `Added tag [Lab 3]:`. The student has both
+      `T1` and `Lab 3`, and all other details and follow-up status are unchanged.
+      The search stays active. Exit TAB and relaunch the same JAR from the same
+      folder; the tags and every other field remain as recorded.
+
+1. Rejecting duplicates and invalid input without mutation
+
+   1. Prerequisites: Continue with the student above and run `find "Tag Test"`.
+      Back up `data/tab.json` and compare it after each refused command.
+
+   1. Test case: `tag 1 -t "  lab   3  "`.<br>
+      Expected: `This student already has tag [lab 3]. No changes made.` The
+      existing `Lab 3` spelling, all other details, displayed list and saved
+      file stay unchanged.
+
+   1. Test cases: `tag 0 -t T2`, `tag 2 -t T2`, `tag 2147483648 -t T2`,
+      `tag 1 -t ""`, `tag 1 -t "---"`, `tag 1 -t`, and `tag 1 -t T2 --tag T3`.<br>
+      Expected: Each is refused with an index, invalid-tag, missing-value or
+      duplicate-option error as appropriate. No student or displayed list
+      changes, and `data/tab.json` stays unchanged.
 
 ### Adding a student
 
