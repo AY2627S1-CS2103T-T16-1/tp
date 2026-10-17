@@ -3,8 +3,10 @@ package seedu.tab.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.tab.commons.core.index.Index;
@@ -29,6 +31,8 @@ public class TagCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1 -a \"Lab 3\"";
     public static final String MESSAGE_SUCCESS = "Added tag [%1$s]: %2$s";
     public static final String MESSAGE_ALREADY_PRESENT = "This student already has tag [%1$s]. No changes made.";
+    public static final String MESSAGE_ADD_GUIDANCE =
+            "To add a tag, use -a or --add, e.g. tag 1 -a \"Lab 3\".";
 
     private final Index targetIndex;
     private final Tag tag;
@@ -50,8 +54,12 @@ public class TagCommand extends Command {
             throw new CommandException(Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
         }
         Student student = shownStudents.get(targetIndex.getZeroBased());
-        if (student.getTags().stream().anyMatch(existing -> existing.tagName.equalsIgnoreCase(tag.tagName))) {
-            throw new CommandException(String.format(MESSAGE_ALREADY_PRESENT, Messages.shorten(tag.tagName)));
+        Optional<Tag> existingTag = student.getTags().stream()
+                .filter(existing -> existing.tagName.equalsIgnoreCase(tag.tagName))
+                .min(Comparator.comparing(existing -> existing.tagName));
+        if (existingTag.isPresent()) {
+            throw new CommandException(String.format(MESSAGE_ALREADY_PRESENT,
+                    Messages.shorten(existingTag.get().tagName)));
         }
 
         Set<Tag> updatedTags = new HashSet<>(student.getTags());

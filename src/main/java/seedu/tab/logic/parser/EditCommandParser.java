@@ -37,7 +37,7 @@ public class EditCommandParser implements Parser<EditCommand> {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public EditCommand parse(String args) throws ParseException {
-        FlagArgumentMap arguments = FlagTokenizer.tokenize(
+        FlagArgumentMap arguments = FlagTokenizer.tokenizeWithIndex(
                 args, FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG,
                 FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
         arguments.verifyNoDuplicateFlagsFor(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,

@@ -337,6 +337,10 @@ done to it beyond the quotes any value with spaces takes:
 
 * Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list. The index **must be a positive integer** 1, 2, 3, ...
 * The index comes first, before any option.
+  An unquoted negative index reports both that the index must be positive and
+  that the negative number is not an option. Extra words after a valid index
+  are reported as unexpected values. Put a name change after `-n` rather than
+  immediately after the index.
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it and is
@@ -402,11 +406,20 @@ Format: `tag INDEX -a TAG`
   already has the tag, case and insignificant whitespace are ignored, so
   `Lab 3` and `lab  3` count as the same tag for this command.
 * An existing tag reports `This student already has tag [TAG]. No changes made.`
-  Its spelling is preserved. Existing case variants entered through `add`,
+  The reply uses the stored spelling: if the tag is `Lab 3`, entering `lab  3`
+  reports `[Lab 3]`. Existing case variants entered through `add`,
   `edit` or a data file are kept; this command does not merge them.
+  When several stored spellings match, the reply uses the first in the tag
+  display order.
 * An invalid index or tag, a missing value, or a repeated add option is refused
   without changing any student details or writing the data file. An empty
   quoted tag is invalid; it does not clear tags.
+* If you omit `-a`/`--add`, the reply explains how to add a tag. A tag entered
+  directly after a valid index is reported as an unexpected value, and `-t`
+  is reported as an unknown option. Use `tag 1 -a lab4` to add `lab4`.
+* An unquoted negative index reports both that the index must be positive
+  and that the negative number is not an option, followed by the addition
+  guidance.
 * A successful addition is saved at once and remains after restarting TAB.
   The feedback starts with `Added tag [TAG]:` and shows the updated record.
 
@@ -417,6 +430,24 @@ Examples:
 * `tag 2 -a "Project A/B"` adds a tag containing a slash.
 * `tag 2 -a "组 1"` adds a tag in another writing system.
 * `tag 1 -a "-Lab"` adds a tag starting with a hyphen.
+
+Examples of refused commands and their replies:
+
+```text
+tag 1 -t T2
+There is no -t option.
+To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3".
+
+tag 1 lab4
+Unexpected value after INDEX: "lab4". Put field values after an option.
+Missing required field(s): -a TAG
+To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3".
+
+tag -1 -a T2
+Index must be a positive integer.
+There is no -1 option.
+To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3".
+```
 
 ### Locating students by detail: `find`
 
