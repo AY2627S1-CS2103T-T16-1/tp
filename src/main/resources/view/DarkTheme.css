@@ -644,7 +644,6 @@
     -fx-text-fill: -tab-accent;
     -fx-font-family: "Monospaced";
     -fx-font-size: 15px;
-    -fx-font-weight: normal;
 }
 
 /* inside the line the field is bare: the rounded surface belongs to the line around it */
@@ -675,7 +674,6 @@
 
 .command-command-word {
     -fx-fill: -tab-accent;
-    -fx-font-weight: bold;
 }
 
 .command-option {
