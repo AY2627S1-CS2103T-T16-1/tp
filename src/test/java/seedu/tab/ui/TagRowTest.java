@@ -1,9 +1,11 @@
 package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -17,6 +19,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.text.Text;
 
 public class TagRowTest {
 
@@ -100,6 +103,119 @@ public class TagRowTest {
         assertEquals("2 more" + ELLIPSIS, chips.get(chips.size() - 1));
         // what survives is drawn whole, rather than every chip being cut to a letter or two
         assertEquals("alpha", chips.get(0));
+    }
+
+    @Test
+    public void setTags_aRowTooNarrowForEvenACutChip_countsTheTagsInstead() throws Exception {
+        // what is left of a chip here would be an ellipsis and little else, which names no
+        // tag, so the row says how many there are instead. The width is found rather than
+        // picked: a label holds its text whatever room it has, so the only widths that say
+        // anything are the ones where what is drawn is the whole of it
+        List<String> readable = rowsDrawingOnlyTheCount(List.of("attendance-low", "bravo")).stream()
+                .map(row -> drawnChipsOf(row).get(0))
+                .distinct()
+                .toList();
+
+        assertEquals(List.of("2 tags"), readable, "the row drew: " + readable);
+    }
+
+    @Test
+    public void setTags_aRowShowingNoChip_doesNotSayTheTagsAreMore() throws Exception {
+        // nothing precedes the count there, so "more" would be more than what. Swept
+        // rather than probed at one width, because which branch the row takes moves with
+        // the glyphs the platform draws
+        List<String> saidMore = new ArrayList<>();
+        for (double width = 20; width <= 110; width += 2) {
+            List<String> chips = drawnChipsOf(narrowRowOf(width, List.of("attendance-low", "bravo")));
+            if (chips.size() == 1 && chips.get(0).contains("more")) {
+                saidMore.add(width + ": " + chips);
+            }
+        }
+
+        assertTrue(saidMore.isEmpty(), "the row counted what it left out at: " + saidMore);
+    }
+
+    @Test
+    public void setTags_aRowShowingNoChip_namesTheTagsOnHover() throws Exception {
+        TagRow row = rowsDrawingOnlyTheCount(List.of("attendance-low", "bravo")).get(0);
+
+        Label trailing = (Label) row.getChildrenUnmodifiable().stream()
+                .filter(node -> node.getStyleClass().contains("tag-overflow"))
+                .findFirst().orElseThrow();
+        // the chips are gone, so the hover is the only way left to read the tags
+        assertEquals("attendance-low, bravo", trailing.getTooltip().getText());
+    }
+
+    /**
+     * Every row, across the narrow widths, that has given up its last chip and draws the
+     * whole of the count it put there instead.
+     *
+     * <p>The widths are found rather than picked. A label holds all of its text however
+     * little room it has, so a row drawn at a width named in pixels may be showing an
+     * ellipsis on one platform and the whole count on another, and a check made there
+     * reads the same either way. Only a width whose drawn text is the whole of the held
+     * text says anything, and this fails rather than returning none.
+     */
+    private static List<TagRow> rowsDrawingOnlyTheCount(List<String> names) throws Exception {
+        List<TagRow> rows = new ArrayList<>();
+        for (double width = 20; width <= 110; width += 2) {
+            TagRow row = narrowRowOf(width, names);
+            List<String> drawn = drawnChipsOf(row);
+            if (drawn.size() == 1 && drawn.equals(chipsOf(row))) {
+                rows.add(row);
+            }
+        }
+
+        assertFalse(rows.isEmpty(), "no width drew the count in full, so nothing was checked");
+        return rows;
+    }
+
+    /**
+     * The text the row's visible chips are drawn with, which is what a reader sees. A
+     * label holds its whole text however little of it the label is given room to draw,
+     * so asking the label says nothing about what reached the window.
+     */
+    private static List<String> drawnChipsOf(TagRow row) {
+        assertTrue(drawnInside(row), "a chip was drawn outside the row");
+        return row.getChildrenUnmodifiable().stream()
+                .filter(Node::isVisible)
+                .map(node -> (Label) node)
+                .sorted(Comparator.comparingDouble(Label::getLayoutX))
+                .map(TagRowTest::drawnTextOf)
+                .toList();
+    }
+
+    /** What {@code label} actually draws, read from the text node inside it. */
+    private static String drawnTextOf(Label label) {
+        return label.lookupAll(".text").stream()
+                .filter(Text.class::isInstance)
+                .map(node -> ((Text) node).getText())
+                .findFirst()
+                .orElse("");
+    }
+
+    /**
+     * A row laid out at {@code width} whatever it asks for, as the card's first line lays
+     * it out. A holder would not go below the row's own minimum, so the widths at which
+     * the row gives up its last chip are only reachable this way.
+     */
+    private static TagRow narrowRowOf(double width, List<String> names) throws Exception {
+        return onFxThread(() -> {
+            TagRow row = new TagRow();
+            // the stylesheet dresses the chips through #tags, so a row without the id is
+            // measured in a font and padding the product never uses
+            row.setId("tags");
+            row.setTags(names);
+            Region holder = new StackPane(row);
+            Scene scene = new Scene(holder, Math.max(width, 400), 40);
+            scene.getStylesheets().add(
+                    UiPart.class.getResource("/view/DarkTheme.css").toExternalForm());
+            holder.applyCss();
+            holder.layout();
+            row.resizeRelocate(0, 0, width, row.getHeight());
+            row.layout();
+            return row;
+        });
     }
 
     @Test
