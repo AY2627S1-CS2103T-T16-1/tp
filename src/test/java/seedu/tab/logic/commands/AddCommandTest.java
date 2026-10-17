@@ -63,11 +63,13 @@ public class AddCommandTest {
 
     @Test
     public void execute_duplicateStudent_throwsCommandException() {
-        Student validStudent = new StudentBuilder().build();
+        Student validStudent = new StudentBuilder().withNusStudentId("A01234567X").build();
         AddCommand addCommand = new AddCommand(validStudent);
         ModelStub modelStub = new ModelStubWithStudent(validStudent);
 
-        assertThrows(CommandException.class, AddCommand.MESSAGE_DUPLICATE_STUDENT, () -> addCommand.execute(modelStub));
+        String expectedMessage = String.format(AddCommand.MESSAGE_DUPLICATE_STUDENT,
+                validStudent.getNusStudentId().orElseThrow());
+        assertThrows(CommandException.class, expectedMessage, () -> addCommand.execute(modelStub));
     }
 
     @Test

@@ -19,7 +19,8 @@ import seedu.tab.model.student.Student;
 @JsonRootName(value = "studentbook")
 class JsonSerializableStudentBook {
 
-    public static final String MESSAGE_DUPLICATE_STUDENT = "Students list contains duplicate student(s).";
+    public static final String MESSAGE_DUPLICATE_STUDENT =
+            "NUS Student ID %1$s is already used by another student record.";
     public static final String MESSAGE_MISSING_STUDENT_LIST = "Student list is missing.";
 
     private final List<JsonAdaptedStudent> students;
@@ -65,7 +66,8 @@ class JsonSerializableStudentBook {
                 throw new IllegalValueException(recordDescription + ": " + e.getMessage(), e);
             }
             if (studentBook.hasStudent(student)) {
-                throw new IllegalValueException(recordDescription + ": " + MESSAGE_DUPLICATE_STUDENT);
+                throw new IllegalValueException(recordDescription + ": "
+                        + String.format(MESSAGE_DUPLICATE_STUDENT, student.getNusStudentId().orElseThrow()));
             }
             studentBook.addStudent(student);
         }
