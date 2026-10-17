@@ -25,6 +25,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.skin.TextFieldSkin;
 import javafx.scene.control.skin.TextInputControlSkin.Direction;
 import javafx.scene.control.skin.TextInputControlSkin.TextUnit;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -322,6 +324,71 @@ public class CommandBoxTest {
 
     private static List<String> styleClassesOf(CommandBox box, String id) {
         return List.copyOf(box.getRoot().lookup(id).getStyleClass());
+    }
+
+    @Test
+    public void history_successfulCommandsAndDraft_recallsBothDirections() throws Exception {
+        CommandBox box = boxExecutedBy(new ArrayList<>(), false);
+        onFxThread(() -> setTextOf(box, "list"));
+        pressEnter(box);
+        onFxThread(() -> setTextOf(box, "find \"Siti Nur-Aisyah\""));
+        pressEnter(box);
+        onFxThread(() -> setTextOf(box, "add 陈"));
+
+        assertHistoryKey(box, KeyCode.UP, "find \"Siti Nur-Aisyah\"");
+        assertHistoryKey(box, KeyCode.UP, "list");
+        assertHistoryKey(box, KeyCode.UP, "list");
+        assertHistoryKey(box, KeyCode.DOWN, "find \"Siti Nur-Aisyah\"");
+        assertHistoryKey(box, KeyCode.DOWN, "add 陈");
+        assertHistoryKey(box, KeyCode.DOWN, "add 陈");
+    }
+
+    @Test
+    public void history_rejectedCommandsAndRepeatedSubmission_recallsOneCopy() throws Exception {
+        CommandBox box = boxExecutedBy(new ArrayList<>(), true);
+        onFxThread(() -> setTextOf(box, "bad"));
+        pressEnter(box);
+        onFxThread(() -> setTextOf(box, "add -p"));
+        pressEnter(box);
+        pressEnter(box);
+        onFxThread(() -> setTextOf(box, "draft"));
+
+        assertHistoryKey(box, KeyCode.UP, "add -p");
+        assertHistoryKey(box, KeyCode.UP, "bad");
+        assertHistoryKey(box, KeyCode.DOWN, "add -p");
+        assertHistoryKey(box, KeyCode.DOWN, "draft");
+    }
+
+    @Test
+    public void history_newCommandBox_keepsAnEmptyHistory() throws Exception {
+        CommandBox box = boxShowing("draft");
+        assertHistoryKey(box, KeyCode.UP, "draft");
+        assertHistoryKey(box, KeyCode.DOWN, "draft");
+    }
+
+    @Test
+    public void history_modifiedArrow_keepsTheDraft() throws Exception {
+        CommandBox box = boxExecutedBy(new ArrayList<>(), false);
+        onFxThread(() -> setTextOf(box, "list"));
+        pressEnter(box);
+        onFxThread(() -> {
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            field.setText("draft");
+            field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.UP, true, false, false, false));
+            assertEquals("draft", field.getText());
+            return null;
+        });
+    }
+
+    private static void assertHistoryKey(CommandBox box, KeyCode key, String expected) throws Exception {
+        onFxThread(() -> {
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", key, false, false, false, false));
+            assertEquals(expected, field.getText());
+            assertEquals(expected.length(), field.getCaretPosition());
+            assertEquals(expected, String.join("", colouredTextOf(box)));
+            return null;
+        });
     }
 
     @Test
