@@ -262,7 +262,7 @@ A name too long for a card is shortened with an ellipsis in its middle, which
 keeps both the start and the end of the name, so two students whose names begin
 alike still read as two. Hover over any name the card cannot show in full,
 whether it was shortened this way or left narrow by a crowded row, to see the
-whole of it.
+whole of it. A cut email address also shows its full value on hover.
 
 When a student is added, the command result displays the new record
 (`New student added: NAME; Phone: PHONE...`) so you can confirm the details
