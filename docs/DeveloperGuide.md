@@ -15,6 +15,10 @@
 
 * This project is based on the AddressBook-Level3 project created by the
   [SE-EDU initiative](https://se-education.org).
+* `StringUtil.editDistance` implements the published
+  [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance),
+  a known algorithm whose recurrence we wrote out ourselves. No code was
+  copied, and the idea is reused in that one method.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -128,7 +132,14 @@ but interacts with the field:
   A field scrolls by rules that differ between typing, deleting, cutting and
   undoing, and every attempt to reproduce them was right for some of those and
   wrong for others; a copy even a pixel out of step shows one character where
-  the field hit-tests another, and clicks land in the wrong place.
+  the field hit-tests another, and clicks land in the wrong place. Reading
+  that node once is not enough, because the field's skin re-scrolls it after a
+  delete, a replace or a change of width, which is after the caret and the
+  text the colouring was told about have both settled. The copy therefore
+  follows the node's own position. The node is the one the field is drawing
+  in, since an empty line shows the prompt in a node of the same kind which
+  the field hides rather than throws away, and a command reading as the
+  prompt would otherwise be taken for the hidden one.
 * **the caret.** The field's caret is drawn in its text colour, which is
   transparent, so the line carries one of its own, sized from a run of the text
   so it sits where the text does.
@@ -332,6 +343,72 @@ shortened to keep the reason visible. Quotes do not make an argument absent:
 nor `LogicManager`'s storage write, so it preserves both the displayed list
 and the JSON file.
 
+### Suggesting a command word
+
+A command word TAB does not dispatch on is answered with the word the User
+typed and the command words it is a likely attempt at. `CommandWords` works
+out which those are in two steps: what the typed word opens, and, failing
+that, what it is near.
+
+A word that opens a command word is read as that command word being typed.
+`del` stands for `delete`, although `help` is the nearer of the two by edits
+alone, at two against three. A part-typed word is right as far as it goes,
+which says more about what was meant than the distance to some other word
+does. Only a word that opens nothing is measured for edits at all.
+
+The measure is `StringUtil.editDistance`: how many insertions, deletions,
+substitutions and swaps of neighbouring characters turn one word into the
+other. A swap counts as one edit because a fast typist makes them as readily
+as the other three, and `lsit` would otherwise sit two edits from `list`, as
+far away as a wilder guess.
+
+Two edits is the budget for every command word, whatever its length. That is
+what the user story asks for, and it is what reaches the words a teaching
+assistant types: `ls` opens nothing and is two insertions short of `list`,
+and `dlte` is two deletions from `delete`.
+
+Two edits also reach past the first letter of a short command word, which is
+how `dlt` came to be answered with `edit`. A word measured for edits
+therefore has to open with the character the command word opens with, unless
+the single edit between the two is that character. The first letter is the
+one a typist is least likely to get wrong, so a word two edits out that
+disagrees on it as well has little to do with the command it happens to sit
+near; where one edit is the whole difference, that edit may fall on the first
+letter and the rest of the word already agrees, which keeps `felete`,
+`edlete` and `elete` reading as `delete`.
+
+Every command word equally likely is named. `eit` is a letter short of both
+`edit` and `exit`, and answering with `edit` alone would read as knowledge TAB
+does not have, with the other ruled out. Choosing between equally likely words
+dresses a guess up as help, while naming them all says exactly what is known.
+They are named in the alphabetical order of `COMMAND_WORDS`, so one typo
+always draws one reply.
+
+Past three equally likely words the reply falls back to the pointer to `help`,
+because a list that long says only that TAB cannot tell. No typed word reaches
+that with the command words TAB has: `edit` and `exit` are the only two
+sharing a first letter, so at most two are ever named at once, and the limit
+is there for the command words it may gain.
+
+The comparison folds case, so `LIST` is read as an attempt at `list`, while
+the message quotes the word as it was typed, because a User who typed capitals
+needs to see them to recognise what they did. The quoted word is shortened the
+way a rejected field value is, so that a pasted line cannot push the rest of
+the message out of sight. Lengths are compared before any distance is, which
+also settles such a line against every command word without measuring it.
+
+A suggestion is never run. Dispatching `delete` for `dlte` would act on a word
+the User did not type, and a wrong guess there costs a student record, where a
+wrong suggestion costs a line of text. `StudentBookParser` raises the same
+`ParseException` as it does for any unknown word, which leaves the model, the
+saved file and the typed text in the command box as they were.
+
+The parser dispatches with a `switch` rather than from
+`CommandWords.COMMAND_WORDS`, so the two can disagree: a word missing from the
+list would work when typed while being suggested to nobody. `CommandWordsTest`
+resolves the command words out of the parser's own cases and compares them
+against the list rather than leaving that to be noticed.
+
 ### Follow-up flag
 
 `Flag` extends `Tag` and uses its validation, normalization, and display
@@ -463,9 +540,14 @@ per repetition, so an address with enough `.`-separated groups exhausts the
 stack. `StackOverflowError` is an `Error` that no parser catches, and
 `CommandBox` catches only `CommandException` and `ParseException`, so the User
 saw no feedback at all. 254 is the limit RFC 5321 section 4.5.3.1 puts on a
-forward path, so the bound comes from the domain rather than from the parser,
-and it is the only bound measured to be safe on every stack size tried: on a
-256 KB stack even a 513-character address overflows.
+forward path, so the bound comes from the domain rather than from the parser.
+It is not the product's only bound: a `NusStudentId` holds at most 32
+characters, while `Name`, `Phone` and `Tag` are checked for the content they
+hold rather than for their length, and take a value of any size. What is
+particular to this bound is its purpose, which is to keep `VALIDATION_REGEX`
+from walking an address long enough to exhaust the stack, and 254 is the
+longest measured to be safe on every stack size tried: on a 256 KB stack even
+a 513-character address overflows.
 
 `isValidEmail` deliberately keeps **no** length limit, so each input boundary
 can report length and format failures separately. Both `ParserUtil` and
@@ -477,8 +559,10 @@ boundary.
 
 `Messages.getErrorMessageForInvalidValue` shortens a rejected value past
 `MAX_QUOTED_VALUE_LENGTH` characters, so that a very long value cannot push the
-reason out of view. It counts Unicode code points so it does not cut an emoji
-in half. Command parsing and storage share that message, so both paths report
+reason out of view. It counts characters through `StringUtil.firstCharacters`,
+as a reader counts them, so it separates neither an emoji nor a letter from the
+accent that belongs to it; a student card cuts a name or a tag with the same
+helper. Command parsing and storage share that message, so both paths report
 the same invalid value consistently.
 
 `Phone` is **not** an identity field and **not** a key: two students may hold the
@@ -582,6 +666,54 @@ components of a Malaysian name, failed this way until the address field was
 removed and the `a/` prefix with it, and the rest failed until `add` and `edit`
 took positional arguments and command options instead. `Name` itself never
 needed changing.
+
+**Showing a long name.** A card gives the name one line, shared with the tags
+and the follow-up pill, so a name longer than `StudentCard.MAX_NAME_CHARACTERS`
+is cut and the whole of it is left on the card as a tooltip. The count is fixed
+rather than taken from the room the row has left over, so the same name breaks
+off in the same place on every card instead of moving as the rest of the card
+changes. A name within the count is cut all the same where the row runs out of
+room, so the name goes on the card through `UiText.showMiddleShortenedToFit`,
+which hands the label the whole name on hover whenever it is drawn narrower
+than its text needs. The tags take that path for the same reason.
+
+The cut is taken from the middle, keeping 13 characters of the start and 9 of
+the end. A cut at the close alone puts `Mohamed Abdul Rahman bin Ismail` and
+`Mohamed Abdul Rahman bin Ahmad` on two cards as the same text, and a reader
+scanning the list has nothing to tell the rows apart by; the end of a name is
+where two such students differ, which is what the 9 characters buy. Wrapping
+the name to a second line was weighed and dropped, because it lets any card
+grow to two lines tall and so costs the list more rows than the collision costs
+a reader, and the pill and the tags still have to fit beside the name. A name
+within one character of the count is left whole, since the ellipsis takes a
+place of its own and the cut would save no room. `UiText` counts both ends with
+`StringUtil.firstCharacters` and `StringUtil.lastCharacters`, so neither cut
+separates a letter from the accent that belongs to it nor an emoji from its
+other half.
+
+Two cuts reach the name and they have to agree on where they take text from.
+The count is the card's own and is applied before the card is laid out, so it
+depends on the name alone. The second is taken once the line knows how much
+room it has, and so depends on what the card carries beside the name.
+`CardName` takes that second cut itself, from the middle and through the same
+`StringUtil` counting, rather than leaving it to the label. A cut at the end
+would read as the same text on two cards: at the window's smallest width both
+`Mohamed Abdul Rahman bin Ismail` and `Mohamed Abdul Rahman bin Ahmad` drew as
+`Mohamed Abd...`. A label told to elide from the middle instead cuts at a
+character index, which falls between the two halves of a character Java stores
+in two, so `Alexander 𠮷田` drew as `Ale…` with the back half of its fourth
+character after it.
+
+`DarkTheme.css` therefore tells `.card-name` to clip, so that a cut `CardName`
+gets a pixel wrong shows a glyph against the edge rather than a broken one.
+That belongs in the stylesheet rather than beside the cut: an author
+stylesheet overrides what code sets on a styleable property, so a
+`setTextOverrun` call on the label would be dropped without a word.
+
+`CardName` asks for the room the whole name needs however little of it is
+drawn. The row shares its width out from what the name asks for, so a name
+that asked only for what it is drawn at would be handed less room on every
+pass, and the name and the tags beside it would chase each other down.
 
 ### Confirming a clear
 
@@ -1416,6 +1548,62 @@ testers are expected to do more *exploratory* testing.
       trailing whitespace only when the test data can be removed; it follows
       the documented clear flow.
 
+### Mistyping a command word
+
+1. A command word one slip away from a real one
+
+   1. Prerequisites: at least one student listed, and a copy of
+      `data/tab.json`.
+
+   1. Test case: `delte 1`<br>
+      Expected: The reply quotes `delte` and suggests `delete`. The student is
+      still listed, the JSON file matches the copy byte for byte, and
+      `delte 1` is still in the command box with the line red, so the missing
+      letter can be typed in rather than the command retyped.
+
+   1. Test cases: `Delte 1` and `DELTE 1`<br>
+      Expected: The same suggestion, with the word quoted in the case it was
+      typed in rather than in lower case.
+
+   1. Test cases: `lsit`, `hepl`, `addd`, and `clexr`<br>
+      Expected: Each suggests `list`, `help`, `add`, and `clear` respectively.
+      None of them runs: the list is unchanged, no help window opens, and no
+      student is added.
+
+   1. Test cases: `ls`, `dlte 1`, and `fit`<br>
+      Expected: Two letters out is still near enough, so `list`, `delete` and
+      `find` are suggested. None of them runs, and the list is unchanged.
+
+   1. Test cases: `felete 1` and `edlete 1`<br>
+      Expected: `delete` is suggested for both, the first letter being the
+      only thing out of place.
+
+1. A command word stopped partway
+
+   1. Test cases: `del 3`, `dele 3`, and `cle`<br>
+      Expected: `delete`, `delete` and `clear` are suggested. No student is
+      deleted and nothing is cleared.
+
+1. A command word that several commands answer to
+
+   1. Test cases: `e` and `eit`<br>
+      Expected: Both name `edit` and `exit`, in that order and in the same
+      order every time the word is entered again.
+
+1. A command word resembling nothing TAB knows
+
+   1. Test cases: `qwerty`, `rm`, `dlt 1`, and `日本語`<br>
+      Expected: Each reply quotes the word typed and points to `help`, with no
+      suggestion offered. `dlt` is two letters from `edit`, but opens with a
+      letter that command does not, so TAB offers nothing rather than guessing.
+      No help window opens until `help` itself is run.
+
+   1. Test case: paste a line of at least 80 characters with no spaces in it,
+      such as the letter `x` repeated.<br>
+      Expected: The reply quotes the opening 60 characters followed by an
+      ellipsis and still ends with the pointer to `help`, rather than running
+      off the result display.
+
 ### Follow-up status
 
 1. Adding students with and without follow-up
@@ -1525,6 +1713,31 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add John Doe -p 98765432`<br>
       Expected: No student is added. The status message reports that this student
       already exists in the student book, and no record is mutated.
+
+### Long names on a card
+
+1. Telling apart two names that share a start
+
+   1. Prerequisites: Launch the JAR and widen the window until a card has room
+      for a long name.
+
+   1. Test case: `add Mohamed Abdul Rahman bin Ismail -p 91234567`, then
+      `add Mohamed Abdul Rahman bin Ahmad -p 92345678`.<br>
+      Expected: The two cards read `Mohamed Abdul…in Ismail` and
+      `Mohamed Abdul…bin Ahmad`, so the names are distinguishable without
+      reading the index. Hovering over either name shows the whole of it.
+
+   1. Test case: narrow the window to its smallest width with both students
+      listed.<br>
+      Expected: The two names stay distinguishable. Each keeps its start and
+      its end around the ellipsis as the cards shrink, rather than both ending
+      up as the same text, and hovering still shows the whole name.
+
+1. Leaving a name that nearly fits alone
+
+   1. Test case: `add Jonathan Chuah Wei Ming -p 93456789`.<br>
+      Expected: The card shows the whole name with no ellipsis, because a cut
+      this close to the limit would save no room.
 
 ### Long value-option names
 
@@ -1794,8 +2007,9 @@ testers are expected to do more *exploratory* testing.
       green, `-p` and `-t` are mauve, and the remaining values are in ordinary
       text.
    1. Test case: type `addd` and press Enter.<br>
-      Expected: The whole line turns red and the reply says the command is
-      unknown. Typing another character takes the red off again.
+      Expected: The whole line turns red and the reply quotes `addd` and
+      suggests `add`, without adding anyone. Typing another character takes
+      the red off again.
 
 1. Checking a command longer than the line
 
@@ -1810,6 +2024,15 @@ testers are expected to do more *exploratory* testing.
    1. Test case: click in the middle of the command.<br>
       Expected: The caret lands on the character clicked, not one or two away
       from it.
+   1. Test case: with that command still typed, press `End`, then `Backspace`
+      three times, then `Ctrl`+`Backspace`, then click in the middle of what
+      is left.<br>
+      Expected: The caret lands on the character clicked after each of those
+      edits, rather than a few characters away from it.
+   1. Test case: with that command still typed, drag the right-hand edge of
+      the window in to narrow it, then click in the middle of the command.<br>
+      Expected: The command still runs to the edge of the line with the caret
+      in view, and the caret lands on the character clicked.
 
 ### The summary beside the list
 

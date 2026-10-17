@@ -2,6 +2,7 @@ package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -21,6 +22,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
+import javafx.scene.text.Text;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
@@ -30,12 +32,33 @@ public class StudentCardTest {
     private static final double CARD_WIDTH = 420;
     /** What the card cuts a name to, as the card states it. */
     private static final int MAX_NAME_CHARACTERS_UNDER_TEST = 22;
+    /** What a cut name keeps from its end, and what it keeps from its start, as UiText states it. */
+    private static final int NAME_CLOSING_CHARACTERS_UNDER_TEST = 9;
+    private static final int NAME_OPENING_CHARACTERS_UNDER_TEST =
+            MAX_NAME_CHARACTERS_UNDER_TEST - NAME_CLOSING_CHARACTERS_UNDER_TEST;
     /**
      * About what the list gives a card when the window opens at its default 740 width,
      * once the sidebar beside it has taken its own. The window's own minimum of 490 leaves
      * a card about 298 wide, which is the narrow end rather than the usual one.
      */
     private static final double DEFAULT_CARD_WIDTH = 546;
+    /**
+     * How much of what a name asks for its line is given, where a test needs the line to clip
+     * the name. Three quarters leaves the name short of what it asks for in any font, since
+     * the name is never drawn wider than the line it sits on.
+     */
+    private static final double NAME_ROOM_SHARE = 0.75;
+    /**
+     * How narrow a sweep takes the line, as a share of what the name asks for, and how far it
+     * moves between one width and the next. Where a line cuts a name is a matter of pixels,
+     * and the cut is not the worse for every width in turn: a width that leaves the name
+     * readable says nothing about the one a pixel below it. A sweep therefore visits every
+     * width, so that it meets every cut the line can make.
+     */
+    private static final double NARROWEST_SHARE = 0.2;
+    private static final double ONE_PIXEL = 1;
+    /** A character Java stores in two, as the Developer Guide's own example of one does. */
+    private static final String BEYOND_THE_BASIC_PLANE = "\uD842\uDFB7";
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -66,6 +89,15 @@ public class StudentCardTest {
 
     private static Label followUpLabelOf(Student student) throws Exception {
         return onFxThread(() -> (Label) new StudentCard(student, 1).getRoot().lookup("#followUp"));
+    }
+
+    private static Student studentNamed(String name) {
+        return new StudentBuilder().withName(name).withTags("alpha", "bravo").withFlag(true).build();
+    }
+
+    private static Label nameLabelOf(String name) throws Exception {
+        return onFxThread(() -> (Label) new StudentCard(
+                new StudentBuilder().withName(name).build(), 1).getRoot().lookup("#name"));
     }
 
     @Test
@@ -350,19 +382,267 @@ public class StudentCardTest {
     @Test
     public void constructor_aNameLongerThanTheCard_isCutWithTheWholeOnHover() throws Exception {
         String whole = "Siti Nur-Aisyah Binte Test Test Test Test Test Test Test";
-        Label shown = onFxThread(() -> (Label) new StudentCard(
-                new StudentBuilder().withName(whole).build(), 1).getRoot().lookup("#name"));
+        Label shown = nameLabelOf(whole);
 
-        assertTrue(shown.getText().length() < whole.length(), "the name should be cut");
-        assertTrue(shown.getText().endsWith("\u2026"), "and marked as cut");
+        assertEquals("Siti Nur-Aisy\u2026Test Test", shown.getText(), "both ends should be kept");
         assertNotNull(shown.getTooltip(), "the whole name should still be reachable");
         assertEquals(whole, shown.getTooltip().getText());
     }
 
     @Test
+    public void constructor_namesSharingTheirStart_readDifferently() throws Exception {
+        Label ismail = nameLabelOf("Mohamed Abdul Rahman bin Ismail");
+        Label ahmad = nameLabelOf("Mohamed Abdul Rahman bin Ahmad");
+
+        assertEquals("Mohamed Abdul\u2026in Ismail", ismail.getText());
+        assertEquals("Mohamed Abdul\u2026bin Ahmad", ahmad.getText());
+    }
+
+    @Test
+    public void constructor_namesSharingTheirStart_areDrawnApartAtEveryNarrowWidth() throws Exception {
+        String ismail = "Mohamed Abdul Rahman bin Ismail";
+        String ahmad = "Mohamed Abdul Rahman bin Ahmad";
+
+        List<String[]> drawn = onFxThread(() -> {
+            Label first = nameLaidOutRoomily(studentNamed(ismail));
+            Label second = nameLaidOutRoomily(studentNamed(ahmad));
+
+            // one line width for both, as a list gives every card the same width
+            List<String[]> pairs = new ArrayList<>();
+            for (double line : lineWidthsThatCut(first)) {
+                pairs.add(new String[] {
+                    drawnTextOf(onALineOf(first, line)),
+                    drawnTextOf(onALineOf(second, line)),
+                });
+            }
+            return pairs;
+        });
+
+        // the line cuts the name from its middle too, so what it leaves still holds the end
+        // of the name. Cut at the end instead, both cards drew "Mohamed Abd..."
+        for (String[] pair : drawn) {
+            assertNotEquals(pair[0], pair[1], "both cards drew " + pair[0]);
+            assertTrue(pair[0].endsWith("l"), "the end of the name is gone from " + pair[0]);
+            assertTrue(pair[1].endsWith("d"), "the end of the name is gone from " + pair[1]);
+        }
+    }
+
+    @Test
+    public void constructor_aNameHoldingACharacterStoredInTwo_isNeverDrawnInHalf() throws Exception {
+        // a cut by index between the two halves of such a character draws as a box. The line
+        // cuts at both ends of the name, so one of these sits in front of each cut
+        String pair = BEYOND_THE_BASIC_PLANE;
+        List<String> names = List.of(
+                "Alexander " + pair + "\u7530",
+                "Alexander Bernard Chris" + pair + "topher",
+                "Ale" + pair + "xander Bernard Christopher");
+
+        for (String whole : names) {
+            for (String drawn : drawnAcrossNarrowLines(studentNamed(whole))) {
+                assertTrue(holdsOnlyWholeCharacters(drawn),
+                        "half a character was left behind in " + drawn + " of " + whole);
+            }
+        }
+    }
+
+    @Test
+    public void constructor_aNameHoldingACombiningAccent_neverStrandsItFromItsLetter() throws Exception {
+        // an accent with no letter to compose with stays a character in its own right, and a
+        // cut in front of it leaves it standing on the ellipsis
+        String marked = "x\u0301";
+        List<String> names = List.of(
+                "Alexander " + marked + "e",
+                "Alexander Bernard Chris" + marked + "topher",
+                "Ale" + marked + "ander Bernard Christopher");
+
+        for (String whole : names) {
+            Student student = studentNamed(whole);
+            assertTrue(student.getName().fullName.indexOf('\u0301') >= 0,
+                    "the stored name holds no mark of its own, so this would prove nothing");
+            for (String drawn : drawnAcrossNarrowLines(student)) {
+                assertTrue(holdsNoStrandedMark(drawn),
+                        "an accent was left standing on its own in " + drawn + " of " + whole);
+            }
+        }
+    }
+
+    @Test
+    public void constructor_aNameAtOrOneOverTheCount_isShownWhole() throws Exception {
+        Label atTheCount = nameLabelOf("Jonathan Chua Wei Ming");
+        // one over, where the ellipsis would take back the one place the cut saves
+        Label oneOver = nameLabelOf("Jonathan Chuah Wei Ming");
+
+        assertEquals("Jonathan Chua Wei Ming", atTheCount.getText());
+        assertNull(atTheCount.getTooltip(), "a name that fits needs no tooltip");
+        assertEquals("Jonathan Chuah Wei Ming", oneOver.getText());
+        assertNull(oneOver.getTooltip(), "a name that fits needs no tooltip");
+    }
+
+    /**
+     * Returns the name on a card laid out at the width the card itself asks for, where nothing
+     * on it has had to give way. The scene dresses the card in the stylesheet first, so every
+     * width read off it afterwards is measured in the font the product draws.
+     */
+    private static Label nameLaidOutRoomily(Student student) {
+        Region root = (Region) new StudentCard(student, 1).getRoot();
+        assertNotNull(styledScene(root, CARD_WIDTH, 120));
+        layOutAt(root, root.prefWidth(-1));
+
+        Label name = (Label) root.lookup("#name");
+        assertTrue(name.getWidth() >= name.prefWidth(-1) - 0.5,
+                "the card should start out showing the whole of a name it asks "
+                + name.prefWidth(-1) + " for");
+        return name;
+    }
+
+    /**
+     * Narrows the card holding {@code name} until its first line is {@code lineWidth} wide.
+     *
+     * <p>The index, the pill and the padding hold their own width, so the whole of a change in
+     * the card's width reaches that line.
+     */
+    private static Label onALineOf(Label name, double lineWidth) {
+        Region root = (Region) name.getScene().getRoot();
+        double besideTheLine = root.getWidth() - ((Region) name.getParent()).getWidth();
+        layOutAt(root, besideTheLine + lineWidth);
+        return name;
+    }
+
+    /**
+     * Returns the name on a card whose first line is given {@link #NAME_ROOM_SHARE} of what the
+     * name by itself asks for, so that the line has too little for the name whatever the glyphs
+     * of the platform measure. A width in pixels would clip the name where the font is wide and
+     * leave it whole where the font is narrow.
+     */
+    private static Label clippedNameLabelOf(Student student) throws Exception {
+        return onFxThread(() -> {
+            Label name = nameLaidOutRoomily(student);
+            double wanted = name.prefWidth(-1);
+
+            // the name is drawn no wider than the line it sits on, so a line given a share of
+            // what the name asks for leaves the name short of it however the line shares it
+            // out with the tags beside it
+            onALineOf(name, wanted * NAME_ROOM_SHARE);
+
+            assertTrue(name.getWidth() < wanted - 0.5,
+                    "the line left the name its whole " + wanted + ", so nothing is clipped");
+            return name;
+        });
+    }
+
+    /** Draws {@code root} again at {@code width}, as a narrowing window would. */
+    private static void layOutAt(Region root, double width) {
+        root.resize(width, root.getHeight());
+        root.layout();
+    }
+
+    /** Returns what a card draws of {@code student}'s name at each width of the sweep. */
+    private static List<String> drawnAcrossNarrowLines(Student student) throws Exception {
+        return onFxThread(() -> {
+            Label name = nameLaidOutRoomily(student);
+
+            List<String> drawn = new ArrayList<>();
+            for (double line : lineWidthsThatCut(name)) {
+                drawn.add(drawnTextOf(onALineOf(name, line)));
+            }
+            return drawn;
+        });
+    }
+
+    /**
+     * Returns every width, a pixel apart, at which the line can take something off the name:
+     * from a fifth of what the name asks for, up to the width at which the line draws the
+     * name and the tags beside it whole. The tags take their room from the same line, so a
+     * line wider than the name alone can still cut it.
+     */
+    private static List<Double> lineWidthsThatCut(Label name) {
+        double narrowest = name.prefWidth(-1) * NARROWEST_SHARE;
+        double widestThatCuts = ((Region) name.getParent()).prefWidth(-1);
+
+        List<Double> widths = new ArrayList<>();
+        for (double line = narrowest; line <= widestThatCuts; line += ONE_PIXEL) {
+            widths.add(line);
+        }
+        return widths;
+    }
+
+    /** Returns true if no combining mark in {@code text} has been stranded from its letter. */
+    private static boolean holdsNoStrandedMark(String text) {
+        for (int at = 0; at < text.length(); at++) {
+            boolean isStranded = Character.getType(text.charAt(at)) == Character.NON_SPACING_MARK
+                    && (at == 0 || text.charAt(at - 1) == '\u2026');
+            if (isStranded) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns the glyphs {@code label} draws, which its own overrun has had its say on, rather
+     * than the text it was given. A row that runs out of room takes more off the text, and
+     * {@code getText} says nothing about that.
+     */
+    private static String drawnTextOf(Label label) {
+        Text drawn = (Text) label.lookup(".text");
+        assertNotNull(drawn, "the label has not been given a skin to draw with");
+        return drawn.getText();
+    }
+
+    @Test
+    public void constructor_aNameTheRowClips_isNamedOnHover() throws Exception {
+        // a name the count leaves whole, on a line too narrow to draw all of it beside the
+        // tags and the pill. The count takes nothing off it and the line clips it anyway
+        String whole = "Jonathan Chuah Wei Ming";
+
+        Label shown = clippedNameLabelOf(studentNamed(whole));
+
+        assertTrue(shown.getText().length() < whole.length(), "the line should have cut the name");
+        assertNotNull(shown.getTooltip(), "a name the row clipped should still be readable");
+        assertEquals(whole, shown.getTooltip().getText());
+    }
+
+    @Test
+    public void constructor_aShorterNameTheRowClips_isNamedOnHover() throws Exception {
+        // well inside the count, so this is the hole a cut by count never covered rather
+        // than the one at the count's own boundary
+        String whole = "Alexander Yeoh Boon";
+
+        Label shown = clippedNameLabelOf(studentNamed(whole));
+
+        assertTrue(shown.getText().length() < whole.length(), "the line should have cut the name");
+        assertNotNull(shown.getTooltip(), "a shorter name the row clipped should be readable too");
+        assertEquals(whole, shown.getTooltip().getText());
+    }
+
+    @Test
+    public void constructor_aNameTwoOverTheCount_isCut() throws Exception {
+        Label shown = nameLabelOf("Jonathan Cheong Wei Ming");
+
+        assertEquals("Jonathan Cheo\u2026Wei Ming", shown.getText());
+    }
+
+    @Test
+    public void constructor_aLongNameOfOneWord_isCutFromItsMiddle() throws Exception {
+        Label shown = nameLabelOf("Thirunavukkarasusubramaniam");
+
+        assertEquals("Thirunavukkar\u2026bramaniam", shown.getText());
+    }
+
+    @Test
+    public void constructor_aLongNameInAnotherScript_isCutFromItsMiddle() throws Exception {
+        Label shown = nameLabelOf("\u9648\u4F1F\u660E\u674E\u5C0F\u9F99\u738B\u5927\u9524"
+                + "\u5F20\u4E09\u4E30\u8D75\u56DB\u4E5D\u5B59\u609F\u7A7A\u8BF8\u845B"
+                + "\u4EAE\u5468\u6770\u502B");
+
+        assertEquals("\u9648\u4F1F\u660E\u674E\u5C0F\u9F99\u738B\u5927\u9524"
+                + "\u5F20\u4E09\u4E30\u8D75\u2026\u5B59\u609F\u7A7A\u8BF8\u845B"
+                + "\u4EAE\u5468\u6770\u502B", shown.getText());
+    }
+
+    @Test
     public void constructor_aShortName_isShownWholeAndWithoutATooltip() throws Exception {
-        Label shown = onFxThread(() -> (Label) new StudentCard(
-                new StudentBuilder().withName("Alex Yeoh").build(), 1).getRoot().lookup("#name"));
+        Label shown = nameLabelOf("Alex Yeoh");
 
         assertEquals("Alex Yeoh", shown.getText());
         assertNull(shown.getTooltip(), "a name that fits needs no tooltip");
@@ -395,7 +675,7 @@ public class StudentCardTest {
         }
 
         assertEquals(List.of(cut.get(0), cut.get(0), cut.get(0)), cut);
-        assertEquals("Siti Nur-Aisyah Binte\u2026", cut.get(0));
+        assertEquals("Siti Nur-Aisy\u2026ah Rahman", cut.get(0));
     }
 
     @Test
@@ -483,12 +763,13 @@ public class StudentCardTest {
     @Test
     public void constructor_aNameHoldingAnEmoji_doesNotCutItInHalf() throws Exception {
         // an emoji is two characters as Java stores it, so cutting at an index can leave half
-        // of one behind, which is drawn as a broken glyph. This one sits exactly where the
-        // card cuts the name
-        String whole = "A".repeat(MAX_NAME_CHARACTERS_UNDER_TEST - 1)
-                + "\uD83C\uDF93 and more besides";
-        Label shown = onFxThread(() -> (Label) new StudentCard(
-                new StudentBuilder().withName(whole).build(), 1).getRoot().lookup("#name"));
+        // of one behind, which is drawn as a broken glyph. One of these sits exactly where
+        // the card opens its cut and the other exactly where it closes it
+        String graduate = "\uD83C\uDF93";
+        String whole = "A".repeat(NAME_OPENING_CHARACTERS_UNDER_TEST - 1) + graduate
+                + " and more besides " + graduate
+                + "B".repeat(NAME_CLOSING_CHARACTERS_UNDER_TEST - 1);
+        Label shown = nameLabelOf(whole);
 
         String cut = shown.getText();
         assertTrue(holdsOnlyWholeCharacters(cut), "half an emoji was left behind in " + cut);
@@ -611,4 +892,47 @@ public class StudentCardTest {
         // count they cannot see
         assertTrue(unreadable.isEmpty(), "the name was squeezed away at: " + unreadable);
     }
+
+    @Test
+    public void setText_null_leavesTheNameHoldingNothingRatherThanFailing() throws Exception {
+        // a Label takes a null text, and a name that kept one would carry it into the width
+        // it reports and into the cut it makes from it
+        double empty = onFxThread(() -> {
+            CardName name = new CardName();
+            name.setText("Alexander Bernard Christopher");
+            name.setText(null);
+            return name.prefWidth(-1);
+        });
+
+        double never = onFxThread(() -> new CardName().prefWidth(-1));
+        assertEquals(never, empty, "a name given null should ask for the room an empty one does");
+    }
+
+    @Test
+    public void constructor_aClippedNameGivenItsRoomBack_losesTheTooltip() throws Exception {
+        // comfortably past the width the row keeps for a name, so the line is willing to cut
+        // it on any platform's glyphs, and well inside the count, so the count takes nothing
+        String whole = "Alexander Yeoh Boon";
+
+        String hovers = onFxThread(() -> {
+            Label name = nameLaidOutRoomily(studentNamed(whole));
+            double wanted = name.prefWidth(-1);
+            String roomy = name.getTooltip() == null ? "none" : "set";
+
+            onALineOf(name, wanted * NAME_ROOM_SHARE);
+            assertTrue(name.getText().length() < whole.length(), "the line should have cut the name");
+            String narrowed = name.getTooltip() == null ? "none" : "set";
+
+            // back to the width the card asks for, where the name and the tags both fit;
+            // the name's own width is not enough, because the tags take from the same line
+            Region root = (Region) name.getScene().getRoot();
+            layOutAt(root, root.prefWidth(-1));
+            assertEquals(whole, name.getText(), "the line should have given the name back");
+            return roomy + "," + narrowed + "," + (name.getTooltip() == null ? "none" : "set");
+        });
+
+        // the whole name is on the card again, so naming it on hover says nothing further
+        assertEquals("none,set,none", hovers);
+    }
+
 }

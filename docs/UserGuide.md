@@ -112,6 +112,38 @@ you meant to quote is not coloured as a quoted value, the parser will not read
 it as one either.
 </box>
 
+### Mistyping a command word
+
+If the first word of a command is not one TAB knows, the reply names the word
+you typed, and names the commands it was likely meant to be:
+
+* `del 3` answers `Unknown command "del". Did you mean delete?`
+* `delte 3` answers `Unknown command "delte". Did you mean delete?`
+* `eit` answers `Unknown command "eit". Did you mean edit or exit?`
+* `qwerty` answers `Unknown command "qwerty". Enter help to see every command.`
+
+A word that opens a command is read as that command being typed: `del` and
+`dele` reach `delete`, `cle` reaches `clear`, and `e` reaches both `edit` and
+`exit`. Every command the word opens is named, because TAB cannot tell which
+of them you meant.
+
+Any other word is matched letter by letter, and reaches a command when at most
+two letters have to be added, removed, swapped or replaced to turn it into
+that command, so `ls` reaches `list` and `dlte` reaches `delete`. A word that
+is two letters out has to start with the same letter as the command, since the
+first letter is the one you are least likely to get wrong. A word that is one
+letter out may differ in it, so `felete` still reaches `delete`.
+
+The comparison ignores case, so `Delte 3` is answered in the same way. A word
+that reaches nothing, such as `dlt`, is answered with the pointer to `help`.
+
+<box type="warning" seamless>
+
+**Caution:** TAB never runs the command it suggests. Nothing is added, changed
+or deleted by a mistyped command word, and what you typed stays in the command
+box, so you can correct the word rather than type the command again.
+</box>
+
 ### Reading the summary beside the list
 
 The panel on the left of the window summarises the students the list is
@@ -226,6 +258,12 @@ command feedback. A student without one has no placeholder or blank gap there.
 A flagged student's card carries a `Needs follow-up` marker at its right-hand
 edge, on the same line as the name, and the command result says so too.
 
+A name too long for a card is shortened with an ellipsis in its middle, which
+keeps both the start and the end of the name, so two students whose names begin
+alike still read as two. Hover over any name the card cannot show in full,
+whether it was shortened this way or left narrow by a crowded row, to see the
+whole of it.
+
 When a student is added, the command result displays the new record
 (`New student added: NAME; Phone: PHONE...`) so you can confirm the details
 immediately. Consistent with the student card, optional fields appear in the
@@ -302,6 +340,9 @@ done to it beyond the quotes any value with spaces takes:
 * To remove a student's email, use `-e ""`. A quoted value containing only spaces
   also removes it. Leaving out `-e` keeps the email unchanged; a bare `-e` is an
   error. Clearing an already absent email succeeds.
+* A new email may run to 254 characters, the same limit `add` applies. A longer
+  value is refused, TAB tells you how long it was, and the student's details
+  stay as they were.
 * To remove a student's NUS Student ID, use `--id ""` or `-i ""`. Leaving the
   option out keeps the NUS Student ID unchanged; a quoted value containing only
   spaces removes it, while a bare option is an error. Clearing an already absent

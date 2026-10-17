@@ -1,9 +1,8 @@
 package seedu.tab.ui;
 
-import java.text.BreakIterator;
-
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
+import seedu.tab.commons.util.StringUtil;
 
 /**
  * Text helpers for the parts of the window that show a value too long for the room they
@@ -12,6 +11,14 @@ import javafx.scene.control.Tooltip;
 final class UiText {
 
     private static final String ELLIPSIS = "…";
+
+    /**
+     * How many characters a cut from the middle keeps from the close of a value. Two names
+     * collide where a reader starts reading them, so what tells them apart is their close:
+     * nine characters hold a final word with the particle in front of it, as in "bin Ahmad".
+     * The rest of the count goes to the opening, which is what a reader scans the list by.
+     */
+    private static final int CLOSING_CHARACTERS = 9;
 
     private UiText() {} // this class only holds helpers
 
@@ -26,7 +33,15 @@ final class UiText {
      */
     static void showShortenedToFit(Label label, String value, int limit) {
         showShortened(label, value, limit);
+        nameWhatIsCutAsItIsDrawn(label, value);
+    }
+
+    private static void nameWhatIsCutAsItIsDrawn(Label label, String value) {
         label.widthProperty().addListener((unused, old, width) -> nameWhatIsCut(label, value));
+        // the width is known before the text that goes in it: a label that cuts its own text
+        // to the room it has does so while laying out, after the width has changed, so a
+        // check made on the width alone reads the text the label is about to replace
+        label.textProperty().addListener((unused, old, text) -> nameWhatIsCut(label, value));
         nameWhatIsCut(label, value);
     }
 
@@ -45,7 +60,7 @@ final class UiText {
      * tooltip, so a card summarises without the record becoming unreachable.
      */
     static void showShortened(Label label, String value, int limit) {
-        String shown = firstCharacters(value, limit);
+        String shown = StringUtil.firstCharacters(value, limit);
         if (shown.equals(value)) {
             label.setText(value);
             return;
@@ -57,26 +72,50 @@ final class UiText {
     }
 
     /**
-     * Returns the first {@code limit} characters of {@code value}, counted as a reader counts
-     * them rather than as Java stores them.
-     *
-     * <p>Cutting the string at an index cuts it between the two halves of an emoji, or
-     * between a letter and the accent that belongs to it, and what is left is drawn as a
-     * broken glyph. A name or a tag may hold either. Counting them the same way also keeps a
-     * value that is long in the way Java stores it, and short in the way it reads, from
-     * being marked as cut when nothing was taken off it.
+     * Puts {@code value} on {@code label}, cut from its middle to {@code limit} characters with
+     * an ellipsis stood in for what was taken, if it runs longer. Both ends of the value stay
+     * on the label, so two values that agree over their opening still read as two, and the
+     * whole of it is a hover away as the label's tooltip.
      */
-    private static String firstCharacters(String value, int limit) {
-        BreakIterator characters = BreakIterator.getCharacterInstance();
-        characters.setText(value);
-        int end = characters.first();
-        for (int counted = 0; counted < limit; counted++) {
-            int next = characters.next();
-            if (next == BreakIterator.DONE) {
-                return value;
-            }
-            end = next;
+    static void showMiddleShortened(Label label, String value, int limit) {
+        String shown = middleShortened(value, limit);
+        label.setText(shown);
+        if (!shown.equals(value)) {
+            label.setTooltip(new Tooltip(value));
         }
-        return value.substring(0, end);
+    }
+
+    /**
+     * Returns {@code value} cut from its middle to {@code limit} characters with an ellipsis
+     * stood in for what was taken, or {@code value} itself when it is already that short.
+     *
+     * <p>The ellipsis takes a place of its own, so a value one character over {@code limit} is
+     * no shorter cut than whole. A value that close to the count is left whole rather than
+     * hiding a character behind a mark that buys no room back.
+     */
+    static String middleShortened(String value, int limit) {
+        if (StringUtil.firstCharacters(value, limit + 1).equals(value)) {
+            return value;
+        }
+        int closing = Math.min(CLOSING_CHARACTERS, limit / 2);
+        String opening = StringUtil.firstCharacters(value, limit - closing);
+        // the ellipsis reads as part of the words it joins, so it sits against both of them
+        // rather than off behind a space either cut happened to land on
+        return opening.stripTrailing() + ELLIPSIS
+                + StringUtil.lastCharacters(value, closing).stripLeading();
+    }
+
+    /**
+     * Puts {@code value} on {@code label} cut from its middle, and names the whole of it on
+     * hover whenever the label shows less than all of it: cut to the count, or drawn narrower
+     * than the text it holds needs.
+     *
+     * <p>A value within the count is cut all the same by the room its row has left over, and
+     * the label's own ellipsis says nothing about what it took. A name is worse off for that
+     * than a tag is, since a card holds nothing else that would identify the student.
+     */
+    static void showMiddleShortenedToFit(Label label, String value, int limit) {
+        showMiddleShortened(label, value, limit);
+        nameWhatIsCutAsItIsDrawn(label, value);
     }
 }

@@ -24,6 +24,11 @@ public class StudentCard extends UiPart<Region> {
      * the tags and the pill, so a name longer than this is cut rather than taking the row.
      * The whole of it is still a hover away. The count is what a name is cut to, whatever
      * else the card holds, so every long name on the list breaks off at the same place.
+     *
+     * <p>The cut is taken from the middle. Students who share the front of a name are common
+     * enough in a tutorial group, and a cut at the close puts two of them on the list as the
+     * same text, which leaves a reader scanning it nothing to go by. Keeping the end of the
+     * name as well tells the two cards apart on sight.
      */
     private static final int MAX_NAME_CHARACTERS = 22;
 
@@ -63,7 +68,7 @@ public class StudentCard extends UiPart<Region> {
         super(FXML);
         this.student = student;
         id.setText(String.valueOf(displayedIndex));
-        UiText.showShortened(name, student.getName().fullName, MAX_NAME_CHARACTERS);
+        UiText.showMiddleShortenedToFit(name, student.getName().fullName, MAX_NAME_CHARACTERS);
         phone.setText(student.getPhone().value);
         show(email, student.getEmail().map(Email::toString).orElse(null));
         show(followUp, student.getFlag().map(flag -> flag.tagName).orElse(null));
