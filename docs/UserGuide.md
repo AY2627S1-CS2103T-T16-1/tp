@@ -112,6 +112,27 @@ you meant to quote is not coloured as a quoted value, the parser will not read
 it as one either.
 </box>
 
+### Mistyping a command word
+
+If the first word of a command is not one TAB knows, the reply names the word
+you typed, and names the command it was likely meant to be whenever one is a
+near enough match:
+
+* `delte 3` answers `Unknown command "delte". Did you mean delete?`
+* `qwerty` answers `Unknown command "qwerty". Enter help to see every command.`
+
+The comparison ignores case, so `Delte 3` is answered in the same way. A
+suggestion is worth making only for a near miss, so a short command word is
+suggested for a single slip alone: `delte` and `dlte` both point to `delete`,
+while `fit` points nowhere, being as much an attempt at `find` as at `list`.
+
+<box type="warning" seamless>
+
+**Caution:** TAB never runs the command it suggests. Nothing is added, changed
+or deleted by a mistyped command word, and what you typed stays in the command
+box, so you can correct the word rather than type the command again.
+</box>
+
 ### Reading the summary beside the list
 
 The panel on the left of the window summarises the students the list is
