@@ -127,6 +127,16 @@ to tags. When that leaves no room for a tag chip, `TagRow` uses the shorter
 `N tags` total instead of `N more…`, preserving a complete count beside the
 name. Its tooltip still lists every hidden tag.
 
+#### Keeping contact details readable
+
+`StudentListCard.fxml` gives NUS Student ID, phone and email separate lines in
+its details `VBox`. Each label may shrink to the available width rather than
+forcing a sibling outside the card. This keeps the email visible even beside
+an annotated phone. `UiText.showToFit` gives phone and email their complete
+values on hover when the line elides them, and removes the tooltip when the
+window becomes wide enough. Absent optional fields remain unmanaged, so no
+blank line is reserved for them.
+
 #### Colouring the command line
 
 `CommandTextField` converts tab and line separators to spaces in text
@@ -1750,6 +1760,27 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add John Doe -p 98765432`<br>
       Expected: No student is added. The status message reports that this student
       already exists in the student book, and no record is mutated.
+
+### Long contact details on a card
+
+1. Reading an annotated phone and an email
+
+   1. Test case: `add Priya Nair -p "1234 5678 (HP) 1111-3333 (Office)" -e e0923841@u.nus.edu -t T1 --follow-up`.
+      Narrow the window to its minimum width (490 px).<br>
+      Expected: Phone and email occupy separate visible lines. A value too
+      wide for its line ends with an ellipsis. Hovering shows the complete
+      corresponding phone or email, including the text after the cut.
+   1. Test case: `add Ravi Kumar -p "+65 6516 2727 ext 21 (office, Mon-Fri 9-5), +65 9123 4567 (HP, after 6pm)" -e e0923841@u.nus.edu`.<br>
+      Expected: Both contacts remain visible at default and minimum widths,
+      including without a follow-up marker. Add `--id A01234567X` with `edit`
+      and check that the ID takes its own line without hiding either contact.
+   1. Widen the window until both contacts fit.<br>
+      Expected: Complete values appear without ellipses, and their hover
+      tooltips are removed. Exit and reopen TAB; the full contact values
+      remain stored, regardless of how much was visible before exiting.
+   1. Test case: `add Mei Lin -p 91234567`.<br>
+      Expected: The ordinary phone remains readable. Absent email and NUS
+      Student ID leave no blank lines.
 
 ### Long names on a card
 

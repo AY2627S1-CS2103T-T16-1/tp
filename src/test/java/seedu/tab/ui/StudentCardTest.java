@@ -130,6 +130,48 @@ public class StudentCardTest {
     }
 
     @Test
+    public void constructor_longPhone_keepsBothContactsInsideCard() throws Exception {
+        for (String number : List.of("1234 5678 (HP) 1111-3333 (Office)",
+                "+65 6516 2727 ext 21 (office, Mon-Fri 9-5), +65 9123 4567 (HP, after 6pm)")) {
+            for (boolean isFlagged : List.of(false, true)) {
+                Student student = new StudentBuilder().withPhone(number).withEmail("e0923841@u.nus.edu")
+                        .withFlag(isFlagged).withNusStudentId("A01234567X").build();
+                for (double width : List.of(298.0, DEFAULT_CARD_WIDTH)) {
+                    assertContactDetailsReadable(student, width);
+                }
+            }
+        }
+    }
+
+    private static void assertContactDetailsReadable(Student student, double width) throws Exception {
+        onFxThread(() -> {
+            Region root = new StudentCard(student, 1).getRoot();
+            assertNotNull(styledScene(root, width, 160));
+            Region details = (Region) root.lookup("#details");
+            Label phone = (Label) root.lookup("#phone");
+            Label email = (Label) root.lookup("#email");
+            for (Label label : List.of(phone, email)) {
+                assertHorizontallyInside(details.localToScene(details.getBoundsInLocal()),
+                        label.localToScene(label.getBoundsInLocal()), label == phone ? "phone" : "email");
+                if (label.getWidth() < label.prefWidth(-1) - 0.5) {
+                    assertNotNull(label.getTooltip());
+                    assertEquals(label.getText(), label.getTooltip().getText());
+                    assertTrue(label.lookupAll(".text").stream().filter(Text.class::isInstance)
+                            .map(Text.class::cast)
+                            .anyMatch(text -> text.getText().endsWith(label.getEllipsisString())));
+                }
+            }
+            assertEquals(student.getPhone().value, phone.getText());
+            assertEquals(student.getEmail().orElseThrow().toString(), email.getText());
+            assertTrue(phone.getBoundsInParent().getMaxY() <= email.getBoundsInParent().getMinY());
+            layOutAt(root, root.prefWidth(-1));
+            assertNull(phone.getTooltip(), "a phone that fits needs no tooltip");
+            assertNull(email.getTooltip(), "an email that fits needs no tooltip");
+            return null;
+        });
+    }
+
+    @Test
     public void constructor_studentWithoutEmail_leavesTheRowOut() throws Exception {
         Student student = new StudentBuilder().withoutEmail().build();
         Label email = emailLabelOf(student);
@@ -257,17 +299,20 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_phoneAndEmail_shareTheSecondaryLine() throws Exception {
+    public void constructor_phoneAndEmail_haveSeparateLines() throws Exception {
         Student student = new StudentBuilder().withPhone("91234567")
                 .withEmail("alice@example.com").build();
         StudentCard card = onFxThread(() -> new StudentCard(student, 1));
         Label phone = (Label) card.getRoot().lookup("#phone");
         Label email = (Label) card.getRoot().lookup("#email");
 
-        // the mockup drops the phone, but it is the one required contact field, so it stays
-        assertEquals(phone.getParent(), email.getParent());
-        assertTrue(phone.isVisible());
-        assertTrue(email.isVisible());
+        onFxThread(() -> {
+            assertNotNull(styledScene(card.getRoot(), CARD_WIDTH, 120));
+            assertTrue(phone.getBoundsInParent().getMaxY() <= email.getBoundsInParent().getMinY());
+            assertTrue(phone.isVisible());
+            assertTrue(email.isVisible());
+            return null;
+        });
     }
 
     @Test
