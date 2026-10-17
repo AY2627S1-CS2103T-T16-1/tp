@@ -1,0 +1,11 @@
+{
+  "students": [ {
+    "name": "Tan Wei Ming",
+    "phone": "91234567",
+    "nusStudentId": "A01234567X"
+  }, {
+    "name": "Lee Wei Ming",
+    "phone": "92345678",
+    "nusStudentId": "a01234567x"
+  } ]
+}

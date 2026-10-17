@@ -119,6 +119,15 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_duplicateNusStudentId_reportsNormalizedId() {
+        String expectedMessage = "Student record 2 (\"Lee Wei Ming\"): NUS Student ID A01234567X "
+                + "is already used by another student record.";
+
+        assertThrows(DataLoadingException.class, expectedMessage, () ->
+                readStudentBook("duplicateNusStudentIdStudentBook.json"));
+    }
+
+    @Test
     public void readStudentBook_fileHoldingTheRemovedAddressField_loadsWithoutIt() throws Exception {
         // Every data file written before the address field was removed still holds an
         // "address" key. Those files have to keep loading, with the key ignored.
@@ -257,6 +266,28 @@ public class JsonStudentBookStorageTest {
         assertTrue(savedJson.contains("\"nusStudentId\" : \"A01234567X\""));
         assertEquals(1, savedJson.split("\"nusStudentId\"", -1).length - 1);
         assertEquals(original, new StudentBook(storage.readStudentBook(filePath).get()));
+    }
+
+    @Test
+    public void readAndSaveStudentBook_sameNameWithDifferentOrAbsentNusStudentIds_roundTrips() throws Exception {
+        Path filePath = testFolder.resolve("StudentsWithSameName.json");
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withPhone("91234567")
+                .withNusStudentId("A01234567X").build();
+        Student second = new StudentBuilder(first).withPhone("92345678")
+                .withNusStudentId("A76543210Y").build();
+        Student withoutNusStudentId = new StudentBuilder(first).withPhone("93456789")
+                .withoutNusStudentId().build();
+        StudentBook original = new StudentBook();
+        original.addStudent(first);
+        original.addStudent(second);
+        original.addStudent(withoutNusStudentId);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        storage.saveStudentBook(original, filePath);
+        ReadOnlyStudentBook readBack = storage.readStudentBook(filePath).get();
+
+        assertEquals(original, new StudentBook(readBack));
+        assertEquals(3, readBack.getStudentList().size());
     }
 
     @Test
