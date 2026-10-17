@@ -611,6 +611,21 @@ place of its own and the cut would save no room. `UiText` counts both ends with
 separates a letter from the accent that belongs to it nor an emoji from its
 other half.
 
+Two cuts reach the name and they have to agree on where they take text from.
+The count is the card's own and is applied before the card is laid out, so it
+depends on the name alone. The row's overrun is JavaFX's, applied to whatever
+the label was handed once the line knows how much room it has, so it depends
+on what the card carries beside the name. `DarkTheme.css` therefore gives
+`.card-name` `-fx-text-overrun: center-ellipsis`, so that the second cut takes
+its text out of the middle as the first one did. With the trailing default, a
+card at the window's smallest width drew both `Mohamed Abdul Rahman bin
+Ismail` and `Mohamed Abdul Rahman bin Ahmad` as `Mohamed Abd...`, taking the
+end of the name straight back off. The same rule sets `-fx-ellipsis-string` to
+the character the card cuts with, so a name that both cuts reach does not
+carry two kinds of ellipsis. The overrun has to live in the stylesheet: an
+author stylesheet overrides what code sets on a styleable property, so a
+`setTextOverrun` call on the label would be dropped without a word.
+
 ### Confirming a clear
 
 `ClearCommand.execute` returns a prompt containing the whole-book count,
@@ -1566,6 +1581,12 @@ testers are expected to do more *exploratory* testing.
       Expected: The two cards read `Mohamed Abdul…in Ismail` and
       `Mohamed Abdul…bin Ahmad`, so the names are distinguishable without
       reading the index. Hovering over either name shows the whole of it.
+
+   1. Test case: narrow the window to its smallest width with both students
+      listed.<br>
+      Expected: The two names stay distinguishable. Each keeps its start and
+      its end around the ellipsis as the cards shrink, rather than both ending
+      up as the same text, and hovering still shows the whole name.
 
 1. Leaving a name that nearly fits alone
 
