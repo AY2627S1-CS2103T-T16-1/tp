@@ -2008,8 +2008,9 @@ testers are expected to do more *exploratory* testing.
 
    1. Copy two adjacent spreadsheet cells containing `Wei Ming` and `Tan`.
    1. Type `add `, paste the cells, then type ` -p 91234567`.<br>
-      Expected: The field reads `add Wei Ming Tan -p 91234567`, with a space
-      between the cell values and matching command colours.
+      Expected: `Wei Ming` and `Tan` remain separate words, with matching
+      command colours. A trailing line break copied by the spreadsheet can
+      leave an extra space before `-p`; this does not change the command.
    1. Press Enter.<br>
       Expected: One student named `Wei Ming Tan` is added.
    1. Paste two lines into a selected part of another command.<br>
