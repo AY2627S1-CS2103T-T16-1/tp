@@ -252,16 +252,25 @@ public class StudentBookParserTest {
     }
 
     @Test
-    public void parseCommand_equallyNearCommands_suggestsTheAlphabeticallyFirst() {
-        // "eit" is one letter short of both edit and exit, so the answer has to be settled
-        // rather than left to whichever command the parser happens to reach first
-        assertThrows(ParseException.class, "Unknown command \"eit\". Did you mean edit?", ()
+    public void parseCommand_equallyNearCommands_namesEveryOneOfThem() {
+        // "eit" is one letter short of both edit and exit, and naming one of the two would
+        // read as knowledge TAB does not have
+        assertThrows(ParseException.class, "Unknown command \"eit\". Did you mean edit or exit?", ()
             -> parser.parseCommand("eit"));
+        assertThrows(ParseException.class, "Unknown command \"eli\". Did you mean edit, exit or help?", ()
+            -> parser.parseCommand("eli"));
+    }
+
+    @Test
+    public void parseCommand_moreNearCommandsThanAreWorthNaming_pointsToHelp() {
+        // "fit" is two edits from edit, exit, find and list alike
+        assertThrows(ParseException.class, Messages.getErrorMessageForUnknownCommand("fit"), ()
+            -> parser.parseCommand("fit"));
     }
 
     @Test
     public void parseCommand_wordFarFromEveryCommand_pointsToHelp() {
-        for (String input : List.of("qwerty", "remove 3", "a", "?", "日本語", "удалить")) {
+        for (String input : List.of("qwerty", "remove 3", "?", "日本語", "удалить")) {
             String word = input.split(" ")[0];
             assertThrows(ParseException.class, Messages.getErrorMessageForUnknownCommand(word), ()
                 -> parser.parseCommand(input));
@@ -282,7 +291,7 @@ public class StudentBookParserTest {
         for (String commandWord : CommandWords.COMMAND_WORDS) {
             String message = messageFromParsing(commandWord);
             assertNotEquals(Messages.getErrorMessageForUnknownCommand(commandWord), message);
-            assertNotEquals(Messages.getErrorMessageForMistypedCommand(commandWord, commandWord), message);
+            assertNotEquals(Messages.getErrorMessageForMistypedCommand(commandWord, List.of(commandWord)), message);
         }
     }
 

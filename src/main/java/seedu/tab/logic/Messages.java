@@ -1,6 +1,7 @@
 package seedu.tab.logic;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -76,12 +77,27 @@ public class Messages {
     }
 
     /**
-     * Returns feedback naming the word that is no command of TAB's and the command it was
-     * likely meant to be. The suggestion is shown rather than run, so that a wrong guess
+     * Returns feedback naming the word that is no command of TAB's and the commands it was
+     * likely meant to be. Every equally likely command is named, because choosing between
+     * them is the User's to make. They are shown rather than run, so that a wrong reading
      * costs the User nothing but the retyping they were facing anyway.
      */
-    public static String getErrorMessageForMistypedCommand(String commandWord, String suggestion) {
-        return String.format(MESSAGE_MISTYPED_COMMAND, shorten(commandWord), suggestion);
+    public static String getErrorMessageForMistypedCommand(String commandWord, List<String> suggestions) {
+        assert !suggestions.isEmpty();
+
+        return String.format(MESSAGE_MISTYPED_COMMAND, shorten(commandWord), listAlternatives(suggestions));
+    }
+
+    /**
+     * Returns {@code alternatives} as a sentence reads them: "list", "find or list", or
+     * "edit, find or list".
+     */
+    private static String listAlternatives(List<String> alternatives) {
+        int lastIndex = alternatives.size() - 1;
+        if (lastIndex == 0) {
+            return alternatives.get(0);
+        }
+        return String.join(", ", alternatives.subList(0, lastIndex)) + " or " + alternatives.get(lastIndex);
     }
 
     /**
