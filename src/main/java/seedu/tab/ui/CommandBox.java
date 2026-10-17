@@ -36,6 +36,10 @@ public class CommandBox extends UiPart<Region> {
 
     private final CommandExecutor commandExecutor;
     private final BooleanSupplier canSubmitEmptyReply;
+    private final ChangeListener<Number> theFieldScrolled = (unused, old, now) -> layOutColours();
+
+    /** The node the field draws its own text in, while the copy is following it. */
+    private Text followed;
 
     @FXML
     private TextField commandTextField;
@@ -150,6 +154,7 @@ public class CommandBox extends UiPart<Region> {
      * it is drawn wherever the field is drawing its own text.
      */
     private void layOutColours() {
+        followTheFieldsText();
         // JavaFX moves the caret before it reports the new text, so this runs once against
         // the copy of the previous command. The recolour that follows puts it right.
         if (!copyMatchesField()) {
@@ -196,6 +201,34 @@ public class CommandBox extends UiPart<Region> {
     private double whereTheFieldDrawsItsText() {
         Text drawn = fieldText();
         return drawn == null ? halfACaret() : drawn.getLayoutX() + drawn.getTranslateX();
+    }
+
+    /**
+     * Keeps the copy following the node the field draws its own text in.
+     *
+     * <p>The field's skin moves that node on its own account, after a delete, a replace or a
+     * change of width, and long after the caret and the text it was told about have settled.
+     * Nothing else says that it has, so the copy would be left where the command used to be
+     * drawn and a click would land on the character the command used to have there.
+     *
+     * <p>The node is followed rather than remembered: an empty line shows the prompt, which
+     * the field draws in a node of the same kind, so which node carries the command changes
+     * with the command itself, and a listener left on the one before it stops firing.
+     */
+    private void followTheFieldsText() {
+        Text drawn = fieldText();
+        if (drawn == followed) {
+            return;
+        }
+        if (followed != null) {
+            followed.layoutXProperty().removeListener(theFieldScrolled);
+            followed.translateXProperty().removeListener(theFieldScrolled);
+        }
+        followed = drawn;
+        if (drawn != null) {
+            drawn.layoutXProperty().addListener(theFieldScrolled);
+            drawn.translateXProperty().addListener(theFieldScrolled);
+        }
     }
 
     /**
