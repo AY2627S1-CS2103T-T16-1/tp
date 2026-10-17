@@ -857,8 +857,11 @@ public class StudentCardTest {
                 assertNotNull(styledScene(root, at, 120));
                 return visibleChipsOf(root);
             });
-            boolean saysMore = chips.stream().anyMatch(chip -> chip.endsWith("more\u2026"));
-            if (chips.size() < 3 && !saysMore) {
+            // the row counts what it left out while a chip is shown, and counts the tags
+            // themselves once it has given up its last chip; either says how many there are
+            boolean saysHowMany = chips.stream()
+                    .anyMatch(chip -> chip.endsWith("more\u2026") || chip.endsWith(" tags"));
+            if (chips.size() < 3 && !saysHowMany) {
                 silent.add(at + ": " + chips);
             }
         }
