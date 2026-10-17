@@ -120,8 +120,8 @@ public class HelpWindowTest {
             return helpWindow;
         });
         try {
-            // A second dispatch runs after show()'s queued re-fit, while the window stays open.
-            double[] measured = onFxThread(() -> {
+            // Wait for native window changes and layout, keeping the window open for measurement.
+            double[] measured = FxToolkit.afterPulse(() -> {
                 assertTrue(window.isShowing(), "the window should stay open until it is measured");
                 Stage stage = window.getRoot();
                 Region content = (Region) stage.getScene().getRoot();
