@@ -1737,6 +1737,16 @@ testers are expected to do more *exploratory* testing.
       its end around the ellipsis as the cards shrink, rather than both ending
       up as the same text, and hovering still shows the whole name.
 
+1. Reading a short name cut by a narrow card
+
+   1. Add `add Siti Nur-Aisyah Hassan -p 91234567 -t T01 -t "Lab 3" -f` and
+      `add Siti Nur-Aisyah Hamid -p 98765432 -t T02 -t "Lab 4" -f`.
+   1. Narrow the window to its minimum width and hover over each shortened name.<br>
+      Expected: Each tooltip shows the corresponding complete name, even though
+      neither name exceeds the card's character limit.
+   1. Widen the window until both names fit.<br>
+      Expected: Each name appears in full and its tooltip is removed.
+
 1. Leaving a name that nearly fits alone
 
    1. Test case: `add Jonathan Chuah Wei Ming -p 93456789`.<br>
