@@ -107,13 +107,74 @@ public class ThemeTest {
         assertTrue(twice.isEmpty(), "these are set more than once, and only the last counts: " + twice);
     }
 
+    @Test
+    public void declarationsIn_aSelectorListOverSeveralLines_countsEverySelector() {
+        // six rules in the stylesheet head their selectors a line at a time, and a reading
+        // that starts at the brace sees only the last of them
+        List<String> declarations = declarationsIn("""
+                .one,
+                .two > .child {
+                    -fx-background-color: red;
+                }
+                """);
+
+        assertEquals(List.of(".one: -fx-background-color", ".two > .child: -fx-background-color"),
+                declarations);
+    }
+
+    @Test
+    public void declarationsIn_twoDeclarationsOnOneLine_countsBoth() {
+        List<String> declarations = declarationsIn(".one { -fx-text-fill: red; -fx-text-fill: blue; }");
+
+        assertEquals(List.of(".one: -fx-text-fill", ".one: -fx-text-fill"), declarations);
+    }
+
+    @Test
+    public void declarationsIn_aRuleCommentedOut_countsNothing() {
+        // a rule someone has put out of action sets nothing, so reading it as a duplicate
+        // would report a clash that the window never sees
+        List<String> declarations = declarationsIn("""
+                /*
+                .one {
+                    -fx-text-fill: red;
+                }
+                */
+                .two {
+                    -fx-text-fill: blue;
+                }
+                """);
+
+        assertEquals(List.of(".two: -fx-text-fill"), declarations);
+    }
+
+    @Test
+    public void declarationsIn_aColonInsideAValue_isNotReadAsAProperty() {
+        // reading a body declaration at a time rather than a line at a time puts a colon in
+        // a value within reach of the name, so this holds the name to what precedes it
+        List<String> declarations = declarationsIn(".one { -fx-background-image: url(\"a:/b.png\"); }");
+
+        assertEquals(List.of(".one: -fx-background-image"), declarations);
+    }
+
     /**
      * Every property the stylesheet sets, written as "selector: property". A block heading
      * several selectors sets the property on each of them.
      */
     private static List<String> declarationsIn(Path stylesheet) throws IOException {
-        String css = Files.readString(stylesheet, StandardCharsets.UTF_8);
-        Matcher rules = Pattern.compile("(?m)^([.#*][^{\\n]*?)\\s*\\{([^}]*)\\}").matcher(css);
+        return declarationsIn(Files.readString(stylesheet, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Every property {@code css} sets, written as "selector: property". A block heading
+     * several selectors sets the property on each of them.
+     *
+     * <p>Comments go first, so a rule someone has commented out is not read as one in force.
+     * A selector list may run over several lines, and a line may hold more than one
+     * declaration, so neither the rule nor the property is looked for a line at a time.
+     */
+    private static List<String> declarationsIn(String css) {
+        String withoutComments = css.replaceAll("(?s)/\\*.*?\\*/", "");
+        Matcher rules = Pattern.compile("([.#*][^{}]*?)\\s*\\{([^{}]*)\\}").matcher(withoutComments);
 
         List<String> declarations = new ArrayList<>();
         while (rules.find()) {
@@ -126,13 +187,26 @@ public class ThemeTest {
         return declarations;
     }
 
-    /** The properties a rule's body sets, in the order it sets them. */
+    /**
+     * The properties a rule's body sets, in the order it sets them.
+     *
+     * <p>The body is read declaration by declaration rather than line by line, because a
+     * line may hold several, and the name is taken from before the colon so that a colon
+     * inside a value is not read as one.
+     */
     private static List<String> propertiesSetIn(String body) {
-        String withoutComments = body.replaceAll("(?s)/\\*.*?\\*/", "");
-        return Pattern.compile("(?m)^\\s*(-?[a-zA-Z][a-zA-Z0-9-]*)\\s*:").matcher(withoutComments)
-                .results()
-                .map(result -> result.group(1))
-                .toList();
+        List<String> properties = new ArrayList<>();
+        for (String declaration : body.split(";")) {
+            int colon = declaration.indexOf(':');
+            if (colon < 0) {
+                continue;
+            }
+            String name = declaration.substring(0, colon).trim();
+            if (name.matches("-?[a-zA-Z][a-zA-Z0-9-]*")) {
+                properties.add(name);
+            }
+        }
+        return properties;
     }
 
     /** The palette names the stylesheet defines, which is what the top block is for. */
