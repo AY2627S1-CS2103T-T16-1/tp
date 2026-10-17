@@ -189,6 +189,62 @@ public class StringUtilTest {
         assertFalse(StringUtil.isWhitespace('\u001C'), "a file separator is not a space");
     }
 
+    //---------------- Tests for editDistance --------------------------------------
+
+    @Test
+    public void editDistance_identicalStrings_returnsZero() {
+        assertEquals(0, StringUtil.editDistance("delete", "delete"));
+        assertEquals(0, StringUtil.editDistance("", ""));
+    }
+
+    @Test
+    public void editDistance_oneEditApart_returnsOne() {
+        assertEquals(1, StringUtil.editDistance("delte", "delete")); // missing letter
+        assertEquals(1, StringUtil.editDistance("deletee", "delete")); // extra letter
+        assertEquals(1, StringUtil.editDistance("lsit", "list")); // swapped letters
+        assertEquals(1, StringUtil.editDistance("lixt", "list")); // wrong letter
+    }
+
+    @Test
+    public void editDistance_twoEditsApart_returnsTwo() {
+        assertEquals(2, StringUtil.editDistance("dlte", "delete")); // two missing letters
+        assertEquals(2, StringUtil.editDistance("ls", "list"));
+        assertEquals(2, StringUtil.editDistance("lixtt", "list"));
+    }
+
+    @Test
+    public void editDistance_unrelatedStrings_returnsThreeOrMore() {
+        assertEquals(3, StringUtil.editDistance("cat", "add"));
+        assertEquals(3, StringUtil.editDistance("list", "find"));
+        assertEquals(6, StringUtil.editDistance("", "delete"));
+    }
+
+    @Test
+    public void editDistance_caseAndAccents_countAsEdits() {
+        assertEquals(1, StringUtil.editDistance("List", "list"));
+        assertEquals(4, StringUtil.editDistance("LIST", "list"));
+        assertEquals(1, StringUtil.editDistance("lïst", "list"));
+    }
+
+    @Test
+    public void editDistance_isSymmetric() {
+        assertEquals(StringUtil.editDistance("delte", "delete"), StringUtil.editDistance("delete", "delte"));
+        assertEquals(StringUtil.editDistance("ca", "abc"), StringUtil.editDistance("abc", "ca"));
+    }
+
+    @Test
+    public void editDistance_swapWithAnEditBetweenIt_countsBothEdits() {
+        // the optimal string alignment reading: "ca" and "abc" are a swap and an insertion
+        // apart, but the insertion falls between the swapped pair, so it counts as three
+        assertEquals(3, StringUtil.editDistance("ca", "abc"));
+    }
+
+    @Test
+    public void editDistance_nullArgument_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StringUtil.editDistance(null, "list"));
+        assertThrows(NullPointerException.class, () -> StringUtil.editDistance("list", null));
+    }
+
     //---------------- Tests for firstCharacters --------------------------------------
 
     @Test

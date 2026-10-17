@@ -112,6 +112,38 @@ you meant to quote is not coloured as a quoted value, the parser will not read
 it as one either.
 </box>
 
+### Mistyping a command word
+
+If the first word of a command is not one TAB knows, the reply names the word
+you typed, and names the commands it was likely meant to be:
+
+* `del 3` answers `Unknown command "del". Did you mean delete?`
+* `delte 3` answers `Unknown command "delte". Did you mean delete?`
+* `eit` answers `Unknown command "eit". Did you mean edit or exit?`
+* `qwerty` answers `Unknown command "qwerty". Enter help to see every command.`
+
+A word that opens a command is read as that command being typed: `del` and
+`dele` reach `delete`, `cle` reaches `clear`, and `e` reaches both `edit` and
+`exit`. Every command the word opens is named, because TAB cannot tell which
+of them you meant.
+
+Any other word is matched letter by letter, and reaches a command when at most
+two letters have to be added, removed, swapped or replaced to turn it into
+that command, so `ls` reaches `list` and `dlte` reaches `delete`. A word that
+is two letters out has to start with the same letter as the command, since the
+first letter is the one you are least likely to get wrong. A word that is one
+letter out may differ in it, so `felete` still reaches `delete`.
+
+The comparison ignores case, so `Delte 3` is answered in the same way. A word
+that reaches nothing, such as `dlt`, is answered with the pointer to `help`.
+
+<box type="warning" seamless>
+
+**Caution:** TAB never runs the command it suggests. Nothing is added, changed
+or deleted by a mistyped command word, and what you typed stays in the command
+box, so you can correct the word rather than type the command again.
+</box>
+
 ### Reading the summary beside the list
 
 The panel on the left of the window summarises the students the list is

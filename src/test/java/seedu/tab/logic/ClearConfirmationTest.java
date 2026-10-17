@@ -78,7 +78,8 @@ public class ClearConfirmationTest {
             assertFalse(logic.isAwaitingConfirmation());
             assertUnchanged();
         }
-        assertThrows(ParseException.class, Messages.MESSAGE_UNKNOWN_COMMAND, () -> logic.execute("yes"));
+        assertThrows(ParseException.class, Messages.getErrorMessageForUnknownCommand("yes"), () ->
+                logic.execute("yes"));
         assertUnchanged();
     }
 
@@ -147,7 +148,8 @@ public class ClearConfirmationTest {
             assertTrue(model.getFilteredStudentList().isEmpty());
             assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
             assertEquals(1, saveCount);
-            assertThrows(ParseException.class, Messages.MESSAGE_UNKNOWN_COMMAND, () -> logic.execute("yes"));
+            assertThrows(ParseException.class, Messages.getErrorMessageForUnknownCommand("yes"), () ->
+                    logic.execute("yes"));
             assertEquals(1, saveCount);
         }
     }
@@ -178,7 +180,8 @@ public class ClearConfirmationTest {
         assertEquals(ClearCommand.MESSAGE_EMPTY, logic.execute("clear").getFeedbackToUser());
         assertEquals(emptyJson, Files.readString(storage.getStudentBookFilePath()));
         assertEquals(0, saveCount);
-        assertThrows(ParseException.class, Messages.MESSAGE_UNKNOWN_COMMAND, () -> logic.execute("yes"));
+        assertThrows(ParseException.class, Messages.getErrorMessageForUnknownCommand("yes"), () ->
+                logic.execute("yes"));
         Files.delete(storage.getStudentBookFilePath());
         assertEquals(ClearCommand.MESSAGE_EMPTY, logic.execute("clear").getFeedbackToUser());
         assertFalse(Files.exists(storage.getStudentBookFilePath()));
