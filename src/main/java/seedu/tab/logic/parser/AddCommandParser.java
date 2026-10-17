@@ -8,6 +8,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.tab.logic.Messages;
@@ -50,9 +51,10 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         Name name = parseName(problems, arguments.getPreamble());
         Phone phone = problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone);
-        Email email = problems.collectIfPresent(arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail);
-        NusStudentId nusStudentId = problems.collectIfPresent(
-                arguments.getValue(FLAG_NUS_STUDENT_ID), ParserUtil::parseNusStudentId);
+        Optional<Email> email = Optional.ofNullable(
+                problems.collectIfPresent(arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail));
+        Optional<NusStudentId> nusStudentId = Optional.ofNullable(
+                problems.collectIfPresent(arguments.getValue(FLAG_NUS_STUDENT_ID), ParserUtil::parseNusStudentId));
         Set<Tag> tagList = problems.collectEach(arguments.getAllValues(FLAG_TAG), ParserUtil::parseTag);
 
         problems.throwIfAny();
