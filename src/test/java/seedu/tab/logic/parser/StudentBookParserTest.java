@@ -1,10 +1,10 @@
 package seedu.tab.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.tab.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 
@@ -206,6 +206,93 @@ public class StudentBookParserTest {
 
     @Test
     public void parseCommand_unknownCommand_throwsParseException() {
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("unknownCommand"));
+        assertThrows(ParseException.class,
+                "Unknown command \"unknownCommand\". Enter help to see every command.", ()
+                    -> parser.parseCommand("unknownCommand"));
+    }
+
+    @Test
+    public void parseCommand_missingLetter_suggestsTheIntendedCommand() {
+        assertThrows(ParseException.class, "Unknown command \"delte\". Did you mean delete?", ()
+            -> parser.parseCommand("delte 3"));
+        assertThrows(ParseException.class, "Unknown command \"fnd\". Did you mean find?", ()
+            -> parser.parseCommand("fnd James"));
+    }
+
+    @Test
+    public void parseCommand_extraLetter_suggestsTheIntendedCommand() {
+        assertThrows(ParseException.class, "Unknown command \"liist\". Did you mean list?", ()
+            -> parser.parseCommand("liist"));
+        assertThrows(ParseException.class, "Unknown command \"addd\". Did you mean add?", ()
+            -> parser.parseCommand("addd John Doe -p 91234567"));
+    }
+
+    @Test
+    public void parseCommand_swappedLetters_suggestsTheIntendedCommand() {
+        assertThrows(ParseException.class, "Unknown command \"lsit\". Did you mean list?", ()
+            -> parser.parseCommand("lsit"));
+        assertThrows(ParseException.class, "Unknown command \"hepl\". Did you mean help?", ()
+            -> parser.parseCommand("hepl"));
+    }
+
+    @Test
+    public void parseCommand_wrongLetter_suggestsTheIntendedCommand() {
+        assertThrows(ParseException.class, "Unknown command \"clexr\". Did you mean clear?", ()
+            -> parser.parseCommand("clexr"));
+        assertThrows(ParseException.class, "Unknown command \"edut\". Did you mean edit?", ()
+            -> parser.parseCommand("edut 1 -p 91234567"));
+    }
+
+    @Test
+    public void parseCommand_mistypedInAnotherCase_namesTheWordAsTyped() {
+        assertThrows(ParseException.class, "Unknown command \"Delte\". Did you mean delete?", ()
+            -> parser.parseCommand("Delte 3"));
+        assertThrows(ParseException.class, "Unknown command \"LIST\". Did you mean list?", ()
+            -> parser.parseCommand("LIST"));
+    }
+
+    @Test
+    public void parseCommand_equallyNearCommands_suggestsTheAlphabeticallyFirst() {
+        // "eit" is one letter short of both edit and exit, so the answer has to be settled
+        // rather than left to whichever command the parser happens to reach first
+        assertThrows(ParseException.class, "Unknown command \"eit\". Did you mean edit?", ()
+            -> parser.parseCommand("eit"));
+    }
+
+    @Test
+    public void parseCommand_wordFarFromEveryCommand_pointsToHelp() {
+        for (String input : List.of("qwerty", "remove 3", "a", "?", "日本語", "удалить")) {
+            String word = input.split(" ")[0];
+            assertThrows(ParseException.class, Messages.getErrorMessageForUnknownCommand(word), ()
+                -> parser.parseCommand(input));
+        }
+    }
+
+    @Test
+    public void parseCommand_pastedWordTooLongToRead_isShortenedInTheFeedback() {
+        String typed = "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH + 1);
+        String expected = String.format(Messages.MESSAGE_UNKNOWN_COMMAND,
+                "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…");
+        assertThrows(ParseException.class, expected, () -> parser.parseCommand(typed + " and more"));
+    }
+
+    @Test
+    public void parseCommand_everyKnownCommandWord_isDispatched() {
+        // a word CommandWords offers as a suggestion has to be one the parser then accepts
+        for (String commandWord : CommandWords.COMMAND_WORDS) {
+            String message = messageFromParsing(commandWord);
+            assertNotEquals(Messages.getErrorMessageForUnknownCommand(commandWord), message);
+            assertNotEquals(Messages.getErrorMessageForMistypedCommand(commandWord, commandWord), message);
+        }
+    }
+
+    /** Returns why {@code input} is refused, or null when it is accepted. */
+    private String messageFromParsing(String input) {
+        try {
+            parser.parseCommand(input);
+            return null;
+        } catch (ParseException e) {
+            return e.getMessage();
+        }
     }
 }

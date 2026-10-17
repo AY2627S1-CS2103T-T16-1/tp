@@ -13,7 +13,9 @@ import seedu.tab.model.tag.Tag;
  */
 public class Messages {
 
-    public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command.";
+    public static final String MESSAGE_UNKNOWN_COMMAND =
+            "Unknown command \"%1$s\". Enter help to see every command.";
+    public static final String MESSAGE_MISTYPED_COMMAND = "Unknown command \"%1$s\". Did you mean %2$s?";
     public static final String MESSAGE_UNEXPECTED_ARGUMENTS =
             "%1$s takes no arguments. Unexpected input: \"%2$s\".";
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
@@ -63,6 +65,23 @@ public class Messages {
      */
     public static String getErrorMessageForInvalidValue(String fieldName, String value, String reason) {
         return String.format(MESSAGE_INVALID_VALUE, fieldName, shorten(value), reason);
+    }
+
+    /**
+     * Returns feedback naming the word that is no command of TAB's, and where to find the ones
+     * that are. A word too long to read is shortened, so that the pointer stays in sight.
+     */
+    public static String getErrorMessageForUnknownCommand(String commandWord) {
+        return String.format(MESSAGE_UNKNOWN_COMMAND, shorten(commandWord));
+    }
+
+    /**
+     * Returns feedback naming the word that is no command of TAB's and the command it was
+     * likely meant to be. The suggestion is shown rather than run, so that a wrong guess
+     * costs the User nothing but the retyping they were facing anyway.
+     */
+    public static String getErrorMessageForMistypedCommand(String commandWord, String suggestion) {
+        return String.format(MESSAGE_MISTYPED_COMMAND, shorten(commandWord), suggestion);
     }
 
     /**
