@@ -2,6 +2,7 @@ package seedu.tab.ui;
 
 import java.util.logging.Logger;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
@@ -69,26 +70,24 @@ public class HelpWindow extends UiPart<Stage> {
     public void show() {
         logger.fine("Showing help page about the application.");
         getRoot().show();
-        // now that the window has a frame, its size can account for it. On Windows a window
-        // that is already showing takes a moment to resize, so the frame is measured again
-        // on the next pulse, by when the sizes reported are the ones in force
         fitToContent();
-        Platform.runLater(() -> {
-            fitToContent();
-            getRoot().centerOnScreen();
-        });
+        // Native frame sizes can arrive during the first pulse after the window is shown.
+        new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                stop();
+                Platform.runLater(() -> {
+                    fitToContent();
+                    getRoot().sizeToScene();
+                    getRoot().centerOnScreen();
+                });
+            }
+        }.start();
     }
 
     /**
-     * Sizes the window to what it draws.
-     *
-     * <p>A stage sizes itself to its scene before the stylesheets have dressed what is in
-     * it, so the padding and the border a button takes from the theme arrive after the
-     * window has been measured, and the scene is measured when the layout file is read,
-     * which is before the address is even put on the label. What did not fit stayed cut
-     * off: the address read as "…/UserGuide.ht…" and the button as "Copy U…". The layout
-     * file now gives the scene the size this window needs and the row inside holds its own,
-     * so this is the backstop for a machine whose fonts make it need more.
+     * Sizes the window to its styled content and the frame measured so far. Once native
+     * dimensions settle, the deferred fit also asks JavaFX to size the scene itself.
      */
     private void fitToContent() {
         Stage stage = getRoot();

@@ -1,6 +1,7 @@
 package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Callable;
@@ -8,6 +9,7 @@ import java.util.concurrent.Callable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -54,14 +56,14 @@ public class HelpWindowTest {
     }
 
     @Test
-    public void window_atTheSizeItOpens_showsTheWholeAddressAndButton() throws Exception {
+    public void window_contentAtItsPreferredSize_showsTheWholeAddressAndButton() throws Exception {
         boolean[] whole = onFxThread(() -> {
             Stage stage = new Stage();
             HelpWindow window = new HelpWindow(stage);
             Region content = (Region) stage.getScene().getRoot();
             content.applyCss();
-            // the size the window opens at, as the layout file sets it
-            content.resize(stage.getScene().getWidth(), stage.getScene().getHeight());
+            // Check the content itself here; the show test checks the actual native scene.
+            content.resize(content.prefWidth(-1), content.prefHeight(-1));
             content.layout();
 
             Label message = (Label) content.lookup("#helpMessage");
@@ -112,26 +114,56 @@ public class HelpWindowTest {
     }
 
     @Test
-    public void show_sizesTheWindowToWhatItDrawsAndItsFrame() throws Exception {
-        double[] measured = onFxThread(() -> {
-            Stage stage = new Stage();
-            HelpWindow window = new HelpWindow(stage);
-            Region content = (Region) stage.getScene().getRoot();
-            double beforeShowing = stage.getWidth();
-            window.show();
-            double shown = stage.getWidth();
-            double sceneWidth = stage.getScene().getWidth();
-            boolean showing = window.isShowing();
-            window.hide();
-            return new double[] {beforeShowing, shown, sceneWidth, showing ? 1 : 0,
-                window.isShowing() ? 1 : 0, content.prefWidth(-1)};
+    public void show_contentUpdatedAfterShowing_refitsOnTheDeferredPass() throws Exception {
+        HelpWindow window = onFxThread(() -> {
+            HelpWindow helpWindow = new HelpWindow(new Stage());
+            helpWindow.show();
+            // Model content metrics arriving after show(), as native styling and fonts can.
+            Platform.runLater(() -> ((Button) helpWindow.getRoot().getScene().getRoot()
+                    .lookup("#copyButton")).setText("Copy the complete User Guide address"));
+            return helpWindow;
         });
+        try {
+            FxToolkit.afterPulse(() -> {
+                Stage stage = window.getRoot();
+                assertTrue(stage.getScene().getWidth() >= stage.getScene().getRoot().prefWidth(-1) - 0.5,
+                        "the deferred fit should include content metrics arriving after show()");
+                return null;
+            });
+        } finally {
+            onFxThread(() -> {
+                window.hide();
+                return null;
+            });
+        }
+    }
 
-        assertEquals(1, measured[3], "the window should be showing once shown");
-        assertEquals(0, measured[4], "and not once hidden");
-        // sized again once there is a frame to measure, which is wider on some platforms
-        // than others, so what is checked is that the window still holds what it draws
-        assertTrue(measured[1] >= measured[5] - 0.5,
-                "the window is " + measured[1] + " wide for content needing " + measured[5]);
+    @Test
+    public void show_afterDeferredResize_fitsContentInsideTheScene() throws Exception {
+        HelpWindow window = onFxThread(() -> {
+            HelpWindow helpWindow = new HelpWindow(new Stage());
+            helpWindow.show();
+            return helpWindow;
+        });
+        try {
+            // Wait for native window changes and layout, keeping the window open for measurement.
+            double[] measured = FxToolkit.afterPulse(() -> {
+                assertTrue(window.isShowing(), "the window should stay open until it is measured");
+                Stage stage = window.getRoot();
+                Region content = (Region) stage.getScene().getRoot();
+                return new double[] {stage.getScene().getWidth(), content.prefWidth(-1),
+                    stage.getScene().getHeight(), content.prefHeight(-1)};
+            });
+            assertTrue(measured[0] >= measured[1] - 0.5,
+                    "the scene is " + measured[0] + " wide for content needing " + measured[1]);
+            assertTrue(measured[2] >= measured[3] - 0.5,
+                    "the scene is " + measured[2] + " tall for content needing " + measured[3]);
+        } finally {
+            onFxThread(() -> {
+                window.hide();
+                assertFalse(window.isShowing(), "the window should be hidden after the test");
+                return null;
+            });
+        }
     }
 }
