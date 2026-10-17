@@ -246,13 +246,16 @@ public class CommandBox extends UiPart<Region> {
     /**
      * Returns the node the field draws its own text in, or null before it has a skin.
      *
-     * <p>An empty line shows the prompt, which the field draws in a node of the same kind,
-     * so the one carrying the command is the one whose text is the command.
+     * <p>An empty line shows the prompt, which the field draws in a node of the same kind
+     * and then hides rather than throws away, so the one carrying the command is the one
+     * the field is drawing in whose text is the command. A command that reads as the prompt
+     * matches the hidden node as well, and the field never scrolls that one.
      */
     private Text fieldText() {
         return commandTextField.lookupAll(".text").stream()
                 .filter(Text.class::isInstance)
                 .map(Text.class::cast)
+                .filter(Node::isVisible)
                 .filter(text -> text.getText().equals(commandTextField.getText()))
                 .findFirst()
                 .orElse(null);

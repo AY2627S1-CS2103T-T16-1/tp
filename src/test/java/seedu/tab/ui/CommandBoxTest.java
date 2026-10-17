@@ -43,6 +43,8 @@ public class CommandBoxTest {
     private static final double NARROW_LINE = 490;
     private static final double WIDE_LINE = 1000;
     private static final double LINE_HEIGHT = 60;
+    /** A line too short for the prompt's own text, so a command reading as it scrolls. */
+    private static final double TIGHT_LINE = 190;
     /** How much narrower a window dragged in by its edge is left, as 1000 px becomes 850. */
     private static final double DRAGGED_IN_BY = 150;
     private static final int A_CUT = 8;
@@ -842,6 +844,38 @@ public class CommandBoxTest {
         assertEquals(drawnFrom[0], drawnFrom[1], 0.5,
                 "moving the caret back within the line moved it from " + drawnFrom[0]
                 + " to " + drawnFrom[1]);
+    }
+
+    @Test
+    public void typing_theLinesOwnPromptText_leavesTheCopyOnTheFieldsOwnText() throws Exception {
+        double[] measured = onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            assertNotNull(styledScene(root, TIGHT_LINE, LINE_HEIGHT));
+            TextField field = (TextField) root.lookup("#commandTextField");
+            TextFlow copy = (TextFlow) root.lookup("#highlighted");
+
+            // the field's own text node is named while nothing else can be taken for it,
+            // so that the prompt's node cannot stand in for it once the two read alike
+            field.setText("list");
+            root.layout();
+            Text drawn = fieldTextOf(field);
+            assertNotNull(drawn, "the field should be drawing its own text");
+
+            field.setText(field.getPromptText());
+            field.positionCaret(field.getLength());
+            root.layout();
+            return new double[] {copy.getLayoutX(), drawn.getLayoutX() + drawn.getTranslateX()};
+        });
+
+        // an empty line shows the prompt, and the field keeps the node it drew that in and
+        // hides it rather than throwing it away. A command that reads as the prompt matches
+        // that node too, and the field leaves it where it is however far the command runs
+        // past the edge, so a copy drawn on it shows one character where the field
+        // hit-tests another
+        assertEquals(measured[1], measured[0], 0.5,
+                "the copy is drawn from " + measured[0] + " where the field's text is at "
+                + measured[1]);
     }
 
     @Test
