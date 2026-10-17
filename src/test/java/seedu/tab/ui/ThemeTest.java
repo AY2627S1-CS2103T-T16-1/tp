@@ -163,7 +163,7 @@ public class ThemeTest {
 
         // text drawn in a transparent highlight disappears the moment it is selected, which
         // is what selecting it to copy it does first. One place may: the command field,
-        // whose text and selection are both drawn by the copy over it
+        // whose text and selection are both drawn by the copy behind it
         assertEquals(Set.of(".command-line #commandTextField"), hidden,
                 "these hide their own text when it is selected");
     }
