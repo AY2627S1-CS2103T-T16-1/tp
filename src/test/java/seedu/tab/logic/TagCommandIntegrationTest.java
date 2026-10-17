@@ -1,0 +1,153 @@
+package seedu.tab.logic;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static seedu.tab.testutil.Assert.assertThrows;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import seedu.tab.logic.commands.exceptions.CommandException;
+import seedu.tab.logic.parser.exceptions.ParseException;
+import seedu.tab.model.Model;
+import seedu.tab.model.ModelManager;
+import seedu.tab.model.ReadOnlyStudentBook;
+import seedu.tab.model.StudentBook;
+import seedu.tab.model.UserPrefs;
+import seedu.tab.model.student.Student;
+import seedu.tab.model.tag.Tag;
+import seedu.tab.storage.JsonStudentBookStorage;
+import seedu.tab.storage.JsonUserPrefsStorage;
+import seedu.tab.storage.StorageManager;
+import seedu.tab.testutil.StudentBuilder;
+
+public class TagCommandIntegrationTest {
+
+    @TempDir
+    public Path testFolder;
+
+    private Model model;
+    private Logic logic;
+    private JsonStudentBookStorage storage;
+    private Student student;
+    private Student otherStudent;
+    private int saveCount;
+
+    @BeforeEach
+    public void setUp() throws Exception {
+        student = new StudentBuilder().withTags("T1", "Lab 3").withFlag(true)
+                .withNusStudentId("A01234567X").build();
+        otherStudent = new StudentBuilder().withName("Other Student").withoutEmail().build();
+        model = new ModelManager();
+        model.addStudent(otherStudent);
+        model.addStudent(student);
+        model.updateFilteredStudentList(student::equals);
+        storage = new JsonStudentBookStorage(testFolder.resolve("tab.json")) {
+            @Override
+            public void saveStudentBook(ReadOnlyStudentBook studentBook) throws IOException {
+                saveCount++;
+                super.saveStudentBook(studentBook);
+            }
+        };
+        storage.saveStudentBook(model.getStudentBook());
+        saveCount = 0;
+        logic = new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json"))));
+    }
+
+    @Test
+    public void execute_addTag_preservesEveryFieldAndPersistsAfterReload() throws Exception {
+        // The first displayed student is the second record in storage.
+        model.updateFilteredStudentList(shown -> shown.getName().equals(student.getName()));
+        Student expected = new StudentBuilder(student).withTags("T1", "Lab 3", "New group").build();
+        assertEquals("Added tag [New group]: Amy Bee; NUS Student ID: A01234567X; Phone: 85355255; "
+                + "Email: amy@gmail.com; Tags: [Lab 3][New group][T1]; Needs follow-up",
+                logic.execute("tag 1 --tag \"  New\u00a0  group  \"").getFeedbackToUser());
+        assertEquals(List.of(expected), model.getFilteredStudentList());
+        assertEquals(List.of(otherStudent, expected), model.getStudentBook().getStudentList());
+        Model restartedModel = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
+        assertEquals(List.of(otherStudent, expected), restartedModel.getStudentBook().getStudentList());
+        assertEquals(1, saveCount);
+        assertEquals(new StudentBuilder().withTags("T1", "Lab 3").withFlag(true)
+                .withNusStudentId("A01234567X").build(), student);
+    }
+
+    @Test
+    public void execute_minimalStudent_preservesAbsentFieldsAndDoesNotSetFollowUp() throws Exception {
+        model.updateFilteredStudentList(shown -> shown.getName().equals(otherStudent.getName()));
+        logic.execute("tag 1 -t \"Needs follow-up\"");
+        Student expected = new StudentBuilder(otherStudent).withTags("Needs follow-up").build();
+        assertEquals(List.of(expected, student), storage.readStudentBook().orElseThrow().getStudentList());
+        assertEquals(List.of(expected), model.getFilteredStudentList());
+    }
+
+    @Test
+    public void execute_duplicateVariants_preservesModelDisplayAndSavedBytes() throws Exception {
+        for (String tag : List.of("Lab 3", "lab 3", "LAB 3", "  lAb\t 3\u00a0", "T1")) {
+            assertFailureWithoutMutation("tag 1 -t \"" + tag + "\"", CommandException.class,
+                    "This student already has tag [" + new Tag(tag).tagName
+                            + "]. No changes made.");
+        }
+    }
+
+    @Test
+    public void execute_invalidInput_preservesModelDisplayAndSavedBytes() throws Exception {
+        Map<String, String> errors = Map.of(
+                "tag 0 -t T2", "Index must be a positive integer.",
+                "tag 2147483648 -t T2", "Index must be a positive integer.",
+                "tag 1 -t \"\"", "Tag \"\" is not valid: it holds no letter or number",
+                "tag 1 -t \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
+                "tag 1 -t T2 --tag T3", "Multiple values specified for the following single-valued field(s): -t");
+        for (Map.Entry<String, String> error : errors.entrySet()) {
+            assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());
+        }
+        for (String index : List.of("2", "2147483647")) {
+            assertFailureWithoutMutation("tag " + index + " -t T2", CommandException.class,
+                    Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        }
+        model.updateFilteredStudentList(shown -> false);
+        assertFailureWithoutMutation("tag 1 -t T2", CommandException.class,
+                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+    }
+
+    @Test
+    public void execute_humanEditedLegacyTags_normalizesWithoutDiscardingExistingVariants() throws Exception {
+        // Legacy/edit records may contain two case variants. Tagging must retain both.
+        model.updateFilteredStudentList(shown -> shown.getName().equals(student.getName()));
+        Student legacy = new StudentBuilder(student).withTags("Lab 3", "lab 3", "Café").build();
+        model.setStudent(student, legacy);
+        storage.saveStudentBook(model.getStudentBook());
+        String json = Files.readString(storage.getStudentBookFilePath()).replace("Lab 3", "  Lab   3  ");
+        Files.writeString(storage.getStudentBookFilePath(), json);
+        model.setStudentBook(storage.readStudentBook().orElseThrow());
+        saveCount = 0;
+        assertFailureWithoutMutation("tag 1 -t \" CAFE\u0301 \"", CommandException.class,
+                "This student already has tag [CAFÉ]. No changes made.");
+        logic.execute("tag 1 -t T2");
+        Student expected = new StudentBuilder(legacy).withTags("Lab 3", "lab 3", "Café", "T2").build();
+        assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    /** Verifies the exact failure, unchanged records and display, and absence of a storage write. */
+    private <T extends Exception> void assertFailureWithoutMutation(String input, Class<T> type, String message)
+            throws IOException {
+        StudentBook expectedBook = new StudentBook(model.getStudentBook());
+        List<Student> expectedDisplay = List.copyOf(model.getFilteredStudentList());
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        assertThrows(type, message, () -> logic.execute(input));
+        assertEquals(expectedBook, model.getStudentBook());
+        assertEquals(expectedDisplay, model.getFilteredStudentList());
+        for (int i = 0; i < expectedDisplay.size(); i++) {
+            assertSame(expectedDisplay.get(i), model.getFilteredStudentList().get(i));
+        }
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        assertEquals(0, saveCount);
+    }
+}

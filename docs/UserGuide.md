@@ -356,6 +356,7 @@ done to it beyond the quotes any value with spaces takes:
   spaces removes it, while a bare option is an error. Clearing an already absent
   NUS Student ID succeeds. Name and phone are required and cannot be cleared.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
+  To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
 * To remove all of a student's tags, give `-t` an empty value: `-t ""`. A bare
   `-t` with nothing after it is refused, so that a mistyped option is reported
   rather than read as a request to clear.
@@ -379,6 +380,43 @@ saved at once, and return as they were when you next launch TAB. The command res
 record (`Edited student: NAME; Phone: PHONE...`) with fields formatted consistently
 with the student card, omitting cleared or absent optional fields and sorting tags
 alphabetically (ignoring case).
+
+### Adding one tag: `tag`
+
+Adds one tag to an existing student, keeping every existing tag and all other
+details, including follow-up status.
+
+Format: `tag INDEX -t TAG`
+
+* Use the index shown in the displayed list, including after `find`. The index
+  must be a positive integer and comes before the option. The current search
+  stays active after tagging.
+* `--tag` is an alias for `-t`. Supply exactly one tag per command; repeat the
+  command to add another. For replacing the full tag set, use `edit INDEX -t TAG`.
+* A tag must contain at least one letter or number in any writing system.
+  Symbols are allowed alongside them. Put a tag containing spaces or starting
+  with a hyphen in double quotes. Escape a literal quote as `\"` and a
+  backslash as `\\` inside a quoted value.
+* Leading and trailing whitespace is removed and runs of whitespace become
+  one space. Tags retain their letter case. When checking whether the student
+  already has the tag, case and insignificant whitespace are ignored, so
+  `Lab 3` and `lab  3` count as the same tag for this command.
+* An existing tag reports `This student already has tag [TAG]. No changes made.`
+  Its spelling is preserved. Existing case variants entered through `add`,
+  `edit` or a data file are kept; this command does not merge them.
+* An invalid index or tag, a missing value, or a repeated tag option is refused
+  without changing any student details or writing the data file. An empty
+  quoted tag is invalid; it does not clear tags.
+* A successful addition is saved at once and remains after restarting TAB.
+  The feedback starts with `Added tag [TAG]:` and shows the updated record.
+
+Examples:
+
+* `tag 1 -t T2` adds `T2` to the 1st displayed student while keeping existing tags.
+* `tag 1 --tag "Lab 3"` adds a tag containing a space.
+* `tag 2 -t "Project A/B"` adds a tag containing a slash.
+* `tag 2 -t "组 1"` adds a tag in another writing system.
+* `tag 1 -t "-Lab"` adds a tag starting with a hyphen.
 
 ### Locating students by detail: `find`
 
@@ -520,6 +558,7 @@ Action     | Format, Examples
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name "James Lee" --id A01234567X`
+**Tag**    | `tag INDEX -t TAG` <br> Alternate spelling: `--tag` <br> e.g., `tag 1 --tag "Lab 3"`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
 **List**   | `list`
 **Help**   | `help`
