@@ -42,6 +42,13 @@ public class CommandWords {
     /** How far from a command word a typed word may be and still be read as a mistyping of it. */
     private static final int MAX_EDITS = 2;
 
+    /**
+     * How far from a command word opening with another character a typed word may be. One
+     * edit is the whole of the difference between the two, so that edit is the first
+     * character itself and the rest of the word already agrees.
+     */
+    private static final int MAX_EDITS_FROM_ANOTHER_OPENING = 1;
+
     /** How many equally likely words are worth naming before a list of them stops being help. */
     private static final int MAX_SUGGESTIONS = 3;
 
@@ -56,6 +63,11 @@ public class CommandWords {
      * two by edits alone. What was typed is right as far as it goes, which says more about
      * what was meant than how many edits away something else sits. Only a word that opens
      * nothing is measured for edits.
+     *
+     * <p>A word measured for edits has to open with the character the command word opens
+     * with, unless the one edit between them is that character. The first character of a
+     * command is the one a typist is least likely to get wrong, so a word two edits away that
+     * disagrees on it as well has little to do with the command.
      *
      * <p>Words equally likely are all returned rather than one of them being chosen. A word
      * that stands for several commands says nothing about which was meant, and naming one of
@@ -113,7 +125,17 @@ public class CommandWords {
         if (Math.abs(commandWord.length() - typed.length()) > MAX_EDITS) {
             return false;
         }
-        return StringUtil.editDistance(typed, commandWord) <= MAX_EDITS;
+        int allowedEdits = opensTheSameWay(commandWord, typed) ? MAX_EDITS : MAX_EDITS_FROM_ANOTHER_OPENING;
+        return StringUtil.editDistance(typed, commandWord) <= allowedEdits;
+    }
+
+    /**
+     * Returns true if {@code commandWord} and {@code typed} open with the same character.
+     * {@code typed} has been folded to lower case, as the command words are written, so the
+     * two characters are compared in the one case.
+     */
+    private static boolean opensTheSameWay(String commandWord, String typed) {
+        return !typed.isEmpty() && commandWord.charAt(0) == typed.charAt(0);
     }
 
 }

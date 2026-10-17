@@ -159,15 +159,25 @@ public class CommandWordsTest {
     }
 
     @Test
-    public void suggestFor_asManyWordsAsAreWorthNaming_namesThemAll() {
-        assertEquals(List.of("edit", "exit", "help"), CommandWords.suggestFor("eli"));
+    public void suggestFor_twoEditsFromWordsOpeningDifferently_returnsOnlyTheOneItOpensLike() {
+        // "fit" is two edits from edit, exit, find and list alike, and only "find" is an
+        // attempt at a command the typing agrees with from its first character
+        assertEquals(List.of("find"), CommandWords.suggestFor("fit"));
+        assertEquals(List.of("edit", "exit"), CommandWords.suggestFor("eli"));
     }
 
     @Test
-    public void suggestFor_moreWordsThanAreWorthNaming_returnsNothing() {
-        // "fit" is two edits from edit, exit, find and list alike, and a list of four says
-        // only that TAB has no idea which was meant
-        assertEquals(List.of(), CommandWords.suggestFor("fit"));
+    public void suggestFor_twoEditsFromAWordOpeningDifferently_returnsNothing() {
+        assertEquals(List.of(), CommandWords.suggestFor("dlt")); // two edits from "edit"
+        assertEquals(List.of(), CommandWords.suggestFor("do")); // two edits from "add"
+        assertEquals(List.of(), CommandWords.suggestFor("end")); // two edits from add and find
+    }
+
+    @Test
+    public void suggestFor_firstLetterMistypedOnce_stillReturnsTheWord() {
+        assertEquals(List.of("delete"), CommandWords.suggestFor("felete")); // wrong letter
+        assertEquals(List.of("delete"), CommandWords.suggestFor("edlete")); // swapped letters
+        assertEquals(List.of("delete"), CommandWords.suggestFor("elete")); // missing letter
     }
 
     @Test
