@@ -2,6 +2,9 @@ package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.logging.Logger;
+
+import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.util.ToStringBuilder;
 import seedu.tab.logic.Messages;
 import seedu.tab.model.Model;
@@ -20,6 +23,8 @@ public class FindCommand extends Command {
             + "Parameters: KEYWORD [MORE_KEYWORDS]...\n"
             + "Example: " + COMMAND_WORD + " alice bob charlie";
 
+    private final Logger logger = LogsCenter.getLogger(FindCommand.class);
+
     private final DetailsContainsKeywordsPredicate predicate;
 
     public FindCommand(DetailsContainsKeywordsPredicate predicate) {
@@ -30,6 +35,8 @@ public class FindCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredStudentList(predicate);
+        logger.fine("Find matched " + model.getFilteredStudentList().size() + " of "
+                + model.getStudentBook().getStudentList().size());
         return new CommandResult(
                 Messages.getStudentsFoundOverview(model.getFilteredStudentList().size()));
     }
