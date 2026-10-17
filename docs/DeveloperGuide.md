@@ -463,9 +463,14 @@ per repetition, so an address with enough `.`-separated groups exhausts the
 stack. `StackOverflowError` is an `Error` that no parser catches, and
 `CommandBox` catches only `CommandException` and `ParseException`, so the User
 saw no feedback at all. 254 is the limit RFC 5321 section 4.5.3.1 puts on a
-forward path, so the bound comes from the domain rather than from the parser,
-and it is the only bound measured to be safe on every stack size tried: on a
-256 KB stack even a 513-character address overflows.
+forward path, so the bound comes from the domain rather than from the parser.
+It is not the product's only bound: a `NusStudentId` holds at most 32
+characters, while `Name`, `Phone` and `Tag` are checked for the content they
+hold rather than for their length, and take a value of any size. What is
+particular to this bound is its purpose, which is to keep `VALIDATION_REGEX`
+from walking an address long enough to exhaust the stack, and 254 is the
+longest measured to be safe on every stack size tried: on a 256 KB stack even
+a 513-character address overflows.
 
 `isValidEmail` deliberately keeps **no** length limit, so each input boundary
 can report length and format failures separately. Both `ParserUtil` and
@@ -477,8 +482,10 @@ boundary.
 
 `Messages.getErrorMessageForInvalidValue` shortens a rejected value past
 `MAX_QUOTED_VALUE_LENGTH` characters, so that a very long value cannot push the
-reason out of view. It counts Unicode code points so it does not cut an emoji
-in half. Command parsing and storage share that message, so both paths report
+reason out of view. It counts characters through `StringUtil.firstCharacters`,
+as a reader counts them, so it separates neither an emoji nor a letter from the
+accent that belongs to it; a student card cuts a name or a tag with the same
+helper. Command parsing and storage share that message, so both paths report
 the same invalid value consistently.
 
 `Phone` is **not** an identity field and **not** a key: two students may hold the

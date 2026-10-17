@@ -302,6 +302,9 @@ done to it beyond the quotes any value with spaces takes:
 * To remove a student's email, use `-e ""`. A quoted value containing only spaces
   also removes it. Leaving out `-e` keeps the email unchanged; a bare `-e` is an
   error. Clearing an already absent email succeeds.
+* A new email may run to 254 characters, the same limit `add` applies. A longer
+  value is refused, TAB tells you how long it was, and the student's details
+  stay as they were.
 * To remove a student's NUS Student ID, use `--id ""` or `-i ""`. Leaving the
   option out keeps the NUS Student ID unchanged; a quoted value containing only
   spaces removes it, while a bare option is an error. Clearing an already absent

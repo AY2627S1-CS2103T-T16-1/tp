@@ -189,6 +189,46 @@ public class StringUtilTest {
         assertFalse(StringUtil.isWhitespace('\u001C'), "a file separator is not a space");
     }
 
+    //---------------- Tests for firstCharacters --------------------------------------
+
+    @Test
+    public void firstCharacters_valueWithinTheLimit_returnsTheWholeValue() {
+        assertEquals("Lab 3", StringUtil.firstCharacters("Lab 3", 10));
+        assertEquals("Lab 3", StringUtil.firstCharacters("Lab 3", 5), "a value exactly at the limit");
+        assertEquals("", StringUtil.firstCharacters("", 5));
+    }
+
+    @Test
+    public void firstCharacters_valueOverTheLimit_keepsTheOpeningCharacters() {
+        assertEquals("attendance", StringUtil.firstCharacters("attendance-low", 10));
+        assertEquals("", StringUtil.firstCharacters("attendance-low", 0));
+    }
+
+    @Test
+    public void firstCharacters_emojiAtTheLimit_keepsItWhole() {
+        // an emoji is one character to a reader and two to Java, and half of one draws as a box
+        assertEquals("ab\uD83D\uDE00", StringUtil.firstCharacters("ab\uD83D\uDE00cd", 3));
+        assertEquals("ab", StringUtil.firstCharacters("ab\uD83D\uDE00cd", 2));
+    }
+
+    @Test
+    public void firstCharacters_combiningAccentAtTheLimit_keepsItOnItsLetter() {
+        String value = "ae\u0301iou"; // "a\u00E9iou", with the accent held as a separate code point
+
+        assertEquals("ae\u0301", StringUtil.firstCharacters(value, 2));
+        assertEquals("a", StringUtil.firstCharacters(value, 1));
+    }
+
+    @Test
+    public void firstCharacters_negativeLimit_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> StringUtil.firstCharacters("abc", -1));
+    }
+
+    @Test
+    public void firstCharacters_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StringUtil.firstCharacters(null, 3));
+    }
+
     //---------------- Tests for getPluralSuffix --------------------------------------
 
     @Test
