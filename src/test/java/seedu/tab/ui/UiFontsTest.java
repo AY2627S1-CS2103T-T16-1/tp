@@ -1,8 +1,8 @@
 package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -55,16 +55,27 @@ public class UiFontsTest {
     }
 
     @Test
-    public void applyTo_aMachineWithAPreferredFamily_doesNotFallBack() throws Exception {
-        String family = onFxThread(UiFonts::bodyFamily);
+    public void bodyFamily_aMachineWithAPreferredFamily_usesTheFirstOfThem() throws Exception {
+        List<String> installedPreferred = onFxThread(() -> {
+            List<String> installed = Font.getFamilies();
+            return UiFonts.preferredFamilies().stream().filter(installed::contains).toList();
+        });
+        // the families a machine carries are its own affair, so this one is reported skipped
+        // rather than passed where there is nothing to choose
+        assumeFalse(installedPreferred.isEmpty(),
+                "this machine carries none of the families the window prefers");
 
-        if (Font.getFamilies().stream().anyMatch(
-                name -> name.equals("Inter") || name.equals("Segoe UI")
-                        || name.equals("Helvetica Neue") || name.equals("Cantarell")
-                        || name.equals("Noto Sans"))) {
-            assertNotEquals("System", family,
-                    "a machine with one of the preferred families should use it");
-        }
+        assertEquals(installedPreferred.get(0), onFxThread(UiFonts::bodyFamily),
+                "the window should be written in the first preferred family the machine has");
+    }
+
+    @Test
+    public void firstOf_aPreferredFamilyInstalled_doesNotKeepTheMachinesOwn() throws Exception {
+        String chosen = onFxThread(() -> UiFonts.firstOf(
+                List.of("Segoe UI"), List.of(Font.getDefault().getFamily(), "Segoe UI")));
+
+        assertEquals("Segoe UI", chosen,
+                "a machine carrying a preferred family should use it rather than its own");
     }
 
     @Test
