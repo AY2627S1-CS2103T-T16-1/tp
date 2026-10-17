@@ -464,10 +464,13 @@ stack. `StackOverflowError` is an `Error` that no parser catches, and
 `CommandBox` catches only `CommandException` and `ParseException`, so the User
 saw no feedback at all. 254 is the limit RFC 5321 section 4.5.3.1 puts on a
 forward path, so the bound comes from the domain rather than from the parser.
-`Name`, `Phone` and `Tag` are bounded by patterns of their own; this bound is
-the one that keeps `VALIDATION_REGEX` from walking an address long enough to
-exhaust the stack, and the longest measured to be safe on every stack size
-tried: on a 256 KB stack even a 513-character address overflows.
+It is not the product's only bound: a `NusStudentId` holds at most 32
+characters, while `Name`, `Phone` and `Tag` are checked for the content they
+hold rather than for their length, and take a value of any size. What is
+particular to this bound is its purpose, which is to keep `VALIDATION_REGEX`
+from walking an address long enough to exhaust the stack, and 254 is the
+longest measured to be safe on every stack size tried: on a 256 KB stack even
+a 513-character address overflows.
 
 `isValidEmail` deliberately keeps **no** length limit, so each input boundary
 can report length and format failures separately. Both `ParserUtil` and
