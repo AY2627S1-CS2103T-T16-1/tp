@@ -226,6 +226,10 @@ command feedback. A student without one has no placeholder or blank gap there.
 A flagged student's card carries a `Needs follow-up` marker at its right-hand
 edge, on the same line as the name, and the command result says so too.
 
+A name too long for a card is shortened with an ellipsis in its middle, which
+keeps both the start and the end of the name, so two students whose names begin
+alike still read as two. Hover over a shortened name to see the whole of it.
+
 When a student is added, the command result displays the new record
 (`New student added: NAME; Phone: PHONE...`) so you can confirm the details
 immediately. Consistent with the student card, optional fields appear in the

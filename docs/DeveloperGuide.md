@@ -587,6 +587,27 @@ removed and the `a/` prefix with it, and the rest failed until `add` and `edit`
 took positional arguments and command options instead. `Name` itself never
 needed changing.
 
+**Showing a long name.** A card gives the name one line, shared with the tags
+and the follow-up pill, so a name longer than `StudentCard.MAX_NAME_CHARACTERS`
+is cut and the whole of it is left on the card as a tooltip. The count is fixed
+rather than taken from the room the row has left over, so the same name breaks
+off in the same place on every card instead of moving as the rest of the card
+changes.
+
+The cut is taken from the middle, keeping 13 characters of the start and 9 of
+the end. A cut at the close alone puts `Mohamed Abdul Rahman bin Ismail` and
+`Mohamed Abdul Rahman bin Ahmad` on two cards as the same text, and a reader
+scanning the list has nothing to tell the rows apart by; the end of a name is
+where two such students differ, which is what the 9 characters buy. Wrapping
+the name to a second line was weighed and dropped, because it lets any card
+grow to two lines tall and so costs the list more rows than the collision costs
+a reader, and the pill and the tags still have to fit beside the name. A name
+within one character of the count is left whole, since the ellipsis takes a
+place of its own and the cut would save no room. `UiText` counts both ends with
+`StringUtil.firstCharacters` and `StringUtil.lastCharacters`, so neither cut
+separates a letter from the accent that belongs to it nor an emoji from its
+other half.
+
 ### Confirming a clear
 
 `ClearCommand.execute` returns a prompt containing the whole-book count,
@@ -1529,6 +1550,25 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add John Doe -p 98765432`<br>
       Expected: No student is added. The status message reports that this student
       already exists in the student book, and no record is mutated.
+
+### Long names on a card
+
+1. Telling apart two names that share a start
+
+   1. Prerequisites: Launch the JAR and widen the window until a card has room
+      for a long name.
+
+   1. Test case: `add Mohamed Abdul Rahman bin Ismail -p 91234567`, then
+      `add Mohamed Abdul Rahman bin Ahmad -p 92345678`.<br>
+      Expected: The two cards read `Mohamed Abdul…in Ismail` and
+      `Mohamed Abdul…bin Ahmad`, so the names are distinguishable without
+      reading the index. Hovering over either name shows the whole of it.
+
+1. Leaving a name that nearly fits alone
+
+   1. Test case: `add Jonathan Chuah Wei Ming -p 93456789`.<br>
+      Expected: The card shows the whole name with no ellipsis, because a cut
+      this close to the limit would save no room.
 
 ### Long value-option names
 
