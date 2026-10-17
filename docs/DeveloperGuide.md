@@ -120,6 +120,13 @@ indicator does not increase the content's preferred size. The regression
 test waits for rendering and native resize events, then measures the scene
 rather than its surrounding frame.
 
+#### Fitting names and tags on a card
+
+`CardHeadline` reserves a readable start of the name before allocating room
+to tags. When that leaves no room for a tag chip, `TagRow` uses the shorter
+`N tags` total instead of `N more…`, preserving a complete count beside the
+name. Its tooltip still lists every hidden tag.
+
 #### Colouring the command line
 
 `CommandTextField` converts tab and line separators to spaces in text
@@ -1762,6 +1769,18 @@ testers are expected to do more *exploratory* testing.
       Expected: The two names stay distinguishable. Each keeps its start and
       its end around the ellipsis as the cards shrink, rather than both ending
       up as the same text, and hovering still shows the whole name.
+
+1. Keeping names readable beside tags and a follow-up marker
+
+   1. Add `add Bernice Xu -p 81234567 -t attendance-low -t consult -t follow-up -t lab -t midterm -t tutorial -f`.
+   1. Narrow the window to its minimum width, then widen it slowly.<br>
+      Expected: The name retains its opening letters. At the minimum width,
+      the count-only chip reads `6 tags`. When one or more chips appear, the
+      count reads `N more…`, where N is the number of hidden tags. Hovering
+      over the count lists all hidden tags.
+   1. Remove the follow-up marker with `edit INDEX -nf`, using the new student's
+      index, then resize again.<br>
+      Expected: The name remains readable and any hidden tags remain counted.
 
 1. Reading a short name cut by a narrow card
 

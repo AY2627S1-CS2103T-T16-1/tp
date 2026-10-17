@@ -884,9 +884,9 @@ public class StudentCardTest {
             });
             // the row counts what it left out while a chip is shown, and counts the tags
             // themselves once it has given up its last chip; either says how many there are
-            boolean saysHowMany = chips.stream()
-                    .anyMatch(chip -> chip.endsWith("more\u2026") || chip.endsWith(" tags"));
-            if (chips.size() < 3 && !saysHowMany) {
+            boolean hasHiddenCount = chips.stream()
+                    .anyMatch(chip -> chip.endsWith("more\u2026") || chip.equals("3 tags"));
+            if (chips.size() < 3 && !hasHiddenCount) {
                 silent.add(at + ": " + chips);
             }
         }
@@ -911,6 +911,48 @@ public class StudentCardTest {
         assertFalse(chips.isEmpty(), "the row should name a tag");
         assertTrue(chips.get(0).startsWith("AY2627"),
                 "the row should lead with the tag, not a count: " + chips);
+    }
+
+    @Test
+    public void constructor_narrowCards_keepNameLettersAndCompleteTagCounts() throws Exception {
+        List<String> allTags = List.of("attendance-low", "consult", "follow-up", "lab", "midterm", "tutorial");
+        for (int tagCount : List.of(1, 2, 4, 6)) {
+            List<String> names = allTags.subList(0, tagCount);
+            for (boolean isFlagged : new boolean[] {false, true}) {
+                Student student = new StudentBuilder().withName("Bernice Yu")
+                        .withTags(names.toArray(String[]::new)).withFlag(isFlagged).build();
+                onFxThread(() -> {
+                    Region root = new StudentCard(student, 2).getRoot();
+                    assertNotNull(styledScene(root, DEFAULT_CARD_WIDTH, 120));
+                    for (int width = 298; width <= DEFAULT_CARD_WIDTH; width++) {
+                        layOutAt(root, width);
+                        Label name = (Label) root.lookup("#name");
+                        assertTrue(drawnTextOf(name).startsWith("Be"),
+                                "the name should keep its opening letters at width " + width);
+                        assertHiddenTagsCounted((TagRow) root.lookup("#tags"), names);
+                    }
+                    return null;
+                });
+            }
+        }
+    }
+
+    private static void assertHiddenTagsCounted(TagRow tags, List<String> names) {
+        Label overflow = (Label) tags.getChildrenUnmodifiable().stream()
+                .filter(node -> node.getStyleClass().contains("tag-overflow")).findFirst().orElseThrow();
+        int shown = (int) tags.getChildrenUnmodifiable().stream()
+                .filter(Node::isVisible).filter(node -> node != overflow).count();
+        if (shown == names.size()) {
+            assertFalse(overflow.isVisible());
+            return;
+        }
+        assertTrue(overflow.isVisible(), "hidden tags must be counted");
+        String expectedCount = (names.size() - shown) + (shown == 0 ? " tags" : " more\u2026");
+        assertEquals(expectedCount, overflow.getText());
+        assertTrue(overflow.getWidth() >= overflow.prefWidth(-1) - 0.5,
+                "the count must fit in full: " + overflow.getText() + " in " + overflow.getWidth());
+        assertTrue(overflow.getBoundsInParent().getMaxX() <= tags.getWidth() + 0.5);
+        assertEquals(String.join(", ", names.subList(shown, names.size())), overflow.getTooltip().getText());
     }
 
     @Test
