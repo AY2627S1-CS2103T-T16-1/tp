@@ -182,7 +182,7 @@
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
     /* the reply is selectable, so it keeps a selection that can be seen. Hiding one is for
-       the command line, whose field carries the input behind a copy of its own */
+       the command line, whose field carries the input in front of a copy of its own */
     -fx-highlight-fill: -tab-selected-text;
     -fx-text-fill: -tab-text;
     -fx-font-size: 12px;
@@ -655,7 +655,7 @@
     -fx-font-family: "Monospaced";
     -fx-font-size: 15px;
     -fx-font-weight: normal;
-    /* the copy over this field carries the text; the field keeps the input, the caret
+    /* the copy behind this field carries the text; the field keeps the input, the caret
        position and the selection, and shows none of them itself. Important, because
        Extensions.css marks a refused command with an important text fill of its own, and
        the field would otherwise paint its text in red over the copy, at its own scroll
