@@ -40,6 +40,12 @@ public class StudentCardTest {
      * a card about 298 wide, which is the narrow end rather than the usual one.
      */
     private static final double DEFAULT_CARD_WIDTH = 546;
+    /**
+     * How much of what a name asks for its line is given, where a test needs the line to clip
+     * the name. Three quarters leaves the name short of what it asks for in any font, since
+     * the name is never drawn wider than the line it sits on.
+     */
+    private static final double NAME_ROOM_SHARE = 0.75;
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -387,27 +393,55 @@ public class StudentCardTest {
         assertNull(oneOver.getTooltip(), "a name that fits needs no tooltip");
     }
 
-    /** Returns the name on a card {@code cardWidth} wide, having checked that the row clips it. */
-    private static Label clippedNameLabelOf(Student student, double cardWidth) throws Exception {
+    /**
+     * Returns the name on a card whose first line is given {@link #NAME_ROOM_SHARE} of what the
+     * name by itself asks for, so that the line has too little for the name whatever the glyphs
+     * of the platform measure. A width in pixels would clip the name where the font is wide and
+     * leave it whole where the font is narrow.
+     */
+    private static Label clippedNameLabelOf(Student student) throws Exception {
         return onFxThread(() -> {
             Region root = (Region) new StudentCard(student, 1).getRoot();
-            assertNotNull(styledScene(root, cardWidth, 120));
+            // the scene dresses the card in the stylesheet, so everything below is measured in
+            // the font the product draws, and the card is then laid out at the width it asks
+            // for, where nothing on it has had to give way yet
+            assertNotNull(styledScene(root, CARD_WIDTH, 120));
+            layOutAt(root, root.prefWidth(-1));
+
             Label name = (Label) root.lookup("#name");
-            assertTrue(name.getWidth() < name.prefWidth(-1) - 0.5,
-                    "the row left the name its whole " + name.prefWidth(-1) + ", so nothing is clipped");
+            Region headline = (Region) name.getParent();
+            double wanted = name.prefWidth(-1);
+            assertTrue(name.getWidth() >= wanted - 0.5,
+                    "the card should start out showing the whole of a name it asks " + wanted + " for");
+
+            // the index, the pill and the padding hold their own width, so the whole of a
+            // change in the card's width reaches the first line. The name is drawn no wider
+            // than the line it sits on, so a line given a share of what the name asks for
+            // leaves the name short of it however the line shares it out with the tags
+            double besideTheHeadline = root.getWidth() - headline.getWidth();
+            layOutAt(root, besideTheHeadline + wanted * NAME_ROOM_SHARE);
+
+            assertTrue(name.getWidth() < wanted - 0.5,
+                    "the line left the name its whole " + wanted + ", so nothing is clipped");
             return name;
         });
     }
 
+    /** Draws {@code root} again at {@code width}, as a narrowing window would. */
+    private static void layOutAt(Region root, double width) {
+        root.resize(width, root.getHeight());
+        root.layout();
+    }
+
     @Test
     public void constructor_aNameTheRowClips_isNamedOnHover() throws Exception {
-        // a name inside the count the card cuts to, on a card too narrow to draw all of it
-        // beside the tags and the pill. The count leaves it alone and the row takes it anyway
+        // a name the count leaves whole, on a line too narrow to draw all of it beside the
+        // tags and the pill. The count takes nothing off it and the line clips it anyway
         String whole = "Jonathan Chuah Wei Ming";
         Student student = new StudentBuilder().withName(whole)
                 .withTags("alpha", "bravo").withFlag(true).build();
 
-        Label shown = clippedNameLabelOf(student, 300);
+        Label shown = clippedNameLabelOf(student);
 
         assertEquals(whole, shown.getText(), "the count should have taken nothing off the name");
         assertNotNull(shown.getTooltip(), "a name the row clipped should still be readable");
@@ -415,15 +449,17 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_aShortNameTheRowClips_isNamedOnHover() throws Exception {
-        String whole = "Alex Yeoh";
+    public void constructor_aShorterNameTheRowClips_isNamedOnHover() throws Exception {
+        // well inside the count, so this is the hole a cut by count never covered rather
+        // than the one at the count's own boundary
+        String whole = "Alexander Yeoh Boon";
         Student student = new StudentBuilder().withName(whole)
                 .withTags("alpha", "bravo").withFlag(true).build();
 
-        Label shown = clippedNameLabelOf(student, 200);
+        Label shown = clippedNameLabelOf(student);
 
         assertEquals(whole, shown.getText());
-        assertNotNull(shown.getTooltip(), "a short name the row clipped should be readable too");
+        assertNotNull(shown.getTooltip(), "a shorter name the row clipped should be readable too");
         assertEquals(whole, shown.getTooltip().getText());
     }
 
