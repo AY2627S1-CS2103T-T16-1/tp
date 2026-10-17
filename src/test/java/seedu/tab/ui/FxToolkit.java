@@ -7,6 +7,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 
 /**
@@ -35,6 +36,28 @@ final class FxToolkit {
         }
         assertTrue(started.await(TIMEOUT_SECONDS, TimeUnit.SECONDS), "the toolkit did not start");
         Platform.runLater(() -> Platform.setImplicitExit(false));
+    }
+
+    /** Runs {@code work} after rendering and a following pulse have processed native resize events. */
+    static <T> T afterPulse(Callable<T> work) throws Exception {
+        FutureTask<T> task = new FutureTask<>(work);
+        onFxThread(() -> {
+            new AnimationTimer() {
+                private boolean hasPulsed;
+
+                @Override
+                public void handle(long now) {
+                    if (!hasPulsed) {
+                        hasPulsed = true;
+                        return;
+                    }
+                    stop();
+                    Platform.runLater(task);
+                }
+            }.start();
+            return null;
+        });
+        return task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
     /** Runs {@code work} on the thread JavaFX requires its nodes to be built on. */

@@ -112,6 +112,14 @@ Student-card email labels use `UiText.showToFit` to retain their full text
 and show a tooltip only while the available width cuts the address. Width
 listeners remove the tooltip when widening the card makes it unnecessary.
 
+`HelpWindow` re-fits its scene after the first rendering pulse, allowing
+for native frame sizes, then uses `sizeToScene()` without fixed FXML scene
+dimensions. This lets JavaFX include native decoration sizes correctly.
+Its copy button keeps the same border insets when focused, so the focus
+indicator does not increase the content's preferred size. The regression
+test waits for rendering and native resize events, then measures the scene
+rather than its surrounding frame.
+
 #### Colouring the command line
 
 A `TextField` cannot colour its own content, so `CommandBox` keeps the field
@@ -1516,6 +1524,15 @@ testers are expected to do more *exploratory* testing.
 
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample student records. The window size may not be optimal.
+
+1. Help window sizing
+
+   1. Run `help` and wait for the window to open.<br>
+      Expected: The whole User Guide address and `Copy URL` button are visible.
+      Check Windows, Linux and macOS because frame sizes and focus styling differ.
+
+   1. Close the help window and run `help` again.<br>
+      Expected: Both remain fully visible after reopening.
 
 1. Saving window preferences
 

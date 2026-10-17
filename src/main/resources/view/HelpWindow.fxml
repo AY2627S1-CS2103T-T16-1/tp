@@ -16,18 +16,15 @@
     <Image url="@/images/help_icon.png" />
   </icons>
   <scene>
-    <!-- sized here rather than left to the scene's own measurement, which happens when
-         this file is read: before the address is put on the label and before the theme has
-         dressed the button, so the window came up too small for either -->
-    <Scene width="760" height="64">
+    <!-- Let sizeToScene use the styled content rather than fixed scene dimensions. -->
+    <Scene>
       <stylesheets>
         <URL value="@DarkTheme.css" />
         <URL value="@HelpWindow.css" />
       </stylesheets>
 
-      <!-- the row keeps the width and height its content needs. A stage sizes itself to its
-           scene before the stylesheets have dressed what is in it, and this window cannot be
-           resized, so anything the theme adds afterwards would otherwise stay cut off -->
+      <!-- Keep the row at its preferred size so native scene fitting can measure
+           the complete address and button after the theme is applied. -->
       <HBox alignment="CENTER" fx:id="helpMessageContainer"
             minWidth="-Infinity" minHeight="-Infinity">
         <children>
