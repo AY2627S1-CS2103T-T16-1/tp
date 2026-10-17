@@ -24,6 +24,12 @@ checkstyle {
     toolVersion = '14.1.0'
 }
 
+run {
+    // the product states invariants with assert, which the JVM ignores unless it is told
+    // not to, so without this they are checked under test and nowhere else
+    enableAssertions = true
+}
+
 test {
     useJUnitPlatform()
     testLogging {
