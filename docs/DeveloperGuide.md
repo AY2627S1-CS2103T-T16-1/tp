@@ -320,7 +320,7 @@ words needs no quotes unless it would otherwise be misread, and the index for
 them. Each short and long marker resolves to the same `Flag`, so mixed aliases
 for a single-valued field are duplicates rather than independent fields.
 Value-taking options take the token after them, and `-t` or `--tag` repeats
-for `add` and `edit`. The `tag` command instead takes exactly one tag.
+for `add` and `edit`. The `tag` command takes exactly one tag through `-a` or `--add`.
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
@@ -363,9 +363,10 @@ same option, so mixing them is also detected as a duplicate.
 
 ### Adding one tag without replacing existing tags
 
-`TagCommandParser` reads `tag INDEX -t TAG` (alias `--tag`) with the existing
-`FlagTokenizer` and `ParserUtil`. Unlike `add` and `edit`, it rejects repeated
-tag options, including mixed aliases. Missing fields and invalid field values
+`TagCommandParser` reads `tag INDEX -a TAG` (alias `--add`) with the existing
+`FlagTokenizer` and `ParserUtil`. The option names the action: both spellings
+map to `FLAG_ADD_TAG`. Exactly one add option is accepted; repeated options,
+including mixed aliases, are rejected. Missing fields and invalid field values
 are collected before a command is created.
 `TagCommandParser` and `EditCommandParser` share `ParserUtil.parseRequiredIndex`
 to distinguish a missing index from an invalid one; each collects its errors
@@ -1758,7 +1759,7 @@ testers are expected to do more *exploratory* testing.
       -e tag@example.com --id A01234567X -t T1 --follow-up` as one line.
       Run `find "Tag Test"` and confirm only this student is shown.
 
-   1. Test case: `tag 1 --tag "Lab 3"`.<br>
+   1. Test case: `tag 1 --add "Lab 3"`.<br>
       Expected: Feedback starts with `Added tag [Lab 3]:`. The student has both
       `T1` and `Lab 3`, and all other details and follow-up status are unchanged.
       The search stays active. Exit TAB and relaunch the same JAR from the same
@@ -1769,13 +1770,13 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Continue with the student above and run `find "Tag Test"`.
       Back up `data/tab.json` and compare it after each refused command.
 
-   1. Test case: `tag 1 -t "  lab   3  "`.<br>
+   1. Test case: `tag 1 -a "  lab   3  "`.<br>
       Expected: `This student already has tag [lab 3]. No changes made.` The
       existing `Lab 3` spelling, all other details, displayed list and saved
       file stay unchanged.
 
-   1. Test cases: `tag 0 -t T2`, `tag 2 -t T2`, `tag 2147483648 -t T2`,
-      `tag 1 -t ""`, `tag 1 -t "---"`, `tag 1 -t`, and `tag 1 -t T2 --tag T3`.<br>
+   1. Test cases: `tag 0 -a T2`, `tag 2 -a T2`, `tag 2147483648 -a T2`,
+      `tag 1 -a ""`, `tag 1 -a "---"`, `tag 1 -a`, and `tag 1 -a T2 --add T3`.<br>
       Expected: Each is refused with an index, invalid-tag, missing-value or
       duplicate-option error as appropriate. No student or displayed list
       changes, and `data/tab.json` stays unchanged.

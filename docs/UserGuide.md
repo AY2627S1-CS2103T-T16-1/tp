@@ -386,12 +386,12 @@ alphabetically (ignoring case).
 Adds one tag to an existing student, keeping every existing tag and all other
 details, including follow-up status.
 
-Format: `tag INDEX -t TAG`
+Format: `tag INDEX -a TAG`
 
 * Use the index shown in the displayed list, including after `find`. The index
   must be a positive integer and comes before the option. The current search
   stays active after tagging.
-* `--tag` is an alias for `-t`. Supply exactly one tag per command; repeat the
+* `-a` selects addition; `--add` is its long alias. Supply exactly one tag per command; repeat the
   command to add another. For replacing the full tag set, use `edit INDEX -t TAG`.
 * A tag must contain at least one letter or number in any writing system.
   Symbols are allowed alongside them. Put a tag containing spaces or starting
@@ -404,7 +404,7 @@ Format: `tag INDEX -t TAG`
 * An existing tag reports `This student already has tag [TAG]. No changes made.`
   Its spelling is preserved. Existing case variants entered through `add`,
   `edit` or a data file are kept; this command does not merge them.
-* An invalid index or tag, a missing value, or a repeated tag option is refused
+* An invalid index or tag, a missing value, or a repeated add option is refused
   without changing any student details or writing the data file. An empty
   quoted tag is invalid; it does not clear tags.
 * A successful addition is saved at once and remains after restarting TAB.
@@ -412,11 +412,11 @@ Format: `tag INDEX -t TAG`
 
 Examples:
 
-* `tag 1 -t T2` adds `T2` to the 1st displayed student while keeping existing tags.
-* `tag 1 --tag "Lab 3"` adds a tag containing a space.
-* `tag 2 -t "Project A/B"` adds a tag containing a slash.
-* `tag 2 -t "组 1"` adds a tag in another writing system.
-* `tag 1 -t "-Lab"` adds a tag starting with a hyphen.
+* `tag 1 -a T2` adds `T2` to the 1st displayed student while keeping existing tags.
+* `tag 1 --add "Lab 3"` adds a tag containing a space.
+* `tag 2 -a "Project A/B"` adds a tag containing a slash.
+* `tag 2 -a "组 1"` adds a tag in another writing system.
+* `tag 1 -a "-Lab"` adds a tag starting with a hyphen.
 
 ### Locating students by detail: `find`
 
@@ -558,7 +558,7 @@ Action     | Format, Examples
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name "James Lee" --id A01234567X`
-**Tag**    | `tag INDEX -t TAG` <br> Alternate spelling: `--tag` <br> e.g., `tag 1 --tag "Lab 3"`
+**Tag**    | `tag INDEX -a TAG` <br> Alternate spelling: `--add` <br> e.g., `tag 1 --add "Lab 3"`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
 **List**   | `list`
 **Help**   | `help`
