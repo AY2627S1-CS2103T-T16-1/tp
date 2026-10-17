@@ -910,25 +910,29 @@ public class StudentCardTest {
 
     @Test
     public void constructor_aClippedNameGivenItsRoomBack_losesTheTooltip() throws Exception {
-        Student student = new StudentBuilder().withName("Alex Yeoh").withPhone("91234567")
-                .withTags("attendance-low", "bravo").withFlag(true).build();
+        // comfortably past the width the row keeps for a name, so the line is willing to cut
+        // it on any platform's glyphs, and well inside the count, so the count takes nothing
+        String whole = "Alexander Yeoh Boon";
 
-        String tooltips = onFxThread(() -> {
-            Region root = (Region) new StudentCard(student, 1).getRoot();
-            assertNotNull(styledScene(root, 900, 120));
-            Label name = (Label) root.lookup("#name");
-            root.resize(300, 120);
-            root.layout();
-            // the row has to have taken something, or widening again proves nothing
-            assertNotEquals("Alex Yeoh", name.getText(), "the row should have cut the name");
-            String whenCut = name.getTooltip() == null ? "none" : "set";
-            root.resize(900, 120);
-            root.layout();
-            assertEquals("Alex Yeoh", name.getText(), "the row should have given the name back");
-            return whenCut + "," + (name.getTooltip() == null ? "none" : "set");
+        String hovers = onFxThread(() -> {
+            Label name = nameLaidOutRoomily(studentNamed(whole));
+            double wanted = name.prefWidth(-1);
+            String roomy = name.getTooltip() == null ? "none" : "set";
+
+            onALineOf(name, wanted * NAME_ROOM_SHARE);
+            assertTrue(name.getText().length() < whole.length(), "the line should have cut the name");
+            String narrowed = name.getTooltip() == null ? "none" : "set";
+
+            // back to the width the card asks for, where the name and the tags both fit;
+            // the name's own width is not enough, because the tags take from the same line
+            Region root = (Region) name.getScene().getRoot();
+            layOutAt(root, root.prefWidth(-1));
+            assertEquals(whole, name.getText(), "the line should have given the name back");
+            return roomy + "," + narrowed + "," + (name.getTooltip() == null ? "none" : "set");
         });
 
         // the whole name is on the card again, so naming it on hover says nothing further
-        assertEquals("set,none", tooltips);
+        assertEquals("none,set,none", hovers);
     }
+
 }
