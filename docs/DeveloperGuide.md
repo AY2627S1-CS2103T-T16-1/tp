@@ -1589,6 +1589,23 @@ testers are expected to do more *exploratory* testing.
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample student records. The window size may not be optimal.
 
+1. Launching from a read-only folder
+
+   1. Prerequisites: Copy the JAR into a new folder that the current user can
+      read but cannot write to. On Linux/macOS, run `chmod 555 FOLDER` and use
+      a non-root account. On Windows, remove write permission for the test
+      account using the folder's Security settings.
+
+   1. From that folder, run `java -jar tab.jar`.<br>
+      Expected: The GUI opens with sample records. The terminal warns
+      `Unable to write log file tab.log. Continuing with console logging only.`
+      and reports that preferences cannot be saved. There is no
+      `ExceptionInInitializerError` or `NullPointerException` from logging.
+
+   1. Run `add Read Only Test -p 91234567`.<br>
+      Expected: TAB reports a data-file save error and remains open. Exit TAB,
+      restore write permission, and relaunch. The added record was not saved.
+
 1. Help window sizing
 
    1. Run `help` and wait for the window to open.<br>
