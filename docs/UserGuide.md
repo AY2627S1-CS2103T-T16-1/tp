@@ -215,6 +215,25 @@ has the same NUS Student ID, ignoring letter case; the error names that ID.
 
 <box type="tip" seamless>
 
+**Tip:** After a successful `add` or `edit`, TAB warns you when another student
+has the same name, phone number, or email address. The record is still saved.
+Each note names the matching field and the other student, for example:
+
+`WARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.com). Delete one if they are the same person.`
+
+Names and emails are compared without regard to letter case. Repeated,
+leading, and trailing whitespace in names is insignificant, as are spaces in
+phone numbers. Each matching field produces a separate note.
+
+The warning is only a hint. It does not prove that two records describe the
+same person, and it does not find misspelled names, email aliases, or phone
+numbers whose punctuation differs. Review the records before deleting either
+one. A matching NUS Student ID is handled separately and still refuses the
+command, as described above.
+</box>
+
+<box type="tip" seamless>
+
 **Tip:** A student can have any number of tags, including zero. A tag may hold
 spaces, hyphens and any script, so `Lab 3`, `needs-followup` and
 `AY2627 Sem 1 CS2103T T16` are all valid.
@@ -362,6 +381,9 @@ done to it beyond the quotes any value with spaces takes:
   NUS Student ID succeeds. Name and phone are required and cannot be cleared.
 * An edit may give two students the same name, but cannot give a student an NUS
   Student ID already held by another record. NUS Student ID matching ignores case.
+  A saved edit produces the same likely-duplicate notes described under `add`
+  when its name, phone number, or email matches another student; the edited
+  student is not compared with its own earlier record.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
 * To remove all of a student's tags, give `-t` an empty value: `-t ""`. A bare
   `-t` with nothing after it is refused, so that a mistyped option is reported

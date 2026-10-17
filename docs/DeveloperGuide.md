@@ -538,6 +538,22 @@ loading, `JsonSerializableStudentBook` admits repeated names but rejects a
 repeated NUS Student ID with the record number, record name, and ID. This keeps
 hand-edited files diagnosable while allowing common names in a class.
 
+After the identity check succeeds, `LikelyDuplicateWarning` compares the
+prospective record with every existing student. Name and email comparisons
+ignore case; names already carry `normalizeFieldValue`'s whitespace
+normalization, and phone comparisons remove spaces from their normalized
+stored forms. Other punctuation remains significant so the warning does not
+claim fuzzy matching it cannot provide. Absent emails do not match.
+
+The commands collect the warnings before mutation, separate them from the
+ordinary success message with a blank line, and append one prominently labelled
+`WARNING: Possible duplicate student` line for every matching field and student
+before saving the change. `EditCommand` excludes the selected `Student` instance
+but still uses the complete unfiltered student book, so a filtered list cannot
+hide a match and an unchanged field cannot make a record match itself. These
+comparisons are advisory only: they never feed `isSameStudent` or the storage
+duplicate check, and therefore cannot reject or discard a legitimate shared detail.
+
 **The email may be absent.** A student is recorded before an email address is
 known rather than one being invented. `Student` retains its nullable email
 constructor contract and exposes the value as `Optional<Email>` so callers
@@ -1953,7 +1969,8 @@ testers are expected to do more *exploratory* testing.
       `add Alice Tan -p 92345678 -i A76543210Y`, then
       `add Alice Tan -p 93456789`.<br>
       Expected: All three students are added because the matching name is not
-      an identity key, and the NUS Student IDs differ or are absent.
+      an identity key, and the NUS Student IDs differ or are absent. The second
+      and third additions each warn that another student has the same name.
 
    1. Test case: `add Bob Lim -p 94567891 -i a01234567x`<br>
       Expected: The addition is rejected. The error names NUS Student ID
@@ -1967,7 +1984,33 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Note the second Alice's index, then run
       `edit INDEX -n "Alice Tan" -p 95678912` with that index.<br>
       Expected: The edit succeeds because her NUS Student ID remains distinct;
-      sharing the same name does not block the edit.
+      sharing the same name does not block the edit. The result warns about
+      each of the other records with that name.
+
+1. Warning about likely duplicate students
+
+   1. Prerequisites: Start from an empty book and add
+      `add Alex Yeoh -p "+65 9123 4567" -e Alex@Example.com -i A01234567X`.<br>
+      Expected: Alex is added without a warning because no other student is
+      present.
+
+   1. Test case: `add "  aLeX   yEoH  " -p 81112222 -e other@example.com`<br>
+      Expected: The second record is saved. The result names Alex Yeoh and the
+      matching `name`; case and repeated spaces do not prevent the match.
+
+   1. Test case: `add Bernice Yu -p +6591234567 -e bernice@example.com`<br>
+      Expected: Bernice is saved. The result names Alex Yeoh and the matching
+      `phone`, because spaces in a phone number are insignificant.
+
+   1. Test case: `add Chris Lim -p 82223333 -e alex@example.com`<br>
+      Expected: Chris is saved. The result names Alex Yeoh and the matching
+      `email`; email letter case is insignificant.
+
+   1. Prerequisites: Clear the book, add `add Dana Lee -p 83334444`, and note
+      Dana's index.<br>
+      Test case: `edit INDEX -t tutorial` with Dana's index.<br>
+      Expected: The edit succeeds without a likely-duplicate warning. Dana's
+      unchanged name and phone are not compared with her own earlier record.
 
 ### Editing a student
 
