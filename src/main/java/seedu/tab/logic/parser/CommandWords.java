@@ -52,6 +52,8 @@ public class CommandWords {
     /** How many equally likely words are worth naming before a list of them stops being help. */
     private static final int MAX_SUGGESTIONS = 3;
 
+    private CommandWords() {} // this class only holds the words and the matching
+
     /**
      * Returns the command words {@code typedWord} is a likely attempt at, in the alphabetical
      * order of {@link #COMMAND_WORDS}. The list is empty when the word stands for none of
