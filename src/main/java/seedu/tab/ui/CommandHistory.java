@@ -3,6 +3,8 @@ package seedu.tab.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import seedu.tab.commons.util.StringUtil;
+
 /** Keeps submitted commands and an unsent draft for one command-box session. */
 final class CommandHistory {
 
@@ -10,9 +12,10 @@ final class CommandHistory {
     private int position;
     private String draft = "";
 
-    /** Records a submission, skipping only a consecutive identical command. */
+    /** Records a submission, skipping blank input and consecutive identical commands. */
     void add(String command) {
-        if (commands.isEmpty() || !commands.getLast().equals(command)) {
+        boolean isBlank = command.chars().allMatch(character -> StringUtil.isWhitespace((char) character));
+        if (!isBlank && (commands.isEmpty() || !commands.getLast().equals(command))) {
             commands.add(command);
         }
         position = commands.size();
@@ -26,6 +29,9 @@ final class CommandHistory {
         }
         if (position == commands.size()) {
             draft = text;
+            if (position > 1 && text.equals(commands.getLast())) {
+                position--;
+            }
         }
         return commands.get(--position);
     }
