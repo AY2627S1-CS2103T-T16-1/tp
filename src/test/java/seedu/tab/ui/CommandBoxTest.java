@@ -23,6 +23,8 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 import javafx.scene.control.skin.TextFieldSkin;
+import javafx.scene.control.skin.TextInputControlSkin.Direction;
+import javafx.scene.control.skin.TextInputControlSkin.TextUnit;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -45,6 +47,7 @@ public class CommandBoxTest {
     private static final double DRAGGED_IN_BY = 150;
     private static final int A_CUT = 8;
     private static final int TWO_WORDS = 12;
+    private static final int A_FEW_CHARACTERS = 4;
     /** Every state the field re-scrolls its own text in, by what leaves it there. */
     private static final List<String> RESCROLLING_EDITS = List.of(
             "backspace", "backspace thrice", "ctrl-backspace", "select and type",
@@ -770,6 +773,75 @@ public class CommandBoxTest {
         });
 
         assertTrue(misread.isEmpty(), "a click lands on a character it was not aimed at:" + misread);
+    }
+
+    @Test
+    public void caretPastTheEnd_isDrawnInsideTheLineWithTheCopyOnTheFieldsText() throws Exception {
+        double[] measured = onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            assertNotNull(styledScene(root, NARROW_LINE, LINE_HEIGHT));
+            TextField field = (TextField) root.lookup("#commandTextField");
+            TextFlow copy = (TextFlow) root.lookup("#highlighted");
+            Region mark = (Region) root.lookup("#caret");
+            Region lane = (Region) root.lookup("#lane");
+
+            field.setText(LONG_COMMAND);
+            field.positionCaret(field.getLength());
+            root.layout();
+
+            Text drawn = fieldTextOf(field);
+            assertNotNull(drawn, "the field should be drawing its own text");
+            return new double[] {copy.getLayoutX(), drawn.getLayoutX() + drawn.getTranslateX(),
+                mark.getLayoutX() + mark.getWidth(), lane.getWidth(), mark.getWidth()};
+        });
+
+        // both at once: the copy where the field's own text sits, so that a click lands
+        // where it was aimed, and the caret inside the line, where the lane is not clipped
+        // away and there is something of it left to see
+        assertEquals(measured[1], measured[0], 0.5,
+                "the copy is drawn from " + measured[0] + " against the field's " + measured[1]);
+        assertTrue(measured[4] > 0, "the caret should have a width to be seen by");
+        assertTrue(measured[2] <= measured[3] + 0.01,
+                "the caret ends at " + measured[2] + ", past the line's " + measured[3]);
+    }
+
+    @Test
+    public void caretMovedLeft_inACommandLongerThanTheLine_leavesTheLineWhereItIs() throws Exception {
+        double[] drawnFrom = onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            assertNotNull(styledScene(root, NARROW_LINE, LINE_HEIGHT));
+            TextField field = (TextField) root.lookup("#commandTextField");
+            TextFlow copy = (TextFlow) root.lookup("#highlighted");
+            TextFieldSkin skin = (TextFieldSkin) field.getSkin();
+
+            field.setText(LONG_COMMAND);
+            field.positionCaret(field.getLength());
+            root.layout();
+            Text drawn = fieldTextOf(field);
+            assertNotNull(drawn, "the field should be drawing its own text");
+            double atTheEnd = copy.getLayoutX();
+            double fieldAtTheEnd = drawn.getLayoutX() + drawn.getTranslateX();
+
+            for (int step = 0; step < A_FEW_CHARACTERS; step++) {
+                skin.moveCaret(TextUnit.CHARACTER, Direction.LEFT, false);
+            }
+            root.layout();
+            return new double[] {atTheEnd, copy.getLayoutX(), fieldAtTheEnd,
+                drawn.getLayoutX() + drawn.getTranslateX()};
+        });
+
+        // the field scrolls only when the caret would leave the line, so a copy that scrolls
+        // on every move shows a different part of the command from the one the field
+        // hit-tests a click against, and a click then lands on the wrong character. What it
+        // is held to is the field's own text node rather than a guess at where the field
+        // ought to have scrolled to, which says nothing on a runner that gives it no focus
+        assertEquals(drawnFrom[2], drawnFrom[0], 0.5, "the copy should start on the field's own text");
+        assertEquals(drawnFrom[3], drawnFrom[1], 0.5, "the copy should stay on the field's own text");
+        assertEquals(drawnFrom[0], drawnFrom[1], 0.5,
+                "moving the caret back within the line moved it from " + drawnFrom[0]
+                + " to " + drawnFrom[1]);
     }
 
     @Test
