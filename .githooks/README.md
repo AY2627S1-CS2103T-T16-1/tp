@@ -52,9 +52,22 @@ Validates the message against the
 | Body avoids "currently" / "originally" | warning |
 
 A lowercase scope prefix is accepted, so `bug fix: Add space after name`
-passes. Merge, revert and autosquash (`fixup!`, `squash!`, `amend!`) messages
-are skipped. An over-long line containing no spaces is treated as an
-unbreakable token such as a URL and only warned about.
+passes. Autosquash (`fixup!`, `squash!`, `amend!`) messages are skipped, since
+they disappear when squashed. Merge and revert messages land on `master`, so
+they are checked as well; git's wording already passes the style rules, and
+the 50-character warning is left out for them. An over-long line containing
+no spaces is treated as an unbreakable token such as a URL and only warned
+about.
+
+### `prepare-commit-msg`
+
+Shortens the subject git writes for a merge, so that syncing a branch with a
+long name stays within 72 characters: `Merge branch 'master' into <branch>`
+becomes `Merge master into <branch>`, and `Merge remote-tracking branch
+'upstream/master' into <branch>` becomes `Merge upstream/master into
+<branch>`. A message given with `-m` is left as written. If the subject is
+still too long, `commit-msg` stops the merge; finish it with
+`git commit -m "Merge master into <shorter name>"`.
 
 ## Escape hatches
 
@@ -65,3 +78,12 @@ git commit --no-verify          # skip the hooks entirely
 
 Use `--no-verify` sparingly: CI applies the same checks, so a commit that
 needs it will usually fail the build instead.
+
+## In CI
+
+GitHub's merge button and web edits run no local hook, so
+`.github/workflows/commit-messages.yml` applies the two length limits on
+GitHub: to every commit a pull request brings in, to the message under
+"Proposed merge commit message" in its description, and to each push to
+`master`. The same check runs locally with
+`.github/commit-message-limits.sh master..<branch>`.
