@@ -14,7 +14,12 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.testutil.SerializableTestClass;
@@ -63,11 +68,101 @@ public class JsonUtilTest {
     }
 
     @Test
+    public void readJsonFile_processingIoError_reportsReadError() throws IOException {
+        Path filePath = testFolder.resolve("processingIoError.json");
+        Files.writeString(filePath, "{}");
+
+        DataLoadingException exception = assertThrows(
+                DataLoadingException.class, () -> JsonUtil.readJsonFile(filePath, JsonWithIoFailure.class));
+
+        assertEquals("The file could not be read: simulated processing failure", exception.getMessage());
+        assertInstanceOf(IOException.class, exception.getCause());
+    }
+
+    @Test
     public void getJsonProcessingErrorMessage_withoutLocation_omitsLocation() {
         JsonProcessingException exception = new JsonProcessingException("Invalid content without a location") {};
 
         assertEquals("The data is not in the expected JSON format: Invalid content without a location",
                 JsonUtil.getJsonProcessingErrorMessage(exception, "source that must not be displayed"));
+    }
+
+    @Test
+    public void getJsonProcessingErrorMessage_invalidLine_omitsLocationAndSource() {
+        JsonLocation location = new JsonLocation("hidden source", -1, -1, 0, 4);
+        JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
+
+        assertEquals("The data is not in the expected JSON format: Invalid content",
+                JsonUtil.getJsonProcessingErrorMessage(exception, "source that must not be displayed"));
+    }
+
+    @Test
+    public void getJsonProcessingErrorMessage_locationWithoutColumn_reportsLineOnly() {
+        JsonLocation location = new JsonLocation("hidden source", -1, -1, 2, 0);
+        JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
+
+        String expectedMessage = "The data is not in the expected JSON format at line 2: Invalid content\n"
+                + "Affected source:\n"
+                + "  1 | first\n"
+                + "> 2 | second\n"
+                + "  3 | third";
+        assertEquals(expectedMessage,
+                JsonUtil.getJsonProcessingErrorMessage(exception, "first\nsecond\nthird"));
+    }
+
+    @Test
+    public void getJsonProcessingErrorMessage_missingParserDetails_reportsFallback() {
+        for (String originalMessage : new String[] {null, " \t "}) {
+            JsonProcessingException exception = new JsonProcessingException(originalMessage) {};
+
+            assertEquals("The data is not in the expected JSON format: "
+                            + "The parser did not provide further details.",
+                    JsonUtil.getJsonProcessingErrorMessage(exception, null));
+        }
+    }
+
+    @Test
+    public void getJsonProcessingErrorMessage_sourceDescriptions_omitsSourceDetails() {
+        assertConciseJsonMessage("Unexpected token (from [Source: hidden])", "Unexpected token");
+        assertConciseJsonMessage("Unexpected token (for ROOT starting at [Source: hidden])", "Unexpected token");
+        assertConciseJsonMessage("Unexpected token at [Source: hidden]", "Unexpected token");
+        assertConciseJsonMessage("Unexpected token [Source: hidden]", "Unexpected token");
+        assertConciseJsonMessage("Unexpected token at context [Source: hidden]", "Unexpected token at context");
+        assertConciseJsonMessage("Unexpected token (near [Source: hidden])", "Unexpected token (near");
+    }
+
+    @Test
+    public void getJsonProcessingErrorMessage_locationBeyondSource_omitsExcerpt() {
+        JsonLocation location = new JsonLocation("hidden source", -1, -1, 3, 1);
+        JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
+
+        assertEquals("The data is not in the expected JSON format at line 3, column 1: Invalid content",
+                JsonUtil.getJsonProcessingErrorMessage(exception, "only one line"));
+    }
+
+    @Test
+    public void getJsonProcessingErrorMessage_locationAfterLastLine_marksLastLine() {
+        JsonLocation location = new JsonLocation("hidden source", -1, -1, 3, 1);
+        JsonProcessingException exception = createJsonProcessingException("Unexpected end", location);
+
+        String expectedMessage = "The data is not in the expected JSON format at line 3, column 1: Unexpected end\n"
+                + "Affected source:\n"
+                + "  1 | first\n"
+                + "> 2 | second";
+        assertEquals(expectedMessage,
+                JsonUtil.getJsonProcessingErrorMessage(exception, "first\nsecond"));
+    }
+
+    @Test
+    public void getJsonProcessingErrorMessage_longAffectedLineNearStart_preservesErrorArea() {
+        String jsonSource = "x".repeat(200);
+        JsonLocation location = new JsonLocation("hidden source", -1, -1, 1, 1);
+        JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
+
+        String expectedMessage = "The data is not in the expected JSON format at line 1, column 1: Invalid content\n"
+                + "Affected source:\n"
+                + "> 1 | " + "x".repeat(154) + "...";
+        assertEquals(expectedMessage, JsonUtil.getJsonProcessingErrorMessage(exception, jsonSource));
     }
 
     @Test
@@ -178,6 +273,28 @@ public class JsonUtilTest {
         DataLoadingException exception = assertThrows(
                 DataLoadingException.class, () -> JsonUtil.readJsonFile(filePath, Object.class));
         return exception.getMessage();
+    }
+
+    private JsonProcessingException createJsonProcessingException(String message, JsonLocation location) {
+        return new JsonProcessingException(message, location) {};
+    }
+
+    private void assertConciseJsonMessage(String originalMessage, String conciseMessage) {
+        JsonProcessingException exception = new JsonProcessingException(originalMessage) {};
+        assertEquals("The data is not in the expected JSON format: " + conciseMessage,
+                JsonUtil.getJsonProcessingErrorMessage(exception, null));
+    }
+
+    @JsonDeserialize(using = IoExceptionThrowingDeserializer.class)
+    private static class JsonWithIoFailure {
+    }
+
+    private static class IoExceptionThrowingDeserializer extends JsonDeserializer<JsonWithIoFailure> {
+
+        @Override
+        public JsonWithIoFailure deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+            throw new IOException("simulated processing failure");
+        }
     }
 
     //TODO: @Test jsonUtil_readJsonStringToObjectInstance_correctObject()
