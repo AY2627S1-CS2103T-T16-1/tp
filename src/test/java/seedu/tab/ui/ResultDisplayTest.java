@@ -267,5 +267,4 @@ public class ResultDisplayTest {
 
         assertEquals(2, rowsOf(display), "the breaks it was written with are all there is");
     }
-
 }
