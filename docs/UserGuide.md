@@ -185,16 +185,29 @@ run `list` to see the whole cohort again.
 
 ### Viewing help: `help`
 
-Shows every supported command, its purpose and concise syntax in the main window's
-result area. The summary also explains option aliases, quoting, optional and
-repeatable arguments, and links to the User Guide. No separate window or browser opens.
+Opens a help page inside TAB, replacing the student list and command box until
+you leave help. It shows every supported command, its purpose and concise syntax,
+option aliases, quoting rules and the User Guide address.
 
-The command box keeps focus, so you can type your next command immediately.
-To read the full summary using only the keyboard, press **F6**, then use arrow
-keys, **Page Up/Page Down**, or **Ctrl+Home/Ctrl+End** (**Cmd+Home/Cmd+End** on macOS).
-Press **Escape** to return to the command box; any partially typed command is preserved.
-The next command's result replaces the summary. **F1** and **Help → Help** show
-the same summary without submitting or clearing a partially typed command.
+Use these pager keys immediately, without clicking or pressing Enter after a letter:
+
+| Key | Action |
+| --- | --- |
+| Space, `f`, Page Down | Next screenful |
+| `b`, Page Up | Previous screenful |
+| Enter, `j`, Down | Next line |
+| `k`, Up | Previous line |
+| `d` / `u` | Forward / backward half a screenful |
+| `g` / `G`, Home / End | Beginning / end |
+| `q`, Escape | Return to commands |
+
+The footer keeps the navigation keys visible and shows your progress, or `(END)`
+at the last screenful. Help has no scrollbars. Text wraps to the window width;
+you can resize the window while reading. Paging keys stay at the beginning or
+end when there is no more text in that direction. Press `q` or Escape to restore
+the student list, previous result and any partially typed command, then enter
+your next command. **F1** and **Help → Help** open the same page at the beginning
+without submitting a partially typed command. Pager keys apply only while help is open.
 
 ![Command summary in the main window](images/helpMessage.png)
 
@@ -620,5 +633,5 @@ Action     | Format, Examples
 **Tag**    | `tag INDEX -a TAG` <br> Alternate spelling: `--add` <br> e.g., `tag 1 --add "Lab 3"`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
 **List**   | `list`
-**Help**   | `help` (also `F1` or Help menu); `F6` to read/scroll, `Escape` to resume typing
+**Help**   | `help` (also `F1` or Help menu); Space/`b` to page, `q`/Escape to return
 **Recall** | `Up` / `Down` in the command box; session only

@@ -19,6 +19,9 @@
   [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance),
   a known algorithm whose recurrence we wrote out ourselves. No code was
   copied, and the idea is reused in that one method.
+* The help pager's navigation keys and progress prompt are inspired by the
+  [OpenBSD more(1) manual](https://man.openbsd.org/more.1). This reuse is limited
+  to interaction conventions; the JavaFX implementation is written for TAB.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -104,14 +107,20 @@ tag labels. Layout uses the full name count to size the overflow chip and
 list all hidden tags in its tooltip, even when fewer labels are created.
 
 `HelpCommand` returns a command summary and the existing `showHelp` signal.
-`MainWindow` routes that signal, F1 and the Help menu to the same `ResultDisplay`
-inside the main window. The summary uses command words and flag labels from the
-command/parser definitions, so option spellings are shared with command usage.
-Help allows up to twelve visible rows before scrolling; ordinary replies retain
-the six-row limit, keeping the student list accessible. Each new reply starts at
-the beginning of its text. The command box retains focus after help is shown.
-F6 focuses the read-only result area for scrolling and selection; Escape focuses
-the command box without changing its text. The separate help stage is removed.
+`MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
+the entire student page (command box, result, summary sidebar and student list).
+The hidden student page remains intact so closing help restores its filter,
+previous result and any unfinished command. The summary uses command words and
+flag labels from the command/parser definitions.
+
+`HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
+context, Enter/j and k move a line, d/u move half a screenful, g/G go to either end,
+and q/Escape return to commands. Page Up/Down, arrows and Home/End are also accepted.
+A wrapped label inside a scrollbar-free viewport takes the remaining window height.
+Page movement uses the current viewport and font metrics, so resizing and different
+fonts do not skip text. A persistent footer shows progress and navigation keys.
+Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
+command box so quitting cannot insert a stray character. No student data is changed.
 
 #### Fitting names and tags on a card
 
@@ -1591,26 +1600,34 @@ testers are expected to do more *exploratory* testing.
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample student records. The window size may not be optimal.
 
-1. In-window command summary
+1. Full-page help pager
 
    1. Enter `help`.<br>
-      Expected: The main window shows all nine commands with purposes and syntax,
-      option aliases and quoting guidance. No extra window or browser opens.
-      The command box is empty and ready for typing; student data is unchanged.
+      Expected: Help replaces the student list, summary sidebar, command box and
+      result area. No extra window or browser opens. Navigation keys remain
+      visible in the footer and work immediately without mouse interaction.
 
-   1. Press F6, then Page Down repeatedly and Ctrl+End (Cmd+End on macOS).<br>
-      Expected: You can read through the last line, including the User Guide URL.
-      Repeat at minimum window size. Press Escape, type `list` and press Enter.<br>
-      Expected: Focus returns to the command box and the list result replaces help.
+   1. Press Space/f and b to move forward/back a screenful. Try Enter/j and k,
+      d/u, Page Down/Up, arrows and Home/End. Press g then G.<br>
+      Expected: Each moves as documented; G reaches the last User Guide line and
+      the footer says `(END)`. Repeated paging at either end stays there.
+      Repeat at minimum size and resize while on the last screenful: all text
+      remains reachable without scrollbars.
 
-   1. Type `find Alex` without submitting it, press F1, then F6 and Escape.<br>
-      Expected: The same summary appears; the partially typed command is preserved.
-      Repeat with Help → Help and with help already showing.
+   1. Press q, enter `list`, then reopen help and press Escape.<br>
+      Expected: Both quit keys restore the student view and focus the command
+      box. No q is inserted into it. The next command works normally; the
+      previous result and student filter are preserved while help is open.
+
+   1. Type `find Alex` without submitting it, press F1, then q.<br>
+      Expected: Help takes the whole content area and the unfinished command
+      is restored on return. Repeat with Help → Help. Reopening help starts
+      at the beginning.
 
    1. Enter `help oops`, `help -p` and `help ""`.<br>
       Expected: Each reports `help takes no arguments. Unexpected input: ...`
-      with the offending input quoted. No summary opens and student data stays unchanged.
-      Enter `help` with trailing spaces or tabs: the summary appears normally.
+      with the offending input quoted. No help page opens and student data stays
+      unchanged. `help` with trailing spaces or tabs opens the pager normally.
 
 1. Saving window preferences
 

@@ -724,3 +724,20 @@
 .command-error .command-token {
     -fx-fill: -tab-danger;
 }
+
+/* Help fills the content area; navigation uses pager keys rather than scroll bars. */
+.help-page,
+.help-page .scroll-pane,
+.help-page .viewport {
+    -fx-background-color: -tab-bg;
+}
+
+.help-page .scroll-pane {
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+}
+
+.help-text {
+    -fx-text-fill: -tab-text;
+    -fx-opacity: 1;
+}

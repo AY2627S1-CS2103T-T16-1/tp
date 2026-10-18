@@ -20,9 +20,6 @@ public class ResultDisplay extends UiPart<Region> {
      * student list off the window while still being reachable.
      */
     private static final int MAX_ROWS = 6;
-    private static final int HELP_ROWS = 12;
-
-    private int maxRows = MAX_ROWS;
 
     @FXML
     private TextArea resultDisplay;
@@ -43,22 +40,6 @@ public class ResultDisplay extends UiPart<Region> {
     }
 
     public void setFeedbackToUser(String feedbackToUser) {
-        maxRows = MAX_ROWS;
-        setText(feedbackToUser);
-    }
-
-    /** Shows help with more reading space while keeping the student list visible. */
-    public void showHelp(String summary) {
-        maxRows = HELP_ROWS;
-        setText(summary);
-    }
-
-    /** Focuses the read-only text area for keyboard navigation and copying. */
-    public void requestFocus() {
-        resultDisplay.requestFocus();
-    }
-
-    private void setText(String feedbackToUser) {
         requireNonNull(feedbackToUser);
         resultDisplay.setText(feedbackToUser);
         resultDisplay.positionCaret(0);
@@ -125,7 +106,7 @@ public class ResultDisplay extends UiPart<Region> {
         isCounting = true;
         Platform.runLater(() -> {
             isCounting = false;
-            int rows = (int) Math.clamp(rowsNeededFor(resultDisplay.getText()), 1, maxRows);
+            int rows = (int) Math.clamp(rowsNeededFor(resultDisplay.getText()), 1, MAX_ROWS);
             if (rows != resultDisplay.getPrefRowCount()) {
                 resultDisplay.setPrefRowCount(rows);
             }

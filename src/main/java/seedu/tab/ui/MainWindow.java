@@ -7,16 +7,15 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.logic.Logic;
 import seedu.tab.logic.commands.CommandResult;
-import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.exceptions.ParseException;
 
@@ -38,6 +37,13 @@ public class MainWindow extends UiPart<Stage> {
     private StudentListPanel studentListPanel;
     private ResultDisplay resultDisplay;
     private CommandBox commandBox;
+    private HelpPage helpPage;
+
+    @FXML
+    private VBox studentPage;
+
+    @FXML
+    private StackPane helpPagePlaceholder;
 
     @FXML
     private StackPane commandBoxPlaceholder;
@@ -136,21 +142,21 @@ public class MainWindow extends UiPart<Stage> {
 
         commandBox = new CommandBox(this::executeCommand, logic::isAwaitingConfirmation);
         commandBoxPlaceholder.getChildren().add(commandBox.getRoot());
-        getRoot().addEventFilter(KeyEvent.KEY_PRESSED, this::handleReadingKey);
+        fillHelpPage();
     }
 
-    /** Moves between the result and command box without losing a partially typed command. */
-    private void handleReadingKey(KeyEvent event) {
-        if (event.isAltDown() || event.isControlDown() || event.isMetaDown() || event.isShiftDown()) {
-            return;
-        }
-        if (event.getCode() == KeyCode.F6) {
-            resultDisplay.requestFocus();
-            event.consume();
-        } else if (event.getCode() == KeyCode.ESCAPE) {
-            commandBox.requestFocus();
-            event.consume();
-        }
+    private void fillHelpPage() {
+        helpPage = new HelpPage(this::closeHelp);
+        helpPagePlaceholder.getChildren().add(helpPage.getRoot());
+    }
+
+    /** Restores the student view, its previous result, and any unfinished command. */
+    private void closeHelp() {
+        helpPagePlaceholder.setVisible(false);
+        helpPagePlaceholder.setManaged(false);
+        studentPage.setManaged(true);
+        studentPage.setVisible(true);
+        commandBox.requestFocus();
     }
 
     /**
@@ -166,12 +172,15 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
-     * Shows the command summary and leaves the command box ready for typing.
+     * Shows the full-page command summary with keyboard paging.
      */
     @FXML
     public void handleHelp() {
-        resultDisplay.showHelp(HelpCommand.SHOWING_HELP_MESSAGE);
-        commandBox.requestFocus();
+        studentPage.setVisible(false);
+        studentPage.setManaged(false);
+        helpPagePlaceholder.setManaged(true);
+        helpPagePlaceholder.setVisible(true);
+        helpPage.show();
     }
 
     void show() {

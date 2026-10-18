@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane fx:id="helpPage" focusTraversable="true" styleClass="help-page"
+            xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <padding>
+    <Insets top="12" right="16" bottom="12" left="16" />
+  </padding>
+  <center>
+    <ScrollPane fx:id="helpViewport" fitToWidth="true" focusTraversable="false"
+                hbarPolicy="NEVER" vbarPolicy="NEVER" minWidth="0" minHeight="0">
+      <content>
+        <Label fx:id="helpText" wrapText="true" minWidth="0" minHeight="-Infinity"
+               maxWidth="Infinity" styleClass="help-text" />
+      </content>
+    </ScrollPane>
+  </center>
+  <bottom>
+    <VBox spacing="4">
+      <padding>
+        <Insets top="12" />
+      </padding>
+      <Label fx:id="helpProgress" styleClass="label-bright" />
+      <Label text="Space/f: next page · b: previous · Enter/j: next line · k: previous line"
+             wrapText="true" />
+      <Label text="d/u: half page · g/G: first/last · q/Escape: return to commands"
+             wrapText="true" />
+    </VBox>
+  </bottom>
+</BorderPane>

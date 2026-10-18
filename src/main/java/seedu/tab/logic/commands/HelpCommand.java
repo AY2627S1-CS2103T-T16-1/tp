@@ -26,7 +26,7 @@ public class HelpCommand extends Command {
             + "Example: " + COMMAND_WORD;
 
     public static final String SHOWING_HELP_MESSAGE = String.join("\n",
-            "Command summary — F6 to read/scroll; Escape to return to the command box.",
+            "TAB command reference",
             "[ ] = optional; ... = repeatable. INDEX is a positive number in the displayed list.",
             "",
             AddCommand.COMMAND_WORD + " — Add a student",
@@ -59,7 +59,7 @@ public class HelpCommand extends Command {
             "Commands and option spellings are case-sensitive. help, list, clear and exit take no arguments.",
             "For clear confirmation, y/yes confirms; n/no or Enter cancels (case-insensitive).",
             "Other replies keep clear confirmation pending. Use Up/Down in the command box to recall commands.",
-            "In the summary use arrows or Page Up/Down.",
+            "Quit this pager with q or Escape before entering your next command.",
             "User Guide: " + USER_GUIDE_URL);
 
     @Override
