@@ -381,6 +381,26 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_identicalStudentsWithoutNusStudentIds_editsSelectedStudent() {
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withPhone("91234567")
+                .withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).build();
+        StudentBook studentBook = new StudentBook();
+        studentBook.addStudent(first);
+        studentBook.addStudent(second);
+        model = new ModelManager(studentBook, new UserPrefs());
+        Student editedSecond = new StudentBuilder(second).withPhone("92345678").build();
+        EditCommand command = new EditCommand(INDEX_SECOND_STUDENT,
+                new EditStudentDescriptorBuilder().withPhone("92345678").build());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(expectedModel.getFilteredStudentList().get(1), editedSecond);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedSecond)),
+                expectedModel);
+    }
+
+    @Test
     public void execute_editToNusStudentIdUsedByAnotherStudent_failure() {
         Student firstStudent = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
         String duplicateId = firstStudent.getNusStudentId().orElseThrow().value.toLowerCase();
