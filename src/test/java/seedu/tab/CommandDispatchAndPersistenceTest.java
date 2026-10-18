@@ -29,7 +29,10 @@ import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.storage.JsonUserPrefsStorage;
 import seedu.tab.storage.StorageManager;
 
-public class KeyboardAndOfflineRequirementTest {
+/**
+ * Integration tests for command dispatch and local file persistence.
+ */
+public class CommandDispatchAndPersistenceTest {
 
     @TempDir
     public Path testFolder;
@@ -50,34 +53,34 @@ public class KeyboardAndOfflineRequirementTest {
     }
 
     @Test
-    public void keyboardOnly_allCoreTasksExecutableViaCommandLine_success() throws Exception {
-        // Add student using keyboard command
+    public void execute_coreCommands_dispatchesAndUpdatesState() throws Exception {
+        // Add student
         CommandResult addResult = logic.execute(
                 AddCommand.COMMAND_WORD + " \"Amy Bee\" -p 85355255 -e amy@gmail.com");
         assertTrue(addResult.getFeedbackToUser().contains("Amy Bee"));
         assertEquals(1, model.getFilteredStudentList().size());
 
-        // List students using keyboard command
+        // List students
         CommandResult listResult = logic.execute(ListCommand.COMMAND_WORD);
         assertEquals(ListCommand.formatSuccessMessage(1), listResult.getFeedbackToUser());
 
-        // Find student using keyboard command
+        // Find student
         CommandResult findResult = logic.execute(FindCommand.COMMAND_WORD + " Amy");
         assertEquals(1, model.getFilteredStudentList().size());
         assertEquals(Messages.getStudentsFoundOverview(1),
                 findResult.getFeedbackToUser());
 
-        // Edit student using keyboard command
+        // Edit student
         CommandResult editResult = logic.execute(
                 EditCommand.COMMAND_WORD + " 1 -p 91234567");
         assertTrue(editResult.getFeedbackToUser().contains("91234567"));
 
-        // Delete student using keyboard command
+        // Delete student
         CommandResult deleteResult = logic.execute(DeleteCommand.COMMAND_WORD + " 1");
         assertTrue(deleteResult.getFeedbackToUser().contains("Deleted student: Amy Bee"));
         assertEquals(0, model.getFilteredStudentList().size());
 
-        // Clear using keyboard command
+        // Clear
         CommandResult clearResult = logic.execute(ClearCommand.COMMAND_WORD);
         assertEquals(ClearCommand.MESSAGE_EMPTY, clearResult.getFeedbackToUser());
 
@@ -92,31 +95,31 @@ public class KeyboardAndOfflineRequirementTest {
         assertTrue(model.getStudentBook().getStudentList().isEmpty());
         assertTrue(storage.readStudentBook().orElseThrow().getStudentList().isEmpty());
 
-        // Help using keyboard command
+        // Help
         CommandResult helpResult = logic.execute(HelpCommand.COMMAND_WORD);
         assertTrue(helpResult.isShowHelp());
 
-        // Exit using keyboard command
+        // Exit
         CommandResult exitResult = logic.execute(ExitCommand.COMMAND_WORD);
         assertTrue(exitResult.isExit());
     }
 
     @Test
-    public void keyboardOnly_exitCommandSignalsExitWithoutMouse_success() throws Exception {
+    public void execute_exitCommand_returnsExitSignal() throws Exception {
         CommandResult result = logic.execute(ExitCommand.COMMAND_WORD);
         assertTrue(result.isExit());
         assertEquals(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, result.getFeedbackToUser());
     }
 
     @Test
-    public void keyboardOnly_helpCommandSignalsShowHelpWithoutMouse_success() throws Exception {
+    public void execute_helpCommand_returnsShowHelpSignal() throws Exception {
         CommandResult result = logic.execute(HelpCommand.COMMAND_WORD);
         assertTrue(result.isShowHelp());
         assertEquals(HelpCommand.SHOWING_HELP_MESSAGE, result.getFeedbackToUser());
     }
 
     @Test
-    public void offlineUsage_operationsExecuteLocallyWithoutNetwork_success() throws Exception {
+    public void execute_addThenDelete_savesChangesToLocalFile() throws Exception {
         // Execute add locally
         logic.execute(AddCommand.COMMAND_WORD + " \"Bob Choo\" -p 88889999 -e bob@example.com");
 
