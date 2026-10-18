@@ -31,10 +31,18 @@ public class CommandTokenizer {
      * One token of a command's arguments.
      *
      * @param value The text of the token, with the quotes that grouped it removed.
-     * @param isQuoted Whether a quote took part in it, which marks it as a value rather than
-     *     something the parser may read as a flag.
+     * @param isQuoted Whether a quote took part in it, which normally marks it as a value
+     *     rather than something the parser may read as a flag.
+     * @param beginsQuoted Whether the token began with a quote, before quotes were removed.
      */
-    public record Token(String value, boolean isQuoted) {}
+    public record Token(String value, boolean isQuoted, boolean beginsQuoted) {
+        /**
+         * Constructs a token without distinguishing a later quoted run from a leading one.
+         */
+        public Token(String value, boolean isQuoted) {
+            this(value, isQuoted, isQuoted);
+        }
+    }
 
     /**
      * Returns the tokens in {@code arguments}, with the quotes that group them removed.
@@ -48,6 +56,7 @@ public class CommandTokenizer {
         StringBuilder value = new StringBuilder();
         boolean isQuoted = false;
         boolean wasQuoted = false;
+        boolean beganQuoted = false;
         // a token can be empty yet real, which is what "" spells, so its presence is tracked apart
         boolean hasToken = false;
 
@@ -58,14 +67,18 @@ public class CommandTokenizer {
                 hasToken = true;
                 i++;
             } else if (current == QUOTE) {
+                if (!hasToken) {
+                    beganQuoted = true;
+                }
                 isQuoted = !isQuoted;
                 wasQuoted = true;
                 hasToken = true;
             } else if (!isQuoted && StringUtil.isWhitespace(current)) {
                 if (hasToken) {
-                    tokens.add(new Token(value.toString(), wasQuoted));
+                    tokens.add(new Token(value.toString(), wasQuoted, beganQuoted));
                     value.setLength(0);
                     wasQuoted = false;
+                    beganQuoted = false;
                     hasToken = false;
                 }
             } else {
@@ -78,7 +91,7 @@ public class CommandTokenizer {
             throw new ParseException(MESSAGE_UNCLOSED_QUOTE);
         }
         if (hasToken) {
-            tokens.add(new Token(value.toString(), wasQuoted));
+            tokens.add(new Token(value.toString(), wasQuoted, beganQuoted));
         }
         return tokens;
     }

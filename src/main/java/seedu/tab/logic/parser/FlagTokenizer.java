@@ -18,13 +18,16 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  *
  * <p>The tokens before the first flag are the preamble, joined back together with single
  * spaces, which each command reads as whatever it takes in that position. Every value-taking
- * flag after it takes the one token that follows it, while a presence-only flag consumes no
- * value. A token belonging to no flag, an unknown flag, and a value-taking flag left without a
- * value are each reported for what they are.
+ * flag after it takes the one token that follows it, or the value joined to it by an equals
+ * sign, while a presence-only flag consumes no value. A token belonging to no flag, an unknown
+ * flag, and a value-taking flag left without a value are each reported for what they are.
  */
 public class FlagTokenizer {
 
     private static final String FLAG_MARKER = "-";
+    private static final char VALUE_SEPARATOR = '=';
+
+    private record AttachedFlagValue(Flag flag, String marker, String value) {}
 
     private FlagTokenizer() {} // this class only reads arguments
 
@@ -78,7 +81,7 @@ public class FlagTokenizer {
     private static int readPreamble(List<Token> tokens, FlagArgumentMap parsed) {
         List<String> preambleTokens = new ArrayList<>();
         int index = 0;
-        while (index < tokens.size() && !isFlag(tokens.get(index))) {
+        while (index < tokens.size() && !isOption(tokens.get(index))) {
             preambleTokens.add(tokens.get(index).value());
             index++;
         }
@@ -92,30 +95,47 @@ public class FlagTokenizer {
     private static void readFlags(List<Token> tokens, int index, Map<String, Flag> flagsByMarker,
             FlagArgumentMap parsed) throws ParseException {
         while (index < tokens.size()) {
-            Token token = tokens.get(index);
-            if (!isFlag(token)) {
-                throw new ParseException(String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, token.value()));
-            }
-
-            Flag flag = flagsByMarker.get(token.value());
-            if (flag == null) {
-                throw new ParseException(String.format(Messages.MESSAGE_UNKNOWN_FLAG, token.value()));
-            }
-            if (!flag.takesValue()) {
-                parsed.put(flag, token.value(), "");
-                index++;
-                continue;
-            }
-            // an option in the value position means the one before it was left empty, not that
-            // the user wants to store "-e" as a tag
-            if (index + 1 >= tokens.size() || isFlag(tokens.get(index + 1))) {
-                throw new ParseException(String.format(
-                        Messages.MESSAGE_FLAG_WITHOUT_VALUE, flag.getLabel(token.value())));
-            }
-
-            parsed.put(flag, token.value(), tokens.get(index + 1).value());
-            index += 2;
+            index = readFlag(tokens, index, flagsByMarker, parsed);
         }
+    }
+
+    /** Reads the flag at {@code index} and returns the index after its optional value. */
+    private static int readFlag(List<Token> tokens, int index, Map<String, Flag> flagsByMarker,
+            FlagArgumentMap parsed) throws ParseException {
+        Token token = tokens.get(index);
+        AttachedFlagValue attached = getAttachedFlagValue(token, flagsByMarker);
+        if (attached != null) {
+            parsed.put(attached.flag(), attached.marker(), attached.value());
+            return index + 1;
+        }
+
+        Flag flag = getFlag(token, flagsByMarker);
+        if (!flag.takesValue()) {
+            parsed.put(flag, token.value(), "");
+            return index + 1;
+        }
+        // an option in the value position means the one before it was left empty, not that
+        // the user wants to store "-e" as a tag
+        if (index + 1 >= tokens.size() || isOption(tokens.get(index + 1))) {
+            throw new ParseException(String.format(
+                    Messages.MESSAGE_FLAG_WITHOUT_VALUE, flag.getLabel(token.value())));
+        }
+
+        parsed.put(flag, token.value(), tokens.get(index + 1).value());
+        return index + 2;
+    }
+
+    /** Returns the known flag named by {@code token}. */
+    private static Flag getFlag(Token token, Map<String, Flag> flagsByMarker) throws ParseException {
+        if (!isOption(token)) {
+            throw new ParseException(String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, token.value()));
+        }
+
+        Flag flag = flagsByMarker.get(token.value());
+        if (flag == null) {
+            throw new ParseException(String.format(Messages.MESSAGE_UNKNOWN_FLAG, token.value()));
+        }
+        return flag;
     }
 
     /**
@@ -126,5 +146,33 @@ public class FlagTokenizer {
         return !token.isQuoted()
                 && token.value().startsWith(FLAG_MARKER)
                 && token.value().length() > FLAG_MARKER.length();
+    }
+
+    /** Returns true if {@code token} looks like either supported option form. */
+    private static boolean isOption(Token token) {
+        return isFlag(token) || isAttachedOption(token);
+    }
+
+    /** Returns true if {@code token} has an unquoted option marker before an equals sign. */
+    private static boolean isAttachedOption(Token token) {
+        int separator = token.value().indexOf(VALUE_SEPARATOR);
+        return !token.beginsQuoted()
+                && token.value().startsWith(FLAG_MARKER)
+                && separator > FLAG_MARKER.length();
+    }
+
+    /** Returns the known value-taking flag and value joined in {@code token}, if any. */
+    private static AttachedFlagValue getAttachedFlagValue(Token token, Map<String, Flag> flagsByMarker) {
+        if (!isAttachedOption(token)) {
+            return null;
+        }
+
+        int separator = token.value().indexOf(VALUE_SEPARATOR);
+        String marker = token.value().substring(0, separator);
+        Flag flag = flagsByMarker.get(marker);
+        if (flag == null || !flag.takesValue()) {
+            return null;
+        }
+        return new AttachedFlagValue(flag, marker, token.value().substring(separator + 1));
     }
 }

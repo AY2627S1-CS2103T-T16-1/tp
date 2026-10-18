@@ -147,6 +147,15 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_emptyValuesJoinedByEquals_clearOptionalFieldsAndTags() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder()
+                .withoutEmail().withoutNusStudentId().withTags().build();
+
+        assertParseSuccess(parser, "1 --email= -i= --tag=",
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+    }
+
+    @Test
     public void parse_nameHoldingAPrefix_succeeds() {
         // the defect this command's options exist to remove: "p/ Smith" used to be read as a
         // phone number, so a name add accepts could not be typed into edit at all

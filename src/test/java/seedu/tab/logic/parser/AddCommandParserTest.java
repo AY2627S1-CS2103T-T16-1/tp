@@ -77,6 +77,18 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_valuesJoinedToOptionsByEquals_success() {
+        Student expected = new StudentBuilder(BOB).withNusStudentId(VALID_NUS_STUDENT_ID_BOB)
+                .withTags("Lab = 3").build();
+
+        assertParseSuccess(parser, " " + BOB.getName().fullName
+                + " --phone=" + VALID_PHONE_BOB
+                + " -e=" + VALID_EMAIL_BOB
+                + " -i=" + VALID_NUS_STUDENT_ID_BOB
+                + " --tag=\"Lab = 3\"", new AddCommand(expected));
+    }
+
+    @Test
     public void parse_unquotedNameOfSeveralWords_success() {
         // quoting is only needed for a value that would otherwise be read as something else
         Student expected = new StudentBuilder(BOB).withTags().build();
@@ -273,6 +285,8 @@ public class AddCommandParserTest {
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-z"));
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --unknown something",
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"));
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --phon=1",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--phon=1"));
         for (String option : new String[] {"--no-follow-up", "-nf"}) {
             assertParseFailure(parser, NAME_BOB + PHONE_BOB + " " + option,
                     String.format(Messages.MESSAGE_UNKNOWN_FLAG, option));
