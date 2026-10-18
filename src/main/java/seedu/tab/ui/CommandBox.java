@@ -95,6 +95,11 @@ public class CommandBox extends UiPart<Region> {
         blink();
     }
 
+    /** Focuses the input field while preserving the command being typed. */
+    public void requestFocus() {
+        commandTextField.requestFocus();
+    }
+
     /**
      * Handles the Enter button pressed event.
      */

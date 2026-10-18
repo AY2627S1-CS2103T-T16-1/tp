@@ -16,6 +16,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
+import seedu.tab.logic.commands.HelpCommand;
 
 public class ResultDisplayTest {
 
@@ -266,5 +267,24 @@ public class ResultDisplayTest {
         });
 
         assertEquals(2, rowsOf(display), "the breaks it was written with are all there is");
+    }
+
+    @Test
+    public void showHelp_thenOrdinaryReply_restoresNormalHeightAndReadingPosition() throws Exception {
+        ResultDisplay display = displayAt(740);
+        onFxThread(() -> {
+            display.showHelp(HelpCommand.SHOWING_HELP_MESSAGE);
+            return null;
+        });
+        pulse(display.getRoot());
+        assertEquals(12, rowsOf(display));
+        onFxThread(() -> {
+            areaOf(display).end();
+            display.setFeedbackToUser(String.join("\n", Collections.nCopies(40, "line")));
+            assertEquals(0, areaOf(display).getCaretPosition());
+            return null;
+        });
+        pulse(display.getRoot());
+        assertEquals(MAX_ROWS_UNDER_TEST, rowsOf(display));
     }
 }

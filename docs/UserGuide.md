@@ -34,7 +34,7 @@ TAB is a **desktop application for teaching assistants to manage student records
    The picture shows TAB in use, so a fresh launch has an empty command box and no reply above the list.<br>
    ![Ui](images/Ui.png)
 
-1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
+1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to show the command summary in the main window.<br>
    Some example commands you can try:
 
    * `list` : Lists all students.
@@ -185,9 +185,18 @@ run `list` to see the whole cohort again.
 
 ### Viewing help: `help`
 
-Shows a message explaining how to access the help page.
+Shows every supported command, its purpose and concise syntax in the main window's
+result area. The summary also explains option aliases, quoting, optional and
+repeatable arguments, and links to the User Guide. No separate window or browser opens.
 
-![help message](images/helpMessage.png)
+The command box keeps focus, so you can type your next command immediately.
+To read the full summary using only the keyboard, press **F6**, then use arrow
+keys, **Page Up/Page Down**, or **Ctrl+Home/Ctrl+End** (**Cmd+Home/Cmd+End** on macOS).
+Press **Escape** to return to the command box; any partially typed command is preserved.
+The next command's result replaces the summary. **F1** and **Help → Help** show
+the same summary without submitting or clearing a partially typed command.
+
+![Command summary in the main window](images/helpMessage.png)
 
 Format: `help`
 
@@ -597,7 +606,6 @@ _Details coming soon ..._
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -612,5 +620,5 @@ Action     | Format, Examples
 **Tag**    | `tag INDEX -a TAG` <br> Alternate spelling: `--add` <br> e.g., `tag 1 --add "Lab 3"`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
 **List**   | `list`
-**Help**   | `help`
+**Help**   | `help` (also `F1` or Help menu); `F6` to read/scroll, `Escape` to resume typing
 **Recall** | `Up` / `Down` in the command box; session only

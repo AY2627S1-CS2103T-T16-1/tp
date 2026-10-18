@@ -103,13 +103,15 @@ The student card's `TagRow` retains every tag name, but creates at most three
 tag labels. Layout uses the full name count to size the overflow chip and
 list all hidden tags in its tooltip, even when fewer labels are created.
 
-`HelpWindow` re-fits its scene after the first rendering pulse, allowing
-for native frame sizes, then uses `sizeToScene()` without fixed FXML scene
-dimensions. This lets JavaFX include native decoration sizes correctly.
-Its copy button keeps the same border insets when focused, so the focus
-indicator does not increase the content's preferred size. The regression
-test waits for rendering and native resize events, then measures the scene
-rather than its surrounding frame.
+`HelpCommand` returns a command summary and the existing `showHelp` signal.
+`MainWindow` routes that signal, F1 and the Help menu to the same `ResultDisplay`
+inside the main window. The summary uses command words and flag labels from the
+command/parser definitions, so option spellings are shared with command usage.
+Help allows up to twelve visible rows before scrolling; ordinary replies retain
+the six-row limit, keeping the student list accessible. Each new reply starts at
+the beginning of its text. The command box retains focus after help is shown.
+F6 focuses the read-only result area for scrolling and selection; Escape focuses
+the command box without changing its text. The separate help stage is removed.
 
 #### Fitting names and tags on a card
 
@@ -1589,14 +1591,26 @@ testers are expected to do more *exploratory* testing.
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample student records. The window size may not be optimal.
 
-1. Help window sizing
+1. In-window command summary
 
-   1. Run `help` and wait for the window to open.<br>
-      Expected: The whole User Guide address and `Copy URL` button are visible.
-      Check Windows, Linux and macOS because frame sizes and focus styling differ.
+   1. Enter `help`.<br>
+      Expected: The main window shows all nine commands with purposes and syntax,
+      option aliases and quoting guidance. No extra window or browser opens.
+      The command box is empty and ready for typing; student data is unchanged.
 
-   1. Close the help window and run `help` again.<br>
-      Expected: Both remain fully visible after reopening.
+   1. Press F6, then Page Down repeatedly and Ctrl+End (Cmd+End on macOS).<br>
+      Expected: You can read through the last line, including the User Guide URL.
+      Repeat at minimum window size. Press Escape, type `list` and press Enter.<br>
+      Expected: Focus returns to the command box and the list result replaces help.
+
+   1. Type `find Alex` without submitting it, press F1, then F6 and Escape.<br>
+      Expected: The same summary appears; the partially typed command is preserved.
+      Repeat with Help → Help and with help already showing.
+
+   1. Enter `help oops`, `help -p` and `help ""`.<br>
+      Expected: Each reports `help takes no arguments. Unexpected input: ...`
+      with the offending input quoted. No summary opens and student data stays unchanged.
+      Enter `help` with trailing spaces or tabs: the summary appears normally.
 
 1. Saving window preferences
 
@@ -1624,7 +1638,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `clear oops`, `list oops`, `help oops`, and `exit oops`.<br>
       Expected: Each command reports that it takes no arguments and quotes
-      `oops`. The list stays filtered, no help window opens, TAB stays open,
+      `oops`. The list stays filtered, no help summary opens, TAB stays open,
       and the JSON file matches the copy byte for byte.
 
    1. Test cases: `clear "oops"`, `clear ""`, and `clear "unfinished`.<br>
@@ -1632,7 +1646,7 @@ testers are expected to do more *exploratory* testing.
       stay unchanged, including for an empty quoted argument.
 
    1. Test cases: `list` and `help` with only trailing spaces or tabs.<br>
-      Expected: The list shows all students and help opens respectively.
+      Expected: The list shows all students and the help summary appears respectively.
       `exit` with trailing whitespace closes TAB. Run plain `clear` with
       trailing whitespace only when the test data can be removed; it follows
       the documented clear flow.
@@ -1656,7 +1670,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `lsit`, `hepl`, `addd`, and `clexr`<br>
       Expected: Each suggests `list`, `help`, `add`, and `clear` respectively.
-      None of them runs: the list is unchanged, no help window opens, and no
+      None of them runs: the list is unchanged, no help summary opens, and no
       student is added.
 
    1. Test cases: `ls`, `dlte 1`, and `fit`<br>
@@ -1685,7 +1699,7 @@ testers are expected to do more *exploratory* testing.
       Expected: Each reply quotes the word typed and points to `help`, with no
       suggestion offered. `dlt` is two letters from `edit`, but opens with a
       letter that command does not, so TAB offers nothing rather than guessing.
-      No help window opens until `help` itself is run.
+      No help summary opens until `help` itself is run.
 
    1. Test case: paste a line of at least 80 characters with no spaces in it,
       such as the letter `x` repeated.<br>
