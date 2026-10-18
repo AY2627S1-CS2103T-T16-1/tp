@@ -2,6 +2,7 @@ package seedu.tab.model.student;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.testutil.Assert.assertThrows;
@@ -141,6 +142,20 @@ public class UniqueStudentListTest {
     }
 
     @Test
+    public void setStudent_equalStudentsWithoutNusStudentIds_replacesTargetReference() {
+        Student first = new StudentBuilder().withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).build();
+        Student editedSecond = new StudentBuilder(second).withPhone("91234567").build();
+        uniqueStudentList.add(first);
+        uniqueStudentList.add(second);
+
+        uniqueStudentList.setStudent(second, editedSecond);
+
+        assertSame(first, uniqueStudentList.asUnmodifiableObservableList().get(0));
+        assertSame(editedSecond, uniqueStudentList.asUnmodifiableObservableList().get(1));
+    }
+
+    @Test
     public void remove_nullStudent_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> uniqueStudentList.remove(null));
     }
@@ -156,6 +171,22 @@ public class UniqueStudentListTest {
         uniqueStudentList.remove(ALICE);
         UniqueStudentList expectedUniqueStudentList = new UniqueStudentList();
         assertEquals(expectedUniqueStudentList, uniqueStudentList);
+    }
+
+    @Test
+    public void remove_equalStudentsWithoutNusStudentIds_removesTargetReference() {
+        Student first = new StudentBuilder().withoutNusStudentId().build();
+        Student middle = new StudentBuilder().withName("Alice Tan").withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).build();
+        uniqueStudentList.add(first);
+        uniqueStudentList.add(middle);
+        uniqueStudentList.add(second);
+
+        uniqueStudentList.remove(second);
+
+        assertEquals(2, uniqueStudentList.asUnmodifiableObservableList().size());
+        assertSame(first, uniqueStudentList.asUnmodifiableObservableList().get(0));
+        assertSame(middle, uniqueStudentList.asUnmodifiableObservableList().get(1));
     }
 
     @Test
