@@ -16,6 +16,10 @@ Class StudentCard
 Class SummaryPanel
 Class StatusBarFooter
 Class CommandBox
+Class CardHeadline
+Class CardName
+Class TagRow
+Class ContactRow
 }
 
 package Model <<Rectangle>> {
@@ -39,6 +43,10 @@ MainWindow *-down-> "1" StatusBarFooter
 MainWindow --> "0..1" HelpWindow
 
 StudentListPanel -down-> "*" StudentCard
+StudentCard *-down-> "1" CardHeadline
+StudentCard *-down-> "1" ContactRow
+CardHeadline *-down-> "1" CardName
+CardHeadline *-down-> "1" TagRow
 
 MainWindow -left-|> UiPart
 
@@ -48,6 +56,7 @@ StudentListPanel --|> UiPart
 StudentCard --|> UiPart
 StatusBarFooter --|> UiPart
 HelpWindow --|> UiPart
+SummaryPanel --|> UiPart
 
 StudentCard ..> Model
 UiManager -right-> Logic
