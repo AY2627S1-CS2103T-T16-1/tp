@@ -116,6 +116,20 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_nullStudentDocument_recordsErrorAndPreservesFile() throws Exception {
+        Path studentsPath = testFolder.resolve("students.json");
+        Files.writeString(studentsPath, "null");
+        MainApp initializedApp = new MainApp(testFolder.resolve("prefs.json"), studentsPath);
+
+        initializedApp.init();
+
+        assertEquals("The JSON document must not be null.",
+                getUiManagerLoadingError(initializedApp).orElseThrow());
+        assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());
+        assertEquals("null", Files.readString(studentsPath));
+    }
+
+    @Test
     public void initModelManager_validFile_initializesWithSavedData() throws Exception {
         Path validFilePath = testFolder.resolve("validStudentBook.json");
         JsonStudentBookStorage studentBookStorage = new JsonStudentBookStorage(validFilePath);
@@ -147,6 +161,40 @@ public class MainAppTest {
 
         UserPrefs initializedPrefs = mainApp.initPrefs(prefsStorage);
         assertEquals(new UserPrefs(), initializedPrefs);
+    }
+
+    @Test
+    public void init_nullGuiSettings_repairsPrefsAndPreservesStudentsAcrossLaunches() throws Exception {
+        assertPrefsRecoveryPreservesStudentsAcrossLaunches("{\"guiSettings\": null}");
+    }
+
+    @Test
+    public void init_nullPrefsDocument_repairsPrefsAndPreservesStudentsAcrossLaunches() throws Exception {
+        assertPrefsRecoveryPreservesStudentsAcrossLaunches("null");
+    }
+
+    private void assertPrefsRecoveryPreservesStudentsAcrossLaunches(String prefsContents) throws Exception {
+        Path prefsPath = testFolder.resolve("prefs.json");
+        Files.writeString(prefsPath, prefsContents);
+        JsonUserPrefsStorage prefsStorage = new JsonUserPrefsStorage(prefsPath);
+        Path studentsPath = testFolder.resolve("students.json");
+        new JsonStudentBookStorage(studentsPath).saveStudentBook(getTypicalStudentBook());
+        String savedStudents = Files.readString(studentsPath);
+        MainApp firstLaunch = new MainApp(prefsPath, studentsPath);
+
+        firstLaunch.init();
+
+        assertEquals(new GuiSettings(), firstLaunch.model.getGuiSettings());
+        assertEquals(getTypicalStudentBook(), firstLaunch.model.getStudentBook());
+        assertEquals(new UserPrefs(), prefsStorage.readUserPrefs().orElseThrow());
+
+        MainApp secondLaunch = new MainApp(prefsPath, studentsPath);
+        secondLaunch.init();
+
+        assertEquals(new GuiSettings(), secondLaunch.model.getGuiSettings());
+        assertEquals(getTypicalStudentBook(), secondLaunch.model.getStudentBook());
+        assertEquals(new UserPrefs(), prefsStorage.readUserPrefs().orElseThrow());
+        assertEquals(savedStudents, Files.readString(studentsPath));
     }
 
     @Test

@@ -3,9 +3,12 @@ package seedu.tab.ui;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
@@ -38,26 +41,59 @@ final class FxToolkit {
         Platform.runLater(() -> Platform.setImplicitExit(false));
     }
 
-    /** Runs {@code work} after rendering and a following pulse have processed native resize events. */
-    static <T> T afterPulse(Callable<T> work) throws Exception {
-        FutureTask<T> task = new FutureTask<>(work);
-        onFxThread(() -> {
-            new AnimationTimer() {
-                private boolean hasPulsed;
+    /** Retries assertions after successive pulses until they pass or the shared timeout expires. */
+    static void awaitAssertion(Runnable assertion) throws Exception {
+        awaitAssertion(assertion, TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    }
 
-                @Override
-                public void handle(long now) {
-                    if (!hasPulsed) {
-                        hasPulsed = true;
-                        return;
-                    }
-                    stop();
-                    Platform.runLater(task);
-                }
-            }.start();
-            return null;
-        });
-        return task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    /** Retries assertions with a caller-supplied timeout, preserving the last assertion failure. */
+    static void awaitAssertion(Runnable assertion, long timeout, TimeUnit unit) throws Exception {
+        CompletableFuture<Void> result = new CompletableFuture<>();
+        AtomicReference<AssertionError> lastFailure = new AtomicReference<>();
+        AnimationTimer timer = onFxThread(() -> startPolling(assertion, result, lastFailure));
+        try {
+            result.get(timeout, unit);
+        } catch (TimeoutException timeoutFailure) {
+            if (lastFailure.get() != null) {
+                throw lastFailure.get();
+            }
+            throw timeoutFailure;
+        } finally {
+            result.cancel(false);
+            onFxThread(() -> {
+                timer.stop();
+                return null;
+            });
+        }
+    }
+
+    private static AnimationTimer startPolling(Runnable assertion, CompletableFuture<Void> result,
+            AtomicReference<AssertionError> lastFailure) {
+        checkAssertion(assertion, result, lastFailure);
+        AnimationTimer timer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                // Assertions run after the pulse's layout work rather than during animation processing.
+                Platform.runLater(() -> checkAssertion(assertion, result, lastFailure));
+            }
+        };
+        timer.start();
+        return timer;
+    }
+
+    private static void checkAssertion(Runnable assertion, CompletableFuture<Void> result,
+            AtomicReference<AssertionError> lastFailure) {
+        if (result.isDone()) {
+            return;
+        }
+        try {
+            assertion.run();
+            result.complete(null);
+        } catch (AssertionError failure) {
+            lastFailure.set(failure);
+        } catch (RuntimeException failure) {
+            result.completeExceptionally(failure);
+        }
     }
 
     /** Runs {@code work} on the thread JavaFX requires its nodes to be built on. */

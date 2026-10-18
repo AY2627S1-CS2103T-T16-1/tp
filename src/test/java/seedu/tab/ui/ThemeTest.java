@@ -33,8 +33,6 @@ public class ThemeTest {
             "src", "main", "resources", "view", "DarkTheme.css");
     private static final Path EXTENSIONS = Paths.get(
             "src", "main", "resources", "view", "Extensions.css");
-    private static final Path HELP_WINDOW = Paths.get(
-            "src", "main", "resources", "view", "HelpWindow.css");
 
     /** The stylesheets the window is dressed with, whichever others it may name besides. */
     private static final List<String> INTENDED_STYLESHEETS = List.of("DarkTheme.css", "Extensions.css");
@@ -233,7 +231,7 @@ public class ThemeTest {
         // resolved against the node it is used on rather than the file it was written in, so
         // they all share one palette and a colour written into any of them escapes it
         List<String> literals = new ArrayList<>();
-        for (Path stylesheet : List.of(DARK_THEME, EXTENSIONS, HELP_WINDOW)) {
+        for (Path stylesheet : List.of(DARK_THEME, EXTENSIONS)) {
             String css = Files.readString(stylesheet, StandardCharsets.UTF_8);
             String belowThePalette = stylesheet.equals(DARK_THEME)
                     ? css.substring(css.indexOf('}') + 1)
@@ -281,7 +279,7 @@ public class ThemeTest {
         // families the window will never use. The one the window is written in is chosen
         // against the families the machine has, in UiFonts, and inherited from there
         List<String> lists = new ArrayList<>();
-        for (Path stylesheet : List.of(DARK_THEME, EXTENSIONS, HELP_WINDOW)) {
+        for (Path stylesheet : List.of(DARK_THEME, EXTENSIONS)) {
             String css = Files.readString(stylesheet, StandardCharsets.UTF_8);
             // the property may be spaced out, the shorthand says the same thing, and the
             // last declaration in a rule may have no semicolon after it

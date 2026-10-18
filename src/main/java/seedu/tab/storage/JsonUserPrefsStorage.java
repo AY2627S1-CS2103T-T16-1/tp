@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import seedu.tab.commons.exceptions.DataLoadingException;
+import seedu.tab.commons.exceptions.IllegalValueException;
 import seedu.tab.commons.util.JsonUtil;
 import seedu.tab.model.ReadOnlyUserPrefs;
 import seedu.tab.model.UserPrefs;
@@ -37,10 +38,15 @@ public class JsonUserPrefsStorage {
     /**
      * Similar to {@link #readUserPrefs()}
      * @param prefsFilePath location of the data. Cannot be null.
-     * @throws DataLoadingException if the file format is not as expected.
+     * @throws DataLoadingException if the file format is not as expected or GUI settings are null.
      */
     public Optional<UserPrefs> readUserPrefs(Path prefsFilePath) throws DataLoadingException {
-        return JsonUtil.readJsonFile(prefsFilePath, UserPrefs.class);
+        Optional<UserPrefs> userPrefs = JsonUtil.readJsonFile(prefsFilePath, UserPrefs.class);
+        if (userPrefs.isPresent() && userPrefs.get().getGuiSettings() == null) {
+            IllegalValueException cause = new IllegalValueException("GUI settings must not be null.");
+            throw new DataLoadingException(cause.getMessage(), cause);
+        }
+        return userPrefs;
     }
 
     /**
