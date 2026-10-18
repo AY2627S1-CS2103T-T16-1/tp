@@ -29,7 +29,8 @@ TAB is a **desktop application for teaching assistants to manage student records
 
 1. Copy the file to a folder you can write to, which will be the _home folder_ for TAB.
    If the folder is read-only, TAB can open but cannot save changes to student
-   records or window preferences there. It reports a warning in the terminal
+   records or window preferences there. `list`, `find`, `help`, and `exit`
+   still work. It reports a warning in the terminal
    if it cannot create its log file. Move TAB and any existing data to a
    writable folder before making changes you want to keep.
 
@@ -551,6 +552,9 @@ Format: `exit`
 ### Saving the data
 
 TAB automatically saves changes to student records. You do not need to save manually.
+Commands that leave the records unchanged, including `list`, `find`, `help`, and `exit`, do not save.
+If a save fails, TAB reports an error; the change remains visible for the session but is not saved.
+These commands still work after a save error, and `exit` closes TAB without retrying the failed save.
 Clear prompts, cancellation, and invalid replies leave the saved file unchanged.
 
 ### Editing the data file
