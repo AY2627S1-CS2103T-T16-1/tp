@@ -225,6 +225,10 @@ public class SummaryPanelTest {
             HBox row = (HBox) rows.getChildren().getFirst();
             Label name = (Label) row.getChildren().getFirst();
             Label count = (Label) row.getChildren().getLast();
+            assertTrue(name.prefWidth(-1) + count.prefWidth(-1) > row.getWidth(),
+                    "the row should be short of space");
+            assertTrue(row.getWidth() <= scroll.getViewportBounds().getWidth(),
+                    "the row should fit the visible tag list");
             assertEquals("12", ((Text) count.lookup(".text")).getText(),
                     "the drawn count should contain both digits");
             assertTrue(count.getWidth() >= count.prefWidth(-1) - 0.5,
