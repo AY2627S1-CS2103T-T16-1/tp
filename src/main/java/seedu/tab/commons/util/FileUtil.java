@@ -1,8 +1,11 @@
 package seedu.tab.commons.util;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 
 /**
  * Writes and reads files
@@ -44,11 +47,46 @@ public class FileUtil {
     }
 
     /**
-     * Writes given string to a file.
+     * Writes the given string to a temporary file, then atomically replaces the target file.
      * Will create the file if it does not exist yet.
+     * Preserves an existing file if writing the new contents fails.
      */
     public static void writeToFile(Path file, String content) throws IOException {
-        Files.write(file, content.getBytes(CHARSET));
+        writeToFile(file, content, FileUtil::writeAndSync);
+    }
+
+    static void writeToFile(Path file, String content, TemporaryFileWriter writer) throws IOException {
+        Path absoluteFile = file.toAbsolutePath();
+        Path temporaryFile = Files.createTempFile(absoluteFile.getParent(), ".tab-", ".tmp");
+
+        try {
+            writer.write(temporaryFile, content.getBytes(CHARSET));
+            Files.move(temporaryFile, absoluteFile,
+                    StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException exception) {
+            deleteTemporaryFile(temporaryFile, exception);
+            throw exception;
+        }
+    }
+
+    private static void writeAndSync(Path file, byte[] content) throws IOException {
+        Files.write(file, content);
+        try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {
+            channel.force(true);
+        }
+    }
+
+    private static void deleteTemporaryFile(Path temporaryFile, IOException originalException) {
+        try {
+            Files.deleteIfExists(temporaryFile);
+        } catch (IOException cleanupException) {
+            originalException.addSuppressed(cleanupException);
+        }
+    }
+
+    @FunctionalInterface
+    interface TemporaryFileWriter {
+        void write(Path file, byte[] content) throws IOException;
     }
 
 }
