@@ -7,6 +7,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
+import static seedu.tab.logic.parser.CliFlags.FLAG_REMOVE_TAG;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
 import java.util.stream.Collectors;
@@ -43,8 +44,10 @@ public class HelpCommand extends Command {
             "         [" + FLAG_FOLLOW_UP.getLabel() + " | " + FLAG_NO_FOLLOW_UP.getLabel() + "]",
             "    Provide at least one option.",
             "",
-            "  " + TagCommand.COMMAND_WORD + " — Add a tag, keeping existing tags",
+            "  " + TagCommand.COMMAND_WORD + " — Add or remove one tag",
             "    " + TagCommand.COMMAND_WORD + " " + TagCommand.FIELD_INDEX + " " + FLAG_ADD_TAG.getLabel(),
+            "    " + TagCommand.COMMAND_WORD + " " + TagCommand.FIELD_INDEX + " " + FLAG_REMOVE_TAG.getLabel(),
+            "    Choose one action; other fields stay unchanged.",
             "",
             "  " + FindCommand.COMMAND_WORD + " — Find students by any partial keyword",
             "    " + FindCommand.COMMAND_WORD + " KEYWORD [MORE_KEYWORDS]...",
@@ -78,7 +81,7 @@ public class HelpCommand extends Command {
             "",
             "  Either spelling is accepted:",
             Stream.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
-                    FLAG_TAG, FLAG_ADD_TAG, FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP)
+                    FLAG_TAG, FLAG_ADD_TAG, FLAG_REMOVE_TAG, FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP)
                     .map(flag -> "    " + flag.getMarkerSummary()).collect(Collectors.joining("\n")),
             "",
             "INPUT RULES",
