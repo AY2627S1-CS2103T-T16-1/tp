@@ -16,6 +16,8 @@ Class StudentCard
 Class SummaryPanel
 Class StatusBarFooter
 Class CommandBox
+Class CommandHistory
+Class CommandTextField
 Class CardHeadline
 Class CardName
 Class TagRow
@@ -36,6 +38,8 @@ HiddenOutside ..> Ui
 UiManager .left.|> Ui
 UiManager -down-> "1" MainWindow
 MainWindow *-down->  "1" CommandBox
+CommandBox *-down-> "1" CommandHistory
+CommandBox *-down-> "1" CommandTextField
 MainWindow *-down-> "1" ResultDisplay
 MainWindow *-down-> "1" StudentListPanel
 MainWindow *-down-> "1" SummaryPanel
