@@ -339,6 +339,14 @@ Classes used by multiple components are in the `seedu.tab.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Resolving application file locations
+
+`AppUtil#getApplicationDirectory` uses the code-source location to distinguish a
+packaged JAR from an exploded Gradle or IDE build. A packaged application stores
+`data/tab.json`, `preferences.json`, and `tab.log.*` beside the JAR regardless of
+the process's working directory. An exploded build keeps the working directory
+as its application directory, preserving the development workflow.
+
 ### How commands read their arguments
 
 `add` and `edit` mark their fields with options,
@@ -1644,6 +1652,19 @@ testers are expected to do more *exploratory* testing.
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample student records. The window size may not be optimal.
 
+1. Keeping application files with the JAR
+
+   1. Put the JAR in an empty folder. Launch it, add a recognizable student,
+      then exit.<br>
+      Expected: The folder now contains `data/tab.json`, `preferences.json`,
+      and `tab.log.0`.
+
+   1. Open a terminal in a different folder and launch the same JAR using its
+      absolute path.<br>
+      Expected: The recognizable student is present. The status bar shows the
+      absolute path to the original `data/tab.json`, and no data, preference,
+      or log file is created in the terminal's working folder.
+
 1. Launching from a read-only folder
 
    1. Prerequisites: Copy the JAR into a new folder that the current user can
@@ -1652,8 +1673,8 @@ testers are expected to do more *exploratory* testing.
       account using the folder's Security settings.
 
    1. From that folder, run `java -jar tab.jar`.<br>
-      Expected: The GUI opens with sample records. The terminal warns
-      `Unable to write log file tab.log. Continuing with console logging only.`
+      Expected: The GUI opens with sample records. The terminal warns that it
+      cannot write the JAR folder's `tab.log`, continues with console logging,
       and reports that preferences cannot be saved. There is no
       `ExceptionInInitializerError` or `NullPointerException` from logging.
 

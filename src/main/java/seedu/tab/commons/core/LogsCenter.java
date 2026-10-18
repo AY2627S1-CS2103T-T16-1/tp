@@ -10,6 +10,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import seedu.tab.commons.util.AppUtil;
+
 /**
  * Configures and manages loggers and handlers, including their logging level.
  * Named {@link Logger}s can be obtained from this class.<br>
@@ -23,7 +25,7 @@ public class LogsCenter {
 
     private static final int MAX_FILE_COUNT = 5;
     private static final int MAX_FILE_SIZE_IN_BYTES = (int) (Math.pow(2, 20) * 5); // 5MB
-    private static final String LOG_FILE = "tab.log";
+    private static final String LOG_FILE = AppUtil.getApplicationDirectory().resolve("tab.log").toString();
     private static Logger baseLogger; // to be used as the parent of all other loggers created by this class.
 
     // This static block ensures essential loggers are created early
