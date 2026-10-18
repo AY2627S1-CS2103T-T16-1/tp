@@ -16,6 +16,12 @@ Class StudentCard
 Class SummaryPanel
 Class StatusBarFooter
 Class CommandBox
+Class CommandHistory {
+    ~add(command : String) : void
+    ~previous(text : String) : String
+    ~next(text : String) : String
+}
+Class CommandTextField
 Class CardHeadline
 Class CardName
 Class TagRow
@@ -30,12 +36,15 @@ package Logic <<Rectangle>> {
 Class HiddenLogic #FFFFFF
 }
 
+Class "javafx.scene.control.TextField" as TextField
 Class HiddenOutside #FFFFFF
 HiddenOutside ..> Ui
 
 UiManager .left.|> Ui
 UiManager -down-> "1" MainWindow
 MainWindow *-down->  "1" CommandBox
+CommandBox *-down-> "1" CommandHistory
+CommandBox *-down-> "1" CommandTextField
 MainWindow *-down-> "1" ResultDisplay
 MainWindow *-down-> "1" StudentListPanel
 MainWindow *-down-> "1" SummaryPanel
@@ -52,6 +61,7 @@ MainWindow -left-|> UiPart
 
 ResultDisplay --|> UiPart
 CommandBox --|> UiPart
+CommandTextField --|> TextField
 StudentListPanel --|> UiPart
 StudentCard --|> UiPart
 StatusBarFooter --|> UiPart
