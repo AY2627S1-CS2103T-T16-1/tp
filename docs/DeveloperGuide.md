@@ -343,6 +343,12 @@ them. Each short and long marker resolves to the same `Flag`, so mixed aliases
 for a single-valued field are duplicates rather than independent fields.
 Value-taking options take the token after them, and `-t` or `--tag` repeats
 for `add` and `edit`. The `tag` command takes exactly one tag through `-a` or `--add`.
+They also accept a value joined to any short or long marker by an equals sign.
+`FlagTokenizer` splits only on the first equals sign, so later ones remain in
+the value. An attached value is unambiguously part of its option even when it
+is empty or opens with a hyphen. `CommandTokenizer` records whether a token
+began with a quote so a fully quoted `"--tag=T1"` remains a value, while the
+quote around the value in `--tag="Lab 3"` does not hide the option marker.
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
@@ -1974,6 +1980,27 @@ testers are expected to do more *exploratory* testing.
       Expected: Neither Bob nor any edit is saved. Each missing value names
       `--phone PHONE`; each unknown option names `--unknown`. Alice's details
       and `data/tab.json` remain unchanged.
+
+1. Joining option values with an equals sign
+
+   1. Prerequisites: Continue with Alice at index 1.
+
+   1. Test case: `edit 1 --name="Alice Tan" -p=81112222
+      --email=alice@example.com --id=a01234567x --tag="Lab 3"` as one line.<br>
+      Expected: Every field changes. The name and tag retain their spaces, and
+      the NUS Student ID is stored as `A01234567X`.
+
+   1. Test case: `tag 1 --add=needs=review`.<br>
+      Expected: The tag `needs=review` is added; only the first equals sign
+      separates the option from its value.
+
+   1. Test case: `edit 1 --email= --id= --tag=`.<br>
+      Expected: The email, NUS Student ID, and all tags are cleared. No other
+      field changes.
+
+   1. Test case: `edit 1 --phon=1`.<br>
+      Expected: No field changes. TAB reports that there is no `--phon=1`
+      option.
 
 ### NUS Student IDs
 
