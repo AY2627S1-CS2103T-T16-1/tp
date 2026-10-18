@@ -3,7 +3,9 @@ package seedu.tab.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
+import java.util.logging.Logger;
 
+import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.ToStringBuilder;
 import seedu.tab.logic.Messages;
@@ -25,6 +27,8 @@ public class DeleteCommand extends Command {
 
     public static final String MESSAGE_DELETE_STUDENT_SUCCESS = "Deleted student: %1$s";
 
+    private final Logger logger = LogsCenter.getLogger(DeleteCommand.class);
+
     private final Index targetIndex;
 
     public DeleteCommand(Index targetIndex) {
@@ -42,6 +46,8 @@ public class DeleteCommand extends Command {
 
         Student studentToDelete = lastShownList.get(targetIndex.getZeroBased());
         model.deleteStudent(studentToDelete);
+        logger.info("Deleted the student shown at " + targetIndex.getOneBased()
+                + "; the book now holds " + model.getStudentBook().getStudentList().size());
         return new CommandResult(String.format(MESSAGE_DELETE_STUDENT_SUCCESS, Messages.format(studentToDelete)));
     }
 

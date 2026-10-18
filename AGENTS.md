@@ -29,7 +29,10 @@ CLI-first with a GUI shell.
 
 CI (`.github/workflows/gradle.yml`) runs on every push and pull request across
 ubuntu, macos and windows. Coverage is uploaded to Codecov from the Linux job
-only. **Do not claim a change is done until `./gradlew check` passes.**
+only. `.github/workflows/commit-messages.yml` checks that every commit a pull
+request brings in, and its proposed merge commit message, stays within the
+72-character limits. **Do not claim a change is done until `./gradlew check`
+passes.**
 
 ## Git hooks
 
@@ -43,7 +46,10 @@ git config core.hooksPath .githooks
 - `pre-commit` runs `.github/run-checks.sh` against the staged index, then
   Checkstyle when Java files are staged.
 - `commit-msg` validates the commit message against the se-edu Git
-  conventions.
+  conventions, merge and revert messages included.
+- `prepare-commit-msg` shortens git's default merge subject to
+  `Merge master into <branch>`, so syncing a long-named branch stays within
+  the 72-character limit.
 
 Errors abort the commit; warnings are advisory. `SKIP_CHECKSTYLE=1 git commit`
 defers the slow Checkstyle run to CI, and `git commit --no-verify` bypasses
@@ -158,7 +164,14 @@ Follow the
   rebase, because rewriting commit timestamps interferes with course progress
   tracking.
 - Give the merge commit a traceable subject, using this format
-  consistently: `Issue title #IssueNumber (#PrNumber)`.
+  consistently: `Summary #IssueNumber (#PrNumber)`, or `Summary (#PrNumber)`
+  for a PR without an issue. The summary is a short imperative description of
+  the whole change, e.g. `Recall recent commands with Up and Down #225 (#259)`,
+  not the issue title, which is often a long user story or a description of
+  the bug. Put the full issue title in the merge commit body instead.
+- Keep the whole merge subject within the 72-character hard limit, and wrap
+  the body at 72 as well; an issue title longer than that goes on two lines.
+  GitHub's merge button does not run our hooks, so count before merging.
 - After merging, close the issue, pull `upstream/master` into local `master`,
   push it to `origin/master`, then merge `master` into every unmerged branch
   that needs the update. Keep all merged PR branches.

@@ -109,8 +109,8 @@ public class TagCommand extends Command {
         } else {
             updatedTags.removeIf(this::matchesTag);
         }
-        return new Student(student.getName(), student.getPhone(), student.getEmail().orElse(null),
-                student.getNusStudentId().orElse(null), updatedTags, student.isFlagged());
+        return new Student(student.getName(), student.getPhone(), student.getEmail(),
+                student.getNusStudentId(), updatedTags, student.isFlagged());
     }
 
     @Override

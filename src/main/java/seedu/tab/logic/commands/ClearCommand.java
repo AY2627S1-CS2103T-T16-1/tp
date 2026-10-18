@@ -2,6 +2,9 @@ package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.logging.Logger;
+
+import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.model.Model;
 import seedu.tab.model.StudentBook;
@@ -20,6 +23,8 @@ public class ClearCommand extends Command {
             "No clear confirmation is pending. Enter clear to request one.";
     public static final String MESSAGE_SUCCESS = "Student book has been cleared!";
 
+    private final Logger logger = LogsCenter.getLogger(ClearCommand.class);
+
 
     @Override
     public CommandResult execute(Model model) {
@@ -34,7 +39,9 @@ public class ClearCommand extends Command {
      */
     public CommandResult executeConfirmed(Model model) {
         requireNonNull(model);
+        int cleared = model.getStudentBook().getStudentList().size();
         model.setStudentBook(new StudentBook());
+        logger.info("Cleared " + cleared + " student" + StringUtil.getPluralSuffix(cleared));
         return new CommandResult(MESSAGE_SUCCESS);
     }
 }

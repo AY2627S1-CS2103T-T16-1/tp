@@ -34,7 +34,7 @@ TAB is a **desktop application for teaching assistants to manage student records
    The picture shows TAB in use, so a fresh launch has an empty command box and no reply above the list.<br>
    ![Ui](images/Ui.png)
 
-1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
+1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to show the command summary in the main window.<br>
    Some example commands you can try:
 
    * `list` : Lists all students.
@@ -77,8 +77,8 @@ it before pressing Enter.
   `-t friend -t family`.
 
 * Parameters can be in any order.<br>
-  For example, if the command specifies `-p PHONE_NUMBER -e EMAIL`,
-  `-e EMAIL -p PHONE_NUMBER` is also acceptable. A parameter given before any
+  For example, if the command specifies `-p PHONE -e EMAIL`,
+  `-e EMAIL -p PHONE` is also acceptable. A parameter given before any
   option, such as the name in `add`, keeps its place at the front.
 
 * Every command marks its fields with options such as `-p`. Value options also
@@ -185,9 +185,37 @@ run `list` to see the whole cohort again.
 
 ### Viewing help: `help`
 
-Shows a message explaining how to access the help page.
+Opens a help page inside TAB, replacing the student list and command box until
+you leave help. It shows every supported command, its purpose and concise syntax,
+option aliases, quoting rules and a shortcut to copy the User Guide address.
 
-![help message](images/helpMessage.png)
+Use these pager keys immediately, without clicking or pressing Enter after a letter:
+
+| Key | Action |
+| --- | --- |
+| Space, `f`, PgDn | Next screenful |
+| `b`, PgUp | Previous screenful |
+| Enter, `j`, Down | Next line |
+| `k`, Up | Previous line |
+| `d` / `u` | Forward / backward half a screenful |
+| `g` / `G`, Home / End | Beginning / end |
+| `q`, Esc | Return to commands |
+| `c` | Copy the User Guide URL |
+
+Press **c** to copy the complete User Guide address to your clipboard. The footer
+confirms `User Guide URL copied.`; paste it into a browser to read the full guide.
+Typing an unused key shows `Press q or Esc to return to the command box.` so you
+can leave help before typing a command.
+
+The footer keeps the navigation keys visible and shows your progress, or `(END)`
+at the last screenful. Help has no scrollbars. Text wraps to the window width;
+you can resize the window while reading. Paging keys stay at the beginning or
+end when there is no more text in that direction. Press `q` or Esc to restore
+the student list, previous result and any partially typed command, then enter
+your next command. **F1** and **Help → Help** open the same page at the beginning
+without submitting a partially typed command. Pager keys apply only while help is open.
+
+![Command summary in the main window](images/helpMessage.png)
 
 Format: `help`
 
@@ -196,7 +224,7 @@ Format: `help`
 
 Adds a student to the student book.
 
-Format: `add NAME -p PHONE_NUMBER [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
+Format: `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
 
 The value options accept these equivalent spellings: `-p` and `--phone`,
 `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`. The spellings may
@@ -274,7 +302,7 @@ Examples:
 * `add Priya Nair -p 91234567 -e priya@example.com --follow-up`
 * `add 陈伟明 -p 98123344 -e e1077310@u.nus.edu`
 
-A student's NUS Student ID appears on the detail line of their card and in successful
+A student's NUS Student ID appears among their card's details and in successful
 command feedback. A student without one has no placeholder or blank gap there.
 A flagged student's card carries a `Needs follow-up` marker at its right-hand
 edge, on the same line as the name, and the command result says so too.
@@ -283,7 +311,11 @@ A name too long for a card is shortened with an ellipsis in its middle, which
 keeps both the start and the end of the name, so two students whose names begin
 alike still read as two. Hover over any name the card cannot show in full,
 whether it was shortened this way or left narrow by a crowded row, to see the
-whole of it. A cut email address also shows its full value on hover.
+whole of it. NUS Student ID, phone and email share a line when they fit. Details
+wrap onto another line when needed, so a long phone cannot hide the email.
+A value wider than a whole line ends with an ellipsis; hover over it to see
+its full value. Widening the window shows more text and brings details back
+onto one line without changing the stored record.
 At narrow widths, the name keeps its opening letters while tags give way to
 a count of those hidden. When no chip fits, the count reads `N tags`; otherwise
 it reads `N more…`. Hover over the count to read the hidden tag names.
@@ -337,7 +369,7 @@ TAB reports the number of displayed students: `Listed 0 students.` when the list
 
 Edits an existing student in the student book.
 
-Format: `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`
+Format: `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`
 
 The value options accept these equivalent spellings: `-n` and `--name`, `-p`
 and `--phone`, `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`.
@@ -632,7 +664,6 @@ _Details coming soon ..._
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -640,12 +671,13 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add NAME -p PHONE_NUMBER [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> e.g., `add James Ho --phone 22224444 -i A01234567X --tag friend -t colleague --follow-up`
+**Add**    | `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> e.g., `add James Ho --phone 22224444 -i A01234567X --tag friend -t colleague --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [-n NAME] [-p PHONE_NUMBER] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name "James Lee" --id A01234567X`
+**Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name "James Lee" --id A01234567X`
 **Tag**    | `tag INDEX -a TAG` or `tag INDEX -r TAG` <br> Alternate spellings: `--add`, `--remove` <br> e.g., `tag 1 --add "Lab 3"`, `tag 1 --remove "Lab 3"`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
 **List**   | `list`
-**Help**   | `help`
+**Exit**   | `exit`
+**Help**   | `help` (also `F1` or Help menu); Space/`b` to page, `c` to copy the guide URL, `q`/Esc to return
 **Recall** | `Up` / `Down` in the command box; session only
