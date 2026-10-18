@@ -183,7 +183,14 @@ public class HelpSummaryTest {
             return result;
         });
         try {
-            FxToolkit.afterPulse(() -> {
+            FxToolkit.awaitAssertion(() -> {
+                Region page = (Region) node(window, "helpPage");
+                assertTrue(page.getWidth() <= window.getRoot().getMinWidth(),
+                        "the page has not reached the minimum window width");
+                assertTrue(page.getHeight() > window.getRoot().getScene().getHeight() * 0.8,
+                        "the page has not filled the resized scene");
+            });
+            FxToolkit.onFxThread(() -> {
                 assertPagerNavigation(window);
                 return null;
             });
