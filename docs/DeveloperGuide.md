@@ -2288,17 +2288,23 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `add Bob Lim -p 94567891 -i a01234567x`<br>
       Expected: The addition is rejected. The error names NUS Student ID
-      `A01234567X`, and none of the existing records changes.
+      `A01234567X` and student `Alice Tan`, and none of the existing records changes.
 
    1. Test case: Run `list`, note the third Alice's index, then run
       `edit INDEX -i A01234567X` with that index.<br>
       Expected: The edit is rejected. The error names NUS Student ID
-      `A01234567X`, and all three Alice records keep their earlier details.
+      `A01234567X` and student `Alice Tan`, and all three Alice records keep their
+      earlier details.
 
    1. Test case: Note the second Alice's index, then run
       `edit INDEX -n "Alice Tan" -p 95678912` with that index.<br>
       Expected: The edit succeeds because her NUS Student ID remains distinct;
       sharing the same name does not block the edit.
+
+   1. Test case: Add `add Tan Wei Ming -p 91234567` twice, note the second
+      Tan Wei Ming's index, then run `edit INDEX -p 99999999` with that index.<br>
+      Expected: Only the selected second Tan Wei Ming's phone changes. The first
+      identical record keeps phone number `91234567`.
 
 ### Editing a student
 
