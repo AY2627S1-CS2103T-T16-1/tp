@@ -624,6 +624,11 @@ If a save fails, TAB reports an error; the change remains visible for the sessio
 These commands still work after a save error, and `exit` closes TAB without retrying the failed save.
 Clear prompts, cancellation, and invalid replies leave the saved file unchanged.
 
+Window size and position are saved separately in `preferences.json` in TAB's
+home folder. If the file contains only `null`, `guiSettings` is `null`, or the
+file cannot be parsed, TAB opens with default window settings and rewrites the
+preferences file when it can. This recovery does not change saved student records in `data/tab.json`.
+
 ### Editing the data file
 
 TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.json`. Advanced users are welcome to update data directly by editing that data file.
