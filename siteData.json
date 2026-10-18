@@ -51,6 +51,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "resolving-application-file-locations": "Resolving application file locations",
         "how-commands-read-their-arguments": "How commands read their arguments",
         "adding-or-removing-one-tag": "Adding or removing one tag",
         "commands-with-no-arguments": "Commands with no arguments",
