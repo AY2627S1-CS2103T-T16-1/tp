@@ -3,6 +3,8 @@ package seedu.tab.ui;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
@@ -16,6 +18,7 @@ public class HelpPage extends UiPart<Region> {
     private static final String FXML = "HelpPage.fxml";
     private static final double HALF_PAGE = 0.5;
     private static final int PERCENT = 100;
+    private static final String READY_MESSAGE = "Help mode: press q or Esc to return to commands.";
 
     private final Runnable closeHelp;
 
@@ -25,6 +28,8 @@ public class HelpPage extends UiPart<Region> {
     private Label helpText;
     @FXML
     private Label helpProgress;
+    @FXML
+    private Label helpNotice;
 
     /** Creates a pager that restores the command view when the user quits help. */
     public HelpPage(Runnable closeHelp) {
@@ -33,6 +38,7 @@ public class HelpPage extends UiPart<Region> {
         getRoot().addEventFilter(KeyEvent.KEY_PRESSED, this::handleKeyPressed);
         getRoot().addEventFilter(KeyEvent.KEY_TYPED, this::handleKeyTyped);
         helpText.setText(HelpCommand.SHOWING_HELP_MESSAGE);
+        helpNotice.setText(READY_MESSAGE);
         helpViewport.vvalueProperty().addListener((unused, old, value) -> updateProgress());
         helpViewport.viewportBoundsProperty().addListener((unused, old, bounds) -> updateProgress());
         helpText.layoutBoundsProperty().addListener((unused, old, bounds) -> updateProgress());
@@ -41,6 +47,7 @@ public class HelpPage extends UiPart<Region> {
 
     /** Opens help at the beginning with immediate keyboard navigation. */
     public void show() {
+        helpNotice.setText(READY_MESSAGE);
         helpViewport.setVvalue(0);
         getRoot().requestFocus();
     }
@@ -80,11 +87,20 @@ public class HelpPage extends UiPart<Region> {
             case "g" -> helpViewport.setVvalue(0);
             case "G" -> helpViewport.setVvalue(1);
             case "q" -> closeHelp.run();
+            case "c" -> copyGuideUrl();
             default -> {
+                helpNotice.setText("Press q or Esc to return to the command box.");
                 return;
             }
         }
         event.consume();
+    }
+
+    private void copyGuideUrl() {
+        ClipboardContent content = new ClipboardContent();
+        content.putString(HelpCommand.USER_GUIDE_URL);
+        Clipboard.getSystemClipboard().setContent(content);
+        helpNotice.setText("User Guide URL copied.");
     }
 
     private double lineHeight() {

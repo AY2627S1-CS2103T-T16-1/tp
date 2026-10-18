@@ -119,6 +119,10 @@ and q/Esc return to commands. PgUp/PgDn, arrows and Home/End are also accepted.
 A wrapped label inside a scrollbar-free viewport takes the remaining window height.
 Page movement uses the current viewport and font metrics, so resizing and different
 fonts do not skip text. A persistent footer shows progress and navigation keys.
+The c key copies `HelpCommand.USER_GUIDE_URL` to the system clipboard and confirms
+it in the footer. Unused typed keys show a reminder to quit help before entering
+a command. The reference keeps explicit lines short enough for minimum width;
+the long User Guide address is available through c instead of wrapping in the label.
 Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
 command box so quitting cannot insert a stray character. No student data is changed.
 
@@ -1609,10 +1613,17 @@ testers are expected to do more *exploratory* testing.
 
    1. Press Space/f and b to move forward/back a screenful. Try Enter/j and k,
       d/u, PgDn/PgUp, arrows and Home/End. Press g then G.<br>
-      Expected: Each moves as documented; G reaches the last User Guide line and
+      Expected: Each moves as documented; G reaches the last guide-copy hint and
       the footer says `(END)`. Repeated paging at either end stays there.
       Repeat at minimum size and resize while on the last screenful: all text
       remains reachable without scrollbars.
+
+   1. Press c while help is open, then paste into a browser address bar.<br>
+      Expected: The exact address `https://ay2627s1-cs2103t-t16-1.github.io/tp/UserGuide.html`
+      is copied and the footer confirms `User Guide URL copied.`. The reading
+      position, student data and unfinished command stay unchanged. Typing an
+      unused letter such as x shows `Press q or Esc to return to the command box.`.
+      Reopening help clears that temporary notice.
 
    1. Press q, enter `list`, then reopen help and press Esc.<br>
       Expected: Both quit keys restore the student view and focus the command

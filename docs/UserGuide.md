@@ -187,7 +187,7 @@ run `list` to see the whole cohort again.
 
 Opens a help page inside TAB, replacing the student list and command box until
 you leave help. It shows every supported command, its purpose and concise syntax,
-option aliases, quoting rules and the User Guide address.
+option aliases, quoting rules and a shortcut to copy the User Guide address.
 
 Use these pager keys immediately, without clicking or pressing Enter after a letter:
 
@@ -200,6 +200,12 @@ Use these pager keys immediately, without clicking or pressing Enter after a let
 | `d` / `u` | Forward / backward half a screenful |
 | `g` / `G`, Home / End | Beginning / end |
 | `q`, Esc | Return to commands |
+| `c` | Copy the User Guide URL |
+
+Press **c** to copy the complete User Guide address to your clipboard. The footer
+confirms `User Guide URL copied.`; paste it into a browser to read the full guide.
+Typing an unused key shows `Press q or Esc to return to the command box.` so you
+can leave help before typing a command.
 
 The footer keeps the navigation keys visible and shows your progress, or `(END)`
 at the last screenful. Help has no scrollbars. Text wraps to the window width;
@@ -634,5 +640,5 @@ Action     | Format, Examples
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
 **List**   | `list`
 **Exit**   | `exit`
-**Help**   | `help` (also `F1` or Help menu); Space/`b` to page, `q`/Esc to return
+**Help**   | `help` (also `F1` or Help menu); Space/`b` to page, `c` to copy the guide URL, `q`/Esc to return
 **Recall** | `Up` / `Down` in the command box; session only

@@ -96,7 +96,7 @@ public class HelpCommand extends Command {
             "  -t \"\"      Clear all tags",
             "",
             "  Otherwise, edit -t replaces existing tags.",
-            "  Follow-up options take no value and cannot be combined.",
+            "  Follow-up flags take no value; choose at most one.",
             "",
             "CLEAR CONFIRMATION",
             "",
@@ -112,8 +112,7 @@ public class HelpCommand extends Command {
             "  Up/Down recalls commands in the command box.",
             "  Press q or Esc, then enter your next command.",
             "",
-            "  User Guide:",
-            "  " + USER_GUIDE_URL);
+            "  Press c to copy the User Guide address.");
 
     @Override
     public CommandResult execute(Model model) {

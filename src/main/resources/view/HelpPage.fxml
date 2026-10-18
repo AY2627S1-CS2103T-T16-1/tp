@@ -25,10 +25,11 @@
       <padding>
         <Insets top="12" />
       </padding>
+      <Label fx:id="helpNotice" wrapText="true" styleClass="label-bright" />
       <Label fx:id="helpProgress" styleClass="label-bright" />
       <Label text="Space/f/PgDn: next · b/PgUp: back · Enter/j: down · k: up"
              wrapText="true" />
-      <Label text="d/u: half page · g/G: first/last · q/Esc: commands"
+      <Label text="c: copy guide URL · d/u: half page · g/G: first/last · q/Esc: commands"
              wrapText="true" />
     </VBox>
   </bottom>

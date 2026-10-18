@@ -3,6 +3,8 @@ package seedu.tab.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -11,9 +13,13 @@ import org.junit.jupiter.api.Test;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
+import javafx.scene.text.Text;
+import seedu.tab.logic.commands.HelpCommand;
 
 public class HelpPageTest {
     private static final double TOLERANCE = 0.0001;
@@ -69,6 +75,8 @@ public class HelpPageTest {
             press(page, KeyCode.X);
             type(page, "x");
             assertEquals(beforeUnknown, viewport.getVvalue());
+            Label notice = (Label) page.getRoot().lookup("#helpNotice");
+            assertEquals("Press q or Esc to return to the command box.", notice.getText());
             assertEquals(0, quitCount.get());
             return null;
         });
@@ -112,6 +120,58 @@ public class HelpPageTest {
             press(page, KeyCode.END);
             assertEquals(1, viewport.getVvalue());
             assertEquals("(END)", progress.getText());
+            return null;
+        });
+    }
+
+    private static Map<DataFormat, Object> clipboardContents(Clipboard clipboard) {
+        Map<DataFormat, Object> contents = new HashMap<>();
+        for (DataFormat format : clipboard.getContentTypes()) {
+            Object value = clipboard.getContent(format);
+            if (value != null) {
+                contents.put(format, value);
+            }
+        }
+        return contents;
+    }
+
+    @Test
+    public void copyGuideUrl_copiesExactAddressWithoutMovingAndResetsNoticeOnReopen() throws Exception {
+        FxToolkit.onFxThread(() -> {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            Map<DataFormat, Object> previous = clipboardContents(clipboard);
+            try {
+                AtomicInteger quitCount = new AtomicInteger();
+                HelpPage page = pageAt(490, 360, quitCount);
+                type(page, "f");
+                double beforeCopy = viewportOf(page).getVvalue();
+                type(page, "c");
+                assertEquals(HelpCommand.USER_GUIDE_URL, clipboard.getString());
+                assertEquals(beforeCopy, viewportOf(page).getVvalue());
+                assertEquals(0, quitCount.get());
+                Label notice = (Label) page.getRoot().lookup("#helpNotice");
+                assertEquals("User Guide URL copied.", notice.getText());
+                page.show();
+                assertEquals("Help mode: press q or Esc to return to commands.", notice.getText());
+            } finally {
+                clipboard.setContent(previous);
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void reference_minimumWindowWidth_preservesExplicitLineBreaks() throws Exception {
+        FxToolkit.onFxThread(() -> {
+            // Reserve native frame space as well as the page padding at the 490px window minimum.
+            HelpPage page = pageAt(474, 600, new AtomicInteger());
+            Label text = (Label) page.getRoot().lookup("#helpText");
+            for (String line : text.getText().split("\\n")) {
+                Text measured = new Text(line);
+                measured.setFont(text.getFont());
+                assertTrue(measured.getLayoutBounds().getWidth() <= text.getWidth(),
+                        "reference line wraps at minimum width: " + line);
+            }
             return null;
         });
     }
