@@ -29,7 +29,10 @@ CLI-first with a GUI shell.
 
 CI (`.github/workflows/gradle.yml`) runs on every push and pull request across
 ubuntu, macos and windows. Coverage is uploaded to Codecov from the Linux job
-only. **Do not claim a change is done until `./gradlew check` passes.**
+only. `.github/workflows/commit-messages.yml` checks that every commit a pull
+request brings in, and its proposed merge commit message, stays within the
+72-character limits. **Do not claim a change is done until `./gradlew check`
+passes.**
 
 ## Git hooks
 
@@ -166,8 +169,9 @@ Follow the
   the whole change, e.g. `Recall recent commands with Up and Down #225 (#259)`,
   not the issue title, which is often a long user story or a description of
   the bug. Put the full issue title in the merge commit body instead.
-- Keep the whole merge subject within the 72-character hard limit. GitHub's
-  merge button does not run our hooks, so count it before merging.
+- Keep the whole merge subject within the 72-character hard limit, and wrap
+  the body at 72 as well; an issue title longer than that goes on two lines.
+  GitHub's merge button does not run our hooks, so count before merging.
 - After merging, close the issue, pull `upstream/master` into local `master`,
   push it to `origin/master`, then merge `master` into every unmerged branch
   that needs the update. Keep all merged PR branches.

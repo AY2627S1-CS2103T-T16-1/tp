@@ -78,3 +78,12 @@ git commit --no-verify          # skip the hooks entirely
 
 Use `--no-verify` sparingly: CI applies the same checks, so a commit that
 needs it will usually fail the build instead.
+
+## In CI
+
+GitHub's merge button and web edits run no local hook, so
+`.github/workflows/commit-messages.yml` applies the two length limits on
+GitHub: to every commit a pull request brings in, to the message under
+"Proposed merge commit message" in its description, and to each push to
+`master`. The same check runs locally with
+`.github/commit-message-limits.sh master..<branch>`.
