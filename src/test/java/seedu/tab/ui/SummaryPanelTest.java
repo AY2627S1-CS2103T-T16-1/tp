@@ -21,6 +21,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -224,45 +225,49 @@ public class SummaryPanelTest {
             HBox row = (HBox) rows.getChildren().getFirst();
             Label name = (Label) row.getChildren().getFirst();
             Label count = (Label) row.getChildren().getLast();
-            assertEquals("12", ((javafx.scene.text.Text) count.lookup(".text")).getText(),
+            assertEquals("12", ((Text) count.lookup(".text")).getText(),
                     "the drawn count should contain both digits");
             assertTrue(count.getWidth() >= count.prefWidth(-1) - 0.5,
                     "the count was squeezed to " + count.getWidth()
                     + " of the " + count.prefWidth(-1) + " it needs");
-            return new String[] {count.getText(), name.getText(),
-                name.getTooltip() == null ? null : name.getTooltip().getText()};
+            Text drawnName = (Text) name.lookup(".text");
+            return new String[] {count.getText(), drawnName.getText()};
         });
 
-        // the count is the one part of the row a reader cannot work out for themselves, so
-        // it is the tag that gives way
         assertEquals("12", shown[0]);
-        assertTrue(shown[1].length() < longTag.length(), "the tag should be cut: " + shown[1]);
-        assertEquals(longTag, shown[2], "the whole tag should be a hover away");
+        assertEquals(longTag, shown[1], "the whole tag should be drawn across wrapped lines");
     }
 
     @Test
-    public void rows_aTagTheRowCuts_nameTheWholeOfItOnHover() throws Exception {
-        // shorter than the count of characters a tag is cut to, so only the width cuts it
-        String tag = "CS2103T-TUTORIAL";
-        ObservableList<Student> students = FXCollections.observableArrayList(
-                new StudentBuilder().withName("A").withTags(tag).build());
-
-        String tooltip = onFxThread(() -> {
-            SummaryPanel panel = new SummaryPanel(students);
+    public void rows_tagsWithSharedPrefixes_drawWholeNamesWithoutOverlap() throws Exception {
+        List<String> tags = List.of("consultation-week-3", "consultation-week-4",
+                "CS2103T Tutorial W09", "CS2103T Tutorial W10", "LongUnbrokenTag".repeat(10),
+                "咨询课第三周");
+        onFxThread(() -> {
+            SummaryPanel panel = new SummaryPanel(FXCollections.observableArrayList(
+                    tagged("Alice", false, tags.toArray(String[]::new))));
             Region root = (Region) panel.getRoot();
-            assertNotNull(styledScene(root, 190, 400));
-
-            Label name = root.lookupAll(".summary-row .label").stream()
-                    .map(node -> (Label) node)
-                    .filter(label -> tag.equals(label.getText()))
-                    .findFirst().orElseThrow(() -> new AssertionError("no row names the tag"));
-            // squeezed as a narrow panel squeezes it
-            HBox row = (HBox) name.getParent();
-            row.resize(60, row.getHeight());
-            row.layout();
-            return name.getTooltip() == null ? null : name.getTooltip().getText();
+            assertNotNull(styledScene(root, 150, 600));
+            ScrollPane scroll = (ScrollPane) root.lookup("#tagScroll");
+            VBox rows = (VBox) scroll.getContent();
+            assertEquals(tags.size(), rows.getChildren().size());
+            double previousBottom = 0;
+            for (var node : rows.getChildren()) {
+                HBox row = (HBox) node;
+                Label name = (Label) row.getChildren().getFirst();
+                Label count = (Label) row.getChildren().getLast();
+                var drawnName = (Text) name.lookup(".text");
+                assertTrue(tags.contains(name.getText()));
+                assertEquals(name.getText(), drawnName.getText());
+                assertTrue(drawnName.getLayoutBounds().getWidth() <= name.getWidth() + 0.5,
+                        "the wrapped name should fit within the sidebar width");
+                assertTrue(drawnName.getLayoutBounds().getHeight() <= name.getHeight() + 0.5,
+                        "the complete wrapped name should fit inside its label");
+                assertTrue(name.getBoundsInParent().getMaxX() <= count.getBoundsInParent().getMinX());
+                assertTrue(row.getLayoutY() >= previousBottom, "wrapped rows should not overlap");
+                previousBottom = row.getBoundsInParent().getMaxY();
+            }
+            return null;
         });
-
-        assertEquals(tag, tooltip, "a tag the row cut should still be readable on hover");
     }
 }

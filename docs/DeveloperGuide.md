@@ -106,6 +106,11 @@ The student card's `TagRow` retains every tag name, but creates at most three
 tag labels. Layout uses the full name count to size the overflow chip and
 list all hidden tags in its tooltip, even when fewer labels are created.
 
+`SummaryPanel` wraps complete tag names within the fixed 150 px sidebar.
+Each count retains its preferred width, while the tag list scrolls vertically
+as wrapped rows grow. Names are not shortened, so tags differing only at the
+end remain distinguishable without hovering.
+
 `HelpCommand` returns a command summary and the existing `showHelp` signal.
 `MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
 the entire student page (command box, result, summary sidebar and student list).
@@ -2488,6 +2493,16 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `clear`, then `yes`.<br>
       Expected: The flagged count and the total read zero, and the tag list is
       empty rather than the panel disappearing.
+
+1. Distinguishing long tags
+
+   1. Test case: `add Eve Koh -p 81112222 -t consultation-week-3`, then
+      `add Fay Lo -p 81112223 -t consultation-week-3 -t consultation-week-4`.<br>
+      Expected: The sidebar shows both complete tag names on wrapped lines,
+      with counts `2` and `1` beside the correct names. Neither row overlaps
+      the next. Widening the window is not needed to read the endings.
+   1. Test case: Add enough distinct long tags to fill the sidebar.<br>
+      Expected: The tags scroll vertically and the student total stays visible.
 
 ### Student counts in list and find feedback
 
