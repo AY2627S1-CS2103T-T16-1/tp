@@ -68,7 +68,7 @@ public class AddCommandTest {
         ModelStub modelStub = new ModelStubWithStudent(validStudent);
 
         String expectedMessage = String.format(AddCommand.MESSAGE_DUPLICATE_STUDENT,
-                validStudent.getNusStudentId().orElseThrow());
+                validStudent.getNusStudentId().orElseThrow(), validStudent.getName());
         assertThrows(CommandException.class, expectedMessage, () -> addCommand.execute(modelStub));
     }
 
@@ -178,6 +178,13 @@ public class AddCommandTest {
         public boolean hasStudent(Student student) {
             requireNonNull(student);
             return this.student.isSameStudent(student);
+        }
+
+        @Override
+        public ReadOnlyStudentBook getStudentBook() {
+            StudentBook studentBook = new StudentBook();
+            studentBook.addStudent(student);
+            return studentBook;
         }
     }
 

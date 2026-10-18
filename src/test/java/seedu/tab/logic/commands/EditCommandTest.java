@@ -330,7 +330,7 @@ public class EditCommandTest {
         EditCommand editCommand = new EditCommand(INDEX_SECOND_STUDENT, descriptor);
 
         assertCommandFailure(editCommand, model, String.format(EditCommand.MESSAGE_DUPLICATE_STUDENT,
-                firstStudent.getNusStudentId().orElseThrow()));
+                firstStudent.getNusStudentId().orElseThrow(), firstStudent.getName()));
     }
 
     @Test
@@ -343,7 +343,7 @@ public class EditCommandTest {
                 new EditStudentDescriptorBuilder(studentInList).build());
 
         assertCommandFailure(editCommand, model, String.format(EditCommand.MESSAGE_DUPLICATE_STUDENT,
-                studentInList.getNusStudentId().orElseThrow()));
+                studentInList.getNusStudentId().orElseThrow(), studentInList.getName()));
     }
 
     @Test
@@ -408,7 +408,7 @@ public class EditCommandTest {
                 new EditStudentDescriptorBuilder().withNusStudentId(duplicateId).build());
 
         assertCommandFailure(command, model, String.format(EditCommand.MESSAGE_DUPLICATE_STUDENT,
-                firstStudent.getNusStudentId().orElseThrow()));
+                firstStudent.getNusStudentId().orElseThrow(), firstStudent.getName()));
     }
 
     @Test

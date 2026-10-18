@@ -210,7 +210,8 @@ stored as uppercase. To remove an NUS Student ID entered by mistake, use
 TAB uses the NUS Student ID to detect duplicate student records. Two students
 may share a name, and students without an NUS Student ID are not treated as
 duplicates. An `add` or `edit` is refused only when another student already
-has the same NUS Student ID, ignoring letter case; the error names that ID.
+has the same NUS Student ID, ignoring letter case; the error names that ID and
+the student who already holds it.
 </box>
 
 <box type="tip" seamless>
@@ -485,8 +486,9 @@ and saves valid IDs in uppercase.
 TAB identifies duplicate records by NUS Student ID, ignoring letter case. Two
 records with the same name load when their NUS Student IDs differ or either ID
 is absent. Two records with the same NUS Student ID make the file unreadable;
-the startup error names the repeated ID so that you can correct it. Phone
-numbers and emails are searchable details rather than identity keys.
+the startup error names the repeated ID and both record locations so that you
+can correct it. Phone numbers and emails are searchable details rather than
+identity keys.
 
 <box type="warning" seamless>
 

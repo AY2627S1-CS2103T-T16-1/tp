@@ -46,7 +46,7 @@ public class AddCommand extends Command {
 
     public static final String MESSAGE_SUCCESS = "New student added: %1$s";
     public static final String MESSAGE_DUPLICATE_STUDENT =
-            "Another student already has NUS Student ID %1$s.";
+            "Another student already has NUS Student ID %1$s (%2$s).";
 
     private final Student toAdd;
 
@@ -63,8 +63,12 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         if (model.hasStudent(toAdd)) {
+            Student duplicateStudent = model.getStudentBook().getStudentList().stream()
+                    .filter(toAdd::isSameStudent)
+                    .findFirst()
+                    .orElseThrow();
             throw new CommandException(String.format(MESSAGE_DUPLICATE_STUDENT,
-                    toAdd.getNusStudentId().orElseThrow()));
+                    toAdd.getNusStudentId().orElseThrow(), duplicateStudent.getName()));
         }
 
         model.addStudent(toAdd);

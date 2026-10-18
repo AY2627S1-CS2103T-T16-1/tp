@@ -533,10 +533,11 @@ and model replacement, so command execution and storage loading enforce the
 same contract.
 
 When `add` or `edit` finds a matching NUS Student ID, it rejects the operation
-without mutation and names the normalized ID in the error. During storage
-loading, `JsonSerializableStudentBook` admits repeated names but rejects a
-repeated NUS Student ID with the record number, record name, and ID. This keeps
-hand-edited files diagnosable while allowing common names in a class.
+without mutation and names the normalized ID and student who already holds it.
+During storage loading, `JsonSerializableStudentBook` admits repeated names but
+rejects a repeated NUS Student ID with both record numbers, both names, and the
+ID. This keeps hand-edited files diagnosable while allowing common names in a
+class.
 
 **The email may be absent.** A student is recorded before an email address is
 known rather than one being invented. `Student` retains its nullable email
@@ -1759,7 +1760,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `add Jane Doe -p 98765432 -i a01234567x`<br>
       Expected: No student is added. The status message names NUS Student ID
-      `A01234567X`, and no record is mutated.
+      `A01234567X` and `John Doe`, and no record is mutated.
 
 ### Long names on a card
 

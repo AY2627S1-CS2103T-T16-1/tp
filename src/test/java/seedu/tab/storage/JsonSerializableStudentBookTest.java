@@ -44,7 +44,8 @@ public class JsonSerializableStudentBookTest {
         JsonSerializableStudentBook dataFromFile = JsonUtil.readJsonFile(DUPLICATE_STUDENT_FILE,
                 JsonSerializableStudentBook.class).get();
         String expectedMessage = "Student record 2 (\"Bob Lim\"): "
-                + String.format(JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT, "A01234567X");
+                + String.format(JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT,
+                        "A01234567X", 1, "Alice Pauline");
         assertThrows(IllegalValueException.class, expectedMessage, dataFromFile::toModelType);
     }
 

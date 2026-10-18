@@ -122,7 +122,7 @@ public class JsonStudentBookStorageTest {
     @Test
     public void readStudentBook_duplicateNusStudentId_reportsNormalizedId() {
         String expectedMessage = "Student record 2 (\"Lee Wei Ming\"): NUS Student ID A01234567X "
-                + "is already used by another student record.";
+                + "is already used by student record 1 (\"Tan Wei Ming\").";
 
         assertThrows(DataLoadingException.class, expectedMessage, () ->
                 readStudentBook("duplicateNusStudentIdStudentBook.json"));

@@ -71,7 +71,7 @@ public class AddCommandIntegrationTest {
         Student studentInList = model.getStudentBook().getStudentList().get(0);
         assertCommandFailure(new AddCommand(studentInList), model,
                 String.format(AddCommand.MESSAGE_DUPLICATE_STUDENT,
-                        studentInList.getNusStudentId().orElseThrow()));
+                        studentInList.getNusStudentId().orElseThrow(), studentInList.getName()));
     }
 
     @Test
@@ -105,7 +105,7 @@ public class AddCommandIntegrationTest {
 
         assertCommandFailure(new AddCommand(second), model,
                 String.format(AddCommand.MESSAGE_DUPLICATE_STUDENT,
-                        second.getNusStudentId().orElseThrow()));
+                        second.getNusStudentId().orElseThrow(), first.getName()));
     }
 
     @Test
