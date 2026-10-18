@@ -1835,7 +1835,8 @@ testers are expected to do more *exploratory* testing.
       remain unchanged. The search stays active. Exit and relaunch TAB from
       the same folder; confirm every remaining field is preserved.
 
-   1. Test case: `tag 1 -r T1`.<br>
+   1. Test case: Run `find "Tag Test"` again after restarting and confirm only
+      that student is shown, then run `tag 1 -r T1`.<br>
       Expected: The student has no general tags and still needs follow-up.
       After restarting TAB, that state remains.
 
@@ -1872,7 +1873,8 @@ testers are expected to do more *exploratory* testing.
       Expected: Both case variants disappear. `T1`, `Needs follow-up`, the
       follow-up flag and all other fields remain after restart.
 
-   1. Test case: `tag 1 -r "needs follow-up"`.<br>
+   1. Test case: Run `find "Tag Test"` again after restarting and confirm only
+      that student is shown, then run `tag 1 -r "needs follow-up"`.<br>
       Expected: Only the general tag disappears. `T1` and the follow-up flag
       remain. Restore the backup when finished.
 
