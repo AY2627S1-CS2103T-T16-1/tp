@@ -109,7 +109,7 @@ public class HelpCommand extends Command {
             "MORE HELP",
             "",
             "  Up/Down in the command box recalls previous commands.",
-            "  Quit this pager with q or Escape to enter your next command.",
+            "  Quit this pager with q or Esc to enter your next command.",
             "",
             "  User Guide:",
             "  " + USER_GUIDE_URL);

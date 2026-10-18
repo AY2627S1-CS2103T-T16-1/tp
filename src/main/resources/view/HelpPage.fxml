@@ -26,9 +26,9 @@
         <Insets top="12" />
       </padding>
       <Label fx:id="helpProgress" styleClass="label-bright" />
-      <Label text="Space/f: next page · b: previous · Enter/j: next line · k: previous line"
+      <Label text="Space/f/PgDn: next · b/PgUp: back · Enter/j: down · k: up"
              wrapText="true" />
-      <Label text="d/u: half page · g/G: first/last · q/Escape: return to commands"
+      <Label text="d/u: half page · g/G: first/last · q/Esc: commands"
              wrapText="true" />
     </VBox>
   </bottom>

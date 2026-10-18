@@ -193,18 +193,18 @@ Use these pager keys immediately, without clicking or pressing Enter after a let
 
 | Key | Action |
 | --- | --- |
-| Space, `f`, Page Down | Next screenful |
-| `b`, Page Up | Previous screenful |
+| Space, `f`, PgDn | Next screenful |
+| `b`, PgUp | Previous screenful |
 | Enter, `j`, Down | Next line |
 | `k`, Up | Previous line |
 | `d` / `u` | Forward / backward half a screenful |
 | `g` / `G`, Home / End | Beginning / end |
-| `q`, Escape | Return to commands |
+| `q`, Esc | Return to commands |
 
 The footer keeps the navigation keys visible and shows your progress, or `(END)`
 at the last screenful. Help has no scrollbars. Text wraps to the window width;
 you can resize the window while reading. Paging keys stay at the beginning or
-end when there is no more text in that direction. Press `q` or Escape to restore
+end when there is no more text in that direction. Press `q` or Esc to restore
 the student list, previous result and any partially typed command, then enter
 your next command. **F1** and **Help → Help** open the same page at the beginning
 without submitting a partially typed command. Pager keys apply only while help is open.
@@ -633,5 +633,5 @@ Action     | Format, Examples
 **Tag**    | `tag INDEX -a TAG` <br> Alternate spelling: `--add` <br> e.g., `tag 1 --add "Lab 3"`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
 **List**   | `list`
-**Help**   | `help` (also `F1` or Help menu); Space/`b` to page, `q`/Escape to return
+**Help**   | `help` (also `F1` or Help menu); Space/`b` to page, `q`/Esc to return
 **Recall** | `Up` / `Down` in the command box; session only

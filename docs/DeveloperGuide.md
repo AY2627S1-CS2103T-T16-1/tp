@@ -115,7 +115,7 @@ flag labels from the command/parser definitions.
 
 `HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
 context, Enter/j and k move a line, d/u move half a screenful, g/G go to either end,
-and q/Escape return to commands. Page Up/Down, arrows and Home/End are also accepted.
+and q/Esc return to commands. PgUp/PgDn, arrows and Home/End are also accepted.
 A wrapped label inside a scrollbar-free viewport takes the remaining window height.
 Page movement uses the current viewport and font metrics, so resizing and different
 fonts do not skip text. A persistent footer shows progress and navigation keys.
@@ -1608,13 +1608,13 @@ testers are expected to do more *exploratory* testing.
       visible in the footer and work immediately without mouse interaction.
 
    1. Press Space/f and b to move forward/back a screenful. Try Enter/j and k,
-      d/u, Page Down/Up, arrows and Home/End. Press g then G.<br>
+      d/u, PgDn/PgUp, arrows and Home/End. Press g then G.<br>
       Expected: Each moves as documented; G reaches the last User Guide line and
       the footer says `(END)`. Repeated paging at either end stays there.
       Repeat at minimum size and resize while on the last screenful: all text
       remains reachable without scrollbars.
 
-   1. Press q, enter `list`, then reopen help and press Escape.<br>
+   1. Press q, enter `list`, then reopen help and press Esc.<br>
       Expected: Both quit keys restore the student view and focus the command
       box. No q is inserted into it. The next command works normally; the
       previous result and student filter are preserved while help is open.
