@@ -87,3 +87,7 @@ GitHub: to every commit a pull request brings in, to the message under
 "Proposed merge commit message" in its description, and to each push to
 `master`. The same check runs locally with
 `.github/commit-message-limits.sh master..<branch>`.
+
+The workflow runs in the team repository only. Our pull request to the
+course repository brings in the whole project history, including commits
+from before these limits, so it skips the check there.
