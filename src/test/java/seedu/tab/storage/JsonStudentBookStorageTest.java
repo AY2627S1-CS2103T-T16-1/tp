@@ -61,6 +61,12 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_nullDocument_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, "The JSON document must not be null.", () ->
+                readStudentBook("nullStudentBook.json"));
+    }
+
+    @Test
     public void readStudentBook_invalidStudentStudentBook_throwDataLoadingException() {
         String expectedMessage = "Student record 1 (\"---\"): Name \"---\" is not valid: "
                 + "it holds no letter or number";
@@ -331,6 +337,28 @@ public class JsonStudentBookStorageTest {
         assertTrue(savedJson.contains("\"flag\" : true"));
         assertEquals(1, savedJson.split("\"flag\"", -1).length - 1);
         assertEquals(original, new StudentBook(storage.readStudentBook(filePath).get()));
+    }
+
+    @Test
+    public void readAndSaveStudentBook_clearedOptionalDetails_omitsKeysAndPreservesOtherFields() throws Exception {
+        Path filePath = testFolder.resolve("ClearedDetails.json");
+        Student student = new StudentBuilder(ALICE).withFlag(true).build();
+        StudentBook book = new StudentBook();
+        book.addStudent(student);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+        storage.saveStudentBook(book);
+        Student loaded = storage.readStudentBook().orElseThrow().getStudentList().get(0);
+        assertEquals(student, loaded);
+
+        Student cleared = new StudentBuilder(loaded).withoutEmail().withoutNusStudentId().build();
+        book.setStudent(student, cleared);
+        storage.saveStudentBook(book);
+
+        String savedJson = Files.readString(filePath);
+        assertFalse(savedJson.contains("\"email\""));
+        assertFalse(savedJson.contains("\"nusStudentId\""));
+        assertTrue(savedJson.contains("\"flag\" : true"));
+        assertEquals(book, new StudentBook(storage.readStudentBook().orElseThrow()));
     }
 
     @Test

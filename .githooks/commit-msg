@@ -14,9 +14,14 @@ msgfile=$1
 # the diff git appends for review is not mistaken for the message body.
 body=$(sed -e '/^# *-\{1,\} >8 -\{1,\}/,$d' -e '/^#/d' "$msgfile")
 
-# Leave generated messages alone: merges, reverts, and autosquash commits.
+# Autosquash commits disappear when they are squashed, so leave them alone.
+# Merge and revert messages are written by git, but they land on master like
+# any other commit, so their lengths are checked too; git's wording already
+# passes the style rules.
+generated=false
 case $body in
-    Merge\ * | Revert\ * | fixup!\ * | squash!\ * | amend!\ *) exit 0 ;;
+    fixup!\ * | squash!\ * | amend!\ *) exit 0 ;;
+    Merge\ * | Revert\ *) generated=true ;;
 esac
 
 subject=$(printf '%s\n' "$body" | sed -n '1p')
@@ -43,7 +48,10 @@ fi
 len=${#subject}
 if [ "$len" -gt 72 ]; then
     fail "subject is $len chars; the hard limit is 72."
-elif [ "$len" -gt 50 ]; then
+    if $generated; then
+        echo "       Give git a shorter message, e.g. git merge -m \"Merge master into <branch>\"."
+    fi
+elif [ "$len" -gt 50 ] && ! $generated; then
     warn "subject is $len chars; aim for 50 or fewer (72 is the hard limit)."
 fi
 

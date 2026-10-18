@@ -32,7 +32,6 @@ import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.NusStudentId;
-import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 import seedu.tab.testutil.StudentBuilder;
@@ -193,10 +192,7 @@ public class EditCommandTest {
         Student original = model.getFilteredStudentList().get(0);
         Student withNusStudentId = new StudentBuilder(original).withNusStudentId("A01234567X").build();
         model.setStudent(original, withNusStudentId);
-        Student edited = new Student(withNusStudentId.getName(), new Phone(VALID_PHONE_BOB),
-                withNusStudentId.getEmail().orElse(null),
-                withNusStudentId.getNusStudentId().orElse(null),
-                withNusStudentId.getTags(), withNusStudentId.isFlagged());
+        Student edited = new StudentBuilder(withNusStudentId).withPhone(VALID_PHONE_BOB).build();
         EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
                 new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
         Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());

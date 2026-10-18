@@ -16,7 +16,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Logger;
 
+import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.CollectionUtil;
 import seedu.tab.commons.util.ToStringBuilder;
@@ -72,6 +74,8 @@ public class EditCommand extends Command {
     public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP
             + " (or -f) and " + FLAG_NO_FOLLOW_UP + " (or -nf) cannot be used together. Choose one.";
 
+    private final Logger logger = LogsCenter.getLogger(EditCommand.class);
+
     private final Index index;
     private final EditStudentDescriptor editStudentDescriptor;
 
@@ -110,6 +114,8 @@ public class EditCommand extends Command {
 
         model.setStudent(studentToEdit, editedStudent);
         model.updateFilteredStudentList(PREDICATE_SHOW_ALL_STUDENTS);
+        logger.info("Edited the student shown at " + index.getOneBased()
+                + "; the book now holds " + model.getStudentBook().getStudentList().size());
         return new CommandResult(String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)));
     }
 
@@ -131,7 +137,7 @@ public class EditCommand extends Command {
         Set<Tag> updatedTags = editStudentDescriptor.getTags().orElse(studentToEdit.getTags());
         boolean updatedFlag = editStudentDescriptor.getFlagged().orElse(studentToEdit.isFlagged());
 
-        return new Student(updatedName, updatedPhone, updatedEmail.orElse(null), updatedNusStudentId.orElse(null),
+        return new Student(updatedName, updatedPhone, updatedEmail, updatedNusStudentId,
                 updatedTags, updatedFlag);
     }
 

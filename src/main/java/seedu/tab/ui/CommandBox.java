@@ -12,6 +12,7 @@ import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
@@ -34,6 +35,7 @@ public class CommandBox extends UiPart<Region> {
     private static final String FXML = "CommandBox.fxml";
     private static final int BLINK_MILLIS = 530;
 
+    private final CommandHistory history = new CommandHistory();
     private final CommandExecutor commandExecutor;
     private final BooleanSupplier canSubmitEmptyReply;
     private final ChangeListener<Number> theFieldScrolled = (unused, old, now) -> layOutColours();
@@ -70,6 +72,7 @@ public class CommandBox extends UiPart<Region> {
         super(FXML);
         this.commandExecutor = commandExecutor;
         this.canSubmitEmptyReply = canSubmitEmptyReply;
+        commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleHistoryKeyPressed);
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
         commandTextField.textProperty().addListener((unused, old, typed) -> recolour(typed));
@@ -92,6 +95,11 @@ public class CommandBox extends UiPart<Region> {
         blink();
     }
 
+    /** Focuses the input field while preserving the command being typed. */
+    public void requestFocus() {
+        commandTextField.requestFocus();
+    }
+
     /**
      * Handles the Enter button pressed event.
      */
@@ -102,12 +110,35 @@ public class CommandBox extends UiPart<Region> {
             return;
         }
 
+        history.add(commandText);
         try {
             commandExecutor.execute(commandText);
             commandTextField.setText("");
         } catch (CommandException | ParseException e) {
             setStyleToIndicateCommandFailure();
         }
+    }
+
+    /** Recalls a session submission while preserving ordinary modified-arrow shortcuts. */
+    private void handleHistoryKeyPressed(KeyEvent event) {
+        if (event.isAltDown() || event.isControlDown() || event.isMetaDown() || event.isShiftDown()) {
+            return;
+        }
+        String current = commandTextField.getText();
+        String recalled;
+        switch (event.getCode()) {
+            case UP:
+                recalled = history.previous(current);
+                break;
+            case DOWN:
+                recalled = history.next(current);
+                break;
+            default:
+                return;
+        }
+        commandTextField.setText(recalled);
+        commandTextField.positionCaret(recalled.length());
+        event.consume();
     }
 
     /**

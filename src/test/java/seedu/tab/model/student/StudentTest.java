@@ -13,6 +13,7 @@ import static seedu.tab.testutil.TypicalStudents.ALICE;
 import static seedu.tab.testutil.TypicalStudents.BOB;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +25,7 @@ public class StudentTest {
     @Test
     public void constructor_withoutFlag_defaultsToUnflagged() {
         Student student = new Student(ALICE.getName(), ALICE.getPhone(),
-                ALICE.getEmail().orElse(null), ALICE.getTags());
+                ALICE.getEmail(), Optional.empty(), ALICE.getTags());
         assertFalse(student.isFlagged());
         assertTrue(student.getFlag().isEmpty());
     }
@@ -39,7 +40,7 @@ public class StudentTest {
     @Test
     public void constructor_withoutNusStudentIdAndWithFlag_preservesBothStates() {
         Student student = new Student(ALICE.getName(), ALICE.getPhone(),
-                ALICE.getEmail().orElse(null), ALICE.getTags(), true);
+                ALICE.getEmail(), Optional.empty(), ALICE.getTags(), true);
 
         assertTrue(student.getNusStudentId().isEmpty());
         assertTrue(student.isFlagged());
@@ -49,10 +50,50 @@ public class StudentTest {
     public void constructor_withNusStudentIdWithoutFlag_preservesBothStates() {
         NusStudentId nusStudentId = new NusStudentId("E0123456");
         Student student = new Student(ALICE.getName(), ALICE.getPhone(),
-                ALICE.getEmail().orElse(null), nusStudentId, ALICE.getTags());
+                ALICE.getEmail(), Optional.of(nusStudentId), ALICE.getTags());
 
         assertEquals(Optional.of(nusStudentId), student.getNusStudentId());
         assertFalse(student.isFlagged());
+    }
+
+    @Test
+    public void constructor_nullOptionalDetail_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new Student(ALICE.getName(), ALICE.getPhone(),
+                null, ALICE.getNusStudentId(), ALICE.getTags()));
+        assertThrows(NullPointerException.class, () -> new Student(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail(), null, ALICE.getTags()));
+        assertThrows(NullPointerException.class, () -> new Student(ALICE.getName(), ALICE.getPhone(),
+                null, ALICE.getNusStudentId(), ALICE.getTags(), true));
+        assertThrows(NullPointerException.class, () -> new Student(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail(), null, ALICE.getTags(), true));
+    }
+
+    @Test
+    public void constructor_emptyOptionalDetails_preservesAbsence() {
+        Student student = new Student(ALICE.getName(), ALICE.getPhone(),
+                Optional.empty(), Optional.empty(), ALICE.getTags());
+
+        assertTrue(student.getEmail().isEmpty());
+        assertTrue(student.getNusStudentId().isEmpty());
+        assertTrue(student.getFlag().isEmpty());
+        assertEquals(new StudentBuilder(ALICE).withoutEmail().withoutNusStudentId().build(), student);
+    }
+
+    @Test
+    public void equalsAndHashCode_optionalDetailCombinations_preserveValueSemantics() {
+        Student neither = new StudentBuilder(ALICE).withoutEmail().withoutNusStudentId().build();
+        Student emailOnly = new StudentBuilder(ALICE).withoutNusStudentId().build();
+        Student idOnly = new StudentBuilder(ALICE).withoutEmail().build();
+        Student both = new StudentBuilder(ALICE).build();
+        Set<Student> students = Set.of(neither, emailOnly, idOnly, both);
+
+        assertEquals(4, students.size());
+        for (Student student : students) {
+            Student copy = new StudentBuilder(student).build();
+            assertEquals(student, copy);
+            assertEquals(student.hashCode(), copy.hashCode());
+            assertTrue(students.contains(copy));
+        }
     }
 
     @Test
@@ -160,6 +201,15 @@ public class StudentTest {
 
         assertFalse(withNusStudentId.isSameStudent(withDifferentNusStudentId));
         assertFalse(ALICE.isSameStudent(withNusStudentId));
+    }
+
+    @Test
+    public void isSameStudent_bothWithoutNusStudentIdDifferentNames_returnsFalse() {
+        Student alice = new StudentBuilder(ALICE).withoutNusStudentId().build();
+        Student bob = new StudentBuilder(BOB).withoutNusStudentId().build();
+
+        assertFalse(alice.isSameStudent(bob));
+        assertFalse(bob.isSameStudent(alice));
     }
 
     @Test

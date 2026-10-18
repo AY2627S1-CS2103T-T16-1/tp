@@ -2,7 +2,6 @@ package seedu.tab;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -10,6 +9,7 @@ import javafx.application.Application;
 import javafx.stage.Stage;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.exceptions.DataLoadingException;
+import seedu.tab.commons.util.AppUtil;
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.Logic;
 import seedu.tab.logic.LogicManager;
@@ -35,8 +35,9 @@ public class MainApp extends Application {
     public static final String VERSION = "v1.3";
 
     private static final Logger logger = LogsCenter.getLogger(MainApp.class);
-    private static final Path USER_PREFS_FILE_PATH = Paths.get("preferences.json");
-    private static final Path STUDENT_BOOK_FILE_PATH = Paths.get("data", "tab.json");
+    private static final Path APPLICATION_DIRECTORY = AppUtil.getApplicationDirectory();
+    private static final Path USER_PREFS_FILE_PATH = APPLICATION_DIRECTORY.resolve("preferences.json");
+    private static final Path STUDENT_BOOK_FILE_PATH = APPLICATION_DIRECTORY.resolve("data").resolve("tab.json");
 
     protected Ui ui;
     protected Logic logic;
@@ -126,7 +127,7 @@ public class MainApp extends Application {
             initializedPrefs = prefsOptional.orElse(new UserPrefs());
         } catch (DataLoadingException e) {
             logger.warning("Preference file at " + prefsFilePath + " could not be loaded."
-                    + " Using default preferences.");
+                    + " Using default preferences. " + e.getMessage());
             initializedPrefs = new UserPrefs();
         }
 

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,20 @@ public class JsonUtilTest {
         assertEquals(serializableTestClass.getName(), SerializableTestClass.getNameTestValue());
         assertEquals(serializableTestClass.getListOfLocalDateTimes(), SerializableTestClass.getListTestValues());
         assertEquals(serializableTestClass.getMapOfIntegerToString(), SerializableTestClass.getHashMapTestValues());
+    }
+
+    @Test
+    public void readJsonFile_nullDocument_reportsMalformedDataAndPreservesFile() throws IOException {
+        Path filePath = testFolder.resolve("null.json");
+        for (String contents : new String[] {"null", "  null  ", "\nnull\n"}) {
+            Files.writeString(filePath, contents);
+
+            DataLoadingException exception = assertThrows(
+                    DataLoadingException.class, () -> JsonUtil.readJsonFile(filePath, SerializableTestClass.class));
+
+            assertEquals("The JSON document must not be null.", exception.getMessage());
+            assertEquals(contents, Files.readString(filePath));
+        }
     }
 
     @Test
