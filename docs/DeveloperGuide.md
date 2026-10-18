@@ -19,6 +19,9 @@
   [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance),
   a known algorithm whose recurrence we wrote out ourselves. No code was
   copied, and the idea is reused in that one method.
+* The help pager's navigation keys and progress prompt are inspired by the
+  [OpenBSD more(1) manual](https://man.openbsd.org/more.1). This reuse is limited
+  to interaction conventions; the JavaFX implementation is written for TAB.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -103,13 +106,25 @@ The student card's `TagRow` retains every tag name, but creates at most three
 tag labels. Layout uses the full name count to size the overflow chip and
 list all hidden tags in its tooltip, even when fewer labels are created.
 
-`HelpWindow` re-fits its scene after the first rendering pulse, allowing
-for native frame sizes, then uses `sizeToScene()` without fixed FXML scene
-dimensions. This lets JavaFX include native decoration sizes correctly.
-Its copy button keeps the same border insets when focused, so the focus
-indicator does not increase the content's preferred size. The regression
-test waits for rendering and native resize events, then measures the scene
-rather than its surrounding frame.
+`HelpCommand` returns a command summary and the existing `showHelp` signal.
+`MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
+the entire student page (command box, result, summary sidebar and student list).
+The hidden student page remains intact so closing help restores its filter,
+previous result and any unfinished command. The summary uses command words and
+flag labels from the command/parser definitions.
+
+`HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
+context, Enter/j and k move a line, d/u move half a screenful, g/G go to either end,
+and q/Esc return to commands. PgUp/PgDn, arrows and Home/End are also accepted.
+A wrapped label inside a scrollbar-free viewport takes the remaining window height.
+Page movement uses the current viewport and font metrics, so resizing and different
+fonts do not skip text. A persistent footer shows progress and navigation keys.
+The c key copies `HelpCommand.USER_GUIDE_URL` to the system clipboard and confirms
+it in the footer. Unused typed keys show a reminder to quit help before entering
+a command. The reference keeps explicit lines short enough for minimum width;
+the long User Guide address is available through c instead of wrapping in the label.
+Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
+command box so quitting cannot insert a stray character. No student data is changed.
 
 #### Fitting names and tags on a card
 
@@ -301,6 +316,11 @@ for repair. `JsonUserPrefsStorage` also rejects an explicit `null` for
 `MainApp.initPrefs` handles invalid preferences by restoring and saving
 defaults before constructing the model. Student data is stored separately
 and is unchanged by preference recovery.
+
+`StorageManager` logs read/write attempts and successful saves at `FINE`,
+including preference-file operations. Entries identify the file path without
+copying student or preference contents. Save completion is logged only after
+the storage delegate returns successfully.
 
 ### Common classes
 
@@ -508,8 +528,8 @@ well as the same normalized name. `Student` holds an optional `Flag` and
 exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
 interface for commands and the UI. Full equality and hashing include the flag,
 but `isSameStudent` does not: changing whether a student needs a reply does not
-change their identity. The four-argument constructor defaults to no flag so
-existing callers remain source-compatible.
+change their identity. The flag is stored as `Optional<Flag>`; the constructor
+without a follow-up argument defaults to `Optional.empty()`.
 
 Search combines ordinary tags with the optional flag and matches their
 inherited `tagName` values. The student card and command feedback display the
@@ -539,6 +559,15 @@ case, avoiding placeholder labels or empty tag markers.
 
 ### Field values
 
+`Student` stores email and NUS Student ID as `Optional<Email>` and
+`Optional<NusStudentId>`. Both constructors require non-null arguments;
+`Optional.empty()` explicitly represents an unknown detail. One constructor
+accepts the follow-up boolean, and the other defaults to unflagged for sample
+data. There are no overloads accepting nullable email or ID values, and no
+`Student` field is null. Add, edit, storage conversion, and test builders pass
+optionals directly into this contract. Nullable JSON strings remain confined
+to the storage adapter, preserving the existing file format.
+
 `Name`, `Tag` and `Phone` each store the form returned by
 `StringUtil.normalizeFieldValue`: without zero-width characters, with each run of
 whitespace reduced to one ASCII space and leading and trailing whitespace removed,
@@ -559,9 +588,8 @@ ASCII letters and digits. Input letters are case-insensitive and the value is
 stored in uppercase, so `e0123456` and `E0123456` are the same value. This
 accommodates variations in the identifiers issued to different groups of
 students while preventing an accidentally pasted value from hiding the other
-details on a student's card. `Student` holds a
-nullable `NusStudentId` and exposes it as `Optional<NusStudentId>`, matching
-the existing optional-email boundary without inventing a sentinel value.
+details on a student's card. `Student` stores and exposes the value as
+`Optional<NusStudentId>`, using an empty optional rather than a sentinel value.
 `NusStudentId.getFailureReason` performs the single validation scan, and
 `isValidNusStudentId` delegates to it. This keeps the accepted format and the
 specific user-facing error synchronized without maintaining a separate regex.
@@ -592,10 +620,10 @@ rejected. A future duplicate-warning workflow can surface shared contact
 details without changing this model contract.
 
 **The email may be absent.** A student is recorded before an email address is
-known rather than one being invented. `Student` retains its nullable email
-constructor contract and exposes the value as `Optional<Email>` so callers
-handle absence explicitly. `JsonAdaptedStudent` writes the email as a string
-when present; the optional wrapper is not written to JSON.
+known rather than one being invented. `Student` accepts, stores, and exposes
+`Optional<Email>` so callers handle absence explicitly. `JsonAdaptedStudent`
+writes the email as a string when present; the optional wrapper is not written
+to JSON.
 
 The data file simply carries no `email` key. One that holds a malformed address
 is still refused, rather than the address being quietly dropped.
@@ -614,8 +642,8 @@ for a token that is empty after trimming, and sets a replacement only after
 validation succeeds. A rejected value is recorded as a parse problem without
 assigning a null email or requesting a clear. A bare option is still an error.
 Clearing counts as an edit even when the email is already absent. `EditCommand`
-keeps the value optional until the existing
-`Student` constructor boundary. The saved record omits the `email` key and
+passes the optional value directly into the `Student` constructor, including
+an empty optional when clearing. The saved record omits the `email` key and
 reloads through the existing optional-email storage contract.
 
 `Email.MAX_LENGTH` caps at 254 characters the address a **command** may enter.
@@ -1599,14 +1627,41 @@ testers are expected to do more *exploratory* testing.
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample student records. The window size may not be optimal.
 
-1. Help window sizing
+1. Full-page help pager
 
-   1. Run `help` and wait for the window to open.<br>
-      Expected: The whole User Guide address and `Copy URL` button are visible.
-      Check Windows, Linux and macOS because frame sizes and focus styling differ.
+   1. Enter `help`.<br>
+      Expected: Help replaces the student list, summary sidebar, command box and
+      result area. No extra window or browser opens. Navigation keys remain
+      visible in the footer and work immediately without mouse interaction.
 
-   1. Close the help window and run `help` again.<br>
-      Expected: Both remain fully visible after reopening.
+   1. Press Space/f and b to move forward/back a screenful. Try Enter/j and k,
+      d/u, PgDn/PgUp, arrows and Home/End. Press g then G.<br>
+      Expected: Each moves as documented; G reaches the last guide-copy hint and
+      the footer says `(END)`. Repeated paging at either end stays there.
+      Repeat at minimum size and resize while on the last screenful: all text
+      remains reachable without scrollbars.
+
+   1. Press c while help is open, then paste into a browser address bar.<br>
+      Expected: The exact address `https://ay2627s1-cs2103t-t16-1.github.io/tp/UserGuide.html`
+      is copied and the footer confirms `User Guide URL copied.`. The reading
+      position, student data and unfinished command stay unchanged. Typing an
+      unused letter such as x shows `Press q or Esc to return to the command box.`.
+      Reopening help clears that temporary notice.
+
+   1. Press q, enter `list`, then reopen help and press Esc.<br>
+      Expected: Both quit keys restore the student view and focus the command
+      box. No q is inserted into it. The next command works normally; the
+      previous result and student filter are preserved while help is open.
+
+   1. Type `find Alex` without submitting it, press F1, then q.<br>
+      Expected: Help takes the whole content area and the unfinished command
+      is restored on return. Repeat with Help → Help. Reopening help starts
+      at the beginning.
+
+   1. Enter `help oops`, `help -p` and `help ""`.<br>
+      Expected: Each reports `help takes no arguments. Unexpected input: ...`
+      with the offending input quoted. No help page opens and student data stays
+      unchanged. `help` with trailing spaces or tabs opens the pager normally.
 
 1. Saving window preferences
 
@@ -1658,7 +1713,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `clear oops`, `list oops`, `help oops`, and `exit oops`.<br>
       Expected: Each command reports that it takes no arguments and quotes
-      `oops`. The list stays filtered, no help window opens, TAB stays open,
+      `oops`. The list stays filtered, no help summary opens, TAB stays open,
       and the JSON file matches the copy byte for byte.
 
    1. Test cases: `clear "oops"`, `clear ""`, and `clear "unfinished`.<br>
@@ -1666,7 +1721,7 @@ testers are expected to do more *exploratory* testing.
       stay unchanged, including for an empty quoted argument.
 
    1. Test cases: `list` and `help` with only trailing spaces or tabs.<br>
-      Expected: The list shows all students and help opens respectively.
+      Expected: The list shows all students and the help summary appears respectively.
       `exit` with trailing whitespace closes TAB. Run plain `clear` with
       trailing whitespace only when the test data can be removed; it follows
       the documented clear flow.
@@ -1690,7 +1745,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `lsit`, `hepl`, `addd`, and `clexr`<br>
       Expected: Each suggests `list`, `help`, `add`, and `clear` respectively.
-      None of them runs: the list is unchanged, no help window opens, and no
+      None of them runs: the list is unchanged, no help summary opens, and no
       student is added.
 
    1. Test cases: `ls`, `dlte 1`, and `fit`<br>
@@ -1719,7 +1774,7 @@ testers are expected to do more *exploratory* testing.
       Expected: Each reply quotes the word typed and points to `help`, with no
       suggestion offered. `dlt` is two letters from `edit`, but opens with a
       letter that command does not, so TAB offers nothing rather than guessing.
-      No help window opens until `help` itself is run.
+      No help summary opens until `help` itself is run.
 
    1. Test case: paste a line of at least 80 characters with no spaces in it,
       such as the letter `x` repeated.<br>
