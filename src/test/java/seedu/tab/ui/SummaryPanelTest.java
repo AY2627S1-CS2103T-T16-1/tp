@@ -21,6 +21,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -224,7 +225,11 @@ public class SummaryPanelTest {
             HBox row = (HBox) rows.getChildren().getFirst();
             Label name = (Label) row.getChildren().getFirst();
             Label count = (Label) row.getChildren().getLast();
-            assertEquals("12", ((javafx.scene.text.Text) count.lookup(".text")).getText(),
+            assertTrue(name.prefWidth(-1) + count.prefWidth(-1) > row.getWidth(),
+                    "the row should be short of space");
+            assertTrue(row.getWidth() <= scroll.getViewportBounds().getWidth(),
+                    "the row should fit the visible tag list");
+            assertEquals("12", ((Text) count.lookup(".text")).getText(),
                     "the drawn count should contain both digits");
             assertTrue(count.getWidth() >= count.prefWidth(-1) - 0.5,
                     "the count was squeezed to " + count.getWidth()
