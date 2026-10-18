@@ -644,14 +644,14 @@ A student with an NUS Student ID has a `"nusStudentId"` string such as
 contain between 1 and 32 ASCII letters and digits. TAB accepts lowercase letters
 and saves valid IDs in uppercase.
 
+An email key is optional: a missing key, `null`, an empty string, or a string
+containing only spaces means that no email has been recorded. TAB removes
+leading and trailing spaces from a non-empty saved email before validating it.
+
 TAB still identifies duplicate records by normalized name. NUS Student IDs, phone
 numbers, and emails are searchable details rather than identity keys, so two
 students with different names may hold the same NUS Student ID. Check such records if
 the repeated ID was unintended.
-
-An email key is optional: a missing key, `null`, an empty string, or a string
-containing only spaces means that no email has been recorded. TAB removes
-leading and trailing spaces from a non-empty saved email before validating it.
 
 <box type="warning" seamless>
 

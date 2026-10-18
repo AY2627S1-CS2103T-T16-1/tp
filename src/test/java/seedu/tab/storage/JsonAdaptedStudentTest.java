@@ -109,12 +109,31 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_paddedInvalidEmail_throwsIllegalValueExceptionNamingTrimmedValue() {
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, "  " + INVALID_EMAIL + "  ", VALID_TAGS, false);
+        String expectedMessage = "Email \"example.com\" is not valid: "
+                + "an email needs an @ between the local part and the domain";
+
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
     public void toModelType_worstCaseEmailAtStorageLimit_stillLoads() {
         String atLimit = repeatedLocalPartEmail(Email.MAX_LENGTH);
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, atLimit, VALID_TAGS, false);
 
         assertDoesNotThrow(student::toModelType);
+    }
+
+    @Test
+    public void toModelType_paddedEmailAtStorageLimit_buildsStudentHoldingTrimmedEmail() throws Exception {
+        String atLimit = repeatedLocalPartEmail(Email.MAX_LENGTH);
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, "  " + atLimit + "  ", VALID_TAGS, false);
+
+        assertEquals(Optional.of(new Email(atLimit)), student.toModelType().getEmail());
     }
 
     @Test

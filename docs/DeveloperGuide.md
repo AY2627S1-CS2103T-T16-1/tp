@@ -2629,6 +2629,9 @@ testers are expected to do more *exploratory* testing.
       actual and allowed lengths, and TAB exits without a stack trace or file
       change.
 
+   1. Test case: Repair the invalid value and relaunch TAB.<br>
+      Expected: The main window opens and shows every saved student.
+
    1. Test case: Replace the file with three valid student records whose email
       values are respectively `""`, `"alice@example.com "`, and absent. Launch
       TAB, enter `list`, then add another student.<br>
@@ -2636,9 +2639,6 @@ testers are expected to do more *exploratory* testing.
       no email, and the second shows `alice@example.com` without the trailing
       space. The newly added student and all three existing students remain in
       `data/tab.json`.
-
-   1. Test case: Repair the invalid value and relaunch TAB.<br>
-      Expected: The main window opens and shows every saved student.
 
    1. Test case: Move `data/tab.json` elsewhere and relaunch TAB.<br>
       Expected: TAB treats the missing file as a first launch and opens with
