@@ -67,8 +67,8 @@ public class TagCommand extends Command {
 
         Set<Tag> updatedTags = new HashSet<>(student.getTags());
         updatedTags.add(tag);
-        Student updatedStudent = new Student(student.getName(), student.getPhone(), student.getEmail().orElse(null),
-                student.getNusStudentId().orElse(null), updatedTags, student.isFlagged());
+        Student updatedStudent = new Student(student.getName(), student.getPhone(), student.getEmail(),
+                student.getNusStudentId(), updatedTags, student.isFlagged());
         model.setStudent(student, updatedStudent);
         return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.shorten(tag.tagName),
                 Messages.format(updatedStudent)));
