@@ -3,6 +3,7 @@ package seedu.tab.commons.util;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.nio.charset.CharacterCodingException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -89,6 +90,10 @@ public class JsonUtil {
     }
 
     static String getIoErrorMessage(IOException exception) {
+        if (exception instanceof CharacterCodingException) {
+            return "The file is not valid UTF-8. Reopen it with its original encoding and save it as UTF-8,"
+                    + " then restart TAB.";
+        }
         if (exception instanceof AccessDeniedException) {
             return "TAB does not have permission to read this file.";
         }

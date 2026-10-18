@@ -743,6 +743,13 @@ An existing file is first parsed as JSON and then every student record and
 field is converted to its model type. Both stages finish before the normal UI
 can accept a command.
 
+`FileUtil.readFromFile` decodes UTF-8 strictly and removes only an optional
+leading BOM before JSON parsing. This accepts files saved by editors that add
+a BOM while rejecting malformed byte sequences rather than silently replacing
+letters with U+FFFD. `JsonUtil` translates decoding failures into an encoding
+explanation and recovery guidance through the same `DataLoadingException`
+boundary; startup preserves the original bytes and blocks the normal UI.
+
 `JsonUtil` turns malformed JSON or an incompatible JSON shape into a
 `DataLoadingException` that retains the parser's line and column. During model
 conversion, `JsonAdaptedStudent` identifies the invalid field and
@@ -2638,5 +2645,21 @@ testers are expected to do more *exploratory* testing.
       existed, including its removed `address` keys, and relaunch TAB.<br>
       Expected: TAB loads every student, ignores the old address values and
       treats a missing flag as not needing follow-up.
+
+1. Loading files saved with different encodings
+
+   1. Prerequisites: Exit TAB and back up a valid `data/tab.json` containing
+      a student named `José Tan` and another recognizable student.
+   1. Test case: Save the file as UTF-8 with BOM in an editor, then launch TAB.<br>
+      Expected: Both students load, including the accented name. Edit a tag,
+      exit and relaunch; both records and the accent remain intact.
+   1. Test case: Restore the backup, save it as Windows-1252 (ANSI), then
+      launch TAB.<br>
+      Expected: The recovery dialog says the file is not valid UTF-8 and
+      explains how to resave it. The main window never opens. After dismissing
+      the dialog, the file remains byte-for-byte unchanged.
+   1. Test case: Reopen the file using Windows-1252 in the editor, save as
+      UTF-8 without BOM, and relaunch.<br>
+      Expected: Both students load with their names intact.
 
 1. _{ more test cases … }_
