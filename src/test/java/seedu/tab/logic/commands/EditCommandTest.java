@@ -2,6 +2,7 @@ package seedu.tab.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.DESC_BOB;
@@ -325,7 +326,7 @@ public class EditCommandTest {
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder(firstStudent).build();
         EditCommand editCommand = new EditCommand(INDEX_SECOND_STUDENT, descriptor);
 
-        assertCommandFailure(editCommand, model, String.format(EditCommand.MESSAGE_DUPLICATE_STUDENT,
+        assertCommandFailure(editCommand, model, String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
                 firstStudent.getNusStudentId().orElseThrow(), firstStudent.getName()));
     }
 
@@ -338,7 +339,7 @@ public class EditCommandTest {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
                 new EditStudentDescriptorBuilder(studentInList).build());
 
-        assertCommandFailure(editCommand, model, String.format(EditCommand.MESSAGE_DUPLICATE_STUDENT,
+        assertCommandFailure(editCommand, model, String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
                 studentInList.getNusStudentId().orElseThrow(), studentInList.getName()));
     }
 
@@ -394,6 +395,7 @@ public class EditCommandTest {
         assertCommandSuccess(command, model,
                 String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedSecond)),
                 expectedModel);
+        assertSame(first, model.getFilteredStudentList().get(0));
     }
 
     @Test
@@ -403,7 +405,7 @@ public class EditCommandTest {
         EditCommand command = new EditCommand(INDEX_SECOND_STUDENT,
                 new EditStudentDescriptorBuilder().withNusStudentId(duplicateId).build());
 
-        assertCommandFailure(command, model, String.format(EditCommand.MESSAGE_DUPLICATE_STUDENT,
+        assertCommandFailure(command, model, String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
                 firstStudent.getNusStudentId().orElseThrow(), firstStudent.getName()));
     }
 

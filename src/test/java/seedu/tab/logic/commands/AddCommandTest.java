@@ -10,6 +10,7 @@ import static seedu.tab.testutil.TypicalStudents.ALICE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
@@ -67,7 +68,7 @@ public class AddCommandTest {
         AddCommand addCommand = new AddCommand(validStudent);
         ModelStub modelStub = new ModelStubWithStudent(validStudent);
 
-        String expectedMessage = String.format(AddCommand.MESSAGE_DUPLICATE_STUDENT,
+        String expectedMessage = String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
                 validStudent.getNusStudentId().orElseThrow(), validStudent.getName());
         assertThrows(CommandException.class, expectedMessage, () -> addCommand.execute(modelStub));
     }
@@ -138,7 +139,7 @@ public class AddCommandTest {
         }
 
         @Override
-        public boolean hasStudent(Student student) {
+        public Optional<Student> findSameStudent(Student student) {
             throw new AssertionError("This method should not be called.");
         }
 
@@ -175,16 +176,9 @@ public class AddCommandTest {
         }
 
         @Override
-        public boolean hasStudent(Student student) {
+        public Optional<Student> findSameStudent(Student student) {
             requireNonNull(student);
-            return this.student.isSameStudent(student);
-        }
-
-        @Override
-        public ReadOnlyStudentBook getStudentBook() {
-            StudentBook studentBook = new StudentBook();
-            studentBook.addStudent(student);
-            return studentBook;
+            return this.student.isSameStudent(student) ? Optional.of(this.student) : Optional.empty();
         }
     }
 
@@ -195,9 +189,9 @@ public class AddCommandTest {
         final ArrayList<Student> studentsAdded = new ArrayList<>();
 
         @Override
-        public boolean hasStudent(Student student) {
+        public Optional<Student> findSameStudent(Student student) {
             requireNonNull(student);
-            return studentsAdded.stream().anyMatch(student::isSameStudent);
+            return studentsAdded.stream().filter(student::isSameStudent).findFirst();
         }
 
         @Override

@@ -68,8 +68,6 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
-    public static final String MESSAGE_DUPLICATE_STUDENT =
-            "Another student already has NUS Student ID %1$s (%2$s).";
 
     public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP
             + " (or -f) and " + FLAG_NO_FOLLOW_UP + " (or -nf) cannot be used together. Choose one.";
@@ -103,13 +101,12 @@ public class EditCommand extends Command {
         Student studentToEdit = lastShownList.get(index.getZeroBased());
         Student editedStudent = createEditedStudent(studentToEdit, editStudentDescriptor);
 
-        if (!studentToEdit.isSameStudent(editedStudent) && model.hasStudent(editedStudent)) {
-            Student duplicateStudent = model.getStudentBook().getStudentList().stream()
-                    .filter(editedStudent::isSameStudent)
-                    .findFirst()
-                    .orElseThrow();
-            throw new CommandException(String.format(MESSAGE_DUPLICATE_STUDENT,
-                    editedStudent.getNusStudentId().orElseThrow(), duplicateStudent.getName()));
+        Optional<Student> duplicateStudent = studentToEdit.isSameStudent(editedStudent)
+                ? Optional.empty()
+                : model.findSameStudent(editedStudent);
+        if (duplicateStudent.isPresent()) {
+            throw new CommandException(String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                    editedStudent.getNusStudentId().orElseThrow(), duplicateStudent.orElseThrow().getName()));
         }
 
         model.setStudent(studentToEdit, editedStudent);
