@@ -40,9 +40,14 @@ public class LogsCenterTest {
 
         String output = runLoggingProbe();
 
-        Path logFile = testFolder.toRealPath().resolve("tab.log");
-        assertTrue(output.contains("Unable to write log file " + logFile + "."), output);
-        assertTrue(output.contains("Continuing with console logging only."), output);
+        String warningStart = "Unable to write log file ";
+        String warningEnd = ". Continuing with console logging only.";
+        int pathStart = output.indexOf(warningStart) + warningStart.length();
+        int pathEnd = output.indexOf(warningEnd, pathStart);
+        assertTrue(pathStart >= warningStart.length() && pathEnd >= 0, output);
+        Path reportedLogFile = Path.of(output.substring(pathStart, pathEnd));
+        assertEquals("tab.log", reportedLogFile.getFileName().toString());
+        assertTrue(Files.isSameFile(testFolder, reportedLogFile.getParent()), output);
         assertTrue(output.contains("Logging probe reached main."), output);
         assertTrue(Files.isDirectory(blockedLog));
     }

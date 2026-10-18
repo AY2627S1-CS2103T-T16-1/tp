@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static seedu.tab.testutil.Assert.assertThrows;
 
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -33,6 +34,16 @@ public class AppUtilTest {
 
         Path applicationDirectory = AppUtil.getApplicationDirectory(
                 testFolder.toUri().toURL(), workingDirectory);
+
+        assertEquals(workingDirectory, applicationDirectory);
+    }
+
+    @Test
+    public void getApplicationDirectory_nonFileCodeLocation_returnsWorkingDirectory() throws Exception {
+        Path workingDirectory = testFolder.resolve("working-directory");
+
+        Path applicationDirectory = AppUtil.getApplicationDirectory(
+                URI.create("https://example.com/tab.jar").toURL(), workingDirectory);
 
         assertEquals(workingDirectory, applicationDirectory);
     }
