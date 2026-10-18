@@ -738,6 +738,13 @@
 }
 
 .help-text {
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 13px;
     -fx-text-fill: -tab-text;
     -fx-opacity: 1;
+}
+
+.help-footer {
+    -fx-border-color: -tab-border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
 }

@@ -30,7 +30,7 @@ public class HelpCommandTest {
         for (String example : List.of("add Alex -p 91234567", "edit 1 -n Alex", "tag 1 -a T1",
                 "find Alex", "list", "delete 1", "clear", "help", "exit")) {
             parser.parseCommand(example);
-            assertTrue(SHOWING_HELP_MESSAGE.lines().anyMatch(line ->
+            assertTrue(SHOWING_HELP_MESSAGE.lines().map(String::stripLeading).anyMatch(line ->
                     line.startsWith(example.split(" ")[0] + " —")
                             || line.startsWith(example.split(" ")[0] + " INDEX —")));
         }
@@ -39,7 +39,8 @@ public class HelpCommandTest {
                 CliFlags.FLAG_FOLLOW_UP, CliFlags.FLAG_NO_FOLLOW_UP)) {
             assertTrue(SHOWING_HELP_MESSAGE.contains(flag.getMarkerSummary()));
         }
-        String example = SHOWING_HELP_MESSAGE.lines().filter(line -> line.startsWith("Example: "))
+        String example = SHOWING_HELP_MESSAGE.lines().map(String::stripLeading)
+                .filter(line -> line.startsWith("Example: "))
                 .findFirst().orElseThrow().substring("Example: ".length());
         parser.parseCommand(example);
     }

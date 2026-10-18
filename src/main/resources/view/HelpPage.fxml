@@ -21,7 +21,7 @@
     </ScrollPane>
   </center>
   <bottom>
-    <VBox spacing="4">
+    <VBox spacing="5" styleClass="help-footer">
       <padding>
         <Insets top="12" />
       </padding>
