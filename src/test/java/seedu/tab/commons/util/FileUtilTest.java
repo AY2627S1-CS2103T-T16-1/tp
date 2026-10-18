@@ -2,10 +2,12 @@ package seedu.tab.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -45,6 +47,26 @@ public class FileUtilTest {
         assertEquals("No space left on device", exception.getMessage());
         assertArrayEquals(originalBytes, Files.readAllBytes(file));
         assertEquals(List.of(file), listFilesInTestFolder());
+    }
+
+    @Test
+    public void writeToFile_writeAndCleanupFail_reportsBothErrorsAndPreservesOriginal() throws Exception {
+        Path file = testFolder.resolve("tab.json");
+        String originalContents = "last valid student data";
+        Files.writeString(file, originalContents);
+
+        IOException exception = assertThrows(IOException.class, () -> FileUtil.writeToFile(
+                file, "replacement student data", (temporaryFile, ignoredContent) -> {
+                    Files.delete(temporaryFile);
+                    Files.createDirectory(temporaryFile);
+                    Files.writeString(temporaryFile.resolve("undeletable-child"), "partial");
+                    throw new IOException("No space left on device");
+                }));
+
+        assertEquals("No space left on device", exception.getMessage());
+        assertEquals(1, exception.getSuppressed().length);
+        assertInstanceOf(DirectoryNotEmptyException.class, exception.getSuppressed()[0]);
+        assertEquals(originalContents, Files.readString(file));
     }
 
     private List<Path> listFilesInTestFolder() throws IOException {
