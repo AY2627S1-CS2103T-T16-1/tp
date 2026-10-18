@@ -513,8 +513,8 @@ well as the same normalized name. `Student` holds an optional `Flag` and
 exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
 interface for commands and the UI. Full equality and hashing include the flag,
 but `isSameStudent` does not: changing whether a student needs a reply does not
-change their identity. The four-argument constructor defaults to no flag so
-existing callers remain source-compatible.
+change their identity. The flag is stored as `Optional<Flag>`; the constructor
+without a follow-up argument defaults to `Optional.empty()`.
 
 Search combines ordinary tags with the optional flag and matches their
 inherited `tagName` values. The student card and command feedback display the
@@ -544,6 +544,15 @@ case, avoiding placeholder labels or empty tag markers.
 
 ### Field values
 
+`Student` stores email and NUS Student ID as `Optional<Email>` and
+`Optional<NusStudentId>`. Both constructors require non-null arguments;
+`Optional.empty()` explicitly represents an unknown detail. One constructor
+accepts the follow-up boolean, and the other defaults to unflagged for sample
+data. There are no overloads accepting nullable email or ID values, and no
+`Student` field is null. Add, edit, storage conversion, and test builders pass
+optionals directly into this contract. Nullable JSON strings remain confined
+to the storage adapter, preserving the existing file format.
+
 `Name`, `Tag` and `Phone` each store the form returned by
 `StringUtil.normalizeFieldValue`: without zero-width characters, with each run of
 whitespace reduced to one ASCII space and leading and trailing whitespace removed,
@@ -564,9 +573,8 @@ ASCII letters and digits. Input letters are case-insensitive and the value is
 stored in uppercase, so `e0123456` and `E0123456` are the same value. This
 accommodates variations in the identifiers issued to different groups of
 students while preventing an accidentally pasted value from hiding the other
-details on a student's card. `Student` holds a
-nullable `NusStudentId` and exposes it as `Optional<NusStudentId>`, matching
-the existing optional-email boundary without inventing a sentinel value.
+details on a student's card. `Student` stores and exposes the value as
+`Optional<NusStudentId>`, using an empty optional rather than a sentinel value.
 `NusStudentId.getFailureReason` performs the single validation scan, and
 `isValidNusStudentId` delegates to it. This keeps the accepted format and the
 specific user-facing error synchronized without maintaining a separate regex.
@@ -597,10 +605,10 @@ rejected. A future duplicate-warning workflow can surface shared contact
 details without changing this model contract.
 
 **The email may be absent.** A student is recorded before an email address is
-known rather than one being invented. `Student` retains its nullable email
-constructor contract and exposes the value as `Optional<Email>` so callers
-handle absence explicitly. `JsonAdaptedStudent` writes the email as a string
-when present; the optional wrapper is not written to JSON.
+known rather than one being invented. `Student` accepts, stores, and exposes
+`Optional<Email>` so callers handle absence explicitly. `JsonAdaptedStudent`
+writes the email as a string when present; the optional wrapper is not written
+to JSON.
 
 The data file simply carries no `email` key. One that holds a malformed address
 is still refused, rather than the address being quietly dropped.
@@ -619,8 +627,8 @@ for a token that is empty after trimming, and sets a replacement only after
 validation succeeds. A rejected value is recorded as a parse problem without
 assigning a null email or requesting a clear. A bare option is still an error.
 Clearing counts as an edit even when the email is already absent. `EditCommand`
-keeps the value optional until the existing
-`Student` constructor boundary. The saved record omits the `email` key and
+passes the optional value directly into the `Student` constructor, including
+an empty optional when clearing. The saved record omits the `email` key and
 reloads through the existing optional-email storage contract.
 
 `Email.MAX_LENGTH` caps at 254 characters the address a **command** may enter.

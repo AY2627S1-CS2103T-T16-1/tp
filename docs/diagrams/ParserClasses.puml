@@ -17,12 +17,15 @@ Class FlagArgumentMap
 Class FlagTokenizer
 Class CommandTokenizer
 Class Flag
+Class CommandWords
+Class ParseProblems
 }
 
 Class HiddenOutside #FFFFFF
 HiddenOutside ..> StudentBookParser
 
 StudentBookParser .down.> XYZCommandParser: <<create>>
+StudentBookParser ..> CommandWords : <<use>>
 
 XYZCommandParser ..> XYZCommand : <<create>>
 StudentBookParser ..> Command : <<use>>
@@ -34,6 +37,7 @@ FlagTokenizer ..> CommandTokenizer
 XYZCommandParser ..> CliFlags
 CliFlags ..> Flag
 XYZCommandParser ..> ParserUtil
+XYZCommandParser ..> ParseProblems
 FlagArgumentMap .down.> Flag
 FlagTokenizer .down.> Flag
 XYZCommand -up-|> Command
