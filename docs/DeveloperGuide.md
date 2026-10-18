@@ -265,6 +265,13 @@ How the `Logic` component works:
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
+`LogicManager` compares a snapshot of the full student list before execution
+with the records afterwards and saves only if they differ. Filter changes and
+commands such as `list`, `find`, `help`, and `exit` therefore need no write
+permission. Confirming `clear` still saves the emptied book. A failed save
+leaves the change in memory; a later command that changes no records does not
+retry that save, so the User can still inspect the records or exit.
+
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a command entered by the User:
 
 <puml src="diagrams/ParserClasses.puml" width="600"/>
@@ -1626,6 +1633,33 @@ testers are expected to do more *exploratory* testing.
 
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample student records. The window size may not be optimal.
+
+1. Launching from a read-only folder
+
+   1. Prerequisites: Copy the JAR into a new folder that the current user can
+      read but cannot write to. On Linux/macOS, run `chmod 555 FOLDER` and use
+      a non-root account. On Windows, remove write permission for the test
+      account using the folder's Security settings.
+
+   1. From that folder, run `java -jar tab.jar`.<br>
+      Expected: The GUI opens with sample records. The terminal warns
+      `Unable to write log file tab.log. Continuing with console logging only.`
+      and reports that preferences cannot be saved. There is no
+      `ExceptionInInitializerError` or `NullPointerException` from logging.
+
+   1. Run `find Read Only Test`, then `list`, then `help`.<br>
+      Expected: The search shows no matches, `list` restores all sample
+      records, and the help page opens. None reports a data-file save error.
+      Press q or Esc to return to the command box.
+
+   1. Run `add Read Only Test -p 91234567`.<br>
+      Expected: TAB reports a data-file save error and remains open. The
+      record is visible for this session but has not been saved.
+
+   1. Run `list`, then `exit`.<br>
+      Expected: `list` includes the unsaved record without a save error,
+      and `exit` closes TAB. Restore write permission and relaunch.
+      The added record was not saved.
 
 1. Full-page help pager
 

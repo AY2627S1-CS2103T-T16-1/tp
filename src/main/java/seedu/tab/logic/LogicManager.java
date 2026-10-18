@@ -2,6 +2,7 @@ package seedu.tab.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -55,8 +56,11 @@ public class LogicManager implements Logic {
         if (command instanceof ClearCommand clearCommand) {
             return requestClearConfirmation(clearCommand);
         }
+        List<Student> studentsBeforeCommand = List.copyOf(model.getStudentBook().getStudentList());
         CommandResult commandResult = command.execute(model);
-        saveStudentBook();
+        if (!studentsBeforeCommand.equals(model.getStudentBook().getStudentList())) {
+            saveStudentBook();
+        }
         return commandResult;
     }
 
