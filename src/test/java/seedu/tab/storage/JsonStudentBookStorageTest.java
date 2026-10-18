@@ -60,6 +60,12 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_nullDocument_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, "The JSON document must not be null.", () ->
+                readStudentBook("nullStudentBook.json"));
+    }
+
+    @Test
     public void readStudentBook_invalidStudentStudentBook_throwDataLoadingException() {
         String expectedMessage = "Student record 1 (\"---\"): Name \"---\" is not valid: "
                 + "it holds no letter or number";

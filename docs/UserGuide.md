@@ -550,9 +550,9 @@ TAB automatically saves changes to student records. You do not need to save manu
 Clear prompts, cancellation, and invalid replies leave the saved file unchanged.
 
 Window size and position are saved separately in `preferences.json` in TAB's
-home folder. If `guiSettings` is `null` or this file cannot be parsed, TAB
-opens with default window settings and rewrites the preferences file when it
-can. This recovery does not change saved student records in `data/tab.json`.
+home folder. If the file contains only `null`, `guiSettings` is `null`, or the
+file cannot be parsed, TAB opens with default window settings and rewrites the
+preferences file when it can. This recovery does not change saved student records in `data/tab.json`.
 
 ### Editing the data file
 
