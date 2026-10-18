@@ -1,5 +1,6 @@
 package seedu.tab.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.FindCommand;
+import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.parser.exceptions.ParseException;
 
@@ -34,6 +36,13 @@ public class UserGuideExamplesTest {
 
     /** Enough that the guide has stopped showing a command if it drops below. */
     private static final int MINIMUM_EXAMPLES = 5;
+
+    @Test
+    public void userGuide_helpFormat_parses() throws Exception {
+        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
+        assertTrue(guide.contains("Format: `help`"));
+        assertInstanceOf(HelpCommand.class, new StudentBookParser().parseCommand("help"));
+    }
 
     @Test
     public void userGuide_everyAddExample_parses() throws IOException {

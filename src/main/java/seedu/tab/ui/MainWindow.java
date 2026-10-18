@@ -10,6 +10,7 @@ import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.commons.core.LogsCenter;
@@ -35,7 +36,14 @@ public class MainWindow extends UiPart<Stage> {
     // Independent Ui parts residing in this Ui container
     private StudentListPanel studentListPanel;
     private ResultDisplay resultDisplay;
-    private HelpWindow helpWindow;
+    private CommandBox commandBox;
+    private HelpPage helpPage;
+
+    @FXML
+    private VBox studentPage;
+
+    @FXML
+    private StackPane helpPagePlaceholder;
 
     @FXML
     private StackPane commandBoxPlaceholder;
@@ -72,8 +80,6 @@ public class MainWindow extends UiPart<Stage> {
         setWindowDefaultSize(logic.getGuiSettings());
 
         setAccelerators();
-
-        helpWindow = new HelpWindow();
     }
 
     public Stage getPrimaryStage() {
@@ -103,7 +109,7 @@ public class MainWindow extends UiPart<Stage> {
          * the TextInputControl(s).
          *
          * For now, we add the following event filter to capture such key events and open
-         * the help window purposely so as to support accelerators even when focus is
+         * the in-window help summary so as to support accelerators even when focus is
          * in CommandBox or ResultDisplay.
          */
         getRoot().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
@@ -134,8 +140,23 @@ public class MainWindow extends UiPart<Stage> {
         StatusBarFooter statusBarFooter = new StatusBarFooter(dataFilePath);
         statusbarPlaceholder.getChildren().add(statusBarFooter.getRoot());
 
-        CommandBox commandBox = new CommandBox(this::executeCommand, logic::isAwaitingConfirmation);
+        commandBox = new CommandBox(this::executeCommand, logic::isAwaitingConfirmation);
         commandBoxPlaceholder.getChildren().add(commandBox.getRoot());
+        fillHelpPage();
+    }
+
+    private void fillHelpPage() {
+        helpPage = new HelpPage(this::closeHelp);
+        helpPagePlaceholder.getChildren().add(helpPage.getRoot());
+    }
+
+    /** Restores the student view, its previous result, and any unfinished command. */
+    private void closeHelp() {
+        helpPagePlaceholder.setVisible(false);
+        helpPagePlaceholder.setManaged(false);
+        studentPage.setManaged(true);
+        studentPage.setVisible(true);
+        commandBox.requestFocus();
     }
 
     /**
@@ -151,15 +172,15 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
-     * Opens the help window or focuses on it if it's already opened.
+     * Shows the full-page command summary with keyboard paging.
      */
     @FXML
     public void handleHelp() {
-        if (!helpWindow.isShowing()) {
-            helpWindow.show();
-        } else {
-            helpWindow.focus();
-        }
+        studentPage.setVisible(false);
+        studentPage.setManaged(false);
+        helpPagePlaceholder.setManaged(true);
+        helpPagePlaceholder.setVisible(true);
+        helpPage.show();
     }
 
     void show() {
@@ -174,7 +195,6 @@ public class MainWindow extends UiPart<Stage> {
         GuiSettings guiSettings = new GuiSettings(primaryStage.getWidth(), primaryStage.getHeight(),
                 (int) primaryStage.getX(), (int) primaryStage.getY());
         logic.setGuiSettings(guiSettings);
-        helpWindow.hide();
         primaryStage.hide();
     }
 
@@ -191,10 +211,10 @@ public class MainWindow extends UiPart<Stage> {
         try {
             CommandResult commandResult = logic.execute(commandText);
             logger.info("Result: " + commandResult.getFeedbackToUser());
-            resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
-
             if (commandResult.isShowHelp()) {
                 handleHelp();
+            } else {
+                resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
             }
 
             if (commandResult.isExit()) {
