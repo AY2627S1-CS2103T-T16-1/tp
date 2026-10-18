@@ -302,6 +302,23 @@ Classes used by multiple components are in the `seedu.tab.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Rolling back model changes when saving fails
+
+`LogicManager` takes a copy of the student book and its active display filter
+before executing a command. It compares the resulting student book with that
+copy and writes to storage only when student records changed. Commands such as
+`list`, `find`, `help`, and `exit` can therefore run even when the data file is
+not writable.
+
+When a write fails, `LogicManager` restores both the student-book copy and the
+previous filter before reporting the storage error. Restoring the filter as
+well as the records matters because `add` and `edit` normally reset the display
+to show every student. The failed command consequently has no visible or
+in-memory effect, and retrying it cannot apply the same change twice. A
+confirmed `clear` follows the same save-and-restore path; its pending
+confirmation is still removed before the save attempt so that a failure does
+not leave a stale reply active.
+
 ### How commands read their arguments
 
 `add` and `edit` mark their fields with options,
@@ -2424,5 +2441,22 @@ testers are expected to do more *exploratory* testing.
       existed, including its removed `address` keys, and relaunch TAB.<br>
       Expected: TAB loads every student, ignores the old address values and
       treats a missing flag as not needing follow-up.
+
+1. Recovering from a save failure
+
+   1. Prerequisites: Launch TAB with at least three students, exit, keep a
+      byte-for-byte copy of `data/tab.json`, and use the operating system to
+      make that file read-only. Relaunch TAB.
+
+   1. Test case: Enter `delete 1` twice, then enter `clear`.<br>
+      Expected: Each delete reports that TAB cannot save the data. No student
+      disappears, and the clear prompt still gives the original student count.
+      Enter `n` to cancel the clear.
+
+   1. Test case: Enter `list`, `find Amy`, and `help`, then close the help
+      window and enter `exit`.<br>
+      Expected: Each command succeeds, including opening the help window and
+      closing TAB. The read-only `data/tab.json` still matches the saved copy
+      byte for byte. Restore its write permission before continuing to use TAB.
 
 1. _{ more test cases … }_

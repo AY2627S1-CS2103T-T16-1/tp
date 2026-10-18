@@ -547,7 +547,10 @@ Format: `exit`
 ### Saving the data
 
 TAB automatically saves changes to student records. You do not need to save manually.
-Clear prompts, cancellation, and invalid replies leave the saved file unchanged.
+If TAB cannot save a change, it reports the error and leaves the student records as
+they were before the command. Commands that do not change student records, including
+`list`, `find`, `help`, and `exit`, do not write to the data file. Clear prompts,
+cancellation, and invalid replies also leave the saved file unchanged.
 
 ### Editing the data file
 
