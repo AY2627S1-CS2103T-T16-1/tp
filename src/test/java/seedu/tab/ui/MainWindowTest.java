@@ -1,5 +1,6 @@
 package seedu.tab.ui;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -94,6 +96,15 @@ public class MainWindowTest {
             "#studentListPanelPlaceholder", "#statusbarPlaceholder"}) {
             assertNotNull(window.getRoot().getScene().lookup(id), id + " is missing");
         }
+    }
+
+    @Test
+    public void fillInnerParts_statusBarShowsAbsoluteDataFilePath() throws Exception {
+        MainWindow window = filledWindow();
+
+        Label saveLocation = (Label) window.getRoot().getScene().lookup("#saveLocationStatus");
+
+        assertEquals(DATA_FILE.toAbsolutePath().normalize().toString(), saveLocation.getText());
     }
 
     @Test
