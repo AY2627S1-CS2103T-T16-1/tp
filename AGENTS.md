@@ -43,7 +43,10 @@ git config core.hooksPath .githooks
 - `pre-commit` runs `.github/run-checks.sh` against the staged index, then
   Checkstyle when Java files are staged.
 - `commit-msg` validates the commit message against the se-edu Git
-  conventions.
+  conventions, merge and revert messages included.
+- `prepare-commit-msg` shortens git's default merge subject to
+  `Merge master into <branch>`, so syncing a long-named branch stays within
+  the 72-character limit.
 
 Errors abort the commit; warnings are advisory. `SKIP_CHECKSTYLE=1 git commit`
 defers the slow Checkstyle run to CI, and `git commit --no-verify` bypasses
