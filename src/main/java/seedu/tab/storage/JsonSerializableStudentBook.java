@@ -65,8 +65,8 @@ class JsonSerializableStudentBook {
             } catch (IllegalValueException e) {
                 throw new IllegalValueException(recordDescription + ": " + e.getMessage(), e);
             }
-            if (studentBook.hasStudent(student)) {
-                int duplicateIndex = findDuplicateIndex(studentBook, student);
+            int duplicateIndex = findDuplicateIndex(studentBook, student);
+            if (duplicateIndex >= 0) {
                 Student duplicateStudent = studentBook.getStudentList().get(duplicateIndex);
                 throw new IllegalValueException(recordDescription + ": "
                         + String.format(MESSAGE_DUPLICATE_STUDENT, student.getNusStudentId().orElseThrow(),
@@ -91,7 +91,7 @@ class JsonSerializableStudentBook {
                 return index;
             }
         }
-        throw new AssertionError("Expected a student with the same identity");
+        return -1;
     }
 
 }

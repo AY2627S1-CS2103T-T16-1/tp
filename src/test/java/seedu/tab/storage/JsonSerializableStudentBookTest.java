@@ -50,6 +50,23 @@ public class JsonSerializableStudentBookTest {
     }
 
     @Test
+    public void toModelType_duplicateMatchesLaterStudent_reportsMatchingRecord() {
+        JsonAdaptedStudent firstStudent = new JsonAdaptedStudent(
+                "Alice Pauline", "94351253", "alice@example.com", "A01234567X", List.of(), false);
+        JsonAdaptedStudent matchingStudent = new JsonAdaptedStudent(
+                "Carol Elle", "98765432", "carol@example.com", "A12345678C", List.of(), false);
+        JsonAdaptedStudent duplicateStudent = new JsonAdaptedStudent(
+                "Bob Lim", "91234567", "bob@example.com", "a12345678c", List.of(), false);
+        JsonSerializableStudentBook dataFromFile = new JsonSerializableStudentBook(
+                List.of(firstStudent, matchingStudent, duplicateStudent));
+        String expectedMessage = "Student record 3 (\"Bob Lim\"): "
+                + String.format(JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT,
+                        "A12345678C", 2, "Carol Elle");
+
+        assertThrows(IllegalValueException.class, expectedMessage, dataFromFile::toModelType);
+    }
+
+    @Test
     public void toModelType_sameNameWithDifferentOrAbsentNusStudentIds_success() throws Exception {
         JsonSerializableStudentBook dataFromFile = JsonUtil.readJsonFile(SAME_NAME_STUDENTS_FILE,
                 JsonSerializableStudentBook.class).get();
