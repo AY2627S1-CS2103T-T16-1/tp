@@ -307,6 +307,11 @@ The `Storage` component,
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonStudentBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
+`StorageManager` logs read/write attempts and successful saves at `FINE`,
+including preference-file operations. Entries identify the file path without
+copying student or preference contents. Save completion is logged only after
+the storage delegate returns successfully.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.tab.commons` package.
