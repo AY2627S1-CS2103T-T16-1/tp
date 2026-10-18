@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -161,18 +162,26 @@ public class HelpPageTest {
     }
 
     @Test
-    public void reference_minimumWindowWidth_preservesExplicitLineBreaks() throws Exception {
+    public void referenceAndFooter_minimumWindowWidth_preserveExplicitLines() throws Exception {
         FxToolkit.onFxThread(() -> {
             // Reserve native frame space as well as the page padding at the 490px window minimum.
             HelpPage page = pageAt(474, 600, new AtomicInteger());
             Label text = (Label) page.getRoot().lookup("#helpText");
             for (String line : text.getText().split("\\n")) {
-                Text measured = new Text(line);
-                measured.setFont(text.getFont());
-                assertTrue(measured.getLayoutBounds().getWidth() <= text.getWidth(),
-                        "reference line wraps at minimum width: " + line);
+                assertLineFits(text, line);
+            }
+            for (Node node : page.getRoot().lookupAll(".help-footer .label")) {
+                Label hint = (Label) node;
+                assertLineFits(hint, hint.getText());
             }
             return null;
         });
+    }
+
+    private static void assertLineFits(Label label, String line) {
+        Text measured = new Text(line);
+        measured.setFont(label.getFont());
+        assertTrue(measured.getLayoutBounds().getWidth() <= label.getWidth(),
+                "help line wraps at minimum width: " + line);
     }
 }
