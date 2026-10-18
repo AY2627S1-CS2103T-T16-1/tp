@@ -51,6 +51,14 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_validEmailWithSurroundingWhitespace_buildsStudentHoldingTrimmedEmail() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, "  " + VALID_EMAIL + "\t", VALID_TAGS, false);
+
+        assertEquals(Optional.of(new Email(VALID_EMAIL)), student.toModelType().getEmail());
+    }
+
+    @Test
     public void toModelType_invalidName_throwsIllegalValueException() {
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(INVALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
@@ -133,6 +141,18 @@ public class JsonAdaptedStudentTest {
     @Test
     public void toModelType_nullEmail_buildsStudentWithoutOne() throws Exception {
         JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, null, VALID_TAGS, false);
+        assertEquals(Optional.empty(), student.toModelType().getEmail());
+    }
+
+    @Test
+    public void toModelType_emptyEmail_buildsStudentWithoutOne() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, "", VALID_TAGS, false);
+        assertEquals(Optional.empty(), student.toModelType().getEmail());
+    }
+
+    @Test
+    public void toModelType_whitespaceOnlyEmail_buildsStudentWithoutOne() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, "  \t", VALID_TAGS, false);
         assertEquals(Optional.empty(), student.toModelType().getEmail());
     }
 

@@ -587,8 +587,10 @@ constructor contract and exposes the value as `Optional<Email>` so callers
 handle absence explicitly. `JsonAdaptedStudent` writes the email as a string
 when present; the optional wrapper is not written to JSON.
 
-The data file simply carries no `email` key. One that holds a malformed address
-is still refused, rather than the address being quietly dropped.
+The data file normally carries no `email` key. A missing key, JSON `null`, and
+a string that is empty after trimming all represent an absent email. A
+non-empty string is trimmed before validation, matching command input; a
+malformed address is still refused rather than being quietly dropped.
 
 `edit INDEX -e ""` clears an email without removing the student or changing
 other fields. `EditStudentDescriptor` stores an `Optional<Email>` and records
@@ -2412,6 +2414,14 @@ testers are expected to do more *exploratory* testing.
       Expected: The dialog identifies the record and Email field, reports the
       actual and allowed lengths, and TAB exits without a stack trace or file
       change.
+
+   1. Test case: Replace the file with three valid student records whose email
+      values are respectively `""`, `"alice@example.com "`, and absent. Launch
+      TAB, enter `list`, then add another student.<br>
+      Expected: All three saved students are listed. The first and third have
+      no email, and the second shows `alice@example.com` without the trailing
+      space. The newly added student and all three existing students remain in
+      `data/tab.json`.
 
    1. Test case: Repair the invalid value and relaunch TAB.<br>
       Expected: The main window opens and shows every saved student.
