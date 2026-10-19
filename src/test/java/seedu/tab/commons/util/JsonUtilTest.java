@@ -244,6 +244,32 @@ public class JsonUtilTest {
     }
 
     @Test
+    public void readJsonFile_unicodeSeparatorInsideString_marksJacksonLine() throws IOException {
+        String jsonSource = "{\n"
+                + "  \"name\": \"Alice\u2028Pauline\",\n"
+                + "  \"first\": true\n"
+                + "  \"second\": false\n"
+                + "}\n";
+
+        String errorMessage = readMalformedJsonAndGetMessage("unicodeSeparator.json", jsonSource);
+
+        assertTrue(errorMessage.contains("at line 4, column 4"));
+        assertTrue(errorMessage.contains("> 4 |   \"second\": false"));
+    }
+
+    @Test
+    public void getJsonProcessingErrorMessage_twoDigitLines_alignsSeparators() {
+        String jsonSource = String.join("\n", "one", "two", "three", "four", "five",
+                "six", "seven", "eight", "nine", "ten");
+        JsonLocation location = new JsonLocation("hidden source", -1, -1, 9, 1);
+        JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
+
+        String errorMessage = JsonUtil.getJsonProcessingErrorMessage(exception, jsonSource);
+
+        assertTrue(errorMessage.contains("   8 | eight\n>  9 | nine\n  10 | ten"));
+    }
+
+    @Test
     public void readJsonFile_syntaxErrorInLongSingleLineJson_boundsExcerptAroundError() throws IOException {
         String padding = "a".repeat(500);
         String jsonSource = "{\"padding\":\"" + padding

@@ -31,6 +31,7 @@ public class JsonUtil {
     private static final int JSON_ERROR_CONTEXT_LINE_COUNT = 1;
     private static final int JSON_ERROR_MAX_LINE_LENGTH = 160;
     private static final String JSON_ERROR_ELLIPSIS = "...";
+    private static final String JSON_ERROR_LINE_SEPARATOR_PATTERN = "\\r\\n|\\r|\\n";
     private static final String JSON_ERROR_SOURCE_MARKER = "[Source:";
     private static final String JSON_ERROR_SOURCE_LOCATION_PREFIX = "; line: ";
     private static final Pattern JSON_ERROR_SOURCE_LOCATION_PATTERN =
@@ -116,7 +117,7 @@ public class JsonUtil {
         }
 
         if (jsonSource != null) {
-            String[] sourceLines = jsonSource.split("\\R", -1);
+            String[] sourceLines = splitJsonSourceIntoLines(jsonSource);
             int lineIndex = location.getLineNr() - 1;
             if (lineIndex >= sourceLines.length
                     || lineIndex == sourceLines.length - 1
@@ -189,7 +190,7 @@ public class JsonUtil {
             return "";
         }
 
-        String[] sourceLines = jsonSource.split("\\R", -1);
+        String[] sourceLines = splitJsonSourceIntoLines(jsonSource);
         int requestedLineIndex = location.getLineNr() - 1;
         if (requestedLineIndex > sourceLines.length) {
             return "";
@@ -206,10 +207,15 @@ public class JsonUtil {
                 affectedLineIndex, affectedColumn);
     }
 
+    private static String[] splitJsonSourceIntoLines(String jsonSource) {
+        return jsonSource.split(JSON_ERROR_LINE_SEPARATOR_PATTERN, -1);
+    }
+
     private static String formatJsonSourceLines(String[] sourceLines, int firstLineIndex,
                                                 int lastLineIndex, int affectedLineIndex,
                                                 int affectedColumn) {
         StringBuilder excerpt = new StringBuilder();
+        int lineNumberWidth = Integer.toString(lastLineIndex + 1).length();
         for (int lineIndex = firstLineIndex; lineIndex <= lastLineIndex; lineIndex++) {
             if (!excerpt.isEmpty()) {
                 excerpt.append('\n');
@@ -217,7 +223,8 @@ public class JsonUtil {
             boolean isAffectedLine = lineIndex == affectedLineIndex;
             String marker = isAffectedLine ? ">" : " ";
             String line = truncateJsonSourceLine(sourceLines[lineIndex], affectedColumn, isAffectedLine);
-            excerpt.append(String.format("%s %d | %s", marker, lineIndex + 1, line));
+            excerpt.append(String.format("%s %" + lineNumberWidth + "d | %s",
+                    marker, lineIndex + 1, line));
         }
         return excerpt.toString();
     }
