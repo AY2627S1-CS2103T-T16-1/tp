@@ -1,0 +1,26 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+
+start
+:AddCommand.execute(model);
+:model.findSameStudent(toAdd);
+note right
+  Student.isSameStudent matches only
+  two present, equal NUS Student IDs.
+  Stored IDs use uppercase letters.
+end note
+
+if (Matching NUS Student ID?) then (yes)
+    :Throw CommandException naming
+    the ID and existing student;
+    stop
+else (no)
+    :Append possible-duplicate warnings
+    for matching name, phone or email;
+    :model.addStudent(toAdd);
+    :Return CommandResult with feedback;
+    stop
+endif
+@enduml
