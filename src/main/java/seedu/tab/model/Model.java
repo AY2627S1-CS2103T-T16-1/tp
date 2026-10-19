@@ -1,5 +1,6 @@
 package seedu.tab.model;
 
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
@@ -37,9 +38,9 @@ public interface Model {
     ReadOnlyStudentBook getStudentBook();
 
     /**
-     * Returns true if a student with the same identity as {@code student} exists in the student book.
+     * Returns a student with the same identity as {@code student}, if one exists in the student book.
      */
-    boolean hasStudent(Student student);
+    Optional<Student> findSameStudent(Student student);
 
     /**
      * Deletes the given student.
@@ -64,9 +65,12 @@ public interface Model {
     /** Returns an unmodifiable view of the filtered student list */
     ObservableList<Student> getFilteredStudentList();
 
+    /** Returns a predicate representing the current displayed-student filter. */
+    Predicate<? super Student> getFilteredStudentPredicate();
+
     /**
      * Updates the filter of the filtered student list to filter by the given {@code predicate}.
      * @throws NullPointerException if {@code predicate} is null.
      */
-    void updateFilteredStudentList(Predicate<Student> predicate);
+    void updateFilteredStudentList(Predicate<? super Student> predicate);
 }

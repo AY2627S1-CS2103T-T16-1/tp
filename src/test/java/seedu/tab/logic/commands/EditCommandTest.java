@@ -2,6 +2,7 @@ package seedu.tab.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.DESC_BOB;
@@ -19,6 +20,7 @@ import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,7 @@ import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
@@ -281,11 +284,67 @@ public class EditCommandTest {
                 new EditStudentDescriptorBuilder().withFlag(true).build());
 
         Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        showStudentAtIndex(expectedModel, INDEX_FIRST_STUDENT);
         expectedModel.setStudent(original, editedStudent);
         String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
                 Messages.format(editedStudent));
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_repeatedEditAfterFilter_targetsSameStudent() {
+        showStudentAtIndex(model, INDEX_FIRST_STUDENT);
+        Student firstShown = model.getFilteredStudentList().get(0);
+
+        EditCommand setFlag = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withFlag(true).build());
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        showStudentAtIndex(expectedModel, INDEX_FIRST_STUDENT);
+        Student flagged = new StudentBuilder(firstShown).withFlag(true).build();
+        expectedModel.setStudent(firstShown, flagged);
+        assertCommandSuccess(setFlag, model, String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(flagged)), expectedModel);
+
+        assertEquals(List.of(flagged), model.getFilteredStudentList());
+
+        EditCommand clearFlag = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withFlag(false).build());
+        Model clearedModel = new ModelManager(new StudentBook(expectedModel.getStudentBook()), new UserPrefs());
+        showStudentAtIndex(clearedModel, INDEX_FIRST_STUDENT);
+        Student cleared = new StudentBuilder(flagged).withFlag(false).build();
+        clearedModel.setStudent(flagged, cleared);
+        assertCommandSuccess(clearFlag, model, String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(cleared)), clearedModel);
+
+        assertEquals(cleared, model.getFilteredStudentList().get(0));
+    }
+
+    @Test
+    public void execute_editRemovingMatchAfterFilter_shiftsRemainingIndices() {
+        model.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of("Meier")));
+        Student firstMatch = model.getFilteredStudentList().get(0);
+        Student secondMatch = model.getFilteredStudentList().get(1);
+
+        EditCommand renameFirst = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withName(VALID_NAME_BOB).build());
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of("Meier")));
+        Student renamed = new StudentBuilder(firstMatch).withName(VALID_NAME_BOB).build();
+        expectedModel.setStudent(firstMatch, renamed);
+        assertCommandSuccess(renameFirst, model, String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(renamed)), expectedModel);
+
+        assertEquals(List.of(secondMatch), model.getFilteredStudentList());
+
+        EditCommand editShifted = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
+        Model shiftedModel = new ModelManager(new StudentBook(expectedModel.getStudentBook()), new UserPrefs());
+        shiftedModel.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of("Meier")));
+        Student editedShifted = new StudentBuilder(secondMatch).withPhone(VALID_PHONE_BOB).build();
+        shiftedModel.setStudent(secondMatch, editedShifted);
+        assertCommandSuccess(editShifted, model, String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(editedShifted)), shiftedModel);
     }
 
     @Test
@@ -314,6 +373,7 @@ public class EditCommandTest {
                 Messages.format(editedStudent));
 
         Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        showStudentAtIndex(expectedModel, INDEX_FIRST_STUDENT);
         expectedModel.setStudent(model.getFilteredStudentList().get(0), editedStudent);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
@@ -325,7 +385,8 @@ public class EditCommandTest {
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder(firstStudent).build();
         EditCommand editCommand = new EditCommand(INDEX_SECOND_STUDENT, descriptor);
 
-        assertCommandFailure(editCommand, model, EditCommand.MESSAGE_DUPLICATE_STUDENT);
+        assertCommandFailure(editCommand, model, String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                firstStudent.getNusStudentId().orElseThrow(), firstStudent.getName()));
     }
 
     @Test
@@ -333,11 +394,83 @@ public class EditCommandTest {
         showStudentAtIndex(model, INDEX_FIRST_STUDENT);
 
         // edit student in filtered list into a duplicate in student book
-        Student studentInList = model.getStudentBook().getStudentList().get(INDEX_SECOND_STUDENT.getZeroBased());
+        Student studentInList = model.getStudentBook().getStudentList().get(2);
         EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
                 new EditStudentDescriptorBuilder(studentInList).build());
 
-        assertCommandFailure(editCommand, model, EditCommand.MESSAGE_DUPLICATE_STUDENT);
+        assertCommandFailure(editCommand, model, String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                studentInList.getNusStudentId().orElseThrow(), studentInList.getName()));
+    }
+
+    @Test
+    public void execute_editToSameNameWithDifferentNusStudentId_success() {
+        Index thirdStudentIndex = Index.fromOneBased(3);
+        Student original = model.getFilteredStudentList().get(thirdStudentIndex.getZeroBased());
+        Student firstStudent = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student edited = new StudentBuilder(original).withName(firstStudent.getName().fullName).build();
+        EditCommand command = new EditCommand(thirdStudentIndex,
+                new EditStudentDescriptorBuilder().withName(firstStudent.getName().fullName).build());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(original, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited))
+                        + "\n\nWARNING: Possible duplicate student: " + firstStudent.getName() + " has the same name ("
+                        + edited.getName() + ")."
+                        + "\nReview the records and delete duplicates only if they are the same person.",
+                expectedModel);
+    }
+
+    @Test
+    public void execute_sameNameWithoutNusStudentIds_editOneSuccess() {
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withPhone("91234567")
+                .withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).withPhone("92345678")
+                .withEmail("second@example.com").build();
+        StudentBook sameNameStudentBook = new StudentBook();
+        sameNameStudentBook.addStudent(first);
+        sameNameStudentBook.addStudent(second);
+        model = new ModelManager(sameNameStudentBook, new UserPrefs());
+        Student edited = new StudentBuilder(second).withPhone("93456789").build();
+        EditCommand command = new EditCommand(INDEX_SECOND_STUDENT,
+                new EditStudentDescriptorBuilder().withPhone("93456789").build());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(second, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    @Test
+    public void execute_identicalStudentsWithoutNusStudentIds_editsSelectedStudent() {
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withPhone("91234567")
+                .withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).build();
+        StudentBook studentBook = new StudentBook();
+        studentBook.addStudent(first);
+        studentBook.addStudent(second);
+        model = new ModelManager(studentBook, new UserPrefs());
+        Student editedSecond = new StudentBuilder(second).withPhone("92345678").build();
+        EditCommand command = new EditCommand(INDEX_SECOND_STUDENT,
+                new EditStudentDescriptorBuilder().withPhone("92345678").build());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(expectedModel.getFilteredStudentList().get(1), editedSecond);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedSecond)),
+                expectedModel);
+        assertSame(first, model.getFilteredStudentList().get(0));
+    }
+
+    @Test
+    public void execute_editToNusStudentIdUsedByAnotherStudent_failure() {
+        Student firstStudent = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        String duplicateId = firstStudent.getNusStudentId().orElseThrow().value.toLowerCase();
+        EditCommand command = new EditCommand(INDEX_SECOND_STUDENT,
+                new EditStudentDescriptorBuilder().withNusStudentId(duplicateId).build());
+
+        assertCommandFailure(command, model, String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                firstStudent.getNusStudentId().orElseThrow(), firstStudent.getName()));
     }
 
     @Test
