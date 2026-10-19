@@ -389,6 +389,8 @@ done to it beyond the quotes any value with spaces takes:
 </box>
 
 * Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list. The index **must be a positive integer** 1, 2, 3, ...
+  The current search stays active after editing, so the index keeps referring to
+  the same student when you repeat a command.
 * The index comes first, before any option.
   An unquoted negative index reports both that the index must be positive and
   that the negative number is not an option. Extra words after a valid index

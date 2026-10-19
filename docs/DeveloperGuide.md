@@ -2312,6 +2312,20 @@ testers are expected to do more *exploratory* testing.
       Expected: No change. An empty value clears the tags only on its own, so
       the message rejects the empty tag.
 
+1. Repeating an edit after a search
+
+   1. Prerequisites: Add `add Alex Yeoh -p 87438807` and
+      `add John Doe -p 98765432`, then run `find john`.
+
+   1. Test case: Run `edit 1 --follow-up` twice.<br>
+      Expected: Both commands flag John Doe, the only student listed. The
+      search stays active between the commands, so index 1 keeps pointing at
+      John Doe and Alex Yeoh stays unflagged.
+
+   1. Test case: `edit 1 -p 9876543` followed by `edit 1 -p 98765432`.<br>
+      Expected: John Doe's phone becomes `9876543` and is then restored to
+      `98765432`. Alex Yeoh's phone remains `87438807` throughout.
+
 1. Reporting several mistakes at once
 
    1. Prerequisites: Run `list` and note the list size.

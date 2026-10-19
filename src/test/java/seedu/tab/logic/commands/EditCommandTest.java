@@ -19,6 +19,7 @@ import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -281,11 +282,40 @@ public class EditCommandTest {
                 new EditStudentDescriptorBuilder().withFlag(true).build());
 
         Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        showStudentAtIndex(expectedModel, INDEX_FIRST_STUDENT);
         expectedModel.setStudent(original, editedStudent);
         String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
                 Messages.format(editedStudent));
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_repeatedEditAfterFilter_targetsSameStudent() {
+        showStudentAtIndex(model, INDEX_FIRST_STUDENT);
+        Student firstShown = model.getFilteredStudentList().get(0);
+
+        EditCommand setFlag = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withFlag(true).build());
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        showStudentAtIndex(expectedModel, INDEX_FIRST_STUDENT);
+        Student flagged = new StudentBuilder(firstShown).withFlag(true).build();
+        expectedModel.setStudent(firstShown, flagged);
+        assertCommandSuccess(setFlag, model, String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(flagged)), expectedModel);
+
+        assertEquals(List.of(flagged), model.getFilteredStudentList());
+
+        EditCommand clearFlag = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withFlag(false).build());
+        Model clearedModel = new ModelManager(new StudentBook(expectedModel.getStudentBook()), new UserPrefs());
+        showStudentAtIndex(clearedModel, INDEX_FIRST_STUDENT);
+        Student cleared = new StudentBuilder(flagged).withFlag(false).build();
+        clearedModel.setStudent(flagged, cleared);
+        assertCommandSuccess(clearFlag, model, String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(cleared)), clearedModel);
+
+        assertEquals(cleared, model.getFilteredStudentList().get(0));
     }
 
     @Test
@@ -314,6 +344,7 @@ public class EditCommandTest {
                 Messages.format(editedStudent));
 
         Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        showStudentAtIndex(expectedModel, INDEX_FIRST_STUDENT);
         expectedModel.setStudent(model.getFilteredStudentList().get(0), editedStudent);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
