@@ -598,7 +598,7 @@
     -fx-font-size: 10px;
 }
 
-/* a tag too long for the panel's width is elided, as a card's values are */
+/* sidebar tag names wrap so that their distinguishing endings remain visible */
 .summary-name {
     -fx-text-overrun: ellipsis;
     -fx-text-fill: -tab-text;

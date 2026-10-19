@@ -2,6 +2,7 @@ package seedu.tab.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.DESC_BOB;
@@ -384,7 +385,8 @@ public class EditCommandTest {
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder(firstStudent).build();
         EditCommand editCommand = new EditCommand(INDEX_SECOND_STUDENT, descriptor);
 
-        assertCommandFailure(editCommand, model, EditCommand.MESSAGE_DUPLICATE_STUDENT);
+        assertCommandFailure(editCommand, model, String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                firstStudent.getNusStudentId().orElseThrow(), firstStudent.getName()));
     }
 
     @Test
@@ -392,11 +394,83 @@ public class EditCommandTest {
         showStudentAtIndex(model, INDEX_FIRST_STUDENT);
 
         // edit student in filtered list into a duplicate in student book
-        Student studentInList = model.getStudentBook().getStudentList().get(INDEX_SECOND_STUDENT.getZeroBased());
+        Student studentInList = model.getStudentBook().getStudentList().get(2);
         EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
                 new EditStudentDescriptorBuilder(studentInList).build());
 
-        assertCommandFailure(editCommand, model, EditCommand.MESSAGE_DUPLICATE_STUDENT);
+        assertCommandFailure(editCommand, model, String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                studentInList.getNusStudentId().orElseThrow(), studentInList.getName()));
+    }
+
+    @Test
+    public void execute_editToSameNameWithDifferentNusStudentId_success() {
+        Index thirdStudentIndex = Index.fromOneBased(3);
+        Student original = model.getFilteredStudentList().get(thirdStudentIndex.getZeroBased());
+        Student firstStudent = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student edited = new StudentBuilder(original).withName(firstStudent.getName().fullName).build();
+        EditCommand command = new EditCommand(thirdStudentIndex,
+                new EditStudentDescriptorBuilder().withName(firstStudent.getName().fullName).build());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(original, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited))
+                        + "\n\nWARNING: Possible duplicate student: " + firstStudent.getName() + " has the same name ("
+                        + edited.getName() + ")."
+                        + "\nReview the records and delete duplicates only if they are the same person.",
+                expectedModel);
+    }
+
+    @Test
+    public void execute_sameNameWithoutNusStudentIds_editOneSuccess() {
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withPhone("91234567")
+                .withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).withPhone("92345678")
+                .withEmail("second@example.com").build();
+        StudentBook sameNameStudentBook = new StudentBook();
+        sameNameStudentBook.addStudent(first);
+        sameNameStudentBook.addStudent(second);
+        model = new ModelManager(sameNameStudentBook, new UserPrefs());
+        Student edited = new StudentBuilder(second).withPhone("93456789").build();
+        EditCommand command = new EditCommand(INDEX_SECOND_STUDENT,
+                new EditStudentDescriptorBuilder().withPhone("93456789").build());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(second, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    @Test
+    public void execute_identicalStudentsWithoutNusStudentIds_editsSelectedStudent() {
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withPhone("91234567")
+                .withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).build();
+        StudentBook studentBook = new StudentBook();
+        studentBook.addStudent(first);
+        studentBook.addStudent(second);
+        model = new ModelManager(studentBook, new UserPrefs());
+        Student editedSecond = new StudentBuilder(second).withPhone("92345678").build();
+        EditCommand command = new EditCommand(INDEX_SECOND_STUDENT,
+                new EditStudentDescriptorBuilder().withPhone("92345678").build());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(expectedModel.getFilteredStudentList().get(1), editedSecond);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedSecond)),
+                expectedModel);
+        assertSame(first, model.getFilteredStudentList().get(0));
+    }
+
+    @Test
+    public void execute_editToNusStudentIdUsedByAnotherStudent_failure() {
+        Student firstStudent = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        String duplicateId = firstStudent.getNusStudentId().orElseThrow().value.toLowerCase();
+        EditCommand command = new EditCommand(INDEX_SECOND_STUDENT,
+                new EditStudentDescriptorBuilder().withNusStudentId(duplicateId).build());
+
+        assertCommandFailure(command, model, String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                firstStudent.getNusStudentId().orElseThrow(), firstStudent.getName()));
     }
 
     @Test

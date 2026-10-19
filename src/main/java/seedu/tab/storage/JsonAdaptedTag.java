@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
+import seedu.tab.logic.Messages;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -43,7 +44,7 @@ class JsonAdaptedTag {
             throw new IllegalValueException("Tag field is missing.");
         }
         if (!Tag.isValidTagName(tagName)) {
-            throw new IllegalValueException(JsonAdaptedStudent.formatInvalidField(
+            throw new IllegalValueException(Messages.getErrorMessageForInvalidValue(
                     Tag.FIELD_NAME, tagName, Tag.getFailureReason(tagName)));
         }
         return new Tag(tagName);

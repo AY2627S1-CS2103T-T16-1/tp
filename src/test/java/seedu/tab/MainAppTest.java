@@ -1,22 +1,35 @@
 package seedu.tab;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.StreamHandler;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.tab.commons.core.GuiSettings;
+import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.model.Model;
+import seedu.tab.model.ModelManager;
 import seedu.tab.model.ReadOnlyUserPrefs;
+import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.util.SampleDataUtil;
 import seedu.tab.storage.JsonStudentBookStorage;
@@ -49,6 +62,22 @@ public class MainAppTest {
         @SuppressWarnings("unchecked")
         Optional<String> loadingError = (Optional<String>) field.get(initializedApp.ui);
         return loadingError;
+    }
+
+    @Test
+    public void init_invalidUtf8_passesEncodingErrorToUiAndPreservesBytesOnShutdown() throws Exception {
+        Path path = testFolder.resolve("students.json");
+        byte[] bytes = "{\"students\":[{\"name\":\"José Tan\",\"phone\":\"91234567\"}]}"
+                .getBytes(Charset.forName("windows-1252"));
+        Files.write(path, bytes);
+        MainApp initializedApp = new MainApp(testFolder.resolve("prefs.json"), path);
+
+        initializedApp.init();
+        assertEquals("The file is not valid UTF-8. Reopen it with its original encoding and save it as UTF-8,"
+                + " then restart TAB.", getUiManagerLoadingError(initializedApp).orElseThrow());
+        assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());
+        initializedApp.stop();
+        assertArrayEquals(bytes, Files.readAllBytes(path));
     }
 
     @Test
@@ -142,6 +171,97 @@ public class MainAppTest {
         Model model = initModelManager(storage, new UserPrefs());
         assertEquals(getTypicalStudentBook(), model.getStudentBook());
         assertFalse(mainApp.getStudentBookLoadingError().isPresent());
+    }
+
+    @Test
+    public void initPrefs_saveDenied_warnsOnceAndUsesDefaultsForSession() {
+        Path path = testFolder.resolve("prefs.json");
+        JsonUserPrefsStorage storage = createFailingPrefsStorage(path, new AccessDeniedException(path.toString()));
+        String output = captureMainAppLogs(() -> assertEquals(new UserPrefs(), mainApp.initPrefs(storage)));
+        assertSingleWarning(output, "Could not save preferences to " + path
+                + ": permission denied. Using preferences for this session only.");
+        assertFalse(Files.exists(path));
+    }
+
+    @Test
+    public void initPrefs_saveFails_retainsLoadedPreferencesAndFile() throws Exception {
+        Path path = testFolder.resolve("prefs.json");
+        UserPrefs saved = new UserPrefs();
+        saved.setGuiSettings(new GuiSettings(1366, 768, 10, 20));
+        new JsonUserPrefsStorage(path).saveUserPrefs(saved);
+        String before = Files.readString(path);
+        JsonUserPrefsStorage storage = createFailingPrefsStorage(path, new IOException("device unavailable"));
+        String output = captureMainAppLogs(() -> assertEquals(saved, mainApp.initPrefs(storage)));
+        assertSingleWarning(output, "Could not save preferences to " + path
+                + ": device unavailable. Using preferences for this session only.");
+        assertEquals(before, Files.readString(path));
+    }
+
+    @Test
+    public void stop_writablePreferences_persistsWindowSettingsWithoutWarning() throws Exception {
+        Path path = testFolder.resolve("prefs.json");
+        JsonUserPrefsStorage prefsStorage = new JsonUserPrefsStorage(path);
+        UserPrefs prefs = new UserPrefs();
+        prefs.setGuiSettings(new GuiSettings(1366, 768, 10, 20));
+        mainApp.storage = new StorageManager(new JsonStudentBookStorage(testFolder.resolve("students.json")),
+                prefsStorage);
+        mainApp.model = new ModelManager(new StudentBook(), prefs);
+
+        String output = captureMainAppLogs(mainApp::stop);
+
+        assertEquals(prefs, prefsStorage.readUserPrefs().orElseThrow());
+        assertFalse(output.contains("WARNING"), output);
+    }
+
+    @Test
+    public void stop_saveFails_warnsOnceWithoutStackTraceOrSevereLevel() {
+        Path path = testFolder.resolve("prefs.json");
+        IOException[] failures = {new AccessDeniedException(path.toString()),
+            new FileSystemException(path.toString(), null, "Read-only file system"), new IOException()};
+        String[] reasons = {"permission denied", "Read-only file system", "an I/O error occurred"};
+        for (int i = 0; i < failures.length; i++) {
+            mainApp.storage = new StorageManager(new JsonStudentBookStorage(testFolder.resolve("students.json")),
+                    createFailingPrefsStorage(path, failures[i]));
+            mainApp.model = new ModelManager(new StudentBook(), new UserPrefs());
+            String output = captureMainAppLogs(mainApp::stop);
+            assertSingleWarning(output, "Could not save window preferences to " + path + ": " + reasons[i]
+                    + ". Window preferences will not be saved.");
+            assertFalse(Files.exists(path));
+        }
+    }
+
+    private JsonUserPrefsStorage createFailingPrefsStorage(Path path, IOException failure) {
+        return new JsonUserPrefsStorage(path) {
+            @Override
+            public void saveUserPrefs(ReadOnlyUserPrefs prefs) throws IOException {
+                throw failure;
+            }
+        };
+    }
+
+    private String captureMainAppLogs(Runnable action) {
+        Logger logger = LogsCenter.getLogger(MainApp.class);
+        boolean isUsingParentHandlers = logger.getUseParentHandlers();
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        StreamHandler handler = new StreamHandler(bytes, new SimpleFormatter());
+        logger.setUseParentHandlers(false);
+        logger.addHandler(handler);
+        try {
+            action.run();
+        } finally {
+            handler.flush();
+            logger.removeHandler(handler);
+            logger.setUseParentHandlers(isUsingParentHandlers);
+        }
+        return bytes.toString(StandardCharsets.UTF_8);
+    }
+
+    private void assertSingleWarning(String output, String message) {
+        assertEquals(1, output.lines().filter(line -> line.startsWith("WARNING:")).count(), output);
+        assertTrue(output.contains("WARNING: " + message + System.lineSeparator()), output);
+        assertFalse(output.contains("SEVERE"), output);
+        assertFalse(output.contains("Exception"), output);
+        assertFalse(output.contains("\tat "), output);
     }
 
     @Test

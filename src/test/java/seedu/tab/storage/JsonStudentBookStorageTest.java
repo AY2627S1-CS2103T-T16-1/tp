@@ -1,5 +1,6 @@
 package seedu.tab.storage;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,9 +11,12 @@ import static seedu.tab.testutil.TypicalStudents.IDA;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -30,6 +34,38 @@ public class JsonStudentBookStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void readAndSaveStudentBook_utf8WithOrWithoutBom_preservesUnicodeRecords() throws Exception {
+        StudentBook expected = new StudentBook();
+        expected.addStudent(new StudentBuilder().withName("José Tan").build());
+        expected.addStudent(new StudentBuilder().withName("王小明").build());
+        Path path = testFolder.resolve("unicode.json");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        storage.saveStudentBook(expected);
+        String json = Files.readString(path);
+        for (String prefix : new String[] {"", "\uFEFF"}) {
+            Files.writeString(path, prefix + json, StandardCharsets.UTF_8);
+            ReadOnlyStudentBook loaded = storage.readStudentBook().orElseThrow();
+            assertEquals(expected, loaded);
+            assertEquals(prefix + json, Files.readString(path), "loading should not rewrite the file");
+            storage.saveStudentBook(loaded);
+            assertEquals(expected, storage.readStudentBook().orElseThrow());
+        }
+    }
+
+    @Test
+    public void readStudentBook_windows1252_reportsEncodingAndPreservesBytes() throws Exception {
+        Path path = testFolder.resolve("ansi.json");
+        byte[] bytes = "{\"students\":[{\"name\":\"José Tan\",\"phone\":\"91234567\"}]}"
+                .getBytes(Charset.forName("windows-1252"));
+        Files.write(path, bytes);
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+        assertEquals("The file is not valid UTF-8. Reopen it with its original encoding and save it as UTF-8,"
+                + " then restart TAB.", exception.getMessage());
+        assertArrayEquals(bytes, Files.readAllBytes(path));
+    }
 
     @Test
     public void readStudentBook_nullFilePath_throwsNullPointerException() {
@@ -64,6 +100,37 @@ public class JsonStudentBookStorageTest {
     public void readStudentBook_nullDocument_throwsDataLoadingException() {
         assertThrows(DataLoadingException.class, "The JSON document must not be null.", () ->
                 readStudentBook("nullStudentBook.json"));
+    }
+
+    @Test
+    public void readStudentBook_syntaxError_reportsAffectedLinesAndPreservesFile() throws Exception {
+        Path filePath = testFolder.resolve("SyntaxError.json");
+        String originalContents = """
+                {
+                  "students": [ {
+                    "name": "Before",
+                    "phone": "81111111"
+                  }, {
+                    "name": "Alice"
+                    "phone": "82222222"
+                  }, {
+                    "name": "After",
+                    "phone": "83333333"
+                  } ]
+                }
+                """;
+        Files.writeString(filePath, originalContents);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, storage::readStudentBook);
+
+        assertTrue(exception.getMessage().contains("at line 7, column 6"));
+        assertTrue(exception.getMessage().contains("  6 |     \"name\": \"Alice\""));
+        assertTrue(exception.getMessage().contains("> 7 |     \"phone\": \"82222222\""));
+        assertFalse(exception.getMessage().contains("Before"));
+        assertFalse(exception.getMessage().contains("After"));
+        assertEquals(originalContents, Files.readString(filePath));
     }
 
     @Test
@@ -123,6 +190,15 @@ public class JsonStudentBookStorageTest {
     @Test
     public void readStudentBook_invalidNusStudentIdStudentBook_throwDataLoadingException() {
         assertThrows(DataLoadingException.class, () -> readStudentBook("invalidNusStudentIdStudentBook.json"));
+    }
+
+    @Test
+    public void readStudentBook_duplicateNusStudentId_reportsNormalizedId() {
+        String expectedMessage = "Student record 2 (\"Lee Wei Ming\"): NUS Student ID A01234567X "
+                + "is already used by student record 1 (\"Tan Wei Ming\").";
+
+        assertThrows(DataLoadingException.class, expectedMessage, () ->
+                readStudentBook("duplicateNusStudentIdStudentBook.json"));
     }
 
     @Test
@@ -299,6 +375,50 @@ public class JsonStudentBookStorageTest {
         assertTrue(savedJson.contains("\"nusStudentId\" : \"A01234567X\""));
         assertEquals(1, savedJson.split("\"nusStudentId\"", -1).length - 1);
         assertEquals(original, new StudentBook(storage.readStudentBook(filePath).get()));
+    }
+
+    @Test
+    public void readAndSaveStudentBook_sameNameWithDifferentOrAbsentNusStudentIds_roundTrips() throws Exception {
+        Path filePath = testFolder.resolve("StudentsWithSameName.json");
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withPhone("91234567")
+                .withNusStudentId("A01234567X").build();
+        Student second = new StudentBuilder(first).withPhone("92345678")
+                .withNusStudentId("A76543210Y").build();
+        Student withoutNusStudentId = new StudentBuilder(first).withPhone("93456789")
+                .withoutNusStudentId().build();
+        StudentBook original = new StudentBook();
+        original.addStudent(first);
+        original.addStudent(second);
+        original.addStudent(withoutNusStudentId);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        storage.saveStudentBook(original, filePath);
+        ReadOnlyStudentBook readBack = storage.readStudentBook(filePath).get();
+
+        assertEquals(original, new StudentBook(readBack));
+        assertEquals(3, readBack.getStudentList().size());
+    }
+
+    @Test
+    public void readAndSaveStudentBook_identicalStudentsWithoutNusStudentIds_preservesCountAndOrder()
+            throws Exception {
+        Path filePath = testFolder.resolve("IdenticalStudentsWithoutNusStudentIds.json");
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withPhone("91234567")
+                .withoutNusStudentId().build();
+        Student middle = new StudentBuilder().withName("Alice Tan").withPhone("92345678")
+                .withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).build();
+        StudentBook original = new StudentBook();
+        original.addStudent(first);
+        original.addStudent(middle);
+        original.addStudent(second);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        storage.saveStudentBook(original, filePath);
+        ReadOnlyStudentBook readBack = storage.readStudentBook(filePath).orElseThrow();
+
+        assertEquals(3, readBack.getStudentList().size());
+        assertEquals(List.of(first, middle, second), readBack.getStudentList());
     }
 
     @Test
