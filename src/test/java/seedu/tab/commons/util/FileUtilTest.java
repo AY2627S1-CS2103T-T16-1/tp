@@ -4,14 +4,20 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
+import java.util.Set;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -28,6 +34,52 @@ public class FileUtilTest {
         FileUtil.writeToFile(file, "new contents");
 
         assertEquals("new contents", Files.readString(file));
+        assertEquals(List.of(file), listFilesInTestFolder());
+    }
+
+    @Test
+    public void writeToFile_symbolicLink_updatesTargetAndPreservesLink() throws Exception {
+        Path target = testFolder.resolve("real-data.json");
+        Path link = testFolder.resolve("tab.json");
+        Files.writeString(target, "old contents");
+        createSymbolicLinkOrSkip(link, target);
+
+        FileUtil.writeToFile(link, "new contents");
+
+        assertTrue(Files.isSymbolicLink(link));
+        assertEquals("new contents", Files.readString(target));
+        assertEquals("new contents", Files.readString(link));
+    }
+
+    @Test
+    public void writeToFile_existingPosixPermissions_preservesPermissions() throws Exception {
+        Path file = testFolder.resolve("tab.json");
+        Files.writeString(file, "old contents");
+        assumePosixPermissions(file);
+        Set<PosixFilePermission> permissions = Set.of(
+                PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_READ);
+        Files.setPosixFilePermissions(file, permissions);
+
+        FileUtil.writeToFile(file, "new contents");
+
+        assertEquals(permissions, Files.getPosixFilePermissions(file));
+        assertEquals("new contents", Files.readString(file));
+    }
+
+    @Test
+    public void writeToFile_readOnlyPosixFile_throwsAndPreservesOriginal() throws Exception {
+        Path file = testFolder.resolve("tab.json");
+        String originalContents = "last valid student data";
+        Files.writeString(file, originalContents);
+        assumePosixPermissions(file);
+        Set<PosixFilePermission> permissions = Set.of(
+                PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ);
+        Files.setPosixFilePermissions(file, permissions);
+
+        assertThrows(AccessDeniedException.class, () -> FileUtil.writeToFile(file, "replacement student data"));
+
+        assertEquals(originalContents, Files.readString(file));
+        assertEquals(permissions, Files.getPosixFilePermissions(file));
         assertEquals(List.of(file), listFilesInTestFolder());
     }
 
@@ -73,5 +125,20 @@ public class FileUtilTest {
         try (var files = Files.list(testFolder)) {
             return files.toList();
         }
+    }
+
+    private void createSymbolicLinkOrSkip(Path link, Path target) {
+        try {
+            Files.createSymbolicLink(link, target);
+        } catch (UnsupportedOperationException | FileSystemException exception) {
+            Assumptions.assumeTrue(false, "Symbolic links are unavailable: " + exception.getMessage());
+        } catch (IOException exception) {
+            throw new AssertionError("The symbolic link should be created.", exception);
+        }
+    }
+
+    private void assumePosixPermissions(Path file) throws IOException {
+        Assumptions.assumeTrue(Files.getFileStore(file).supportsFileAttributeView("posix"),
+                "POSIX permissions are unavailable.");
     }
 }

@@ -2,10 +2,12 @@ package seedu.tab.commons.util;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFileAttributeView;
 
 /**
  * Writes and reads files
@@ -56,16 +58,39 @@ public class FileUtil {
     }
 
     static void writeToFile(Path file, String content, TemporaryFileWriter writer) throws IOException {
-        Path absoluteFile = file.toAbsolutePath();
-        Path temporaryFile = Files.createTempFile(absoluteFile.getParent(), ".tab-", ".tmp");
+        Path targetFile = resolveWriteTarget(file);
+        ensureWritable(targetFile);
+        Path temporaryFile = Files.createTempFile(targetFile.getParent(), ".tab-", ".tmp");
 
         try {
+            copyPosixPermissions(targetFile, temporaryFile);
             writer.write(temporaryFile, content.getBytes(CHARSET));
-            Files.move(temporaryFile, absoluteFile,
+            Files.move(temporaryFile, targetFile,
                     StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
             deleteTemporaryFile(temporaryFile, exception);
             throw exception;
+        }
+    }
+
+    private static Path resolveWriteTarget(Path file) throws IOException {
+        Path absoluteFile = file.toAbsolutePath();
+        return Files.exists(absoluteFile) ? absoluteFile.toRealPath() : absoluteFile;
+    }
+
+    private static void ensureWritable(Path file) throws AccessDeniedException {
+        if (Files.exists(file) && !Files.isWritable(file)) {
+            throw new AccessDeniedException(file.toString());
+        }
+    }
+
+    private static void copyPosixPermissions(Path source, Path target) throws IOException {
+        if (!Files.exists(source)) {
+            return;
+        }
+        PosixFileAttributeView sourceAttributes = Files.getFileAttributeView(source, PosixFileAttributeView.class);
+        if (sourceAttributes != null) {
+            Files.setPosixFilePermissions(target, sourceAttributes.readAttributes().permissions());
         }
     }
 
