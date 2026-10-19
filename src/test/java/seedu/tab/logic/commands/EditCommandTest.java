@@ -58,6 +58,12 @@ public class EditCommandTest {
     }
 
     @Test
+    public void messageConflictingFollowUp_namesEachFlagWithItsAliases() {
+        assertTrue(EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP.contains(FLAG_FOLLOW_UP.getMarkerWithAliases()));
+        assertTrue(EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP.contains(FLAG_NO_FOLLOW_UP.getMarkerWithAliases()));
+    }
+
+    @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
         Student editedStudent = new StudentBuilder().build();
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder(editedStudent).build();

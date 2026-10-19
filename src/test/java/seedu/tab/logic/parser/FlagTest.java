@@ -34,6 +34,24 @@ public class FlagTest {
     }
 
     @Test
+    public void getMarkerWithAliases_flagWithoutAliases_returnsJustThePrimaryMarker() {
+        assertEquals("-e", new Flag("-e", "EMAIL").getMarkerWithAliases());
+        assertEquals("-f", new Flag("-f").getMarkerWithAliases());
+    }
+
+    @Test
+    public void getMarkerWithAliases_flagWithOneAlias_namesItAfterOr() {
+        assertEquals("--follow-up (or -f)", new Flag("--follow-up", List.of("-f")).getMarkerWithAliases());
+    }
+
+    @Test
+    public void getMarkerWithAliases_flagWithSeveralAliases_namesThemAllAfterOr() {
+        Flag valueTaking = new Flag("-a", List.of("--add", "--append"), "TAG");
+
+        assertEquals("-a (or --add, --append)", valueTaking.getMarkerWithAliases());
+    }
+
+    @Test
     public void valueTakingFlag_takesValue() {
         assertTrue(new Flag("-e", "EMAIL").takesValue());
     }

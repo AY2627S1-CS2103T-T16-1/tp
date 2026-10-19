@@ -32,6 +32,8 @@ public class Messages {
     /** How much of a rejected value is quoted back, so that a long one cannot hide the reason. */
     public static final int MAX_QUOTED_VALUE_LENGTH = 60;
     public static final String MESSAGE_UNKNOWN_FLAG = "There is no %1$s option.";
+    public static final String MESSAGE_FLAG_TAKES_NO_VALUE =
+            "%1$s takes no value. Use the option on its own.";
     public static final String MESSAGE_FLAG_WITHOUT_VALUE =
             "%1$s needs a value after it. A value opening with a hyphen goes in double quotes.";
     public static final String MESSAGE_VALUE_AFTER_FLAGS =
