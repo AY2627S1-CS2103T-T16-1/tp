@@ -115,8 +115,13 @@ public class UiManagerTest {
 
     @Test
     public void createDataLoadingErrorAlert_usesTabThemeAndActionableContent() throws Exception {
-        String error = "Student record 4 (\"Yun\"): Phone \"09\" is not valid: "
-                + "a phone number needs at least 3 digits";
+        String error = """
+                The data is not in the expected JSON format at line 4, column 6: Unexpected character
+                Affected source:
+                  3 |     "name": "Yun"
+                > 4 |     "phone": "09"
+                  5 |   },
+                """;
         UiManager uiManager = new UiManager(null, DATA_FILE_PATH, Optional.of(error));
 
         AlertDetails details = FxToolkit.onFxThread(() -> {
