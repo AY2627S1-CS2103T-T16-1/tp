@@ -105,6 +105,27 @@ public class CommandDispatchAndPersistenceTest {
     }
 
     @Test
+    public void execute_addPastedNameHoldingInvisibleMarks_storedAlikeAndWarnsOfDuplicate() throws Exception {
+        logic.execute(AddCommand.COMMAND_WORD + " John Doe -p 98765432");
+
+        // the mark a chat app pasted before the name draws nothing, so both records
+        // read John Doe and the warning can name the first one
+        String pastedAdd = AddCommand.COMMAND_WORD + " \u200EJohn Doe -p 98765432";
+        CommandResult result = logic.execute(pastedAdd);
+
+        assertTrue(result.getFeedbackToUser().contains(
+                "WARNING: Possible duplicate student: John Doe has the same name (John Doe)."));
+
+        assertEquals(2, model.getFilteredStudentList().size());
+        assertEquals("John Doe", model.getFilteredStudentList().get(0).getName().fullName);
+        assertEquals("John Doe", model.getFilteredStudentList().get(1).getName().fullName);
+
+        ReadOnlyStudentBook saved = storage.readStudentBook().orElseThrow();
+        assertEquals(2, saved.getStudentList().size());
+        assertEquals("John Doe", saved.getStudentList().get(1).getName().fullName);
+    }
+
+    @Test
     public void execute_exitCommand_returnsExitSignal() throws Exception {
         CommandResult result = logic.execute(ExitCommand.COMMAND_WORD);
         assertTrue(result.isExit());
