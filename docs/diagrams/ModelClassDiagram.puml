@@ -46,6 +46,12 @@ Student *--> "*" Tag
 Student *--> "0..1" Flag
 Flag --|> Tag
 
+note right of Student
+  isSameStudent compares records by
+  NUS Student ID only; a missing ID
+  does not establish identity
+end note
+
 Student -[hidden]up--> I
 UniqueStudentList -[hidden]right-> I
 

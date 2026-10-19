@@ -2,6 +2,7 @@ package seedu.tab.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_AMY;
@@ -15,6 +16,8 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,6 +81,31 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.formatSuccessMessage(0), model);
+    }
+
+    @Test
+    public void execute_findFormattedPhoneDigits_preservesRecordsAndStorage() throws Exception {
+        logic.execute("add Alex Yeoh -p \"+65 9123 4567\"");
+        logic.execute("add Bernice Yu -p 9876-5432");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        model = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
+        setUp();
+
+        for (String keyword : List.of("91234567", "91234", "6591234567", "\"9123 4567\"", "  91234567  ")) {
+            assertEquals(new CommandResult(Messages.getStudentsFoundOverview(1)), logic.execute("find " + keyword));
+            assertEquals(List.of(students.get(0)), model.getFilteredStudentList());
+        }
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(1)), logic.execute("find 98765432"));
+        assertEquals(List.of(students.get(1)), model.getFilteredStudentList());
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(2)), logic.execute("find 91234567 Bernice"));
+        assertEquals(students, model.getFilteredStudentList());
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(0)), logic.execute("find 91234568"));
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        assertEquals(students, model.getStudentBook().getStudentList());
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        assertEquals(students, storage.readStudentBook().orElseThrow().getStudentList());
     }
 
     @Test
@@ -292,6 +320,86 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_mutatingCommandsWhenStorageFails_rollsBackAndCanRetry() throws Exception {
+        for (String command : List.of(
+                "add \"New Student\" -p 81112222",
+                "edit 1 -p 81112222",
+                "delete 1",
+                "tag 1 -a T2")) {
+            model = new ModelManager();
+            Student amy = new StudentBuilder(AMY).build();
+            model.addStudent(amy);
+            model.addStudent(new StudentBuilder().withName("Other Student").build());
+            model.updateFilteredStudentList(amy::equals);
+            Predicate<? super Student> expectedFilter = model.getFilteredStudentPredicate();
+            Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+            expectedModel.updateFilteredStudentList(amy::equals);
+            logic = createLogicWithFailingStorage(DUMMY_IO_EXCEPTION);
+            String expectedMessage = String.format(
+                    LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage());
+
+            for (int attempt = 0; attempt < 2; attempt++) {
+                assertCommandFailure(command, CommandException.class, expectedMessage, expectedModel);
+                assertSame(expectedFilter, model.getFilteredStudentPredicate());
+            }
+        }
+    }
+
+    @Test
+    public void execute_confirmedClearWhenStorageFails_rollsBackAndCanRetry() throws Exception {
+        Student amy = new StudentBuilder(AMY).build();
+        model.addStudent(amy);
+        model.addStudent(new StudentBuilder().withName("Other Student").build());
+        model.updateFilteredStudentList(amy::equals);
+        Predicate<? super Student> expectedFilter = model.getFilteredStudentPredicate();
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.updateFilteredStudentList(amy::equals);
+        logic = createLogicWithFailingStorage(DUMMY_IO_EXCEPTION);
+        String expectedMessage = String.format(
+                LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage());
+
+        for (int attempt = 0; attempt < 2; attempt++) {
+            assertEquals("Clear all 2 students? This cannot be undone. [y/N]",
+                    logic.execute("clear").getFeedbackToUser());
+            assertTrue(logic.isAwaitingConfirmation());
+            assertCommandFailure("yes", CommandException.class, expectedMessage, expectedModel);
+            assertFalse(logic.isAwaitingConfirmation());
+            assertSame(expectedFilter, model.getFilteredStudentPredicate());
+        }
+    }
+
+    @Test
+    public void execute_retryAfterStorageRecovers_appliesChangeOnce() throws Exception {
+        Student otherStudent = new StudentBuilder().withName("Other Student").build();
+        model.addStudent(AMY);
+        model.addStudent(otherStudent);
+        Path studentBookPath = temporaryFolder.resolve("studentBook.json");
+        AtomicInteger saveAttempts = new AtomicInteger();
+        JsonStudentBookStorage studentBookStorage = new JsonStudentBookStorage(studentBookPath) {
+            @Override
+            public void saveStudentBook(ReadOnlyStudentBook studentBook) throws IOException {
+                if (saveAttempts.incrementAndGet() == 1) {
+                    throw DUMMY_IO_EXCEPTION;
+                }
+                super.saveStudentBook(studentBook);
+            }
+        };
+        logic = new LogicManager(model, new StorageManager(studentBookStorage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"))));
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+
+        assertCommandFailure("delete 1", CommandException.class,
+                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()), expectedModel);
+        CommandResult result = logic.execute("delete 1");
+
+        assertEquals(String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, Messages.format(AMY)),
+                result.getFeedbackToUser());
+        assertEquals(List.of(otherStudent), model.getStudentBook().getStudentList());
+        assertEquals(List.of(otherStudent), studentBookStorage.readStudentBook().orElseThrow().getStudentList());
+        assertEquals(2, saveAttempts.get());
+    }
+
+    @Test
     public void execute_unwritableStorage_readOnlyCommandsSucceed() throws Exception {
         model.addStudent(AMY);
         setUpUnwritableStorage();
@@ -302,6 +410,8 @@ public class LogicManagerTest {
 
     @Test
     public void execute_afterFailedSave_readOnlyCommandsSucceed() throws Exception {
+        Student existingStudent = new StudentBuilder().withName("Existing Student").build();
+        model.addStudent(existingStudent);
         setUpUnwritableStorage();
         String addCommand = AddCommand.COMMAND_WORD + NAME_AMY + PHONE_AMY + EMAIL_AMY;
         assertThrows(CommandException.class, String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT,
@@ -411,28 +521,26 @@ public class LogicManagerTest {
      * @param expectedMessage the message expected inside exception thrown by the Logic component
      */
     private void assertCommandFailureForExceptionFromStorage(IOException e, String expectedMessage) {
-        Path prefPath = temporaryFolder.resolve("ExceptionUserPrefs.json");
-
-        // Inject LogicManager with a JsonStudentBookStorage that throws the IOException e when saving
-        JsonStudentBookStorage studentBookStorage = new JsonStudentBookStorage(prefPath) {
-            @Override
-            public void saveStudentBook(ReadOnlyStudentBook studentBook) throws IOException {
-                throw e;
-            }
-        };
-
-        JsonUserPrefsStorage userPrefsStorage =
-                new JsonUserPrefsStorage(temporaryFolder.resolve("ExceptionUserPrefs.json"));
-        StorageManager storage = new StorageManager(studentBookStorage, userPrefsStorage);
-
-        logic = new LogicManager(model, storage);
+        logic = createLogicWithFailingStorage(e);
 
         // Triggers the saveStudentBook method by executing an add command
         String addCommand = AddCommand.COMMAND_WORD + NAME_AMY + PHONE_AMY
                 + EMAIL_AMY;
-        Student expectedStudent = new StudentBuilder(AMY).withTags().build();
         ModelManager expectedModel = new ModelManager();
-        expectedModel.addStudent(expectedStudent);
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+    }
+
+    /** Returns a LogicManager whose student-book storage always throws {@code exception}. */
+    private Logic createLogicWithFailingStorage(IOException exception) {
+        Path studentBookPath = temporaryFolder.resolve("ExceptionStudentBook.json");
+        JsonStudentBookStorage studentBookStorage = new JsonStudentBookStorage(studentBookPath) {
+            @Override
+            public void saveStudentBook(ReadOnlyStudentBook studentBook) throws IOException {
+                throw exception;
+            }
+        };
+        JsonUserPrefsStorage userPrefsStorage =
+                new JsonUserPrefsStorage(temporaryFolder.resolve("ExceptionUserPrefs.json"));
+        return new LogicManager(model, new StorageManager(studentBookStorage, userPrefsStorage));
     }
 }
