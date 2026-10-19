@@ -625,12 +625,11 @@ optionals directly into this contract. Nullable JSON strings remain confined
 to the storage adapter, preserving the existing file format.
 
 `Name`, `Tag` and `Phone` each store the form returned by
-`StringUtil.normalizeFieldValue`: without the invisible format characters that draw
-nothing on screen, with each run of
-whitespace reduced to one ASCII space and leading and trailing whitespace removed,
-and with the result composed to Unicode NFC. Composing happens last, because an invisible
-character between a base letter and its combining mark blocks the two from
-composing.
+`StringUtil.normalizeFieldValue`: without the invisible format characters that
+draw nothing on screen, with each run of whitespace reduced to one ASCII space
+and leading and trailing whitespace removed, and with the result composed to
+Unicode NFC. Composing happens last, because an invisible character between a
+base letter and its combining mark blocks the two from composing.
 
 They normalize for different reasons, and the rule each one enforces differs.
 
