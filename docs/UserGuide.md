@@ -71,6 +71,11 @@ it before pressing Enter.
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add NAME`, replace `NAME` with a value such as `John Doe`.
 
+* A command word may be typed in any case, so `list`, `List` and `LIST` all
+  list your students. Only the first word is read this way: the rest of the
+  command keeps the capitals you typed, so `Find Alex` still looks for `Alex`.
+  Option spellings are case-sensitive, so `-P` is not the `-p` option.
+
 * Items in square brackets are optional.<br>
   For example, `NAME [-t TAG]` can be used as `John Doe -t friend` or as `John Doe`.
 
@@ -169,6 +174,8 @@ letter out may differ in it, so `felete` still reaches `delete`.
 
 The comparison ignores case, so `Delte 3` is answered in the same way. A word
 that reaches nothing, such as `dlt`, is answered with the pointer to `help`.
+A word spelt correctly is no mistyping whatever case it is in: `List` and
+`LIST` run `list` rather than being suggested back to you.
 
 <box type="warning" seamless>
 
