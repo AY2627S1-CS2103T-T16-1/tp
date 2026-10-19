@@ -724,6 +724,11 @@ whitespace runs and applying Unicode NFC normalization. It creates a
 against the student's name, NUS Student ID, phone, email, ordinary tags,
 and optional follow-up flag. Matching is case-insensitive and partial; any
 keyword can match.
+For a keyword containing only Unicode decimal digits (`\p{Nd}+`), the phone
+comparison also checks a copy of the stored phone with non-digit characters
+removed. This lets `91234567` match `+65 9123 4567` or `9123-4567`.
+Literal phone matching remains available for formatted phrases and annotations;
+other fields retain their text matching. The stored phone and saved data do not change.
 
 `FindCommand` and `ListCommand` report the count of displayed students in
 their execution feedback. `FindCommand` counts only the matching students
@@ -2541,6 +2546,23 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `delete 1`, then `list`<br>
       Expected: Feedback reports `Listed 1 student.`.
+
+### Locating students by digits in formatted phone numbers
+
+1. Full numbers, partial numbers, and unchanged saved formatting
+
+   1. Prerequisites: In a disposable copy of TAB, clear all students (`clear`, then `yes`).
+      Run `add Alex Yeoh -p "+65 9123 4567"` and `add Bernice Yu -p 9876-5432`.
+      Restart TAB and keep a copy of `data/tab.json`.
+   1. Test cases: `find 91234567`, `find 91234`, and `find 6591234567`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.` and phone `+65 9123 4567`.
+   1. Test case: `find 98765432`.<br>
+      Expected: Only Bernice Yu is shown, with `Found 1 student.` and phone `9876-5432`.
+   1. Test case: `find 91234567 Bernice`.<br>
+      Expected: Both students are shown, with `Found 2 students.`.
+   1. Test case: `find 91234568`.<br>
+      Expected: No students are shown, with `Found 0 students.`.
+      `data/tab.json` is identical to the saved copy after all these searches.
 
 ### Locating students with quoted phrases and error handling
 

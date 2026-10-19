@@ -564,6 +564,10 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
   address, tags and follow-up status. For example, `find follow-up` can find
   flagged students, and `find a0123` can find a student with NUS Student ID `A01234567X`.
 * Parts of details match; for example, `Han` matches `Hans`, and `912` matches the phone number `91234567`.
+* A keyword containing only digits also searches the phone number with all non-digit characters removed.
+  For example, `find 91234567` and `find 91234` both match `+65 9123 4567`, and
+  `find 98765432` matches `9876-5432`. You can include the country code, as in `find 6591234567`.
+  Terms containing other characters, such as `"ext 21"` or `"9123 4567"`, still match the stored text.
 * TAB reports the number of matches found: `Found 0 students.` when none match,
   `Found 1 student.` for a single match, and `Found 3 students.` for multiple matches.
 
