@@ -11,6 +11,7 @@ import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
 import static seedu.tab.testutil.TypicalStudents.ALICE;
+import static seedu.tab.testutil.TypicalStudents.CARL;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import org.junit.jupiter.api.Test;
@@ -118,8 +119,10 @@ public class DeleteCommandTest {
 
     @Test
     public void execute_validNusStudentIdUnfilteredList_success() {
-        Student studentToDelete = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
-        DeleteCommand deleteCommand = deleteById("A12345678C");
+        // CARL is not the first student, so a lookup that stopped at the first student holding
+        // any ID at all would leave the wrong student in the book
+        Student studentToDelete = CARL;
+        DeleteCommand deleteCommand = deleteById("A23456789D");
 
         String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS,
                 Messages.format(studentToDelete));
