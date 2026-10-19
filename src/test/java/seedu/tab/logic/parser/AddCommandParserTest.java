@@ -316,6 +316,24 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_namePastedWithInvisibleMarks_isStoredAsItLooks() {
+        // a chat app wraps a copied name in direction marks, which draw nothing on screen but
+        // would otherwise store a second, lookalike student
+        Student expected = new StudentBuilder().withName("John Doe").withPhone(VALID_PHONE_BOB)
+                .withoutEmail().withTags().build();
+        assertParseSuccess(parser, " \u200EJohn Doe -p " + VALID_PHONE_BOB, new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_theSameTagGivenTwiceWithAnInvisibleMark_storesOneTag() {
+        // the two spellings are one tag to a reader, so the set must not hold both
+        Student expected = new StudentBuilder().withName("John Doe").withPhone(VALID_PHONE_BOB)
+                .withoutEmail().withTags(VALID_TAG_FRIEND).build();
+        assertParseSuccess(parser, " John Doe -p " + VALID_PHONE_BOB + " -t friend -t \u200Efriend",
+                new AddCommand(expected));
+    }
+
+    @Test
     public void parse_nameWithSlash_succeeds() {
         // no field is marked by a slash any more, so a slash needs nothing done to it
         Student son = new StudentBuilder().withName("Ravi s/o Kumaran").withPhone(VALID_PHONE_BOB)

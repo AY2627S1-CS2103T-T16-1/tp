@@ -46,6 +46,13 @@ public class PhoneTest {
     }
 
     @Test
+    public void constructor_storesTheNumberTheWayItLooks() {
+        // WhatsApp wraps a copied number in direction marks, which draw nothing on screen
+        assertEquals("98765432", new Phone("\u202A98765432\u202C").value);
+        assertEquals("+65 9123 4567", new Phone("\u200E+65 9123 4567").value);
+    }
+
+    @Test
     public void equals() {
         Phone phone = new Phone("999");
 
