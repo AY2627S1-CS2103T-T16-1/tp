@@ -2603,7 +2603,7 @@ testers are expected to do more *exploratory* testing.
 1. Deleting a student while all students are being shown
 
    1. Prerequisites: List all students using the `list` command, with multiple students in the list.
-      Note one student's NUS Student ID (such as `A12345678C`).
+      Note one student's NUS Student ID, such as Charlotte Oliveiro's `A02345678G` in the sample data.
 
    1. Test case: `delete 1`<br>
       Expected: The first student record is deleted from the list. The status message identifies
@@ -2613,13 +2613,18 @@ testers are expected to do more *exploratory* testing.
       Expected: No student is deleted. The status message shows error details, and the student book
       remains unchanged.
 
-   1. Test case: `delete A12345678C`, where `A12345678C` is the NUS Student ID a student in the book holds<br>
-      Expected: That student is deleted from the list wherever they appear, and the status message
-      identifies them. `delete a12345678c` does the same, because matching an ID ignores case.
+   1. Test case: `delete A02345678G`<br>
+      Expected: Charlotte Oliveiro is deleted from the book wherever she appears, and the status
+      message identifies her. `delete a02345678g` does the same, because matching an ID ignores case.
 
-   1. Test case: `find Alex` followed by `delete A12345678C`, where the search hides the student
-      who holds that ID<br>
-      Expected: That student is deleted from the book, and the status message identifies them.
+   1. Test case: `add "Digit Ida" -p 91234567 --id 1ABC`, then `delete --id 1ABC`<br>
+      Expected: The student holding `1ABC` is deleted, and the status message identifies them.
+      `delete 1ABC` is refused with the command's format, because a target starting with a digit
+      reads as an index.
+
+   1. Test case: `find Alex` followed by `delete A02345678G`, where the search hides
+      Charlotte Oliveiro<br>
+      Expected: Charlotte Oliveiro is deleted from the book, and the status message identifies her.
 
    1. Test case: `delete A99999999Z`, where no student holds that ID<br>
       Expected: No student is deleted. The status message reads
@@ -2633,7 +2638,8 @@ testers are expected to do more *exploratory* testing.
 
    1. Other incorrect delete commands to try: `delete`, `delete 999` (where the number is larger
       than the list size)<br>
-      Expected: Similar to previous.
+      Expected: `delete` is refused with the command's format, and `delete 999` is refused as past
+      the end of the displayed list. Neither deletes a student, and the student book is unchanged.
 
 1. _{ more test cases … }_
 
