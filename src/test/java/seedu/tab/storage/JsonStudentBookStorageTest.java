@@ -1,5 +1,6 @@
 package seedu.tab.storage;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,6 +11,8 @@ import static seedu.tab.testutil.TypicalStudents.IDA;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,6 +34,38 @@ public class JsonStudentBookStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void readAndSaveStudentBook_utf8WithOrWithoutBom_preservesUnicodeRecords() throws Exception {
+        StudentBook expected = new StudentBook();
+        expected.addStudent(new StudentBuilder().withName("José Tan").build());
+        expected.addStudent(new StudentBuilder().withName("王小明").build());
+        Path path = testFolder.resolve("unicode.json");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        storage.saveStudentBook(expected);
+        String json = Files.readString(path);
+        for (String prefix : new String[] {"", "\uFEFF"}) {
+            Files.writeString(path, prefix + json, StandardCharsets.UTF_8);
+            ReadOnlyStudentBook loaded = storage.readStudentBook().orElseThrow();
+            assertEquals(expected, loaded);
+            assertEquals(prefix + json, Files.readString(path), "loading should not rewrite the file");
+            storage.saveStudentBook(loaded);
+            assertEquals(expected, storage.readStudentBook().orElseThrow());
+        }
+    }
+
+    @Test
+    public void readStudentBook_windows1252_reportsEncodingAndPreservesBytes() throws Exception {
+        Path path = testFolder.resolve("ansi.json");
+        byte[] bytes = "{\"students\":[{\"name\":\"José Tan\",\"phone\":\"91234567\"}]}"
+                .getBytes(Charset.forName("windows-1252"));
+        Files.write(path, bytes);
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+        assertEquals("The file is not valid UTF-8. Reopen it with its original encoding and save it as UTF-8,"
+                + " then restart TAB.", exception.getMessage());
+        assertArrayEquals(bytes, Files.readAllBytes(path));
+    }
 
     @Test
     public void readStudentBook_nullFilePath_throwsNullPointerException() {

@@ -695,6 +695,12 @@ preferences file when it can. This recovery does not change saved student record
 
 TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.json`. Advanced users are welcome to update data directly by editing that data file.
 
+Save the file as **UTF-8**, with or without a leading byte order mark (BOM).
+TAB accepts both forms and preserves accented letters and other Unicode text.
+Files saved in another encoding, such as Windows-1252 (ANSI), may contain
+invalid UTF-8. TAB rejects those files without changing their bytes and asks
+you to reopen them with their original encoding and save them as UTF-8.
+
 A student who needs follow-up has `"flag": true` in their JSON record. An
 unflagged student normally has no `flag` key; absence, `false`, and `null` all
 mean that no follow-up is needed. Data files created before this field existed
