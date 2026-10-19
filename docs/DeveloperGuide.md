@@ -556,9 +556,11 @@ but `isSameStudent` does not: changing whether a student needs a reply does not
 change their identity. The flag is stored as `Optional<Flag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
-Search combines ordinary tags with the optional flag and matches their
-inherited `tagName` values. The student card and command feedback display the
-same value, while the card keeps the flag in its separate follow-up row.
+Search matches ordinary tags as parts of their inherited `tagName` values, but
+matches the optional flag only when a term names it: the whole label
+`Needs follow-up` or one of its words, ignoring case (`Flag.matchesKeyword`).
+The student card and command feedback display the same value, while the card
+keeps the flag in its separate follow-up row.
 
 The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
 For edit, the `EditStudentDescriptor` stores a nullable `Boolean isFlagged`:
@@ -722,8 +724,10 @@ Search terms are normalized with `StringUtil.normalizeFieldValue`, collapsing in
 whitespace runs and applying Unicode NFC normalization. It creates a
 `DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
 against the student's name, NUS Student ID, phone, email, ordinary tags,
-and optional follow-up flag. Matching is case-insensitive and partial; any
-keyword can match.
+and optional follow-up flag. Matching is case-insensitive; those details
+match partially, while the follow-up flag matches only the whole label
+`Needs follow-up` or one of its words, so a fragment such as `low` cannot
+list every flagged student.
 
 `FindCommand` and `ListCommand` report the count of displayed students in
 their execution feedback. `FindCommand` counts only the matching students
@@ -1174,7 +1178,7 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to find students, providing one or more search terms.
 2.  TAB shows the students for whom any term matches any part of a name, NUS Student ID,
-    phone, email, tag, or follow-up status, regardless of letter case.
+    phone, email or tag, or names the follow-up status as a whole, regardless of letter case.
 3.  User identifies the intended student.
 4.  User initiates the desired action on that student.
 
@@ -1871,8 +1875,13 @@ testers are expected to do more *exploratory* testing.
       and Bob flagged.
 
    1. Test cases: `find follow-up` and `find NEEDS`<br>
-      Expected: Each search shows Bob and excludes Alice, matching part of
-      the flag's displayed name without regard to case.
+      Expected: Each search shows Bob and excludes Alice, matching a whole
+      word of the flag's displayed name without regard to case.
+
+   1. Test case: `add Low Jia Hui -p 91112222`, then `find low`<br>
+      Expected: Only Low Jia Hui is listed, reported as `Found 1 student.`,
+      although Bob still needs follow-up: `low` sits inside `Needs follow-up`
+      but is not a word of it, so it never matches the follow-up status.
 
 1. Setting and clearing follow-up while editing
 

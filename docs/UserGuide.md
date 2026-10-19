@@ -558,6 +558,9 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
   address, tags and follow-up status. For example, `find follow-up` can find
   flagged students, and `find a0123` can find a student with NUS Student ID `A01234567X`.
 * Parts of details match; for example, `Han` matches `Hans`, and `912` matches the phone number `91234567`.
+  The follow-up status is the exception: only `Needs follow-up` or one of its whole
+  words matches it, so `find follow-up` and `find needs` find flagged students while
+  `find low` and `find up` do not.
 * TAB reports the number of matches found: `Found 0 students.` when none match,
   `Found 1 student.` for a single match, and `Found 3 students.` for multiple matches.
 
