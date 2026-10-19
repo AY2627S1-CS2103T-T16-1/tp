@@ -88,8 +88,15 @@ it before pressing Enter.
 
 * Every command marks its fields with options such as `-p`. Value options also
   have descriptive long aliases such as `--phone`; the command-specific
-  sections list them. A value holding spaces goes in double quotes after an
-  option, as does any value opening with a hyphen.
+  sections list them. Separate a value from its option with a space, as in
+  `--phone 91234567`, or join it with an equals sign, as in
+  `--phone=91234567`; short options accept both forms too. Only the first
+  equals sign is a separator, so the rest belong to the value. A value holding
+  spaces goes in double quotes after an option or after its equals sign, as in
+  `--tag="Lab 3"`. Quote any value opening with a hyphen when using a space;
+  after an equals sign it is already unambiguous. An equals sign still needs a
+  value after it. Where `edit` allows an empty value, write the deliberate
+  empty value as `OPTION=""`, for example `--email=""`.
 
 * Commands that take no parameters (`help`, `list`, `exit`, and `clear`)
   reject unexpected input and report it without executing the command.<br>
@@ -255,6 +262,35 @@ use the shorter `-i` alias. It must contain between 1 and 32 ASCII letters and
 digits, such as `A01234567X` or `E0123456`. Lowercase letters are accepted and
 stored as uppercase. To remove an NUS Student ID entered by mistake, use
 `edit INDEX --id ""`; a value containing only spaces clears it as well.
+
+TAB uses the NUS Student ID to detect duplicate student records. Two students
+may share a name, and students without an NUS Student ID are not treated as
+duplicates. An `add` or `edit` is refused only when another student already
+has the same NUS Student ID, ignoring letter case; the error names that ID and
+the student who already holds it.
+</box>
+
+<box type="tip" seamless>
+
+**Tip:** After a successful `add` or `edit`, TAB warns you when another student
+has the same name, phone number, or email address. The record is still saved.
+One warning line is shown for each matching field. It names up to two other
+students, then counts any further matches. For example:
+
+```
+WARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.com).
+Review the records and delete duplicates only if they are the same person.
+```
+
+Names and emails are compared without regard to letter case. Repeated,
+leading, and trailing whitespace in names is insignificant, as are spaces in
+phone numbers. The review advice appears once after all matching fields.
+
+The warning is only a hint. It does not prove that two records describe the
+same person, and it does not find misspelled names, email aliases, or phone
+numbers whose punctuation differs. Review the records before deleting either
+one. A matching NUS Student ID is handled separately and still refuses the
+command, as described above.
 </box>
 
 <box type="tip" seamless>
@@ -301,6 +337,7 @@ To put a double quote or a backslash inside a value, write `\"` or `\\`:
 
 Examples:
 * `add John Doe -p 98765432 -e johnd@example.com`
+* `add Alice Tan --phone=91234567 --email=alice@example.com --tag="Lab 3"`
 * `add "Betsy Crowe" --tag friend --email betsycrowe@example.com --phone 1234567 --id A01234567X -t criminal`
 * `add "Ravi s/o Kumaran" -p 91234567 -e e0923841@u.nus.edu`
 * `add Siti Nur-Aisyah -p 84420917 -e e1147203@u.nus.edu -i a11472030k -t T1 -t "Lab 3"`
@@ -389,6 +426,12 @@ done to it beyond the quotes any value with spaces takes:
 </box>
 
 * Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list. The index **must be a positive integer** 1, 2, 3, ...
+  The current search stays active after editing, so the index keeps referring to
+  the same student when you repeat a command, as long as that student still
+  matches the search. An edit that removes a matching detail, such as renaming
+  the only `john` in the list, takes that student off the displayed list and
+  shifts the remaining indices up. Check the displayed list before repeating a
+  command after such an edit.
 * The index comes first, before any option.
   An unquoted negative index reports both that the index must be positive and
   that the negative number is not an option. Extra words after a valid index
@@ -398,25 +441,35 @@ done to it beyond the quotes any value with spaces takes:
 * Existing values will be updated to the input values.
 * `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it and is
   available only with `edit`. New students are unflagged by default when added.
-  Both options take no value. Repeating either request succeeds and keeps the requested state.
+  Both options take no value, so forms such as `--follow-up=true` are refused.
+  Repeating either request succeeds and keeps the requested state.
   Leaving both out preserves the student's follow-up status.
 * Choose at most one follow-up option. Combining `--follow-up` or `-f` with
   `--no-follow-up` or `-nf` is rejected without changing any student details.
-* To remove a student's email, use `-e ""`. A quoted value containing only spaces
-  also removes it. Leaving out `-e` keeps the email unchanged; a bare `-e` is an
-  error. Clearing an already absent email succeeds.
+* To remove a student's email, use `-e ""` or `--email=""`. A quoted value
+  containing only spaces also removes it. Leaving out `-e` keeps the email
+  unchanged; a bare `-e` or `--email=` is an error. Clearing an already absent
+  email succeeds.
 * A new email may run to 254 characters, the same limit `add` applies. A longer
   value is refused, TAB tells you how long it was, and the student's details
   stay as they were.
-* To remove a student's NUS Student ID, use `--id ""` or `-i ""`. Leaving the
-  option out keeps the NUS Student ID unchanged; a quoted value containing only
-  spaces removes it, while a bare option is an error. Clearing an already absent
-  NUS Student ID succeeds. Name and phone are required and cannot be cleared.
+* To remove a student's NUS Student ID, use `--id ""`, `--id=""`, or the
+  corresponding `-i` form. Leaving the option out keeps the NUS Student ID
+  unchanged; a quoted value containing only spaces removes it, while a bare
+  option or an unquoted empty value such as `--id=` is an error. Clearing an
+  already absent NUS Student ID succeeds. Name and phone are required and
+  cannot be cleared.
+* An edit may give two students the same name, but cannot give a student an NUS
+  Student ID already held by another record. NUS Student ID matching ignores case.
+  A saved edit produces the same likely-duplicate notes described under `add`
+  only when a name, phone number, or email changed by that command matches
+  another student. Unchanged fields are not reported again, and the edited
+  student is not compared with its own earlier record.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
-* To remove all of a student's tags, give `-t` an empty value: `-t ""`. A bare
-  `-t` with nothing after it is refused, so that a mistyped option is reported
-  rather than read as a request to clear.
+* To remove all of a student's tags, give `-t` an empty value: `-t ""` or
+  `--tag=""`. A bare `-t` or unquoted `--tag=` is refused, so that a mistyped
+  option is reported rather than read as a request to clear.
 
 Examples:
 *  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
@@ -558,6 +611,13 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
   address, tags and follow-up status. For example, `find follow-up` can find
   flagged students, and `find a0123` can find a student with NUS Student ID `A01234567X`.
 * Parts of details match; for example, `Han` matches `Hans`, and `912` matches the phone number `91234567`.
+  The follow-up status is the exception: only `Needs follow-up` or one of its whole
+  words matches it, so `find follow-up` and `find needs` find flagged students while
+  `find low` and `find up` do not.
+* A keyword containing only digits also searches the phone number with all non-digit characters removed.
+  For example, `find 91234567` and `find 91234` both match `+65 9123 4567`, and
+  `find 98765432` matches `9876-5432`. You can include the country code, as in `find 6591234567`.
+  Terms containing other characters, such as `"ext 21"` or `"9123 4567"`, still match the stored text.
 * TAB reports the number of matches found: `Found 0 students.` when none match,
   `Found 1 student.` for a single match, and `Found 3 students.` for multiple matches.
 
@@ -619,10 +679,10 @@ Format: `exit`
 ### Saving the data
 
 TAB automatically saves changes to student records. You do not need to save manually.
-Commands that leave the records unchanged, including `list`, `find`, `help`, and `exit`, do not save.
-If a save fails, TAB reports an error; the change remains visible for the session but is not saved.
-These commands still work after a save error, and `exit` closes TAB without retrying the failed save.
-Clear prompts, cancellation, and invalid replies leave the saved file unchanged.
+If TAB cannot save a change, it reports the error and leaves the student records as
+they were before the command. Commands that do not change student records, including
+`list`, `find`, `help`, and `exit`, do not write to the data file. Clear prompts,
+cancellation, and invalid replies also leave the saved file unchanged.
 
 Window size and position are saved separately in `preferences.json` in TAB's
 home folder. If the file contains only `null`, `guiSettings` is `null`, or the
@@ -644,14 +704,16 @@ A student with an NUS Student ID has a `"nusStudentId"` string such as
 contain between 1 and 32 ASCII letters and digits. TAB accepts lowercase letters
 and saves valid IDs in uppercase.
 
+TAB identifies duplicate records by NUS Student ID, ignoring letter case. Two
+records with the same name load when their NUS Student IDs differ or either ID
+is absent. Two records with the same NUS Student ID make the file unreadable;
+the startup error names the repeated ID and both record locations so that you
+can correct it. Phone numbers and emails are searchable details rather than
+identity keys.
+
 An email key is optional: a missing key, `null`, an empty string, or a string
 containing only spaces means that no email has been recorded. TAB removes
 leading and trailing spaces from a non-empty saved email before validating it.
-
-TAB still identifies duplicate records by normalized name. NUS Student IDs, phone
-numbers, and emails are searchable details rather than identity keys, so two
-students with different names may hold the same NUS Student ID. Check such records if
-the repeated ID was unintended.
 
 <box type="warning" seamless>
 
@@ -692,11 +754,11 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> e.g., `add James Ho --phone 22224444 -i A01234567X --tag friend -t colleague --follow-up`
+**Add**    | `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> e.g., `add James Ho --phone=22224444 -i=A01234567X --tag=friend -t colleague --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name "James Lee" --id A01234567X`
-**Tag**    | `tag INDEX -a TAG` or `tag INDEX -r TAG` <br> Alternate spellings: `--add`, `--remove` <br> e.g., `tag 1 --add "Lab 3"`, `tag 1 --remove "Lab 3"`
+**Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A01234567X`
+**Tag**    | `tag INDEX -a TAG` or `tag INDEX -r TAG` <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
 **List**   | `list`
 **Exit**   | `exit`

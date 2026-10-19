@@ -53,19 +53,19 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void hasStudent_nullStudent_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> modelManager.hasStudent(null));
+    public void findSameStudent_nullStudent_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> modelManager.findSameStudent(null));
     }
 
     @Test
-    public void hasStudent_studentNotInStudentBook_returnsFalse() {
-        assertFalse(modelManager.hasStudent(ALICE));
+    public void findSameStudent_studentNotInStudentBook_returnsEmpty() {
+        assertTrue(modelManager.findSameStudent(ALICE).isEmpty());
     }
 
     @Test
-    public void hasStudent_studentInStudentBook_returnsTrue() {
+    public void findSameStudent_studentInStudentBook_returnsStudent() {
         modelManager.addStudent(ALICE);
-        assertTrue(modelManager.hasStudent(ALICE));
+        assertEquals(ALICE, modelManager.findSameStudent(ALICE).orElseThrow());
     }
 
     @Test
