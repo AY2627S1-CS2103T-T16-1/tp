@@ -2,7 +2,6 @@ package seedu.tab;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -23,7 +22,6 @@ import seedu.tab.logic.commands.ExitCommand;
 import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.ListCommand;
-import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.ReadOnlyStudentBook;
@@ -107,16 +105,24 @@ public class CommandDispatchAndPersistenceTest {
     }
 
     @Test
-    public void execute_addPastedNameHoldingInvisibleMarks_isRefusedAsDuplicate() throws Exception {
+    public void execute_addPastedNameHoldingInvisibleMarks_storedAlikeAndWarnsOfDuplicate() throws Exception {
         logic.execute(AddCommand.COMMAND_WORD + " John Doe -p 98765432");
 
-        // the mark a chat app pasted before the name draws nothing, so this is the same student
+        // the mark a chat app pasted before the name draws nothing, so both records
+        // read John Doe and the warning can name the first one
         String pastedAdd = AddCommand.COMMAND_WORD + " \u200EJohn Doe -p 98765432";
-        CommandException duplicate = assertThrows(CommandException.class, () -> logic.execute(pastedAdd));
-        assertEquals(AddCommand.MESSAGE_DUPLICATE_STUDENT, duplicate.getMessage());
+        CommandResult result = logic.execute(pastedAdd);
 
-        assertEquals(1, model.getFilteredStudentList().size());
-        assertEquals(1, storage.readStudentBook().orElseThrow().getStudentList().size());
+        assertTrue(result.getFeedbackToUser().contains(
+                "WARNING: Possible duplicate student: John Doe has the same name (John Doe)."));
+
+        assertEquals(2, model.getFilteredStudentList().size());
+        assertEquals("John Doe", model.getFilteredStudentList().get(0).getName().fullName);
+        assertEquals("John Doe", model.getFilteredStudentList().get(1).getName().fullName);
+
+        ReadOnlyStudentBook saved = storage.readStudentBook().orElseThrow();
+        assertEquals(2, saved.getStudentList().size());
+        assertEquals("John Doe", saved.getStudentList().get(1).getName().fullName);
     }
 
     @Test
