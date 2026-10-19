@@ -29,12 +29,14 @@ import seedu.tab.logic.commands.DeleteCommand;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.ExitCommand;
 import seedu.tab.logic.commands.FindCommand;
+import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.ListCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.ReadOnlyStudentBook;
+import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
@@ -341,18 +343,60 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_nonMutatingCommandsWhenStorageFails_succeedsWithoutSaving() throws Exception {
-        model.addStudent(new StudentBuilder(AMY).build());
-        logic = createLogicWithFailingStorage(DUMMY_IO_EXCEPTION);
+    public void execute_unwritableStorage_readOnlyCommandsSucceed() throws Exception {
+        model.addStudent(AMY);
+        setUpUnwritableStorage();
 
-        CommandResult result = logic.execute("list");
-        assertEquals(ListCommand.formatSuccessMessage(1), result.getFeedbackToUser());
-        result = logic.execute("find Amy");
-        assertEquals(Messages.getStudentsFoundOverview(1), result.getFeedbackToUser());
-        result = logic.execute("help");
-        assertTrue(result.isShowHelp());
-        result = logic.execute("exit");
-        assertTrue(result.isExit());
+        assertReadOnlyCommandsSucceed();
+        assertEquals(List.of(AMY), model.getStudentBook().getStudentList());
+    }
+
+    @Test
+    public void execute_afterFailedSave_readOnlyCommandsSucceed() throws Exception {
+        Student existingStudent = new StudentBuilder().withName("Existing Student").build();
+        model.addStudent(existingStudent);
+        setUpUnwritableStorage();
+        String addCommand = AddCommand.COMMAND_WORD + NAME_AMY + PHONE_AMY + EMAIL_AMY;
+        assertThrows(CommandException.class, String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT,
+                DUMMY_AD_EXCEPTION.getMessage()), () -> logic.execute(addCommand));
+        ReadOnlyStudentBook expectedBook = new StudentBook(model.getStudentBook());
+
+        assertReadOnlyCommandsSucceed();
+        assertEquals(expectedBook, model.getStudentBook());
+        assertFalse(Files.exists(temporaryFolder.resolve("studentBook.json")));
+    }
+
+    @Test
+    public void execute_unwritableStorage_unchangedEditSucceeds() throws Exception {
+        model.addStudent(AMY);
+        setUpUnwritableStorage();
+
+        CommandResult result = logic.execute("edit 1 -p " + AMY.getPhone().value);
+
+        assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(AMY)),
+                result.getFeedbackToUser());
+        assertEquals(List.of(AMY), model.getStudentBook().getStudentList());
+    }
+
+    private void setUpUnwritableStorage() {
+        JsonStudentBookStorage studentBookStorage =
+                new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json")) {
+                    @Override
+                    public void saveStudentBook(ReadOnlyStudentBook studentBook) throws IOException {
+                        throw DUMMY_AD_EXCEPTION;
+                    }
+                };
+        logic = new LogicManager(model, new StorageManager(studentBookStorage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"))));
+    }
+
+    private void assertReadOnlyCommandsSucceed() throws Exception {
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(0)), logic.execute("find Nobody"));
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        assertEquals(new CommandResult(ListCommand.formatSuccessMessage(1)), logic.execute("list"));
+        assertEquals(model.getStudentBook().getStudentList(), model.getFilteredStudentList());
+        assertEquals(new CommandResult(HelpCommand.SHOWING_HELP_MESSAGE, true, false), logic.execute("help"));
+        assertEquals(new CommandResult(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, false, true), logic.execute("exit"));
     }
 
     @Test

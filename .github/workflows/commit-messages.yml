@@ -18,6 +18,10 @@ permissions:
 
 jobs:
   limits:
+    # Our pull request to the course repository brings in the whole project
+    # history, including commits from before these limits, which only a
+    # rewrite of master could change. So this runs in the team repository only.
+    if: github.repository == 'AY2627S1-CS2103T-T16-1/tp'
     runs-on: ubuntu-latest
     steps:
       - name: Set up repository

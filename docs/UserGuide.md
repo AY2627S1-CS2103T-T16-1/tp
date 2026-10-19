@@ -27,7 +27,12 @@ TAB is a **desktop application for teaching assistants to manage student records
 
 1. Download the latest `.jar` file from [here](https://github.com/AY2627S1-CS2103T-T16-1/tp/releases).
 
-1. Copy the file to the folder you want to use as the _home folder_ for TAB.
+1. Copy the file to a folder you can write to, which will be the _home folder_ for TAB.
+   If the folder is read-only, TAB can open but cannot save changes to student
+   records or window preferences there. `list`, `find`, `help`, and `exit`
+   still work. It reports a warning in the terminal
+   if it cannot create its log file. Move TAB and any existing data to a
+   writable folder before making changes you want to keep.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar tab.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.
@@ -445,6 +450,7 @@ Format: `tag INDEX -a TAG`
   stays active after tagging.
 * `-a` selects addition; `--add` is its long alias. Supply exactly one tag per command; repeat the
   command to add another. For replacing the full tag set, use `edit INDEX -t TAG`.
+  To remove one tag, use [`tag INDEX -r TAG`](#removing-one-tag-tag).
 * A tag must contain at least one letter or number in any writing system.
   Symbols are allowed alongside them. Put a tag containing spaces or starting
   with a hyphen in double quotes. Escape a literal quote as `\"` and a
@@ -462,11 +468,11 @@ Format: `tag INDEX -a TAG`
 * An invalid index or tag, a missing value, or a repeated add option is refused
   without changing any student details or writing the data file. An empty
   quoted tag is invalid; it does not clear tags.
-* If you omit `-a`/`--add`, the reply explains how to add a tag. A tag entered
+* If you omit an action option, the reply explains how to add or remove a tag. A tag entered
   directly after a valid index is reported as an unexpected value, and `-t`
   is reported as an unknown option. Use `tag 1 -a lab4` to add `lab4`.
 * An unquoted negative index reports both that the index must be positive
-  and that the negative number is not an option, followed by the addition
+  and that the negative number is not an option, followed by the action
   guidance.
 * A successful addition is saved at once and remains after restarting TAB.
   The feedback starts with `Added tag [TAG]:` and shows the updated record.
@@ -484,18 +490,56 @@ Examples of refused commands and their replies:
 ```text
 tag 1 -t T2
 There is no -t option.
-To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3".
+To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3". To remove a tag, use -r or --remove, e.g. tag 1 -r "Lab 3".
 
 tag 1 lab4
 Unexpected value after INDEX: "lab4". Put field values after an option.
-Missing required field(s): -a TAG
-To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3".
+Missing required field(s): -a TAG or -r TAG
+To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3". To remove a tag, use -r or --remove, e.g. tag 1 -r "Lab 3".
 
 tag -1 -a T2
 Index must be a positive integer.
 There is no -1 option.
-To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3".
+To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3". To remove a tag, use -r or --remove, e.g. tag 1 -r "Lab 3".
 ```
+
+### Removing one tag: `tag`
+
+Removes one tag from an existing student, keeping unrelated tags and all other
+details, including follow-up status.
+
+Format: `tag INDEX -r TAG`
+
+* `-r` selects removal; `--remove` is its long alias. Use exactly one action
+  and one tag per command. Combining addition and removal, or repeating the
+  removal option (including mixed aliases), is refused without saving changes.
+* Indexes, quoting, valid tag characters and whitespace follow the
+  [same rules as adding one tag](#adding-one-tag-tag). Option names are
+  case-sensitive; tag matching ignores case and insignificant whitespace.
+* If the tag is present, feedback starts with `Removed tag [TAG]:` using its
+  stored spelling, followed by the updated student details. If records from
+  `add`, `edit` or a hand-edited file hold several case variants of the same
+  tag, all matching variants are removed. Feedback uses the first matching
+  spelling in tag display order. Unrelated tags keep their spelling.
+* If the tag is absent, TAB reports
+  `This student does not have tag [TAG]. No changes made.` using your
+  normalized input. The record, displayed list and saved file stay unchanged.
+* An invalid index or tag, an empty quoted tag, or a missing value is refused
+  with a specific error and leaves records and the saved file unchanged.
+* Removing the last tag leaves a student with no general tags. Removing a
+  general tag named `Needs follow-up` leaves the follow-up flag unchanged;
+  use `edit INDEX --no-follow-up` to clear that flag.
+* The current search stays active. If it matched only the removed tag, the
+  student may disappear from the displayed list; use `list` to see them again.
+* A successful removal is saved at once and remains after restarting TAB.
+
+Examples:
+
+* `tag 1 -r T2` removes `T2` from the 1st displayed student.
+* `tag 1 --remove "  lab   3  "` removes `Lab 3`, ignoring case and extra spaces.
+* `tag 2 -r "Project A/B"` removes a tag containing a slash.
+* `tag 2 -r "组 1"` removes a tag in another writing system.
+* `tag 1 -r "-Lab"` removes a tag starting with a hyphen.
 
 ### Locating students by detail: `find`
 
@@ -580,6 +624,11 @@ they were before the command. Commands that do not change student records, inclu
 `list`, `find`, `help`, and `exit`, do not write to the data file. Clear prompts,
 cancellation, and invalid replies also leave the saved file unchanged.
 
+Window size and position are saved separately in `preferences.json` in TAB's
+home folder. If the file contains only `null`, `guiSettings` is `null`, or the
+file cannot be parsed, TAB opens with default window settings and rewrites the
+preferences file when it can. This recovery does not change saved student records in `data/tab.json`.
+
 ### Editing the data file
 
 TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.json`. Advanced users are welcome to update data directly by editing that data file.
@@ -594,6 +643,10 @@ A student with an NUS Student ID has a `"nusStudentId"` string such as
 `null` means that no NUS Student ID has been recorded. A non-null value must
 contain between 1 and 32 ASCII letters and digits. TAB accepts lowercase letters
 and saves valid IDs in uppercase.
+
+An email key is optional: a missing key, `null`, an empty string, or a string
+containing only spaces means that no email has been recorded. TAB removes
+leading and trailing spaces from a non-empty saved email before validating it.
 
 TAB still identifies duplicate records by normalized name. NUS Student IDs, phone
 numbers, and emails are searchable details rather than identity keys, so two
@@ -639,7 +692,7 @@ Action     | Format, Examples
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name "James Lee" --id A01234567X`
-**Tag**    | `tag INDEX -a TAG` <br> Alternate spelling: `--add` <br> e.g., `tag 1 --add "Lab 3"`
+**Tag**    | `tag INDEX -a TAG` or `tag INDEX -r TAG` <br> Alternate spellings: `--add`, `--remove` <br> e.g., `tag 1 --add "Lab 3"`, `tag 1 --remove "Lab 3"`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
 **List**   | `list`
 **Exit**   | `exit`
