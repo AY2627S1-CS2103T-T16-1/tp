@@ -5,8 +5,10 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_ADD_TAG;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
+import static seedu.tab.logic.parser.CliFlags.FLAG_REMOVE_TAG;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.testutil.Assert.assertThrows;
 
@@ -77,7 +79,7 @@ public class FlagTokenizerTest {
     @Test
     public void tokenize_valuesJoinedByEquals_readsEveryValueTakingOptionAndAlias() throws Exception {
         for (Flag flag : List.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
-                FLAG_TAG, FLAG_ADD_TAG)) {
+                FLAG_TAG, FLAG_ADD_TAG, FLAG_REMOVE_TAG)) {
             for (String marker : flag.getMarkers()) {
                 FlagArgumentMap parsed = FlagTokenizer.tokenize(marker + "=value", flag);
 
@@ -93,8 +95,26 @@ public class FlagTokenizerTest {
     }
 
     @Test
-    public void tokenize_emptyValueAfterEquals_reachesTheFlag() throws Exception {
-        assertEquals(Optional.of(""), parse("John --email=").getValue(FLAG_EMAIL));
+    public void tokenize_unquotedEmptyValueAfterEquals_saysFlagNeedsValue() {
+        for (Flag flag : List.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
+                FLAG_TAG, FLAG_ADD_TAG, FLAG_REMOVE_TAG)) {
+            for (String marker : flag.getMarkers()) {
+                assertThrows(ParseException.class,
+                        String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, flag.getLabel(marker)), () ->
+                            FlagTokenizer.tokenize(marker + "=", flag));
+            }
+        }
+    }
+
+    @Test
+    public void tokenize_quotedEmptyValueAfterEquals_reachesTheFlag() throws Exception {
+        for (Flag flag : List.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
+                FLAG_TAG, FLAG_ADD_TAG, FLAG_REMOVE_TAG)) {
+            for (String marker : flag.getMarkers()) {
+                assertEquals(Optional.of(""),
+                        FlagTokenizer.tokenize(marker + "=\"\"", flag).getValue(flag));
+            }
+        }
     }
 
     @Test
@@ -174,9 +194,9 @@ public class FlagTokenizerTest {
                 parse("John -z something"));
         assertThrows(ParseException.class, String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"), () ->
                 parse("John --unknown something"));
-        assertThrows(ParseException.class, String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--phon=1"), () ->
+        assertThrows(ParseException.class, String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--phon"), () ->
                 parse("John --phon=1"));
-        assertThrows(ParseException.class, String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown=some value"), () ->
+        assertThrows(ParseException.class, String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"), () ->
                 parse("John --unknown=\"some value\""));
     }
 
@@ -311,13 +331,23 @@ public class FlagTokenizerTest {
     }
 
     @Test
-    public void tokenize_valueAfterMarkerOnlyFlag_saysItBelongsToNoOption() {
+    public void tokenize_separateValueAfterMarkerOnlyFlag_saysItBelongsToNoOption() {
         assertThrows(ParseException.class,
                 String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "true"), () ->
                     parse("John --follow-up true"));
-        assertThrows(ParseException.class,
-                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--follow-up=true"), () ->
-                    parse("John --follow-up=true"));
+    }
+
+    @Test
+    public void tokenize_attachedValueAfterMarkerOnlyFlag_saysFlagTakesNoValue() {
+        for (Flag flag : List.of(FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP)) {
+            for (String marker : flag.getMarkers()) {
+                for (String suffix : List.of("=true", "=")) {
+                    assertThrows(ParseException.class,
+                            String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, marker), () ->
+                                FlagTokenizer.tokenize("John " + marker + suffix, flag));
+                }
+            }
+        }
     }
 
     @Test

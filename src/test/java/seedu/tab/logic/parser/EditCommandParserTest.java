@@ -147,11 +147,11 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_emptyValuesJoinedByEquals_clearOptionalFieldsAndTags() {
+    public void parse_quotedEmptyValuesJoinedByEquals_clearOptionalFieldsAndTags() {
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder()
                 .withoutEmail().withoutNusStudentId().withTags().build();
 
-        assertParseSuccess(parser, "1 --email= -i= --tag=",
+        assertParseSuccess(parser, "1 --email=\"\" -i=\"\" --tag=\"\"",
                 new EditCommand(INDEX_FIRST_STUDENT, descriptor));
     }
 

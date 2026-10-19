@@ -94,7 +94,9 @@ it before pressing Enter.
   equals sign is a separator, so the rest belong to the value. A value holding
   spaces goes in double quotes after an option or after its equals sign, as in
   `--tag="Lab 3"`. Quote any value opening with a hyphen when using a space;
-  after an equals sign it is already unambiguous.
+  after an equals sign it is already unambiguous. An equals sign still needs a
+  value after it. Where `edit` allows an empty value, write the deliberate
+  empty value as `OPTION=""`, for example `--email=""`.
 
 * Commands that take no parameters (`help`, `list`, `exit`, and `clear`)
   reject unexpected input and report it without executing the command.<br>
@@ -404,25 +406,29 @@ done to it beyond the quotes any value with spaces takes:
 * Existing values will be updated to the input values.
 * `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it and is
   available only with `edit`. New students are unflagged by default when added.
-  Both options take no value. Repeating either request succeeds and keeps the requested state.
+  Both options take no value, so forms such as `--follow-up=true` are refused.
+  Repeating either request succeeds and keeps the requested state.
   Leaving both out preserves the student's follow-up status.
 * Choose at most one follow-up option. Combining `--follow-up` or `-f` with
   `--no-follow-up` or `-nf` is rejected without changing any student details.
-* To remove a student's email, use `-e ""`. A quoted value containing only spaces
-  also removes it. Leaving out `-e` keeps the email unchanged; a bare `-e` is an
-  error. Clearing an already absent email succeeds.
+* To remove a student's email, use `-e ""` or `--email=""`. A quoted value
+  containing only spaces also removes it. Leaving out `-e` keeps the email
+  unchanged; a bare `-e` or `--email=` is an error. Clearing an already absent
+  email succeeds.
 * A new email may run to 254 characters, the same limit `add` applies. A longer
   value is refused, TAB tells you how long it was, and the student's details
   stay as they were.
-* To remove a student's NUS Student ID, use `--id ""` or `-i ""`. Leaving the
-  option out keeps the NUS Student ID unchanged; a quoted value containing only
-  spaces removes it, while a bare option is an error. Clearing an already absent
-  NUS Student ID succeeds. Name and phone are required and cannot be cleared.
+* To remove a student's NUS Student ID, use `--id ""`, `--id=""`, or the
+  corresponding `-i` form. Leaving the option out keeps the NUS Student ID
+  unchanged; a quoted value containing only spaces removes it, while a bare
+  option or an unquoted empty value such as `--id=` is an error. Clearing an
+  already absent NUS Student ID succeeds. Name and phone are required and
+  cannot be cleared.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
-* To remove all of a student's tags, give `-t` an empty value: `-t ""`. A bare
-  `-t` with nothing after it is refused, so that a mistyped option is reported
-  rather than read as a request to clear.
+* To remove all of a student's tags, give `-t` an empty value: `-t ""` or
+  `--tag=""`. A bare `-t` or unquoted `--tag=` is refused, so that a mistyped
+  option is reported rather than read as a request to clear.
 
 Examples:
 *  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.

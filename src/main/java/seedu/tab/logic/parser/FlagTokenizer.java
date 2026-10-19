@@ -27,7 +27,7 @@ public class FlagTokenizer {
     private static final String FLAG_MARKER = "-";
     private static final char VALUE_SEPARATOR = '=';
 
-    private record AttachedFlagValue(Flag flag, String marker, String value) {}
+    private record AttachedOption(String marker, String value) {}
 
     private FlagTokenizer() {} // this class only reads arguments
 
@@ -103,9 +103,18 @@ public class FlagTokenizer {
     private static int readFlag(List<Token> tokens, int index, Map<String, Flag> flagsByMarker,
             FlagArgumentMap parsed) throws ParseException {
         Token token = tokens.get(index);
-        AttachedFlagValue attached = getAttachedFlagValue(token, flagsByMarker);
+        AttachedOption attached = getAttachedOption(token);
         if (attached != null) {
-            parsed.put(attached.flag(), attached.marker(), attached.value());
+            Flag flag = getAttachedFlag(attached, flagsByMarker);
+            if (!flag.takesValue()) {
+                throw new ParseException(String.format(
+                        Messages.MESSAGE_FLAG_TAKES_NO_VALUE, attached.marker()));
+            }
+            if (attached.value().isEmpty() && !token.isQuoted()) {
+                throw new ParseException(String.format(
+                        Messages.MESSAGE_FLAG_WITHOUT_VALUE, flag.getLabel(attached.marker())));
+            }
+            parsed.put(flag, attached.marker(), attached.value());
             return index + 1;
         }
 
@@ -161,18 +170,24 @@ public class FlagTokenizer {
                 && separator > FLAG_MARKER.length();
     }
 
-    /** Returns the known value-taking flag and value joined in {@code token}, if any. */
-    private static AttachedFlagValue getAttachedFlagValue(Token token, Map<String, Flag> flagsByMarker) {
+    /** Returns the option marker and value joined in {@code token}, if any. */
+    private static AttachedOption getAttachedOption(Token token) {
         if (!isAttachedOption(token)) {
             return null;
         }
 
         int separator = token.value().indexOf(VALUE_SEPARATOR);
         String marker = token.value().substring(0, separator);
-        Flag flag = flagsByMarker.get(marker);
-        if (flag == null || !flag.takesValue()) {
-            return null;
+        return new AttachedOption(marker, token.value().substring(separator + 1));
+    }
+
+    /** Returns the known flag named by an attached option. */
+    private static Flag getAttachedFlag(AttachedOption option, Map<String, Flag> flagsByMarker)
+            throws ParseException {
+        Flag flag = flagsByMarker.get(option.marker());
+        if (flag == null) {
+            throw new ParseException(String.format(Messages.MESSAGE_UNKNOWN_FLAG, option.marker()));
         }
-        return new AttachedFlagValue(flag, marker, token.value().substring(separator + 1));
+        return flag;
     }
 }

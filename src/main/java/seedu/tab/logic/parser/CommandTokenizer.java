@@ -35,14 +35,7 @@ public class CommandTokenizer {
      *     rather than something the parser may read as a flag.
      * @param beginsQuoted Whether the token began with a quote, before quotes were removed.
      */
-    public record Token(String value, boolean isQuoted, boolean beginsQuoted) {
-        /**
-         * Constructs a token without distinguishing a later quoted run from a leading one.
-         */
-        public Token(String value, boolean isQuoted) {
-            this(value, isQuoted, isQuoted);
-        }
-    }
+    public record Token(String value, boolean isQuoted, boolean beginsQuoted) {}
 
     /**
      * Returns the tokens in {@code arguments}, with the quotes that group them removed.

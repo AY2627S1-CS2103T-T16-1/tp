@@ -286,7 +286,7 @@ public class AddCommandParserTest {
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --unknown something",
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"));
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " --phon=1",
-                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--phon=1"));
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--phon"));
         for (String option : new String[] {"--no-follow-up", "-nf"}) {
             assertParseFailure(parser, NAME_BOB + PHONE_BOB + " " + option,
                     String.format(Messages.MESSAGE_UNKNOWN_FLAG, option));

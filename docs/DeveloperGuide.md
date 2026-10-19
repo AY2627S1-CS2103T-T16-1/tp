@@ -391,18 +391,20 @@ for `add` and `edit`. The `tag` command takes exactly one tag through `-a`/`--ad
 for addition or `-r`/`--remove` for removal.
 They also accept a value joined to any short or long marker by an equals sign.
 `FlagTokenizer` splits only on the first equals sign, so later ones remain in
-the value. An attached value is unambiguously part of its option even when it
-is empty or opens with a hyphen. `CommandTokenizer` records whether a token
-began with a quote so a fully quoted `"--tag=T1"` remains a value, while the
-quote around the value in `--tag="Lab 3"` does not hide the option marker.
+the value. An attached value is unambiguously part of its option when it opens
+with a hyphen. An empty attached value must be quoted as in `--tag=""`, so an
+accidental `--tag=` cannot clear data. `CommandTokenizer` records whether a
+token began with a quote so a fully quoted `"--tag=T1"` remains a value, while
+the quote around the value in `--tag="Lab 3"` does not hide the option marker.
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
 `FlagArgumentMap` distinguish an
 absent option from a present marker without a separate representation. An
-unknown option, a value-taking option left without a value, and a token
-belonging to no option are each reported for what they are, rather than as one
-generic complaint.
+attached value on a presence-only option is refused specifically. An unknown
+option names its marker without echoing an attached value, while a value-taking
+option left without a value and a token belonging to no option are each
+reported for what they are, rather than as one generic complaint.
 
 `Flag` also lets a value-taking option carry aliases. NUS Student ID uses
 `--id` as its canonical option and the unused `-i` as its typing-friendly
@@ -2206,13 +2208,22 @@ testers are expected to do more *exploratory* testing.
       Expected: The tag `needs=review` is added; only the first equals sign
       separates the option from its value.
 
-   1. Test case: `edit 1 --email= --id= --tag=`.<br>
+   1. Test cases: `edit 1 --email=`, `edit 1 --id=`, and
+      `edit 1 --tag=`.<br>
+      Expected: No field changes. Each command reports that its option needs a
+      value, because an unquoted empty value may be an accidental omission.
+
+   1. Test case: `edit 1 --email="" --id="" --tag=""`.<br>
       Expected: The email, NUS Student ID, and all tags are cleared. No other
-      field changes.
+      field changes; quoting makes each empty value deliberate.
 
    1. Test case: `edit 1 --phon=1`.<br>
-      Expected: No field changes. TAB reports that there is no `--phon=1`
-      option.
+      Expected: No field changes. TAB reports that there is no `--phon` option,
+      naming the mistyped marker without its value.
+
+   1. Test cases: `edit 1 --follow-up=yes` and `edit 1 -nf=1`.<br>
+      Expected: No field changes. TAB reports that the named option takes no
+      value and should be used on its own.
 
 ### NUS Student IDs
 
