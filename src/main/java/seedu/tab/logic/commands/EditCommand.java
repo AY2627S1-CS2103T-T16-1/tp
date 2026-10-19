@@ -69,8 +69,8 @@ public class EditCommand extends Command {
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_STUDENT = "This student already exists in the student book.";
 
-    public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP
-            + " (or -f) and " + FLAG_NO_FOLLOW_UP + " (or -nf) cannot be used together. Choose one.";
+    public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP.getMarkerWithAliases()
+            + " and " + FLAG_NO_FOLLOW_UP.getMarkerWithAliases() + " cannot be used together. Choose one.";
 
     private final Logger logger = LogsCenter.getLogger(EditCommand.class);
 
