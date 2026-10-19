@@ -104,30 +104,28 @@ public class StudentTest {
 
     @Test
     public void isSameStudent() {
-        // same object -> returns true
+        // same object with an NUS Student ID -> returns true
         assertTrue(ALICE.isSameStudent(ALICE));
 
         // null -> returns false
         assertFalse(ALICE.isSameStudent(null));
 
-        // same name, all other attributes different -> returns true
-        Student editedAlice = new StudentBuilder(ALICE).withPhone(VALID_PHONE_BOB).withEmail(VALID_EMAIL_BOB)
-                .withTags(VALID_TAG_HUSBAND).build();
+        // same NUS Student ID, all other attributes different -> returns true
+        Student editedAlice = new StudentBuilder(ALICE).withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
+                .withEmail(VALID_EMAIL_BOB).withTags(VALID_TAG_HUSBAND).build();
         assertTrue(ALICE.isSameStudent(editedAlice));
 
-        // different name, all other attributes same -> returns false
-        editedAlice = new StudentBuilder(ALICE).withName(VALID_NAME_BOB).build();
+        // different NUS Student ID, all other attributes same -> returns false
+        editedAlice = new StudentBuilder(ALICE).withNusStudentId("A01234567X").build();
         assertFalse(ALICE.isSameStudent(editedAlice));
 
-        // name differs in case, all other attributes same -> returns false
-        Student editedBob = new StudentBuilder(BOB).withName(VALID_NAME_BOB.toLowerCase()).build();
-        assertFalse(BOB.isSameStudent(editedBob));
+        // only one student has an NUS Student ID -> returns false
+        assertFalse(ALICE.isSameStudent(BOB));
 
-        // name differs only by surrounding whitespace -> returns true, because Name stores a
-        // normalized form and an accidental extra space does not make a different student
-        String nameWithTrailingSpaces = VALID_NAME_BOB + " ";
-        editedBob = new StudentBuilder(BOB).withName(nameWithTrailingSpaces).build();
-        assertTrue(BOB.isSameStudent(editedBob));
+        // neither student has an NUS Student ID -> returns false
+        Student bobCopy = new StudentBuilder(BOB).build();
+        assertFalse(BOB.isSameStudent(bobCopy));
+        assertFalse(BOB.isSameStudent(BOB));
     }
 
     @Test
@@ -197,12 +195,12 @@ public class StudentTest {
     }
 
     @Test
-    public void isSameStudent_differentNusStudentId_stillTheSameStudent() {
+    public void isSameStudent_differentNusStudentId_returnsFalse() {
         Student withNusStudentId = new StudentBuilder(ALICE).withNusStudentId("A01234567X").build();
         Student withDifferentNusStudentId = new StudentBuilder(ALICE).withNusStudentId("A76543210Y").build();
 
-        assertTrue(withNusStudentId.isSameStudent(withDifferentNusStudentId));
-        assertTrue(ALICE.isSameStudent(withNusStudentId));
+        assertFalse(withNusStudentId.isSameStudent(withDifferentNusStudentId));
+        assertFalse(ALICE.isSameStudent(withNusStudentId));
     }
 
     @Test
@@ -215,11 +213,27 @@ public class StudentTest {
     }
 
     @Test
-    public void isSameStudent_sameNusStudentIdDifferentName_returnsFalse() {
+    public void isSameStudent_sameNusStudentIdDifferentName_returnsTrue() {
         Student alice = new StudentBuilder(ALICE).withNusStudentId("A01234567X").build();
         Student bob = new StudentBuilder(ALICE).withName(VALID_NAME_BOB).withNusStudentId("A01234567X").build();
 
-        assertFalse(alice.isSameStudent(bob));
+        assertTrue(alice.isSameStudent(bob));
+    }
+
+    @Test
+    public void isSameStudent_nusStudentIdCaseVariant_returnsTrue() {
+        Student uppercase = new StudentBuilder(ALICE).withNusStudentId("A01234567X").build();
+        Student lowercase = new StudentBuilder(BOB).withNusStudentId("a01234567x").build();
+
+        assertTrue(uppercase.isSameStudent(lowercase));
+    }
+
+    @Test
+    public void isSameStudent_sameNameWithoutNusStudentIds_returnsFalse() {
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).withoutNusStudentId().build();
+
+        assertFalse(first.isSameStudent(second));
     }
 
     @Test

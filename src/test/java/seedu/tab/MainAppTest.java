@@ -1,5 +1,6 @@
 package seedu.tab;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,6 +9,7 @@ import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
@@ -60,6 +62,22 @@ public class MainAppTest {
         @SuppressWarnings("unchecked")
         Optional<String> loadingError = (Optional<String>) field.get(initializedApp.ui);
         return loadingError;
+    }
+
+    @Test
+    public void init_invalidUtf8_passesEncodingErrorToUiAndPreservesBytesOnShutdown() throws Exception {
+        Path path = testFolder.resolve("students.json");
+        byte[] bytes = "{\"students\":[{\"name\":\"José Tan\",\"phone\":\"91234567\"}]}"
+                .getBytes(Charset.forName("windows-1252"));
+        Files.write(path, bytes);
+        MainApp initializedApp = new MainApp(testFolder.resolve("prefs.json"), path);
+
+        initializedApp.init();
+        assertEquals("The file is not valid UTF-8. Reopen it with its original encoding and save it as UTF-8,"
+                + " then restart TAB.", getUiManagerLoadingError(initializedApp).orElseThrow());
+        assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());
+        initializedApp.stop();
+        assertArrayEquals(bytes, Files.readAllBytes(path));
     }
 
     @Test

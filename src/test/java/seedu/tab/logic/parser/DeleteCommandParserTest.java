@@ -32,6 +32,33 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_indexAroundUnicodeWhitespace_returnsDeleteCommand() {
+        // a command pasted from a web page carries the non-breaking space the page used, and
+        // a Chinese input method types a full-width space in place of the space bar
+        assertParseSuccess(parser, "\u00A01", new DeleteCommand(INDEX_FIRST_STUDENT));
+        assertParseSuccess(parser, "1\u00A0", new DeleteCommand(INDEX_FIRST_STUDENT));
+        assertParseSuccess(parser, "\u30001\u3000", new DeleteCommand(INDEX_FIRST_STUDENT));
+        assertParseSuccess(parser, " \u00A01\u3000 ", new DeleteCommand(INDEX_FIRST_STUDENT));
+    }
+
+    @Test
+    public void parse_quotedIndex_returnsDeleteCommand() {
+        // the index is read as one token however it is grouped, as the preamble of edit is
+        assertParseSuccess(parser, "\"1\"", new DeleteCommand(INDEX_FIRST_STUDENT));
+    }
+
+    @Test
+    public void parse_quotedIndexHoldingTwoNumbers_throwsParseException() {
+        assertParseFailure(parser, "\"1 2\"", String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                DeleteCommand.MESSAGE_USAGE));
+    }
+
+    @Test
+    public void parse_unclosedQuote_throwsUnclosedQuoteMessage() {
+        assertParseFailure(parser, "\"1", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
+    }
+
+    @Test
     public void parse_emptyArgs_throwsParseException() {
         assertParseFailure(parser, "", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
         assertParseFailure(parser, "   ", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));

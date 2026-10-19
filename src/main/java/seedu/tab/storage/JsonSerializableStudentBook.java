@@ -19,7 +19,8 @@ import seedu.tab.model.student.Student;
 @JsonRootName(value = "studentbook")
 class JsonSerializableStudentBook {
 
-    public static final String MESSAGE_DUPLICATE_STUDENT = "Students list contains duplicate student(s).";
+    public static final String MESSAGE_DUPLICATE_STUDENT =
+            "NUS Student ID %1$s is already used by student record %2$d (\"%3$s\").";
     public static final String MESSAGE_MISSING_STUDENT_LIST = "Student list is missing.";
 
     private final List<JsonAdaptedStudent> students;
@@ -64,8 +65,12 @@ class JsonSerializableStudentBook {
             } catch (IllegalValueException e) {
                 throw new IllegalValueException(recordDescription + ": " + e.getMessage(), e);
             }
-            if (studentBook.hasStudent(student)) {
-                throw new IllegalValueException(recordDescription + ": " + MESSAGE_DUPLICATE_STUDENT);
+            int duplicateIndex = findDuplicateIndex(studentBook, student);
+            if (duplicateIndex >= 0) {
+                Student duplicateStudent = studentBook.getStudentList().get(duplicateIndex);
+                throw new IllegalValueException(recordDescription + ": "
+                        + String.format(MESSAGE_DUPLICATE_STUDENT, student.getNusStudentId().orElseThrow(),
+                                duplicateIndex + 1, duplicateStudent.getName()));
             }
             studentBook.addStudent(student);
         }
@@ -78,6 +83,15 @@ class JsonSerializableStudentBook {
             return String.format("Student record %d", index + 1);
         }
         return String.format("Student record %d (\"%s\")", index + 1, name);
+    }
+
+    private static int findDuplicateIndex(StudentBook studentBook, Student student) {
+        for (int index = 0; index < studentBook.getStudentList().size(); index++) {
+            if (student.isSameStudent(studentBook.getStudentList().get(index))) {
+                return index;
+            }
+        }
+        return -1;
     }
 
 }
