@@ -60,7 +60,7 @@ public class FileUtil {
     static void writeToFile(Path file, String content, TemporaryFileWriter writer) throws IOException {
         Path targetFile = resolveWriteTarget(file);
         ensureWritable(targetFile);
-        Path temporaryFile = Files.createTempFile(targetFile.getParent(), ".tab-", ".tmp");
+        Path temporaryFile = createTemporaryFile(targetFile);
 
         try {
             copyPosixPermissions(targetFile, temporaryFile);
@@ -70,6 +70,16 @@ public class FileUtil {
         } catch (IOException exception) {
             deleteTemporaryFile(temporaryFile, exception);
             throw exception;
+        }
+    }
+
+    private static Path createTemporaryFile(Path targetFile) throws IOException {
+        try {
+            return Files.createTempFile(targetFile.getParent(), ".tab-", ".tmp");
+        } catch (AccessDeniedException exception) {
+            AccessDeniedException targetException = new AccessDeniedException(targetFile.toString());
+            targetException.initCause(exception);
+            throw targetException;
         }
     }
 

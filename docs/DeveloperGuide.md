@@ -2334,25 +2334,6 @@ testers are expected to do more *exploratory* testing.
       Expected: No change. The first names the missing index and says a field
       to edit is needed; the second asks only for a field.
 
-1. Preserving existing data when a save fails
-
-   1. Prerequisites: Launch TAB, add a recognizable student, exit, and keep a
-      byte-for-byte copy of `data/tab.json`. Leave the file readable, but make
-      its `data` folder non-writable. On Linux/macOS, run `chmod 555 data` as a
-      non-root User. On Windows, remove create/write permission for the test
-      account from the folder while retaining read permission.
-
-   1. Test case: Launch TAB and enter `add Bob Tan -p 91234567`.<br>
-      Expected: TAB reports that it could not save the data. Bob remains
-      visible for this session, while `data/tab.json` still matches the backup
-      byte for byte and no temporary `.tab-*.tmp` file remains.
-
-   1. Test case: Enter `exit`, restore write permission to `data`, relaunch TAB,
-      and enter `list`.<br>
-      Expected: The recognizable student and every record from the backup are
-      present. Bob is absent because his failed save never replaced the last
-      valid data file.
-
 ### Clearing a student's email
 
 1. Removing a mistaken address without removing the record
@@ -2622,6 +2603,26 @@ testers are expected to do more *exploratory* testing.
       Expected: The student is still present and no confirmation is pending.
 
 ### Saving data
+
+1. Preserving existing data when a save fails
+
+   1. Prerequisites: Launch TAB, add a recognizable student, exit, and keep a
+      byte-for-byte copy of `data/tab.json`. Leave the file readable, but make
+      its `data` folder non-writable. On Linux/macOS, run `chmod 555 data` as a
+      non-root User. On Windows, remove create/write permission for the test
+      account from the folder while retaining read permission.
+
+   1. Test case: Launch TAB and enter `add Bob Tan -p 91234567`.<br>
+      Expected: TAB reports that it could not save to `data/tab.json` due to
+      insufficient permissions. Bob remains visible for this session, while
+      `data/tab.json` still matches the backup byte for byte and no temporary
+      `.tab-*.tmp` file remains.
+
+   1. Test case: Enter `exit`, restore write permission to `data`, relaunch TAB,
+      and enter `list`.<br>
+      Expected: The recognizable student and every record from the backup are
+      present. Bob is absent because his failed save never replaced the last
+      valid data file.
 
 1. Dealing with missing/corrupted data files
 

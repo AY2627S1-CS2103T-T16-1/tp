@@ -97,11 +97,39 @@ public class FileUtilTest {
                 PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ);
         Files.setPosixFilePermissions(file, permissions);
 
-        assertThrows(AccessDeniedException.class, () -> FileUtil.writeToFile(file, "replacement student data"));
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> FileUtil.writeToFile(
+                file, "replacement student data"));
 
+        assertEquals(file.getFileName(), Path.of(exception.getFile()).getFileName());
         assertEquals(originalContents, Files.readString(file));
         assertEquals(permissions, Files.getPosixFilePermissions(file));
         assertEquals(List.of(file), listFilesInTestFolder());
+    }
+
+    @Test
+    public void writeToFile_readOnlyParentDirectory_reportsTargetFile() throws Exception {
+        Path directory = Files.createDirectory(testFolder.resolve("data"));
+        Path file = directory.resolve("tab.json");
+        Files.writeString(file, "old contents");
+        assumePosixPermissions(directory);
+        Set<PosixFilePermission> originalPermissions = Files.getPosixFilePermissions(directory);
+        Files.setPosixFilePermissions(directory, Set.of(
+                PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_EXECUTE));
+
+        try {
+            Assumptions.assumeFalse(Files.isWritable(directory), "The test account can still write to the directory.");
+            AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> FileUtil.writeToFile(
+                    file, "new contents"));
+
+            assertEquals(file.getFileName(), Path.of(exception.getFile()).getFileName());
+            assertInstanceOf(AccessDeniedException.class, exception.getCause());
+        } finally {
+            Files.setPosixFilePermissions(directory, originalPermissions);
+        }
+        assertEquals("old contents", Files.readString(file));
+        try (var files = Files.list(directory)) {
+            assertEquals(List.of(file), files.toList());
+        }
     }
 
     @Test
