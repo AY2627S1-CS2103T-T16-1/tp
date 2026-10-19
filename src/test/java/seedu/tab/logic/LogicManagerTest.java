@@ -84,6 +84,31 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_findFormattedPhoneDigits_preservesRecordsAndStorage() throws Exception {
+        logic.execute("add Alex Yeoh -p \"+65 9123 4567\"");
+        logic.execute("add Bernice Yu -p 9876-5432");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        model = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
+        setUp();
+
+        for (String keyword : List.of("91234567", "91234", "6591234567", "\"9123 4567\"", "  91234567  ")) {
+            assertEquals(new CommandResult(Messages.getStudentsFoundOverview(1)), logic.execute("find " + keyword));
+            assertEquals(List.of(students.get(0)), model.getFilteredStudentList());
+        }
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(1)), logic.execute("find 98765432"));
+        assertEquals(List.of(students.get(1)), model.getFilteredStudentList());
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(2)), logic.execute("find 91234567 Bernice"));
+        assertEquals(students, model.getFilteredStudentList());
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(0)), logic.execute("find 91234568"));
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        assertEquals(students, model.getStudentBook().getStudentList());
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        assertEquals(students, storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
     public void execute_studentCountAgreesWithList_afterAddDeleteClear() throws Exception {
         // Initial empty state
         CommandResult result = logic.execute(ListCommand.COMMAND_WORD);

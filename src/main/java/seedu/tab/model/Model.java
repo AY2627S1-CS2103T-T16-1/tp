@@ -1,5 +1,6 @@
 package seedu.tab.model;
 
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
@@ -37,9 +38,9 @@ public interface Model {
     ReadOnlyStudentBook getStudentBook();
 
     /**
-     * Returns true if a student with the same identity as {@code student} exists in the student book.
+     * Returns a student with the same identity as {@code student}, if one exists in the student book.
      */
-    boolean hasStudent(Student student);
+    Optional<Student> findSameStudent(Student student);
 
     /**
      * Deletes the given student.
