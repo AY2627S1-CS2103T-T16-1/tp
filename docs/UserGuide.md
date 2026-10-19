@@ -255,6 +255,12 @@ use the shorter `-i` alias. It must contain between 1 and 32 ASCII letters and
 digits, such as `A01234567X` or `E0123456`. Lowercase letters are accepted and
 stored as uppercase. To remove an NUS Student ID entered by mistake, use
 `edit INDEX --id ""`; a value containing only spaces clears it as well.
+
+TAB uses the NUS Student ID to detect duplicate student records. Two students
+may share a name, and students without an NUS Student ID are not treated as
+duplicates. An `add` or `edit` is refused only when another student already
+has the same NUS Student ID, ignoring letter case; the error names that ID and
+the student who already holds it.
 </box>
 
 <box type="tip" seamless>
@@ -418,6 +424,8 @@ done to it beyond the quotes any value with spaces takes:
   option out keeps the NUS Student ID unchanged; a quoted value containing only
   spaces removes it, while a bare option is an error. Clearing an already absent
   NUS Student ID succeeds. Name and phone are required and cannot be cleared.
+* An edit may give two students the same name, but cannot give a student an NUS
+  Student ID already held by another record. NUS Student ID matching ignores case.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
 * To remove all of a student's tags, give `-t` an empty value: `-t ""`. A bare
@@ -657,14 +665,16 @@ A student with an NUS Student ID has a `"nusStudentId"` string such as
 contain between 1 and 32 ASCII letters and digits. TAB accepts lowercase letters
 and saves valid IDs in uppercase.
 
+TAB identifies duplicate records by NUS Student ID, ignoring letter case. Two
+records with the same name load when their NUS Student IDs differ or either ID
+is absent. Two records with the same NUS Student ID make the file unreadable;
+the startup error names the repeated ID and both record locations so that you
+can correct it. Phone numbers and emails are searchable details rather than
+identity keys.
+
 An email key is optional: a missing key, `null`, an empty string, or a string
 containing only spaces means that no email has been recorded. TAB removes
 leading and trailing spaces from a non-empty saved email before validating it.
-
-TAB still identifies duplicate records by normalized name. NUS Student IDs, phone
-numbers, and emails are searchable details rather than identity keys, so two
-students with different names may hold the same NUS Student ID. Check such records if
-the repeated ID was unintended.
 
 <box type="warning" seamless>
 

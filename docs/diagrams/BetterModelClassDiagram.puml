@@ -17,4 +17,11 @@ Student -up-> "*" Tag
 Student *--> Name
 Student *--> Phone
 Student *--> "0..1" Email
+Student *--> "0..1" NusStudentId
+
+note right of Student
+  isSameStudent compares records by
+  NUS Student ID only; a missing ID
+  does not establish identity
+end note
 @enduml

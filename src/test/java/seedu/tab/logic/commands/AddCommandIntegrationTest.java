@@ -70,28 +70,42 @@ public class AddCommandIntegrationTest {
     public void execute_duplicateStudent_throwsCommandException() {
         Student studentInList = model.getStudentBook().getStudentList().get(0);
         assertCommandFailure(new AddCommand(studentInList), model,
-                AddCommand.MESSAGE_DUPLICATE_STUDENT);
+                String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                        studentInList.getNusStudentId().orElseThrow(), studentInList.getName()));
     }
 
     @Test
-    public void execute_sameNameDifferentNusStudentId_throwsCommandExceptionWithoutMutation() {
+    public void execute_sameNameDifferentNusStudentId_addsBothStudents() {
         Student studentInList = model.getStudentBook().getStudentList().get(0);
-        Student duplicateName = new StudentBuilder(studentInList).withNusStudentId("A76543210Y").build();
+        Student sameName = new StudentBuilder(studentInList).withNusStudentId("A76543210Y").build();
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.addStudent(sameName);
 
-        assertCommandFailure(new AddCommand(duplicateName), model,
-                AddCommand.MESSAGE_DUPLICATE_STUDENT);
+        assertCommandSuccess(new AddCommand(sameName), model,
+                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(sameName)), expectedModel);
     }
 
     @Test
-    public void execute_sameNusStudentIdDifferentNames_bothStudentsAccepted() {
-        Student first = new StudentBuilder().withName("First Student").withNusStudentId("A01234567X").build();
-        Student second = new StudentBuilder().withName("Second Student").withNusStudentId("A01234567X").build();
+    public void execute_sameNameWithoutNusStudentIds_addsBothStudents() {
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).withPhone("91234567").build();
         model.addStudent(first);
         Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
         expectedModel.addStudent(second);
 
         assertCommandSuccess(new AddCommand(second), model,
                 String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(second)), expectedModel);
+    }
+
+    @Test
+    public void execute_sameNusStudentIdDifferentNames_throwsCommandExceptionWithoutMutation() {
+        Student first = new StudentBuilder().withName("First Student").withNusStudentId("A01234567X").build();
+        Student second = new StudentBuilder().withName("Second Student").withNusStudentId("a01234567x").build();
+        model.addStudent(first);
+
+        assertCommandFailure(new AddCommand(second), model,
+                String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                        second.getNusStudentId().orElseThrow(), first.getName()));
     }
 
     @Test

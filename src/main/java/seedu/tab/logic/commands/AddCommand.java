@@ -7,6 +7,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import seedu.tab.commons.core.LogsCenter;
@@ -48,7 +49,6 @@ public class AddCommand extends Command {
             + FLAG_TAG + " \"Lab 3\"";
 
     public static final String MESSAGE_SUCCESS = "New student added: %1$s";
-    public static final String MESSAGE_DUPLICATE_STUDENT = "This student already exists in the student book.";
 
     private final Logger logger = LogsCenter.getLogger(AddCommand.class);
 
@@ -66,8 +66,10 @@ public class AddCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
 
-        if (model.hasStudent(toAdd)) {
-            throw new CommandException(MESSAGE_DUPLICATE_STUDENT);
+        Optional<Student> duplicateStudent = model.findSameStudent(toAdd);
+        if (duplicateStudent.isPresent()) {
+            throw new CommandException(String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                    toAdd.getNusStudentId().orElseThrow(), duplicateStudent.orElseThrow().getName()));
         }
 
         model.addStudent(toAdd);
