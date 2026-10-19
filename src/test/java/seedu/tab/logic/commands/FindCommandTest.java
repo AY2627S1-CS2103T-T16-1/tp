@@ -145,6 +145,30 @@ public class FindCommandTest {
     }
 
     @Test
+    public void execute_followUpLabelFragment_findsOnlyStudentWithThatName() {
+        Student surnameStudent = new StudentBuilder().withName("Low Jia Hui").withPhone("91112222").build();
+        Student firstFlaggedStudent = new StudentBuilder().withName("Alex Yeoh").withPhone("87438807")
+                .withFlag(true).build();
+        Student secondFlaggedStudent = new StudentBuilder().withName("Bernice Yu").withPhone("99272758")
+                .withFlag(true).build();
+        StudentBook studentBook = new StudentBook();
+        studentBook.addStudent(surnameStudent);
+        studentBook.addStudent(firstFlaggedStudent);
+        studentBook.addStudent(secondFlaggedStudent);
+
+        Model localModel = new ModelManager(studentBook, new UserPrefs());
+        Model localExpectedModel = new ModelManager(studentBook, new UserPrefs());
+
+        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of("low"));
+        FindCommand command = new FindCommand(predicate);
+        localExpectedModel.updateFilteredStudentList(predicate);
+
+        assertCommandSuccess(command, localModel,
+                Messages.getStudentsFoundOverview(1), localExpectedModel);
+        assertEquals(List.of(surnameStudent), localModel.getFilteredStudentList());
+    }
+
+    @Test
     public void execute_mixedPhraseAndKeyword_matchesEither() {
         Student phraseStudent = new StudentBuilder().withName("Alice Tan")
                 .withPhone("91111111").withTags("Lab 3").build();

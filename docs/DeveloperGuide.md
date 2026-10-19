@@ -290,6 +290,8 @@ How the parsing works:
 The `Model` component,
 
 * stores the student book's data i.e., all `Student` objects (which are contained in a `UniqueStudentList` object).
+* treats two records as the same student only when both hold the same NUS Student ID. Names are not identity keys,
+  and records without an NUS Student ID remain distinct.
 * stores the `Student` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Student>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the User’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -566,9 +568,11 @@ but `isSameStudent` does not: changing whether a student needs a reply does not
 change their identity. The flag is stored as `Optional<Flag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
-Search combines ordinary tags with the optional flag and matches their
-inherited `tagName` values. The student card and command feedback display the
-same value, while the card keeps the flag in its separate follow-up row.
+Search matches ordinary tags as parts of their inherited `tagName` values, but
+matches the optional flag only when a term names it: the whole label
+`Needs follow-up` or one of its words, ignoring case (`Flag.matchesKeyword`).
+The student card and command feedback display the same value, while the card
+keeps the flag in its separate follow-up row.
 
 The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
 For edit, the `EditStudentDescriptor` stores a nullable `Boolean isFlagged`:
@@ -614,7 +618,7 @@ They normalize for different reasons, and the rule each one enforces differs.
 
 | Field | Why it is normalized | What it must hold |
 | --- | --- | --- |
-| `Name` | it is the identity field used to compare students, so visually identical names should have the same stored form | at least one letter or number |
+| `Name` | it is displayed and searched as text, so visually identical names should have the same stored form | at least one letter or number |
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
 
@@ -646,13 +650,43 @@ A malformed non-null value rejects the data file instead of being silently
 dropped. The student card and command feedback show a present ID and omit the
 label entirely when absent.
 
-NUS Student ID is searchable but is **not an identity key**. Student identity remains
-the normalized name, so two different names may carry the same NUS Student ID, just as
-they may carry the same phone or email. This avoids rejecting legitimate data
-or claiming certainty when a reused detail might be a correction or a data-entry
-mistake. Adding or editing a record to a name already in the book is still
-rejected. A future duplicate-warning workflow can surface shared contact
-details without changing this model contract.
+NUS Student ID is the sole **identity key**. `Student.isSameStudent` returns
+true only when both records hold equal NUS Student IDs. Because construction
+normalizes letters to uppercase, this comparison is case-insensitive. A shared
+name does not establish identity, and neither does a shared phone number or
+email. Records without an NUS Student ID therefore remain distinct even when
+their other details match. `UniqueStudentList` applies this rule to add, edit,
+and model replacement, so command execution and storage loading enforce the
+same contract.
+
+When `add` or `edit` finds a matching NUS Student ID, it rejects the operation
+without mutation and names the normalized ID and student who already holds it.
+During storage loading, `JsonSerializableStudentBook` admits repeated names but
+rejects a repeated NUS Student ID with both record numbers, both names, and the
+ID. This keeps hand-edited files diagnosable while allowing common names in a
+class.
+
+After the identity check succeeds, `LikelyDuplicateWarning` compares the
+prospective record with every existing student. Name and email comparisons
+ignore case; names already carry `normalizeFieldValue`'s whitespace
+normalization, and phone comparisons remove spaces from their normalized
+stored forms. Other punctuation remains significant so the warning does not
+claim fuzzy matching it cannot provide. Absent emails do not match.
+
+The commands collect the warnings before mutation and separate them from the
+ordinary success message with a blank line. Matches are grouped by field into
+one prominently labelled `WARNING: Possible duplicate student` line. A line
+names at most two students and summarizes further matches as `N others`, so a
+shared placeholder does not fill the result box. The review advice appears
+once after every matching field.
+
+`EditCommand` compares only name, phone, or email values that differ from the
+selected record. It excludes the selected `Student` instance but still uses
+the complete unfiltered student book, so a filtered list cannot hide a match
+and unrelated tag or follow-up edits do not repeat an acknowledged warning.
+These comparisons are advisory only: they never feed `isSameStudent` or the
+storage duplicate check, and therefore cannot reject or discard a legitimate
+shared detail.
 
 **The email may be absent.** A student is recorded before an email address is
 known rather than one being invented. `Student` accepts, stores, and exposes
@@ -732,8 +766,15 @@ Search terms are normalized with `StringUtil.normalizeFieldValue`, collapsing in
 whitespace runs and applying Unicode NFC normalization. It creates a
 `DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
 against the student's name, NUS Student ID, phone, email, ordinary tags,
-and optional follow-up flag. Matching is case-insensitive and partial; any
-keyword can match.
+and optional follow-up flag. Matching is case-insensitive; those details
+match partially, while the follow-up flag matches only the whole label
+`Needs follow-up` or one of its words, so a fragment such as `low` cannot
+list every flagged student.
+For a keyword containing only Unicode decimal digits (`\p{Nd}+`), the phone
+comparison also checks a copy of the stored phone with non-digit characters
+removed. This lets `91234567` match `+65 9123 4567` or `9123-4567`.
+Literal phone matching remains available for formatted phrases and annotations;
+other fields retain their text matching. The stored phone and saved data do not change.
 
 `FindCommand` and `ListCommand` report the count of displayed students in
 their execution feedback. `FindCommand` counts only the matching students
@@ -777,10 +818,10 @@ restart remain separate future features.
 
 #### Student names
 
-A name is displayed, searched as text, and used as a student's
-identity field. `Name` therefore stores a normalized field value rather than
-the raw input, so that two names which look identical cannot be searched
-differently or admitted as two students.
+A name is displayed and searched as text, but is not an identity field.
+`Name` stores a normalized field value rather than the raw input so that two
+names which look identical are displayed and searched consistently. Multiple
+students may hold the same normalized name.
 
 **Normalizing.** On construction a name is
 
@@ -1092,7 +1133,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | list students I have not followed up with since a given date | make sure no one who needs help flies under the radar |
 | `*` | teaching assistant working in twenty-second windows | identify a student by their NUS Student ID when deleting a record | avoid removing the wrong student when several students are listed |
 | `*` | teaching assistant working in twenty-second windows | identify a student by their NUS Student ID when editing a record | avoid changing the wrong student’s details |
-| `*` | teaching assistant | record two students who genuinely have the same name | keep separate student records for them |
+| `* * *` | teaching assistant | record two students who genuinely have the same name | keep separate student records for them |
 | `*` | teaching assistant who can type fast | be shown a likely correction when I mistype a command word | recover without looking up the syntax |
 | `*` | teaching assistant | look back at results I have already replaced | re-read earlier output without running the search again |
 | `*` | teaching assistant | start from my previous input when an entry is rejected | correct one detail instead of retyping everything |
@@ -1161,10 +1202,10 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 2.
 
-* 1c. The normalized name matches a student whom TAB already holds.
+* 1c. The NUS Student ID matches one that another student already holds, ignoring case.
 
-    * 1c1. TAB reports that the student already exists and leaves the student
-      records unchanged.
+    * 1c1. TAB names the repeated NUS Student ID and leaves the student records
+      unchanged.
 
       Use case ends.
 
@@ -1184,7 +1225,7 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to find students, providing one or more search terms.
 2.  TAB shows the students for whom any term matches any part of a name, NUS Student ID,
-    phone, email, tag, or follow-up status, regardless of letter case.
+    phone, email or tag, or names the follow-up status as a whole, regardless of letter case.
 3.  User identifies the intended student.
 4.  User initiates the desired action on that student.
 
@@ -1489,10 +1530,10 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* 3d. The edited normalized name matches another student whom TAB already holds.
+* 3d. The edited NUS Student ID matches one that another student already holds, ignoring case.
 
-    * 3d1. TAB reports that the student already exists and leaves both student
-      records unchanged.
+    * 3d1. TAB names the repeated NUS Student ID and leaves both student records
+      unchanged.
 
       Use case ends.
 
@@ -1608,8 +1649,8 @@ These were raised during requirement gathering and left out of the product.
   command (such as `find` or `list`). Commands taking an Index target records relative to this list.
 * **Follow-up**: An action or response that the User still owes to a student,
   tracked in TAB as a pending status on a student record.
-* **Identity field**: A field used by TAB to identify whether two records refer to the same student. Student identity
-  is determined by normalized name. NUS Student IDs, phone numbers, and emails are searchable details, not identity keys.
+* **Identity field**: A field used by TAB to identify whether two records refer to the same student. The NUS Student
+  ID is TAB's sole identity field. Name, phone number, and email are searchable details rather than identity keys.
 * **Index**: The 1-based positive integer identifying a student according to their current display position in the
   active/filtered list shown in the GUI, rather than a permanent database identifier or 0-based code index.
 * **Mainstream OS**: Windows, Linux and macOS.
@@ -1881,8 +1922,13 @@ testers are expected to do more *exploratory* testing.
       and Bob flagged.
 
    1. Test cases: `find follow-up` and `find NEEDS`<br>
-      Expected: Each search shows Bob and excludes Alice, matching part of
-      the flag's displayed name without regard to case.
+      Expected: Each search shows Bob and excludes Alice, matching a whole
+      word of the flag's displayed name without regard to case.
+
+   1. Test case: `add Low Jia Hui -p 91112222`, then `find low`<br>
+      Expected: Only Low Jia Hui is listed, reported as `Found 1 student.`,
+      although Bob still needs follow-up: `low` sits inside `Needs follow-up`
+      but is not a word of it, so it never matches the follow-up status.
 
 1. Setting and clearing follow-up while editing
 
@@ -2058,13 +2104,14 @@ testers are expected to do more *exploratory* testing.
       shows `New student added: Jane Doe; Phone: 91234567; Tags: [lab1][urgent]; Needs follow-up`
       with tags sorted alphabetically ignoring case.
 
-1. Adding a duplicate student
+1. Adding a duplicate NUS Student ID
 
-   1. Prerequisites: A student named `John Doe` with phone `98765432` is already in the list.
+   1. Prerequisites: A student named `John Doe` with NUS Student ID `A01234567X`
+      is already in the list.
 
-   1. Test case: `add John Doe -p 98765432`<br>
-      Expected: No student is added. The status message reports that this student
-      already exists in the student book, and no record is mutated.
+   1. Test case: `add Jane Doe -p 98765432 -i a01234567x`<br>
+      Expected: No student is added. The status message names NUS Student ID
+      `A01234567X` and `John Doe`, and no record is mutated.
 
 ### Long contact details on a card
 
@@ -2282,13 +2329,70 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Start from an empty book.
 
    1. Test cases: add `add Alice Tan -p 91234567 -i A01234567X`, then
-      `add Bob Lim -p 92345678 -i A01234567X`.<br>
-      Expected: Both students are added because different normalized names are
-      different identities, even when the NUS Student ID is shared.
+      `add Alice Tan -p 92345678 -i A76543210Y`, then
+      `add Alice Tan -p 93456789`.<br>
+      Expected: All three students are added because the matching name is not
+      an identity key, and the NUS Student IDs differ or are absent. The second
+      and third additions each warn that other students have the same name;
+      the third result groups both matching records into one name warning.
 
-   1. Test case: `add Alice Tan -p 93456789 -i A76543210Y`<br>
-      Expected: The addition is rejected as a duplicate name and neither
-      existing record changes.
+   1. Test case: `add Bob Lim -p 94567891 -i a01234567x`<br>
+      Expected: The addition is rejected. The error names NUS Student ID
+      `A01234567X` and student `Alice Tan`, and none of the existing records changes.
+
+   1. Test case: Run `list`, note the third Alice's index, then run
+      `edit INDEX -i A01234567X` with that index.<br>
+      Expected: The edit is rejected. The error names NUS Student ID
+      `A01234567X` and student `Alice Tan`, and all three Alice records keep their
+      earlier details.
+
+   1. Test case: Note the second Alice's index, then run
+      `edit INDEX -n "Alice Tan" -p 95678912` with that index.<br>
+      Expected: The edit succeeds because her NUS Student ID remains distinct;
+      sharing the same name does not block the edit. The unchanged name is not
+      warned about again, and the new phone matches no other record.
+
+1. Warning about likely duplicate students
+
+   1. Prerequisites: Start from an empty book and add
+      `add Alex Yeoh -p "+65 9123 4567" -e Alex@Example.com -i A01234567X`.<br>
+      Expected: Alex is added without a warning because no other student is
+      present.
+
+   1. Test case: `add "  aLeX   yEoH  " -p 81112222 -e other@example.com`<br>
+      Expected: The second record is saved. The result names Alex Yeoh and the
+      matching `name`; case and repeated spaces do not prevent the match.
+
+   1. Test case: `add Bernice Yu -p +6591234567 -e bernice@example.com`<br>
+      Expected: Bernice is saved. The result names Alex Yeoh and the matching
+      `phone`, because spaces in a phone number are insignificant.
+
+   1. Test case: `add Chris Lim -p 82223333 -e alex@example.com`<br>
+      Expected: Chris is saved. The result names Alex Yeoh and the matching
+      `email`; email letter case is insignificant.
+
+   1. Prerequisites: Clear the book, add `add Dana Lee -p 83334444`, and note
+      Dana's index.<br>
+      Test case: `edit INDEX -t tutorial` with Dana's index.<br>
+      Expected: The edit succeeds without a likely-duplicate warning. Dana's
+      unchanged name and phone are not compared with her own earlier record.
+
+   1. Test case: Add `add Evan Lee -p 84445555`, then change Dana's phone with
+      `edit INDEX -p 84445555`.<br>
+      Expected: Dana's edit succeeds and warns that Evan Lee has the same
+      changed phone. Her unchanged name is not checked.
+
+   1. Prerequisites: Clear the book, add four students named `Student One`
+      through `Student Four`, each with phone `000`.<br>
+      Test case: `add Student Five -p 000`<br>
+      Expected: Student Five is saved. One phone warning names Student One and
+      Student Two, then says that two others match. The review advice appears
+      once rather than after every student.
+
+   1. Test case: Add `add Tan Wei Ming -p 91234567` twice, note the second
+      Tan Wei Ming's index, then run `edit INDEX -p 99999999` with that index.<br>
+      Expected: Only the selected second Tan Wei Ming's phone changes. The first
+      identical record keeps phone number `91234567`.
 
 ### Editing a student
 
@@ -2321,6 +2425,29 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `edit INDEX -t T1 -t ""`<br>
       Expected: No change. An empty value clears the tags only on its own, so
       the message rejects the empty tag.
+
+1. Repeating an edit after a search
+
+   1. Prerequisites: Add `add Alex Yeoh -p 87438807` and
+      `add John Doe -p 98765432`, then run `find john`.
+
+   1. Test case: Run `edit 1 --follow-up` twice.<br>
+      Expected: Both commands flag John Doe, the only student listed. The
+      search stays active between the commands, so index 1 keeps pointing at
+      John Doe and Alex Yeoh stays unflagged.
+
+   1. Test case: `edit 1 -p 9876543` followed by `edit 1 -p 98765432`.<br>
+      Expected: John Doe's phone becomes `9876543` and is then restored to
+      `98765432`. Alex Yeoh's phone remains `87438807` throughout.
+
+   1. Test case: Run `add John Smith -p 91112222`, then `find john`,
+      `edit 1 -n Jack`, then `edit 1 -p 91112233`.<br>
+      Expected: The first `edit` renames John Doe to Jack, who no longer
+      matches `john` and leaves the displayed list; John Smith shifts up to
+      index 1. The second `edit` therefore changes John Smith's phone, not
+      Jack's. The User Guide warns that an edit removing a match shifts the
+      remaining indices, so the displayed list should be checked before
+      repeating a command.
 
 1. Reporting several mistakes at once
 
@@ -2400,6 +2527,12 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `delete 0`<br>
       Expected: No student is deleted. The status message shows error details, and the student book
       remains unchanged.
+
+   1. Test case: `delete 1` where the space after the `1` is a non-breaking space (`U+00A0`),
+      pasted from a word processor or a web page, or a full-width space (`U+3000`) typed
+      with a Chinese input method<br>
+      Expected: The first student record is deleted, exactly as with an ordinary space.
+      TAB does not call the command an invalid format for a character the user cannot see.
 
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
@@ -2526,6 +2659,23 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `delete 1`, then `list`<br>
       Expected: Feedback reports `Listed 1 student.`.
+
+### Locating students by digits in formatted phone numbers
+
+1. Full numbers, partial numbers, and unchanged saved formatting
+
+   1. Prerequisites: In a disposable copy of TAB, clear all students (`clear`, then `yes`).
+      Run `add Alex Yeoh -p "+65 9123 4567"` and `add Bernice Yu -p 9876-5432`.
+      Restart TAB and keep a copy of `data/tab.json`.
+   1. Test cases: `find 91234567`, `find 91234`, and `find 6591234567`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.` and phone `+65 9123 4567`.
+   1. Test case: `find 98765432`.<br>
+      Expected: Only Bernice Yu is shown, with `Found 1 student.` and phone `9876-5432`.
+   1. Test case: `find 91234567 Bernice`.<br>
+      Expected: Both students are shown, with `Found 2 students.`.
+   1. Test case: `find 91234568`.<br>
+      Expected: No students are shown, with `Found 0 students.`.
+      `data/tab.json` is identical to the saved copy after all these searches.
 
 ### Locating students with quoted phrases and error handling
 
