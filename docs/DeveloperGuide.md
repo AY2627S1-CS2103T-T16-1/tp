@@ -2458,6 +2458,12 @@ testers are expected to do more *exploratory* testing.
       Expected: No student is deleted. The status message shows error details, and the student book
       remains unchanged.
 
+   1. Test case: `delete 1` where the space after the `1` is a non-breaking space (`U+00A0`),
+      pasted from a word processor or a web page, or a full-width space (`U+3000`) typed
+      with a Chinese input method<br>
+      Expected: The first student record is deleted, exactly as with an ordinary space.
+      TAB does not call the command an invalid format for a character the user cannot see.
+
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
 
