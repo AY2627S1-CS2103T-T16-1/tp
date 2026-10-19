@@ -7,6 +7,10 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
+import java.util.Optional;
+import java.util.logging.Logger;
+
+import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.util.ToStringBuilder;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.exceptions.CommandException;
@@ -45,8 +49,8 @@ public class AddCommand extends Command {
             + FLAG_TAG + " \"Lab 3\"";
 
     public static final String MESSAGE_SUCCESS = "New student added: %1$s";
-    public static final String MESSAGE_DUPLICATE_STUDENT =
-            "Another student already has NUS Student ID %1$s.";
+
+    private final Logger logger = LogsCenter.getLogger(AddCommand.class);
 
     private final Student toAdd;
 
@@ -62,15 +66,18 @@ public class AddCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
 
-        if (model.hasStudent(toAdd)) {
-            throw new CommandException(String.format(MESSAGE_DUPLICATE_STUDENT,
-                    toAdd.getNusStudentId().orElseThrow()));
+        Optional<Student> duplicateStudent = model.findSameStudent(toAdd);
+        if (duplicateStudent.isPresent()) {
+            throw new CommandException(String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                    toAdd.getNusStudentId().orElseThrow(), duplicateStudent.orElseThrow().getName()));
         }
 
         String feedback = LikelyDuplicateWarning.appendTo(
                 String.format(MESSAGE_SUCCESS, Messages.format(toAdd)),
                 toAdd, model.getStudentBook().getStudentList());
         model.addStudent(toAdd);
+        logger.info("Added a student; the book now holds "
+                + model.getStudentBook().getStudentList().size());
         return new CommandResult(feedback);
     }
 

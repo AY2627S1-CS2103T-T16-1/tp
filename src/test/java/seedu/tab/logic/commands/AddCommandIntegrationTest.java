@@ -70,8 +70,8 @@ public class AddCommandIntegrationTest {
     public void execute_duplicateStudent_throwsCommandException() {
         Student studentInList = model.getStudentBook().getStudentList().get(0);
         assertCommandFailure(new AddCommand(studentInList), model,
-                String.format(AddCommand.MESSAGE_DUPLICATE_STUDENT,
-                        studentInList.getNusStudentId().orElseThrow()));
+                String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                        studentInList.getNusStudentId().orElseThrow(), studentInList.getName()));
     }
 
     @Test
@@ -140,8 +140,8 @@ public class AddCommandIntegrationTest {
         model.addStudent(first);
 
         assertCommandFailure(new AddCommand(second), model,
-                String.format(AddCommand.MESSAGE_DUPLICATE_STUDENT,
-                        second.getNusStudentId().orElseThrow()));
+                String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                        second.getNusStudentId().orElseThrow(), first.getName()));
     }
 
     @Test

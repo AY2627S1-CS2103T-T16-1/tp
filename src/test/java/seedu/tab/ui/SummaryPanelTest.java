@@ -15,13 +15,13 @@ import org.junit.jupiter.api.Test;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -209,32 +209,28 @@ public class SummaryPanelTest {
     @Test
     public void rows_aTagTooLongForThePanel_keepItsCountWhole() throws Exception {
         String longTag = "attendance-and-participation-term-two";
-        ObservableList<Student> students = FXCollections.observableArrayList(
-                new StudentBuilder().withName("A").withTags(longTag).build(),
-                new StudentBuilder().withName("B").withTags(longTag).build());
+        ObservableList<Student> students = FXCollections.observableArrayList();
+        for (int i = 0; i < 12; i++) {
+            students.add(tagged("Student " + i, false, longTag));
+        }
 
         String[] shown = onFxThread(() -> {
             SummaryPanel panel = new SummaryPanel(students);
             Region root = (Region) panel.getRoot();
-            assertNotNull(styledScene(root, 190, 400));
+            assertNotNull(styledScene(root, 150, 400));
+            assertEquals(150, root.getWidth());
 
-            Label name = null;
-            Label count = null;
-            for (Node node : root.lookupAll(".summary-row .label")) {
-                Label label = (Label) node;
-                if (label.getStyleClass().contains("summary-count")) {
-                    count = label;
-                } else {
-                    name = label;
-                }
-            }
-            assertNotNull(name);
-            assertNotNull(count);
-            // a row short of space shares the shortfall among everything in it, and a
-            // count cut to an ellipsis is the one part of the row a reader cannot work out
-            // for themselves, so it is the count that is held and the tag that gives way
-            assertEquals(Region.USE_PREF_SIZE, count.getMinWidth(),
-                    "the count should not be squeezable");
+            ScrollPane scroll = (ScrollPane) root.lookup("#tagScroll");
+            VBox rows = (VBox) scroll.getContent();
+            HBox row = (HBox) rows.getChildren().getFirst();
+            Label name = (Label) row.getChildren().getFirst();
+            Label count = (Label) row.getChildren().getLast();
+            assertTrue(name.prefWidth(-1) + count.prefWidth(-1) > row.getWidth(),
+                    "the row should be short of space");
+            assertTrue(row.getWidth() <= scroll.getViewportBounds().getWidth(),
+                    "the row should fit the visible tag list");
+            assertEquals("12", ((Text) count.lookup(".text")).getText(),
+                    "the drawn count should contain both digits");
             assertTrue(count.getWidth() >= count.prefWidth(-1) - 0.5,
                     "the count was squeezed to " + count.getWidth()
                     + " of the " + count.prefWidth(-1) + " it needs");
@@ -244,7 +240,7 @@ public class SummaryPanelTest {
 
         // the count is the one part of the row a reader cannot work out for themselves, so
         // it is the tag that gives way
-        assertEquals("2", shown[0]);
+        assertEquals("12", shown[0]);
         assertTrue(shown[1].length() < longTag.length(), "the tag should be cut: " + shown[1]);
         assertEquals(longTag, shown[2], "the whole tag should be a hover away");
     }

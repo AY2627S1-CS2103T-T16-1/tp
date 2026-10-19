@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.exceptions.DataLoadingException;
+import seedu.tab.commons.exceptions.IllegalValueException;
 
 /**
  * Converts a Java object instance to JSON and vice versa
@@ -48,7 +49,7 @@ public class JsonUtil {
      *
      * @param filePath cannot be null.
      * @param classOfObjectToDeserialize JSON file has to correspond to the structure in the class given here.
-     * @throws DataLoadingException if loading of the JSON file failed.
+     * @throws DataLoadingException if loading of the JSON file failed or the document is null.
      */
     public static <T> Optional<T> readJsonFile(
             Path filePath, Class<T> classOfObjectToDeserialize) throws DataLoadingException {
@@ -71,6 +72,10 @@ public class JsonUtil {
             throw new DataLoadingException(getIoErrorMessage(e), e);
         }
 
+        if (jsonFile == null) {
+            IllegalValueException cause = new IllegalValueException("The JSON document must not be null.");
+            throw new DataLoadingException(cause.getMessage(), cause);
+        }
         return Optional.of(jsonFile);
     }
 

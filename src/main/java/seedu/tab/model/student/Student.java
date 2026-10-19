@@ -22,47 +22,35 @@ public class Student {
     private final Name name;
     private final Phone phone;
 
-    /** Null when the teaching assistant has not recorded one. */
-    private final Email email;
-    /** Null when the teaching assistant has not recorded one. */
-    private final NusStudentId nusStudentId;
+    private final Optional<Email> email;
+    private final Optional<NusStudentId> nusStudentId;
 
     // Data fields
     private final Set<Tag> tags = new HashSet<>();
-    private final Flag flag;
+    private final Optional<Flag> flag;
 
     /**
-     * Every field but the email and NUS Student ID must be present and not null.
+     * Constructs an unflagged student. Every argument must be non-null;
+     * unknown optional details are represented by {@link Optional#empty()}.
      */
-    public Student(Name name, Phone phone, Email email, Set<Tag> tags) {
-        this(name, phone, email, null, tags, false);
-    }
-
-    /**
-     * Every field but the email and NUS Student ID must be present and not null.
-     */
-    public Student(Name name, Phone phone, Email email, Set<Tag> tags, boolean isFlagged) {
-        this(name, phone, email, null, tags, isFlagged);
-    }
-
-    /**
-     * Every field but the email and NUS Student ID must be present and not null.
-     */
-    public Student(Name name, Phone phone, Email email, NusStudentId nusStudentId, Set<Tag> tags) {
+    public Student(Name name, Phone phone, Optional<Email> email, Optional<NusStudentId> nusStudentId,
+            Set<Tag> tags) {
         this(name, phone, email, nusStudentId, tags, false);
     }
 
     /**
-     * Every field but the email and NUS Student ID must be present and not null.
+     * Constructs a student with the given follow-up state. Every argument must be non-null;
+     * unknown optional details are represented by {@link Optional#empty()}.
      */
-    public Student(Name name, Phone phone, Email email, NusStudentId nusStudentId, Set<Tag> tags, boolean isFlagged) {
-        requireAllNonNull(name, phone, tags);
+    public Student(Name name, Phone phone, Optional<Email> email, Optional<NusStudentId> nusStudentId,
+            Set<Tag> tags, boolean isFlagged) {
+        requireAllNonNull(name, phone, email, nusStudentId, tags);
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.nusStudentId = nusStudentId;
         this.tags.addAll(tags);
-        this.flag = isFlagged ? new Flag() : null;
+        this.flag = isFlagged ? Optional.of(new Flag()) : Optional.empty();
     }
 
     public Name getName() {
@@ -74,11 +62,11 @@ public class Student {
     }
 
     public Optional<Email> getEmail() {
-        return Optional.ofNullable(email);
+        return email;
     }
 
     public Optional<NusStudentId> getNusStudentId() {
-        return Optional.ofNullable(nusStudentId);
+        return nusStudentId;
     }
 
     /**
@@ -90,12 +78,12 @@ public class Student {
     }
 
     public boolean isFlagged() {
-        return flag != null;
+        return flag.isPresent();
     }
 
     /** Returns the follow-up flag, when this student needs follow-up. */
     public Optional<Flag> getFlag() {
-        return Optional.ofNullable(flag);
+        return flag;
     }
 
     /**
@@ -106,7 +94,7 @@ public class Student {
      */
     public boolean isSameStudent(Student otherStudent) {
         return otherStudent != null
-                && nusStudentId != null
+                && nusStudentId.isPresent()
                 && nusStudentId.equals(otherStudent.nusStudentId);
     }
 
@@ -127,10 +115,10 @@ public class Student {
 
         return name.equals(otherStudent.name)
                 && phone.equals(otherStudent.phone)
-                && Objects.equals(email, otherStudent.email)
-                && Objects.equals(nusStudentId, otherStudent.nusStudentId)
+                && email.equals(otherStudent.email)
+                && nusStudentId.equals(otherStudent.nusStudentId)
                 && tags.equals(otherStudent.tags)
-                && Objects.equals(flag, otherStudent.flag);
+                && flag.equals(otherStudent.flag);
     }
 
     @Override
@@ -144,8 +132,8 @@ public class Student {
         return new ToStringBuilder(this)
                 .add("name", name)
                 .add("phone", phone)
-                .add("email", email)
-                .add("nusStudentId", nusStudentId)
+                .add("email", email.map(Email::toString).orElse("null"))
+                .add("nusStudentId", nusStudentId.map(NusStudentId::toString).orElse("null"))
                 .add("tags", tags)
                 .add("isFlagged", isFlagged())
                 .toString();

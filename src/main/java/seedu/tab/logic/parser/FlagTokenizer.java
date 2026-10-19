@@ -37,7 +37,29 @@ public class FlagTokenizer {
     public static FlagArgumentMap tokenize(String arguments, Flag... knownFlags) throws ParseException {
         requireNonNull(arguments);
 
+        return readTokens(CommandTokenizer.tokenize(arguments), knownFlags);
+    }
+
+    /**
+     * Reads arguments whose preamble is an index. An unquoted negative number could be an
+     * index or an option, so reports both reasons it is rejected before reading the flags.
+     *
+     * @throws ParseException if the index looks like an invalid option or tokenization fails.
+     */
+    public static FlagArgumentMap tokenizeWithIndex(String arguments, Flag... knownFlags) throws ParseException {
         List<Token> tokens = CommandTokenizer.tokenize(arguments);
+        if (!tokens.isEmpty()) {
+            Token first = tokens.getFirst();
+            if (!first.isQuoted() && first.value().matches("-[0-9]+(?:\\.[0-9]+)?")) {
+                throw new ParseException(ParserUtil.MESSAGE_INVALID_INDEX + "\n"
+                        + String.format(Messages.MESSAGE_UNKNOWN_FLAG, Messages.shorten(first.value())));
+            }
+        }
+        return readTokens(tokens, knownFlags);
+    }
+
+    /** Reads already split tokens, sharing flag handling between index and name preambles. */
+    private static FlagArgumentMap readTokens(List<Token> tokens, Flag... knownFlags) throws ParseException {
         // a caller that names the same marker twice means one flag, not a broken collector
         Map<String, Flag> flagsByMarker = Stream.of(knownFlags)
                 .flatMap(flag -> flag.getMarkers().stream().map(marker -> Map.entry(marker, flag)))

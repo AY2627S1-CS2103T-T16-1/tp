@@ -334,11 +334,11 @@ public class EditCommandParserTest {
 
         // a token before the options that is not part of the index
         assertParseFailure(parser, "1 some random string" + FLAG_NAME_AMY,
-                ParserUtil.MESSAGE_INVALID_INDEX);
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, "INDEX", "some random string"));
 
-        // a negative index reads as an unknown option, since -5 is shaped like one
+        // an unquoted negative number is invalid as both an index and an option
         assertParseFailure(parser, "-5" + FLAG_NAME_AMY,
-                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-5"));
+                ParserUtil.MESSAGE_INVALID_INDEX + "\n" + String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-5"));
     }
 
     @Test

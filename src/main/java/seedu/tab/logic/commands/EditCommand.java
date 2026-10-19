@@ -16,7 +16,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Logger;
 
+import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.CollectionUtil;
 import seedu.tab.commons.util.ToStringBuilder;
@@ -66,11 +68,11 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
-    public static final String MESSAGE_DUPLICATE_STUDENT =
-            "Another student already has NUS Student ID %1$s.";
 
     public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP
             + " (or -f) and " + FLAG_NO_FOLLOW_UP + " (or -nf) cannot be used together. Choose one.";
+
+    private final Logger logger = LogsCenter.getLogger(EditCommand.class);
 
     private final Index index;
     private final EditStudentDescriptor editStudentDescriptor;
@@ -99,9 +101,12 @@ public class EditCommand extends Command {
         Student studentToEdit = lastShownList.get(index.getZeroBased());
         Student editedStudent = createEditedStudent(studentToEdit, editStudentDescriptor);
 
-        if (!studentToEdit.isSameStudent(editedStudent) && model.hasStudent(editedStudent)) {
-            throw new CommandException(String.format(MESSAGE_DUPLICATE_STUDENT,
-                    editedStudent.getNusStudentId().orElseThrow()));
+        Optional<Student> duplicateStudent = studentToEdit.isSameStudent(editedStudent)
+                ? Optional.empty()
+                : model.findSameStudent(editedStudent);
+        if (duplicateStudent.isPresent()) {
+            throw new CommandException(String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                    editedStudent.getNusStudentId().orElseThrow(), duplicateStudent.orElseThrow().getName()));
         }
 
         String feedback = LikelyDuplicateWarning.appendToExcluding(
@@ -109,6 +114,8 @@ public class EditCommand extends Command {
                 editedStudent, model.getStudentBook().getStudentList(), studentToEdit);
         model.setStudent(studentToEdit, editedStudent);
         model.updateFilteredStudentList(PREDICATE_SHOW_ALL_STUDENTS);
+        logger.info("Edited the student shown at " + index.getOneBased()
+                + "; the book now holds " + model.getStudentBook().getStudentList().size());
         return new CommandResult(feedback);
     }
 
@@ -130,7 +137,7 @@ public class EditCommand extends Command {
         Set<Tag> updatedTags = editStudentDescriptor.getTags().orElse(studentToEdit.getTags());
         boolean updatedFlag = editStudentDescriptor.getFlagged().orElse(studentToEdit.isFlagged());
 
-        return new Student(updatedName, updatedPhone, updatedEmail.orElse(null), updatedNusStudentId.orElse(null),
+        return new Student(updatedName, updatedPhone, updatedEmail, updatedNusStudentId,
                 updatedTags, updatedFlag);
     }
 

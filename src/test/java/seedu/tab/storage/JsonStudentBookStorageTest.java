@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,12 @@ public class JsonStudentBookStorageTest {
 
         assertTrue(exception.getMessage().contains("The data is not in the expected JSON format"));
         assertTrue(exception.getMessage().contains("line 1, column 4"));
+    }
+
+    @Test
+    public void readStudentBook_nullDocument_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, "The JSON document must not be null.", () ->
+                readStudentBook("nullStudentBook.json"));
     }
 
     @Test
@@ -121,7 +128,7 @@ public class JsonStudentBookStorageTest {
     @Test
     public void readStudentBook_duplicateNusStudentId_reportsNormalizedId() {
         String expectedMessage = "Student record 2 (\"Lee Wei Ming\"): NUS Student ID A01234567X "
-                + "is already used by another student record.";
+                + "is already used by student record 1 (\"Tan Wei Ming\").";
 
         assertThrows(DataLoadingException.class, expectedMessage, () ->
                 readStudentBook("duplicateNusStudentIdStudentBook.json"));
@@ -291,6 +298,28 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readAndSaveStudentBook_identicalStudentsWithoutNusStudentIds_preservesCountAndOrder()
+            throws Exception {
+        Path filePath = testFolder.resolve("IdenticalStudentsWithoutNusStudentIds.json");
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withPhone("91234567")
+                .withoutNusStudentId().build();
+        Student middle = new StudentBuilder().withName("Alice Tan").withPhone("92345678")
+                .withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).build();
+        StudentBook original = new StudentBook();
+        original.addStudent(first);
+        original.addStudent(middle);
+        original.addStudent(second);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        storage.saveStudentBook(original, filePath);
+        ReadOnlyStudentBook readBack = storage.readStudentBook(filePath).orElseThrow();
+
+        assertEquals(3, readBack.getStudentList().size());
+        assertEquals(List.of(first, middle, second), readBack.getStudentList());
+    }
+
+    @Test
     public void readAndSaveStudentBook_followUpFlag_roundTripsAndOmitsFalse() throws Exception {
         Path filePath = testFolder.resolve("FollowUpFlag.json");
         Student flaggedStudent = new StudentBuilder().withName("Wong Mei Ling").withPhone("91234567")
@@ -308,6 +337,28 @@ public class JsonStudentBookStorageTest {
         assertTrue(savedJson.contains("\"flag\" : true"));
         assertEquals(1, savedJson.split("\"flag\"", -1).length - 1);
         assertEquals(original, new StudentBook(storage.readStudentBook(filePath).get()));
+    }
+
+    @Test
+    public void readAndSaveStudentBook_clearedOptionalDetails_omitsKeysAndPreservesOtherFields() throws Exception {
+        Path filePath = testFolder.resolve("ClearedDetails.json");
+        Student student = new StudentBuilder(ALICE).withFlag(true).build();
+        StudentBook book = new StudentBook();
+        book.addStudent(student);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+        storage.saveStudentBook(book);
+        Student loaded = storage.readStudentBook().orElseThrow().getStudentList().get(0);
+        assertEquals(student, loaded);
+
+        Student cleared = new StudentBuilder(loaded).withoutEmail().withoutNusStudentId().build();
+        book.setStudent(student, cleared);
+        storage.saveStudentBook(book);
+
+        String savedJson = Files.readString(filePath);
+        assertFalse(savedJson.contains("\"email\""));
+        assertFalse(savedJson.contains("\"nusStudentId\""));
+        assertTrue(savedJson.contains("\"flag\" : true"));
+        assertEquals(book, new StudentBook(storage.readStudentBook().orElseThrow()));
     }
 
     @Test

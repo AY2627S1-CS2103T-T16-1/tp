@@ -1,6 +1,7 @@
 package seedu.tab.testutil;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.tab.model.student.Email;
@@ -22,8 +23,8 @@ public class StudentBuilder {
 
     private Name name;
     private Phone phone;
-    private Email email;
-    private NusStudentId nusStudentId;
+    private Optional<Email> email;
+    private Optional<NusStudentId> nusStudentId;
     private Set<Tag> tags;
     private boolean isFlagged;
 
@@ -33,7 +34,8 @@ public class StudentBuilder {
     public StudentBuilder() {
         name = new Name(DEFAULT_NAME);
         phone = new Phone(DEFAULT_PHONE);
-        email = new Email(DEFAULT_EMAIL);
+        email = Optional.of(new Email(DEFAULT_EMAIL));
+        nusStudentId = Optional.empty();
         tags = new HashSet<>();
         isFlagged = false;
     }
@@ -44,8 +46,8 @@ public class StudentBuilder {
     public StudentBuilder(Student studentToCopy) {
         name = studentToCopy.getName();
         phone = studentToCopy.getPhone();
-        email = studentToCopy.getEmail().orElse(null);
-        nusStudentId = studentToCopy.getNusStudentId().orElse(null);
+        email = studentToCopy.getEmail();
+        nusStudentId = studentToCopy.getNusStudentId();
         tags = new HashSet<>(studentToCopy.getTags());
         isFlagged = studentToCopy.isFlagged();
     }
@@ -78,7 +80,7 @@ public class StudentBuilder {
      * Sets the {@code Email} of the {@code Student} that we are building.
      */
     public StudentBuilder withEmail(String email) {
-        this.email = new Email(email);
+        this.email = Optional.of(new Email(email));
         return this;
     }
 
@@ -86,7 +88,7 @@ public class StudentBuilder {
      * Leaves the {@code Student} that we are building without an email.
      */
     public StudentBuilder withoutEmail() {
-        this.email = null;
+        this.email = Optional.empty();
         return this;
     }
 
@@ -94,7 +96,7 @@ public class StudentBuilder {
      * Sets the {@code NusStudentId} of the {@code Student} that we are building.
      */
     public StudentBuilder withNusStudentId(String nusStudentId) {
-        this.nusStudentId = new NusStudentId(nusStudentId);
+        this.nusStudentId = Optional.of(new NusStudentId(nusStudentId));
         return this;
     }
 
@@ -102,7 +104,7 @@ public class StudentBuilder {
      * Leaves the {@code Student} that we are building without an NUS Student ID.
      */
     public StudentBuilder withoutNusStudentId() {
-        this.nusStudentId = null;
+        this.nusStudentId = Optional.empty();
         return this;
     }
 

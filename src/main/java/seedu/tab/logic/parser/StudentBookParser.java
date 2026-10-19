@@ -17,6 +17,7 @@ import seedu.tab.logic.commands.ExitCommand;
 import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.ListCommand;
+import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.parser.exceptions.ParseException;
 
 /**
@@ -72,6 +73,7 @@ public class StudentBookParser {
         return switch (commandWord) {
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
+            case TagCommand.COMMAND_WORD -> new TagCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);
             case ClearCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new ClearCommand());
             case FindCommand.COMMAND_WORD -> new FindCommandParser().parse(arguments);

@@ -44,7 +44,25 @@ public class JsonSerializableStudentBookTest {
         JsonSerializableStudentBook dataFromFile = JsonUtil.readJsonFile(DUPLICATE_STUDENT_FILE,
                 JsonSerializableStudentBook.class).get();
         String expectedMessage = "Student record 2 (\"Bob Lim\"): "
-                + String.format(JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT, "A01234567X");
+                + String.format(JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT,
+                        "A01234567X", 1, "Alice Pauline");
+        assertThrows(IllegalValueException.class, expectedMessage, dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_duplicateMatchesLaterStudent_reportsMatchingRecord() {
+        JsonAdaptedStudent firstStudent = new JsonAdaptedStudent(
+                "Alice Pauline", "94351253", "alice@example.com", "A01234567X", List.of(), false);
+        JsonAdaptedStudent matchingStudent = new JsonAdaptedStudent(
+                "Carol Elle", "98765432", "carol@example.com", "A12345678C", List.of(), false);
+        JsonAdaptedStudent duplicateStudent = new JsonAdaptedStudent(
+                "Bob Lim", "91234567", "bob@example.com", "a12345678c", List.of(), false);
+        JsonSerializableStudentBook dataFromFile = new JsonSerializableStudentBook(
+                List.of(firstStudent, matchingStudent, duplicateStudent));
+        String expectedMessage = "Student record 3 (\"Bob Lim\"): "
+                + String.format(JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT,
+                        "A12345678C", 2, "Carol Elle");
+
         assertThrows(IllegalValueException.class, expectedMessage, dataFromFile::toModelType);
     }
 
