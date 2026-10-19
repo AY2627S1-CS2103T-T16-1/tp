@@ -31,6 +31,7 @@ import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
@@ -316,6 +317,33 @@ public class EditCommandTest {
                 Messages.format(cleared)), clearedModel);
 
         assertEquals(cleared, model.getFilteredStudentList().get(0));
+    }
+
+    @Test
+    public void execute_editRemovingMatchAfterFilter_shiftsRemainingIndices() {
+        model.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of("Meier")));
+        Student firstMatch = model.getFilteredStudentList().get(0);
+        Student secondMatch = model.getFilteredStudentList().get(1);
+
+        EditCommand renameFirst = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withName(VALID_NAME_BOB).build());
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of("Meier")));
+        Student renamed = new StudentBuilder(firstMatch).withName(VALID_NAME_BOB).build();
+        expectedModel.setStudent(firstMatch, renamed);
+        assertCommandSuccess(renameFirst, model, String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(renamed)), expectedModel);
+
+        assertEquals(List.of(secondMatch), model.getFilteredStudentList());
+
+        EditCommand editShifted = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
+        Model shiftedModel = new ModelManager(new StudentBook(expectedModel.getStudentBook()), new UserPrefs());
+        shiftedModel.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of("Meier")));
+        Student editedShifted = new StudentBuilder(secondMatch).withPhone(VALID_PHONE_BOB).build();
+        shiftedModel.setStudent(secondMatch, editedShifted);
+        assertCommandSuccess(editShifted, model, String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(editedShifted)), shiftedModel);
     }
 
     @Test

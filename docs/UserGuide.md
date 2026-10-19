@@ -390,7 +390,11 @@ done to it beyond the quotes any value with spaces takes:
 
 * Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list. The index **must be a positive integer** 1, 2, 3, ...
   The current search stays active after editing, so the index keeps referring to
-  the same student when you repeat a command.
+  the same student when you repeat a command, as long as that student still
+  matches the search. An edit that removes a matching detail, such as renaming
+  the only `john` in the list, takes that student off the displayed list and
+  shifts the remaining indices up. Check the displayed list before repeating a
+  command after such an edit.
 * The index comes first, before any option.
   An unquoted negative index reports both that the index must be positive and
   that the negative number is not an option. Extra words after a valid index

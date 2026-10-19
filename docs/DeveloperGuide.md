@@ -2326,6 +2326,15 @@ testers are expected to do more *exploratory* testing.
       Expected: John Doe's phone becomes `9876543` and is then restored to
       `98765432`. Alex Yeoh's phone remains `87438807` throughout.
 
+   1. Test case: Run `add John Smith -p 91112222`, then `find john`,
+      `edit 1 -n Jack`, then `edit 1 -p 91112233`.<br>
+      Expected: The first `edit` renames John Doe to Jack, who no longer
+      matches `john` and leaves the displayed list; John Smith shifts up to
+      index 1. The second `edit` therefore changes John Smith's phone, not
+      Jack's. The User Guide warns that an edit removing a match shifts the
+      remaining indices, so the displayed list should be checked before
+      repeating a command.
+
 1. Reporting several mistakes at once
 
    1. Prerequisites: Run `list` and note the list size.
