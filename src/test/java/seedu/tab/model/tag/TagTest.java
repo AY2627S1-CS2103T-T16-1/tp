@@ -57,6 +57,10 @@ public class TagTest {
         assertEquals("Lab 3", new Tag(" Lab 3 ").tagName);
         assertEquals(new Tag("Lab 3"), new Tag("Lab\u00A03"));
         assertEquals(new Tag("caf\u00E9"), new Tag("cafe\u200B\u0301"));
+
+        // an invisible mark a paste carries must not split one tag into two lookalikes
+        assertEquals(new Tag("friend"), new Tag("\u200Efriend"));
+        assertEquals(new Tag("friend"), new Tag("friend\u200F"));
     }
 
     @Test
