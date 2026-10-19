@@ -751,7 +751,12 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install TAB on the other computer and overwrite the data file it creates with the data file from your previous TAB home folder.
+**A**: Install TAB on the other computer, then copy `data/tab.json` from your
+previous TAB home folder to the same place beside the new JAR, creating the
+`data` folder if it is not there. A new install has no data file to overwrite:
+TAB writes one only when a command changes a record, so a fresh TAB that has
+only been looked at leaves the folder without it. Copy the file while TAB is
+closed, since TAB rewrites it from its own copy at the next change.
 
 --------------------------------------------------------------------------------------------------------------------
 
