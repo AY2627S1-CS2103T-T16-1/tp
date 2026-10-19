@@ -3,18 +3,24 @@ package seedu.tab.commons.util;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileSystem;
 import java.nio.file.FileSystemException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Assumptions;
@@ -64,6 +70,21 @@ public class FileUtilTest {
 
         assertEquals(permissions, Files.getPosixFilePermissions(file));
         assertEquals("new contents", Files.readString(file));
+    }
+
+    @Test
+    public void writeToFile_existingNonPosixFile_replacesContents() throws Exception {
+        Path archive = testFolder.resolve("data.zip");
+        URI archiveUri = URI.create("jar:" + archive.toUri());
+        try (FileSystem fileSystem = FileSystems.newFileSystem(archiveUri, Map.of("create", "true"))) {
+            Path file = fileSystem.getPath("tab.json");
+            Files.writeString(file, "old contents");
+            assertNull(Files.getFileAttributeView(file, PosixFileAttributeView.class));
+
+            FileUtil.writeToFile(file, "new contents");
+
+            assertEquals("new contents", Files.readString(file));
+        }
     }
 
     @Test
