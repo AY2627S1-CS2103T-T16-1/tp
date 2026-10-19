@@ -706,7 +706,7 @@ identity check scans the complete student book. A matching NUS Student ID stops
 the command before it changes the model; other matching details can warn the
 User while still allowing the record to be added.
 
-<img src="images/AddDuplicateCheckActivityDiagram.png" alt="Add command duplicate check" width="500" />
+<puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Add command duplicate check" width="500" />
 
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons

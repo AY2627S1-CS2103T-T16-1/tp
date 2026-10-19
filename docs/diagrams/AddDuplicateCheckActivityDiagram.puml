@@ -4,23 +4,23 @@ skinparam ActivityFontSize 15
 skinparam ArrowFontSize 12
 
 start
-:AddCommand.execute(model);
-:model.findSameStudent(toAdd);
+:Find a student with the same
+NUS Student ID;
 note right
   Student.isSameStudent matches only
   two present, equal NUS Student IDs.
   Stored IDs use uppercase letters.
 end note
 
-if (Matching NUS Student ID?) then (yes)
-    :Throw CommandException naming
-    the ID and existing student;
+if () then ([matching NUS Student ID])
+    :Reject the addition, naming the ID
+    and existing student;
     stop
-else (no)
-    :Append possible-duplicate warnings
+else ([else])
+    :Build feedback and append warnings
     for matching name, phone or email;
-    :model.addStudent(toAdd);
-    :Return CommandResult with feedback;
+    :Add the student to the model;
+    :Return command result with feedback;
     stop
 endif
 @enduml
