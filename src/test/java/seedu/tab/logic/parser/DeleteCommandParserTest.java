@@ -154,6 +154,15 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_valueJoinedToAnotherMarker_readsTheTokenAsTheTarget() {
+        // an equals sign joins a value to an option, so a token that opens any other way
+        // is still read as the target itself
+        assertParseFailure(parser, "1=2", USAGE_MESSAGE);
+        assertParseFailure(parser, "a=b", Messages.getErrorMessageForInvalidValue(
+                NusStudentId.FIELD_NAME, "a=b", NusStudentId.MESSAGE_NON_ALPHANUMERIC));
+    }
+
+    @Test
     public void parse_malformedNusStudentIdFlag_throwsParseException() {
         // the option takes exactly one value and leaves no room for a second target
         assertParseFailure(parser, "--id", USAGE_MESSAGE);
