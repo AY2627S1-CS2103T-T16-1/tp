@@ -89,6 +89,17 @@ public class Flag {
         return String.join("/", getMarkers());
     }
 
+    /**
+     * Returns the primary marker followed by each alias introduced by "or", such as
+     * {@code --follow-up (or -f)}. A flag without aliases returns its primary marker alone.
+     */
+    public String getMarkerWithAliases() {
+        if (aliases.isEmpty()) {
+            return flag;
+        }
+        return flag + " (or " + String.join(", ", aliases) + ")";
+    }
+
     public boolean takesValue() {
         return takesValue;
     }

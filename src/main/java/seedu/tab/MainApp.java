@@ -1,6 +1,8 @@
 package seedu.tab;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -10,7 +12,6 @@ import javafx.stage.Stage;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.commons.util.AppUtil;
-import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.Logic;
 import seedu.tab.logic.LogicManager;
 import seedu.tab.model.Model;
@@ -135,7 +136,8 @@ public class MainApp extends Application {
         try {
             storage.saveUserPrefs(initializedPrefs);
         } catch (IOException e) {
-            logger.warning("Failed to save preference file : " + StringUtil.getDetails(e));
+            logger.warning("Could not save preferences to " + prefsFilePath + ": " + describePreferenceSaveError(e)
+                    + ". Using preferences for this session only.");
         }
 
         return initializedPrefs;
@@ -153,7 +155,18 @@ public class MainApp extends Application {
         try {
             storage.saveUserPrefs(model.getUserPrefs());
         } catch (IOException e) {
-            logger.severe("Failed to save preferences " + StringUtil.getDetails(e));
+            logger.warning("Could not save window preferences to " + storage.getUserPrefsFilePath() + ": "
+                    + describePreferenceSaveError(e) + ". Window preferences will not be saved.");
         }
+    }
+
+    private static String describePreferenceSaveError(IOException exception) {
+        if (exception instanceof FileSystemException fileError && fileError.getReason() != null) {
+            return fileError.getReason();
+        }
+        if (exception instanceof AccessDeniedException) {
+            return "permission denied";
+        }
+        return exception.getMessage() == null ? "an I/O error occurred" : exception.getMessage();
     }
 }

@@ -10,6 +10,7 @@ import static seedu.tab.testutil.TypicalStudents.ALICE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
@@ -63,11 +64,13 @@ public class AddCommandTest {
 
     @Test
     public void execute_duplicateStudent_throwsCommandException() {
-        Student validStudent = new StudentBuilder().build();
+        Student validStudent = new StudentBuilder().withNusStudentId("A01234567X").build();
         AddCommand addCommand = new AddCommand(validStudent);
         ModelStub modelStub = new ModelStubWithStudent(validStudent);
 
-        assertThrows(CommandException.class, AddCommand.MESSAGE_DUPLICATE_STUDENT, () -> addCommand.execute(modelStub));
+        String expectedMessage = String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                validStudent.getNusStudentId().orElseThrow(), validStudent.getName());
+        assertThrows(CommandException.class, expectedMessage, () -> addCommand.execute(modelStub));
     }
 
     @Test
@@ -136,7 +139,7 @@ public class AddCommandTest {
         }
 
         @Override
-        public boolean hasStudent(Student student) {
+        public Optional<Student> findSameStudent(Student student) {
             throw new AssertionError("This method should not be called.");
         }
 
@@ -156,7 +159,12 @@ public class AddCommandTest {
         }
 
         @Override
-        public void updateFilteredStudentList(Predicate<Student> predicate) {
+        public Predicate<? super Student> getFilteredStudentPredicate() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void updateFilteredStudentList(Predicate<? super Student> predicate) {
             throw new AssertionError("This method should not be called.");
         }
     }
@@ -173,9 +181,9 @@ public class AddCommandTest {
         }
 
         @Override
-        public boolean hasStudent(Student student) {
+        public Optional<Student> findSameStudent(Student student) {
             requireNonNull(student);
-            return this.student.isSameStudent(student);
+            return this.student.isSameStudent(student) ? Optional.of(this.student) : Optional.empty();
         }
     }
 
@@ -186,9 +194,9 @@ public class AddCommandTest {
         final ArrayList<Student> studentsAdded = new ArrayList<>();
 
         @Override
-        public boolean hasStudent(Student student) {
+        public Optional<Student> findSameStudent(Student student) {
             requireNonNull(student);
-            return studentsAdded.stream().anyMatch(student::isSameStudent);
+            return studentsAdded.stream().filter(student::isSameStudent).findFirst();
         }
 
         @Override
