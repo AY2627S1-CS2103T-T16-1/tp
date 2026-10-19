@@ -50,7 +50,7 @@ public class UniqueStudentList implements Iterable<Student> {
 
     /**
      * Replaces the student {@code target} in the list with {@code editedStudent}.
-     * {@code target} must exist in the list.
+     * {@code target} must be the exact object stored in the list.
      * The student identity of {@code editedStudent} must not be the same as another existing student in the list.
      */
     public void setStudent(Student target, Student editedStudent) {
@@ -69,8 +69,8 @@ public class UniqueStudentList implements Iterable<Student> {
     }
 
     /**
-     * Removes the equivalent student from the list.
-     * The student must exist in the list.
+     * Removes {@code toRemove} from the list.
+     * {@code toRemove} must be the exact object stored in the list.
      */
     public void remove(Student toRemove) {
         requireNonNull(toRemove);
