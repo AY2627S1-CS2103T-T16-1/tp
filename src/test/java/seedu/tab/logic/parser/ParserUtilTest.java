@@ -14,6 +14,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.logic.Messages;
+import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
@@ -36,6 +38,9 @@ public class ParserUtilTest {
     private static final String VALID_TAG_2 = "neighbour";
 
     private static final String WHITESPACE = " \t\r\n";
+
+    /** What a calling command hands parseStudentTarget to report a mistyped index through. */
+    private static final String USAGE = "delete: deletes a student by index or NUS Student ID.";
 
     @Test
     public void parseRequiredIndex_missingInput_namesSuppliedField() {
@@ -86,6 +91,57 @@ public class ParserUtilTest {
 
         // Leading and trailing whitespaces
         assertEquals(INDEX_FIRST_STUDENT, ParserUtil.parseIndex("  1  "));
+    }
+
+    @Test
+    public void parseStudentTarget_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseStudentTarget(null, USAGE));
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseStudentTarget("1", null));
+    }
+
+    @Test
+    public void parseStudentTarget_blankTarget_throwsUsageMessage() {
+        for (String target : List.of("", " ", WHITESPACE)) {
+            assertThrows(ParseException.class,
+                    String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, USAGE), () ->
+                    ParserUtil.parseStudentTarget(target, USAGE));
+        }
+    }
+
+    @Test
+    public void parseStudentTarget_indexTarget_returnsIndexTarget() throws Exception {
+        assertEquals(StudentTarget.byIndex(INDEX_FIRST_STUDENT),
+                ParserUtil.parseStudentTarget("1", USAGE));
+        assertEquals(StudentTarget.byIndex(INDEX_FIRST_STUDENT),
+                ParserUtil.parseStudentTarget("  1  ", USAGE));
+    }
+
+    @Test
+    public void parseStudentTarget_unusableIndexTarget_throwsUsageMessage() {
+        // a target of this shape reads as a mistyped index rather than as a candidate
+        // NUS Student ID, so the usage message carries the refusal
+        for (String target : List.of("0", "-1", "!@#", "1a", "2147483648")) {
+            assertThrows(ParseException.class,
+                    String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, USAGE), () ->
+                    ParserUtil.parseStudentTarget(target, USAGE));
+        }
+    }
+
+    @Test
+    public void parseStudentTarget_nusStudentIdTarget_returnsIdTarget() throws Exception {
+        assertEquals(StudentTarget.byNusStudentId(new NusStudentId(VALID_NUS_STUDENT_ID)),
+                ParserUtil.parseStudentTarget(VALID_NUS_STUDENT_ID, USAGE));
+
+        // NusStudentId normalizes its value, so a lowercase ID is the same target
+        assertEquals(StudentTarget.byNusStudentId(new NusStudentId(VALID_NUS_STUDENT_ID)),
+                ParserUtil.parseStudentTarget("a01234567x", USAGE));
+    }
+
+    @Test
+    public void parseStudentTarget_invalidNusStudentId_throwsParseExceptionWithReason() {
+        assertThrows(ParseException.class, Messages.getErrorMessageForInvalidValue(
+                NusStudentId.FIELD_NAME, INVALID_NUS_STUDENT_ID, NusStudentId.MESSAGE_NON_ALPHANUMERIC), () ->
+                ParserUtil.parseStudentTarget(INVALID_NUS_STUDENT_ID, USAGE));
     }
 
     @Test
