@@ -556,9 +556,11 @@ but `isSameStudent` does not: changing whether a student needs a reply does not
 change their identity. The flag is stored as `Optional<Flag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
-Search combines ordinary tags with the optional flag and matches their
-inherited `tagName` values. The student card and command feedback display the
-same value, while the card keeps the flag in its separate follow-up row.
+Search matches ordinary tags as parts of their inherited `tagName` values, but
+matches the optional flag only when a term names it: the whole label
+`Needs follow-up` or one of its words, ignoring case (`Flag.matchesKeyword`).
+The student card and command feedback display the same value, while the card
+keeps the flag in its separate follow-up row.
 
 The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
 For edit, the `EditStudentDescriptor` stores a nullable `Boolean isFlagged`:
@@ -724,8 +726,15 @@ Search terms are normalized with `StringUtil.normalizeFieldValue`, collapsing in
 whitespace runs and applying Unicode NFC normalization. It creates a
 `DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
 against the student's name, NUS Student ID, phone, email, ordinary tags,
-and optional follow-up flag. Matching is case-insensitive and partial; any
-keyword can match.
+and optional follow-up flag. Matching is case-insensitive; those details
+match partially, while the follow-up flag matches only the whole label
+`Needs follow-up` or one of its words, so a fragment such as `low` cannot
+list every flagged student.
+For a keyword containing only Unicode decimal digits (`\p{Nd}+`), the phone
+comparison also checks a copy of the stored phone with non-digit characters
+removed. This lets `91234567` match `+65 9123 4567` or `9123-4567`.
+Literal phone matching remains available for formatted phrases and annotations;
+other fields retain their text matching. The stored phone and saved data do not change.
 
 `FindCommand` and `ListCommand` report the count of displayed students in
 their execution feedback. `FindCommand` counts only the matching students
@@ -1176,7 +1185,7 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to find students, providing one or more search terms.
 2.  TAB shows the students for whom any term matches any part of a name, NUS Student ID,
-    phone, email, tag, or follow-up status, regardless of letter case.
+    phone, email or tag, or names the follow-up status as a whole, regardless of letter case.
 3.  User identifies the intended student.
 4.  User initiates the desired action on that student.
 
@@ -1873,8 +1882,13 @@ testers are expected to do more *exploratory* testing.
       and Bob flagged.
 
    1. Test cases: `find follow-up` and `find NEEDS`<br>
-      Expected: Each search shows Bob and excludes Alice, matching part of
-      the flag's displayed name without regard to case.
+      Expected: Each search shows Bob and excludes Alice, matching a whole
+      word of the flag's displayed name without regard to case.
+
+   1. Test case: `add Low Jia Hui -p 91112222`, then `find low`<br>
+      Expected: Only Low Jia Hui is listed, reported as `Found 1 student.`,
+      although Bob still needs follow-up: `low` sits inside `Needs follow-up`
+      but is not a word of it, so it never matches the follow-up status.
 
 1. Setting and clearing follow-up while editing
 
@@ -2314,6 +2328,29 @@ testers are expected to do more *exploratory* testing.
       Expected: No change. An empty value clears the tags only on its own, so
       the message rejects the empty tag.
 
+1. Repeating an edit after a search
+
+   1. Prerequisites: Add `add Alex Yeoh -p 87438807` and
+      `add John Doe -p 98765432`, then run `find john`.
+
+   1. Test case: Run `edit 1 --follow-up` twice.<br>
+      Expected: Both commands flag John Doe, the only student listed. The
+      search stays active between the commands, so index 1 keeps pointing at
+      John Doe and Alex Yeoh stays unflagged.
+
+   1. Test case: `edit 1 -p 9876543` followed by `edit 1 -p 98765432`.<br>
+      Expected: John Doe's phone becomes `9876543` and is then restored to
+      `98765432`. Alex Yeoh's phone remains `87438807` throughout.
+
+   1. Test case: Run `add John Smith -p 91112222`, then `find john`,
+      `edit 1 -n Jack`, then `edit 1 -p 91112233`.<br>
+      Expected: The first `edit` renames John Doe to Jack, who no longer
+      matches `john` and leaves the displayed list; John Smith shifts up to
+      index 1. The second `edit` therefore changes John Smith's phone, not
+      Jack's. The User Guide warns that an edit removing a match shifts the
+      remaining indices, so the displayed list should be checked before
+      repeating a command.
+
 1. Reporting several mistakes at once
 
    1. Prerequisites: Run `list` and note the list size.
@@ -2394,6 +2431,12 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `delete 0`<br>
       Expected: No student is deleted. The status message shows error details, and the student book
       remains unchanged.
+
+   1. Test case: `delete 1` where the space after the `1` is a non-breaking space (`U+00A0`),
+      pasted from a word processor or a web page, or a full-width space (`U+3000`) typed
+      with a Chinese input method<br>
+      Expected: The first student record is deleted, exactly as with an ordinary space.
+      TAB does not call the command an invalid format for a character the user cannot see.
 
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
@@ -2520,6 +2563,23 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `delete 1`, then `list`<br>
       Expected: Feedback reports `Listed 1 student.`.
+
+### Locating students by digits in formatted phone numbers
+
+1. Full numbers, partial numbers, and unchanged saved formatting
+
+   1. Prerequisites: In a disposable copy of TAB, clear all students (`clear`, then `yes`).
+      Run `add Alex Yeoh -p "+65 9123 4567"` and `add Bernice Yu -p 9876-5432`.
+      Restart TAB and keep a copy of `data/tab.json`.
+   1. Test cases: `find 91234567`, `find 91234`, and `find 6591234567`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.` and phone `+65 9123 4567`.
+   1. Test case: `find 98765432`.<br>
+      Expected: Only Bernice Yu is shown, with `Found 1 student.` and phone `9876-5432`.
+   1. Test case: `find 91234567 Bernice`.<br>
+      Expected: Both students are shown, with `Found 2 students.`.
+   1. Test case: `find 91234568`.<br>
+      Expected: No students are shown, with `Found 0 students.`.
+      `data/tab.json` is identical to the saved copy after all these searches.
 
 ### Locating students with quoted phrases and error handling
 
