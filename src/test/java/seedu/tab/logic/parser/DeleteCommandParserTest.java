@@ -21,6 +21,9 @@ import seedu.tab.model.student.NusStudentId;
  */
 public class DeleteCommandParserTest {
 
+    private static final String USAGE_MESSAGE =
+            String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE);
+
     private DeleteCommandParser parser = new DeleteCommandParser();
 
     @Test
@@ -128,6 +131,39 @@ public class DeleteCommandParserTest {
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
         assertParseFailure(parser, "1 2",
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+    }
+
+    @Test
+    public void parse_nusStudentIdFlag_returnsDeleteCommand() {
+        // the option names the ID explicitly, so an ID opening with a digit is not read as an index
+        assertParseSuccess(parser, "--id 1ABC", deleteById("1ABC"));
+        assertParseSuccess(parser, "-i 1ABC", deleteById("1ABC"));
+        assertParseSuccess(parser, "--id=1ABC", deleteById("1ABC"));
+        assertParseSuccess(parser, "-i=A01234567X", deleteById("A01234567X"));
+
+        // the value is normalized the same way as anywhere else
+        assertParseSuccess(parser, "--id a01234567x", deleteById("A01234567X"));
+    }
+
+    @Test
+    public void parse_invalidNusStudentIdFlagValue_throwsParseException() {
+        assertParseFailure(parser, "--id A0123-456", Messages.getErrorMessageForInvalidValue(
+                NusStudentId.FIELD_NAME, "A0123-456", NusStudentId.MESSAGE_NON_ALPHANUMERIC));
+        assertParseFailure(parser, "--id=", Messages.getErrorMessageForInvalidValue(
+                NusStudentId.FIELD_NAME, "", NusStudentId.MESSAGE_EMPTY));
+    }
+
+    @Test
+    public void parse_malformedNusStudentIdFlag_throwsParseException() {
+        // the option takes exactly one value and leaves no room for a second target
+        assertParseFailure(parser, "--id", USAGE_MESSAGE);
+        assertParseFailure(parser, "--id 1ABC extra", USAGE_MESSAGE);
+        assertParseFailure(parser, "1 --id A01234567X", USAGE_MESSAGE);
+        assertParseFailure(parser, "--id A01234567X --follow-up", USAGE_MESSAGE);
+
+        // a quoted token is a value, not an option, as everywhere else in a command
+        assertParseFailure(parser, "\"--id\" 1ABC", USAGE_MESSAGE);
+        assertParseFailure(parser, "\"--id=1ABC\"", USAGE_MESSAGE);
     }
 
     /** Returns the delete command that names the student holding {@code nusStudentId}. */
