@@ -83,14 +83,60 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_digitsInFormattedPhone_returnsTrue() {
+        for (String phone : List.of("+65 9123 4567", "9123-4567", "(9123).4567", "9123\u00a04567",
+                "9123\u20114567", "9123 4567 ext 21")) {
+            Student student = new StudentBuilder().withPhone(phone).build();
+            for (String keyword : List.of("91234567", "91234", "345", "7")) {
+                assertTrue(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student),
+                        phone + " should match " + keyword);
+            }
+        }
+        Student student = new StudentBuilder().withPhone("+65 9123 4567").build();
+        assertTrue(new DetailsContainsKeywordsPredicate(List.of("6591234567")).test(student));
+        Student unicodeStudent = new StudentBuilder().withPhone("٩١٢٣-٤٥٦٧").build();
+        assertTrue(new DetailsContainsKeywordsPredicate(List.of("٩١٢٣٤٥٦٧")).test(unicodeStudent));
+    }
+
+    @Test
+    public void test_formattedPhoneText_preservesLiteralMatching() {
+        Student student = new StudentBuilder().withPhone("+65 9123 4567 ext 21").build();
+        for (String keyword : List.of("+65", "9123 4567", "EXT 21", "ext")) {
+            assertTrue(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student));
+        }
+        for (String keyword : List.of("91234568", "76543219", "123456789", "missing91234567",
+                "ext 22", "---", "9123-4567")) {
+            assertFalse(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student));
+        }
+    }
+
+    @Test
+    public void test_digitsAcrossOtherDetailFormatting_returnsFalse() {
+        Student student = new StudentBuilder().withName("Lab 9123 4567").withPhone("88888888")
+                .withEmail("9123-4567@example.com").withTags("9123-4567").build();
+        assertFalse(new DetailsContainsKeywordsPredicate(List.of("91234567")).test(student));
+    }
+
+    @Test
     public void test_keywordInFollowUpFlag_matchesOnlyFlaggedStudent() {
         Student flaggedStudent = new StudentBuilder().withName("Alice").withFlag(true).build();
         Student unflaggedStudent = new StudentBuilder().withName("Alice").withFlag(false).build();
-        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of("FOLLOW-UP"));
 
-        assertTrue(predicate.test(flaggedStudent));
-        assertFalse(predicate.test(unflaggedStudent));
-        assertTrue(new DetailsContainsKeywordsPredicate(List.of("needs")).test(flaggedStudent));
+        for (String keyword : List.of("follow-up", "FOLLOW-UP", "needs", "NEEDS", "Needs follow-up")) {
+            DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of(keyword));
+            assertTrue(predicate.test(flaggedStudent), keyword + " should name the follow-up status");
+            assertFalse(predicate.test(unflaggedStudent), keyword + " should not match a student without it");
+        }
+    }
+
+    @Test
+    public void test_fragmentOfFollowUpFlag_doesNotMatchFlaggedStudent() {
+        Student flaggedStudent = new StudentBuilder().withName("Alex Yeoh").withFlag(true).build();
+
+        for (String fragment : List.of("low", "ee", "ed", "up", "need", "fol")) {
+            DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of(fragment));
+            assertFalse(predicate.test(flaggedStudent), fragment + " is only a fragment of the flag's label");
+        }
     }
 
     @Test
