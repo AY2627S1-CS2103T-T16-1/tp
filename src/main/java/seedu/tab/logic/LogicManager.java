@@ -2,8 +2,8 @@ package seedu.tab.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
-import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 import javafx.collections.ObservableList;
@@ -17,6 +17,7 @@ import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.StudentBookParser;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.Model;
+import seedu.tab.model.StudentBook;
 import seedu.tab.model.student.Student;
 import seedu.tab.storage.Storage;
 
@@ -24,10 +25,12 @@ import seedu.tab.storage.Storage;
  * The main LogicManager of the app.
  */
 public class LogicManager implements Logic {
-    public static final String FILE_OPS_ERROR_FORMAT = "Could not save data due to the following error: %s";
+    public static final String FILE_OPS_ERROR_FORMAT =
+            "Could not save data due to the following error: %s. No changes were made.";
 
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
-            "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
+            "Could not save data to file %s due to insufficient permissions to write to the file or the folder. "
+                    + "No changes were made.";
 
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
@@ -56,12 +59,7 @@ public class LogicManager implements Logic {
         if (command instanceof ClearCommand clearCommand) {
             return requestClearConfirmation(clearCommand);
         }
-        List<Student> studentsBeforeCommand = List.copyOf(model.getStudentBook().getStudentList());
-        CommandResult commandResult = command.execute(model);
-        if (!studentsBeforeCommand.equals(model.getStudentBook().getStudentList())) {
-            saveStudentBook();
-        }
-        return commandResult;
+        return executeAndSaveChanges(command);
     }
 
     /**
@@ -91,9 +89,22 @@ public class LogicManager implements Logic {
                     + clearCommand.execute(model).getFeedbackToUser());
         }
         pendingClearCommand = Optional.empty();
+        StudentBook studentBookBeforeCommand = new StudentBook(model.getStudentBook());
+        Predicate<? super Student> filterBeforeCommand = model.getFilteredStudentPredicate();
         CommandResult result = clearCommand.executeConfirmed(model);
-        saveStudentBook();
+        saveStudentBookIfChanged(studentBookBeforeCommand, filterBeforeCommand);
         return result;
+    }
+
+    /**
+     * Executes a command and saves only when it changes student records.
+     */
+    private CommandResult executeAndSaveChanges(Command command) throws CommandException {
+        StudentBook studentBookBeforeCommand = new StudentBook(model.getStudentBook());
+        Predicate<? super Student> filterBeforeCommand = model.getFilteredStudentPredicate();
+        CommandResult commandResult = command.execute(model);
+        saveStudentBookIfChanged(studentBookBeforeCommand, filterBeforeCommand);
+        return commandResult;
     }
 
     /**
@@ -112,15 +123,23 @@ public class LogicManager implements Logic {
     }
 
     /**
-     * Saves the student book and translates storage errors into command feedback.
+     * Saves changed student data, restoring the previous data and filter if the save fails.
      */
-    private void saveStudentBook() throws CommandException {
+    private void saveStudentBookIfChanged(StudentBook studentBookBeforeCommand,
+            Predicate<? super Student> filterBeforeCommand) throws CommandException {
+        if (studentBookBeforeCommand.equals(model.getStudentBook())) {
+            return;
+        }
         try {
             storage.saveStudentBook(model.getStudentBook());
-        } catch (AccessDeniedException e) {
-            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
-        } catch (IOException ioe) {
-            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
+        } catch (IOException e) {
+            model.setStudentBook(studentBookBeforeCommand);
+            model.updateFilteredStudentList(filterBeforeCommand);
+            logger.warning("Restored the student book and filter after save failed: " + e);
+            if (e instanceof AccessDeniedException) {
+                throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
+            }
+            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, e.getMessage()), e);
         }
     }
 

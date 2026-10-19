@@ -65,9 +65,12 @@ public interface Model {
     /** Returns an unmodifiable view of the filtered student list */
     ObservableList<Student> getFilteredStudentList();
 
+    /** Returns a predicate representing the current displayed-student filter. */
+    Predicate<? super Student> getFilteredStudentPredicate();
+
     /**
      * Updates the filter of the filtered student list to filter by the given {@code predicate}.
      * @throws NullPointerException if {@code predicate} is null.
      */
-    void updateFilteredStudentList(Predicate<Student> predicate);
+    void updateFilteredStudentList(Predicate<? super Student> predicate);
 }

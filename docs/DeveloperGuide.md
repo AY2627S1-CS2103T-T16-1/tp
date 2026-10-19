@@ -265,12 +265,12 @@ How the `Logic` component works:
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
-`LogicManager` compares a snapshot of the full student list before execution
+`LogicManager` compares a snapshot of the full student book before execution
 with the records afterwards and saves only if they differ. Filter changes and
 commands such as `list`, `find`, `help`, and `exit` therefore need no write
-permission. Confirming `clear` still saves the emptied book. A failed save
-leaves the change in memory; a later command that changes no records does not
-retry that save, so the User can still inspect the records or exit.
+permission. Confirming `clear` still saves the emptied book. If a save fails,
+`LogicManager` restores the snapshot and active filter before reporting the
+error, so a failed command does not remain applied in memory.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a command entered by the User:
 
@@ -350,6 +350,23 @@ Classes used by multiple components are in the `seedu.tab.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Rolling back model changes when saving fails
+
+`LogicManager` takes a copy of the student book and its active display filter
+before executing a command. It compares the resulting student book with that
+copy and writes to storage only when student records changed. Commands such as
+`list`, `find`, `help`, and `exit` can therefore run even when the data file is
+not writable.
+
+When a write fails, `LogicManager` restores both the student-book copy and the
+previous filter before reporting the storage error. Restoring the filter as
+well as the records matters because `add` and `edit` normally reset the display
+to show every student. The failed command consequently has no visible or
+in-memory effect, and retrying it cannot apply the same change twice. A
+confirmed `clear` follows the same save-and-restore path; its pending
+confirmation is still removed before the save attempt so that a failure does
+not leave a stale reply active.
 
 ### Resolving application file locations
 
@@ -1738,12 +1755,12 @@ testers are expected to do more *exploratory* testing.
 
    1. Run `add Read Only Test -p 91234567`.<br>
       Expected: TAB reports a data-file save error and remains open. The
-      record is visible for this session but has not been saved.
+      record is not visible because the failed change is rolled back.
 
    1. Run `list`, then `exit`.<br>
-      Expected: `list` includes the unsaved record without a save error,
-      and `exit` closes TAB. Restore write permission and relaunch.
-      The added record was not saved.
+      Expected: `list` excludes the failed record without a save error, and
+      `exit` closes TAB. Restore write permission and relaunch. The failed
+      record is still absent.
 
 1. Full-page help pager
 
@@ -2826,5 +2843,28 @@ testers are expected to do more *exploratory* testing.
       existed, including its removed `address` keys, and relaunch TAB.<br>
       Expected: TAB loads every student, ignores the old address values and
       treats a missing flag as not needing follow-up.
+
+1. Recovering from a save failure
+
+   1. Prerequisites: Launch TAB with at least three students, make a change
+      such as `edit 1 -p 91234567`, and exit so that `data/tab.json` exists.
+      Keep a byte-for-byte copy of the file. Make both `data/tab.json` and its
+      `data` folder non-writable, then relaunch TAB using a non-root account.
+      On Linux/macOS, run `chmod 444 data/tab.json` and `chmod 555 data`. On
+      Windows, remove write permission from both the file and folder for the
+      test account while retaining read permission.
+
+   1. Test case: Enter `delete 1` twice, then enter `clear` followed by `y`.<br>
+      Expected: Each delete reports that TAB cannot save the data. No student
+      disappears, and the clear prompt still gives the original student count.
+      Confirming the clear also reports the save error and restores every
+      student.
+
+   1. Test case: Enter `list`, `find Amy`, and `help`, then press q to leave the
+      help page and enter `exit`.<br>
+      Expected: Each command succeeds, including opening the help page and
+      closing TAB. The read-only `data/tab.json` still matches the saved copy
+      byte for byte. Restore write permission to both the file and folder before
+      continuing to use TAB.
 
 1. _{ more test cases … }_
