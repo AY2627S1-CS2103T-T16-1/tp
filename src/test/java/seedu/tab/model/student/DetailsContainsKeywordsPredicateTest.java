@@ -121,11 +121,22 @@ public class DetailsContainsKeywordsPredicateTest {
     public void test_keywordInFollowUpFlag_matchesOnlyFlaggedStudent() {
         Student flaggedStudent = new StudentBuilder().withName("Alice").withFlag(true).build();
         Student unflaggedStudent = new StudentBuilder().withName("Alice").withFlag(false).build();
-        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of("FOLLOW-UP"));
 
-        assertTrue(predicate.test(flaggedStudent));
-        assertFalse(predicate.test(unflaggedStudent));
-        assertTrue(new DetailsContainsKeywordsPredicate(List.of("needs")).test(flaggedStudent));
+        for (String keyword : List.of("follow-up", "FOLLOW-UP", "needs", "NEEDS", "Needs follow-up")) {
+            DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of(keyword));
+            assertTrue(predicate.test(flaggedStudent), keyword + " should name the follow-up status");
+            assertFalse(predicate.test(unflaggedStudent), keyword + " should not match a student without it");
+        }
+    }
+
+    @Test
+    public void test_fragmentOfFollowUpFlag_doesNotMatchFlaggedStudent() {
+        Student flaggedStudent = new StudentBuilder().withName("Alex Yeoh").withFlag(true).build();
+
+        for (String fragment : List.of("low", "ee", "ed", "up", "need", "fol")) {
+            DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of(fragment));
+            assertFalse(predicate.test(flaggedStudent), fragment + " is only a fragment of the flag's label");
+        }
     }
 
     @Test

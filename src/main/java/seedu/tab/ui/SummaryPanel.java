@@ -24,13 +24,7 @@ import seedu.tab.model.student.Student;
  */
 public class SummaryPanel extends UiPart<Region> {
 
-    /**
-     * How much of a tag the panel names. A little longer than a card's chips are cut to,
-     * because a row here carries one tag and its count where a card's line carries several
-     * chips beside a name. The count is the part a reader cannot work out for themselves,
-     * so it is the tag that gives way, and the whole of it is on its tooltip.
-     */
-    private static final int MAX_TAG_CHARACTERS = 18;
+    private static final double TAG_ROW_SPACING = 4;
 
     private static final String FXML = "SummaryPanel.fxml";
     private static final String SINGULAR = "%d student";
@@ -99,14 +93,13 @@ public class SummaryPanel extends UiPart<Region> {
     /**
      * Returns a row naming {@code tag} with its count pushed to the far edge.
      *
-     * <p>A long tag gives way, not its count. A row shares what it cannot fit between the
-     * two, so a tag long enough left the count reading as an ellipsis, which is the one part
-     * of the row a reader cannot work out for themselves. The whole of a cut tag is on its
-     * tooltip.
+     * <p>Long names wrap so that tags with a shared prefix remain distinguishable.
+     * The count keeps its full width beside the name.
      */
     private static HBox rowFor(String tag, int count) {
-        Label name = new Label();
-        UiText.showShortenedToFit(name, tag, MAX_TAG_CHARACTERS);
+        Label name = new Label(tag);
+        name.setWrapText(true);
+        name.setMinWidth(0);
         name.getStyleClass().add("summary-name");
 
         Region spacer = new Region();
@@ -116,7 +109,7 @@ public class SummaryPanel extends UiPart<Region> {
         number.getStyleClass().add("summary-count");
         number.setMinWidth(Region.USE_PREF_SIZE);
 
-        HBox row = new HBox(name, spacer, number);
+        HBox row = new HBox(TAG_ROW_SPACING, name, spacer, number);
         row.getStyleClass().add("summary-row");
         return row;
     }

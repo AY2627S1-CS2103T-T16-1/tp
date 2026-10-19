@@ -14,11 +14,9 @@ import seedu.tab.model.student.exceptions.StudentNotFoundException;
 /**
  * A list of students that enforces uniqueness between its elements and does not allow nulls.
  * A student is considered unique by comparing using {@code Student#isSameStudent(Student)}.
- * As such, adding and updating of
- * students uses Student#isSameStudent(Student) for equality so as to ensure that the student being added or updated is
- * unique in terms of identity in the UniqueStudentList. However, the removal of a student
- * uses Student#equals(Object) so
- * as to ensure that the student with exactly the same fields will be removed.
+ * As such, adding and updating of students uses Student#isSameStudent(Student) for equality so as to ensure that the
+ * student being added or updated is unique in terms of identity in the UniqueStudentList. Updating and removing locate
+ * the exact object supplied by the filtered list, so equal student records remain independently targetable.
  *
  * Supports a minimal set of list operations.
  *
@@ -52,13 +50,13 @@ public class UniqueStudentList implements Iterable<Student> {
 
     /**
      * Replaces the student {@code target} in the list with {@code editedStudent}.
-     * {@code target} must exist in the list.
+     * {@code target} must be the exact object stored in the list.
      * The student identity of {@code editedStudent} must not be the same as another existing student in the list.
      */
     public void setStudent(Student target, Student editedStudent) {
         requireAllNonNull(target, editedStudent);
 
-        int index = internalList.indexOf(target);
+        int index = indexOfReference(target);
         if (index == -1) {
             throw new StudentNotFoundException();
         }
@@ -71,14 +69,16 @@ public class UniqueStudentList implements Iterable<Student> {
     }
 
     /**
-     * Removes the equivalent student from the list.
-     * The student must exist in the list.
+     * Removes {@code toRemove} from the list.
+     * {@code toRemove} must be the exact object stored in the list.
      */
     public void remove(Student toRemove) {
         requireNonNull(toRemove);
-        if (!internalList.remove(toRemove)) {
+        int index = indexOfReference(toRemove);
+        if (index == -1) {
             throw new StudentNotFoundException();
         }
+        internalList.remove(index);
     }
 
     public void setStudents(UniqueStudentList replacement) {
@@ -147,5 +147,14 @@ public class UniqueStudentList implements Iterable<Student> {
             }
         }
         return true;
+    }
+
+    private int indexOfReference(Student target) {
+        for (int index = 0; index < internalList.size(); index++) {
+            if (internalList.get(index) == target) {
+                return index;
+            }
+        }
+        return -1;
     }
 }
