@@ -267,13 +267,17 @@ the student who already holds it.
 
 **Tip:** After a successful `add` or `edit`, TAB warns you when another student
 has the same name, phone number, or email address. The record is still saved.
-Each note names the matching field and the other student, for example:
+One warning line is shown for each matching field. It names up to two other
+students, then counts any further matches. For example:
 
-`WARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.com). Delete one if they are the same person.`
+```
+WARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.com).
+Review the records and delete duplicates only if they are the same person.
+```
 
 Names and emails are compared without regard to letter case. Repeated,
 leading, and trailing whitespace in names is insignificant, as are spaces in
-phone numbers. Each matching field produces a separate note.
+phone numbers. The review advice appears once after all matching fields.
 
 The warning is only a hint. It does not prove that two records describe the
 same person, and it does not find misspelled names, email aliases, or phone
@@ -440,7 +444,8 @@ done to it beyond the quotes any value with spaces takes:
 * An edit may give two students the same name, but cannot give a student an NUS
   Student ID already held by another record. NUS Student ID matching ignores case.
   A saved edit produces the same likely-duplicate notes described under `add`
-  when its name, phone number, or email matches another student; the edited
+  only when a name, phone number, or email changed by that command matches
+  another student. Unchanged fields are not reported again, and the edited
   student is not compared with its own earlier record.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).

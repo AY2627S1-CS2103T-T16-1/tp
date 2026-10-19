@@ -661,14 +661,20 @@ normalization, and phone comparisons remove spaces from their normalized
 stored forms. Other punctuation remains significant so the warning does not
 claim fuzzy matching it cannot provide. Absent emails do not match.
 
-The commands collect the warnings before mutation, separate them from the
-ordinary success message with a blank line, and append one prominently labelled
-`WARNING: Possible duplicate student` line for every matching field and student
-before saving the change. `EditCommand` excludes the selected `Student` instance
-but still uses the complete unfiltered student book, so a filtered list cannot
-hide a match and an unchanged field cannot make a record match itself. These
-comparisons are advisory only: they never feed `isSameStudent` or the storage
-duplicate check, and therefore cannot reject or discard a legitimate shared detail.
+The commands collect the warnings before mutation and separate them from the
+ordinary success message with a blank line. Matches are grouped by field into
+one prominently labelled `WARNING: Possible duplicate student` line. A line
+names at most two students and summarizes further matches as `N others`, so a
+shared placeholder does not fill the result box. The review advice appears
+once after every matching field.
+
+`EditCommand` compares only name, phone, or email values that differ from the
+selected record. It excludes the selected `Student` instance but still uses
+the complete unfiltered student book, so a filtered list cannot hide a match
+and unrelated tag or follow-up edits do not repeat an acknowledged warning.
+These comparisons are advisory only: they never feed `isSameStudent` or the
+storage duplicate check, and therefore cannot reject or discard a legitimate
+shared detail.
 
 **The email may be absent.** A student is recorded before an email address is
 known rather than one being invented. `Student` accepts, stores, and exposes
@@ -2303,7 +2309,8 @@ testers are expected to do more *exploratory* testing.
       `add Alice Tan -p 93456789`.<br>
       Expected: All three students are added because the matching name is not
       an identity key, and the NUS Student IDs differ or are absent. The second
-      and third additions each warn that another student has the same name.
+      and third additions each warn that other students have the same name;
+      the third result groups both matching records into one name warning.
 
    1. Test case: `add Bob Lim -p 94567891 -i a01234567x`<br>
       Expected: The addition is rejected. The error names NUS Student ID
@@ -2318,8 +2325,8 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Note the second Alice's index, then run
       `edit INDEX -n "Alice Tan" -p 95678912` with that index.<br>
       Expected: The edit succeeds because her NUS Student ID remains distinct;
-      sharing the same name does not block the edit. The result warns about
-      each of the other records with that name.
+      sharing the same name does not block the edit. The unchanged name is not
+      warned about again, and the new phone matches no other record.
 
 1. Warning about likely duplicate students
 
@@ -2345,6 +2352,18 @@ testers are expected to do more *exploratory* testing.
       Test case: `edit INDEX -t tutorial` with Dana's index.<br>
       Expected: The edit succeeds without a likely-duplicate warning. Dana's
       unchanged name and phone are not compared with her own earlier record.
+
+   1. Test case: Add `add Evan Lee -p 84445555`, then change Dana's phone with
+      `edit INDEX -p 84445555`.<br>
+      Expected: Dana's edit succeeds and warns that Evan Lee has the same
+      changed phone. Her unchanged name is not checked.
+
+   1. Prerequisites: Clear the book, add four students named `Student One`
+      through `Student Four`, each with phone `000`.<br>
+      Test case: `add Student Five -p 000`<br>
+      Expected: Student Five is saved. One phone warning names Student One and
+      Student Two, then says that two others match. The review advice appears
+      once rather than after every student.
 
    1. Test case: Add `add Tan Wei Ming -p 91234567` twice, note the second
       Tan Wei Ming's index, then run `edit INDEX -p 99999999` with that index.<br>
