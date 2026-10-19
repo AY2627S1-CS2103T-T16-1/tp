@@ -7,7 +7,10 @@ import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.DeleteCommand;
+import seedu.tab.logic.commands.StudentTarget;
+import seedu.tab.model.student.NusStudentId;
 
 /**
  * As we are only doing white-box testing, our test cases do not cover path variations
@@ -77,9 +80,37 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_nusStudentId_returnsDeleteCommand() {
+        // an NUS Student ID is any string of letters and digits, so any target opening with
+        // a letter that holds one is read as an ID rather than as a mistyped index
+        assertParseSuccess(parser, "abc", deleteById("abc"));
+        assertParseSuccess(parser, "A01234567X", deleteById("A01234567X"));
+    }
+
+    @Test
+    public void parse_nusStudentIdIgnoresCase_returnsDeleteCommand() {
+        // NusStudentId normalizes its value, so a lowercase ID names the same student
+        assertParseSuccess(parser, "a01234567x", deleteById("A01234567X"));
+    }
+
+    @Test
+    public void parse_quotedNusStudentId_returnsDeleteCommand() {
+        assertParseSuccess(parser, "\"A01234567X\"", deleteById("A01234567X"));
+    }
+
+    @Test
+    public void parse_invalidNusStudentId_throwsParseException() {
+        assertParseFailure(parser, "A0123-456", Messages.getErrorMessageForInvalidValue(
+                NusStudentId.FIELD_NAME, "A0123-456", NusStudentId.MESSAGE_NON_ALPHANUMERIC));
+        String tooLong = "A" + "1".repeat(NusStudentId.MAX_LENGTH);
+        assertParseFailure(parser, tooLong, Messages.getErrorMessageForInvalidValue(
+                NusStudentId.FIELD_NAME, tooLong, NusStudentId.MESSAGE_TOO_LONG));
+    }
+
+    @Test
     public void parse_invalidArgs_throwsParseException() {
-        assertParseFailure(parser, "a", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
-        assertParseFailure(parser, "abc", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+        // a target that does not open with a letter reads as a mistyped index, not as a
+        // candidate NUS Student ID, so it is refused with the usage message
         assertParseFailure(parser, "!@#", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
     }
 
@@ -97,5 +128,10 @@ public class DeleteCommandParserTest {
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
         assertParseFailure(parser, "1 2",
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+    }
+
+    /** Returns the delete command that names the student holding {@code nusStudentId}. */
+    private static DeleteCommand deleteById(String nusStudentId) {
+        return new DeleteCommand(StudentTarget.byNusStudentId(new NusStudentId(nusStudentId)));
     }
 }
