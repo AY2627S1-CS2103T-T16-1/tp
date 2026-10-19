@@ -106,6 +106,11 @@ The student card's `TagRow` retains every tag name, but creates at most three
 tag labels. Layout uses the full name count to size the overflow chip and
 list all hidden tags in its tooltip, even when fewer labels are created.
 
+`SummaryPanel` wraps complete tag names within the fixed 150 px sidebar.
+Each count retains its preferred width, while the tag list scrolls vertically
+as wrapped rows grow. Names are not shortened, so tags differing only at the
+end remain distinguishable without hovering.
+
 `HelpCommand` returns a command summary and the existing `showHelp` signal.
 `MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
 the entire student page (command box, result, summary sidebar and student list).
@@ -325,6 +330,11 @@ for repair. `JsonUserPrefsStorage` also rejects an explicit `null` for
 `MainApp.initPrefs` handles invalid preferences by restoring and saving
 defaults before constructing the model. Student data is stored separately
 and is unchanged by preference recovery.
+Recoverable preference writes in `MainApp.initPrefs` and `MainApp.stop` log
+one `WARNING` naming the preferences path and I/O reason, without a stack
+trace. Startup retains the loaded or default preferences for the session;
+shutdown explains that window preferences were not saved. Permission errors
+without a reason are described as permission denied.
 
 `FileUtil.writeToFile` protects an existing JSON file from a partial save. It
 resolves an existing symbolic link to its destination, so replacing the saved
@@ -418,14 +428,22 @@ for a single-valued field are duplicates rather than independent fields.
 Value-taking options take the token after them, and `-t` or `--tag` repeats
 for `add` and `edit`. The `tag` command takes exactly one tag through `-a`/`--add`
 for addition or `-r`/`--remove` for removal.
+They also accept a value joined to any short or long marker by an equals sign.
+`FlagTokenizer` splits only on the first equals sign, so later ones remain in
+the value. An attached value is unambiguously part of its option when it opens
+with a hyphen. An empty attached value must be quoted as in `--tag=""`, so an
+accidental `--tag=` cannot clear data. `CommandTokenizer` records whether a
+token began with a quote so a fully quoted `"--tag=T1"` remains a value, while
+the quote around the value in `--tag="Lab 3"` does not hide the option marker.
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
 `FlagArgumentMap` distinguish an
 absent option from a present marker without a separate representation. An
-unknown option, a value-taking option left without a value, and a token
-belonging to no option are each reported for what they are, rather than as one
-generic complaint.
+attached value on a presence-only option is refused specifically. An unknown
+option names its marker without echoing an attached value, while a value-taking
+option left without a value and a token belonging to no option are each
+reported for what they are, rather than as one generic complaint.
 
 `Flag` also lets a value-taking option carry aliases. NUS Student ID uses
 `--id` as its canonical option and the unused `-i` as its typing-friendly
@@ -814,9 +832,23 @@ An existing file is first parsed as JSON and then every student record and
 field is converted to its model type. Both stages finish before the normal UI
 can accept a command.
 
+`FileUtil.readFromFile` decodes UTF-8 strictly and removes only an optional
+leading BOM before JSON parsing. This accepts files saved by editors that add
+a BOM while rejecting malformed byte sequences rather than silently replacing
+letters with U+FFFD. `JsonUtil` translates decoding failures into an encoding
+explanation and recovery guidance through the same `DataLoadingException`
+boundary; startup preserves the original bytes and blocks the normal UI.
+
 `JsonUtil` turns malformed JSON or an incompatible JSON shape into a
-`DataLoadingException` that retains the parser's line and column. During model
-conversion, `JsonAdaptedStudent` identifies the invalid field and
+`DataLoadingException`. For a syntax error, it uses the deepest parser
+exception so that the displayed line and column identify the offending token
+rather than the last successfully mapped value. It pairs the concise parser
+explanation with the affected line and at most one line on either side. Each
+source line is limited to 160 characters; an affected long line is cropped
+around the reported column so that minified JSON remains useful without
+filling the dialog. If the parser supplies no usable location, `JsonUtil`
+omits the source instead of falling back to Jackson's source-bearing message.
+During model conversion, `JsonAdaptedStudent` identifies the invalid field and
 `JsonSerializableStudentBook` adds the one-based record number and its name
 when available. `JsonStudentBookStorage` carries that explanation through the
 same `DataLoadingException` boundary.
@@ -1389,7 +1421,8 @@ These were raised during requirement gathering and left out of the product.
 * 2a. TAB cannot read the data file at all, for example because it is not a TAB data file.
 
     * 2a1. TAB identifies the data file and parsing location when available,
-      reports why it is unreadable, and leaves it unchanged.
+      reports why it is unreadable, shows a bounded line-numbered source
+      excerpt when possible, and leaves it unchanged.
 
       Use case resumes at step 3.
 
@@ -1746,7 +1779,9 @@ testers are expected to do more *exploratory* testing.
    1. From that folder, run `java -jar tab.jar`.<br>
       Expected: The GUI opens with sample records. The terminal warns that it
       cannot write the JAR folder's `tab.log`, continues with console logging,
-      and reports that preferences cannot be saved. There is no
+      and prints one preferences warning naming `preferences.json`, the reason,
+      and that preferences will be used for this session only. The preferences
+      warning has no stack trace or `SEVERE` label. There is no
       `ExceptionInInitializerError` or `NullPointerException` from logging.
 
    1. Run `find Read Only Test`, then `list`, then `help`.<br>
@@ -1760,8 +1795,10 @@ testers are expected to do more *exploratory* testing.
 
    1. Run `list`, then `exit`.<br>
       Expected: `list` excludes the failed record without a save error, and
-      `exit` closes TAB. Restore write permission and relaunch. The failed
-      record is still absent.
+      `exit` closes TAB with one warning naming `preferences.json` and
+      explaining that window preferences could not be saved. That warning has
+      no stack trace or `SEVERE` label. Restore write permission and relaunch.
+      The failed record is still absent.
 
 1. Full-page help pager
 
@@ -2262,6 +2299,36 @@ testers are expected to do more *exploratory* testing.
       `--phone PHONE`; each unknown option names `--unknown`. Alice's details
       and `data/tab.json` remain unchanged.
 
+1. Joining option values with an equals sign
+
+   1. Prerequisites: Continue with Alice at index 1.
+
+   1. Test case: `edit 1 --name="Alice Tan" -p=81112222
+      --email=alice@example.com --id=a01234567x --tag="Lab 3"` as one line.<br>
+      Expected: Every field changes. The name and tag retain their spaces, and
+      the NUS Student ID is stored as `A01234567X`.
+
+   1. Test case: `tag 1 --add=needs=review`.<br>
+      Expected: The tag `needs=review` is added; only the first equals sign
+      separates the option from its value.
+
+   1. Test cases: `edit 1 --email=`, `edit 1 --id=`, and
+      `edit 1 --tag=`.<br>
+      Expected: No field changes. Each command reports that its option needs a
+      value, because an unquoted empty value may be an accidental omission.
+
+   1. Test case: `edit 1 --email="" --id="" --tag=""`.<br>
+      Expected: The email, NUS Student ID, and all tags are cleared. No other
+      field changes; quoting makes each empty value deliberate.
+
+   1. Test case: `edit 1 --phon=1`.<br>
+      Expected: No field changes. TAB reports that there is no `--phon` option,
+      naming the mistyped marker without its value.
+
+   1. Test cases: `edit 1 --follow-up=yes` and `edit 1 -nf=1`.<br>
+      Expected: No field changes. TAB reports that the named option takes no
+      value and should be used on its own.
+
 ### NUS Student IDs
 
 1. Adding optional NUS Student IDs with either option spelling
@@ -2650,6 +2717,16 @@ testers are expected to do more *exploratory* testing.
       Expected: The flagged count and the total read zero, and the tag list is
       empty rather than the panel disappearing.
 
+1. Distinguishing long tags
+
+   1. Test case: `add Eve Koh -p 81112222 -t consultation-week-3`, then
+      `add Fay Lo -p 81112223 -t consultation-week-3 -t consultation-week-4`.<br>
+      Expected: The sidebar shows both complete tag names on wrapped lines,
+      with counts `2` and `1` beside the correct names. Neither row overlaps
+      the next. Widening the window is not needed to read the endings.
+   1. Test case: Add enough distinct long tags to fill the sidebar.<br>
+      Expected: The tags scroll vertically and the student total stays visible.
+
 ### Student counts in list and find feedback
 
 1. Accurate student counts in command feedback
@@ -2800,9 +2877,24 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Replace the file contents with `not json format!` and launch
       TAB.<br>
       Expected: An error dialog identifies `data/tab.json`, reports malformed
-      JSON with its line and column, and asks the User to repair or replace it.
-      The main window does not open. After dismissing the dialog, the file still
-      matches the malformed contents byte for byte.
+      JSON with its line and column, shows the affected line with its line
+      number, and asks the User to repair or replace it. The main window does
+      not open. After dismissing the dialog, the file still matches the
+      malformed contents byte for byte.
+
+   1. Test case: Restore the copied multi-student file, remove the comma after
+      one student's `"name"` value, and launch TAB.<br>
+      Expected: The dialog marks the next line as affected and shows no more
+      than one numbered line on either side. Unrelated student records do not
+      appear. The recovery instructions and `Close TAB` button remain visible,
+      and the malformed file remains byte-for-byte unchanged.
+
+   1. Test case: Put otherwise valid JSON on one line, remove a comma after the
+      first 160 characters, and launch TAB.<br>
+      Expected: The dialog reports line 1 and the error column. Its excerpt is
+      shortened around the error with an ellipsis instead of showing the whole
+      line. The recovery instructions and `Close TAB` button remain visible,
+      and the malformed file remains byte-for-byte unchanged.
 
    1. Test case: Replace the file contents with `{}` and launch TAB.<br>
       Expected: The dialog reports that the student list is missing. The main
@@ -2867,5 +2959,21 @@ testers are expected to do more *exploratory* testing.
       closing TAB. The read-only `data/tab.json` still matches the saved copy
       byte for byte. Restore write permission to both the file and folder before
       continuing to use TAB.
+
+1. Loading files saved with different encodings
+
+   1. Prerequisites: Exit TAB and back up a valid `data/tab.json` containing
+      a student named `José Tan` and another recognizable student.
+   1. Test case: Save the file as UTF-8 with BOM in an editor, then launch TAB.<br>
+      Expected: Both students load, including the accented name. Edit a tag,
+      exit and relaunch; both records and the accent remain intact.
+   1. Test case: Restore the backup, save it as Windows-1252 (ANSI), then
+      launch TAB.<br>
+      Expected: The recovery dialog says the file is not valid UTF-8 and
+      explains how to resave it. The main window never opens. After dismissing
+      the dialog, the file remains byte-for-byte unchanged.
+   1. Test case: Reopen the file using Windows-1252 in the editor, save as
+      UTF-8 without BOM, and relaunch.<br>
+      Expected: Both students load with their names intact.
 
 1. _{ more test cases … }_

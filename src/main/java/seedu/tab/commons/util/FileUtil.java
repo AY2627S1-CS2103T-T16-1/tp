@@ -2,6 +2,7 @@ package seedu.tab.commons.util;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,10 +43,13 @@ public class FileUtil {
     }
 
     /**
-     * Assumes file exists
+     * Reads an existing UTF-8 file, ignoring an optional leading byte order mark.
+     *
+     * @throws IOException if the file cannot be read or contains malformed UTF-8.
      */
     public static String readFromFile(Path file) throws IOException {
-        return new String(Files.readAllBytes(file), CHARSET);
+        String content = Files.readString(file, StandardCharsets.UTF_8);
+        return content.startsWith("\uFEFF") ? content.substring(1) : content;
     }
 
     /**
