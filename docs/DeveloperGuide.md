@@ -324,6 +324,16 @@ for repair. `JsonUserPrefsStorage` also rejects an explicit `null` for
 defaults before constructing the model. Student data is stored separately
 and is unchanged by preference recovery.
 
+`FileUtil.writeToFile` protects an existing JSON file from a partial save. It
+resolves an existing symbolic link to its destination, so replacing the saved
+data leaves the link in place. It also refuses a destination that is not
+writable and copies an existing file's POSIX permissions to its replacement.
+The new contents are written and forced to a temporary file beside the real
+destination before an atomic move replaces it. Keeping both files in one
+folder makes the atomic move possible, but also means that the folder must
+allow temporary-file creation. If writing or moving fails, the previous file
+remains unchanged and TAB removes the temporary file where possible.
+
 `StorageManager` logs read/write attempts and successful saves at `FINE`,
 including preference-file operations. Entries identify the file path without
 copying student or preference contents. Save completion is logged only after
@@ -2324,7 +2334,24 @@ testers are expected to do more *exploratory* testing.
       Expected: No change. The first names the missing index and says a field
       to edit is needed; the second asks only for a field.
 
-1. _{ more test cases … }_
+1. Preserving existing data when a save fails
+
+   1. Prerequisites: Launch TAB, add a recognizable student, exit, and keep a
+      byte-for-byte copy of `data/tab.json`. Leave the file readable, but make
+      its `data` folder non-writable. On Linux/macOS, run `chmod 555 data` as a
+      non-root User. On Windows, remove create/write permission for the test
+      account from the folder while retaining read permission.
+
+   1. Test case: Launch TAB and enter `add Bob Tan -p 91234567`.<br>
+      Expected: TAB reports that it could not save the data. Bob remains
+      visible for this session, while `data/tab.json` still matches the backup
+      byte for byte and no temporary `.tab-*.tmp` file remains.
+
+   1. Test case: Enter `exit`, restore write permission to `data`, relaunch TAB,
+      and enter `list`.<br>
+      Expected: The recognizable student and every record from the backup are
+      present. Bob is absent because his failed save never replaced the last
+      valid data file.
 
 ### Clearing a student's email
 
