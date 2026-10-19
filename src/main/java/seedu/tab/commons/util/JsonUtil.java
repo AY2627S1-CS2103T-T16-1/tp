@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -30,6 +32,9 @@ public class JsonUtil {
     private static final int JSON_ERROR_MAX_LINE_LENGTH = 160;
     private static final String JSON_ERROR_ELLIPSIS = "...";
     private static final String JSON_ERROR_SOURCE_MARKER = "[Source:";
+    private static final String JSON_ERROR_SOURCE_LOCATION_PREFIX = "; line: ";
+    private static final Pattern JSON_ERROR_SOURCE_LOCATION_PATTERN =
+            Pattern.compile("; line: (\\d+), column: (\\d+)\\]");
     private static final Logger logger = LogsCenter.getLogger(JsonUtil.class);
 
     private static ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules()
@@ -88,7 +93,8 @@ public class JsonUtil {
         JsonProcessingException detailedException = getDetailedJsonProcessingException(exception);
         JsonLocation location = detailedException.getLocation();
         String message = "The data is not in the expected JSON format"
-                + getJsonLocationMessage(location) + ": " + getConciseJsonErrorMessage(detailedException);
+                + getJsonLocationMessage(location, jsonSource) + ": "
+                + getConciseJsonErrorMessage(detailedException);
         String sourceExcerpt = getJsonSourceExcerpt(jsonSource, location);
         return sourceExcerpt.isEmpty() ? message : message + "\nAffected source:\n" + sourceExcerpt;
     }
@@ -101,12 +107,25 @@ public class JsonUtil {
         return detailedException;
     }
 
-    private static String getJsonLocationMessage(JsonLocation location) {
+    private static String getJsonLocationMessage(JsonLocation location, String jsonSource) {
         if (location == null || location.getLineNr() < 1) {
             return "";
         }
         if (location.getColumnNr() < 1) {
             return String.format(" at line %d", location.getLineNr());
+        }
+
+        if (jsonSource != null) {
+            String[] sourceLines = jsonSource.split("\\R", -1);
+            int lineIndex = location.getLineNr() - 1;
+            if (lineIndex >= sourceLines.length
+                    || lineIndex == sourceLines.length - 1
+                    && location.getColumnNr() > sourceLines[lineIndex].length() + 1) {
+                return " at the end of the file";
+            }
+            if (location.getColumnNr() > sourceLines[lineIndex].length() + 1) {
+                return String.format(" at line %d", location.getLineNr());
+            }
         }
         return String.format(" at line %d, column %d", location.getLineNr(), location.getColumnNr());
     }
@@ -122,18 +141,39 @@ public class JsonUtil {
             return originalMessage.strip();
         }
 
-        int sourceContextIndex = getJsonSourceContextIndex(originalMessage, sourceMarkerIndex);
+        Optional<String> messageWithLocation = replaceJsonSourceWithLocation(originalMessage, sourceMarkerIndex);
+        if (messageWithLocation.isPresent()) {
+            return messageWithLocation.get().strip();
+        }
+
+        int sourceContextIndex = getJsonSourceContextStart(originalMessage, sourceMarkerIndex);
         return originalMessage.substring(0, sourceContextIndex).strip();
     }
 
-    private static int getJsonSourceContextIndex(String originalMessage, int sourceMarkerIndex) {
+    private static Optional<String> replaceJsonSourceWithLocation(String originalMessage, int sourceMarkerIndex) {
+        int locationSuffixIndex = originalMessage.lastIndexOf(JSON_ERROR_SOURCE_LOCATION_PREFIX);
+        if (locationSuffixIndex < sourceMarkerIndex) {
+            return Optional.empty();
+        }
+
+        Matcher matcher = JSON_ERROR_SOURCE_LOCATION_PATTERN.matcher(originalMessage);
+        matcher.region(locationSuffixIndex, originalMessage.length());
+        if (!matcher.lookingAt()) {
+            return Optional.empty();
+        }
+
+        int column = Integer.parseInt(matcher.group(2));
+        String safeLocation = column < 1
+                ? String.format("line %s", matcher.group(1))
+                : String.format("line %s, column %d", matcher.group(1), column);
+        return Optional.of(originalMessage.substring(0, sourceMarkerIndex)
+                + safeLocation + originalMessage.substring(matcher.end()));
+    }
+
+    private static int getJsonSourceContextStart(String originalMessage, int sourceMarkerIndex) {
         int openingParenthesisIndex = originalMessage.lastIndexOf('(', sourceMarkerIndex);
         if (openingParenthesisIndex >= 0) {
-            String sourceIntroduction = originalMessage
-                    .substring(openingParenthesisIndex + 1, sourceMarkerIndex).strip();
-            if (sourceIntroduction.equals("from") || sourceIntroduction.equals("for ROOT starting at")) {
-                return openingParenthesisIndex;
-            }
+            return openingParenthesisIndex;
         }
 
         int precedingAtIndex = originalMessage.lastIndexOf(" at ", sourceMarkerIndex);

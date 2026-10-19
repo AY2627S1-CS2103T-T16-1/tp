@@ -88,6 +88,15 @@ public class JsonUtilTest {
     }
 
     @Test
+    public void getJsonProcessingErrorMessage_withoutSource_keepsAvailableLocation() {
+        JsonLocation location = new JsonLocation("hidden source", -1, -1, 2, 3);
+        JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
+
+        assertEquals("The data is not in the expected JSON format at line 2, column 3: Invalid content",
+                JsonUtil.getJsonProcessingErrorMessage(exception, null));
+    }
+
+    @Test
     public void getJsonProcessingErrorMessage_invalidLine_omitsLocationAndSource() {
         JsonLocation location = new JsonLocation("hidden source", -1, -1, 0, 4);
         JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
@@ -97,17 +106,19 @@ public class JsonUtilTest {
     }
 
     @Test
-    public void getJsonProcessingErrorMessage_locationWithoutColumn_reportsLineOnly() {
-        JsonLocation location = new JsonLocation("hidden source", -1, -1, 2, 0);
-        JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
-
+    public void getJsonProcessingErrorMessage_unusableColumn_reportsLineOnly() {
         String expectedMessage = "The data is not in the expected JSON format at line 2: Invalid content\n"
                 + "Affected source:\n"
                 + "  1 | first\n"
                 + "> 2 | second\n"
                 + "  3 | third";
-        assertEquals(expectedMessage,
-                JsonUtil.getJsonProcessingErrorMessage(exception, "first\nsecond\nthird"));
+        for (int column : new int[] {0, 99}) {
+            JsonLocation location = new JsonLocation("hidden source", -1, -1, 2, column);
+            JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
+
+            assertEquals(expectedMessage,
+                    JsonUtil.getJsonProcessingErrorMessage(exception, "first\nsecond\nthird"));
+        }
     }
 
     @Test
@@ -128,7 +139,12 @@ public class JsonUtilTest {
         assertConciseJsonMessage("Unexpected token at [Source: hidden]", "Unexpected token");
         assertConciseJsonMessage("Unexpected token [Source: hidden]", "Unexpected token");
         assertConciseJsonMessage("Unexpected token at context [Source: hidden]", "Unexpected token at context");
-        assertConciseJsonMessage("Unexpected token (near [Source: hidden])", "Unexpected token (near");
+        assertConciseJsonMessage("Unexpected token (near [Source: hidden])", "Unexpected token");
+        assertConciseJsonMessage("Unexpected token (near [Source: hidden; line: unknown])", "Unexpected token");
+        assertConciseJsonMessage(
+                "Unexpected close marker '}': expected ']' "
+                        + "(for ARRAY starting at [Source: hidden; line: 8, column: 14])",
+                "Unexpected close marker '}': expected ']' (for ARRAY starting at line 8, column 14)");
     }
 
     @Test
@@ -136,7 +152,7 @@ public class JsonUtilTest {
         JsonLocation location = new JsonLocation("hidden source", -1, -1, 3, 1);
         JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
 
-        assertEquals("The data is not in the expected JSON format at line 3, column 1: Invalid content",
+        assertEquals("The data is not in the expected JSON format at the end of the file: Invalid content",
                 JsonUtil.getJsonProcessingErrorMessage(exception, "only one line"));
     }
 
@@ -145,7 +161,7 @@ public class JsonUtilTest {
         JsonLocation location = new JsonLocation("hidden source", -1, -1, 3, 1);
         JsonProcessingException exception = createJsonProcessingException("Unexpected end", location);
 
-        String expectedMessage = "The data is not in the expected JSON format at line 3, column 1: Unexpected end\n"
+        String expectedMessage = "The data is not in the expected JSON format at the end of the file: Unexpected end\n"
                 + "Affected source:\n"
                 + "  1 | first\n"
                 + "> 2 | second";
@@ -206,11 +222,25 @@ public class JsonUtilTest {
 
         assertTrue(startErrorMessage.contains("at line 1, column 2"));
         assertTrue(startErrorMessage.contains("> 1 | }"));
-        assertFalse(startErrorMessage.contains("for ROOT starting"));
+        assertTrue(startErrorMessage.contains("(for ROOT starting at line 1)"));
+        assertFalse(startErrorMessage.contains("[Source:"));
         assertFalse(startErrorMessage.contains("| null"));
         assertTrue(endErrorMessage.contains("Unexpected end-of-input"));
-        assertFalse(endErrorMessage.contains("(from"));
+        assertTrue(endErrorMessage.contains("(from line 2, column 14)"));
+        assertFalse(endErrorMessage.contains("[Source:"));
+        assertTrue(endErrorMessage.contains("at the end of the file"));
         assertTrue(endErrorMessage.contains(" 3 |     \"name\": \"Alice\""));
+    }
+
+    @Test
+    public void readJsonFile_mismatchedClosingBracket_preservesStartLocation() throws IOException {
+        String jsonSource = "{\n  \"tags\": [\"friends\"\n}\n";
+
+        String errorMessage = readMalformedJsonAndGetMessage("mismatchedBracket.json", jsonSource);
+
+        assertTrue(errorMessage.contains("Unexpected close marker '}': expected ']'"));
+        assertTrue(errorMessage.contains("(for ARRAY starting at line 2, column 11)"));
+        assertFalse(errorMessage.contains("[Source:"));
     }
 
     @Test
