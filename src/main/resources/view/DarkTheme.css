@@ -724,3 +724,27 @@
 .command-error .command-token {
     -fx-fill: -tab-danger;
 }
+
+/* Help fills the content area; navigation uses pager keys rather than scroll bars. */
+.help-page,
+.help-page .scroll-pane,
+.help-page .viewport {
+    -fx-background-color: -tab-bg;
+}
+
+.help-page .scroll-pane {
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+}
+
+.help-text {
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 13px;
+    -fx-text-fill: -tab-text;
+    -fx-opacity: 1;
+}
+
+.help-footer {
+    -fx-border-color: -tab-border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}

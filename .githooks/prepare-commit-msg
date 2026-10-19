@@ -1,0 +1,20 @@
+#!/bin/sh
+# Shortens the subject git writes for a merge, so that syncing a branch whose
+# name is long stays within the 72-character limit that commit-msg enforces:
+#
+#   Merge branch 'master' into 229-show-a-likely-correction-for-a-mistyped-command
+#   Merge master into 229-show-a-likely-correction-for-a-mistyped-command
+#
+# Enable with:  git config core.hooksPath .githooks   (see .githooks/README.md)
+
+msgfile=$1
+source=$2
+
+{ [ "$source" = merge ] && [ -f "$msgfile" ]; } || exit 0
+
+# Only git's own wording on the first line is rewritten, so a message given
+# with -m is kept as written. The " of <url>" that git pull adds is dropped.
+sed -e "1s/^Merge branch '\([^']*\)' of [^ ]* into /Merge \1 into /" \
+    -e "1s/^Merge branch '\([^']*\)'/Merge \1/" \
+    -e "1s/^Merge remote-tracking branch '\([^']*\)'/Merge \1/" \
+    "$msgfile" > "$msgfile.tmp" && mv "$msgfile.tmp" "$msgfile"

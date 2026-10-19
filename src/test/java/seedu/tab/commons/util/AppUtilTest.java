@@ -1,11 +1,52 @@
 package seedu.tab.commons.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static seedu.tab.testutil.Assert.assertThrows;
 
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class AppUtilTest {
+
+    @TempDir
+    public Path testFolder;
+
+    @Test
+    public void getApplicationDirectory_jarCodeLocation_returnsJarParent() throws Exception {
+        Path jarFile = testFolder.resolve("folder with spaces").resolve("tab.jar");
+        Files.createDirectories(jarFile.getParent());
+        Files.createFile(jarFile);
+
+        Path applicationDirectory = AppUtil.getApplicationDirectory(
+                jarFile.toUri().toURL(), testFolder.resolve("working-directory"));
+
+        assertEquals(jarFile.getParent(), applicationDirectory);
+    }
+
+    @Test
+    public void getApplicationDirectory_explodedCodeLocation_returnsWorkingDirectory() throws Exception {
+        Path workingDirectory = testFolder.resolve("working-directory");
+
+        Path applicationDirectory = AppUtil.getApplicationDirectory(
+                testFolder.toUri().toURL(), workingDirectory);
+
+        assertEquals(workingDirectory, applicationDirectory);
+    }
+
+    @Test
+    public void getApplicationDirectory_nonFileCodeLocation_returnsWorkingDirectory() throws Exception {
+        Path workingDirectory = testFolder.resolve("working-directory");
+
+        Path applicationDirectory = AppUtil.getApplicationDirectory(
+                URI.create("https://example.com/tab.jar").toURL(), workingDirectory);
+
+        assertEquals(workingDirectory, applicationDirectory);
+    }
 
     @Test
     public void getImage_exitingImage() {

@@ -19,6 +19,9 @@
   [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance),
   a known algorithm whose recurrence we wrote out ourselves. No code was
   copied, and the idea is reused in that one method.
+* The help pager's navigation keys and progress prompt are inspired by the
+  [OpenBSD more(1) manual](https://man.openbsd.org/more.1). This reuse is limited
+  to interaction conventions; the JavaFX implementation is written for TAB.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -103,13 +106,25 @@ The student card's `TagRow` retains every tag name, but creates at most three
 tag labels. Layout uses the full name count to size the overflow chip and
 list all hidden tags in its tooltip, even when fewer labels are created.
 
-`HelpWindow` re-fits its scene after the first rendering pulse, allowing
-for native frame sizes, then uses `sizeToScene()` without fixed FXML scene
-dimensions. This lets JavaFX include native decoration sizes correctly.
-Its copy button keeps the same border insets when focused, so the focus
-indicator does not increase the content's preferred size. The regression
-test waits for rendering and native resize events, then measures the scene
-rather than its surrounding frame.
+`HelpCommand` returns a command summary and the existing `showHelp` signal.
+`MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
+the entire student page (command box, result, summary sidebar and student list).
+The hidden student page remains intact so closing help restores its filter,
+previous result and any unfinished command. The summary uses command words and
+flag labels from the command/parser definitions.
+
+`HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
+context, Enter/j and k move a line, d/u move half a screenful, g/G go to either end,
+and q/Esc return to commands. PgUp/PgDn, arrows and Home/End are also accepted.
+A wrapped label inside a scrollbar-free viewport takes the remaining window height.
+Page movement uses the current viewport and font metrics, so resizing and different
+fonts do not skip text. A persistent footer shows progress and navigation keys.
+The c key copies `HelpCommand.USER_GUIDE_URL` to the system clipboard and confirms
+it in the footer. Unused typed keys show a reminder to quit help before entering
+a command. The reference keeps explicit lines short enough for minimum width;
+the long User Guide address is available through c instead of wrapping in the label.
+Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
+command box so quitting cannot insert a stray character. No student data is changed.
 
 #### Fitting names and tags on a card
 
@@ -250,6 +265,13 @@ How the `Logic` component works:
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
+`LogicManager` compares a snapshot of the full student list before execution
+with the records afterwards and saves only if they differ. Filter changes and
+commands such as `list`, `find`, `help`, and `exit` therefore need no write
+permission. Confirming `clear` still saves the emptied book. A failed save
+leaves the change in memory; a later command that changes no records does not
+retry that save, so the User can still inspect the records or exit.
+
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a command entered by the User:
 
 <puml src="diagrams/ParserClasses.puml" width="600"/>
@@ -292,6 +314,21 @@ The `Storage` component,
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonStudentBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
+`JsonUtil.readJsonFile` rejects a whole-file `null` with a
+`DataLoadingException`, so both preference and student data loading use their
+existing error handling instead of crashing. Invalid student data is preserved
+for repair. `JsonUserPrefsStorage` also rejects an explicit `null` for
+`guiSettings` with a `DataLoadingException`; a missing setting retains the
+`UserPrefs` defaults.
+`MainApp.initPrefs` handles invalid preferences by restoring and saving
+defaults before constructing the model. Student data is stored separately
+and is unchanged by preference recovery.
+
+`StorageManager` logs read/write attempts and successful saves at `FINE`,
+including preference-file operations. Entries identify the file path without
+copying student or preference contents. Save completion is logged only after
+the storage delegate returns successfully.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.tab.commons` package.
@@ -301,6 +338,14 @@ Classes used by multiple components are in the `seedu.tab.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Resolving application file locations
+
+`AppUtil#getApplicationDirectory` uses the code-source location to distinguish a
+packaged JAR from an exploded Gradle or IDE build. A packaged application stores
+`data/tab.json`, `preferences.json`, and `tab.log.*` beside the JAR regardless of
+the process's working directory. An exploded build keeps the working directory
+as its application directory, preserving the development workflow.
 
 ### How commands read their arguments
 
@@ -342,7 +387,8 @@ words needs no quotes unless it would otherwise be misread, and the index for
 them. Each short and long marker resolves to the same `Flag`, so mixed aliases
 for a single-valued field are duplicates rather than independent fields.
 Value-taking options take the token after them, and `-t` or `--tag` repeats
-for `add` and `edit`. The `tag` command takes exactly one tag through `-a` or `--add`.
+for `add` and `edit`. The `tag` command takes exactly one tag through `-a`/`--add`
+for addition or `-r`/`--remove` for removal.
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
@@ -383,34 +429,43 @@ The `-nf` alias makes clearing quick to type without making opposite actions
 differ only in case, as `-f` and `-F` would. Both clear spellings map to the
 same option, so mixing them is also detected as a duplicate.
 
-### Adding one tag without replacing existing tags
+### Adding or removing one tag
 
-`TagCommandParser` reads `tag INDEX -a TAG` (alias `--add`) with the existing
+`TagCommandParser` reads `tag INDEX -a TAG` (alias `--add`) or
+`tag INDEX -r TAG` (alias `--remove`) with the existing
 `FlagTokenizer` and `ParserUtil`. The option names the action: both spellings
-map to `FLAG_ADD_TAG`. Exactly one add option is accepted; repeated options,
-including mixed aliases, are rejected. Missing fields and invalid field values
-are collected before a command is created.
+map to `FLAG_ADD_TAG` or `FLAG_REMOVE_TAG`, respectively. Exactly one action
+option is accepted; conflicting actions and repeated options, including mixed
+aliases, are rejected. Missing fields and invalid field values are collected
+before a command is created.
 `TagCommandParser` and `EditCommandParser` share `ParserUtil.parseRequiredIndex`
 to distinguish a missing index from an invalid one; each collects its errors
 with `ParseProblems` and applies its own tag rules.
 Both use `FlagTokenizer.tokenizeWithIndex`, which reports an unquoted negative
 number as both an invalid index and an unknown option. A value following a valid
 index is reported separately by `parseRequiredIndex`. Tag syntax failures and
-a missing add option include guidance for `-a`/`--add`.
+a missing action option include guidance for both addition and removal.
 
 `TagCommand` resolves the index against the displayed list. It compares the
 normalized tag names ignoring case before copying the existing tag set and
 constructing a replacement student with every other field preserved. The
-search filter stays active. Tag equality and storage remain unchanged, so
-existing case variants are preserved rather than merged. A general tag named
-`Needs follow-up` remains separate from the follow-up flag.
-Duplicate feedback uses a matching stored tag's spelling. If several case
-variants match, it chooses the first in the card's tag display order.
+search filter stays active; removing a tag used by that filter may hide the
+student from the displayed list. `TagCommand.Action` selects addition or
+removal while sharing index lookup, matching, student replacement and feedback.
+Tag equality and storage remain unchanged. Addition preserves existing case
+variants; removal removes every matching variant of the requested group while
+retaining unrelated tags. A general tag named `Needs follow-up` remains separate
+from the follow-up flag. Duplicate and successful removal feedback use a matching
+stored tag's spelling. If several case variants match, the reply chooses the
+first in the card's tag display order.
 
-Invalid indexes and existing tags throw `CommandException` before mutation;
-invalid syntax or values throw `ParseException`. These paths never reach
-`LogicManager`'s save. A successful addition uses the normal JSON save path.
-The paired single-tag removal feature remains tracked in issue #141.
+Invalid indexes, existing tags on addition and absent tags on removal throw
+`CommandException` before mutation; invalid syntax or values throw
+`ParseException`. These paths never reach
+`LogicManager`'s save. Successful additions and removals use the normal JSON
+save path without changing the schema. Integration tests exercise reloads,
+human-edited case and whitespace variants, absent optional fields and unchanged
+saved bytes on failure.
 
 ### Commands with no arguments
 
@@ -498,8 +553,8 @@ well as the same normalized name. `Student` holds an optional `Flag` and
 exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
 interface for commands and the UI. Full equality and hashing include the flag,
 but `isSameStudent` does not: changing whether a student needs a reply does not
-change their identity. The four-argument constructor defaults to no flag so
-existing callers remain source-compatible.
+change their identity. The flag is stored as `Optional<Flag>`; the constructor
+without a follow-up argument defaults to `Optional.empty()`.
 
 Search combines ordinary tags with the optional flag and matches their
 inherited `tagName` values. The student card and command feedback display the
@@ -529,6 +584,15 @@ case, avoiding placeholder labels or empty tag markers.
 
 ### Field values
 
+`Student` stores email and NUS Student ID as `Optional<Email>` and
+`Optional<NusStudentId>`. Both constructors require non-null arguments;
+`Optional.empty()` explicitly represents an unknown detail. One constructor
+accepts the follow-up boolean, and the other defaults to unflagged for sample
+data. There are no overloads accepting nullable email or ID values, and no
+`Student` field is null. Add, edit, storage conversion, and test builders pass
+optionals directly into this contract. Nullable JSON strings remain confined
+to the storage adapter, preserving the existing file format.
+
 `Name`, `Tag` and `Phone` each store the form returned by
 `StringUtil.normalizeFieldValue`: without zero-width characters, with each run of
 whitespace reduced to one ASCII space and leading and trailing whitespace removed,
@@ -549,9 +613,8 @@ ASCII letters and digits. Input letters are case-insensitive and the value is
 stored in uppercase, so `e0123456` and `E0123456` are the same value. This
 accommodates variations in the identifiers issued to different groups of
 students while preventing an accidentally pasted value from hiding the other
-details on a student's card. `Student` holds a
-nullable `NusStudentId` and exposes it as `Optional<NusStudentId>`, matching
-the existing optional-email boundary without inventing a sentinel value.
+details on a student's card. `Student` stores and exposes the value as
+`Optional<NusStudentId>`, using an empty optional rather than a sentinel value.
 `NusStudentId.getFailureReason` performs the single validation scan, and
 `isValidNusStudentId` delegates to it. This keeps the accepted format and the
 specific user-facing error synchronized without maintaining a separate regex.
@@ -582,13 +645,15 @@ rejected. A future duplicate-warning workflow can surface shared contact
 details without changing this model contract.
 
 **The email may be absent.** A student is recorded before an email address is
-known rather than one being invented. `Student` retains its nullable email
-constructor contract and exposes the value as `Optional<Email>` so callers
-handle absence explicitly. `JsonAdaptedStudent` writes the email as a string
-when present; the optional wrapper is not written to JSON.
+known rather than one being invented. `Student` accepts, stores, and exposes
+`Optional<Email>` so callers handle absence explicitly. `JsonAdaptedStudent`
+writes the email as a string when present; the optional wrapper is not written
+to JSON.
 
-The data file simply carries no `email` key. One that holds a malformed address
-is still refused, rather than the address being quietly dropped.
+The data file normally carries no `email` key. A missing key, JSON `null`, and
+a string that is empty after trimming all represent an absent email. A
+non-empty string is trimmed before validation, matching command input; a
+malformed address is still refused rather than being quietly dropped.
 
 `edit INDEX -e ""` clears an email without removing the student or changing
 other fields. `EditStudentDescriptor` stores an `Optional<Email>` and records
@@ -604,8 +669,8 @@ for a token that is empty after trimming, and sets a replacement only after
 validation succeeds. A rejected value is recorded as a parse problem without
 assigning a null email or requesting a clear. A bare option is still an error.
 Clearing counts as an edit even when the email is already absent. `EditCommand`
-keeps the value optional until the existing
-`Student` constructor boundary. The saved record omits the `email` key and
+passes the optional value directly into the `Student` constructor, including
+an empty optional when clearing. The saved record omits the `email` key and
 reloads through the existing optional-email storage contract.
 
 `Email.MAX_LENGTH` caps at 254 characters the address a **command** may enter.
@@ -1589,14 +1654,81 @@ testers are expected to do more *exploratory* testing.
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample student records. The window size may not be optimal.
 
-1. Help window sizing
+1. Keeping application files with the JAR
 
-   1. Run `help` and wait for the window to open.<br>
-      Expected: The whole User Guide address and `Copy URL` button are visible.
-      Check Windows, Linux and macOS because frame sizes and focus styling differ.
+   1. Put the JAR in an empty folder. Launch it, add a recognizable student,
+      then exit.<br>
+      Expected: The folder now contains `data/tab.json`, `preferences.json`,
+      and `tab.log.0`.
 
-   1. Close the help window and run `help` again.<br>
-      Expected: Both remain fully visible after reopening.
+   1. Open a terminal in a different folder and launch the same JAR using its
+      absolute path.<br>
+      Expected: The recognizable student is present. The status bar shows the
+      absolute path to the original `data/tab.json`, and no data, preference,
+      or log file is created in the terminal's working folder.
+
+1. Launching from a read-only folder
+
+   1. Prerequisites: Copy the JAR into a new folder that the current user can
+      read but cannot write to. On Linux/macOS, run `chmod 555 FOLDER` and use
+      a non-root account. On Windows, remove write permission for the test
+      account using the folder's Security settings.
+
+   1. From that folder, run `java -jar tab.jar`.<br>
+      Expected: The GUI opens with sample records. The terminal warns that it
+      cannot write the JAR folder's `tab.log`, continues with console logging,
+      and reports that preferences cannot be saved. There is no
+      `ExceptionInInitializerError` or `NullPointerException` from logging.
+
+   1. Run `find Read Only Test`, then `list`, then `help`.<br>
+      Expected: The search shows no matches, `list` restores all sample
+      records, and the help page opens. None reports a data-file save error.
+      Press q or Esc to return to the command box.
+
+   1. Run `add Read Only Test -p 91234567`.<br>
+      Expected: TAB reports a data-file save error and remains open. The
+      record is visible for this session but has not been saved.
+
+   1. Run `list`, then `exit`.<br>
+      Expected: `list` includes the unsaved record without a save error,
+      and `exit` closes TAB. Restore write permission and relaunch.
+      The added record was not saved.
+
+1. Full-page help pager
+
+   1. Enter `help`.<br>
+      Expected: Help replaces the student list, summary sidebar, command box and
+      result area. No extra window or browser opens. Navigation keys remain
+      visible in the footer and work immediately without mouse interaction.
+
+   1. Press Space/f and b to move forward/back a screenful. Try Enter/j and k,
+      d/u, PgDn/PgUp, arrows and Home/End. Press g then G.<br>
+      Expected: Each moves as documented; G reaches the last guide-copy hint and
+      the footer says `(END)`. Repeated paging at either end stays there.
+      Repeat at minimum size and resize while on the last screenful: all text
+      remains reachable without scrollbars.
+
+   1. Press c while help is open, then paste into a browser address bar.<br>
+      Expected: The exact address `https://ay2627s1-cs2103t-t16-1.github.io/tp/UserGuide.html`
+      is copied and the footer confirms `User Guide URL copied.`. The reading
+      position, student data and unfinished command stay unchanged. Typing an
+      unused letter such as x shows `Press q or Esc to return to the command box.`.
+      Reopening help clears that temporary notice.
+
+   1. Press q, enter `list`, then reopen help and press Esc.<br>
+      Expected: Both quit keys restore the student view and focus the command
+      box. No q is inserted into it. The next command works normally; the
+      previous result and student filter are preserved while help is open.
+
+   1. Type `find Alex` without submitting it, press F1, then q.<br>
+      Expected: Help takes the whole content area and the unfinished command
+      is restored on return. Repeat with Help → Help. Reopening help starts
+      at the beginning.
+
+   1. Enter `help oops`, `help -p` and `help ""`.<br>
+      Expected: Each reports `help takes no arguments. Unexpected input: ...`
+      with the offending input quoted. No help page opens and student data stays
+      unchanged. `help` with trailing spaces or tabs opens the pager normally.
 
 1. Saving window preferences
 
@@ -1604,6 +1736,30 @@ testers are expected to do more *exploratory* testing.
 
    1. Relaunch TAB by double-clicking the JAR file.<br>
        Expected: The most recent window size and location are retained.
+
+1. Recovering from null preferences or window settings
+
+   1. Prerequisites: Add a recognizable student, close TAB, and keep a backup
+      of `data/tab.json`.
+
+   1. Replace the contents of `preferences.json` with `{"guiSettings": null}`
+      and run `java -jar tab.jar`.<br>
+      Expected: The main window opens with default window settings and shows
+      the saved student. The terminal reports that the preference file could
+      not be loaded and defaults are being used, followed by
+      `GUI settings must not be null.` The preferences file now
+      contains a non-null `guiSettings` object.
+
+   1. Close TAB and launch it again.<br>
+      Expected: The window opens normally again. The saved student is still
+      present, and `data/tab.json` matches the backup.
+
+   1. Close TAB, replace the contents of `preferences.json` with only `null`,
+      and repeat both launches.<br>
+      Expected: Both launches open normally with default window settings and
+      the saved student. The first launch reports
+      `The JSON document must not be null.` and rewrites valid preferences.
+      The student data file still matches the backup.
 
 1. Narrow student cards
 
@@ -1624,7 +1780,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `clear oops`, `list oops`, `help oops`, and `exit oops`.<br>
       Expected: Each command reports that it takes no arguments and quotes
-      `oops`. The list stays filtered, no help window opens, TAB stays open,
+      `oops`. The list stays filtered, no help summary opens, TAB stays open,
       and the JSON file matches the copy byte for byte.
 
    1. Test cases: `clear "oops"`, `clear ""`, and `clear "unfinished`.<br>
@@ -1632,7 +1788,7 @@ testers are expected to do more *exploratory* testing.
       stay unchanged, including for an empty quoted argument.
 
    1. Test cases: `list` and `help` with only trailing spaces or tabs.<br>
-      Expected: The list shows all students and help opens respectively.
+      Expected: The list shows all students and the help summary appears respectively.
       `exit` with trailing whitespace closes TAB. Run plain `clear` with
       trailing whitespace only when the test data can be removed; it follows
       the documented clear flow.
@@ -1656,7 +1812,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `lsit`, `hepl`, `addd`, and `clexr`<br>
       Expected: Each suggests `list`, `help`, `add`, and `clear` respectively.
-      None of them runs: the list is unchanged, no help window opens, and no
+      None of them runs: the list is unchanged, no help summary opens, and no
       student is added.
 
    1. Test cases: `ls`, `dlte 1`, and `fit`<br>
@@ -1685,7 +1841,7 @@ testers are expected to do more *exploratory* testing.
       Expected: Each reply quotes the word typed and points to `help`, with no
       suggestion offered. `dlt` is two letters from `edit`, but opens with a
       letter that command does not, so TAB offers nothing rather than guessing.
-      No help window opens until `help` itself is run.
+      No help summary opens until `help` itself is run.
 
    1. Test case: paste a line of at least 80 characters with no spaces in it,
       such as the letter `x` repeated.<br>
@@ -1811,14 +1967,70 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `tag -1 -a T2` and `edit -1 -p 91234567`.<br>
       Expected: Both report `Index must be a positive integer.` and
-      `There is no -1 option.` The tag command also shows the add guidance.
+      `There is no -1 option.` The tag command also shows the action guidance.
       No record, displayed list or saved file changes.
 
    1. Test cases: `tag 1 -t T2` and `tag 1 lab4`.<br>
-      Expected: Both show `To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3".`
+      Expected: Both show guidance for `-a`/`--add` and `-r`/`--remove` with examples.
       The first names the unknown `-t` option; the second names `lab4` as an
       unexpected value after the index. No record, displayed list or saved
       file changes.
+
+### Removing one tag
+
+1. Preserving other details and persisting removal
+
+   1. Prerequisites: Complete the single-tag addition tests above. Run
+      `find "Tag Test"`; the student has `T1`, `Lab 3` and follow-up enabled.
+
+   1. Test case: `tag 1 --remove "  LAB   3  "`.<br>
+      Expected: Feedback starts with `Removed tag [Lab 3]:`. Only `Lab 3` is
+      removed; `T1`, name, phone, email, NUS Student ID and follow-up status
+      remain unchanged. The search stays active. Exit and relaunch TAB from
+      the same folder; confirm every remaining field is preserved.
+
+   1. Test case: Run `find "Tag Test"` again after restarting and confirm only
+      that student is shown, then run `tag 1 -r T1`.<br>
+      Expected: The student has no general tags and still needs follow-up.
+      After restarting TAB, that state remains.
+
+1. Reporting absent tags and invalid input without saving
+
+   1. Prerequisites: Run `find "Tag Test"` again. Back up `data/tab.json`
+      and compare it after every refused command below.
+
+   1. Test cases: `tag 1 -r "Lab 3"`, `tag 1 --remove "  lab   3  "`.<br>
+      Expected: `This student does not have tag [Lab 3]. No changes made.`
+      and `This student does not have tag [lab 3]. No changes made.`,
+      respectively. Record, displayed list and saved bytes stay unchanged.
+
+   1. Test cases: `tag 0 -r T1`, `tag 2 -r T1`, `tag 2147483648 -r T1`,
+      `tag 1 -r ""`, `tag 1 -r "---"`, `tag 1 -r`,
+      `tag 1 -r T1 --remove T2` and `tag 1 -a T2 -r T1`.<br>
+      Expected: Specific index, invalid-tag, missing-value, duplicate-option
+      or conflicting-action errors. No record, displayed list or file changes.
+
+1. Removing a tag that supplies the search match
+
+   1. Test case: Run `tag 1 -a "Lab 3"`, `find "Lab 3"`, then
+      `tag 1 -r "Lab 3"`.<br>
+      Expected: The student disappears from the filtered list. Run `list`
+      to see the preserved student without `Lab 3`.
+
+1. Removing variants from a human-edited data file
+
+   1. Prerequisites: Exit TAB. Back up the data file, then set Tag Test's
+      `tags` array to `["Lab 3", "  lab   3  ", "T1", "Needs follow-up"]`.
+      Keep `"flag": true` and restart TAB. Run `find "Tag Test"`.
+
+   1. Test case: `tag 1 -r "LAB 3"`.<br>
+      Expected: Both case variants disappear. `T1`, `Needs follow-up`, the
+      follow-up flag and all other fields remain after restart.
+
+   1. Test case: Run `find "Tag Test"` again after restarting and confirm only
+      that student is shown, then run `tag 1 -r "needs follow-up"`.<br>
+      Expected: Only the general tag disappears. `T1` and the follow-up flag
+      remain. Restore the backup when finished.
 
 ### Adding a student
 
@@ -2400,6 +2612,10 @@ testers are expected to do more *exploratory* testing.
       Expected: The dialog reports that the student list is missing. The main
       window does not open and the file remains byte-for-byte unchanged.
 
+   1. Test case: Replace the file contents with `null` and launch TAB.<br>
+      Expected: The dialog reports `The JSON document must not be null.`
+      The main window does not open and the file remains byte-for-byte unchanged.
+
    1. Test case: Replace the file with well-formed JSON containing two student
       records, where the second has a phone value of `12`, and launch TAB.<br>
       Expected: The dialog identifies student record 2, its name, the Phone
@@ -2415,6 +2631,14 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: Repair the invalid value and relaunch TAB.<br>
       Expected: The main window opens and shows every saved student.
+
+   1. Test case: Replace the file with three valid student records whose email
+      values are respectively `""`, `"alice@example.com "`, and absent. Launch
+      TAB, enter `list`, then add another student.<br>
+      Expected: All three saved students are listed. The first and third have
+      no email, and the second shows `alice@example.com` without the trailing
+      space. The newly added student and all three existing students remain in
+      `data/tab.json`.
 
    1. Test case: Move `data/tab.json` elsewhere and relaunch TAB.<br>
       Expected: TAB treats the missing file as a first launch and opens with

@@ -101,8 +101,8 @@ public class TagCommandIntegrationTest {
     @Test
     public void execute_invalidInput_preservesModelDisplayAndSavedBytes() throws Exception {
         Map<String, String> errors = Map.of(
-                "tag 1 -t T2", "There is no -t option.\n" + TagCommand.MESSAGE_ADD_GUIDANCE,
-                "tag 1 --tag T2", "There is no --tag option.\n" + TagCommand.MESSAGE_ADD_GUIDANCE,
+                "tag 1 -t T2", "There is no -t option.\n" + TagCommand.MESSAGE_ACTION_GUIDANCE,
+                "tag 1 --tag T2", "There is no --tag option.\n" + TagCommand.MESSAGE_ACTION_GUIDANCE,
                 "tag 0 -a T2", "Index must be a positive integer.",
                 "tag 2147483648 -a T2", "Index must be a positive integer.",
                 "tag 1 -a \"\"", "Tag \"\" is not valid: it holds no letter or number",
@@ -122,14 +122,14 @@ public class TagCommandIntegrationTest {
 
     @Test
     public void execute_negativeIndexOrMissingAction_preservesModelDisplayAndSavedBytes() throws Exception {
-        String hint = "\n" + TagCommand.MESSAGE_ADD_GUIDANCE;
+        String hint = "\n" + TagCommand.MESSAGE_ACTION_GUIDANCE;
         Map<String, String> errors = Map.of(
                 "tag -1 -a T2", "Index must be a positive integer.\nThere is no -1 option." + hint,
                 "tag -1 --add T2", "Index must be a positive integer.\nThere is no -1 option." + hint,
                 "edit -1 -p 91234567", "Index must be a positive integer.\nThere is no -1 option.",
                 "tag 1 lab4", "Unexpected value after INDEX: \"lab4\". Put field values after an option.\n"
-                        + "Missing required field(s): -a TAG" + hint,
-                "tag 1", "Missing required field(s): -a TAG" + hint,
+                        + "Missing required field(s): -a TAG or -r TAG" + hint,
+                "tag 1", "Missing required field(s): -a TAG or -r TAG" + hint,
                 "edit 1 Alex -p 91234567",
                         "Unexpected value after INDEX: \"Alex\". Put field values after an option.");
         for (Map.Entry<String, String> error : errors.entrySet()) {
@@ -154,6 +154,137 @@ public class TagCommandIntegrationTest {
                 "This student already has tag [Lab 3]. No changes made.");
         logic.execute("tag 1 -a T2");
         Student expected = new StudentBuilder(legacy).withTags("Lab 3", "lab 3", "Café", "T2").build();
+        assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_removeTag_preservesEveryFieldAndPersistsAfterReload() throws Exception {
+        model.updateFilteredStudentList(shown -> shown.getName().equals(student.getName()));
+        Student expected = new StudentBuilder(student).withTags("T1").build();
+        assertEquals("Removed tag [Lab 3]: Amy Bee; NUS Student ID: A01234567X; Phone: 85355255; "
+                + "Email: amy@gmail.com; Tags: [T1]; Needs follow-up",
+                logic.execute("tag 1 --remove \"  lAB\u00a0  3  \"").getFeedbackToUser());
+        assertEquals(List.of(expected), model.getFilteredStudentList());
+        assertEquals(List.of(otherStudent, expected), model.getStudentBook().getStudentList());
+        Model restartedModel = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
+        assertEquals(List.of(otherStudent, expected), restartedModel.getStudentBook().getStudentList());
+        assertEquals(1, saveCount);
+        assertEquals(new StudentBuilder().withTags("T1", "Lab 3").withFlag(true)
+                .withNusStudentId("A01234567X").build(), student);
+    }
+
+    @Test
+    public void execute_removeLastTag_preservesAbsentFieldsAndFollowUpStatus() throws Exception {
+        Student minimal = new StudentBuilder(otherStudent).withoutNusStudentId()
+                .withTags("Needs follow-up").build();
+        model.setStudent(otherStudent, minimal);
+        model.updateFilteredStudentList(shown -> shown.getName().equals(minimal.getName()));
+        logic.execute("tag 1 -r \"needs follow-up\"");
+        Student expected = new StudentBuilder(minimal).withTags().build();
+        assertEquals(List.of(expected), model.getFilteredStudentList());
+        assertEquals(List.of(expected, student), storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_removeAbsentVariants_preservesModelDisplayAndSavedBytes() throws Exception {
+        Map<String, String> variants = Map.of("Lab 4", "Lab 4", "lab 4", "lab 4",
+                "  LAB\u00a0  4  ", "LAB 4", "Needs follow-up", "Needs follow-up");
+        for (Map.Entry<String, String> variant : variants.entrySet()) {
+            assertFailureWithoutMutation("tag 1 -r \"" + variant.getKey() + "\"", CommandException.class,
+                    "This student does not have tag [" + variant.getValue() + "]. No changes made.");
+        }
+        model.updateFilteredStudentList(shown -> shown.getName().equals(otherStudent.getName()));
+        assertFailureWithoutMutation("tag 1 --remove T1", CommandException.class,
+                "This student does not have tag [T1]. No changes made.");
+    }
+
+    @Test
+    public void execute_removeInvalidInput_preservesModelDisplayAndSavedBytes() throws Exception {
+        String hint = "\n" + TagCommand.MESSAGE_ACTION_GUIDANCE;
+        Map<String, String> errors = Map.of(
+                "tag 0 -r T1", "Index must be a positive integer.",
+                "tag -1 -r T1", "Index must be a positive integer.\nThere is no -1 option." + hint,
+                "tag 2147483648 --remove T1", "Index must be a positive integer.",
+                "tag 1 -r \"\"", "Tag \"\" is not valid: it holds no letter or number",
+                "tag 1 -r \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
+                "tag 1 -r", "-r TAG needs a value after it. "
+                        + "A value opening with a hyphen goes in double quotes." + hint,
+                "tag 1 -r T1 --remove T2", "Multiple values specified for the following single-valued field(s): -r",
+                "tag 1 -a T2 --remove T1", "Options -a/--add and -r/--remove cannot be used together.");
+        for (Map.Entry<String, String> error : errors.entrySet()) {
+            assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());
+        }
+        for (String index : List.of("2", "2147483647")) {
+            assertFailureWithoutMutation("tag " + index + " -r T1", CommandException.class,
+                    Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        }
+        model.updateFilteredStudentList(shown -> false);
+        assertFailureWithoutMutation("tag 1 -r T1", CommandException.class,
+                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+    }
+
+    @Test
+    public void execute_removeHumanEditedVariants_removesMatchingGroupAndPreservesUnrelatedTags() throws Exception {
+        model.updateFilteredStudentList(shown -> shown.getName().equals(student.getName()));
+        Student legacy = new StudentBuilder(student).withTags("Lab 3", "lab 3", "Café").build();
+        model.setStudent(student, legacy);
+        storage.saveStudentBook(model.getStudentBook());
+        String json = Files.readString(storage.getStudentBookFilePath()).replace("Lab 3", "  Lab   3  ");
+        Files.writeString(storage.getStudentBookFilePath(), json);
+        model.setStudentBook(storage.readStudentBook().orElseThrow());
+        saveCount = 0;
+        assertEquals("Removed tag [Lab 3]: Amy Bee; NUS Student ID: A01234567X; Phone: 85355255; "
+                + "Email: amy@gmail.com; Tags: [Café]; Needs follow-up",
+                logic.execute("tag 1 -r \"LAB 3\"").getFeedbackToUser());
+        Student expected = new StudentBuilder(legacy).withTags("Café").build();
+        assertEquals(List.of(expected), model.getFilteredStudentList());
+        assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
+        saveCount = 0;
+        assertFailureWithoutMutation("tag 1 --remove \"  lab  3 \"", CommandException.class,
+                "This student does not have tag [lab 3]. No changes made.");
+        logic.execute("tag 1 --remove \" CAFE\u0301 \"");
+        Student withoutTags = new StudentBuilder(legacy).withTags().build();
+        assertEquals(List.of(otherStudent, withoutTags), storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_removeGeneralFollowUpTag_doesNotClearFollowUpFlag() throws Exception {
+        Student tagged = new StudentBuilder(student).withTags("T1", "Needs follow-up").build();
+        model.setStudent(student, tagged);
+        model.updateFilteredStudentList(shown -> shown.getName().equals(student.getName()));
+        logic.execute("tag 1 -r \"needs follow-up\"");
+        Student expected = new StudentBuilder(student).withTags("T1").build();
+        assertEquals(List.of(expected), model.getFilteredStudentList());
+        assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_removeQuotedSymbolsAndLongTag_persistsEachRemoval() throws Exception {
+        List<String> tags = List.of("组 1", "CS2103T (AY26/27)", "Lab \"A\"\\B", "-r", "x".repeat(1000));
+        Student tagged = new StudentBuilder(student).withTags(tags.toArray(String[]::new)).build();
+        model.setStudent(student, tagged);
+        model.updateFilteredStudentList(shown -> shown.getName().equals(student.getName()));
+        for (int i = 0; i < tags.size(); i++) {
+            String quoted = tags.get(i).replace("\\", "\\\\").replace("\"", "\\\"");
+            logic.execute("tag 1 -r \"" + quoted + "\"");
+            Student expected = new StudentBuilder(student)
+                    .withTags(tags.subList(i + 1, tags.size()).toArray(String[]::new)).build();
+            assertEquals(List.of(expected), model.getFilteredStudentList());
+            assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
+        }
+        assertEquals(tags.size(), saveCount);
+        saveCount = 0;
+        assertFailureWithoutMutation("tag 1 -r \"" + tags.getLast() + "\"", CommandException.class,
+                "This student does not have tag [" + Messages.shorten(tags.getLast()) + "]. No changes made.");
+    }
+
+    @Test
+    public void execute_removeTagUsedByFilter_keepsFilterActive() throws Exception {
+        model.updateFilteredStudentList(shown -> shown.getTags().stream()
+                .anyMatch(tag -> tag.tagName.equals("Lab 3")));
+        logic.execute("tag 1 -r \"Lab 3\"");
+        assertEquals(List.of(), model.getFilteredStudentList());
+        Student expected = new StudentBuilder(student).withTags("T1").build();
         assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
     }
 
