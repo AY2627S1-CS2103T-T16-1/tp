@@ -2,16 +2,15 @@ package seedu.tab.model.student;
 
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.commons.util.ToStringBuilder;
-import seedu.tab.model.tag.Tag;
 
 /**
  * Tests that a {@code Student}'s details match any of the keywords given.
- * A keyword matches when it appears in the student's name, phone, email, NUS Student ID,
- * tags, or a follow-up flag, ignoring case and allowing partial matches.
+ * A keyword matches when it appears in the student's name, phone, email, NUS Student ID
+ * or tags, ignoring case and allowing partial matches, or when it names the follow-up
+ * flag as the whole label {@code Needs follow-up} or one of its words.
  */
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     private final List<String> keywords;
@@ -31,12 +30,12 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
                 || StringUtil.containsIgnoreCase(student.getEmail().map(Email::toString).orElse(""), keyword)
                 || StringUtil.containsIgnoreCase(
                         student.getNusStudentId().map(NusStudentId::toString).orElse(""), keyword)
-                || matchesAnyTag(student, keyword);
+                || matchesAnyTag(student, keyword)
+                || student.getFlag().stream().anyMatch(flag -> flag.matchesKeyword(keyword));
     }
 
     private static boolean matchesAnyTag(Student student, String keyword) {
-        Stream<Tag> tagsAndFlag = Stream.concat(student.getTags().stream(), student.getFlag().stream());
-        return tagsAndFlag.anyMatch(tag -> StringUtil.containsIgnoreCase(tag.tagName, keyword));
+        return student.getTags().stream().anyMatch(tag -> StringUtil.containsIgnoreCase(tag.tagName, keyword));
     }
 
     @Override
