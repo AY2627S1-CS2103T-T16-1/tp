@@ -357,7 +357,9 @@ public class EditCommandTest {
         assertCommandSuccess(command, model,
                 String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited))
                         + "\n\nWARNING: Possible duplicate student: " + firstStudent.getName() + " has the same name ("
-                        + edited.getName() + "). Delete one if they are the same person.", expectedModel);
+                        + edited.getName() + ")."
+                        + "\nReview the records and delete duplicates only if they are the same person.",
+                expectedModel);
     }
 
     @Test
@@ -377,9 +379,7 @@ public class EditCommandTest {
         expectedModel.setStudent(second, edited);
 
         assertCommandSuccess(command, model,
-                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited))
-                        + "\n\nWARNING: Possible duplicate student: Tan Wei Ming has the same name (Tan Wei Ming). "
-                        + "Delete one if they are the same person.", expectedModel);
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
     }
 
     @Test
@@ -398,11 +398,7 @@ public class EditCommandTest {
         expectedModel.setStudent(expectedModel.getFilteredStudentList().get(1), editedSecond);
 
         assertCommandSuccess(command, model,
-                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedSecond))
-                        + "\n\nWARNING: Possible duplicate student: Tan Wei Ming has the same name (Tan Wei Ming). "
-                        + "Delete one if they are the same person."
-                        + "\nWARNING: Possible duplicate student: Tan Wei Ming has the same email (amy@gmail.com). "
-                        + "Delete one if they are the same person.",
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedSecond)),
                 expectedModel);
         assertSame(first, model.getFilteredStudentList().get(0));
     }

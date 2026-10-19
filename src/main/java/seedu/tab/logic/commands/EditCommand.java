@@ -109,9 +109,9 @@ public class EditCommand extends Command {
                     editedStudent.getNusStudentId().orElseThrow(), duplicateStudent.orElseThrow().getName()));
         }
 
-        String feedback = LikelyDuplicateWarning.appendToExcluding(
+        String feedback = LikelyDuplicateWarning.appendChangedFieldsTo(
                 String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)),
-                editedStudent, model.getStudentBook().getStudentList(), studentToEdit);
+                studentToEdit, editedStudent, model.getStudentBook().getStudentList());
         model.setStudent(studentToEdit, editedStudent);
         model.updateFilteredStudentList(PREDICATE_SHOW_ALL_STUDENTS);
         logger.info("Edited the student shown at " + index.getOneBased()
