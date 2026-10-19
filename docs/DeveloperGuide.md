@@ -330,6 +330,11 @@ for repair. `JsonUserPrefsStorage` also rejects an explicit `null` for
 `MainApp.initPrefs` handles invalid preferences by restoring and saving
 defaults before constructing the model. Student data is stored separately
 and is unchanged by preference recovery.
+Recoverable preference writes in `MainApp.initPrefs` and `MainApp.stop` log
+one `WARNING` naming the preferences path and I/O reason, without a stack
+trace. Startup retains the loaded or default preferences for the session;
+shutdown explains that window preferences were not saved. Permission errors
+without a reason are described as permission denied.
 
 `FileUtil.writeToFile` protects an existing JSON file from a partial save. It
 resolves an existing symbolic link to its destination, so replacing the saved
@@ -1773,7 +1778,9 @@ testers are expected to do more *exploratory* testing.
    1. From that folder, run `java -jar tab.jar`.<br>
       Expected: The GUI opens with sample records. The terminal warns that it
       cannot write the JAR folder's `tab.log`, continues with console logging,
-      and reports that preferences cannot be saved. There is no
+      and prints one preferences warning naming `preferences.json`, the reason,
+      and that preferences will be used for this session only. The preferences
+      warning has no stack trace or `SEVERE` label. There is no
       `ExceptionInInitializerError` or `NullPointerException` from logging.
 
    1. Run `find Read Only Test`, then `list`, then `help`.<br>
@@ -1787,8 +1794,10 @@ testers are expected to do more *exploratory* testing.
 
    1. Run `list`, then `exit`.<br>
       Expected: `list` excludes the failed record without a save error, and
-      `exit` closes TAB. Restore write permission and relaunch. The failed
-      record is still absent.
+      `exit` closes TAB with one warning naming `preferences.json` and
+      explaining that window preferences could not be saved. That warning has
+      no stack trace or `SEVERE` label. Restore write permission and relaunch.
+      The failed record is still absent.
 
 1. Full-page help pager
 

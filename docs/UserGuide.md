@@ -690,6 +690,9 @@ Window size and position are saved separately in `preferences.json` in TAB's
 home folder. If the file contains only `null`, `guiSettings` is `null`, or the
 file cannot be parsed, TAB opens with default window settings and rewrites the
 preferences file when it can. This recovery does not change saved student records in `data/tab.json`.
+If preferences cannot be saved, TAB prints a concise warning naming the path
+and reason. It uses the loaded or default settings for that session. A warning
+on exit means the window settings could not be saved; TAB still closes normally.
 
 ### Editing the data file
 
