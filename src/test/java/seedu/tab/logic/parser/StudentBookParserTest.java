@@ -182,6 +182,28 @@ public class StudentBookParserTest {
     }
 
     @Test
+    public void parseCommand_everyTrailingSeparator_givesTheSameCommandAsNoSeparator() {
+        // a command pasted from a web page keeps the invisible separator the page ended it
+        // with; in delete that separator used to travel into the index itself, where it was
+        // reported as an index that is not a positive integer
+        String[] commands = {"delete 1", "edit 1 -p 91234567", "find John", "add John Doe -p 91234567"};
+
+        for (String command : commands) {
+            Command baseline = parseOrNull(command);
+            assertNotNull(baseline, command + " is refused without a trailing separator");
+
+            for (int code = Character.MIN_VALUE; code <= Character.MAX_VALUE; code++) {
+                char separator = (char) code;
+                if (!StringUtil.isWhitespace(separator)) {
+                    continue;
+                }
+                assertEquals(baseline, parseOrNull(command + separator),
+                        command + " differed on a trailing U+" + Integer.toHexString(code));
+            }
+        }
+    }
+
+    @Test
     public void parseCommand_leadingSeparators_areIgnored() throws Exception {
         assertTrue(parser.parseCommand("\u00A0\u3000 " + ListCommand.COMMAND_WORD) instanceof ListCommand);
     }
