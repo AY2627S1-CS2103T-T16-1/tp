@@ -18,6 +18,8 @@ public class StudentTargetTest {
     private static final StudentTarget FIRST_BY_INDEX = StudentTarget.byIndex(INDEX_FIRST_STUDENT);
     private static final StudentTarget FIRST_BY_ID =
             StudentTarget.byNusStudentId(new NusStudentId("A12345678C"));
+    private static final StudentTarget SECOND_BY_ID =
+            StudentTarget.byNusStudentId(new NusStudentId("A23456789D"));
 
     @Test
     public void equals() {
@@ -38,11 +40,23 @@ public class StudentTargetTest {
         // a different way of naming a student -> returns false
         assertFalse(FIRST_BY_INDEX.equals(FIRST_BY_ID));
 
+        // a different NUS Student ID -> returns false
+        assertFalse(FIRST_BY_ID.equals(SECOND_BY_ID));
+
         // null -> returns false
         assertFalse(FIRST_BY_INDEX.equals(null));
 
         // different type -> returns false
         assertFalse(FIRST_BY_INDEX.equals(1));
+    }
+
+    @Test
+    public void hashCode_equalTargets_sameHashCode() {
+        // targets that name the same address must agree on their hash, or a collection that
+        // holds them cannot find one by looking for the other
+        assertEquals(FIRST_BY_INDEX.hashCode(), StudentTarget.byIndex(INDEX_FIRST_STUDENT).hashCode());
+        assertEquals(FIRST_BY_ID.hashCode(),
+                StudentTarget.byNusStudentId(new NusStudentId("a12345678c")).hashCode());
     }
 
     @Test
