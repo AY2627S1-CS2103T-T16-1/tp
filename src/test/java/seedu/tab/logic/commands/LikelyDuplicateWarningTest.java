@@ -81,6 +81,22 @@ public class LikelyDuplicateWarningTest {
     }
 
     @Test
+    public void appendTo_threePhoneMatches_summarizesOneOtherStudent() {
+        Student first = new StudentBuilder().withName("Student One").withPhone("000").withoutEmail().build();
+        Student second = new StudentBuilder().withName("Student Two").withPhone("0 0 0").withoutEmail().build();
+        Student third = new StudentBuilder().withName("Student Three").withPhone("000").withoutEmail().build();
+        Student changed = new StudentBuilder().withName("Student Four").withPhone("000").withoutEmail().build();
+
+        String expected = SUCCESS_MESSAGE
+                + "\n\nWARNING: Possible duplicate students: Student One, Student Two and 1 other "
+                + "have the same phone (000)."
+                + "\nReview the records and delete duplicates only if they are the same person.";
+
+        assertEquals(expected, LikelyDuplicateWarning.appendTo(
+                SUCCESS_MESSAGE, changed, List.of(first, second, third)));
+    }
+
+    @Test
     public void appendTo_manyPhoneMatches_groupsStudentNames() {
         Student first = new StudentBuilder().withName("Student One").withPhone("000").withoutEmail().build();
         Student second = new StudentBuilder().withName("Student Two").withPhone("0 0 0").withoutEmail().build();
