@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -213,6 +214,34 @@ public class CommandWordsTest {
     @Test
     public void suggestFor_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> CommandWords.suggestFor(null));
+    }
+
+    @Test
+    public void foldCase_commandWordInAnyCase_givesTheCommandWord() {
+        for (String commandWord : CommandWords.COMMAND_WORDS) {
+            assertEquals(commandWord, CommandWords.foldCase(commandWord));
+            assertEquals(commandWord, CommandWords.foldCase(commandWord.toUpperCase(Locale.ROOT)));
+            assertEquals(commandWord, CommandWords.foldCase(
+                    Character.toUpperCase(commandWord.charAt(0)) + commandWord.substring(1)));
+        }
+    }
+
+    @Test
+    public void foldCase_inALocaleOfItsOwnCaseRules_stillGivesTheCommandWord() {
+        // a Turkish locale folds a capital I to a dotless one, which no command word holds
+        Locale userLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr"));
+            assertEquals("list", CommandWords.foldCase("LIST"));
+            assertEquals("exit", CommandWords.foldCase("EXIT"));
+        } finally {
+            Locale.setDefault(userLocale);
+        }
+    }
+
+    @Test
+    public void foldCase_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> CommandWords.foldCase(null));
     }
 
 }
