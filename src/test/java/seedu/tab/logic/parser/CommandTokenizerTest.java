@@ -88,15 +88,20 @@ public class CommandTokenizerTest {
     public void tokenize_quotedToken_isMarkedAsQuoted() throws Exception {
         // a value that opens with the flag marker is only telling apart from a flag by this
         List<Token> tokens = tokenize("\"-Ahmad\" -t T2");
-        assertEquals(new Token("-Ahmad", true), tokens.get(0));
-        assertEquals(new Token("-t", false), tokens.get(1));
-        assertEquals(new Token("T2", false), tokens.get(2));
+        assertEquals(new Token("-Ahmad", true, true), tokens.get(0));
+        assertEquals(new Token("-t", false, false), tokens.get(1));
+        assertEquals(new Token("T2", false, false), tokens.get(2));
     }
 
     @Test
     public void tokenize_partlyQuotedToken_countsAsQuoted() throws Exception {
         // a quote anywhere in the token means the user spelled a value, not an option
-        assertEquals(new Token("-tx", true), tokenize("\"-t\"x").get(0));
+        assertEquals(new Token("-tx", true, true), tokenize("\"-t\"x").get(0));
+    }
+
+    @Test
+    public void tokenize_quoteAfterEquals_doesNotMarkTokenAsBeginningQuoted() throws Exception {
+        assertEquals(new Token("--tag=Lab 3", true, false), tokenize("--tag=\"Lab 3\"").get(0));
     }
 
     @Test
