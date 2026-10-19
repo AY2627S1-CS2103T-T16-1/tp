@@ -16,6 +16,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -340,6 +341,37 @@ public class LogicManagerTest {
             assertFalse(logic.isAwaitingConfirmation());
             assertSame(expectedFilter, model.getFilteredStudentPredicate());
         }
+    }
+
+    @Test
+    public void execute_retryAfterStorageRecovers_appliesChangeOnce() throws Exception {
+        Student otherStudent = new StudentBuilder().withName("Other Student").build();
+        model.addStudent(AMY);
+        model.addStudent(otherStudent);
+        Path studentBookPath = temporaryFolder.resolve("studentBook.json");
+        AtomicInteger saveAttempts = new AtomicInteger();
+        JsonStudentBookStorage studentBookStorage = new JsonStudentBookStorage(studentBookPath) {
+            @Override
+            public void saveStudentBook(ReadOnlyStudentBook studentBook) throws IOException {
+                if (saveAttempts.incrementAndGet() == 1) {
+                    throw DUMMY_IO_EXCEPTION;
+                }
+                super.saveStudentBook(studentBook);
+            }
+        };
+        logic = new LogicManager(model, new StorageManager(studentBookStorage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"))));
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+
+        assertCommandFailure("delete 1", CommandException.class,
+                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()), expectedModel);
+        CommandResult result = logic.execute("delete 1");
+
+        assertEquals(String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, Messages.format(AMY)),
+                result.getFeedbackToUser());
+        assertEquals(List.of(otherStudent), model.getStudentBook().getStudentList());
+        assertEquals(List.of(otherStudent), studentBookStorage.readStudentBook().orElseThrow().getStudentList());
+        assertEquals(2, saveAttempts.get());
     }
 
     @Test

@@ -25,10 +25,12 @@ import seedu.tab.storage.Storage;
  * The main LogicManager of the app.
  */
 public class LogicManager implements Logic {
-    public static final String FILE_OPS_ERROR_FORMAT = "Could not save data due to the following error: %s";
+    public static final String FILE_OPS_ERROR_FORMAT =
+            "Could not save data due to the following error: %s. No changes were made.";
 
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
-            "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
+            "Could not save data to file %s due to insufficient permissions to write to the file or the folder. "
+                    + "No changes were made.";
 
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
@@ -133,6 +135,7 @@ public class LogicManager implements Logic {
         } catch (IOException e) {
             model.setStudentBook(studentBookBeforeCommand);
             model.updateFilteredStudentList(filterBeforeCommand);
+            logger.warning("Restored the student book and filter after save failed: " + e);
             if (e instanceof AccessDeniedException) {
                 throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
             }

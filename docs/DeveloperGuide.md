@@ -2668,19 +2668,25 @@ testers are expected to do more *exploratory* testing.
 
 1. Recovering from a save failure
 
-   1. Prerequisites: Launch TAB with at least three students, exit, keep a
-      byte-for-byte copy of `data/tab.json`, and use the operating system to
-      make that file read-only. Relaunch TAB.
+   1. Prerequisites: Launch TAB with at least three students, make a change
+      such as `edit 1 -p 91234567`, and exit so that `data/tab.json` exists.
+      Keep a byte-for-byte copy of the file. Make both `data/tab.json` and its
+      `data` folder non-writable, then relaunch TAB using a non-root account.
+      On Linux/macOS, run `chmod 444 data/tab.json` and `chmod 555 data`. On
+      Windows, remove write permission from both the file and folder for the
+      test account while retaining read permission.
 
-   1. Test case: Enter `delete 1` twice, then enter `clear`.<br>
+   1. Test case: Enter `delete 1` twice, then enter `clear` followed by `y`.<br>
       Expected: Each delete reports that TAB cannot save the data. No student
       disappears, and the clear prompt still gives the original student count.
-      Enter `n` to cancel the clear.
+      Confirming the clear also reports the save error and restores every
+      student.
 
-   1. Test case: Enter `list`, `find Amy`, and `help`, then close the help
-      window and enter `exit`.<br>
-      Expected: Each command succeeds, including opening the help window and
+   1. Test case: Enter `list`, `find Amy`, and `help`, then press q to leave the
+      help page and enter `exit`.<br>
+      Expected: Each command succeeds, including opening the help page and
       closing TAB. The read-only `data/tab.json` still matches the saved copy
-      byte for byte. Restore its write permission before continuing to use TAB.
+      byte for byte. Restore write permission to both the file and folder before
+      continuing to use TAB.
 
 1. _{ more test cases … }_
