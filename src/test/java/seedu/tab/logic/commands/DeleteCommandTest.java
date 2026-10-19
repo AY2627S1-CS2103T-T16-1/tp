@@ -2,6 +2,7 @@ package seedu.tab.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandSuccess;
@@ -17,6 +18,7 @@ import seedu.tab.commons.core.index.Index;
 import seedu.tab.logic.Messages;
 import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
+import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
@@ -166,6 +168,28 @@ public class DeleteCommandTest {
         assertEquals(initialSize - 1, model.getFilteredStudentList().size());
         assertFalse(model.getFilteredStudentList().contains(studentToDelete));
         assertFalse(model.getStudentBook().getStudentList().contains(studentToDelete));
+    }
+
+    @Test
+    public void execute_identicalStudentsWithoutNusStudentIds_deletesSelectedStudent() {
+        Student first = new StudentBuilder().withName("Tan Wei Ming").withPhone("91234567")
+                .withoutNusStudentId().build();
+        Student middle = new StudentBuilder().withName("Alice Tan").withPhone("92345678")
+                .withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).build();
+        StudentBook studentBook = new StudentBook();
+        studentBook.addStudent(first);
+        studentBook.addStudent(middle);
+        studentBook.addStudent(second);
+        model = new ModelManager(studentBook, new UserPrefs());
+        DeleteCommand command = new DeleteCommand(Index.fromOneBased(3));
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.deleteStudent(expectedModel.getFilteredStudentList().get(2));
+
+        assertCommandSuccess(command, model,
+                String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, Messages.format(second)), expectedModel);
+        assertSame(first, model.getStudentBook().getStudentList().get(0));
+        assertSame(middle, model.getStudentBook().getStudentList().get(1));
     }
 
     @Test

@@ -3,6 +3,7 @@ package seedu.tab.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -70,9 +71,11 @@ public class ModelManager implements Model {
     }
 
     @Override
-    public boolean hasStudent(Student student) {
+    public Optional<Student> findSameStudent(Student student) {
         requireNonNull(student);
-        return studentBook.hasStudent(student);
+        return studentBook.getStudentList().stream()
+                .filter(student::isSameStudent)
+                .findFirst();
     }
 
     @Override
@@ -105,7 +108,13 @@ public class ModelManager implements Model {
     }
 
     @Override
-    public void updateFilteredStudentList(Predicate<Student> predicate) {
+    public Predicate<? super Student> getFilteredStudentPredicate() {
+        Predicate<? super Student> predicate = filteredStudents.getPredicate();
+        return predicate == null ? PREDICATE_SHOW_ALL_STUDENTS : predicate;
+    }
+
+    @Override
+    public void updateFilteredStudentList(Predicate<? super Student> predicate) {
         requireNonNull(predicate);
         filteredStudents.setPredicate(predicate);
     }
