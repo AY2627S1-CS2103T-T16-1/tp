@@ -72,10 +72,13 @@ public class AddCommand extends Command {
                     toAdd.getNusStudentId().orElseThrow(), duplicateStudent.orElseThrow().getName()));
         }
 
+        String feedback = LikelyDuplicateWarning.appendTo(
+                String.format(MESSAGE_SUCCESS, Messages.format(toAdd)),
+                toAdd, model.getStudentBook().getStudentList());
         model.addStudent(toAdd);
         logger.info("Added a student; the book now holds "
                 + model.getStudentBook().getStudentList().size());
-        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(toAdd)));
+        return new CommandResult(feedback);
     }
 
     @Override

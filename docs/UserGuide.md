@@ -265,6 +265,29 @@ the student who already holds it.
 
 <box type="tip" seamless>
 
+**Tip:** After a successful `add` or `edit`, TAB warns you when another student
+has the same name, phone number, or email address. The record is still saved.
+One warning line is shown for each matching field. It names up to two other
+students, then counts any further matches. For example:
+
+```
+WARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.com).
+Review the records and delete duplicates only if they are the same person.
+```
+
+Names and emails are compared without regard to letter case. Repeated,
+leading, and trailing whitespace in names is insignificant, as are spaces in
+phone numbers. The review advice appears once after all matching fields.
+
+The warning is only a hint. It does not prove that two records describe the
+same person, and it does not find misspelled names, email aliases, or phone
+numbers whose punctuation differs. Review the records before deleting either
+one. A matching NUS Student ID is handled separately and still refuses the
+command, as described above.
+</box>
+
+<box type="tip" seamless>
+
 **Tip:** A student can have any number of tags, including zero. A tag may hold
 spaces, hyphens and any script, so `Lab 3`, `needs-followup` and
 `AY2627 Sem 1 CS2103T T16` are all valid.
@@ -426,6 +449,10 @@ done to it beyond the quotes any value with spaces takes:
   NUS Student ID succeeds. Name and phone are required and cannot be cleared.
 * An edit may give two students the same name, but cannot give a student an NUS
   Student ID already held by another record. NUS Student ID matching ignores case.
+  A saved edit produces the same likely-duplicate notes described under `add`
+  only when a name, phone number, or email changed by that command matches
+  another student. Unchanged fields are not reported again, and the edited
+  student is not compared with its own earlier record.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
 * To remove all of a student's tags, give `-t` an empty value: `-t ""`. A bare

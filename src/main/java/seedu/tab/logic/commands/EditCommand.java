@@ -108,10 +108,13 @@ public class EditCommand extends Command {
                     editedStudent.getNusStudentId().orElseThrow(), duplicateStudent.orElseThrow().getName()));
         }
 
+        String feedback = LikelyDuplicateWarning.appendChangedFieldsTo(
+                String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)),
+                studentToEdit, editedStudent, model.getStudentBook().getStudentList());
         model.setStudent(studentToEdit, editedStudent);
         logger.info("Edited the student shown at " + index.getOneBased()
                 + "; the book now holds " + model.getStudentBook().getStudentList().size());
-        return new CommandResult(String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)));
+        return new CommandResult(feedback);
     }
 
     /**
