@@ -822,8 +822,15 @@ field is converted to its model type. Both stages finish before the normal UI
 can accept a command.
 
 `JsonUtil` turns malformed JSON or an incompatible JSON shape into a
-`DataLoadingException` that retains the parser's line and column. During model
-conversion, `JsonAdaptedStudent` identifies the invalid field and
+`DataLoadingException`. For a syntax error, it uses the deepest parser
+exception so that the displayed line and column identify the offending token
+rather than the last successfully mapped value. It pairs the concise parser
+explanation with the affected line and at most one line on either side. Each
+source line is limited to 160 characters; an affected long line is cropped
+around the reported column so that minified JSON remains useful without
+filling the dialog. If the parser supplies no usable location, `JsonUtil`
+omits the source instead of falling back to Jackson's source-bearing message.
+During model conversion, `JsonAdaptedStudent` identifies the invalid field and
 `JsonSerializableStudentBook` adds the one-based record number and its name
 when available. `JsonStudentBookStorage` carries that explanation through the
 same `DataLoadingException` boundary.
@@ -1396,7 +1403,8 @@ These were raised during requirement gathering and left out of the product.
 * 2a. TAB cannot read the data file at all, for example because it is not a TAB data file.
 
     * 2a1. TAB identifies the data file and parsing location when available,
-      reports why it is unreadable, and leaves it unchanged.
+      reports why it is unreadable, shows a bounded line-numbered source
+      excerpt when possible, and leaves it unchanged.
 
       Use case resumes at step 3.
 
@@ -2837,9 +2845,24 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Replace the file contents with `not json format!` and launch
       TAB.<br>
       Expected: An error dialog identifies `data/tab.json`, reports malformed
-      JSON with its line and column, and asks the User to repair or replace it.
-      The main window does not open. After dismissing the dialog, the file still
-      matches the malformed contents byte for byte.
+      JSON with its line and column, shows the affected line with its line
+      number, and asks the User to repair or replace it. The main window does
+      not open. After dismissing the dialog, the file still matches the
+      malformed contents byte for byte.
+
+   1. Test case: Restore the copied multi-student file, remove the comma after
+      one student's `"name"` value, and launch TAB.<br>
+      Expected: The dialog marks the next line as affected and shows no more
+      than one numbered line on either side. Unrelated student records do not
+      appear. The recovery instructions and `Close TAB` button remain visible,
+      and the malformed file remains byte-for-byte unchanged.
+
+   1. Test case: Put otherwise valid JSON on one line, remove a comma after the
+      first 160 characters, and launch TAB.<br>
+      Expected: The dialog reports line 1 and the error column. Its excerpt is
+      shortened around the error with an ellipsis instead of showing the whole
+      line. The recovery instructions and `Close TAB` button remain visible,
+      and the malformed file remains byte-for-byte unchanged.
 
    1. Test case: Replace the file contents with `{}` and launch TAB.<br>
       Expected: The dialog reports that the student list is missing. The main

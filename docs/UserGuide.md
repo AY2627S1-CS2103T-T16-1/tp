@@ -720,7 +720,11 @@ leading and trailing spaces from a non-empty saved email before validating it.
 **Caution:**
 If your changes make the data file unreadable, TAB shows an error at the next
 run instead of opening the main window. The error identifies `data/tab.json`
-and, when possible, the affected student record or field. TAB leaves the file
+and, when possible, the affected student record or field. For a JSON syntax
+error with a usable location, it gives the line and column and shows a short,
+line-numbered excerpt around the mistake. Long lines are shortened around the
+error instead of being shown in full. Without a usable location, it gives a
+concise explanation without showing the file contents. TAB leaves the file
 unchanged so that you can repair or replace it, then restart TAB.<br>
 Saved email addresses longer than 254 characters are rejected before validation
 because their shape can otherwise exhaust Java's stack. This is the same limit

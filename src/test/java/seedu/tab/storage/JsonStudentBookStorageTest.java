@@ -68,6 +68,37 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_syntaxError_reportsAffectedLinesAndPreservesFile() throws Exception {
+        Path filePath = testFolder.resolve("SyntaxError.json");
+        String originalContents = """
+                {
+                  "students": [ {
+                    "name": "Before",
+                    "phone": "81111111"
+                  }, {
+                    "name": "Alice"
+                    "phone": "82222222"
+                  }, {
+                    "name": "After",
+                    "phone": "83333333"
+                  } ]
+                }
+                """;
+        Files.writeString(filePath, originalContents);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, storage::readStudentBook);
+
+        assertTrue(exception.getMessage().contains("at line 7, column 6"));
+        assertTrue(exception.getMessage().contains("  6 |     \"name\": \"Alice\""));
+        assertTrue(exception.getMessage().contains("> 7 |     \"phone\": \"82222222\""));
+        assertFalse(exception.getMessage().contains("Before"));
+        assertFalse(exception.getMessage().contains("After"));
+        assertEquals(originalContents, Files.readString(filePath));
+    }
+
+    @Test
     public void readStudentBook_invalidStudentStudentBook_throwDataLoadingException() {
         String expectedMessage = "Student record 1 (\"---\"): Name \"---\" is not valid: "
                 + "it holds no letter or number";
