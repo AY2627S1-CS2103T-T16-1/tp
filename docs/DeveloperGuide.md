@@ -265,12 +265,12 @@ How the `Logic` component works:
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
-`LogicManager` compares a snapshot of the full student list before execution
+`LogicManager` compares a snapshot of the full student book before execution
 with the records afterwards and saves only if they differ. Filter changes and
 commands such as `list`, `find`, `help`, and `exit` therefore need no write
-permission. Confirming `clear` still saves the emptied book. A failed save
-leaves the change in memory; a later command that changes no records does not
-retry that save, so the User can still inspect the records or exit.
+permission. Confirming `clear` still saves the emptied book. If a save fails,
+`LogicManager` restores the snapshot and active filter before reporting the
+error, so a failed command does not remain applied in memory.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a command entered by the User:
 
@@ -290,6 +290,8 @@ How the parsing works:
 The `Model` component,
 
 * stores the student book's data i.e., all `Student` objects (which are contained in a `UniqueStudentList` object).
+* treats two records as the same student only when both hold the same NUS Student ID. Names are not identity keys,
+  and records without an NUS Student ID remain distinct.
 * stores the `Student` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Student>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the User’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -324,6 +326,16 @@ for repair. `JsonUserPrefsStorage` also rejects an explicit `null` for
 defaults before constructing the model. Student data is stored separately
 and is unchanged by preference recovery.
 
+`FileUtil.writeToFile` protects an existing JSON file from a partial save. It
+resolves an existing symbolic link to its destination, so replacing the saved
+data leaves the link in place. It also refuses a destination that is not
+writable and copies an existing file's POSIX permissions to its replacement.
+The new contents are written and forced to a temporary file beside the real
+destination before an atomic move replaces it. Keeping both files in one
+folder makes the atomic move possible, but also means that the folder must
+allow temporary-file creation. If writing or moving fails, the previous file
+remains unchanged and TAB removes the temporary file where possible.
+
 `StorageManager` logs read/write attempts and successful saves at `FINE`,
 including preference-file operations. Entries identify the file path without
 copying student or preference contents. Save completion is logged only after
@@ -338,6 +350,23 @@ Classes used by multiple components are in the `seedu.tab.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Rolling back model changes when saving fails
+
+`LogicManager` takes a copy of the student book and its active display filter
+before executing a command. It compares the resulting student book with that
+copy and writes to storage only when student records changed. Commands such as
+`list`, `find`, `help`, and `exit` can therefore run even when the data file is
+not writable.
+
+When a write fails, `LogicManager` restores both the student-book copy and the
+previous filter before reporting the storage error. Restoring the filter as
+well as the records matters because `add` and `edit` normally reset the display
+to show every student. The failed command consequently has no visible or
+in-memory effect, and retrying it cannot apply the same change twice. A
+confirmed `clear` follows the same save-and-restore path; its pending
+confirmation is still removed before the save attempt so that a failure does
+not leave a stale reply active.
 
 ### Resolving application file locations
 
@@ -607,7 +636,7 @@ They normalize for different reasons, and the rule each one enforces differs.
 
 | Field | Why it is normalized | What it must hold |
 | --- | --- | --- |
-| `Name` | it is the identity field used to compare students, so visually identical names should have the same stored form | at least one letter or number |
+| `Name` | it is displayed and searched as text, so visually identical names should have the same stored form | at least one letter or number |
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
 
@@ -639,13 +668,43 @@ A malformed non-null value rejects the data file instead of being silently
 dropped. The student card and command feedback show a present ID and omit the
 label entirely when absent.
 
-NUS Student ID is searchable but is **not an identity key**. Student identity remains
-the normalized name, so two different names may carry the same NUS Student ID, just as
-they may carry the same phone or email. This avoids rejecting legitimate data
-or claiming certainty when a reused detail might be a correction or a data-entry
-mistake. Adding or editing a record to a name already in the book is still
-rejected. A future duplicate-warning workflow can surface shared contact
-details without changing this model contract.
+NUS Student ID is the sole **identity key**. `Student.isSameStudent` returns
+true only when both records hold equal NUS Student IDs. Because construction
+normalizes letters to uppercase, this comparison is case-insensitive. A shared
+name does not establish identity, and neither does a shared phone number or
+email. Records without an NUS Student ID therefore remain distinct even when
+their other details match. `UniqueStudentList` applies this rule to add, edit,
+and model replacement, so command execution and storage loading enforce the
+same contract.
+
+When `add` or `edit` finds a matching NUS Student ID, it rejects the operation
+without mutation and names the normalized ID and student who already holds it.
+During storage loading, `JsonSerializableStudentBook` admits repeated names but
+rejects a repeated NUS Student ID with both record numbers, both names, and the
+ID. This keeps hand-edited files diagnosable while allowing common names in a
+class.
+
+After the identity check succeeds, `LikelyDuplicateWarning` compares the
+prospective record with every existing student. Name and email comparisons
+ignore case; names already carry `normalizeFieldValue`'s whitespace
+normalization, and phone comparisons remove spaces from their normalized
+stored forms. Other punctuation remains significant so the warning does not
+claim fuzzy matching it cannot provide. Absent emails do not match.
+
+The commands collect the warnings before mutation and separate them from the
+ordinary success message with a blank line. Matches are grouped by field into
+one prominently labelled `WARNING: Possible duplicate student` line. A line
+names at most two students and summarizes further matches as `N others`, so a
+shared placeholder does not fill the result box. The review advice appears
+once after every matching field.
+
+`EditCommand` compares only name, phone, or email values that differ from the
+selected record. It excludes the selected `Student` instance but still uses
+the complete unfiltered student book, so a filtered list cannot hide a match
+and unrelated tag or follow-up edits do not repeat an acknowledged warning.
+These comparisons are advisory only: they never feed `isSameStudent` or the
+storage duplicate check, and therefore cannot reject or discard a legitimate
+shared detail.
 
 **The email may be absent.** A student is recorded before an email address is
 known rather than one being invented. `Student` accepts, stores, and exposes
@@ -778,10 +837,10 @@ restart remain separate future features.
 
 #### Student names
 
-A name is displayed, searched as text, and used as a student's
-identity field. `Name` therefore stores a normalized field value rather than
-the raw input, so that two names which look identical cannot be searched
-differently or admitted as two students.
+A name is displayed and searched as text, but is not an identity field.
+`Name` stores a normalized field value rather than the raw input so that two
+names which look identical are displayed and searched consistently. Multiple
+students may hold the same normalized name.
 
 **Normalizing.** On construction a name is
 
@@ -1093,7 +1152,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | list students I have not followed up with since a given date | make sure no one who needs help flies under the radar |
 | `*` | teaching assistant working in twenty-second windows | identify a student by their NUS Student ID when deleting a record | avoid removing the wrong student when several students are listed |
 | `*` | teaching assistant working in twenty-second windows | identify a student by their NUS Student ID when editing a record | avoid changing the wrong student’s details |
-| `*` | teaching assistant | record two students who genuinely have the same name | keep separate student records for them |
+| `* * *` | teaching assistant | record two students who genuinely have the same name | keep separate student records for them |
 | `*` | teaching assistant who can type fast | be shown a likely correction when I mistype a command word | recover without looking up the syntax |
 | `*` | teaching assistant | look back at results I have already replaced | re-read earlier output without running the search again |
 | `*` | teaching assistant | start from my previous input when an entry is rejected | correct one detail instead of retyping everything |
@@ -1162,10 +1221,10 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 2.
 
-* 1c. The normalized name matches a student whom TAB already holds.
+* 1c. The NUS Student ID matches one that another student already holds, ignoring case.
 
-    * 1c1. TAB reports that the student already exists and leaves the student
-      records unchanged.
+    * 1c1. TAB names the repeated NUS Student ID and leaves the student records
+      unchanged.
 
       Use case ends.
 
@@ -1490,10 +1549,10 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-* 3d. The edited normalized name matches another student whom TAB already holds.
+* 3d. The edited NUS Student ID matches one that another student already holds, ignoring case.
 
-    * 3d1. TAB reports that the student already exists and leaves both student
-      records unchanged.
+    * 3d1. TAB names the repeated NUS Student ID and leaves both student records
+      unchanged.
 
       Use case ends.
 
@@ -1609,8 +1668,8 @@ These were raised during requirement gathering and left out of the product.
   command (such as `find` or `list`). Commands taking an Index target records relative to this list.
 * **Follow-up**: An action or response that the User still owes to a student,
   tracked in TAB as a pending status on a student record.
-* **Identity field**: A field used by TAB to identify whether two records refer to the same student. Student identity
-  is determined by normalized name. NUS Student IDs, phone numbers, and emails are searchable details, not identity keys.
+* **Identity field**: A field used by TAB to identify whether two records refer to the same student. The NUS Student
+  ID is TAB's sole identity field. Name, phone number, and email are searchable details rather than identity keys.
 * **Index**: The 1-based positive integer identifying a student according to their current display position in the
   active/filtered list shown in the GUI, rather than a permanent database identifier or 0-based code index.
 * **Mainstream OS**: Windows, Linux and macOS.
@@ -1698,12 +1757,12 @@ testers are expected to do more *exploratory* testing.
 
    1. Run `add Read Only Test -p 91234567`.<br>
       Expected: TAB reports a data-file save error and remains open. The
-      record is visible for this session but has not been saved.
+      record is not visible because the failed change is rolled back.
 
    1. Run `list`, then `exit`.<br>
-      Expected: `list` includes the unsaved record without a save error,
-      and `exit` closes TAB. Restore write permission and relaunch.
-      The added record was not saved.
+      Expected: `list` excludes the failed record without a save error, and
+      `exit` closes TAB. Restore write permission and relaunch. The failed
+      record is still absent.
 
 1. Full-page help pager
 
@@ -2064,13 +2123,14 @@ testers are expected to do more *exploratory* testing.
       shows `New student added: Jane Doe; Phone: 91234567; Tags: [lab1][urgent]; Needs follow-up`
       with tags sorted alphabetically ignoring case.
 
-1. Adding a duplicate student
+1. Adding a duplicate NUS Student ID
 
-   1. Prerequisites: A student named `John Doe` with phone `98765432` is already in the list.
+   1. Prerequisites: A student named `John Doe` with NUS Student ID `A01234567X`
+      is already in the list.
 
-   1. Test case: `add John Doe -p 98765432`<br>
-      Expected: No student is added. The status message reports that this student
-      already exists in the student book, and no record is mutated.
+   1. Test case: `add Jane Doe -p 98765432 -i a01234567x`<br>
+      Expected: No student is added. The status message names NUS Student ID
+      `A01234567X` and `John Doe`, and no record is mutated.
 
 ### Long contact details on a card
 
@@ -2288,13 +2348,70 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Start from an empty book.
 
    1. Test cases: add `add Alice Tan -p 91234567 -i A01234567X`, then
-      `add Bob Lim -p 92345678 -i A01234567X`.<br>
-      Expected: Both students are added because different normalized names are
-      different identities, even when the NUS Student ID is shared.
+      `add Alice Tan -p 92345678 -i A76543210Y`, then
+      `add Alice Tan -p 93456789`.<br>
+      Expected: All three students are added because the matching name is not
+      an identity key, and the NUS Student IDs differ or are absent. The second
+      and third additions each warn that other students have the same name;
+      the third result groups both matching records into one name warning.
 
-   1. Test case: `add Alice Tan -p 93456789 -i A76543210Y`<br>
-      Expected: The addition is rejected as a duplicate name and neither
-      existing record changes.
+   1. Test case: `add Bob Lim -p 94567891 -i a01234567x`<br>
+      Expected: The addition is rejected. The error names NUS Student ID
+      `A01234567X` and student `Alice Tan`, and none of the existing records changes.
+
+   1. Test case: Run `list`, note the third Alice's index, then run
+      `edit INDEX -i A01234567X` with that index.<br>
+      Expected: The edit is rejected. The error names NUS Student ID
+      `A01234567X` and student `Alice Tan`, and all three Alice records keep their
+      earlier details.
+
+   1. Test case: Note the second Alice's index, then run
+      `edit INDEX -n "Alice Tan" -p 95678912` with that index.<br>
+      Expected: The edit succeeds because her NUS Student ID remains distinct;
+      sharing the same name does not block the edit. The unchanged name is not
+      warned about again, and the new phone matches no other record.
+
+1. Warning about likely duplicate students
+
+   1. Prerequisites: Start from an empty book and add
+      `add Alex Yeoh -p "+65 9123 4567" -e Alex@Example.com -i A01234567X`.<br>
+      Expected: Alex is added without a warning because no other student is
+      present.
+
+   1. Test case: `add "  aLeX   yEoH  " -p 81112222 -e other@example.com`<br>
+      Expected: The second record is saved. The result names Alex Yeoh and the
+      matching `name`; case and repeated spaces do not prevent the match.
+
+   1. Test case: `add Bernice Yu -p +6591234567 -e bernice@example.com`<br>
+      Expected: Bernice is saved. The result names Alex Yeoh and the matching
+      `phone`, because spaces in a phone number are insignificant.
+
+   1. Test case: `add Chris Lim -p 82223333 -e alex@example.com`<br>
+      Expected: Chris is saved. The result names Alex Yeoh and the matching
+      `email`; email letter case is insignificant.
+
+   1. Prerequisites: Clear the book, add `add Dana Lee -p 83334444`, and note
+      Dana's index.<br>
+      Test case: `edit INDEX -t tutorial` with Dana's index.<br>
+      Expected: The edit succeeds without a likely-duplicate warning. Dana's
+      unchanged name and phone are not compared with her own earlier record.
+
+   1. Test case: Add `add Evan Lee -p 84445555`, then change Dana's phone with
+      `edit INDEX -p 84445555`.<br>
+      Expected: Dana's edit succeeds and warns that Evan Lee has the same
+      changed phone. Her unchanged name is not checked.
+
+   1. Prerequisites: Clear the book, add four students named `Student One`
+      through `Student Four`, each with phone `000`.<br>
+      Test case: `add Student Five -p 000`<br>
+      Expected: Student Five is saved. One phone warning names Student One and
+      Student Two, then says that two others match. The review advice appears
+      once rather than after every student.
+
+   1. Test case: Add `add Tan Wei Ming -p 91234567` twice, note the second
+      Tan Wei Ming's index, then run `edit INDEX -p 99999999` with that index.<br>
+      Expected: Only the selected second Tan Wei Ming's phone changes. The first
+      identical record keeps phone number `91234567`.
 
 ### Editing a student
 
@@ -2362,8 +2479,6 @@ testers are expected to do more *exploratory* testing.
    1. Test cases: `edit` and `edit INDEX`<br>
       Expected: No change. The first names the missing index and says a field
       to edit is needed; the second asks only for a field.
-
-1. _{ more test cases … }_
 
 ### Clearing a student's email
 
@@ -2658,6 +2773,26 @@ testers are expected to do more *exploratory* testing.
 
 ### Saving data
 
+1. Preserving existing data when a save fails
+
+   1. Prerequisites: Launch TAB, add a recognizable student, exit, and keep a
+      byte-for-byte copy of `data/tab.json`. Leave the file readable, but make
+      its `data` folder non-writable. On Linux/macOS, run `chmod 555 data` as a
+      non-root User. On Windows, remove create/write permission for the test
+      account from the folder while retaining read permission.
+
+   1. Test case: Launch TAB and enter `add Bob Tan -p 91234567`.<br>
+      Expected: TAB reports that it could not save to `data/tab.json` due to
+      insufficient permissions. Bob remains visible for this session, while
+      `data/tab.json` still matches the backup byte for byte and no temporary
+      `.tab-*.tmp` file remains.
+
+   1. Test case: Enter `exit`, restore write permission to `data`, relaunch TAB,
+      and enter `list`.<br>
+      Expected: The recognizable student and every record from the backup are
+      present. Bob is absent because his failed save never replaced the last
+      valid data file.
+
 1. Dealing with missing/corrupted data files
 
    1. Prerequisites: Launch TAB, add a recognizable student, exit, and keep a
@@ -2710,5 +2845,28 @@ testers are expected to do more *exploratory* testing.
       existed, including its removed `address` keys, and relaunch TAB.<br>
       Expected: TAB loads every student, ignores the old address values and
       treats a missing flag as not needing follow-up.
+
+1. Recovering from a save failure
+
+   1. Prerequisites: Launch TAB with at least three students, make a change
+      such as `edit 1 -p 91234567`, and exit so that `data/tab.json` exists.
+      Keep a byte-for-byte copy of the file. Make both `data/tab.json` and its
+      `data` folder non-writable, then relaunch TAB using a non-root account.
+      On Linux/macOS, run `chmod 444 data/tab.json` and `chmod 555 data`. On
+      Windows, remove write permission from both the file and folder for the
+      test account while retaining read permission.
+
+   1. Test case: Enter `delete 1` twice, then enter `clear` followed by `y`.<br>
+      Expected: Each delete reports that TAB cannot save the data. No student
+      disappears, and the clear prompt still gives the original student count.
+      Confirming the clear also reports the save error and restores every
+      student.
+
+   1. Test case: Enter `list`, `find Amy`, and `help`, then press q to leave the
+      help page and enter `exit`.<br>
+      Expected: Each command succeeds, including opening the help page and
+      closing TAB. The read-only `data/tab.json` still matches the saved copy
+      byte for byte. Restore write permission to both the file and folder before
+      continuing to use TAB.
 
 1. _{ more test cases … }_
