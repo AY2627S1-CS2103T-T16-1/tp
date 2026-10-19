@@ -395,6 +395,12 @@ done to it beyond the quotes any value with spaces takes:
 </box>
 
 * Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list. The index **must be a positive integer** 1, 2, 3, ...
+  The current search stays active after editing, so the index keeps referring to
+  the same student when you repeat a command, as long as that student still
+  matches the search. An edit that removes a matching detail, such as renaming
+  the only `john` in the list, takes that student off the displayed list and
+  shifts the remaining indices up. Check the displayed list before repeating a
+  command after such an edit.
 * The index comes first, before any option.
   An unquoted negative index reports both that the index must be positive and
   that the negative number is not an option. Extra words after a valid index
@@ -566,6 +572,13 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
   address, tags and follow-up status. For example, `find follow-up` can find
   flagged students, and `find a0123` can find a student with NUS Student ID `A01234567X`.
 * Parts of details match; for example, `Han` matches `Hans`, and `912` matches the phone number `91234567`.
+  The follow-up status is the exception: only `Needs follow-up` or one of its whole
+  words matches it, so `find follow-up` and `find needs` find flagged students while
+  `find low` and `find up` do not.
+* A keyword containing only digits also searches the phone number with all non-digit characters removed.
+  For example, `find 91234567` and `find 91234` both match `+65 9123 4567`, and
+  `find 98765432` matches `9876-5432`. You can include the country code, as in `find 6591234567`.
+  Terms containing other characters, such as `"ext 21"` or `"9123 4567"`, still match the stored text.
 * TAB reports the number of matches found: `Found 0 students.` when none match,
   `Found 1 student.` for a single match, and `Found 3 students.` for multiple matches.
 
@@ -658,6 +671,10 @@ is absent. Two records with the same NUS Student ID make the file unreadable;
 the startup error names the repeated ID and both record locations so that you
 can correct it. Phone numbers and emails are searchable details rather than
 identity keys.
+
+An email key is optional: a missing key, `null`, an empty string, or a string
+containing only spaces means that no email has been recorded. TAB removes
+leading and trailing spaces from a non-empty saved email before validating it.
 
 <box type="warning" seamless>
 

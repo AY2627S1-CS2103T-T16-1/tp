@@ -8,7 +8,6 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
-import static seedu.tab.model.Model.PREDICATE_SHOW_ALL_STUDENTS;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -110,7 +109,6 @@ public class EditCommand extends Command {
         }
 
         model.setStudent(studentToEdit, editedStudent);
-        model.updateFilteredStudentList(PREDICATE_SHOW_ALL_STUDENTS);
         logger.info("Edited the student shown at " + index.getOneBased()
                 + "; the book now holds " + model.getStudentBook().getStudentList().size());
         return new CommandResult(String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)));
