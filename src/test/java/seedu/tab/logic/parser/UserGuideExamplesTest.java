@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.logic.commands.AddCommand;
+import seedu.tab.logic.commands.DeleteCommand;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.HelpCommand;
@@ -47,6 +48,11 @@ public class UserGuideExamplesTest {
     @Test
     public void userGuide_everyAddExample_parses() throws IOException {
         assertEveryExampleParses(AddCommand.COMMAND_WORD, new AddCommandParser());
+    }
+
+    @Test
+    public void userGuide_everyDeleteExample_parses() throws IOException {
+        assertEveryExampleParses(DeleteCommand.COMMAND_WORD, new DeleteCommandParser());
     }
 
     @Test

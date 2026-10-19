@@ -2519,6 +2519,7 @@ testers are expected to do more *exploratory* testing.
 1. Deleting a student while all students are being shown
 
    1. Prerequisites: List all students using the `list` command, with multiple students in the list.
+      Note one student's NUS Student ID (such as `A12345678C`).
 
    1. Test case: `delete 1`<br>
       Expected: The first student record is deleted from the list. The status message identifies
@@ -2528,13 +2529,26 @@ testers are expected to do more *exploratory* testing.
       Expected: No student is deleted. The status message shows error details, and the student book
       remains unchanged.
 
+   1. Test case: `delete A12345678C`, where `A12345678C` is the NUS Student ID a student in the book holds<br>
+      Expected: That student is deleted from the list wherever they appear, and the status message
+      identifies them. `delete a12345678c` does the same, because matching an ID ignores case.
+
+   1. Test case: `find Alex` followed by `delete A12345678C`, where the search hides the student
+      who holds that ID<br>
+      Expected: That student is deleted from the book, and the status message identifies them.
+
+   1. Test case: `delete A99999999Z`, where no student holds that ID<br>
+      Expected: No student is deleted. The status message reads
+      `No student has NUS Student ID A99999999Z.`, and the student book remains unchanged.
+
    1. Test case: `delete 1` where the space after the `1` is a non-breaking space (`U+00A0`),
       pasted from a word processor or a web page, or a full-width space (`U+3000`) typed
       with a Chinese input method<br>
       Expected: The first student record is deleted, exactly as with an ordinary space.
       TAB does not call the command an invalid format for a character the user cannot see.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
+   1. Other incorrect delete commands to try: `delete`, `delete 999` (where the number is larger
+      than the list size)<br>
       Expected: Similar to previous.
 
 1. _{ more test cases … }_

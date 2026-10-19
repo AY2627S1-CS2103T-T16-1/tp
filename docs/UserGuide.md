@@ -46,7 +46,7 @@ TAB is a **desktop application for teaching assistants to manage student records
 
    * `add John Doe -p 98765432 -e johnd@example.com --id A01234567X` : Adds a student named `John Doe` with an NUS Student ID.
 
-   * `delete 3` : Deletes the 3rd student shown in the current list.
+   * `delete 3` : Deletes the 3rd student shown in the current list. `delete A01234567X` deletes by NUS Student ID instead.
 
    * `clear` : Asks before deleting all students. Type `y` and press Enter
      to confirm, or press Enter without a reply to cancel.
@@ -622,17 +622,21 @@ Examples:
 
 Deletes the specified student from the student book.
 
-Format: `delete INDEX`
+Format: `delete INDEX` or `delete NUS_STUDENT_ID`
 
-* Deletes the student at the specified `INDEX`.
+* An `INDEX` deletes the student at that position in the displayed student list.
+* An `INDEX` **must be a positive integer** 1, 2, 3, ...
+* An `NUS_STUDENT_ID` deletes the student who holds that ID, wherever they are in
+  the book — even while a search is hiding them. The match ignores case.
 * The command result identifies the removed record (`Deleted student: NAME; Phone: PHONE...`)
   so you can verify exactly which student was deleted from the book.
-* The index refers to the index number shown in the displayed student list.
-* The index **must be a positive integer** 1, 2, 3, ...
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd student in the student book.
 * `find Betsy` followed by `delete 1` deletes the 1st student in the results of the `find` command.
+* `delete A01234567X` deletes the student holding the NUS Student ID `A01234567X`.
+* `delete a01234567x` deletes the same student, because matching an ID ignores case.
+* `find Alex` followed by `delete A12345678C` deletes that student even while the search hides them.
 
 ### Clearing all entries: `clear`
 
@@ -740,7 +744,7 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> e.g., `add James Ho --phone 22224444 -i A01234567X --tag friend -t colleague --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Delete** | `delete INDEX` or `delete NUS_STUDENT_ID`<br> e.g., `delete 3`, `delete A01234567X`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag` <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name "James Lee" --id A01234567X`
 **Tag**    | `tag INDEX -a TAG` or `tag INDEX -r TAG` <br> Alternate spellings: `--add`, `--remove` <br> e.g., `tag 1 --add "Lab 3"`, `tag 1 --remove "Lab 3"`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
