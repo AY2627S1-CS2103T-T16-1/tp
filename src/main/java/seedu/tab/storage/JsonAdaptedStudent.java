@@ -95,7 +95,7 @@ class JsonAdaptedStudent {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.FIELD_NAME));
         }
         if (!Name.isValidName(name)) {
-            throw new IllegalValueException(formatInvalidField(
+            throw new IllegalValueException(Messages.getErrorMessageForInvalidValue(
                     Name.FIELD_NAME, name, Name.getFailureReason(name)));
         }
         final Name modelName = new Name(name);
@@ -104,7 +104,7 @@ class JsonAdaptedStudent {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.FIELD_NAME));
         }
         if (!Phone.isValidPhone(phone)) {
-            throw new IllegalValueException(formatInvalidField(
+            throw new IllegalValueException(Messages.getErrorMessageForInvalidValue(
                     Phone.FIELD_NAME, phone, Phone.getFailureReason(phone)));
         }
         final Phone modelPhone = new Phone(phone);
@@ -118,7 +118,7 @@ class JsonAdaptedStudent {
                     Email.FIELD_NAME, normalizedEmail.length(), Email.MAX_LENGTH));
         }
         if (normalizedEmail != null && !Email.isValidEmail(normalizedEmail)) {
-            throw new IllegalValueException(formatInvalidField(
+            throw new IllegalValueException(Messages.getErrorMessageForInvalidValue(
                     Email.FIELD_NAME, normalizedEmail, Email.getFailureReason(normalizedEmail)));
         }
         final Optional<Email> modelEmail = Optional.ofNullable(normalizedEmail).map(Email::new);
@@ -144,9 +144,5 @@ class JsonAdaptedStudent {
 
     String getNameForErrorMessage() {
         return name == null ? null : Messages.shorten(name);
-    }
-
-    static String formatInvalidField(String fieldName, String value, String reason) {
-        return Messages.getErrorMessageForInvalidValue(fieldName, value, reason);
     }
 }
