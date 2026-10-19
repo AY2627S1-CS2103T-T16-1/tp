@@ -21,6 +21,7 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
+import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -181,6 +182,41 @@ public class JsonStudentBookStorageTest {
         assertEquals(2, loaded.getStudentList().size());
         assertEquals(explicitNull, loaded.getStudentList().get(0));
         assertEquals(keyLeftOut, loaded.getStudentList().get(1));
+    }
+
+    @Test
+    public void readStudentBook_handEditedEmailWhitespace_loadsAndPreservesAllStudents() throws Exception {
+        Path filePath = testFolder.resolve("EmailWhitespace.json");
+        Files.writeString(filePath, """
+                {
+                  "students": [ {
+                    "name": "Alex Yeoh",
+                    "phone": "87438807",
+                    "email": ""
+                  }, {
+                    "name": "Bernice Yu",
+                    "phone": "99272758",
+                    "email": "berniceyu@example.com "
+                  }, {
+                    "name": "Charlotte Oliveiro",
+                    "phone": "93210283"
+                  } ]
+                }
+                """);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        ReadOnlyStudentBook loaded = storage.readStudentBook().get();
+
+        assertEquals(3, loaded.getStudentList().size());
+        assertEquals(Optional.empty(), loaded.getStudentList().get(0).getEmail());
+        assertEquals(Optional.of(new Email("berniceyu@example.com")), loaded.getStudentList().get(1).getEmail());
+        assertEquals(Optional.empty(), loaded.getStudentList().get(2).getEmail());
+
+        StudentBook updated = new StudentBook(loaded);
+        updated.addStudent(new StudentBuilder().withName("David Li").withPhone("91031282").build());
+        storage.saveStudentBook(updated);
+
+        assertEquals(updated, new StudentBook(storage.readStudentBook().get()));
     }
 
     @Test
