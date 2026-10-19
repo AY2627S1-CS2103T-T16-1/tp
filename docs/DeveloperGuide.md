@@ -728,6 +728,11 @@ and optional follow-up flag. Matching is case-insensitive; those details
 match partially, while the follow-up flag matches only the whole label
 `Needs follow-up` or one of its words, so a fragment such as `low` cannot
 list every flagged student.
+For a keyword containing only Unicode decimal digits (`\p{Nd}+`), the phone
+comparison also checks a copy of the stored phone with non-digit characters
+removed. This lets `91234567` match `+65 9123 4567` or `9123-4567`.
+Literal phone matching remains available for formatted phrases and annotations;
+other fields retain their text matching. The stored phone and saved data do not change.
 
 `FindCommand` and `ListCommand` report the count of displayed students in
 their execution feedback. `FindCommand` counts only the matching students
@@ -2321,6 +2326,29 @@ testers are expected to do more *exploratory* testing.
       Expected: No change. An empty value clears the tags only on its own, so
       the message rejects the empty tag.
 
+1. Repeating an edit after a search
+
+   1. Prerequisites: Add `add Alex Yeoh -p 87438807` and
+      `add John Doe -p 98765432`, then run `find john`.
+
+   1. Test case: Run `edit 1 --follow-up` twice.<br>
+      Expected: Both commands flag John Doe, the only student listed. The
+      search stays active between the commands, so index 1 keeps pointing at
+      John Doe and Alex Yeoh stays unflagged.
+
+   1. Test case: `edit 1 -p 9876543` followed by `edit 1 -p 98765432`.<br>
+      Expected: John Doe's phone becomes `9876543` and is then restored to
+      `98765432`. Alex Yeoh's phone remains `87438807` throughout.
+
+   1. Test case: Run `add John Smith -p 91112222`, then `find john`,
+      `edit 1 -n Jack`, then `edit 1 -p 91112233`.<br>
+      Expected: The first `edit` renames John Doe to Jack, who no longer
+      matches `john` and leaves the displayed list; John Smith shifts up to
+      index 1. The second `edit` therefore changes John Smith's phone, not
+      Jack's. The User Guide warns that an edit removing a match shifts the
+      remaining indices, so the displayed list should be checked before
+      repeating a command.
+
 1. Reporting several mistakes at once
 
    1. Prerequisites: Run `list` and note the list size.
@@ -2527,6 +2555,23 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `delete 1`, then `list`<br>
       Expected: Feedback reports `Listed 1 student.`.
+
+### Locating students by digits in formatted phone numbers
+
+1. Full numbers, partial numbers, and unchanged saved formatting
+
+   1. Prerequisites: In a disposable copy of TAB, clear all students (`clear`, then `yes`).
+      Run `add Alex Yeoh -p "+65 9123 4567"` and `add Bernice Yu -p 9876-5432`.
+      Restart TAB and keep a copy of `data/tab.json`.
+   1. Test cases: `find 91234567`, `find 91234`, and `find 6591234567`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.` and phone `+65 9123 4567`.
+   1. Test case: `find 98765432`.<br>
+      Expected: Only Bernice Yu is shown, with `Found 1 student.` and phone `9876-5432`.
+   1. Test case: `find 91234567 Bernice`.<br>
+      Expected: Both students are shown, with `Found 2 students.`.
+   1. Test case: `find 91234568`.<br>
+      Expected: No students are shown, with `Found 0 students.`.
+      `data/tab.json` is identical to the saved copy after all these searches.
 
 ### Locating students with quoted phrases and error handling
 
