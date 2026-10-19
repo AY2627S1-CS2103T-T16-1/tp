@@ -1,0 +1,57 @@
+name: Commit messages
+
+# Every commit a pull request brings in lands on master with its message, and
+# the merge commit typed into GitHub's merge box runs no local hook. So this
+# checks the 72-character limits before a merge where it can: the pull
+# request's commits and its proposed merge commit message. On master, it flags
+# a pushed commit that broke them, such as a merge typed on GitHub.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  limits:
+    # Our pull request to the course repository brings in the whole project
+    # history, including commits from before these limits, which only a
+    # rewrite of master could change. So this runs in the team repository only.
+    if: github.repository == 'AY2627S1-CS2103T-T16-1/tp'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check the commits this pull request brings in
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: .github/commit-message-limits.sh "$BASE..$HEAD"
+
+      - name: Check the proposed merge commit message
+        if: github.event_name == 'pull_request'
+        env:
+          DESCRIPTION: ${{ github.event.pull_request.body }}
+        run: printf '%s\n' "$DESCRIPTION" | .github/commit-message-limits.sh --proposed
+
+      - name: Check the commits pushed to master
+        if: github.event_name == 'push'
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          # After a force push the old tip is not an ancestor, so check only
+          # the new tip rather than the whole history.
+          if git merge-base --is-ancestor "$BEFORE" "$AFTER" 2>/dev/null; then
+              .github/commit-message-limits.sh "$BEFORE..$AFTER"
+          else
+              .github/commit-message-limits.sh "$AFTER^!"
+          fi

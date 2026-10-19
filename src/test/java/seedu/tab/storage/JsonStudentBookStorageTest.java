@@ -21,6 +21,7 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
+import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -57,6 +58,12 @@ public class JsonStudentBookStorageTest {
 
         assertTrue(exception.getMessage().contains("The data is not in the expected JSON format"));
         assertTrue(exception.getMessage().contains("line 1, column 4"));
+    }
+
+    @Test
+    public void readStudentBook_nullDocument_throwsDataLoadingException() {
+        assertThrows(DataLoadingException.class, "The JSON document must not be null.", () ->
+                readStudentBook("nullStudentBook.json"));
     }
 
     @Test
@@ -144,6 +151,41 @@ public class JsonStudentBookStorageTest {
         assertEquals(2, loaded.getStudentList().size());
         assertEquals(explicitNull, loaded.getStudentList().get(0));
         assertEquals(keyLeftOut, loaded.getStudentList().get(1));
+    }
+
+    @Test
+    public void readStudentBook_handEditedEmailWhitespace_loadsAndPreservesAllStudents() throws Exception {
+        Path filePath = testFolder.resolve("EmailWhitespace.json");
+        Files.writeString(filePath, """
+                {
+                  "students": [ {
+                    "name": "Alex Yeoh",
+                    "phone": "87438807",
+                    "email": ""
+                  }, {
+                    "name": "Bernice Yu",
+                    "phone": "99272758",
+                    "email": "berniceyu@example.com "
+                  }, {
+                    "name": "Charlotte Oliveiro",
+                    "phone": "93210283"
+                  } ]
+                }
+                """);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        ReadOnlyStudentBook loaded = storage.readStudentBook().get();
+
+        assertEquals(3, loaded.getStudentList().size());
+        assertEquals(Optional.empty(), loaded.getStudentList().get(0).getEmail());
+        assertEquals(Optional.of(new Email("berniceyu@example.com")), loaded.getStudentList().get(1).getEmail());
+        assertEquals(Optional.empty(), loaded.getStudentList().get(2).getEmail());
+
+        StudentBook updated = new StudentBook(loaded);
+        updated.addStudent(new StudentBuilder().withName("David Li").withPhone("91031282").build());
+        storage.saveStudentBook(updated);
+
+        assertEquals(updated, new StudentBook(storage.readStudentBook().get()));
     }
 
     @Test
@@ -277,6 +319,28 @@ public class JsonStudentBookStorageTest {
         assertTrue(savedJson.contains("\"flag\" : true"));
         assertEquals(1, savedJson.split("\"flag\"", -1).length - 1);
         assertEquals(original, new StudentBook(storage.readStudentBook(filePath).get()));
+    }
+
+    @Test
+    public void readAndSaveStudentBook_clearedOptionalDetails_omitsKeysAndPreservesOtherFields() throws Exception {
+        Path filePath = testFolder.resolve("ClearedDetails.json");
+        Student student = new StudentBuilder(ALICE).withFlag(true).build();
+        StudentBook book = new StudentBook();
+        book.addStudent(student);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+        storage.saveStudentBook(book);
+        Student loaded = storage.readStudentBook().orElseThrow().getStudentList().get(0);
+        assertEquals(student, loaded);
+
+        Student cleared = new StudentBuilder(loaded).withoutEmail().withoutNusStudentId().build();
+        book.setStudent(student, cleared);
+        storage.saveStudentBook(book);
+
+        String savedJson = Files.readString(filePath);
+        assertFalse(savedJson.contains("\"email\""));
+        assertFalse(savedJson.contains("\"nusStudentId\""));
+        assertTrue(savedJson.contains("\"flag\" : true"));
+        assertEquals(book, new StudentBook(storage.readStudentBook().orElseThrow()));
     }
 
     @Test

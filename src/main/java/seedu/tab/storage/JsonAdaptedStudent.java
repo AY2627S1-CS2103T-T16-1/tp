@@ -3,6 +3,7 @@ package seedu.tab.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -108,28 +109,37 @@ class JsonAdaptedStudent {
         }
         final Phone modelPhone = new Phone(phone);
 
-        // A file may hold no email, either because the key is absent or because it is null.
-        // Anything else has to be a valid address; a broken one is not silently dropped.
-        if (email != null && !Email.isWithinLengthLimit(email)) {
+        // A hand-edited file may spell an absent email as a missing key, null or a blank string.
+        // A non-blank value follows the same trimming behavior as command input before validation.
+        final String normalizedEmail = normalizeOptionalEmail(email);
+        if (normalizedEmail != null && !Email.isWithinLengthLimit(normalizedEmail)) {
             throw new IllegalValueException(String.format(
                     "%s field is too long to read safely: it holds %d characters, but saved emails may hold at most %d",
-                    Email.FIELD_NAME, email.length(), Email.MAX_LENGTH));
+                    Email.FIELD_NAME, normalizedEmail.length(), Email.MAX_LENGTH));
         }
-        if (email != null && !Email.isValidEmail(email)) {
+        if (normalizedEmail != null && !Email.isValidEmail(normalizedEmail)) {
             throw new IllegalValueException(formatInvalidField(
-                    Email.FIELD_NAME, email, Email.getFailureReason(email)));
+                    Email.FIELD_NAME, normalizedEmail, Email.getFailureReason(normalizedEmail)));
         }
-        final Email modelEmail = email == null ? null : new Email(email);
+        final Optional<Email> modelEmail = Optional.ofNullable(normalizedEmail).map(Email::new);
 
         // A missing or null key represents an ID that has not been recorded. A malformed
         // value is rejected rather than being silently discarded from the student record.
         if (nusStudentId != null && !NusStudentId.isValidNusStudentId(nusStudentId)) {
             throw new IllegalValueException(NusStudentId.MESSAGE_CONSTRAINTS);
         }
-        final NusStudentId modelNusStudentId = nusStudentId == null ? null : new NusStudentId(nusStudentId);
+        final Optional<NusStudentId> modelNusStudentId = Optional.ofNullable(nusStudentId).map(NusStudentId::new);
 
         final Set<Tag> modelTags = new HashSet<>(studentTags);
         return new Student(modelName, modelPhone, modelEmail, modelNusStudentId, modelTags, Boolean.TRUE.equals(flag));
+    }
+
+    private static String normalizeOptionalEmail(String rawEmail) {
+        if (rawEmail == null) {
+            return null;
+        }
+        String trimmedEmail = rawEmail.trim();
+        return trimmedEmail.isEmpty() ? null : trimmedEmail;
     }
 
     String getNameForErrorMessage() {

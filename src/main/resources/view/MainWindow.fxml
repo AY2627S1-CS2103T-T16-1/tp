@@ -39,35 +39,40 @@
           </Menu>
         </MenuBar>
 
-        <StackPane VBox.vgrow="NEVER" fx:id="commandBoxPlaceholder" styleClass="command-pane">
-          <padding>
-            <Insets top="12" right="16" bottom="4" left="16" />
-          </padding>
-        </StackPane>
-
-        <!-- the reply keeps the height it asks for. A VBox short of room shrinks every
-             child, whatever its grow priority, so the reply was squeezed below the rows it
-             had been given and what did not fit was cut off -->
-        <StackPane VBox.vgrow="NEVER" fx:id="resultDisplayPlaceholder" minHeight="-Infinity">
-          <padding>
-            <Insets top="6" right="12" bottom="6" left="12" />
-          </padding>
-        </StackPane>
-
-        <!-- the list yields height before the reply does: it scrolls, so what it cannot
-             show is still reachable, where a reply squeezed below the rows it was given is
-             simply cut off -->
-        <HBox VBox.vgrow="ALWAYS" minHeight="0">
-          <StackPane fx:id="summaryPanelPlaceholder" HBox.hgrow="NEVER" />
-
-          <VBox fx:id="studentList" styleClass="student-list-pane" minWidth="340" prefWidth="340"
-                minHeight="0" HBox.hgrow="ALWAYS">
+        <VBox fx:id="studentPage" VBox.vgrow="ALWAYS" minHeight="0">
+          <StackPane VBox.vgrow="NEVER" fx:id="commandBoxPlaceholder" styleClass="command-pane">
             <padding>
-              <Insets top="4" right="16" bottom="8" left="8" />
+              <Insets top="12" right="16" bottom="4" left="16" />
             </padding>
-            <StackPane fx:id="studentListPanelPlaceholder" VBox.vgrow="ALWAYS"/>
-          </VBox>
-        </HBox>
+          </StackPane>
+
+          <!-- the reply keeps the height it asks for. A VBox short of room shrinks every
+               child, whatever its grow priority, so the reply was squeezed below the rows it
+               had been given and what did not fit was cut off -->
+          <StackPane VBox.vgrow="NEVER" fx:id="resultDisplayPlaceholder" minHeight="-Infinity">
+            <padding>
+              <Insets top="6" right="12" bottom="6" left="12" />
+            </padding>
+          </StackPane>
+
+          <!-- the list yields height before the reply does: it scrolls, so what it cannot
+               show is still reachable, where a reply squeezed below the rows it was given is
+               simply cut off -->
+          <HBox VBox.vgrow="ALWAYS" minHeight="0">
+            <StackPane fx:id="summaryPanelPlaceholder" HBox.hgrow="NEVER" />
+
+            <VBox fx:id="studentList" styleClass="student-list-pane" minWidth="340" prefWidth="340"
+                  minHeight="0" HBox.hgrow="ALWAYS">
+              <padding>
+                <Insets top="4" right="16" bottom="8" left="8" />
+              </padding>
+              <StackPane fx:id="studentListPanelPlaceholder" VBox.vgrow="ALWAYS"/>
+            </VBox>
+          </HBox>
+        </VBox>
+
+        <StackPane fx:id="helpPagePlaceholder" VBox.vgrow="ALWAYS" minHeight="0"
+                   visible="false" managed="false" />
 
         <StackPane fx:id="statusbarPlaceholder" VBox.vgrow="NEVER" />
       </VBox>
