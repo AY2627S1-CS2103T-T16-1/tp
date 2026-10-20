@@ -215,6 +215,24 @@ public class StudentBookParserTest {
     }
 
     @Test
+    public void parseCommand_invisibleFormatCharacters_areStrippedBeforeParsing() throws Exception {
+        // a direction mark or a zero-width space pasted before the command word or the index
+        // leaves a word that looks right but matches no command, and an index rejected as not
+        // a positive integer; both are hidden from the user by ordinary text editing
+        assertTrue(parser.parseCommand("\u200Blist") instanceof ListCommand);
+        assertTrue(parser.parseCommand("\uFEFFlist") instanceof ListCommand);
+        assertTrue(parser.parseCommand("\u200E" + DeleteCommand.COMMAND_WORD + " \u200E1")
+                instanceof DeleteCommand);
+    }
+
+    @Test
+    public void parseCommand_joinerFormatCharacters_areKept() {
+        // Sinhala and Arabic need the joiners to shape a word, so a command word holding one
+        // is a different word rather than the same word with a character removed
+        assertThrows(ParseException.class, () -> parser.parseCommand("\u200Dlist"));
+    }
+
+    @Test
     public void parseCommand_argumentsHoldingALineBreak_areStillRead() throws Exception {
         // a command copied out of a document may arrive wrapped across lines
         assertTrue(parser.parseCommand(AddCommand.COMMAND_WORD + " John Doe\n-p 91234567") instanceof AddCommand);

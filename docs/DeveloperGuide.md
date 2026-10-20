@@ -525,6 +525,17 @@ shortened to keep the reason visible. Quotes do not make an argument absent:
 nor `LogicManager`'s storage write, so it preserves both the displayed list
 and the JSON file.
 
+### Invisible characters on the command line
+
+Before the command word is read, `StudentBookParser` strips the same Unicode
+format characters that `StringUtil.normalizeFieldValue` strips from a stored
+value, through `StringUtil.stripFormatCharacters`. A direction mark or a
+zero-width space pasted before a command word or an index is otherwise a word
+that looks right but matches no command, or an index reported as not a positive
+integer. The zero-width joiner and non-joiner are kept, because a script such as
+Sinhala needs them to shape a word, and a command word holding one is a
+different word rather than the same word with a character removed.
+
 ### Suggesting a command word
 
 A command word TAB does not dispatch on is answered with the word the User

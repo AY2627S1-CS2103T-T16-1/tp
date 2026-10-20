@@ -104,6 +104,11 @@ it before pressing Enter.
   "123".` Whitespace after the command is accepted, but quoted values,
   including `""`, are still arguments.
 
+* Invisible format characters are ignored wherever they appear, so a command
+  word or an index copied from a web page with a direction mark or a zero-width
+  space still runs as the command it looks like. The joiners some scripts need
+  for shaping are the exception and are kept.
+
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
