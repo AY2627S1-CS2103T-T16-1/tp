@@ -813,9 +813,11 @@ and optional follow-up flag. Matching is case-insensitive; those details
 match partially, while the follow-up flag matches only the whole label
 `Needs follow-up` or one of its words, so a fragment such as `low` cannot
 list every flagged student.
-For a keyword containing only Unicode decimal digits (`\p{Nd}+`), the phone
+For a keyword containing only Unicode decimal digits, or those digits with the
+punctuation a phone number is written with (`+`, `-`, `(`, `)`, `.`), the phone
 comparison also checks a copy of the stored phone with non-digit characters
-removed. This lets `91234567` match `+65 9123 4567` or `9123-4567`.
+removed. This lets `91234567`, `9123-4567` and `+6591234567` all match
+`+65 9123 4567`.
 Literal phone matching remains available for formatted phrases and annotations;
 other fields retain their text matching. The stored phone and saved data do not change.
 

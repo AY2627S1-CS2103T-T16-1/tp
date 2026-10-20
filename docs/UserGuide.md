@@ -616,8 +616,8 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
   The follow-up status is the exception: only `Needs follow-up` or one of its whole
   words matches it, so `find follow-up` and `find needs` find flagged students while
   `find low` and `find up` do not.
-* A keyword containing only digits also searches the phone number with all non-digit characters removed.
-  For example, `find 91234567` and `find 91234` both match `+65 9123 4567`, and
+* A keyword containing only digits, or only digits and phone punctuation (`+`, `-`, `(`, `)`, `.`), also searches the phone number with all non-digit characters removed.
+  For example, `find 91234567`, `find 91234`, `find 9123-4567` and `find +6591234567` all match `+65 9123 4567`, and
   `find 98765432` matches `9876-5432`. You can include the country code, as in `find 6591234567`.
   Terms containing other characters, such as `"ext 21"` or `"9123 4567"`, still match the stored text.
 * TAB reports the number of matches found: `Found 0 students.` when none match,
