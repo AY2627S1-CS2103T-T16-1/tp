@@ -93,6 +93,8 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentListPanel`, `SummaryPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
+`CommandBox` owns its `CommandHistory` and `CommandTextField`, and calls the static `CommandHighlighter.highlight` method to color the input. The card controls extend JavaFX classes directly: `CardHeadline` extends `Pane`, `CardName` extends `Label`, `TagRow` extends `Region`, and `ContactRow` extends `FlowPane`. These controls are composed in `StudentListCard.fxml`.
+
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/MainWindow.java).
 
 The `UI` component,
