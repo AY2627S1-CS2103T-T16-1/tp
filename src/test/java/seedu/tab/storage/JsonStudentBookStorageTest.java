@@ -339,6 +339,40 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readAndSaveStudentBook_handEditedInvisibleMarks_loadsAndSavesBackWithoutThem() throws Exception {
+        // A file edited by hand can hold a value with a format character pasted into it,
+        // the state v1.3 left behind. Loading has to drop the mark, and every save after
+        // that has to keep it out of the file.
+        Path filePath = testFolder.resolve("InvisibleMarks.json");
+        Files.writeString(filePath, """
+                {
+                  "students": [ {
+                    "name": "\u200EJohn Doe",
+                    "phone": "\u202A+65 9123 4567\u202C",
+                    "tags": [ "\u200Ffriend" ]
+                  } ]
+                }
+                """);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        ReadOnlyStudentBook loaded = storage.readStudentBook().get();
+
+        Student expected = new StudentBuilder().withName("John Doe").withPhone("+65 9123 4567")
+                .withTags("friend").withoutEmail().withoutNusStudentId().build();
+        assertEquals(1, loaded.getStudentList().size());
+        assertEquals(expected, loaded.getStudentList().get(0));
+
+        storage.saveStudentBook(new StudentBook(loaded));
+
+        String saved = Files.readString(filePath);
+        assertFalse(saved.contains("\u200E"));
+        assertFalse(saved.contains("\u202A"));
+        assertFalse(saved.contains("\u202C"));
+        assertFalse(saved.contains("\u200F"));
+        assertEquals(expected, storage.readStudentBook().get().getStudentList().get(0));
+    }
+
+    @Test
     public void readAndSaveStudentBook_studentWithoutEmail_roundTripsAndLeavesTheKeyOut() throws Exception {
         Path filePath = testFolder.resolve("NoEmail.json");
         Student student = new StudentBuilder().withName("Wong Mei Ling").withPhone("91234567")
