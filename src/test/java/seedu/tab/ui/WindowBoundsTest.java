@@ -2,6 +2,7 @@ package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,24 @@ public class WindowBoundsTest {
     private static final List<Rectangle2D> DISPLAYS = List.of(PRIMARY, SECONDARY);
     private static final double MIN_WIDTH = 490;
     private static final double MIN_HEIGHT = 600;
+
+    @Test
+    public void prioritizePrimary_secondaryListedFirst_preservesSecondaryAndPrimaryFallback() {
+        List<Rectangle2D> availableDisplays = new ArrayList<>(List.of(SECONDARY, PRIMARY));
+        List<Rectangle2D> orderedDisplays = WindowBounds.prioritizePrimary(PRIMARY, availableDisplays);
+
+        assertEquals(DISPLAYS, orderedDisplays);
+        assertEquals(List.of(SECONDARY, PRIMARY), availableDisplays);
+        assertBounds(new GuiSettings(800, 650, -1200, 20), orderedDisplays,
+                new Rectangle2D(-1200, 20, 800, 650));
+        assertBounds(new GuiSettings(800, 650, 99999, 99999), orderedDisplays,
+                new Rectangle2D(560, 210, 800, 650));
+    }
+
+    @Test
+    public void prioritizePrimary_singleDisplay_doesNotRepeatPrimary() {
+        assertEquals(List.of(PRIMARY), WindowBounds.prioritizePrimary(PRIMARY, List.of(PRIMARY)));
+    }
 
     @Test
     public void restore_visibleBounds_preservesSizeAndPosition() {

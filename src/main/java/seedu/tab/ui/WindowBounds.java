@@ -1,6 +1,7 @@
 package seedu.tab.ui;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.List;
 
 import javafx.geometry.Rectangle2D;
@@ -10,6 +11,14 @@ import seedu.tab.commons.core.GuiSettings;
 final class WindowBounds {
 
     private WindowBounds() {}
+
+    /** Returns display bounds with the primary first and without repeating its bounds. */
+    static List<Rectangle2D> prioritizePrimary(Rectangle2D primary, List<Rectangle2D> displays) {
+        List<Rectangle2D> orderedDisplays = new ArrayList<>();
+        orderedDisplays.add(primary);
+        displays.stream().filter(display -> !display.equals(primary)).forEach(orderedDisplays::add);
+        return orderedDisplays;
+    }
 
     /** Returns fitted bounds; the first display is the primary display. */
     static Rectangle2D restore(GuiSettings settings, List<Rectangle2D> displays,

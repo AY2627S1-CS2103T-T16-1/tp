@@ -1,7 +1,6 @@
 package seedu.tab.ui;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -167,10 +166,8 @@ public class MainWindow extends UiPart<Stage> {
      * Sets the default size based on {@code guiSettings}.
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
-        List<Rectangle2D> displays = new ArrayList<>();
-        displays.add(Screen.getPrimary().getVisualBounds());
-        Screen.getScreens().stream().filter(screen -> screen != Screen.getPrimary())
-                .map(Screen::getVisualBounds).forEach(displays::add);
+        List<Rectangle2D> displays = WindowBounds.prioritizePrimary(Screen.getPrimary().getVisualBounds(),
+                Screen.getScreens().stream().map(Screen::getVisualBounds).toList());
         Rectangle2D bounds = WindowBounds.restore(guiSettings, displays,
                 primaryStage.getMinWidth(), primaryStage.getMinHeight());
         // A saved minimum must not force the window beyond a smaller or scaled display.
