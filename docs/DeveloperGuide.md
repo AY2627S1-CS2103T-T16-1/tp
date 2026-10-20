@@ -701,6 +701,13 @@ rejects a repeated NUS Student ID with both record numbers, both names, and the
 ID. This keeps hand-edited files diagnosable while allowing common names in a
 class.
 
+The activity diagram below follows `AddCommand.execute` after parsing. The
+identity check scans the complete student book. A matching NUS Student ID stops
+the command before it changes the model; other matching details can warn the
+User while still allowing the record to be added.
+
+<puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Add command duplicate check" width="500" />
+
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
 ignore case; names already carry `normalizeFieldValue`'s whitespace
