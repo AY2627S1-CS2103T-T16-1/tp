@@ -4,7 +4,8 @@ name: Commit messages
 # the merge commit typed into GitHub's merge box runs no local hook. So this
 # checks the 72-character limits before a merge where it can: the pull
 # request's commits and its proposed merge commit message. On master, it flags
-# a pushed commit that broke them, such as a merge typed on GitHub.
+# a pushed commit that broke them, such as a merge typed on GitHub. A merge
+# that keeps GitHub's default message is exempt, as the course ignores those.
 
 on:
   pull_request:
