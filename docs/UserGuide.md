@@ -613,9 +613,9 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
   address, tags and follow-up status. For example, `find follow-up` can find
   flagged students, and `find a0123` can find a student with NUS Student ID `A01234567X`.
 * Parts of details match; for example, `Han` matches `Hans`, and `912` matches the phone number `91234567`.
-  The follow-up status is the exception: only `Needs follow-up` or one of its whole
-  words matches it, so `find follow-up` and `find needs` find flagged students while
-  `find low` and `find up` do not.
+  The follow-up status is the exception: only `Needs follow-up`, one of its whole words, or the
+  opening letters of one of those words matches it, so `find follow-up`, `find follow` and
+  `find needs` find flagged students while `find low` and `find up` do not.
 * A keyword containing only digits, or only digits and phone punctuation (`+`, `-`, `(`, `)`, `.`), also searches the phone number with all non-digit characters removed.
   For example, `find 91234567`, `find 91234`, `find 9123-4567` and `find +6591234567` all match `+65 9123 4567`, and
   `find 98765432` matches `9876-5432`. You can include the country code, as in `find 6591234567`.

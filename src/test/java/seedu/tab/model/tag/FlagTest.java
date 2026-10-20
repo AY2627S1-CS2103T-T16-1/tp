@@ -46,10 +46,23 @@ public class FlagTest {
     }
 
     @Test
-    public void matchesKeyword_fragmentOfLabel_returnsFalse() {
+    public void matchesKeyword_openingOfWord_ignoringCase() {
         Flag flag = new Flag();
-        for (String fragment : List.of("low", "ee", "ed", "up", "need", "fol", "follow")) {
-            assertFalse(flag.matchesKeyword(fragment), fragment + " is only a fragment of the label");
+        for (String opening : List.of("need", "fol", "follow", "follow-", "follo", "FOLL", "n")) {
+            assertTrue(flag.matchesKeyword(opening), opening + " opens a word of the label");
         }
+    }
+
+    @Test
+    public void matchesKeyword_fragmentFromMiddleOfWord_returnsFalse() {
+        Flag flag = new Flag();
+        for (String fragment : List.of("low", "ee", "ed", "lo", "ow", "up", "ollow-up")) {
+            assertFalse(flag.matchesKeyword(fragment), fragment + " begins mid-word in the label");
+        }
+    }
+
+    @Test
+    public void matchesKeyword_empty_returnsFalse() {
+        assertFalse(new Flag().matchesKeyword(""));
     }
 }

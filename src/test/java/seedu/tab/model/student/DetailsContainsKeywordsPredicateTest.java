@@ -143,7 +143,8 @@ public class DetailsContainsKeywordsPredicateTest {
         Student flaggedStudent = new StudentBuilder().withName("Alice").withFlag(true).build();
         Student unflaggedStudent = new StudentBuilder().withName("Alice").withFlag(false).build();
 
-        for (String keyword : List.of("follow-up", "FOLLOW-UP", "needs", "NEEDS", "Needs follow-up")) {
+        for (String keyword : List.of("follow-up", "FOLLOW-UP", "needs", "NEEDS", "Needs follow-up",
+                "follow", "fol", "need")) {
             DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of(keyword));
             assertTrue(predicate.test(flaggedStudent), keyword + " should name the follow-up status");
             assertFalse(predicate.test(unflaggedStudent), keyword + " should not match a student without it");
@@ -154,9 +155,9 @@ public class DetailsContainsKeywordsPredicateTest {
     public void test_fragmentOfFollowUpFlag_doesNotMatchFlaggedStudent() {
         Student flaggedStudent = new StudentBuilder().withName("Alex Yeoh").withFlag(true).build();
 
-        for (String fragment : List.of("low", "ee", "ed", "up", "need", "fol")) {
+        for (String fragment : List.of("low", "ee", "ed", "lo", "ow", "up")) {
             DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of(fragment));
-            assertFalse(predicate.test(flaggedStudent), fragment + " is only a fragment of the flag's label");
+            assertFalse(predicate.test(flaggedStudent), fragment + " begins mid-word in the flag's label");
         }
     }
 

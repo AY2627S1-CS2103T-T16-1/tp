@@ -14,12 +14,20 @@ public class Flag extends Tag {
     }
 
     /**
-     * Returns true if the keyword names this flag: the whole label {@code Needs follow-up}
-     * or one of its words, ignoring case. A fragment such as {@code low} never matches,
-     * so a search for a surname cannot list every flagged student.
+     * Returns true if the keyword names this flag: the whole label {@code Needs follow-up},
+     * or the opening letters of one of its words, ignoring case. A fragment from the middle
+     * of a word, such as {@code low}, never matches, so a search for a surname cannot list
+     * every flagged student, while {@code fol} still finds the flagged students a TA
+     * remembering only "follow" would look for.
      */
     public boolean matchesKeyword(String keyword) {
-        return FOLLOW_UP_NAME.equalsIgnoreCase(keyword)
-                || Arrays.stream(FOLLOW_UP_NAME.split("\\s+")).anyMatch(keyword::equalsIgnoreCase);
+        if (keyword.isEmpty()) {
+            return false;
+        }
+        if (FOLLOW_UP_NAME.equalsIgnoreCase(keyword)) {
+            return true;
+        }
+        return Arrays.stream(FOLLOW_UP_NAME.split("\\s+"))
+                .anyMatch(word -> word.regionMatches(true, 0, keyword, 0, keyword.length()));
     }
 }

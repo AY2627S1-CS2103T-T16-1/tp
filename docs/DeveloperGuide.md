@@ -811,8 +811,8 @@ whitespace runs and applying Unicode NFC normalization. It creates a
 against the student's name, NUS Student ID, phone, email, ordinary tags,
 and optional follow-up flag. Matching is case-insensitive; those details
 match partially, while the follow-up flag matches only the whole label
-`Needs follow-up` or one of its words, so a fragment such as `low` cannot
-list every flagged student.
+`Needs follow-up`, one of its words, or the opening letters of a word, so a
+fragment beginning mid-word such as `low` cannot list every flagged student.
 For a keyword containing only Unicode decimal digits, or those digits with the
 punctuation a phone number is written with (`+`, `-`, `(`, `)`, `.`), the phone
 comparison also checks a copy of the stored phone with non-digit characters
@@ -1284,7 +1284,8 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to find students, providing one or more search terms.
 2.  TAB shows the students for whom any term matches any part of a name, NUS Student ID,
-    phone, email or tag, or names the follow-up status as a whole, regardless of letter case.
+    phone, email or tag, or names the follow-up status by its label or one of its words,
+    regardless of letter case.
 3.  User identifies the intended student.
 4.  User initiates the desired action on that student.
 
