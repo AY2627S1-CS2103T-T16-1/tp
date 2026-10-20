@@ -81,6 +81,23 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_unknownStudentKey_passesErrorToUiAndPreservesBytesOnShutdown() throws Exception {
+        Path path = testFolder.resolve("students.json");
+        String json = """
+                {"students":[{"name":"Bernice Yu","phone":"99272758","nusStudentID":"A0999999Z"}]}
+                """;
+        Files.writeString(path, json);
+        MainApp initializedApp = new MainApp(testFolder.resolve("prefs.json"), path);
+
+        initializedApp.init();
+        assertTrue(getUiManagerLoadingError(initializedApp).orElseThrow()
+                .contains("Unknown field \"nusStudentID\" in student \"Bernice Yu\""));
+        assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());
+        initializedApp.stop();
+        assertEquals(json, Files.readString(path));
+    }
+
+    @Test
     public void init_invalidStudentFile_passesLoadingErrorToUiManager() throws Exception {
         Path invalidFilePath = testFolder.resolve("invalidStudentBook.json");
         Files.writeString(invalidFilePath, "Invalid JSON content {{{");

@@ -351,6 +351,15 @@ including preference-file operations. Entries identify the file path without
 copying student or preference contents. Save completion is logged only after
 the storage delegate returns successfully.
 
+`JsonAdaptedStudent` and `JsonSerializableStudentBook` use Jackson's
+`@JsonAnySetter` callbacks to reject unknown keys while the data is being read.
+The student callback includes the record name and allowed field names in its
+error, and permits the removed `address` key as a compatibility exception.
+The book also accepts the existing `_comment` metadata key.
+This prevents hand-edited values from disappearing during a later unrelated
+save. The shared JSON mapper keeps its existing behavior for preferences;
+startup follows the existing loading-error path and leaves rejected data intact.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.tab.commons` package.
@@ -2943,6 +2952,29 @@ testers are expected to do more *exploratory* testing.
       existed, including its removed `address` keys, and relaunch TAB.<br>
       Expected: TAB loads every student, ignores the old address values and
       treats a missing flag as not needing follow-up.
+
+1. Detecting misspelled data-file keys
+
+   1. Prerequisites: Close TAB and back up a valid multi-student `data/tab.json`.
+      In the second student's record, change `nusStudentId` to `nusStudentID`
+      while retaining the value and leave the other records unchanged.
+
+   1. Launch TAB.<br>
+      Expected: The startup error names `data/tab.json`, the unknown key
+      `nusStudentID`, and the affected student's name. It lists the supported
+      student fields. The main window does not open; dismissing the error
+      leaves the file byte-for-byte unchanged.
+
+   1. Restore the backup and repeat with `Email`, `tag` or `Flag` in place of
+      the corresponding supported key. Also try an unknown top-level key
+      beside `students`.<br>
+      Expected: Each unknown key stops loading with a diagnostic identifying
+      its location in a student or in the student book; no value is erased.
+
+   1. Correct the spelling and relaunch, then change another student through
+      TAB and relaunch again.<br>
+      Expected: Every supported value survives the save and relaunch. A legacy
+      `address` key is still ignored and does not prevent loading old files.
 
 1. Recovering from a save failure
 

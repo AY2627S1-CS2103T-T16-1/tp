@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -75,6 +76,19 @@ class JsonAdaptedStudent {
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
         flag = source.getFlag().isPresent() ? Boolean.TRUE : null;
+    }
+
+    /** Rejects unrecognized keys before their values can be lost on the next save. */
+    @JsonAnySetter
+    public void rejectUnknownField(String field, Object value) {
+        // AB3 data files retain this removed field, so they must still load.
+        if (field.equals("address")) {
+            return;
+        }
+        String record = name == null ? "student record" : "student \"" + Messages.shorten(name) + "\"";
+        throw new IllegalArgumentException("Unknown field \"" + Messages.shorten(field) + "\" in " + record
+                + ". Check its spelling. Expected: name, phone, email, nusStudentId, tags, flag."
+                + " The legacy address field is also accepted and ignored.");
     }
 
     /**
