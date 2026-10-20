@@ -1938,8 +1938,7 @@ testers are expected to do more *exploratory* testing.
 
 1. A correctly spelt command word in capitals
 
-   1. Prerequisites: at least one student listed, and a copy of
-      `data/tab.json`.
+   1. Prerequisites: at least one student listed.
 
    1. Test cases: `List`, `LIST`, and `Help`<br>
       Expected: Each runs the command of that name, so all students are listed
@@ -1950,10 +1949,11 @@ testers are expected to do more *exploratory* testing.
       typed, in the card and in `data/tab.json`, the fold reaching the command
       word alone.
 
-   1. Test case: `LIST oops`<br>
+   1. Test case: `LIST oops`, after taking a copy of `data/tab.json`, since
+      the step above writes to it<br>
       Expected: The reply reads `list takes no arguments. Unexpected input:
       "oops".`, naming the command rather than the capitals typed. The list is
-      unchanged and the JSON file matches the copy byte for byte.
+      unchanged and the JSON file matches that copy byte for byte.
 
    1. Test case: `EXIT`<br>
       Expected: TAB closes, with the added student in the saved file.
