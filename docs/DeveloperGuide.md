@@ -654,8 +654,8 @@ optionals directly into this contract. Nullable JSON strings remain confined
 to the storage adapter, preserving the existing file format.
 
 `Name`, `Tag` and `Phone` each store the form returned by
-`StringUtil.normalizeFieldValue`: without the invisible format characters that
-draw nothing on screen, with each run of whitespace reduced to one ASCII space
+`StringUtil.normalizeFieldValue`: without invisible format characters such as
+direction marks, with each run of whitespace reduced to one ASCII space
 and leading and trailing whitespace removed, and with the result composed to
 Unicode NFC. Composing happens last, because an invisible character between a
 base letter and its combining mark blocks the two from composing.
@@ -2634,9 +2634,10 @@ testers are expected to do more *exploratory* testing.
       Expected: No student is deleted. The status message shows error details, and the student book
       remains unchanged.
 
-   1. Test case: `delete 1` where the space after the `1` is a non-breaking space (`U+00A0`),
+   1. Test case: `delete 1` followed by a non-breaking space (`U+00A0`),
       pasted from a word processor or a web page, or a full-width space (`U+3000`) typed
-      with a Chinese input method<br>
+      with a Chinese input method (to type a non-breaking space: Option+Space on macOS,
+      Alt+0160 on a Windows numeric keypad, or Ctrl+Shift+U then `a0` on Linux)<br>
       Expected: The first student record is deleted, exactly as with an ordinary space.
       TAB does not call the command an invalid format for a character the user cannot see.
 
