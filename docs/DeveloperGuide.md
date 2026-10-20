@@ -2629,8 +2629,11 @@ testers are expected to do more *exploratory* testing.
       Expected: The first student record is deleted, exactly as with an ordinary space.
       TAB does not call the command an invalid format for a character the user cannot see.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Other incorrect delete commands to try: `delete`, `delete x`, `delete 1 2` (where x
+      is larger than the list size)<br>
+      Expected: Similar to previous, except that `delete 1 2` names the extra value,
+      `Unexpected value after INDEX: "2". Put field values after an option.`, as `edit` and
+      `tag` do for a value left after their own index.
 
 1. _{ more test cases … }_
 

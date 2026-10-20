@@ -643,6 +643,9 @@ Format: `delete INDEX`
   so you can verify exactly which student was deleted from the book.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
+* `delete` takes no field values, so anything after the index is refused with
+  `Unexpected value after INDEX: "..."`, naming the part to remove, as in
+  `Unexpected value after INDEX: "2". Put field values after an option.`
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd student in the student book.

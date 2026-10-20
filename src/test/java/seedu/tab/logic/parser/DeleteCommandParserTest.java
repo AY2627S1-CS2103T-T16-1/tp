@@ -7,6 +7,7 @@ import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.DeleteCommand;
 
 /**
@@ -94,8 +95,22 @@ public class DeleteCommandParserTest {
     @Test
     public void parse_extraneousTokens_throwsParseException() {
         assertParseFailure(parser, "1 extra",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, DeleteCommand.FIELD_INDEX, "extra"));
         assertParseFailure(parser, "1 2",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, DeleteCommand.FIELD_INDEX, "2"));
+    }
+
+    @Test
+    public void parse_severalExtraneousTokens_namesEveryOneOfThem() {
+        assertParseFailure(parser, "1 extra 2",
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, DeleteCommand.FIELD_INDEX, "extra 2"));
+    }
+
+    @Test
+    public void parse_longExtraneousToken_shortensItInTheFeedback() {
+        String extra = "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH + 1);
+        assertParseFailure(parser, "1 " + extra,
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, DeleteCommand.FIELD_INDEX,
+                        "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…"));
     }
 }
