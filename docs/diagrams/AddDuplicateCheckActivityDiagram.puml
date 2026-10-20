@@ -1,0 +1,26 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+
+start
+:Find a student with the same
+NUS Student ID;
+note right
+  Student.isSameStudent matches only
+  two present, equal NUS Student IDs.
+  Stored IDs use uppercase letters.
+end note
+
+if () then ([matching NUS Student ID])
+    :Reject the addition, naming the ID
+    and existing student;
+    stop
+else ([else])
+    :Build feedback and append warnings
+    for matching name, phone or email;
+    :Add the student to the model;
+    :Return command result with feedback;
+    stop
+endif
+@enduml

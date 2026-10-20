@@ -184,6 +184,11 @@ public class NameTest {
         // zero-width characters, which would otherwise hide a duplicate
         assertEquals(new Name("John"), new Name("\u200BJohn"));
 
+        // invisible direction marks, which a chat app wraps a pasted name in
+        assertEquals(new Name("John Doe"), new Name("\u200EJohn Doe"));
+        assertEquals(new Name("John Doe"), new Name("\u202AJohn Doe\u202C"));
+        assertEquals(new Name("John Doe"), new Name("John\u00AD Doe"));
+
         // a zero-width character between a base letter and its mark must not survive as a
         // decomposed pair, or the two spellings would be different students
         assertEquals(new Name("Ren\u00E9"), new Name("Rene\u200B\u0301"));

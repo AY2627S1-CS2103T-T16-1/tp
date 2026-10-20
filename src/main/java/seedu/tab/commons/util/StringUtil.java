@@ -15,7 +15,11 @@ import java.util.regex.Pattern;
  */
 public class StringUtil {
 
-    private static final Pattern ZERO_WIDTH = Pattern.compile("[\\u200B\\uFEFF]");
+    // almost every Unicode format character (category Cf), except the joiner and non-joiner a
+    // script needs to shape a word. A few of them do draw something — the Arabic end-of-ayah
+    // sign and the characters that tag a Scotland flag — but none is likely in a class list,
+    // and dropping them is the price of closing the whole category
+    private static final Pattern INVISIBLE = Pattern.compile("[\\p{Cf}&&[^\\u200C\\u200D]]");
     private static final Pattern WHITESPACE = Pattern.compile("(?U)\\s+");
     private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
 
@@ -176,20 +180,23 @@ public class StringUtil {
     }
 
     /**
-     * Returns {@code raw} in the form a stored field holds: without the zero-width characters
-     * that would let two identical-looking values differ, with every run of whitespace reduced
-     * to one ASCII space, the ends trimmed, and the result composed to Unicode form NFC.
+     * Returns {@code raw} in the form a stored field holds: without the invisible format
+     * characters that would let two identical-looking values differ, with every run of
+     * whitespace reduced to one ASCII space, the ends trimmed, and the result composed to
+     * Unicode form NFC.
      *
-     * Composing happens last. A zero-width character sitting between a base letter and its
+     * <p>Composing happens last. An invisible character sitting between a base letter and its
      * combining mark blocks the two from composing, so {@code e\u200B\u0301} would otherwise
      * be stored decomposed and compare unequal to {@code \u00E9}, which looks the same.
      *
-     * The zero-width joiner and non-joiner are kept, because scripts such as Sinhala and
-     * Arabic need them to shape correctly.
+     * <p>Every Unicode format character is discarded but the zero-width joiner and non-joiner,
+     * because scripts such as Sinhala and Arabic need them to shape correctly. What remains of
+     * a name, a tag or a number is therefore what a reader sees: a direction mark pasted from a
+     * chat app or a soft hyphen hides nothing, and two values that look alike are stored alike.
      */
     public static String normalizeFieldValue(String raw) {
         requireNonNull(raw);
-        String visible = ZERO_WIDTH.matcher(raw).replaceAll("");
+        String visible = INVISIBLE.matcher(raw).replaceAll("");
         String spaced = WHITESPACE.matcher(visible).replaceAll(" ").trim();
         return Normalizer.normalize(spaced, Normalizer.Form.NFC);
     }
