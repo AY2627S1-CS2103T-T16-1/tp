@@ -23,6 +23,8 @@ public class ParserUtil {
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
     public static final String MESSAGE_VALUE_AFTER_INDEX =
             "Unexpected value after %1$s: \"%2$s\". Put field values after an option.";
+    public static final String MESSAGE_VALUE_AFTER_INDEX_ONLY =
+            "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index and nothing else.";
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be

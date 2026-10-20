@@ -2644,8 +2644,9 @@ testers are expected to do more *exploratory* testing.
    1. Other incorrect delete commands to try: `delete`, `delete x`, `delete 1 2` (where x
       is larger than the list size)<br>
       Expected: Similar to previous, except that `delete 1 2` names the extra value,
-      `Unexpected value after INDEX: "2". Put field values after an option.`, as `edit` and
-      `tag` do for a value left after their own index.
+      `Unexpected value after INDEX: "2". delete accepts one index and nothing else.` The
+      hint says `delete`, not the `edit`/`tag` advice to put a value after an option, since
+      `delete` takes no field values.
 
 1. _{ more test cases … }_
 
@@ -2789,13 +2790,35 @@ testers are expected to do more *exploratory* testing.
       Restart TAB and keep a copy of `data/tab.json`.
    1. Test cases: `find 91234567`, `find 91234`, and `find 6591234567`.<br>
       Expected: Only Alex Yeoh is shown, with `Found 1 student.` and phone `+65 9123 4567`.
+   1. Test cases: `find 9123-4567` and `find +6591234567`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.`, even though the stored phone
+      is written `+65 9123 4567`. A keyword of digits and phone punctuation compares by the
+      digits alone.
    1. Test case: `find 98765432`.<br>
       Expected: Only Bernice Yu is shown, with `Found 1 student.` and phone `9876-5432`.
    1. Test case: `find 91234567 Bernice`.<br>
       Expected: Both students are shown, with `Found 2 students.`.
-   1. Test case: `find 91234568`.<br>
+   1. Test cases: `find 91234568` and `find 9123-4568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
+
+### Locating students by the follow-up status
+
+1. Whole words and openings of words, but not fragments from the middle
+
+   1. Prerequisites: Clear all students (`clear`, then `yes`). Add a flagged student,
+      `add Alex Yeoh -p 91234567 -f`, an unflagged student, `add Bernice Yu -p 98765432`,
+      and a student whose name is not the label, `add Low Jia Hui -p 91112222`.
+
+   1. Test cases: `find follow-up`, `find follow`, `find fol`, and `find needs`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.`. A term that opens a word of
+      the label `Needs follow-up` names the flag.
+   1. Test case: `find low`.<br>
+      Expected: Only Low Jia Hui is shown, with `Found 1 student.`. A fragment beginning
+      mid-word in the label does not name the flag, so a search for the surname does not list
+      the flagged student.
+   1. Test case: `find up`.<br>
+      Expected: No students are shown, with `Found 0 students.`.
 
 ### Locating students with quoted phrases and error handling
 

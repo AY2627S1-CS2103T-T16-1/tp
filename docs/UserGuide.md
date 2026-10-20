@@ -650,7 +650,7 @@ Format: `delete INDEX`
 * The index **must be a positive integer** 1, 2, 3, ...
 * `delete` takes no field values, so anything after the index is refused with
   `Unexpected value after INDEX: "..."`, naming the part to remove, as in
-  `Unexpected value after INDEX: "2". Put field values after an option.`
+  `Unexpected value after INDEX: "2". delete accepts one index and nothing else.`
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd student in the student book.

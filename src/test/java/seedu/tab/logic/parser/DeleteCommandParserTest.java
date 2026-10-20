@@ -94,23 +94,25 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_extraneousTokens_throwsParseException() {
-        assertParseFailure(parser, "1 extra",
-                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, DeleteCommand.FIELD_INDEX, "extra"));
-        assertParseFailure(parser, "1 2",
-                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, DeleteCommand.FIELD_INDEX, "2"));
+        assertParseFailure(parser, "1 extra", valueAfterIndexMessage("extra"));
+        assertParseFailure(parser, "1 2", valueAfterIndexMessage("2"));
     }
 
     @Test
     public void parse_severalExtraneousTokens_namesEveryOneOfThem() {
-        assertParseFailure(parser, "1 extra 2",
-                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, DeleteCommand.FIELD_INDEX, "extra 2"));
+        assertParseFailure(parser, "1 extra 2", valueAfterIndexMessage("extra 2"));
     }
 
     @Test
     public void parse_longExtraneousToken_shortensItInTheFeedback() {
         String extra = "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH + 1);
         assertParseFailure(parser, "1 " + extra,
-                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, DeleteCommand.FIELD_INDEX,
-                        "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…"));
+                valueAfterIndexMessage("x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…"));
+    }
+
+    /** The reply {@code delete} gives for the value it found after the index. */
+    private static String valueAfterIndexMessage(String value) {
+        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX_ONLY, DeleteCommand.FIELD_INDEX,
+                value, DeleteCommand.COMMAND_WORD);
     }
 }

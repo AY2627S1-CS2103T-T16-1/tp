@@ -40,8 +40,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
     /**
      * Returns the index {@code tokens} holds. {@code delete} takes one and only one token:
      * no token where an index was asked for, or several where a single one names a student,
-     * leave no index to be read. A second token is named to the user, the way {@code edit}
-     * and {@code tag} name the value left after their own index, so that the part to
+     * leave no index to be read. A second token is named to the user, so that the part to
      * remove is clear.
      *
      * @throws ParseException if {@code tokens} holds no valid index.
@@ -57,14 +56,18 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
     }
 
     /**
-     * Reports the tokens left unexplained, in the words {@code edit} and {@code tag} use.
-     * It is not a {@code ParseException} so that {@link #parse} can turn it into the named
-     * message rather than wrap it in the general usage feedback the other failures take.
+     * Reports the tokens left after the index. The recovery hint names {@code delete} rather
+     * than the one {@code edit} and {@code tag} use, because those commands take field values
+     * and {@code delete} takes none: telling a user to put the value after an option suggests
+     * a command delete cannot run. It is not a {@code ParseException} so that {@link #parse}
+     * can turn it into the named message rather than wrap it in the general usage feedback the
+     * other failures take.
      */
     private static class ExtraneousValueException extends RuntimeException {
         ExtraneousValueException(List<Token> tokens) {
-            super(String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, DeleteCommand.FIELD_INDEX,
-                    Messages.shorten(String.join(" ", tokens.stream().map(Token::value).toList()))));
+            super(String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX_ONLY, DeleteCommand.FIELD_INDEX,
+                    Messages.shorten(String.join(" ", tokens.stream().map(Token::value).toList())),
+                    DeleteCommand.COMMAND_WORD));
         }
     }
 
