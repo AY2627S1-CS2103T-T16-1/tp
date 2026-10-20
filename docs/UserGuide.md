@@ -687,7 +687,11 @@ they were before the command. Commands that do not change student records, inclu
 cancellation, and invalid replies also leave the saved file unchanged.
 
 Window size and position are saved separately in `preferences.json` in TAB's
-home folder. If the file contains only `null`, `guiSettings` is `null`, or the
+home folder. On launch, TAB keeps the saved size and position when they fit
+an available screen. If a screen was disconnected, TAB moves the window onto
+an available screen; oversized windows shrink to its usable area. This also
+applies after a resolution or display-scaling change.
+If the file contains only `null`, `guiSettings` is `null`, or the
 file cannot be parsed, TAB opens with default window settings and rewrites the
 preferences file when it can. This recovery does not change saved student records in `data/tab.json`.
 If preferences cannot be saved, TAB prints a concise warning naming the path
@@ -757,7 +761,7 @@ _Details coming soon ..._
 
 ## Known issues
 
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
+No known issues are listed at this time.
 
 --------------------------------------------------------------------------------------------------------------------
 
