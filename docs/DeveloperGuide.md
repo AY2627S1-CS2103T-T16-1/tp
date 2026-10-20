@@ -371,8 +371,8 @@ not writable.
 
 When a write fails, `LogicManager` restores both the student-book copy and the
 previous filter before reporting the storage error. Restoring the filter as
-well as the records matters because `add` and `edit` normally reset the display
-to show every student. The failed command consequently has no visible or
+well as the records matters because `add` normally resets the display to show
+every student. The failed command consequently has no visible or
 in-memory effect, and retrying it cannot apply the same change twice. A
 confirmed `clear` follows the same save-and-restore path; its pending
 confirmation is still removed before the save attempt so that a failure does
@@ -643,11 +643,11 @@ optionals directly into this contract. Nullable JSON strings remain confined
 to the storage adapter, preserving the existing file format.
 
 `Name`, `Tag` and `Phone` each store the form returned by
-`StringUtil.normalizeFieldValue`: without zero-width characters, with each run of
-whitespace reduced to one ASCII space and leading and trailing whitespace removed,
-and with the result composed to Unicode NFC. Composing happens last, because a zero-width
-character between a base letter and its combining mark blocks the two from
-composing.
+`StringUtil.normalizeFieldValue`: without the invisible format characters that
+draw nothing on screen, with each run of whitespace reduced to one ASCII space
+and leading and trailing whitespace removed, and with the result composed to
+Unicode NFC. Composing happens last, because an invisible character between a
+base letter and its combining mark blocks the two from composing.
 
 They normalize for different reasons, and the rule each one enforces differs.
 
@@ -700,6 +700,13 @@ During storage loading, `JsonSerializableStudentBook` admits repeated names but
 rejects a repeated NUS Student ID with both record numbers, both names, and the
 ID. This keeps hand-edited files diagnosable while allowing common names in a
 class.
+
+The activity diagram below follows `AddCommand.execute` after parsing. The
+identity check scans the complete student book. A matching NUS Student ID stops
+the command before it changes the model; other matching details can warn the
+User while still allowing the record to be added.
+
+<puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Add command duplicate check" width="500" />
 
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
@@ -791,7 +798,8 @@ the same invalid value consistently.
 
 `Phone` is **not** an identity field and **not** a key: two students may hold the
 same number, and `isSameStudent` does not read it. It is normalized only so
-that a number typed with unusual whitespace is stored consistently.
+that a number typed with unusual whitespace, or wrapped in the invisible marks a
+chat app puts around a copied number, is stored consistently.
 
 `FindCommandParser` reads search arguments using `CommandTokenizer`, allowing
 keywords to be enclosed in double quotes to match phrases containing spaces
@@ -876,8 +884,8 @@ students may hold the same normalized name.
 
 * composed to Unicode form NFC, so that `Nguyễn` written as one code point and
   as `e` plus two combining marks become the same string
-* stripped of the zero-width space and the byte order mark, which are invisible
-  and carry no meaning of their own
+* stripped of Unicode format characters such as direction marks and zero-width
+  spaces, apart from the joiners described below
 * reduced to single ASCII spaces, with leading and trailing whitespace removed,
   so that a non-breaking space cannot hide a word from the search
 
@@ -2858,15 +2866,15 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: Launch TAB and enter `add Bob Tan -p 91234567`.<br>
       Expected: TAB reports that it could not save to `data/tab.json` due to
-      insufficient permissions. Bob remains visible for this session, while
-      `data/tab.json` still matches the backup byte for byte and no temporary
-      `.tab-*.tmp` file remains.
+      insufficient permissions. Bob does not appear in the list because the
+      failed `add` is undone in memory. `data/tab.json` still matches the backup
+      byte for byte, and no temporary `.tab-*.tmp` file remains.
 
    1. Test case: Enter `exit`, restore write permission to `data`, relaunch TAB,
       and enter `list`.<br>
       Expected: The recognizable student and every record from the backup are
-      present. Bob is absent because his failed save never replaced the last
-      valid data file.
+      present. Bob remains absent because the failed `add` was undone in memory
+      and never replaced the last valid data file.
 
 1. Dealing with missing/corrupted data files
 

@@ -10,6 +10,12 @@
 # With --proposed, the message checked is the one after "Proposed merge commit
 # message": the `quoted` text on that line, or else the next ``` block.
 #
+# A merge commit that keeps GitHub's default message is skipped, as the course
+# ignores those merges when checking compliance with the Git conventions. That
+# is "Merge pull request #N from <branch>" from the merge button, whose body is
+# the unwrapped PR title, and "Merge branch '<base>' into <branch>" from the
+# Update branch button.
+#
 # Not named check-*, since run-checks.sh runs those without arguments.
 
 check_message() {
@@ -24,6 +30,12 @@ check_message() {
         }
         END { exit failed }
     '
+}
+
+is_default_merge() {
+    git rev-parse -q --verify "$1^2" > /dev/null &&
+        git log -1 --format=%s "$1" |
+        grep -Eq "^Merge (pull request #[0-9]+ from|branch '[^']+' into) [^ ]+$"
 }
 
 proposed_message() {
@@ -54,7 +66,12 @@ fi
 
 ret=0
 for commit in $(git rev-list "$1"); do
-    if ! git log -1 --format=%B "$commit" | check_message "$(git rev-parse --short "$commit")"; then
+    short=$(git rev-parse --short "$commit")
+    if is_default_merge "$commit"; then
+        echo "$short: GitHub's default merge message; skipped."
+        continue
+    fi
+    if ! git log -1 --format=%B "$commit" | check_message "$short"; then
         ret=1
     fi
 done

@@ -113,13 +113,39 @@ public class StringUtilTest {
     }
 
     @Test
-    public void normalizeFieldValue_dropsZeroWidthCharactersButKeepsJoiners() {
+    public void normalizeFieldValue_dropsInvisibleFormatCharactersButKeepsJoiners() {
         assertEquals("John", StringUtil.normalizeFieldValue("\u200BJohn"));
         assertEquals("John", StringUtil.normalizeFieldValue("John\uFEFF"));
+
+        // marks a chat app or email wraps a copied name in, which draw nothing on screen
+        assertEquals("John Doe", StringUtil.normalizeFieldValue("\u200EJohn Doe")); // left-to-right
+        assertEquals("John Doe", StringUtil.normalizeFieldValue("\u200FJohn Doe")); // right-to-left
+        assertEquals("John Doe", StringUtil.normalizeFieldValue("\u202AJohn Doe\u202C")); // embedding
+        assertEquals("John Doe", StringUtil.normalizeFieldValue("\u202DJohn Doe\u202E")); // override
+        assertEquals("John Doe", StringUtil.normalizeFieldValue("\u2066John\u2069 Doe")); // isolates
+        assertEquals("Johnson", StringUtil.normalizeFieldValue("John\u00ADson")); // soft hyphen
+        assertEquals("John Doe", StringUtil.normalizeFieldValue("John\u2060 Doe")); // word joiner
 
         // Sinhala needs the joiner to shape correctly
         String sinhala = "\u0DC1\u0DCA\u200D\u0DBB\u0DD3";
         assertEquals(sinhala, StringUtil.normalizeFieldValue(sinhala));
+    }
+
+    @Test
+    public void normalizeFieldValue_everyFormatCharacter_isStrippedExceptTheTwoJoiners() {
+        // naming the characters one by one left the rest of category Cf behind, so a lookalike
+        // student could still be added; every format character must answer for itself
+        for (int code = Character.MIN_CODE_POINT; code <= Character.MAX_CODE_POINT; code++) {
+            if (Character.getType(code) != Character.FORMAT) {
+                continue;
+            }
+            String character = new String(Character.toChars(code));
+            boolean isJoiner = code == '\u200C' || code == '\u200D';
+            String expected = isJoiner ? "a" + character + "b" : "ab";
+
+            assertEquals(expected, StringUtil.normalizeFieldValue("a" + character + "b"),
+                    "U+" + Integer.toHexString(code));
+        }
     }
 
     @Test

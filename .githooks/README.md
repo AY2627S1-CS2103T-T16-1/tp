@@ -88,6 +88,12 @@ GitHub: to every commit a pull request brings in, to the message under
 `master`. The same check runs locally with
 `.github/commit-message-limits.sh master..<branch>`.
 
+A merge commit that keeps GitHub's default message is skipped: `Merge pull
+request #N from <branch>` from the merge button, and `Merge branch '<base>'
+into <branch>` from the Update branch button. The course ignores merges with
+GitHub's default message when it checks compliance with the Git conventions,
+and the default body is the PR title, which is not wrapped.
+
 The workflow runs in the team repository only. Our pull request to the
 course repository brings in the whole project history, including commits
 from before these limits, so it skips the check there.
