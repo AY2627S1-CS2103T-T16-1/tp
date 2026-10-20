@@ -87,6 +87,24 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_unknownKeyWithoutName_reportsUnnamedRecordAndPreservesFile() throws Exception {
+        Path path = testFolder.resolve("unnamed-student.json");
+        for (String nameField : List.of("", "\"name\":null,")) {
+            String json = "{\"students\":[{" + nameField
+                    + "\"phone\":\"99272758\",\"Email\":\"bernice@example.com\"}]}";
+            Files.writeString(path, json);
+
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+            assertEquals("The data is not in the expected JSON format: Unknown field \"Email\" in student record."
+                    + " Check its spelling. Expected: name, phone, email, nusStudentId, tags, flag."
+                    + " The legacy address field is also accepted and ignored.", exception.getMessage());
+            assertEquals(json, Files.readString(path));
+        }
+    }
+
+    @Test
     public void readStudentBook_unknownRootKey_reportsKeyAndPreservesFile() throws Exception {
         Path path = testFolder.resolve("unknown-root.json");
         String json = "{\"Students\":[],\"students\":[]}";
