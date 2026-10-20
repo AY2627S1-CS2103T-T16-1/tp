@@ -643,11 +643,11 @@ optionals directly into this contract. Nullable JSON strings remain confined
 to the storage adapter, preserving the existing file format.
 
 `Name`, `Tag` and `Phone` each store the form returned by
-`StringUtil.normalizeFieldValue`: without zero-width characters, with each run of
-whitespace reduced to one ASCII space and leading and trailing whitespace removed,
-and with the result composed to Unicode NFC. Composing happens last, because a zero-width
-character between a base letter and its combining mark blocks the two from
-composing.
+`StringUtil.normalizeFieldValue`: without the invisible format characters that
+draw nothing on screen, with each run of whitespace reduced to one ASCII space
+and leading and trailing whitespace removed, and with the result composed to
+Unicode NFC. Composing happens last, because an invisible character between a
+base letter and its combining mark blocks the two from composing.
 
 They normalize for different reasons, and the rule each one enforces differs.
 
@@ -798,7 +798,8 @@ the same invalid value consistently.
 
 `Phone` is **not** an identity field and **not** a key: two students may hold the
 same number, and `isSameStudent` does not read it. It is normalized only so
-that a number typed with unusual whitespace is stored consistently.
+that a number typed with unusual whitespace, or wrapped in the invisible marks a
+chat app puts around a copied number, is stored consistently.
 
 `FindCommandParser` reads search arguments using `CommandTokenizer`, allowing
 keywords to be enclosed in double quotes to match phrases containing spaces
@@ -883,8 +884,8 @@ students may hold the same normalized name.
 
 * composed to Unicode form NFC, so that `Nguyễn` written as one code point and
   as `e` plus two combining marks become the same string
-* stripped of the zero-width space and the byte order mark, which are invisible
-  and carry no meaning of their own
+* stripped of Unicode format characters such as direction marks and zero-width
+  spaces, apart from the joiners described below
 * reduced to single ASCII spaces, with leading and trailing whitespace removed,
   so that a non-breaking space cannot hide a word from the search
 
