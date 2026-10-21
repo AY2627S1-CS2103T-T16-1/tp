@@ -9,6 +9,7 @@ import java.util.Set;
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.Messages;
+import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
@@ -52,6 +53,40 @@ public class ParserUtil {
             throw new ParseException(String.format(MESSAGE_VALUE_AFTER_INDEX, fieldName, Messages.shorten(values[1])));
         }
         return index;
+    }
+
+    /**
+     * Parses {@code target} as the address of one student: a target opening with a letter is
+     * an NUS Student ID, and any other target is the index shown in the displayed student
+     * list. An index is all digits and a natural NUS Student ID opens with a letter, so the
+     * two shapes are read apart without ever mistaking one for the other; an all-digit ID is
+     * the exception, and is addressed by index.
+     *
+     * <p>An NUS Student ID that is not a valid one keeps the reason it was refused, so the
+     * User is told which value was rejected and why. An index that is not a positive integer
+     * is reported through {@code usage} instead, because a target of that shape reads as a
+     * mistyped index rather than as a candidate ID.
+     *
+     * @param target The one token the User gave as the target.
+     * @param usage What the calling command shows when the target reads as an unusable index.
+     * @throws ParseException if {@code target} is blank, opens with a letter without holding
+     *     a valid NUS Student ID, or is otherwise not a positive integer.
+     */
+    public static StudentTarget parseStudentTarget(String target, String usage) throws ParseException {
+        requireNonNull(target);
+        requireNonNull(usage);
+        String trimmedTarget = target.trim();
+        if (trimmedTarget.isEmpty()) {
+            throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage));
+        }
+        if (Character.isLetter(trimmedTarget.charAt(0))) {
+            return StudentTarget.byNusStudentId(parseNusStudentId(trimmedTarget));
+        }
+        try {
+            return StudentTarget.byIndex(parseIndex(trimmedTarget));
+        } catch (ParseException pe) {
+            throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage), pe);
+        }
     }
 
     /**

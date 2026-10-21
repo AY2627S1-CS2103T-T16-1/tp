@@ -26,6 +26,7 @@ import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 import seedu.tab.testutil.StudentBuilder;
@@ -99,6 +100,16 @@ public class CommandLoggingTest {
     }
 
     @Test
+    public void execute_deleteByNusStudentId_recordsTheReferralAndBookSizeAtInfo() throws Exception {
+        new DeleteCommand(StudentTarget.byNusStudentId(new NusStudentId("A12345678C"))).execute(model);
+
+        // the log names how the student was addressed without repeating their NUS Student ID
+        assertTrue(messagesAt(Level.INFO)
+                        .contains("Deleted the student identified by NUS Student ID; the book now holds 6"),
+                "logged: " + messagesAt(Level.INFO));
+    }
+
+    @Test
     public void execute_edit_recordsTheIndexAndBookSizeAtInfo() throws Exception {
         new EditCommand(FIRST, new EditStudentDescriptorBuilder().withPhone("91234567").build())
                 .execute(model);
@@ -160,6 +171,8 @@ public class CommandLoggingTest {
         new EditCommand(FIRST, new EditStudentDescriptorBuilder().withPhone(replacementPhone).build())
                 .execute(model);
         new DeleteCommand(FIRST).execute(model);
+        // addressing a student by their NUS Student ID must not put the ID in the log either
+        new DeleteCommand(StudentTarget.byNusStudentId(new NusStudentId("A09876543Z"))).execute(model);
         new ClearCommand().executeConfirmed(model);
 
         // the command text LogicManager writes already holds whatever was typed; these

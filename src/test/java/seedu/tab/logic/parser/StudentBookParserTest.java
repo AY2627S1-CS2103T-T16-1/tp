@@ -26,8 +26,10 @@ import seedu.tab.logic.commands.ExitCommand;
 import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.ListCommand;
+import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 import seedu.tab.testutil.StudentBuilder;
@@ -106,6 +108,12 @@ public class StudentBookParserTest {
         DeleteCommand whitespaceCommand = (DeleteCommand) parser.parseCommand(
                 "  " + DeleteCommand.COMMAND_WORD + "   " + INDEX_FIRST_STUDENT.getOneBased() + "  ");
         assertEquals(new DeleteCommand(INDEX_FIRST_STUDENT), whitespaceCommand);
+
+        // a target opening with a letter reaches the parser as an NUS Student ID
+        DeleteCommand idCommand = (DeleteCommand) parser.parseCommand(
+                DeleteCommand.COMMAND_WORD + " a01234567x");
+        assertEquals(new DeleteCommand(StudentTarget.byNusStudentId(new NusStudentId("A01234567X"))),
+                idCommand);
     }
 
     @Test

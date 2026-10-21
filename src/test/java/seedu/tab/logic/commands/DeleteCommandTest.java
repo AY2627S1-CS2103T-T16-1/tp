@@ -10,6 +10,8 @@ import static seedu.tab.logic.commands.CommandTestUtil.showStudentAtIndex;
 import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
+import static seedu.tab.testutil.TypicalStudents.ALICE;
+import static seedu.tab.testutil.TypicalStudents.CARL;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -115,9 +118,81 @@ public class DeleteCommandTest {
     }
 
     @Test
+    public void execute_validNusStudentIdUnfilteredList_success() {
+        // CARL is not the first student, so a lookup that stopped at the first student holding
+        // any ID at all would leave the wrong student in the book
+        Student studentToDelete = CARL;
+        DeleteCommand deleteCommand = deleteById("A23456789D");
+
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS,
+                Messages.format(studentToDelete));
+
+        ModelManager expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.deleteStudent(studentToDelete);
+
+        assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_nusStudentIdIgnoresCase_success() {
+        // NusStudentId normalizes its value, so a lowercase ID names the same student
+        Student studentToDelete = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        DeleteCommand deleteCommand = deleteById("a12345678c");
+
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS,
+                Messages.format(studentToDelete));
+
+        ModelManager expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.deleteStudent(studentToDelete);
+
+        assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_nusStudentIdOfStudentHiddenByFilter_success() {
+        // an NUS Student ID names its holder wherever they are in the book, so a search
+        // that hides the student cannot put them out of reach of delete
+        showStudentAtIndex(model, INDEX_SECOND_STUDENT);
+
+        DeleteCommand deleteCommand = deleteById("A12345678C");
+
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS,
+                Messages.format(ALICE));
+
+        ModelManager expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        showStudentAtIndex(expectedModel, INDEX_SECOND_STUDENT);
+        expectedModel.deleteStudent(ALICE);
+
+        assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_studentHoldingNoNusStudentId_isNotNamedById() {
+        // a student with no NUS Student ID is passed over when scanning for one
+        Student studentWithoutId = new StudentBuilder().withName("No Ida").withPhone("91234567")
+                .withoutNusStudentId().build();
+        StudentBook studentBook = new StudentBook();
+        studentBook.addStudent(studentWithoutId);
+        model = new ModelManager(studentBook, new UserPrefs());
+        DeleteCommand deleteCommand = deleteById("A12345678C");
+
+        assertCommandFailure(deleteCommand, model,
+                String.format(Messages.MESSAGE_NO_STUDENT_WITH_NUS_ID, "A12345678C"));
+    }
+
+    @Test
+    public void execute_unknownNusStudentId_throwsCommandException() {
+        DeleteCommand deleteCommand = deleteById("A99999999Z");
+
+        assertCommandFailure(deleteCommand, model,
+                String.format(Messages.MESSAGE_NO_STUDENT_WITH_NUS_ID, "A99999999Z"));
+    }
+
+    @Test
     public void equals() {
         DeleteCommand deleteFirstCommand = new DeleteCommand(INDEX_FIRST_STUDENT);
         DeleteCommand deleteSecondCommand = new DeleteCommand(INDEX_SECOND_STUDENT);
+        DeleteCommand deleteAliceByIdCommand = deleteById("A12345678C");
 
         // same object -> returns true
         assertTrue(deleteFirstCommand.equals(deleteFirstCommand));
@@ -125,6 +200,13 @@ public class DeleteCommandTest {
         // same values -> returns true
         DeleteCommand deleteFirstCommandCopy = new DeleteCommand(INDEX_FIRST_STUDENT);
         assertTrue(deleteFirstCommand.equals(deleteFirstCommandCopy));
+
+        // an index and the target that holds it name the same student -> returns true
+        assertTrue(deleteFirstCommand.equals(
+                new DeleteCommand(StudentTarget.byIndex(INDEX_FIRST_STUDENT))));
+
+        // same NUS Student ID -> returns true
+        assertTrue(deleteAliceByIdCommand.equals(deleteById("A12345678C")));
 
         // different types -> returns false
         assertFalse(deleteFirstCommand.equals(1));
@@ -134,6 +216,9 @@ public class DeleteCommandTest {
 
         // different student -> returns false
         assertFalse(deleteFirstCommand.equals(deleteSecondCommand));
+
+        // same position but a different way of naming a student -> returns false
+        assertFalse(deleteFirstCommand.equals(deleteAliceByIdCommand));
     }
 
     @Test
@@ -196,8 +281,14 @@ public class DeleteCommandTest {
     public void toStringMethod() {
         Index targetIndex = Index.fromOneBased(1);
         DeleteCommand deleteCommand = new DeleteCommand(targetIndex);
-        String expected = DeleteCommand.class.getCanonicalName() + "{targetIndex=" + targetIndex + "}";
+        String expected = DeleteCommand.class.getCanonicalName()
+                + "{target=" + StudentTarget.byIndex(targetIndex) + "}";
         assertEquals(expected, deleteCommand.toString());
+    }
+
+    /** Returns the delete command that names the student holding {@code nusStudentId}. */
+    private static DeleteCommand deleteById(String nusStudentId) {
+        return new DeleteCommand(StudentTarget.byNusStudentId(new NusStudentId(nusStudentId)));
     }
 
     /**

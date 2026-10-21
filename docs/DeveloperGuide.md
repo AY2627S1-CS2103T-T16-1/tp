@@ -2663,6 +2663,7 @@ testers are expected to do more *exploratory* testing.
 1. Deleting a student while all students are being shown
 
    1. Prerequisites: List all students using the `list` command, with multiple students in the list.
+      Note one student's NUS Student ID, such as Charlotte Oliveiro's `A02345678G` in the sample data.
 
    1. Test case: `delete 1`<br>
       Expected: The first student record is deleted from the list. The status message identifies
@@ -2672,14 +2673,33 @@ testers are expected to do more *exploratory* testing.
       Expected: No student is deleted. The status message shows error details, and the student book
       remains unchanged.
 
+   1. Test case: `delete A02345678G`<br>
+      Expected: Charlotte Oliveiro is deleted from the book wherever she appears, and the status
+      message identifies her. `delete a02345678g` does the same, because matching an ID ignores case.
+
+   1. Test case: `add "Digit Ida" -p 91234567 --id 1ABC`, then `delete --id 1ABC`<br>
+      Expected: The student holding `1ABC` is deleted, and the status message identifies them.
+      `delete 1ABC` is refused with the command's format, because a target starting with a digit
+      reads as an index.
+
+   1. Test case: `find Alex` followed by `delete A02345678G`, where the search hides
+      Charlotte Oliveiro<br>
+      Expected: Charlotte Oliveiro is deleted from the book, and the status message identifies her.
+
+   1. Test case: `delete A99999999Z`, where no student holds that ID<br>
+      Expected: No student is deleted. The status message reads
+      `No student has NUS Student ID A99999999Z.`, and the student book remains unchanged.
+
    1. Test case: `delete 1` where the space after the `1` is a non-breaking space (`U+00A0`),
       pasted from a word processor or a web page, or a full-width space (`U+3000`) typed
       with a Chinese input method<br>
       Expected: The first student record is deleted, exactly as with an ordinary space.
       TAB does not call the command an invalid format for a character the user cannot see.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Other incorrect delete commands to try: `delete`, `delete 999` (where the number is larger
+      than the list size)<br>
+      Expected: `delete` is refused with the command's format, and `delete 999` is refused as past
+      the end of the displayed list. Neither deletes a student, and the student book is unchanged.
 
 1. _{ more test cases … }_
 
