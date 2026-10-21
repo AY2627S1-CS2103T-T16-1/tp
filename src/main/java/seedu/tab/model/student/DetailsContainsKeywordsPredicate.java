@@ -1,8 +1,11 @@
 package seedu.tab.model.student;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -44,16 +47,24 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     }
 
     private final Map<Field, List<String>> keywordsByField;
+    private final Optional<Boolean> followUp;
 
     /** Creates a predicate requiring every term to match its selected field. */
     public DetailsContainsKeywordsPredicate(Map<Field, List<String>> keywordsByField) {
+        this(keywordsByField, Optional.empty());
+    }
+
+    /** Creates a predicate combining field terms with an optional follow-up status. */
+    public DetailsContainsKeywordsPredicate(Map<Field, List<String>> keywordsByField, Optional<Boolean> followUp) {
+        this.followUp = requireNonNull(followUp);
         this.keywordsByField = new EnumMap<>(Field.class);
         keywordsByField.forEach((field, keywords) -> this.keywordsByField.put(field, List.copyOf(keywords)));
     }
 
     @Override
     public boolean test(Student student) {
-        return keywordsByField.values().stream().anyMatch(keywords -> !keywords.isEmpty())
+        return (followUp.isPresent() || keywordsByField.values().stream().anyMatch(keywords -> !keywords.isEmpty()))
+                && followUp.map(isFlagged -> student.isFlagged() == isFlagged).orElse(true)
                 && keywordsByField.entrySet().stream().allMatch(entry -> entry.getValue().stream()
                         .allMatch(keyword -> entry.getKey().matches(student, keyword)));
     }
@@ -93,12 +104,12 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
             return false;
         }
 
-        return keywordsByField.equals(otherPredicate.keywordsByField);
+        return keywordsByField.equals(otherPredicate.keywordsByField) && followUp.equals(otherPredicate.followUp);
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this).add("keywordsByField", keywordsByField).toString();
+        return new ToStringBuilder(this).add("keywordsByField", keywordsByField).add("followUp", followUp).toString();
     }
 }
 

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -237,13 +238,39 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_followUpStatus_matchesOnlyRequestedState() {
+        Student flagged = new StudentBuilder().withName("Jason Tan").withFlag(true).withTags("Lab").build();
+        Student unflagged = new StudentBuilder(flagged).withFlag(false).build();
+        for (boolean isFlagged : List.of(true, false)) {
+            DetailsContainsKeywordsPredicate statusOnly =
+                    new DetailsContainsKeywordsPredicate(Map.of(), Optional.of(isFlagged));
+            assertEquals(isFlagged, statusOnly.test(flagged));
+            assertEquals(!isFlagged, statusOnly.test(unflagged));
+            DetailsContainsKeywordsPredicate combined = new DetailsContainsKeywordsPredicate(
+                    Map.of(Field.NAME, List.of("jason"), Field.TAG, List.of("lab")), Optional.of(isFlagged));
+            assertEquals(isFlagged, combined.test(flagged));
+            assertEquals(!isFlagged, combined.test(unflagged));
+            assertFalse(combined.test(new StudentBuilder(flagged).withName("Alice").build()));
+        }
+    }
+
+    @Test
+    public void equals_differentFollowUpStates_returnsFalse() {
+        DetailsContainsKeywordsPredicate flagged =
+                new DetailsContainsKeywordsPredicate(Map.of(), Optional.of(true));
+        assertEquals(flagged, new DetailsContainsKeywordsPredicate(Map.of(), Optional.of(true)));
+        assertFalse(flagged.equals(new DetailsContainsKeywordsPredicate(Map.of(), Optional.of(false))));
+        assertFalse(flagged.equals(new DetailsContainsKeywordsPredicate(Map.of())));
+    }
+
+    @Test
     public void toStringMethod() {
         List<String> keywords = List.of("keyword1", "keyword2");
         DetailsContainsKeywordsPredicate predicate =
                 new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, keywords));
 
         String expected = DetailsContainsKeywordsPredicate.class.getCanonicalName()
-                + "{keywordsByField=" + Map.of(Field.NAME, keywords) + "}";
+                + "{keywordsByField=" + Map.of(Field.NAME, keywords) + ", followUp=Optional.empty}";
         assertEquals(expected, predicate.toString());
     }
 
