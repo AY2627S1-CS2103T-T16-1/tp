@@ -371,8 +371,8 @@ not writable.
 
 When a write fails, `LogicManager` restores both the student-book copy and the
 previous filter before reporting the storage error. Restoring the filter as
-well as the records matters because `add` and `edit` normally reset the display
-to show every student. The failed command consequently has no visible or
+well as the records matters because `add` normally resets the display to show
+every student. The failed command consequently has no visible or
 in-memory effect, and retrying it cannot apply the same change twice. A
 confirmed `clear` follows the same save-and-restore path; its pending
 confirmation is still removed before the save attempt so that a failure does
@@ -700,6 +700,13 @@ During storage loading, `JsonSerializableStudentBook` admits repeated names but
 rejects a repeated NUS Student ID with both record numbers, both names, and the
 ID. This keeps hand-edited files diagnosable while allowing common names in a
 class.
+
+The activity diagram below follows `AddCommand.execute` after parsing. The
+identity check scans the complete student book. A matching NUS Student ID stops
+the command before it changes the model; other matching details can warn the
+User while still allowing the record to be added.
+
+<puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Add command duplicate check" width="500" />
 
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
@@ -2879,15 +2886,15 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: Launch TAB and enter `add Bob Tan -p 91234567`.<br>
       Expected: TAB reports that it could not save to `data/tab.json` due to
-      insufficient permissions. Bob remains visible for this session, while
-      `data/tab.json` still matches the backup byte for byte and no temporary
-      `.tab-*.tmp` file remains.
+      insufficient permissions. Bob does not appear in the list because the
+      failed `add` is undone in memory. `data/tab.json` still matches the backup
+      byte for byte, and no temporary `.tab-*.tmp` file remains.
 
    1. Test case: Enter `exit`, restore write permission to `data`, relaunch TAB,
       and enter `list`.<br>
       Expected: The recognizable student and every record from the backup are
-      present. Bob is absent because his failed save never replaced the last
-      valid data file.
+      present. Bob remains absent because the failed `add` was undone in memory
+      and never replaced the last valid data file.
 
 1. Dealing with missing/corrupted data files
 

@@ -31,8 +31,8 @@ CI (`.github/workflows/gradle.yml`) runs on every push and pull request across
 ubuntu, macos and windows. Coverage is uploaded to Codecov from the Linux job
 only. `.github/workflows/commit-messages.yml` checks that every commit a pull
 request brings in, and its proposed merge commit message, stays within the
-72-character limits. **Do not claim a change is done until `./gradlew check`
-passes.**
+72-character limits; a merge that keeps GitHub's default message is exempt.
+**Do not claim a change is done until `./gradlew check` passes.**
 
 ## Git hooks
 
@@ -163,15 +163,21 @@ Follow the
 - Do not merge a PR while CI is failing. Use a merge commit; do not squash or
   rebase, because rewriting commit timestamps interferes with course progress
   tracking.
-- Give the merge commit a traceable subject, using this format
-  consistently: `Summary #IssueNumber (#PrNumber)`, or `Summary (#PrNumber)`
-  for a PR without an issue. The summary is a short imperative description of
-  the whole change, e.g. `Recall recent commands with Up and Down #225 (#259)`,
-  not the issue title, which is often a long user story or a description of
-  the bug. Put the full issue title in the merge commit body instead.
-- Keep the whole merge subject within the 72-character hard limit, and wrap
-  the body at 72 as well; an issue title longer than that goes on two lines.
-  GitHub's merge button does not run our hooks, so count before merging.
+- GitHub's default merge message, `Merge pull request #N from <branch>` with
+  the PR title as its body, may be kept as it is. The course ignores merge
+  commits that keep GitHub's default message when it checks compliance with
+  the Git conventions, and so does our commit message check.
+- A merge message written by hand is checked like any other commit. Give it a
+  traceable subject in this format: `Summary #IssueNumber (#PrNumber)`, or
+  `Summary (#PrNumber)` for a PR without an issue. The summary is a short
+  imperative description of the whole change, e.g. `Recall recent commands
+  with Up and Down #225 (#259)`, not the issue title, which is often a long
+  user story or a description of the bug. Put the full issue title in the
+  merge commit body instead.
+- Keep a hand-written merge subject within the 72-character hard limit, and
+  wrap the body at 72 as well; an issue title longer than that goes on two
+  lines. GitHub's merge button does not run our hooks, so count before
+  merging.
 - After merging, close the issue, pull `upstream/master` into local `master`,
   push it to `origin/master`, then merge `master` into every unmerged branch
   that needs the update. Keep all merged PR branches.
