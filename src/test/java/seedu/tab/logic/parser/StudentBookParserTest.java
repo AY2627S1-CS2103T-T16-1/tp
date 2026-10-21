@@ -236,6 +236,57 @@ public class StudentBookParserTest {
     }
 
     @Test
+    public void parseCommand_invisibleFormatCharacters_areStrippedBeforeParsing() throws Exception {
+        // a direction mark or a zero-width space pasted before the command word or the index
+        // leaves a word that looks right but matches no command, and an index rejected as not
+        // a positive integer; both are hidden from the user by ordinary text editing
+        assertTrue(parser.parseCommand("\u200Blist") instanceof ListCommand);
+        assertTrue(parser.parseCommand("\uFEFFlist") instanceof ListCommand);
+        assertTrue(parser.parseCommand("\u200E" + DeleteCommand.COMMAND_WORD + " \u200E1")
+                instanceof DeleteCommand);
+    }
+
+    @Test
+    public void parseCommand_everyFormatCharacterAfterTheWordOrIndex_isStripped() {
+        // the strip runs at the one place every command enters, so no format character in
+        // either position may survive to hide the command word or the index, and a strip
+        // that reached only part of the line would let one through
+        Command baseline = parseOrNull(DeleteCommand.COMMAND_WORD + " 1");
+        assertNotNull(baseline, "delete 1 is refused with an ordinary space");
+
+        for (int code = Character.MIN_CODE_POINT; code <= Character.MAX_CODE_POINT; code++) {
+            if (Character.getType(code) != Character.FORMAT || code == '\u200C' || code == '\u200D') {
+                continue;
+            }
+            String character = new String(Character.toChars(code));
+            String label = "U+" + Integer.toHexString(code);
+            assertEquals(baseline, parseOrNull(DeleteCommand.COMMAND_WORD + character + " 1"),
+                    "a format character after the command word differed on " + label);
+            assertEquals(baseline, parseOrNull(DeleteCommand.COMMAND_WORD + " 1" + character),
+                    "a format character after the index differed on " + label);
+        }
+    }
+
+    @Test
+    public void parseCommand_optionValueHoldingAFormatCharacter_isReadWithoutIt() throws Exception {
+        // a mark pasted between an option and its value would otherwise land in the field
+        // itself, where the stored value looks right to the user but fails validation (#308
+        // reports this for email); both fields that were left unnormalized are pinned here
+        Student student = new StudentBuilder().withName("Jane Tan").withPhone("90001111")
+                .withEmail("jane@example.com").withNusStudentId("A01234567X").build();
+        AddCommand command = (AddCommand) parser.parseCommand(
+                "add Jane Tan -p 90001111 -e \u200Ejane@example.com -i \u200EA01234567X");
+        assertEquals(new AddCommand(student), command);
+    }
+
+    @Test
+    public void parseCommand_joinerFormatCharacters_areKept() {
+        // Sinhala and Arabic need the joiners to shape a word, so a command word holding one
+        // is a different word rather than the same word with a character removed
+        assertThrows(ParseException.class, () -> parser.parseCommand("\u200Dlist"));
+    }
+
+    @Test
     public void parseCommand_argumentsHoldingALineBreak_areStillRead() throws Exception {
         // a command copied out of a document may arrive wrapped across lines
         assertTrue(parser.parseCommand(AddCommand.COMMAND_WORD + " John Doe\n-p 91234567") instanceof AddCommand);

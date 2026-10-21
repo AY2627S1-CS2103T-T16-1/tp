@@ -127,10 +127,33 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_extraneousTokens_throwsParseException() {
-        assertParseFailure(parser, "1 extra",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
-        assertParseFailure(parser, "1 2",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "1 extra", valueAfterIndexMessage("extra"));
+        assertParseFailure(parser, "1 2", valueAfterIndexMessage("2"));
+    }
+
+    @Test
+    public void parse_severalExtraneousTokens_namesEveryOneOfThem() {
+        assertParseFailure(parser, "1 extra 2", valueAfterIndexMessage("extra 2"));
+    }
+
+    @Test
+    public void parse_bareHyphenAfterTheIndex_namesItAsTheExtraValue() {
+        // a bare hyphen is spelled like an option without being one, and delete takes it
+        // as the extra value rather than showing the usage message an option would
+        assertParseFailure(parser, "1 -", valueAfterIndexMessage("-"));
+    }
+
+    @Test
+    public void parse_longExtraneousToken_shortensItInTheFeedback() {
+        String extra = "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH + 1);
+        assertParseFailure(parser, "1 " + extra,
+                valueAfterIndexMessage("x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…"));
+    }
+
+    /** The reply {@code delete} gives for the value it found after the index. */
+    private static String valueAfterIndexMessage(String value) {
+        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX_ONLY, DeleteCommand.FIELD_INDEX,
+                value, DeleteCommand.COMMAND_WORD);
     }
 
     @Test
