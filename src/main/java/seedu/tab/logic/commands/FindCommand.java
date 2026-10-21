@@ -24,8 +24,8 @@ public class FindCommand extends Command {
     public static final String COMMAND_WORD = "find";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds students matching every search term "
-            + "(case-insensitive partial matches). Field options restrict terms to selected details.\n"
-            + "Parameters: KEYWORD [MORE_KEYWORDS] or field options: "
+            + "(case-insensitive partial matches). Every term needs a field option.\n"
+            + "Parameters: one or more field options: "
             + FLAG_NAME.getLabel() + ", " + FLAG_NUS_STUDENT_ID.getLabel() + ", " + FLAG_PHONE.getLabel() + ", "
             + FLAG_EMAIL.getLabel() + ", " + FLAG_TAG.getLabel() + ".\n"
             + "Each option takes one word or quoted phrase; repeat an option to require another term.\n"

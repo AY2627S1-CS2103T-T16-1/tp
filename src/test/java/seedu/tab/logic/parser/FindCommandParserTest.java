@@ -26,80 +26,42 @@ public class FindCommandParserTest {
     }
 
     @Test
-    public void parse_emptyOrBlankQuotedTerm_throwsParseException() {
-        // empty quoted string
-        assertParseFailure(parser, "\"\"", MESSAGE_EMPTY_KEYWORD);
-
-        // whitespace-only quoted string
-        assertParseFailure(parser, "\"   \"", MESSAGE_EMPTY_KEYWORD);
-
-        // zero-width space inside quotes
-        assertParseFailure(parser, "\"\u200B\"", MESSAGE_EMPTY_KEYWORD);
-
-        // mixed valid keyword with empty quoted string
-        assertParseFailure(parser, "Alice \"\"", MESSAGE_EMPTY_KEYWORD);
-
-        // mixed valid keyword with whitespace-only quoted string
-        assertParseFailure(parser, "Alice \"   \" Bob", MESSAGE_EMPTY_KEYWORD);
-    }
-
-    @Test
-    public void parse_unclosedQuote_throwsParseException() {
-        assertParseFailure(parser, "\"Lab 3", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
-        assertParseFailure(parser, "Alice \"Lab 3", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
+    public void parse_unqualifiedTerms_throwsParseException() {
+        for (String input : List.of("Jason", "Jason Tan", "Jason -t Lab", "\"Jason Tan\"", "\"\"", "-")) {
+            assertParseFailure(parser, input, FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
+        }
     }
 
     @Test
     public void parse_validArgs_returnsFindCommand() {
-        // no leading and trailing whitespaces
-        FindCommand expectedFindCommand =
-                new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Alice", "Bob")));
-        assertParseSuccess(parser, "Alice Bob", expectedFindCommand);
+        FindCommand expected = new FindCommand(new DetailsContainsKeywordsPredicate(
+                Map.of(Field.NAME, List.of("Jason", "Tan"), Field.TAG, List.of("Lab"))));
+        assertParseSuccess(parser, "-n Jason -t Lab -n Tan", expected);
+        assertParseSuccess(parser, " \n -n\u00a0Jason \n\t -t Lab -n Tan\u3000", expected);
+    }
 
-        // multiple whitespaces between keywords
-        assertParseSuccess(parser, " \n Alice \n \t Bob  \t", expectedFindCommand);
+    @Test
+    public void parse_doubleQuotedPhrase_normalizesWhitespaceAndUnicode() {
+        FindCommand expected = new FindCommand(new DetailsContainsKeywordsPredicate(
+                Map.of(Field.NAME, List.of("Jason Tan"))));
+        for (String input : List.of("-n \"Jason Tan\"", "-n \" Jason   Tan \"", "--name=\"Jason\u00a0Tan\"")) {
+            assertParseSuccess(parser, input, expected);
+        }
+        FindCommand stripped = new FindCommand(new DetailsContainsKeywordsPredicate(
+                Map.of(Field.TAG, List.of("Lab3"))));
+        assertParseSuccess(parser, "-t \"Lab\u200b3\"", stripped);
+    }
 
-        // single quoted phrase
-        FindCommand expectedPhraseCommand =
-                new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Lab 3")));
-        assertParseSuccess(parser, "\"Lab 3\"", expectedPhraseCommand);
-
-        // quoted phrase with surrounding whitespace inside the quotes trimmed
-        assertParseSuccess(parser, "\"  Lab 3  \"", expectedPhraseCommand);
-
-        // quoted phrase with multiple internal spaces collapsed
-        assertParseSuccess(parser, "\"Lab   3\"", expectedPhraseCommand);
-
-        // quoted phrase with internal non-breaking space collapsed to normal space
-        assertParseSuccess(parser, "\"Lab\u00A03\"", expectedPhraseCommand);
-
-        // zero-width spaces stripped
-        FindCommand expectedStrippedZeroWidthCommand =
-                new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Lab3")));
-        assertParseSuccess(parser, "\"Lab\u200B3\"", expectedStrippedZeroWidthCommand);
-
-        // decomposed unicode characters composed to NFC
-        FindCommand expectedComposedCommand =
-                new FindCommand(new DetailsContainsKeywordsPredicate(List.of("caf\u00E9")));
-        assertParseSuccess(parser, "\"caf\u0065\u0301\"", expectedComposedCommand);
-
-        // mixed unquoted words and quoted phrase
-        FindCommand expectedMixedCommand =
-                new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Alice", "Lab 3", "Bob")));
-        assertParseSuccess(parser, "Alice \"Lab 3\" Bob", expectedMixedCommand);
-
-        // escaped quotes within quoted phrase
-        FindCommand expectedEscapedQuotesCommand =
-                new FindCommand(new DetailsContainsKeywordsPredicate(List.of("say \"hi\"")));
-        assertParseSuccess(parser, "\"say \\\"hi\\\"\"", expectedEscapedQuotesCommand);
-
-        // escaped backslash
-        FindCommand expectedEscapedBackslashCommand =
-                new FindCommand(new DetailsContainsKeywordsPredicate(List.of("path\\to")));
-        assertParseSuccess(parser, "\"path\\\\to\"", expectedEscapedBackslashCommand);
-
-        // unicode whitespace between arguments
-        assertParseSuccess(parser, "Alice\u00A0\"Lab 3\"\u3000Bob", expectedMixedCommand);
+    @Test
+    public void parse_apostrophes_areLiteralCharacters() {
+        FindCommand expected = new FindCommand(new DetailsContainsKeywordsPredicate(
+                Map.of(Field.NAME, List.of("O'Brien"))));
+        assertParseSuccess(parser, "-n O'Brien", expected);
+        assertParseSuccess(parser, "-n \"O'Brien\"", expected);
+        FindCommand literalQuotes = new FindCommand(new DetailsContainsKeywordsPredicate(
+                Map.of(Field.NAME, List.of("'Jason'"))));
+        assertParseSuccess(parser, "-n 'Jason'", literalQuotes);
+        assertParseFailure(parser, "-n 'Jason Tan'", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "Tan'"));
     }
 
     @Test

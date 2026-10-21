@@ -638,8 +638,10 @@ Every term needs a field option. Each option takes one word or one double-quoted
   separate tags are never joined. Repeated spaces inside a phrase are collapsed to one space.
 * Apostrophes are literal characters, so `find -n O'Brien` searches for `O'Brien`.
   Single quotation marks do not group words; use double quotes for phrases.
-* General searches without field options retain the legacy OR matching.
-  Field searches require an option for each term and cannot be mixed with bare terms.
+* Bare terms are refused, including a name given before any option. Use a field option
+  for every term. An extra word after an option is also refused; repeat the option or quote a phrase.
+  This replaces the earlier unqualified cross-field search syntax and OR matching.
+  Follow-up status is not a searchable field.
 * To include a literal double quote or backslash inside a term, escape it with a backslash:
   `\"` or `\\`. An unclosed quote or an empty or whitespace-only term is refused
   without changing the current student list.

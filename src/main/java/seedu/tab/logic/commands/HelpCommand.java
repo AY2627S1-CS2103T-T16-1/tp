@@ -55,7 +55,7 @@ public class HelpCommand extends Command {
             "        " + FLAG_PHONE.getLabel() + ", " + FLAG_EMAIL.getLabel() + ", " + FLAG_TAG.getLabel(),
             "    Each option takes one word or quoted phrase.",
             "    Repeat options for more required terms.",
-            "    Use field options. Apostrophes are literal.",
+            "    Every term needs an option. Apostrophes are literal.",
             "    Matches ignore case.",
             "",
             "  " + ListCommand.COMMAND_WORD + " — List all students",

@@ -48,19 +48,15 @@ public class FindCommandParser implements Parser<FindCommand> {
         }
 
         FlagArgumentMap arguments = FlagTokenizer.tokenize(args, SEARCH_FIELDS.keySet().toArray(Flag[]::new));
+        if (!arguments.getPreamble().isEmpty() || tokens.getFirst().beginsQuoted()) {
+            throw new ParseException(MESSAGE_UNQUALIFIED_TERM);
+        }
         Map<Field, List<String>> keywordsByField = new EnumMap<>(Field.class);
         for (Map.Entry<Flag, Field> entry : SEARCH_FIELDS.entrySet()) {
             List<String> values = arguments.getAllValues(entry.getKey());
             if (!values.isEmpty()) {
                 keywordsByField.put(entry.getValue(), normalizeKeywords(values));
             }
-        }
-        if (keywordsByField.isEmpty()) {
-            return new FindCommand(new DetailsContainsKeywordsPredicate(
-                    normalizeKeywords(tokens.stream().map(Token::value).toList())));
-        }
-        if (!arguments.getPreamble().isEmpty() || tokens.getFirst().beginsQuoted()) {
-            throw new ParseException(MESSAGE_UNQUALIFIED_TERM);
         }
         return new FindCommand(new DetailsContainsKeywordsPredicate(keywordsByField));
     }

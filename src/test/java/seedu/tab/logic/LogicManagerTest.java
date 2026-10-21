@@ -145,6 +145,7 @@ public class LogicManagerTest {
         String savedJson = Files.readString(dataPath);
         for (var entry : Map.of(
                 "find Jason -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
+                "find Jason", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
                 "find -t \"\"", FindCommandParser.MESSAGE_EMPTY_KEYWORD,
                 "find --unknown friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"),
                 "find -t lab tutorial", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "tutorial"),

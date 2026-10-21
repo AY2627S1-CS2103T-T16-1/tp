@@ -867,8 +867,8 @@ that a number typed with unusual whitespace, or wrapped in the invisible marks a
 chat app puts around a copied number, is stored consistently.
 
 `FindCommandParser` uses `FlagTokenizer` and the existing `CliFlags` aliases for
-name, NUS Student ID, phone, email and tag. Each field-restricted search term has a field option. General searches
-without options retain the legacy OR matching. An option takes one word or one double-quoted phrase; apostrophes are
+name, NUS Student ID, phone, email and tag. Every search term must have a field
+option. An option takes one word or one double-quoted phrase; apostrophes are
 literal characters, so names such as `O'Brien` do not need quoting. Repeated
 options retain all values. Bare terms receive `MESSAGE_UNQUALIFIED_TERM`, and
 an extra bare word after an option receives the shared tokenizer's
@@ -882,8 +882,9 @@ whitespace runs and applying Unicode NFC normalization. The parser creates a
 Every term must match its selected field, using case-insensitive substrings:
 AND applies both within and between fields. Each tag term must occur within
 one tag, but separate terms may match the same tag or different tags. Absent
-optional fields do not match. Explicit field selectors prevent unrelated matches in other details.
-Follow-up status remains available through the legacy general search.
+optional fields do not match. Explicit field selectors prevent unrelated
+matches in other details and replace the earlier unqualified OR search.
+Follow-up status is no longer searched.
 
 For phone terms containing only Unicode decimal digits, or those digits with
 phone punctuation (`+`, `-`, `(`, `)`, `.`), matching also compares the digits
@@ -2984,8 +2985,8 @@ testers are expected to do more *exploratory* testing.
 
 1. Rejected input preserves the current results and saved data
 
-   1. Test cases: `find Jason -t lab` and `find -t lab tutorial`.<br>
-      Expected: The first asks for a field option for every term. The second
+   1. Test cases: `find Jason`, `find Jason -t lab` and `find -t lab tutorial`.<br>
+      Expected: The first two ask for a field option for every term. The third
       identifies `tutorial` as an unexpected value and explains that a multi-word value needs quotes.
    1. Test cases: `find -t`, `find -t -n Jason`, `find --unknown friend`,
       `find -t ""`, `find -t "   "` and an unclosed quote in `find -t "lab`.<br>
