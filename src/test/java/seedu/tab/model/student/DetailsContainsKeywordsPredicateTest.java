@@ -5,9 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 import seedu.tab.testutil.StudentBuilder;
 
 public class DetailsContainsKeywordsPredicateTest {
@@ -209,6 +211,81 @@ public class DetailsContainsKeywordsPredicateTest {
         assertFalse(predicate.test(new StudentBuilder().withName("Alice Bob")
                 .withPhone("91234567").withEmail("alice@example.com")
                 .withTags("friend").build()));
+    }
+
+    @Test
+    public void test_fieldSelectors_matchOnlySelectedField() {
+        List<Student> students = List.of(
+                new StudentBuilder().withName("Jason Lim").build(),
+                new StudentBuilder().withNusStudentId("A01234567X").build(),
+                new StudentBuilder().withPhone("+65 9123 4567").build(),
+                new StudentBuilder().withEmail("jason@nus.edu.sg").build(),
+                new StudentBuilder().withTags("friend").build());
+        List<Field> fields = List.of(Field.NAME, Field.NUS_STUDENT_ID, Field.PHONE, Field.EMAIL, Field.TAG);
+        assertEquals(List.of(Field.values()), fields);
+        List<String> terms = List.of("jASon", "a0123", "9123-4567", "NUS.EDU", "rIeNd");
+        for (int i = 0; i < fields.size(); i++) {
+            DetailsContainsKeywordsPredicate predicate =
+                    new DetailsContainsKeywordsPredicate(Map.of(fields.get(i), List.of(terms.get(i))));
+            for (int j = 0; j < students.size(); j++) {
+                assertEquals(i == j, predicate.test(students.get(j)), fields.get(i) + " on student " + j);
+            }
+        }
+        Student otherFieldsOnly = new StudentBuilder().withName("Friend Follow-up")
+                .withEmail("friend@example.com").withFlag(true).withTags().build();
+        assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.TAG, List.of("friend")))
+                .test(otherFieldsOnly));
+        assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.TAG, List.of("follow-up")))
+                .test(otherFieldsOnly));
+    }
+
+    @Test
+    public void test_repeatedTagTerms_matchSameOrDifferentTags() {
+        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(
+                Map.of(Field.NAME, List.of("jason"), Field.TAG, List.of("LAB", "tutorial")));
+        assertTrue(predicate.test(new StudentBuilder().withName("Jason Lim").withTags("lab tutorial").build()));
+        assertTrue(predicate.test(new StudentBuilder().withName("Jason Zhou")
+                .withTags("lab 5", "tutorial 3").build()));
+        assertFalse(predicate.test(new StudentBuilder().withName("Jason Tan").withTags("lab").build()));
+        assertFalse(predicate.test(new StudentBuilder().withName("Alice").withTags("lab tutorial").build()));
+        assertFalse(predicate.test(new StudentBuilder().withName("Jason").withTags().build()));
+        DetailsContainsKeywordsPredicate phrase =
+                new DetailsContainsKeywordsPredicate(Map.of(Field.TAG, List.of("lab tutorial")));
+        assertFalse(phrase.test(new StudentBuilder().withTags("lab", "tutorial").build()));
+        assertTrue(phrase.test(new StudentBuilder().withTags("Lab Tutorial 3").build()));
+    }
+
+    @Test
+    public void test_repeatedFieldTerms_requiresEveryTermWithinThatField() {
+        Student student = new StudentBuilder().withName("Jason Lim").withNusStudentId("A01234567X")
+                .withPhone("+65 9123 4567").withEmail("jason@nus.edu").build();
+        Map<Field, List<String>> matchingTerms = Map.of(
+                Field.NAME, List.of("JASON", "Lim"), Field.NUS_STUDENT_ID, List.of("a0123", "567x"),
+                Field.PHONE, List.of("+65", "4567"), Field.EMAIL, List.of("jason@", "NUS.EDU"));
+        assertTrue(new DetailsContainsKeywordsPredicate(matchingTerms).test(student));
+        for (var entry : matchingTerms.entrySet()) {
+            assertTrue(new DetailsContainsKeywordsPredicate(Map.of(entry.getKey(), entry.getValue())).test(student));
+            assertFalse(new DetailsContainsKeywordsPredicate(Map.of(entry.getKey(),
+                    List.of(entry.getValue().getFirst(), "missing"))).test(student));
+        }
+    }
+
+    @Test
+    public void test_optionalFieldsAbsent_returnsFalse() {
+        Student student = new StudentBuilder().withoutEmail().withoutNusStudentId().withTags().build();
+        for (Field field : List.of(Field.EMAIL, Field.NUS_STUDENT_ID, Field.TAG)) {
+            assertFalse(new DetailsContainsKeywordsPredicate(Map.of(field, List.of("x"))).test(student));
+        }
+    }
+
+    @Test
+    public void equals_sameTermsInDifferentFields_returnsFalse() {
+        DetailsContainsKeywordsPredicate name =
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("friend")));
+        DetailsContainsKeywordsPredicate tag =
+                new DetailsContainsKeywordsPredicate(Map.of(Field.TAG, List.of("friend")));
+        assertFalse(name.equals(tag));
+        assertEquals(name, new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("friend"))));
     }
 
     @Test
