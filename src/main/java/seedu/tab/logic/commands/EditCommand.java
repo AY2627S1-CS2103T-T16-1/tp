@@ -42,7 +42,8 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the student identified "
             + "by the index number used in the displayed student list, or by the NUS Student ID "
-            + "they hold anywhere in the book. "
+            + "they hold anywhere in the book. A target ID opens with a letter; a digit-leading ID "
+            + "is edited by index, because " + FLAG_NUS_STUDENT_ID + " sets the ID rather than naming it. "
             + "Existing values will be overwritten by the input values, while "
             + FLAG_FOLLOW_UP.getMarkerSummary() + " sets follow-up and "
             + FLAG_NO_FOLLOW_UP.getMarkerSummary() + " clears it.\n"

@@ -2588,8 +2588,8 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `find Alex` followed by `edit A02345678G -p 81112222`, where the
       search hides Charlotte Oliveiro<br>
       Expected: Charlotte Oliveiro's phone changes even though she is not in the
-      displayed list. An `edit 1 -p` in the same state would name the wrong
-      student.
+      displayed list. A complete `edit 1 -p 81112222` in the same state would edit
+      Alex instead, because index 1 is the first student the search shows.
 
    1. Test case: `edit A02345678G --id A09876543Z`<br>
       Expected: The NUS Student ID of the student found by `A02345678G` becomes

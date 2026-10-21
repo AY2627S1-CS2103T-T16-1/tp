@@ -373,6 +373,13 @@ public class EditCommandParserTest {
                 Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
                         NusStudentId.getFailureReason("A0123-456")));
 
+        // a digit-leading ID cannot be a target: the plain form reads as an index, and
+        // --id names the field to set rather than the student to edit
+        assertParseFailure(parser, "1A2B3C" + FLAG_NAME_AMY,
+                String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "--id 1A2B3C -p 81112222",
+                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_INDEX));
+
         // a token before the options that is not part of the target
         assertParseFailure(parser, "1 some random string" + FLAG_NAME_AMY,
                 String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, "INDEX", "some random string"));

@@ -35,8 +35,9 @@ public class EditCommandParser implements Parser<EditCommand> {
      * field a value belongs to.
      *
      * <p>The target is read by {@link ParserUtil#parseRequiredStudentTarget}: a position in the
-     * displayed list, or an NUS Student ID, which is given through {@code --id} when it opens
-     * with a digit.
+     * displayed list, or an NUS Student ID that opens with a letter. Unlike {@code delete}, an
+     * ID opening with a digit cannot be a target, because {@code --id} names the field to set
+     * rather than the student to edit.
      *
      * @throws ParseException if the user input does not conform to the expected format
      */

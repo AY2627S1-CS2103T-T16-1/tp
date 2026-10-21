@@ -449,8 +449,10 @@ done to it beyond the quotes any value with spaces takes:
 * Edits the student at the specified `INDEX`, or the student who holds the given
   `NUS_STUDENT_ID`. An index refers to the index number shown in the displayed student list and
   **must be a positive integer** 1, 2, 3, ... An NUS Student ID names its holder wherever they
-  are in the book, even while a search hides them, and the match ignores case; an ID starting
-  with a digit is given through `--id`, because the plain form reads it as an index.
+  are in the book, even while a search hides them, and the match ignores case. A target
+  starting with a digit reads as an index, so `edit` can only name a student by an ID
+  that opens with a letter; to edit a student whose ID starts with a digit, use their
+  index. Here `--id` always sets the student's ID rather than choosing who to edit.
   The current search stays active after editing, so the index keeps referring to
   the same student when you repeat a command, as long as that student still
   matches the search. An edit that removes a matching detail, such as renaming
@@ -496,8 +498,8 @@ done to it beyond the quotes any value with spaces takes:
 * To remove all of a student's tags, give `-t` an empty value: `-t ""` or
   `--tag=""`. A bare `-t` or unquoted `--tag=` is refused, so that a mistyped
   option is reported rather than read as a request to clear.
-* An NUS Student ID target that no student holds changes nothing and reads
-  `No student has NUS Student ID A0123456X.`. A letter-first target that is not
+* An NUS Student ID target that no student holds changes nothing and shows
+  `No student has NUS Student ID A0123456X.` A letter-first target that is not
   a valid ID, such as `A0123-456`, is refused with the field-level reason.
   `edit INDEX` behaves exactly as before.
 
