@@ -285,7 +285,7 @@ public class EditCommandParserTest {
         for (String options : new String[] {"--follow-up --no-follow-up", "--no-follow-up --follow-up",
             "-f --no-follow-up", "--no-follow-up -f -p 81112222", "--follow-up -nf", "-nf --follow-up",
             "-f -nf", "-nf -f -p 81112222"}) {
-            assertParseFailure(parser, "1 " + options, EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP);
+            assertParseFailure(parser, "1 " + options, Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
         }
     }
 

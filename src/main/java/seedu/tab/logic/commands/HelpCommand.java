@@ -55,7 +55,8 @@ public class HelpCommand extends Command {
             "        " + FLAG_PHONE.getLabel() + ", " + FLAG_EMAIL.getLabel() + ", " + FLAG_TAG.getLabel(),
             "    Each option takes one word or quoted phrase.",
             "    Repeat field options for more required terms.",
-            "    Status: -f / --follow-up or -nf / --no-follow-up",
+            "    Status: " + String.join(" / ", FLAG_FOLLOW_UP.getMarkers())
+                    + " or " + String.join(" / ", FLAG_NO_FOLLOW_UP.getMarkers()),
             "    Status options take no value and can be used alone.",
             "    Every term needs an option. Apostrophes are literal.",
             "    Matches ignore case.",

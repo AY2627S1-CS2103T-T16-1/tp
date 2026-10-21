@@ -35,9 +35,6 @@ public class FindCommand extends Command {
             + " (no value). Use a status option alone or combine it with field terms.\n"
             + "Example: " + COMMAND_WORD + " -n Jason -t lab -t tutorial";
 
-    public static final String MESSAGE_CONFLICTING_FOLLOW_UP =
-            "Use either -f/--follow-up or -nf/--no-follow-up, not both.";
-
     private final Logger logger = LogsCenter.getLogger(FindCommand.class);
 
     private final DetailsContainsKeywordsPredicate predicate;

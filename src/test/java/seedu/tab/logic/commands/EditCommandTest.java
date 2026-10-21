@@ -61,8 +61,8 @@ public class EditCommandTest {
 
     @Test
     public void messageConflictingFollowUp_namesEachFlagWithItsAliases() {
-        assertTrue(EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP.contains(FLAG_FOLLOW_UP.getMarkerWithAliases()));
-        assertTrue(EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP.contains(FLAG_NO_FOLLOW_UP.getMarkerWithAliases()));
+        assertTrue(Messages.MESSAGE_CONFLICTING_FOLLOW_UP.contains(FLAG_FOLLOW_UP.getMarkerWithAliases()));
+        assertTrue(Messages.MESSAGE_CONFLICTING_FOLLOW_UP.contains(FLAG_NO_FOLLOW_UP.getMarkerWithAliases()));
     }
 
     @Test

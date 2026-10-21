@@ -68,9 +68,6 @@ public class EditCommand extends Command {
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
 
-    public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP.getMarkerWithAliases()
-            + " and " + FLAG_NO_FOLLOW_UP.getMarkerWithAliases() + " cannot be used together. Choose one.";
-
     private final Logger logger = LogsCenter.getLogger(EditCommand.class);
 
     private final Index index;

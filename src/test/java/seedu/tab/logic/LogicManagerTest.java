@@ -143,12 +143,17 @@ public class LogicManagerTest {
         List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
         Path dataPath = temporaryFolder.resolve("studentBook.json");
         String savedJson = Files.readString(dataPath);
+        String unexpectedValueMessage = "\"%1$s\" does not belong to any option. "
+                + "Options that take a value take one token, and a value holding spaces goes in double quotes.";
         for (var entry : Map.of(
                 "find Jason -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
                 "find Jason", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
                 "find -t \"\"", FindCommandParser.MESSAGE_EMPTY_KEYWORD,
                 "find --unknown friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"),
-                "find -t lab tutorial", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "tutorial"),
+                "find -t lab tutorial", String.format(unexpectedValueMessage, "tutorial"),
+                "find -n Jason Tan", String.format(unexpectedValueMessage, "Tan"),
+                "find -n 'Jason Tan'", String.format(unexpectedValueMessage, "Tan'"),
+                "find -f true", String.format(unexpectedValueMessage, "true"),
                 "find -t", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-t TAG")).entrySet()) {
             assertThrows(ParseException.class, entry.getValue(), () -> logic.execute(entry.getKey()));
             assertEquals(filtered, model.getFilteredStudentList());
@@ -194,7 +199,7 @@ public class LogicManagerTest {
             assertEquals(entry.getValue(), model.getFilteredStudentList());
         }
         List<Student> filtered = List.copyOf(model.getFilteredStudentList());
-        assertThrows(ParseException.class, FindCommand.MESSAGE_CONFLICTING_FOLLOW_UP, () ->
+        assertThrows(ParseException.class, Messages.MESSAGE_CONFLICTING_FOLLOW_UP, () ->
                 logic.execute("find -f -nf"));
         assertEquals(filtered, model.getFilteredStudentList());
         assertEquals(students, model.getStudentBook().getStudentList());
@@ -348,7 +353,7 @@ public class LogicManagerTest {
                     "-f --no-follow-up", "--no-follow-up -f -p 81112222", "--follow-up -nf", "-nf --follow-up",
                     "-f -nf", "-nf -f -p 81112222")) {
                 assertCommandFailure("edit 1 " + options, ParseException.class,
-                        EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP, expectedModel);
+                        Messages.MESSAGE_CONFLICTING_FOLLOW_UP, expectedModel);
                 assertTrue(model.getFilteredStudentList().isEmpty());
                 assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
             }

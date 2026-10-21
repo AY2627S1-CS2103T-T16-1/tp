@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import seedu.tab.commons.util.StringUtil;
+import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.parser.CommandTokenizer.Token;
 import seedu.tab.logic.parser.exceptions.ParseException;
@@ -77,7 +78,7 @@ public class FindCommandParser implements Parser<FindCommand> {
         boolean hasFollowUp = arguments.getValue(FLAG_FOLLOW_UP).isPresent();
         boolean hasNoFollowUp = arguments.getValue(FLAG_NO_FOLLOW_UP).isPresent();
         if (hasFollowUp && hasNoFollowUp) {
-            throw new ParseException(FindCommand.MESSAGE_CONFLICTING_FOLLOW_UP);
+            throw new ParseException(Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
         }
         if (hasFollowUp) {
             return Optional.of(true);

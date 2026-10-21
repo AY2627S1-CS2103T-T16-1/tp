@@ -1,5 +1,8 @@
 package seedu.tab.logic;
 
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,9 +40,10 @@ public class Messages {
     public static final String MESSAGE_FLAG_WITHOUT_VALUE =
             "%1$s needs a value after it. A value opening with a hyphen goes in double quotes.";
     public static final String MESSAGE_VALUE_AFTER_FLAGS =
-            "\"%1$s\" does not belong to any option. Only the first value may be given without "
-            + "an option. Options that take a value take one token, and a value holding spaces "
-            + "goes in double quotes.";
+            "\"%1$s\" does not belong to any option. Options that take a value take one token, "
+            + "and a value holding spaces goes in double quotes.";
+    public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP.getMarkerWithAliases()
+            + " and " + FLAG_NO_FOLLOW_UP.getMarkerWithAliases() + " cannot be used together. Choose one.";
 
     private Messages() {} // this class only holds the messages
 

@@ -63,10 +63,20 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
 
     @Override
     public boolean test(Student student) {
-        return (followUp.isPresent() || keywordsByField.values().stream().anyMatch(keywords -> !keywords.isEmpty()))
-                && followUp.map(isFlagged -> student.isFlagged() == isFlagged).orElse(true)
-                && keywordsByField.entrySet().stream().allMatch(entry -> entry.getValue().stream()
-                        .allMatch(keyword -> entry.getKey().matches(student, keyword)));
+        return hasAnyCondition() && matchesFollowUp(student) && matchesAllTerms(student);
+    }
+
+    private boolean hasAnyCondition() {
+        return followUp.isPresent() || keywordsByField.values().stream().anyMatch(keywords -> !keywords.isEmpty());
+    }
+
+    private boolean matchesFollowUp(Student student) {
+        return followUp.map(isFlagged -> student.isFlagged() == isFlagged).orElse(true);
+    }
+
+    private boolean matchesAllTerms(Student student) {
+        return keywordsByField.entrySet().stream().allMatch(entry -> entry.getValue().stream()
+                .allMatch(keyword -> entry.getKey().matches(student, keyword)));
     }
 
     private static boolean matchesPhone(Phone phone, String keyword) {
