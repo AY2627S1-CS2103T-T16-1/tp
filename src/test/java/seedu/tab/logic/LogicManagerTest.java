@@ -144,6 +144,7 @@ public class LogicManagerTest {
         Path dataPath = temporaryFolder.resolve("studentBook.json");
         String savedJson = Files.readString(dataPath);
         String unexpectedValueMessage = "\"%1$s\" does not belong to any option. "
+                + "If the command takes a name or index without an option, put it before all options. "
                 + "Options that take a value take one token, and a value holding spaces goes in double quotes.";
         for (var entry : Map.of(
                 "find Jason -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,

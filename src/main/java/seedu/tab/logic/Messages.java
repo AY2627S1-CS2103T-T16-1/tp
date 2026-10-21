@@ -40,7 +40,8 @@ public class Messages {
     public static final String MESSAGE_FLAG_WITHOUT_VALUE =
             "%1$s needs a value after it. A value opening with a hyphen goes in double quotes.";
     public static final String MESSAGE_VALUE_AFTER_FLAGS =
-            "\"%1$s\" does not belong to any option. Options that take a value take one token, "
+            "\"%1$s\" does not belong to any option. If the command takes a name or index without an option, "
+            + "put it before all options. Options that take a value take one token, "
             + "and a value holding spaces goes in double quotes.";
     public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP.getMarkerWithAliases()
             + " and " + FLAG_NO_FOLLOW_UP.getMarkerWithAliases() + " cannot be used together. Choose one.";
