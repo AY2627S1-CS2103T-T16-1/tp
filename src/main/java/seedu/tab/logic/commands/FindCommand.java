@@ -2,7 +2,9 @@ package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
@@ -25,11 +27,16 @@ public class FindCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds students matching every search term "
             + "(case-insensitive partial matches). Every term needs a field option.\n"
-            + "Parameters: one or more field options: "
+            + "Parameters: field terms and/or one follow-up status option. Field options: "
             + FLAG_NAME.getLabel() + ", " + FLAG_NUS_STUDENT_ID.getLabel() + ", " + FLAG_PHONE.getLabel() + ", "
             + FLAG_EMAIL.getLabel() + ", " + FLAG_TAG.getLabel() + ".\n"
-            + "Each option takes one word or quoted phrase; repeat an option to require another term.\n"
+            + "Each field option takes one word or quoted phrase; repeat it to require another term.\n"
+            + "Status options: " + FLAG_FOLLOW_UP.getLabel() + " or " + FLAG_NO_FOLLOW_UP.getLabel()
+            + " (no value). Use a status option alone or combine it with field terms.\n"
             + "Example: " + COMMAND_WORD + " -n Jason -t lab -t tutorial";
+
+    public static final String MESSAGE_CONFLICTING_FOLLOW_UP =
+            "Use either -f/--follow-up or -nf/--no-follow-up, not both.";
 
     private final Logger logger = LogsCenter.getLogger(FindCommand.class);
 

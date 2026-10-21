@@ -669,8 +669,8 @@ change their identity. The flag is stored as `Optional<Flag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
 Tag searches match ordinary tags as parts of their inherited `tagName` values,
-ignoring case. The separate follow-up status is excluded from all five search
-fields, even when its displayed label matches a search term.
+ignoring case. Follow-up status is selected independently through `-f` or `-nf`, so its
+displayed label never produces a text-field match.
 The student card and command feedback display the same value, while the card
 keeps the flag in its separate follow-up row.
 
@@ -884,7 +884,12 @@ AND applies both within and between fields. Each tag term must occur within
 one tag, but separate terms may match the same tag or different tags. Absent
 optional fields do not match. Explicit field selectors prevent unrelated
 matches in other details and replace the earlier unqualified OR search.
-Follow-up status is no longer searched.
+Follow-up status is selected with the presence-only `-f`/`--follow-up` and
+`-nf`/`--no-follow-up` options. The predicate holds an `Optional<Boolean>`:
+empty imposes no status restriction, true requires follow-up, and false
+requires its absence. A status-only search is valid, and combinations require
+both the status and every field term. The parser rejects conflicting or
+repeated status options before execution, matching the existing edit rules.
 
 For phone terms containing only Unicode decimal digits, or those digits with
 phone punctuation (`+`, `-`, `(`, `)`, `.`), matching also compares the digits
@@ -1355,7 +1360,8 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to find students, specifying a field for each search term.
 2.  TAB shows the students for whom every term matches part of its specified
-    name, NUS Student ID, phone, email or tag, regardless of letter case.
+    name, NUS Student ID, phone, email or tag, regardless of letter case,
+    and any requested follow-up status matches.
 3.  User identifies the intended student.
 4.  User initiates the desired action on that student.
 
@@ -2994,6 +3000,31 @@ testers are expected to do more *exploratory* testing.
       The displayed list is unchanged after each rejected command.
    1. Run `list` and restart TAB.<br>
       Expected: All six students and their original details remain. `data/tab.json`
+      is identical to the saved copy after all successful and rejected searches.
+
+### Finding students by follow-up status
+
+1. Status-only and combined searches preserve data
+
+   1. Prerequisites: In a disposable TAB folder, clear students (`clear`, then `yes`).
+      Run `add Jason Tan -p 91111111 -t Lab -f`, `add Jason Lim -p 92222222 -t Lab`,
+      and `add Alice Lee -p 93333333 -t Tutorial -f`. Restart TAB and save a copy of `data/tab.json`.
+   1. Test cases: `find -f` and `find --follow-up`.<br>
+      Expected: Jason Tan and Alice Lee, with `Found 2 students.`.
+   1. Test cases: `find -nf` and `find --no-follow-up`.<br>
+      Expected: Only Jason Lim, with `Found 1 student.`.
+   1. Test case: `find -f -n Jason -t Lab`.<br>
+      Expected: Only Jason Tan; the status and every field term must match.
+   1. Test case: `find -n Jason -nf -t Lab`.<br>
+      Expected: Only Jason Lim; the status option may appear between field options.
+   1. Test case: `find -nf -t Tutorial`.<br>
+      Expected: No students, with `Found 0 students.`.
+   1. Test cases: `find -f -nf`, `find -f --follow-up`, `find -nf --no-follow-up`,
+      `find -f true` and `find -nf=none`.<br>
+      Expected: A clear error for conflicting or repeated status selectors, an extra bare
+      value, or a value attached to an option that takes none. The empty result list remains unchanged.
+   1. Run `list` and restart TAB.<br>
+      Expected: All three students retain their details and follow-up states. `data/tab.json`
       is identical to the saved copy after all successful and rejected searches.
 
 ### Confirming before clearing all students

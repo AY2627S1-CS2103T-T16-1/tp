@@ -7,6 +7,7 @@ import static seedu.tab.logic.parser.FindCommandParser.MESSAGE_EMPTY_KEYWORD;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -107,11 +108,38 @@ public class FindCommandParserTest {
         }
         assertParseFailure(parser, "--unknown friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"));
         assertParseFailure(parser, "-T friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-T"));
-        assertParseFailure(parser, "-f follow-up", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-f"));
         assertParseFailure(parser, "-t lab tutorial", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "tutorial"));
         assertParseFailure(parser, "Jason -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
         assertParseFailure(parser, "\"\" -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
         assertParseFailure(parser, "-t \"Lab", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
+    }
+
+    @Test
+    public void parse_followUpSelectors_acceptsAliasesAloneOrWithFields() {
+        for (String flag : List.of("-f", "--follow-up", "-nf", "--no-follow-up")) {
+            boolean isFlagged = flag.equals("-f") || flag.equals("--follow-up");
+            FindCommand statusOnly = new FindCommand(
+                    new DetailsContainsKeywordsPredicate(Map.of(), Optional.of(isFlagged)));
+            assertParseSuccess(parser, flag, statusOnly);
+            FindCommand combined = new FindCommand(new DetailsContainsKeywordsPredicate(
+                    Map.of(Field.NAME, List.of("Jason"), Field.TAG, List.of("Lab")), Optional.of(isFlagged)));
+            assertParseSuccess(parser, flag + " -n Jason -t Lab", combined);
+            assertParseSuccess(parser, "-n Jason -t Lab " + flag, combined);
+        }
+    }
+
+    @Test
+    public void parse_invalidStatusSelectors_reportsSpecificProblem() {
+        for (String input : List.of("-f -nf", "--no-follow-up --follow-up", "-nf -n Jason -f")) {
+            assertParseFailure(parser, input, FindCommand.MESSAGE_CONFLICTING_FOLLOW_UP);
+        }
+        for (String input : List.of("-f -f", "-f --follow-up")) {
+            assertParseFailure(parser, input, Messages.getErrorMessageForDuplicateFlags("-f"));
+        }
+        assertParseFailure(parser, "-nf --no-follow-up", Messages.getErrorMessageForDuplicateFlags("-nf"));
+        assertParseFailure(parser, "-f true", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "true"));
+        assertParseFailure(parser, "-nf=none", String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-nf"));
+        assertParseFailure(parser, "-f -n", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-n NAME"));
     }
 
 }

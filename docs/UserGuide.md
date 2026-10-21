@@ -612,9 +612,9 @@ Examples:
 
 Finds students matching every supplied search term within its selected field.
 
-Format: `find FIELD_OPTION TERM [FIELD_OPTION TERM]...`
+Format: `find [FIELD_OPTION TERM]... [-f | -nf]`
 
-Every term needs a field option. Each option takes one word or one double-quoted phrase.
+Provide at least one field term or one follow-up status option. Every search term needs a field option, which takes one word or one double-quoted phrase.
 
 | Field | Options | Example |
 | --- | --- | --- |
@@ -623,6 +623,8 @@ Every term needs a field option. Each option takes one word or one double-quoted
 | Phone | `-p`, `--phone` | `find -p 9123` |
 | Email | `-e`, `--email` | `find -e nus.edu` |
 | Tag | `-t`, `--tag` | `find -t friend` |
+| Needs follow-up | `-f`, `--follow-up` (no value) | `find -f` |
+| Does not need follow-up | `-nf`, `--no-follow-up` (no value) | `find -nf` |
 
 * Matching is case-insensitive and allows partial values: `find -n jas` matches `Jason`.
 * All terms use **AND** matching, within and between fields. There is no OR search mode.
@@ -641,7 +643,12 @@ Every term needs a field option. Each option takes one word or one double-quoted
 * Bare terms are refused, including a name given before any option. Use a field option
   for every term. An extra word after an option is also refused; repeat the option or quote a phrase.
   This replaces the earlier unqualified cross-field search syntax and OR matching.
-  Follow-up status is not a searchable field.
+* Status options take no value. `find -f` lists students needing follow-up, and `find -nf`
+  lists students not needing it. Combine a status option with field terms using AND:
+  `find -f -n Jason -t Lab` requires the status, name fragment and tag fragment.
+  Omitting both status options searches students of either status.
+* Use at most one status option. Conflicting options (`-f` with `-nf`) or a repeated
+  status option, including mixed aliases, are refused without changing the results.
 * To include a literal double quote or backslash inside a term, escape it with a backslash:
   `\"` or `\\`. An unclosed quote or an empty or whitespace-only term is refused
   without changing the current student list.
@@ -829,7 +836,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`<br> The ID option, spelled `-i`/`--id` or `--id=VALUE`, is what an ID starting with a digit needs<br> e.g., `delete 3`, `delete A01234567X`, `delete --id 1A2B3C`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A01234567X`
 **Tag**    | `tag INDEX -a TAG` or `tag INDEX -r TAG` <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`
-**Find**   | `find FIELD_OPTION TERM [FIELD_OPTION TERM]...`<br> e.g., `find -n Jason -t lab -t tutorial` (all terms required)
+**Find**   | `find [FIELD_OPTION TERM]... [-f \| -nf]`<br> e.g., `find -n Jason -t lab -t tutorial` (all terms required)
 **List**   | `list`
 **Exit**   | `exit`
 **Help**   | `help` (also `F1` or Help menu); Space/`b` to page, `c` to copy the guide URL, `q`/Esc to return
