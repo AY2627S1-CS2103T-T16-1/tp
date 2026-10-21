@@ -120,6 +120,17 @@ public class CommandLoggingTest {
     }
 
     @Test
+    public void execute_editByNusStudentId_recordsTheReferralAndBookSizeAtInfo() throws Exception {
+        new EditCommand(StudentTarget.byNusStudentId(new NusStudentId("A12345678C")),
+                new EditStudentDescriptorBuilder().withPhone("91234567").build()).execute(model);
+
+        // the log names how the student was addressed without repeating their NUS Student ID
+        assertTrue(messagesAt(Level.INFO)
+                        .contains("Edited the student identified by NUS Student ID; the book now holds 7"),
+                "logged: " + messagesAt(Level.INFO));
+    }
+
+    @Test
     public void executeConfirmed_clear_recordsHowManyWentAtInfo() {
         new ClearCommand().executeConfirmed(model);
 
@@ -170,6 +181,9 @@ public class CommandLoggingTest {
         new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Alice"))).execute(model);
         new EditCommand(FIRST, new EditStudentDescriptorBuilder().withPhone(replacementPhone).build())
                 .execute(model);
+        // addressing a student by their NUS Student ID must not put the ID in the log either
+        new EditCommand(StudentTarget.byNusStudentId(new NusStudentId("A09876543Z")),
+                new EditStudentDescriptorBuilder().withPhone(replacementPhone).build()).execute(model);
         new DeleteCommand(FIRST).execute(model);
         // addressing a student by their NUS Student ID must not put the ID in the log either
         new DeleteCommand(StudentTarget.byNusStudentId(new NusStudentId("A09876543Z"))).execute(model);

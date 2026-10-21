@@ -2613,6 +2613,45 @@ testers are expected to do more *exploratory* testing.
       Expected: No change. A name marked by an option takes one token, so the
       message reports that `s/o` belongs to no option.
 
+1. Editing by NUS Student ID
+
+   1. Prerequisites: Run `list` and note one student's NUS Student ID such as
+      Charlotte Oliveiro's `A02345678G` in the sample data.
+
+   1. Test case: `edit A02345678G -p 81112222`<br>
+      Expected: The phone number of the student holding `A02345678G` changes,
+      and the status message identifies them. `edit a02345678g -p 81112222`
+      does the same, because matching an ID ignores case.
+
+   1. Test case: `edit A02345678G -n "Edited By Id"`, then `edit A02345678G -n
+      "Charlotte Oliveiro"` to restore the name.<br>
+      Expected: The command identifies the same student by their ID both times,
+      even though the rename takes them off any list a search had narrowed to.
+
+   1. Test case: `find Alex` followed by `edit A02345678G -p 81112222`, where the
+      search hides Charlotte Oliveiro<br>
+      Expected: Charlotte Oliveiro's phone changes even though she is not in the
+      displayed list. A complete `edit 1 -p 81112222` in the same state would edit
+      Alex instead, because index 1 is the first student the search shows.
+
+   1. Test case: `edit A02345678G --id A09876543Z`<br>
+      Expected: The NUS Student ID of the student found by `A02345678G` becomes
+      `A09876543Z`, and no other detail changes. Editing it back with
+      `edit A09876543Z --id A02345678G` works the same way.
+
+   1. Test case: `edit A01234567X --id A12345678C`, where `A12345678C` is another
+      student's ID<br>
+      Expected: No change. The message refuses the ID another student already
+      holds, the same way an `edit INDEX --id` would.
+
+   1. Test case: `edit A99999999Z -p 81112222`, where no student holds that ID<br>
+      Expected: No change. The status message reads
+      `No student has NUS Student ID A99999999Z.`
+
+   1. Test case: `edit A0123-456 -p 81112222`<br>
+      Expected: No change. The letter-first target that is not a valid ID is
+      refused with the field-level reason, so the hyphen is named.
+
 1. Clearing the tags
 
    1. Prerequisites: Give the student two tags with
