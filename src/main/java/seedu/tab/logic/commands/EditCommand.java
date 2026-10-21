@@ -11,7 +11,6 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -32,27 +31,29 @@ import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
 
 /**
- * Edits the details of an existing student in the student book.
+ * Edits the details of an existing student in the student book, identified by their
+ * displayed index or their NUS Student ID.
  */
 public class EditCommand extends Command {
     public static final String COMMAND_WORD = "edit";
 
-    /** The index is given before any option rather than marked by one. */
+    /** The target is given before any option rather than marked by one. */
     public static final String FIELD_INDEX = "INDEX";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the student identified "
-            + "by the index number used in the displayed student list. "
+            + "by the index number used in the displayed student list, or by the NUS Student ID "
+            + "they hold anywhere in the book. "
             + "Existing values will be overwritten by the input values, while "
             + FLAG_FOLLOW_UP.getMarkerSummary() + " sets follow-up and "
             + FLAG_NO_FOLLOW_UP.getMarkerSummary() + " clears it.\n"
-            + "Parameters: " + FIELD_INDEX + " (must be a positive integer) "
+            + "Parameters: " + FIELD_INDEX + " (must be a positive integer) or NUS_STUDENT_ID "
             + "[" + FLAG_NAME.getLabel() + "] "
             + "[" + FLAG_PHONE.getLabel() + "] "
             + "[" + FLAG_EMAIL.getLabel() + "] "
             + "[" + FLAG_NUS_STUDENT_ID.getLabel() + "] "
             + "[" + FLAG_TAG.getLabel() + "]... "
             + "[" + FLAG_FOLLOW_UP.getLabel() + " | " + FLAG_NO_FOLLOW_UP.getLabel() + "]\n"
-            + "The index comes first. Any option value holding spaces, and any value opening with "
+            + "The target comes first. Any option value holding spaces, and any value opening with "
             + "a hyphen, goes in double quotes. The value options accept either spelling: "
             + FLAG_NAME.getMarkerSummary() + ", " + FLAG_PHONE.getMarkerSummary() + ", "
             + FLAG_EMAIL.getMarkerSummary() + ", " + FLAG_NUS_STUDENT_ID.getMarkerSummary() + " and "
@@ -63,7 +64,9 @@ public class EditCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1 "
             + FLAG_PHONE + " 91234567 "
             + FLAG_EMAIL + " johndoe@example.com "
-            + FLAG_NUS_STUDENT_ID + " A01234567X";
+            + FLAG_NUS_STUDENT_ID + " A01234567X\n"
+            + "Example: " + COMMAND_WORD + " A0123456X "
+            + FLAG_PHONE + " 91234567";
 
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
@@ -73,31 +76,33 @@ public class EditCommand extends Command {
 
     private final Logger logger = LogsCenter.getLogger(EditCommand.class);
 
-    private final Index index;
+    private final StudentTarget target;
     private final EditStudentDescriptor editStudentDescriptor;
 
     /**
-     * @param index of the student in the filtered student list to edit
+     * @param targetIndex of the student in the filtered student list to edit
      * @param editStudentDescriptor details to edit the student with
      */
-    public EditCommand(Index index, EditStudentDescriptor editStudentDescriptor) {
-        requireNonNull(index);
+    public EditCommand(Index targetIndex, EditStudentDescriptor editStudentDescriptor) {
+        this(StudentTarget.byIndex(targetIndex), editStudentDescriptor);
+    }
+
+    /**
+     * @param target names the student to edit, by displayed index or by NUS Student ID
+     * @param editStudentDescriptor details to edit the student with
+     */
+    public EditCommand(StudentTarget target, EditStudentDescriptor editStudentDescriptor) {
+        requireNonNull(target);
         requireNonNull(editStudentDescriptor);
 
-        this.index = index;
+        this.target = target;
         this.editStudentDescriptor = new EditStudentDescriptor(editStudentDescriptor);
     }
 
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        List<Student> lastShownList = model.getFilteredStudentList();
-
-        if (index.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
-        }
-
-        Student studentToEdit = lastShownList.get(index.getZeroBased());
+        Student studentToEdit = target.resolve(model);
         Student editedStudent = createEditedStudent(studentToEdit, editStudentDescriptor);
 
         Optional<Student> duplicateStudent = studentToEdit.isSameStudent(editedStudent)
@@ -112,7 +117,7 @@ public class EditCommand extends Command {
                 String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)),
                 studentToEdit, editedStudent, model.getStudentBook().getStudentList());
         model.setStudent(studentToEdit, editedStudent);
-        logger.info("Edited the student shown at " + index.getOneBased()
+        logger.info("Edited the student " + target.describe()
                 + "; the book now holds " + model.getStudentBook().getStudentList().size());
         return new CommandResult(feedback);
     }
@@ -150,14 +155,14 @@ public class EditCommand extends Command {
             return false;
         }
 
-        return index.equals(otherEditCommand.index)
+        return target.equals(otherEditCommand.target)
                 && editStudentDescriptor.equals(otherEditCommand.editStudentDescriptor);
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .add("index", index)
+                .add("target", target)
                 .add("editStudentDescriptor", editStudentDescriptor)
                 .toString();
     }
