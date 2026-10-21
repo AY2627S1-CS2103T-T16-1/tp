@@ -180,6 +180,21 @@ public class StringUtil {
     }
 
     /**
+     * Returns {@code raw} without the invisible format characters that would let two
+     * identical-looking pieces of a command differ: a direction mark or a zero-width space
+     * pasted before a command word or an index is removed, while the zero-width joiner and
+     * non-joiner a script needs to shape a word are kept.
+     *
+     * <p>The rule is the one {@link #normalizeFieldValue} applies to a stored value, so a
+     * character the user cannot see is treated the same whether it lands in a field or on
+     * the command line.
+     */
+    public static String stripFormatCharacters(String raw) {
+        requireNonNull(raw);
+        return INVISIBLE.matcher(raw).replaceAll("");
+    }
+
+    /**
      * Returns {@code raw} in the form a stored field holds: without the invisible format
      * characters that would let two identical-looking values differ, with every run of
      * whitespace reduced to one ASCII space, the ends trimmed, and the result composed to
@@ -196,7 +211,7 @@ public class StringUtil {
      */
     public static String normalizeFieldValue(String raw) {
         requireNonNull(raw);
-        String visible = INVISIBLE.matcher(raw).replaceAll("");
+        String visible = stripFormatCharacters(raw);
         String spaced = WHITESPACE.matcher(visible).replaceAll(" ").trim();
         return Normalizer.normalize(spaced, Normalizer.Form.NFC);
     }

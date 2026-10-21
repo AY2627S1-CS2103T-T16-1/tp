@@ -101,6 +101,28 @@ public class StringUtilTest {
         assertThrows(NullPointerException.class, () -> StringUtil.getDetails(null));
     }
 
+    //---------------- Tests for stripFormatCharacters -----------------------------------
+
+    @Test
+    public void stripFormatCharacters_dropsInvisibleFormatCharactersButKeepsJoiners() {
+        assertEquals("delete 1", StringUtil.stripFormatCharacters("\u200Bdelete 1"));
+        assertEquals("delete 1", StringUtil.stripFormatCharacters("delete\u200E 1"));
+        assertEquals("delete 1", StringUtil.stripFormatCharacters("delete 1\uFEFF"));
+        assertEquals("John Doe", StringUtil.stripFormatCharacters("\u202AJohn Doe\u202C")); // embedding
+        assertEquals("Johnson", StringUtil.stripFormatCharacters("John\u00ADson")); // soft hyphen
+
+        // scripts such as Sinhala need the joiners to shape a word
+        assertEquals("\u0DC1\u0DCA\u200D\u0DBB\u0DD3",
+                StringUtil.stripFormatCharacters("\u0DC1\u0DCA\u200D\u0DBB\u0DD3"));
+    }
+
+    @Test
+    public void stripFormatCharacters_leavesOrdinaryTextAlone() {
+        assertEquals("delete 1", StringUtil.stripFormatCharacters("delete 1"));
+        assertEquals("find 9123-4567", StringUtil.stripFormatCharacters("find 9123-4567"));
+        assertEquals("", StringUtil.stripFormatCharacters(""));
+    }
+
     //---------------- Tests for normalizeFieldValue -------------------------------------
 
     @Test

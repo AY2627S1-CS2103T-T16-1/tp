@@ -20,6 +20,7 @@ public class Phone {
     public static final String MESSAGE_CONSTRAINTS = "Phone numbers should contain at least 3 digits";
 
     private static final Pattern DIGIT = Pattern.compile("\\p{Nd}");
+    private static final Pattern NON_DIGIT = Pattern.compile("\\P{Nd}");
     private static final int MINIMUM_DIGITS = 3;
     public final String value;
 
@@ -44,6 +45,15 @@ public class Phone {
 
     private static int countDigits(String test) {
         return (int) DIGIT.matcher(test).results().count();
+    }
+
+    /**
+     * Returns the digits this phone number holds, in order, with every other character
+     * removed, so {@code +65 9123 4567} gives {@code 6591234567}. A search for the digits
+     * alone compares against this form, whatever punctuation the number is stored with.
+     */
+    public String getDigits() {
+        return NON_DIGIT.matcher(value).replaceAll("");
     }
 
     /**

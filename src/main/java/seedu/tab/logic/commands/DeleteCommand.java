@@ -1,8 +1,8 @@
 package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 
-import java.util.List;
 import java.util.logging.Logger;
 
 import seedu.tab.commons.core.LogsCenter;
@@ -14,39 +14,43 @@ import seedu.tab.model.Model;
 import seedu.tab.model.student.Student;
 
 /**
- * Deletes a student identified using its displayed index from the student book.
+ * Deletes a student identified using their displayed index or their NUS Student ID.
  */
 public class DeleteCommand extends Command {
 
     public static final String COMMAND_WORD = "delete";
 
+    public static final String FIELD_INDEX = "INDEX";
+
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Deletes the student identified by the index number used in the displayed student list.\n"
-            + "Parameters: INDEX (must be a positive integer)\n"
-            + "Example: " + COMMAND_WORD + " 1";
+            + ": Deletes the student identified by the index number used in the displayed student list,\n"
+            + "or by the NUS Student ID they hold anywhere in the book.\n"
+            + "Parameters: " + FIELD_INDEX + " (must be a positive integer) or NUS_STUDENT_ID\n"
+            + "   or " + FLAG_NUS_STUDENT_ID.getMarkerSummary()
+            + " NUS_STUDENT_ID, which reads an ID starting with a digit as an ID\n"
+            + "Example: " + COMMAND_WORD + " 1\n"
+            + "Example: " + COMMAND_WORD + " A0123456X";
 
     public static final String MESSAGE_DELETE_STUDENT_SUCCESS = "Deleted student: %1$s";
 
     private final Logger logger = LogsCenter.getLogger(DeleteCommand.class);
 
-    private final Index targetIndex;
+    private final StudentTarget target;
 
     public DeleteCommand(Index targetIndex) {
-        this.targetIndex = targetIndex;
+        this(StudentTarget.byIndex(targetIndex));
+    }
+
+    public DeleteCommand(StudentTarget target) {
+        this.target = target;
     }
 
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        List<Student> lastShownList = model.getFilteredStudentList();
-
-        if (targetIndex.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
-        }
-
-        Student studentToDelete = lastShownList.get(targetIndex.getZeroBased());
+        Student studentToDelete = target.resolve(model);
         model.deleteStudent(studentToDelete);
-        logger.info("Deleted the student shown at " + targetIndex.getOneBased()
+        logger.info("Deleted the student " + target.describe()
                 + "; the book now holds " + model.getStudentBook().getStudentList().size());
         return new CommandResult(String.format(MESSAGE_DELETE_STUDENT_SUCCESS, Messages.format(studentToDelete)));
     }
@@ -62,13 +66,13 @@ public class DeleteCommand extends Command {
             return false;
         }
 
-        return targetIndex.equals(otherDeleteCommand.targetIndex);
+        return target.equals(otherDeleteCommand.target);
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .add("targetIndex", targetIndex)
+                .add("target", target)
                 .toString();
     }
 }

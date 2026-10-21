@@ -99,13 +99,34 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_punctuatedDigitsInFormattedPhone_returnsTrue() {
+        // a number copied from a contact list carries the +, and someone may type the
+        // hyphenated form the UG shows for add while the stored number uses a space
+        Student student = new StudentBuilder().withPhone("+65 9123 4567").build();
+        for (String keyword : List.of("+6591234567", "9123-4567", "(9123)4567", "9123.4567",
+                "+65-9123-4567", "+65")) {
+            assertTrue(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student),
+                    keyword + " should match +65 9123 4567 by its digits");
+        }
+    }
+
+    @Test
+    public void test_punctuatedDigitsNotInPhone_returnsFalse() {
+        Student student = new StudentBuilder().withPhone("+65 9123 4567").build();
+        for (String keyword : List.of("9123-4568", "999-9999", "ext-21", "---", "+()-.")) {
+            assertFalse(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student),
+                    keyword + " should not match +65 9123 4567");
+        }
+    }
+
+    @Test
     public void test_formattedPhoneText_preservesLiteralMatching() {
         Student student = new StudentBuilder().withPhone("+65 9123 4567 ext 21").build();
         for (String keyword : List.of("+65", "9123 4567", "EXT 21", "ext")) {
             assertTrue(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student));
         }
         for (String keyword : List.of("91234568", "76543219", "123456789", "missing91234567",
-                "ext 22", "---", "9123-4567")) {
+                "ext 22", "---")) {
             assertFalse(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student));
         }
     }
@@ -122,7 +143,8 @@ public class DetailsContainsKeywordsPredicateTest {
         Student flaggedStudent = new StudentBuilder().withName("Alice").withFlag(true).build();
         Student unflaggedStudent = new StudentBuilder().withName("Alice").withFlag(false).build();
 
-        for (String keyword : List.of("follow-up", "FOLLOW-UP", "needs", "NEEDS", "Needs follow-up")) {
+        for (String keyword : List.of("follow-up", "FOLLOW-UP", "needs", "NEEDS", "Needs follow-up",
+                "needs follow", "follow", "fol", "need")) {
             DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of(keyword));
             assertTrue(predicate.test(flaggedStudent), keyword + " should name the follow-up status");
             assertFalse(predicate.test(unflaggedStudent), keyword + " should not match a student without it");
@@ -133,9 +155,9 @@ public class DetailsContainsKeywordsPredicateTest {
     public void test_fragmentOfFollowUpFlag_doesNotMatchFlaggedStudent() {
         Student flaggedStudent = new StudentBuilder().withName("Alex Yeoh").withFlag(true).build();
 
-        for (String fragment : List.of("low", "ee", "ed", "up", "need", "fol")) {
+        for (String fragment : List.of("low", "ee", "ed", "lo", "ow", "up")) {
             DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of(fragment));
-            assertFalse(predicate.test(flaggedStudent), fragment + " is only a fragment of the flag's label");
+            assertFalse(predicate.test(flaggedStudent), fragment + " begins mid-word in the flag's label");
         }
     }
 

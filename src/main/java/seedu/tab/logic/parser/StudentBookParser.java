@@ -43,27 +43,39 @@ public class StudentBookParser {
      * the same rule the tokenizer splits the arguments on. Spelling the rule a second time as
      * a pattern is what let a command pasted from a web page be refused as unknown.
      *
+     * <p>Invisible format characters are stripped first, by the same rule that normalizes a
+     * stored field value. A direction mark or a zero-width space pasted before the command
+     * word or an index otherwise leaves a word that looks right but matches no command, or an
+     * index reported as not a positive integer.
+     *
      * <p>Whatever separated the two is handed on as a single space, so that a command means
      * the same thing whichever one was typed. Only the add command reads its arguments with
      * the tokenizer; the rest look for an ordinary space and would otherwise keep the
      * separator as the first character of their arguments.
+     *
+     * <p>The command word is read in any case, because no two commands differ only in case
+     * and so a capitalised word can only mean the one command. The fold reaches the first
+     * word alone: {@code Find Alex} searches for {@code Alex} with its capital, and the word
+     * is quoted back as typed when it is no command at all.
      *
      * @param userInput full user input string
      * @return the command based on the user input
      * @throws ParseException if the user input does not conform to the expected format
      */
     public Command parseCommand(String userInput) throws ParseException {
-        int wordStart = indexOfNextValue(userInput, 0);
+        String line = StringUtil.stripFormatCharacters(userInput);
+        int wordStart = indexOfNextValue(line, 0);
         if (wordStart == NOT_FOUND) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
-        int wordEnd = indexOfNextSeparator(userInput, wordStart);
-        int argumentsStart = indexOfNextValue(userInput, wordEnd);
+        int wordEnd = indexOfNextSeparator(line, wordStart);
+        int argumentsStart = indexOfNextValue(line, wordEnd);
 
-        final String commandWord = userInput.substring(wordStart, wordEnd);
+        final String typedWord = line.substring(wordStart, wordEnd);
+        final String commandWord = CommandWords.foldCase(typedWord);
         final String arguments = argumentsStart == NOT_FOUND
                 ? ""
-                : ARGUMENT_SEPARATOR + userInput.substring(argumentsStart);
+                : ARGUMENT_SEPARATOR + line.substring(argumentsStart);
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.
@@ -82,7 +94,7 @@ public class StudentBookParser {
             case HelpCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new HelpCommand());
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
-                throw new ParseException(describeUnknownCommand(commandWord));
+                throw new ParseException(describeUnknownCommand(typedWord));
             }
         };
     }
