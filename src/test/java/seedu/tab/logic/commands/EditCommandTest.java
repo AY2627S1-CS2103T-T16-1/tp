@@ -18,6 +18,8 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
+import static seedu.tab.testutil.TypicalStudents.ALICE;
+import static seedu.tab.testutil.TypicalStudents.CARL;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import java.util.List;
@@ -515,6 +517,84 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_nusStudentIdTargetUnfilteredList_success() {
+        // CARL is not the first student, so a lookup that stopped at the first student holding
+        // any ID at all would edit the wrong student
+        Student original = CARL;
+        Student edited = new StudentBuilder(original).withPhone(VALID_PHONE_BOB).build();
+        EditCommand command = new EditCommand(targetById("A23456789D"),
+                new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.setStudent(original, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    @Test
+    public void execute_nusStudentIdIgnoresCase_success() {
+        Student original = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student edited = new StudentBuilder(original).withPhone(VALID_PHONE_BOB).build();
+        EditCommand command = new EditCommand(targetById("a12345678c"),
+                new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.setStudent(original, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    @Test
+    public void execute_nusStudentIdOfStudentHiddenByFilter_success() {
+        // an NUS Student ID names its holder wherever they are in the book, so a search
+        // that hides the student cannot put them out of reach of edit
+        showStudentAtIndex(model, INDEX_SECOND_STUDENT);
+        Student edited = new StudentBuilder(ALICE).withPhone(VALID_PHONE_BOB).build();
+        EditCommand command = new EditCommand(targetById("A12345678C"),
+                new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        showStudentAtIndex(expectedModel, INDEX_SECOND_STUDENT);
+        expectedModel.setStudent(ALICE, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    @Test
+    public void execute_changeIdOfStudentFoundById_success() {
+        Student original = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student edited = new StudentBuilder(original).withNusStudentId("A7654321Y").build();
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setNusStudentId(new NusStudentId("A7654321Y"));
+        EditCommand command = new EditCommand(targetById("A12345678C"), descriptor);
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.setStudent(original, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    @Test
+    public void execute_changeIdToIdHeldByAnotherStudent_failure() {
+        // the target is one student, and the new ID already belongs to another
+        String idOfCarl = CARL.getNusStudentId().orElseThrow().value;
+        EditCommand command = new EditCommand(targetById("A12345678C"),
+                new EditStudentDescriptorBuilder().withNusStudentId(idOfCarl).build());
+
+        assertCommandFailure(command, model, String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
+                CARL.getNusStudentId().orElseThrow(), CARL.getName()));
+    }
+
+    @Test
+    public void execute_unknownNusStudentId_throwsCommandException() {
+        EditCommand command = new EditCommand(targetById("A99999999Z"),
+                new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
+
+        assertCommandFailure(command, model,
+                String.format(Messages.MESSAGE_NO_STUDENT_WITH_NUS_ID, "A99999999Z"));
+    }
+
+    @Test
     public void equals() {
         final EditCommand standardCommand = new EditCommand(INDEX_FIRST_STUDENT, DESC_AMY);
 
@@ -537,6 +617,13 @@ public class EditCommandTest {
 
         // different descriptor -> returns false
         assertFalse(standardCommand.equals(new EditCommand(INDEX_FIRST_STUDENT, DESC_BOB)));
+
+        // an index and the target that holds it name the same student -> returns true
+        assertTrue(standardCommand.equals(new EditCommand(
+                StudentTarget.byIndex(INDEX_FIRST_STUDENT), DESC_AMY)));
+
+        // same position but a different way of naming a student -> returns false
+        assertFalse(standardCommand.equals(new EditCommand(targetById("A12345678C"), DESC_AMY)));
     }
 
     @Test
@@ -544,9 +631,15 @@ public class EditCommandTest {
         Index index = Index.fromOneBased(1);
         EditStudentDescriptor editStudentDescriptor = new EditStudentDescriptor();
         EditCommand editCommand = new EditCommand(index, editStudentDescriptor);
-        String expected = EditCommand.class.getCanonicalName() + "{index=" + index + ", editStudentDescriptor="
+        String expected = EditCommand.class.getCanonicalName()
+                + "{target=" + StudentTarget.byIndex(index) + ", editStudentDescriptor="
                 + editStudentDescriptor + "}";
         assertEquals(expected, editCommand.toString());
+    }
+
+    /** Returns the edit command whose target names the student holding {@code nusStudentId}. */
+    private static StudentTarget targetById(String nusStudentId) {
+        return StudentTarget.byNusStudentId(new NusStudentId(nusStudentId));
     }
 
 }
