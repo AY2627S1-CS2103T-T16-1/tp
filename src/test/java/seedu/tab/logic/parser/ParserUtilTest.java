@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.commons.core.index.Index;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.exceptions.ParseException;
@@ -77,8 +78,25 @@ public class ParserUtilTest {
 
     @Test
     public void parseIndex_outOfRangeInput_throwsParseException() {
-        assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, ()
-            -> ParserUtil.parseIndex(Long.toString(Integer.MAX_VALUE + 1)));
+        // the first index that does not fit in an int, one more than the largest one that
+        // does. It is written out rather than added up, because an int addition would wrap
+        // around and produce a negative index instead
+        assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
+                ParserUtil.parseIndex("2147483648"));
+    }
+
+    @Test
+    public void parseIndex_largestIndex_isAccepted() throws Exception {
+        assertEquals(Index.fromOneBased(Integer.MAX_VALUE),
+                ParserUtil.parseIndex(String.valueOf(Integer.MAX_VALUE)));
+    }
+
+    @Test
+    public void parseIndex_zeroOrNegativeInput_throwsParseException() {
+        for (String index : List.of("0", "-1")) {
+            assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
+                    ParserUtil.parseIndex(index));
+        }
     }
 
     @Test
