@@ -2,6 +2,7 @@ package seedu.tab.model.student;
 
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.commons.util.ToStringBuilder;
@@ -10,10 +11,15 @@ import seedu.tab.commons.util.ToStringBuilder;
  * Tests that a {@code Student}'s details match any of the keywords given.
  * A keyword matches when it appears in the student's name, phone, email, NUS Student ID
  * or tags, ignoring case and allowing partial matches, or when it names the follow-up
- * flag as the whole label {@code Needs follow-up} or one of its words.
- * Digit-only keywords also match the phone's digits with non-digit characters removed.
+ * flag by opening the label {@code Needs follow-up} or one of its words.
+ * A keyword made only of digits and the punctuation a phone number is written with
+ * also matches the phone's digits with non-digit characters removed.
  */
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
+    /** A keyword of digits and phone punctuation, holding at least one digit. */
+    private static final Pattern PHONE_KEYWORD = Pattern.compile("[\\p{Nd}+().-]*\\p{Nd}[\\p{Nd}+().-]*");
+    private static final Pattern NON_DIGIT = Pattern.compile("\\P{Nd}");
+
     private final List<String> keywords;
 
     public DetailsContainsKeywordsPredicate(List<String> keywords) {
@@ -37,7 +43,22 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
 
     private static boolean matchesPhone(Phone phone, String keyword) {
         return StringUtil.containsIgnoreCase(phone.value, keyword)
-                || keyword.matches("\\p{Nd}+") && phone.value.replaceAll("\\P{Nd}", "").contains(keyword);
+                || matchesPhoneByDigits(phone, keyword);
+    }
+
+    /**
+     * Returns true if the digits {@code keyword} holds appear in {@code phone} in order.
+     * The keyword must be one a user would type as a number: made only of digits and the
+     * punctuation a phone number is written with, and holding at least one digit, so a
+     * keyword such as {@code ---} or one drawn from a name or a tag stays with the literal
+     * comparison above.
+     */
+    private static boolean matchesPhoneByDigits(Phone phone, String keyword) {
+        if (!PHONE_KEYWORD.matcher(keyword).matches()) {
+            return false;
+        }
+        String digits = NON_DIGIT.matcher(keyword).replaceAll("");
+        return phone.getDigits().contains(digits);
     }
 
     private static boolean matchesAnyTag(Student student, String keyword) {

@@ -15,10 +15,13 @@ import org.junit.jupiter.api.Test;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.geometry.Bounds;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.logic.Logic;
@@ -44,6 +47,7 @@ public class MainWindowTest {
 
     /** A {@code Logic} that holds one student and runs nothing. */
     private static class LogicStub implements Logic {
+        private GuiSettings guiSettings = new GuiSettings();
         private final ObservableList<Student> students =
                 FXCollections.observableArrayList(new StudentBuilder().build());
 
@@ -65,7 +69,7 @@ public class MainWindowTest {
 
         @Override
         public GuiSettings getGuiSettings() {
-            return new GuiSettings();
+            return guiSettings;
         }
 
         @Override
@@ -86,6 +90,38 @@ public class MainWindowTest {
             window.fillInnerParts();
             return window;
         });
+    }
+
+    @Test
+    public void show_offscreenOversizedPreferences_fitsPrimaryDisplay() throws Exception {
+        MainWindow window = onFxThread(() -> {
+            LogicStub logic = new LogicStub();
+            logic.guiSettings = new GuiSettings(1.0E9, 1.0E9, 99999, 99999);
+            MainWindow restored = new MainWindow(new Stage(), logic, DATA_FILE);
+            restored.fillInnerParts();
+            restored.show();
+            return restored;
+        });
+        try {
+            FxToolkit.awaitAssertion(() -> {
+                Stage stage = window.getPrimaryStage();
+                Rectangle2D display = Screen.getPrimary().getVisualBounds();
+                Bounds content = stage.getScene().getRoot().localToScreen(
+                        stage.getScene().getRoot().getBoundsInLocal());
+                // Window managers may include invisible frame shadows in the stage origin.
+                assertTrue(content.getMinX() >= display.getMinX());
+                assertTrue(content.getMinY() >= display.getMinY());
+                assertTrue(content.getMaxX() <= display.getMaxX() + 1);
+                assertTrue(content.getMaxY() <= display.getMaxY() + 1);
+                assertTrue(stage.getWidth() <= display.getWidth() + 1);
+                assertTrue(stage.getHeight() <= display.getHeight() + 1);
+            });
+        } finally {
+            onFxThread(() -> {
+                window.getPrimaryStage().hide();
+                return null;
+            });
+        }
     }
 
     @Test

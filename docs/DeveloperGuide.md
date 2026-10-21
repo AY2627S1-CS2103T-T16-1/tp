@@ -133,6 +133,19 @@ the long User Guide address is available through c instead of wrapping in the la
 Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
 command box so quitting cannot insert a stray character. No student data is changed.
 
+#### Restoring window geometry
+
+`MainWindow` supplies each screen's visual bounds to `WindowBounds`, with the
+primary screen first. Equal overlap therefore favors the primary screen.
+Restoration chooses the screen with the greatest overlap with the saved window,
+preserving valid secondary-screen positions, including negative coordinates.
+With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
+nonpositive or nonfinite dimensions use the default size. The window minimum
+also yields to a smaller usable area so it cannot defeat the size correction.
+A window spanning adjacent displays is fitted entirely onto the selected screen,
+even when it was visible across both. This keeps restoration predictable when
+displays have different usable heights or gaps between them.
+
 #### Fitting names and tags on a card
 
 `CardHeadline` reserves a readable start of the name before allocating room
@@ -353,6 +366,17 @@ including preference-file operations. Entries identify the file path without
 copying student or preference contents. Save completion is logged only after
 the storage delegate returns successfully.
 
+`JsonAdaptedStudent` and `JsonSerializableStudentBook` use Jackson's
+`@JsonAnySetter` callbacks to reject unknown keys while the data is being read.
+The student callback includes the record name and allowed field names in its
+error, and permits the removed `address` key as a compatibility exception.
+`JsonStudentBookStorage` adds the one-based student record number from Jackson's
+mapping path, so even unnamed records or students sharing a name can be located.
+The book also accepts the existing `_comment` metadata key.
+This prevents hand-edited values from disappearing during a later unrelated
+save. The shared JSON mapper keeps its existing behavior for preferences;
+startup follows the existing loading-error path and leaves rejected data intact.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.tab.commons` package.
@@ -527,6 +551,43 @@ shortened to keep the reason visible. Quotes do not make an argument absent:
 nor `LogicManager`'s storage write, so it preserves both the displayed list
 and the JSON file.
 
+### Invisible characters on the command line
+
+Before the command word is read, `StudentBookParser` strips the same Unicode
+format characters that `StringUtil.normalizeFieldValue` strips from a stored
+value, through `StringUtil.stripFormatCharacters`. A direction mark or a
+zero-width space pasted before a command word or an index is otherwise a word
+that looks right but matches no command, or an index reported as not a positive
+integer. The zero-width joiner and non-joiner are kept, because a script such as
+Sinhala needs them to shape a word, and a command word holding one is a
+different word rather than the same word with a character removed.
+
+### Reading a command word in any case
+
+`StudentBookParser` folds the first word of the input to lower case before it
+dispatches, so `List`, `LIST` and `list` all reach `ListCommand`. No two
+command words differ only in case, so a capitalised word can only mean the one
+command, and refusing it over a Caps Lock left on or a Shift held a moment too
+long costs the User a retyping for nothing.
+
+The fold is `CommandWords.foldCase`, which `CommandWords.suggestFor` applies to
+the word it measures as well. Dispatch and suggestion therefore agree by
+construction, where a second fold written into the parser could come to differ
+from this one, leaving a word that is refused and then suggested back to the
+User unchanged. The fold is `Locale.ROOT`'s rather than the User's, whose
+Turkish rules would turn `LIST` into a word with a dotless `ı` that answers to
+nothing.
+
+The first word alone is folded. The arguments reach the command parsers as
+typed, so `Find Alex` searches for `Alex` with its capital and `Add John Doe`
+stores the name as it was written. Option spellings stay case-sensitive, as the
+User Guide documents them: an option is read among the values rather than in
+front of them, so folding there would have to leave the values it sits beside
+untouched, which is a decision of its own. The typed word is kept beside
+the folded one, because an unknown word is quoted back in the case it was
+typed in, while a command refusing arguments names the command: `LIST oops`
+reports that `list` takes no arguments.
+
 ### Suggesting a command word
 
 A command word TAB does not dispatch on is answered with the word the User
@@ -574,9 +635,11 @@ that with the command words TAB has: `edit` and `exit` are the only two
 sharing a first letter, so at most two are ever named at once, and the limit
 is there for the command words it may gain.
 
-The comparison folds case, so `LIST` is read as an attempt at `list`, while
-the message quotes the word as it was typed, because a User who typed capitals
-needs to see them to recognise what they did. The quoted word is shortened the
+The comparison folds case with the `CommandWords.foldCase` the parser
+dispatches with, so `Delte` is read as an attempt at `delete`; a word spelt
+correctly in any case is dispatched before it reaches here. The message quotes
+the word as it was typed, because a User who typed capitals needs to see them
+to recognise what they did. The quoted word is shortened the
 way a rejected field value is, so that a pasted line cannot push the rest of
 the message out of sight. Lengths are compared before any distance is, which
 also settles such a line against every command word without measuring it.
@@ -606,8 +669,10 @@ change their identity. The flag is stored as `Optional<Flag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
 Search matches ordinary tags as parts of their inherited `tagName` values, but
-matches the optional flag only when a term names it: the whole label
-`Needs follow-up` or one of its words, ignoring case (`Flag.matchesKeyword`).
+matches the optional flag only when a term opens the label `Needs follow-up`
+or one of its words, ignoring case (`Flag.matchesKeyword`), so a phrase quoted
+as one search term, such as `needs follow`, names the flag the way each of its
+words does on its own.
 The student card and command feedback display the same value, while the card
 keeps the flag in its separate follow-up row.
 
@@ -645,8 +710,8 @@ optionals directly into this contract. Nullable JSON strings remain confined
 to the storage adapter, preserving the existing file format.
 
 `Name`, `Tag` and `Phone` each store the form returned by
-`StringUtil.normalizeFieldValue`: without the invisible format characters that
-draw nothing on screen, with each run of whitespace reduced to one ASCII space
+`StringUtil.normalizeFieldValue`: without invisible format characters such as
+direction marks, with each run of whitespace reduced to one ASCII space
 and leading and trailing whitespace removed, and with the result composed to
 Unicode NFC. Composing happens last, because an invisible character between a
 base letter and its combining mark blocks the two from composing.
@@ -812,12 +877,14 @@ whitespace runs and applying Unicode NFC normalization. It creates a
 `DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
 against the student's name, NUS Student ID, phone, email, ordinary tags,
 and optional follow-up flag. Matching is case-insensitive; those details
-match partially, while the follow-up flag matches only the whole label
-`Needs follow-up` or one of its words, so a fragment such as `low` cannot
-list every flagged student.
-For a keyword containing only Unicode decimal digits (`\p{Nd}+`), the phone
+match partially, while the follow-up flag matches only an opening of the label
+`Needs follow-up` or of one of its words, so a fragment beginning mid-word such
+as `low` cannot list every flagged student.
+For a keyword containing only Unicode decimal digits, or those digits with the
+punctuation a phone number is written with (`+`, `-`, `(`, `)`, `.`), the phone
 comparison also checks a copy of the stored phone with non-digit characters
-removed. This lets `91234567` match `+65 9123 4567` or `9123-4567`.
+removed. This lets `91234567`, `9123-4567` and `+6591234567` all match
+`+65 9123 4567`.
 Literal phone matching remains available for formatted phrases and annotations;
 other fields retain their text matching. The stored phone and saved data do not change.
 
@@ -1284,7 +1351,8 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to find students, providing one or more search terms.
 2.  TAB shows the students for whom any term matches any part of a name, NUS Student ID,
-    phone, email or tag, or names the follow-up status as a whole, regardless of letter case.
+    phone, email or tag, or opens the follow-up status label or one of its words,
+    regardless of letter case.
 3.  User identifies the intended student.
 4.  User initiates the desired action on that student.
 
@@ -1850,7 +1918,24 @@ testers are expected to do more *exploratory* testing.
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
    1. Relaunch TAB by double-clicking the JAR file.<br>
-       Expected: The most recent window size and location are retained.
+       Expected: The most recent window size and location are retained when
+       they fit the available display's usable area.
+
+   1. With TAB closed, set `windowWidth` and `windowHeight` in
+      `preferences.json` under `guiSettings` to `1.0E9` and set
+      `windowCoordinates` to `{"x":99999,"y":99999}`. Relaunch.<br>
+      Expected: The entire window fits the primary display's usable area.
+      Its title bar, command box and status bar remain reachable. Close and
+      relaunch again: the corrected bounds are retained and student data is
+      unchanged.
+
+   1. Move a normally sized window to a secondary display, close and relaunch
+      while both displays are connected, then close, disconnect that display
+      and relaunch again.<br>
+      Expected: With both displays, the saved position is retained, including
+      on a display left of the primary. After disconnection, TAB opens fully
+      on an available display without deleting preferences. Repeat after
+      reducing resolution or increasing scaling, including 1280×720 at 150%.
 
 1. Recovering from null preferences or window settings
 
@@ -1907,6 +1992,30 @@ testers are expected to do more *exploratory* testing.
       `exit` with trailing whitespace closes TAB. Run plain `clear` with
       trailing whitespace only when the test data can be removed; it follows
       the documented clear flow.
+
+### Typing a command word in another case
+
+1. A correctly spelt command word in capitals
+
+   1. Prerequisites: at least one student listed.
+
+   1. Test cases: `List`, `LIST`, and `Help`<br>
+      Expected: Each runs the command of that name, so all students are listed
+      and the help summary opens. No reply names a word TAB does not know.
+
+   1. Test case: `ADD McDonald Tan -p 91234567`<br>
+      Expected: A student named `McDonald Tan` is added with the capitals as
+      typed, in the card and in `data/tab.json`, the fold reaching the command
+      word alone.
+
+   1. Test case: `LIST oops`, after taking a copy of `data/tab.json`, since
+      the step above writes to it<br>
+      Expected: The reply reads `list takes no arguments. Unexpected input:
+      "oops".`, naming the command rather than the capitals typed. The list is
+      unchanged and the JSON file matches that copy byte for byte.
+
+   1. Test case: `EXIT`<br>
+      Expected: TAB closes, with the added student in the saved file.
 
 ### Mistyping a command word
 
@@ -2613,6 +2722,7 @@ testers are expected to do more *exploratory* testing.
 1. Deleting a student while all students are being shown
 
    1. Prerequisites: List all students using the `list` command, with multiple students in the list.
+      Note one student's NUS Student ID, such as Charlotte Oliveiro's `A02345678G` in the sample data.
 
    1. Test case: `delete 1`<br>
       Expected: The first student record is deleted from the list. The status message identifies
@@ -2622,14 +2732,38 @@ testers are expected to do more *exploratory* testing.
       Expected: No student is deleted. The status message shows error details, and the student book
       remains unchanged.
 
-   1. Test case: `delete 1` where the space after the `1` is a non-breaking space (`U+00A0`),
+   1. Test case: `delete A02345678G`<br>
+      Expected: Charlotte Oliveiro is deleted from the book wherever she appears, and the status
+      message identifies her. `delete a02345678g` does the same, because matching an ID ignores case.
+
+   1. Test case: `add "Digit Ida" -p 91234567 --id 1ABC`, then `delete --id 1ABC`<br>
+      Expected: The student holding `1ABC` is deleted, and the status message identifies them.
+      `delete 1ABC` is refused with the command's format, because a target starting with a digit
+      reads as an index.
+
+   1. Test case: `find Alex` followed by `delete A02345678G`, where the search hides
+      Charlotte Oliveiro<br>
+      Expected: Charlotte Oliveiro is deleted from the book, and the status message identifies her.
+
+   1. Test case: `delete A99999999Z`, where no student holds that ID<br>
+      Expected: No student is deleted. The status message reads
+      `No student has NUS Student ID A99999999Z.`, and the student book remains unchanged.
+
+   1. Test case: `delete 1` followed by a non-breaking space (`U+00A0`),
       pasted from a word processor or a web page, or a full-width space (`U+3000`) typed
-      with a Chinese input method<br>
+      with a Chinese input method (to type a non-breaking space: Option+Space on macOS,
+      Alt+0160 on a Windows numeric keypad, or Ctrl+Shift+U then `a0` on Linux)<br>
       Expected: The first student record is deleted, exactly as with an ordinary space.
       TAB does not call the command an invalid format for a character the user cannot see.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Other incorrect delete commands to try: `delete`, `delete 999` (where the number is larger
+      than the list size), `delete 1 2`<br>
+      Expected: `delete` is refused with the command's format, `delete 999` is refused as past
+      the end of the displayed list, and `delete 1 2` names the extra value,
+      `Unexpected value after INDEX: "2". delete accepts one index and nothing else.` The
+      hint says `delete`, not the `edit`/`tag` advice to put a value after an option, since
+      `delete` takes no field values. None of them deletes a student, and the student book
+      is unchanged.
 
 1. _{ more test cases … }_
 
@@ -2773,13 +2907,38 @@ testers are expected to do more *exploratory* testing.
       Restart TAB and keep a copy of `data/tab.json`.
    1. Test cases: `find 91234567`, `find 91234`, and `find 6591234567`.<br>
       Expected: Only Alex Yeoh is shown, with `Found 1 student.` and phone `+65 9123 4567`.
+   1. Test cases: `find 9123-4567` and `find +6591234567`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.`, even though the stored phone
+      is written `+65 9123 4567`. A keyword of digits and phone punctuation compares by the
+      digits alone.
    1. Test case: `find 98765432`.<br>
       Expected: Only Bernice Yu is shown, with `Found 1 student.` and phone `9876-5432`.
    1. Test case: `find 91234567 Bernice`.<br>
       Expected: Both students are shown, with `Found 2 students.`.
-   1. Test case: `find 91234568`.<br>
+   1. Test cases: `find 91234568` and `find 9123-4568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
+
+### Locating students by the follow-up status
+
+1. Openings of the label and of its words, but not fragments from the middle
+
+   1. Prerequisites: Clear all students (`clear`, then `yes`). Add a flagged student,
+      `add Alex Yeoh -p 91234567 -f`, an unflagged student, `add Bernice Yu -p 98765432`,
+      and a student whose name is not the label, `add Low Jia Hui -p 91112222`.
+
+   1. Test cases: `find follow-up`, `find follow`, `find fol`, and `find needs`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.`. A term that opens a word of
+      the label `Needs follow-up` names the flag.
+   1. Test case: `find "needs follow"`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.`. A phrase quoted as one term
+      that opens the whole label names the flag, as each of its words does on its own.
+   1. Test case: `find low`.<br>
+      Expected: Only Low Jia Hui is shown, with `Found 1 student.`. A fragment beginning
+      mid-word in the label does not name the flag, so a search for the surname does not list
+      the flagged student.
+   1. Test case: `find up`.<br>
+      Expected: No students are shown, with `Found 0 students.`.
 
 ### Locating students with quoted phrases and error handling
 
@@ -2945,6 +3104,29 @@ testers are expected to do more *exploratory* testing.
       existed, including its removed `address` keys, and relaunch TAB.<br>
       Expected: TAB loads every student, ignores the old address values and
       treats a missing flag as not needing follow-up.
+
+1. Detecting misspelled data-file keys
+
+   1. Prerequisites: Close TAB and back up a valid multi-student `data/tab.json`.
+      In the second student's record, change `nusStudentId` to `nusStudentID`
+      while retaining the value and leave the other records unchanged.
+
+   1. Launch TAB.<br>
+      Expected: The startup error names `data/tab.json`, the unknown key
+      `nusStudentID`, student record 2, and the affected student's name. It lists
+      the supported student fields. The main window does not open; dismissing the
+      error leaves the file byte-for-byte unchanged.
+
+   1. Restore the backup and repeat with `Email`, `tag` or `Flag` in place of
+      the corresponding supported key. Also try an unknown top-level key
+      beside `students`.<br>
+      Expected: Each unknown key stops loading with a diagnostic identifying
+      its location in a student or in the student book; no value is erased.
+
+   1. Correct the spelling and relaunch, then change another student through
+      TAB and relaunch again.<br>
+      Expected: Every supported value survives the save and relaunch. A legacy
+      `address` key is still ignored and does not prevent loading old files.
 
 1. Recovering from a save failure
 
