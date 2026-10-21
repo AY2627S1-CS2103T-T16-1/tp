@@ -2,10 +2,6 @@ package seedu.tab.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.Messages;
@@ -171,17 +167,5 @@ public class ParserUtil {
                     Tag.FIELD_NAME, trimmedTag, Tag.getFailureReason(trimmedTag)));
         }
         return new Tag(trimmedTag);
-    }
-
-    /**
-     * Parses {@code Collection<String> tags} into a {@code Set<Tag>}.
-     */
-    public static Set<Tag> parseTags(Collection<String> tags) throws ParseException {
-        requireNonNull(tags);
-        final Set<Tag> tagSet = new HashSet<>();
-        for (String tagName : tags) {
-            tagSet.add(parseTag(tagName));
-        }
-        return tagSet;
     }
 }

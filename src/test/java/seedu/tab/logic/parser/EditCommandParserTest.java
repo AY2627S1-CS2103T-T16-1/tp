@@ -250,6 +250,15 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_theSameTagGivenTwice_keepsOneTag() {
+        // naming a tag twice asks for one tag rather than for two copies of it
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withTags(VALID_TAG_FRIEND).build();
+
+        assertParseSuccess(parser, "1" + TAG_FRIEND + TAG_FRIEND,
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+    }
+
+    @Test
     public void parse_followUpAloneOrWithAnotherEdit_success() {
         EditStudentDescriptor flagOnly = new EditStudentDescriptorBuilder()
                 .withFlag(true).build();
