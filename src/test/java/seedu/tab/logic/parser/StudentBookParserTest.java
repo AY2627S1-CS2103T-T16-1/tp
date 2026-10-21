@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 
@@ -140,6 +141,14 @@ public class StudentBookParserTest {
                     + StudentUtil.getEditStudentDescriptorDetails(flagDescriptor));
             assertEquals(new EditCommand(INDEX_FIRST_STUDENT, flagDescriptor), flagCommand);
         }
+
+        // a target opening with a letter reaches the parser as an NUS Student ID
+        EditStudentDescriptor idTargetDescriptor = new EditStudentDescriptorBuilder()
+                .withPhone("91234567").build();
+        EditCommand idTargetCommand = (EditCommand) parser.parseCommand(
+                EditCommand.COMMAND_WORD + " a01234567x " + FLAG_PHONE + " 91234567");
+        assertEquals(new EditCommand(StudentTarget.byNusStudentId(new NusStudentId("A01234567X")),
+                idTargetDescriptor), idTargetCommand);
     }
 
     @Test

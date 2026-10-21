@@ -46,6 +46,7 @@ import seedu.tab.commons.core.index.Index;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
+import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
@@ -120,6 +121,31 @@ public class EditCommandParserTest {
         EditStudentDescriptor tag = new EditStudentDescriptorBuilder().withTags(VALID_TAG_FRIEND).build();
         assertParseSuccess(parser, targetIndex.getOneBased() + TAG_FRIEND,
                 new EditCommand(targetIndex, tag));
+    }
+
+    @Test
+    public void parse_nusStudentIdTarget_success() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_AMY).build();
+        assertParseSuccess(parser, "A01234567X" + PHONE_AMY,
+                new EditCommand(StudentTarget.byNusStudentId(new NusStudentId("A01234567X")), descriptor));
+    }
+
+    @Test
+    public void parse_lowerCaseNusStudentIdTarget_usesNormalizedId() {
+        // NusStudentId normalizes its value, so a case variant names the same student
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_AMY).build();
+        assertParseSuccess(parser, "a01234567x" + PHONE_AMY,
+                new EditCommand(StudentTarget.byNusStudentId(new NusStudentId("A01234567X")), descriptor));
+    }
+
+    @Test
+    public void parse_idTargetWithIdOption_changesTheIdOfTheStudentFoundById() {
+        // --id still names the field to change, so the old ID is the target and the new
+        // ID is the value
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setNusStudentId(new NusStudentId("A7654321Y"));
+        assertParseSuccess(parser, "A01234567X --id A7654321Y",
+                new EditCommand(StudentTarget.byNusStudentId(new NusStudentId("A01234567X")), descriptor));
     }
 
     @Test
@@ -329,14 +355,22 @@ public class EditCommandParserTest {
     @Test
     public void parse_missingIndex_namesItAsMissing() {
         assertParseFailure(parser, FLAG_NAME_AMY,
-                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_INDEX));
+                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_TARGET));
     }
 
     @Test
     public void parse_missingIndexAndField_reportsBothAtOnce() {
         assertParseFailure(parser, "",
-                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_INDEX)
+                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_TARGET)
                         + "\n" + EditCommand.MESSAGE_NOT_EDITED);
+    }
+
+    @Test
+    public void parse_missingTarget_namesEveryTargetForm() {
+        // a user who gives only options, expecting -i/--id to choose the student, is shown
+        // that an index and an NUS Student ID are both valid targets
+        assertParseFailure(parser, "--id 1A2B3C -p 81112222",
+                "Missing required field(s): INDEX or NUS_STUDENT_ID");
     }
 
     @Test
@@ -345,12 +379,23 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_invalidIndex_failure() {
-        // zero, and anything that is not a positive integer, is not an index
-        assertParseFailure(parser, "0" + FLAG_NAME_AMY, ParserUtil.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "abc" + FLAG_NAME_AMY, ParserUtil.MESSAGE_INVALID_INDEX);
+    public void parse_invalidTarget_failure() {
+        // zero, and anything that is not a positive integer, is not an index and reads
+        // as a mistyped one rather than as a candidate NUS Student ID
+        assertParseFailure(parser, "0" + FLAG_NAME_AMY,
+                String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE));
 
-        // a token before the options that is not part of the index
+        // a letter-first target that is not a valid NUS Student ID keeps the field-level reason
+        assertParseFailure(parser, "A0123-456" + FLAG_NAME_AMY,
+                Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
+                        NusStudentId.getFailureReason("A0123-456")));
+
+        // a digit-leading ID cannot be a target: the plain form reads as an index, and
+        // --id names the field to set rather than the student to edit
+        assertParseFailure(parser, "1A2B3C" + FLAG_NAME_AMY,
+                String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE));
+
+        // a token before the options that is not part of the target
         assertParseFailure(parser, "1 some random string" + FLAG_NAME_AMY,
                 String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, "INDEX", "some random string"));
 
@@ -360,9 +405,9 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_invalidIndexAndInvalidField_reportsBothAtOnce() {
+    public void parse_invalidTargetAndInvalidField_reportsBothAtOnce() {
         assertParseFailure(parser, "0" + INVALID_PHONE,
-                ParserUtil.MESSAGE_INVALID_INDEX + "\n"
+                String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE) + "\n"
                         + Messages.getErrorMessageForInvalidValue("Phone", "12",
                                 Phone.getFailureReason("12")));
     }

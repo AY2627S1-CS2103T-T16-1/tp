@@ -13,10 +13,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import seedu.tab.commons.core.index.Index;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
+import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.NusStudentId;
@@ -32,10 +32,15 @@ public class EditCommandParser implements Parser<EditCommand> {
      * and returns an EditCommand object for execution.
      *
      * The command is read the way {@code add} reads its own: once the shape is settled, every
-     * field is examined before the command is refused, so that a user who mistyped the index
+     * field is examined before the command is refused, so that a user who mistyped the target
      * and a field is told about both at once. The shape is settled first, because an unclosed
      * quote, an unknown option, or a single-valued option given twice leaves it unclear which
      * field a value belongs to.
+     *
+     * <p>The target is read by {@link ParserUtil#parseRequiredStudentTarget}: a position in the
+     * displayed list, or an NUS Student ID that opens with a letter. Unlike {@code delete}, an
+     * ID opening with a digit cannot be a target, because {@code --id} names the field to set
+     * rather than the student to edit.
      *
      * @throws ParseException if the user input does not conform to the expected format
      */
@@ -51,8 +56,9 @@ public class EditCommandParser implements Parser<EditCommand> {
 
         ParseProblems problems = new ParseProblems();
 
-        Index index = problems.collect(() -> ParserUtil.parseRequiredIndex(
-                arguments.getPreamble(), EditCommand.FIELD_INDEX));
+        StudentTarget target = problems.collect(() -> ParserUtil.parseRequiredStudentTarget(
+                arguments.getPreamble(), EditCommand.FIELD_TARGET, EditCommand.FIELD_INDEX,
+                EditCommand.MESSAGE_USAGE));
         if (!hasAnyField(arguments)) {
             problems.add(EditCommand.MESSAGE_NOT_EDITED);
         }
@@ -60,7 +66,7 @@ public class EditCommandParser implements Parser<EditCommand> {
 
         problems.throwIfAny();
 
-        return new EditCommand(index, descriptor);
+        return new EditCommand(target, descriptor);
     }
 
     /**

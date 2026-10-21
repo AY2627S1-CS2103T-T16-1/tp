@@ -42,6 +42,7 @@ public class HelpCommand extends Command {
             "         [" + FLAG_EMAIL.getLabel() + "] [" + FLAG_NUS_STUDENT_ID.getLabel() + "]",
             "         [" + FLAG_TAG.getLabel() + "]...",
             "         [" + FLAG_FOLLOW_UP.getLabel() + " | " + FLAG_NO_FOLLOW_UP.getLabel() + "]",
+            "    The target may be an ID instead of an index.",
             "    Provide at least one option.",
             "",
             "  " + TagCommand.COMMAND_WORD + " — Add or remove one tag",
