@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -71,10 +70,10 @@ public class JsonStudentBookStorage {
             return JsonUtil.readJsonFile(filePath, JsonSerializableStudentBook.class);
         } catch (DataLoadingException e) {
             if (e.getCause() instanceof JsonMappingException mappingException) {
-                List<JsonMappingException.Reference> path = mappingException.getPath();
-                if (path.size() >= 2 && "students".equals(path.get(0).getFieldName())
-                        && path.get(1).getIndex() >= 0) {
-                    throw new DataLoadingException("Student record " + (path.get(1).getIndex() + 1)
+                Optional<JsonMappingException.Reference> studentRecord = mappingException.getPath().stream()
+                        .filter(reference -> reference.getIndex() >= 0).findFirst();
+                if (studentRecord.isPresent()) {
+                    throw new DataLoadingException("Student record " + (studentRecord.get().getIndex() + 1)
                             + ": " + e.getMessage(), e);
                 }
             }
