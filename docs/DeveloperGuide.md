@@ -131,6 +131,19 @@ the long User Guide address is available through c instead of wrapping in the la
 Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
 command box so quitting cannot insert a stray character. No student data is changed.
 
+#### Restoring window geometry
+
+`MainWindow` supplies each screen's visual bounds to `WindowBounds`, with the
+primary screen first. Equal overlap therefore favors the primary screen.
+Restoration chooses the screen with the greatest overlap with the saved window,
+preserving valid secondary-screen positions, including negative coordinates.
+With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
+nonpositive or nonfinite dimensions use the default size. The window minimum
+also yields to a smaller usable area so it cannot defeat the size correction.
+A window spanning adjacent displays is fitted entirely onto the selected screen,
+even when it was visible across both. This keeps restoration predictable when
+displays have different usable heights or gaps between them.
+
 #### Fitting names and tags on a card
 
 `CardHeadline` reserves a readable start of the name before allocating room
@@ -1892,7 +1905,24 @@ testers are expected to do more *exploratory* testing.
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
    1. Relaunch TAB by double-clicking the JAR file.<br>
-       Expected: The most recent window size and location are retained.
+       Expected: The most recent window size and location are retained when
+       they fit the available display's usable area.
+
+   1. With TAB closed, set `windowWidth` and `windowHeight` in
+      `preferences.json` under `guiSettings` to `1.0E9` and set
+      `windowCoordinates` to `{"x":99999,"y":99999}`. Relaunch.<br>
+      Expected: The entire window fits the primary display's usable area.
+      Its title bar, command box and status bar remain reachable. Close and
+      relaunch again: the corrected bounds are retained and student data is
+      unchanged.
+
+   1. Move a normally sized window to a secondary display, close and relaunch
+      while both displays are connected, then close, disconnect that display
+      and relaunch again.<br>
+      Expected: With both displays, the saved position is retained, including
+      on a display left of the primary. After disconnection, TAB opens fully
+      on an available display without deleting preferences. Repeat after
+      reducing resolution or increasing scaling, including 1280×720 at 150%.
 
 1. Recovering from null preferences or window settings
 
