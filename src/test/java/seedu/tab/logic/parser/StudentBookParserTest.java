@@ -247,6 +247,27 @@ public class StudentBookParserTest {
     }
 
     @Test
+    public void parseCommand_everyFormatCharacterAfterTheWordOrIndex_isStripped() {
+        // the strip runs at the one place every command enters, so no format character in
+        // either position may survive to hide the command word or the index, and a strip
+        // that reached only part of the line would let one through
+        Command baseline = parseOrNull(DeleteCommand.COMMAND_WORD + " 1");
+        assertNotNull(baseline, "delete 1 is refused with an ordinary space");
+
+        for (int code = Character.MIN_CODE_POINT; code <= Character.MAX_CODE_POINT; code++) {
+            if (Character.getType(code) != Character.FORMAT || code == '\u200C' || code == '\u200D') {
+                continue;
+            }
+            String character = new String(Character.toChars(code));
+            String label = "U+" + Integer.toHexString(code);
+            assertEquals(baseline, parseOrNull(DeleteCommand.COMMAND_WORD + character + " 1"),
+                    "a format character after the command word differed on " + label);
+            assertEquals(baseline, parseOrNull(DeleteCommand.COMMAND_WORD + " 1" + character),
+                    "a format character after the index differed on " + label);
+        }
+    }
+
+    @Test
     public void parseCommand_joinerFormatCharacters_areKept() {
         // Sinhala and Arabic need the joiners to shape a word, so a command word holding one
         // is a different word rather than the same word with a character removed
