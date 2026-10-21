@@ -109,6 +109,11 @@ it before pressing Enter.
   "123".` Whitespace after the command is accepted, but quoted values,
   including `""`, are still arguments.
 
+* Invisible format characters are ignored wherever they appear, so a command
+  word or an index copied from a web page with a direction mark or a zero-width
+  space still runs as the command it looks like. The joiners some scripts need
+  for shaping are the exception and are kept.
+
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
@@ -620,11 +625,12 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
   address, tags and follow-up status. For example, `find follow-up` can find
   flagged students, and `find a0123` can find a student with NUS Student ID `A01234567X`.
 * Parts of details match; for example, `Han` matches `Hans`, and `912` matches the phone number `91234567`.
-  The follow-up status is the exception: only `Needs follow-up` or one of its whole
-  words matches it, so `find follow-up` and `find needs` find flagged students while
-  `find low` and `find up` do not.
-* A keyword containing only digits also searches the phone number with all non-digit characters removed.
-  For example, `find 91234567` and `find 91234` both match `+65 9123 4567`, and
+  The follow-up status is the exception: only the opening letters of `Needs follow-up` or of one of
+  its words match it, so `find follow-up`, `find follow` and `find needs` find flagged students while
+  `find low` and `find up` do not. A phrase that opens the label matches as well, so
+  `find "needs follow"` finds the flagged students too.
+* A keyword containing only digits, or only digits and phone punctuation (`+`, `-`, `(`, `)`, `.`), also searches the phone number with all non-digit characters removed.
+  For example, `find 91234567`, `find 91234`, `find 9123-4567` and `find +6591234567` all match `+65 9123 4567`, and
   `find 98765432` matches `9876-5432`. You can include the country code, as in `find 6591234567`.
   Terms containing other characters, such as `"ext 21"` or `"9123 4567"`, still match the stored text.
 * TAB reports the number of matches found: `Found 0 students.` when none match,
@@ -653,6 +659,9 @@ Format: `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID
   needs — the plain form would read it as an index. `-i` works in place of `--id`.
 * The command result identifies the removed record (`Deleted student: NAME; Phone: PHONE...`)
   so you can verify exactly which student was deleted from the book.
+* `delete` takes no field values, so a value found after the target is refused with
+  `Unexpected value after INDEX: "..."`, naming the part to remove, as in
+  `Unexpected value after INDEX: "2". delete accepts one index and nothing else.`
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd student in the student book.

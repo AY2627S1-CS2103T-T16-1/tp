@@ -20,10 +20,12 @@ public class DeleteCommand extends Command {
 
     public static final String COMMAND_WORD = "delete";
 
+    public static final String FIELD_INDEX = "INDEX";
+
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Deletes the student identified by the index number used in the displayed student list,\n"
             + "or by the NUS Student ID they hold anywhere in the book.\n"
-            + "Parameters: INDEX (must be a positive integer) or NUS_STUDENT_ID\n"
+            + "Parameters: " + FIELD_INDEX + " (must be a positive integer) or NUS_STUDENT_ID\n"
             + "   or " + FLAG_NUS_STUDENT_ID.getMarkerSummary()
             + " NUS_STUDENT_ID, which reads an ID starting with a digit as an ID\n"
             + "Example: " + COMMAND_WORD + " 1\n"

@@ -525,6 +525,17 @@ shortened to keep the reason visible. Quotes do not make an argument absent:
 nor `LogicManager`'s storage write, so it preserves both the displayed list
 and the JSON file.
 
+### Invisible characters on the command line
+
+Before the command word is read, `StudentBookParser` strips the same Unicode
+format characters that `StringUtil.normalizeFieldValue` strips from a stored
+value, through `StringUtil.stripFormatCharacters`. A direction mark or a
+zero-width space pasted before a command word or an index is otherwise a word
+that looks right but matches no command, or an index reported as not a positive
+integer. The zero-width joiner and non-joiner are kept, because a script such as
+Sinhala needs them to shape a word, and a command word holding one is a
+different word rather than the same word with a character removed.
+
 ### Reading a command word in any case
 
 `StudentBookParser` folds the first word of the input to lower case before it
@@ -632,8 +643,10 @@ change their identity. The flag is stored as `Optional<Flag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
 Search matches ordinary tags as parts of their inherited `tagName` values, but
-matches the optional flag only when a term names it: the whole label
-`Needs follow-up` or one of its words, ignoring case (`Flag.matchesKeyword`).
+matches the optional flag only when a term opens the label `Needs follow-up`
+or one of its words, ignoring case (`Flag.matchesKeyword`), so a phrase quoted
+as one search term, such as `needs follow`, names the flag the way each of its
+words does on its own.
 The student card and command feedback display the same value, while the card
 keeps the flag in its separate follow-up row.
 
@@ -671,8 +684,8 @@ optionals directly into this contract. Nullable JSON strings remain confined
 to the storage adapter, preserving the existing file format.
 
 `Name`, `Tag` and `Phone` each store the form returned by
-`StringUtil.normalizeFieldValue`: without the invisible format characters that
-draw nothing on screen, with each run of whitespace reduced to one ASCII space
+`StringUtil.normalizeFieldValue`: without invisible format characters such as
+direction marks, with each run of whitespace reduced to one ASCII space
 and leading and trailing whitespace removed, and with the result composed to
 Unicode NFC. Composing happens last, because an invisible character between a
 base letter and its combining mark blocks the two from composing.
@@ -838,12 +851,14 @@ whitespace runs and applying Unicode NFC normalization. It creates a
 `DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
 against the student's name, NUS Student ID, phone, email, ordinary tags,
 and optional follow-up flag. Matching is case-insensitive; those details
-match partially, while the follow-up flag matches only the whole label
-`Needs follow-up` or one of its words, so a fragment such as `low` cannot
-list every flagged student.
-For a keyword containing only Unicode decimal digits (`\p{Nd}+`), the phone
+match partially, while the follow-up flag matches only an opening of the label
+`Needs follow-up` or of one of its words, so a fragment beginning mid-word such
+as `low` cannot list every flagged student.
+For a keyword containing only Unicode decimal digits, or those digits with the
+punctuation a phone number is written with (`+`, `-`, `(`, `)`, `.`), the phone
 comparison also checks a copy of the stored phone with non-digit characters
-removed. This lets `91234567` match `+65 9123 4567` or `9123-4567`.
+removed. This lets `91234567`, `9123-4567` and `+6591234567` all match
+`+65 9123 4567`.
 Literal phone matching remains available for formatted phrases and annotations;
 other fields retain their text matching. The stored phone and saved data do not change.
 
@@ -1310,7 +1325,8 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to find students, providing one or more search terms.
 2.  TAB shows the students for whom any term matches any part of a name, NUS Student ID,
-    phone, email or tag, or names the follow-up status as a whole, regardless of letter case.
+    phone, email or tag, or opens the follow-up status label or one of its words,
+    regardless of letter case.
 3.  User identifies the intended student.
 4.  User initiates the desired action on that student.
 
@@ -2690,16 +2706,21 @@ testers are expected to do more *exploratory* testing.
       Expected: No student is deleted. The status message reads
       `No student has NUS Student ID A99999999Z.`, and the student book remains unchanged.
 
-   1. Test case: `delete 1` where the space after the `1` is a non-breaking space (`U+00A0`),
+   1. Test case: `delete 1` followed by a non-breaking space (`U+00A0`),
       pasted from a word processor or a web page, or a full-width space (`U+3000`) typed
-      with a Chinese input method<br>
+      with a Chinese input method (to type a non-breaking space: Option+Space on macOS,
+      Alt+0160 on a Windows numeric keypad, or Ctrl+Shift+U then `a0` on Linux)<br>
       Expected: The first student record is deleted, exactly as with an ordinary space.
       TAB does not call the command an invalid format for a character the user cannot see.
 
    1. Other incorrect delete commands to try: `delete`, `delete 999` (where the number is larger
-      than the list size)<br>
-      Expected: `delete` is refused with the command's format, and `delete 999` is refused as past
-      the end of the displayed list. Neither deletes a student, and the student book is unchanged.
+      than the list size), `delete 1 2`<br>
+      Expected: `delete` is refused with the command's format, `delete 999` is refused as past
+      the end of the displayed list, and `delete 1 2` names the extra value,
+      `Unexpected value after INDEX: "2". delete accepts one index and nothing else.` The
+      hint says `delete`, not the `edit`/`tag` advice to put a value after an option, since
+      `delete` takes no field values. None of them deletes a student, and the student book
+      is unchanged.
 
 1. _{ more test cases … }_
 
@@ -2843,13 +2864,38 @@ testers are expected to do more *exploratory* testing.
       Restart TAB and keep a copy of `data/tab.json`.
    1. Test cases: `find 91234567`, `find 91234`, and `find 6591234567`.<br>
       Expected: Only Alex Yeoh is shown, with `Found 1 student.` and phone `+65 9123 4567`.
+   1. Test cases: `find 9123-4567` and `find +6591234567`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.`, even though the stored phone
+      is written `+65 9123 4567`. A keyword of digits and phone punctuation compares by the
+      digits alone.
    1. Test case: `find 98765432`.<br>
       Expected: Only Bernice Yu is shown, with `Found 1 student.` and phone `9876-5432`.
    1. Test case: `find 91234567 Bernice`.<br>
       Expected: Both students are shown, with `Found 2 students.`.
-   1. Test case: `find 91234568`.<br>
+   1. Test cases: `find 91234568` and `find 9123-4568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
+
+### Locating students by the follow-up status
+
+1. Openings of the label and of its words, but not fragments from the middle
+
+   1. Prerequisites: Clear all students (`clear`, then `yes`). Add a flagged student,
+      `add Alex Yeoh -p 91234567 -f`, an unflagged student, `add Bernice Yu -p 98765432`,
+      and a student whose name is not the label, `add Low Jia Hui -p 91112222`.
+
+   1. Test cases: `find follow-up`, `find follow`, `find fol`, and `find needs`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.`. A term that opens a word of
+      the label `Needs follow-up` names the flag.
+   1. Test case: `find "needs follow"`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.`. A phrase quoted as one term
+      that opens the whole label names the flag, as each of its words does on its own.
+   1. Test case: `find low`.<br>
+      Expected: Only Low Jia Hui is shown, with `Found 1 student.`. A fragment beginning
+      mid-word in the label does not name the flag, so a search for the surname does not list
+      the flagged student.
+   1. Test case: `find up`.<br>
+      Expected: No students are shown, with `Found 0 students.`.
 
 ### Locating students with quoted phrases and error handling
 
