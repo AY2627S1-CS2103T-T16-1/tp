@@ -9,6 +9,7 @@ import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -25,14 +26,28 @@ import seedu.tab.logic.commands.ExitCommand;
 import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.ListCommand;
+import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 import seedu.tab.testutil.StudentBuilder;
 import seedu.tab.testutil.StudentUtil;
 
 public class StudentBookParserTest {
+
+    /** One example of each command word, in the alphabetical order of {@code COMMAND_WORDS}. */
+    private static final List<String> EXAMPLE_COMMANDS = List.of(
+            "add John Doe -p 91234567",
+            "clear",
+            "delete 1",
+            "edit 1 -p 91234567",
+            "exit",
+            "find John",
+            "help",
+            "list",
+            "tag 1 -a Lab");
 
     private final StudentBookParser parser = new StudentBookParser();
 
@@ -93,6 +108,12 @@ public class StudentBookParserTest {
         DeleteCommand whitespaceCommand = (DeleteCommand) parser.parseCommand(
                 "  " + DeleteCommand.COMMAND_WORD + "   " + INDEX_FIRST_STUDENT.getOneBased() + "  ");
         assertEquals(new DeleteCommand(INDEX_FIRST_STUDENT), whitespaceCommand);
+
+        // a target opening with a letter reaches the parser as an NUS Student ID
+        DeleteCommand idCommand = (DeleteCommand) parser.parseCommand(
+                DeleteCommand.COMMAND_WORD + " a01234567x");
+        assertEquals(new DeleteCommand(StudentTarget.byNusStudentId(new NusStudentId("A01234567X"))),
+                idCommand);
     }
 
     @Test
@@ -269,8 +290,64 @@ public class StudentBookParserTest {
     public void parseCommand_mistypedInAnotherCase_namesTheWordAsTyped() {
         assertThrows(ParseException.class, "Unknown command \"Delte\". Did you mean delete?", ()
             -> parser.parseCommand("Delte 3"));
-        assertThrows(ParseException.class, "Unknown command \"LIST\". Did you mean list?", ()
-            -> parser.parseCommand("LIST"));
+        assertThrows(ParseException.class, "Unknown command \"LSIT\". Did you mean list?", ()
+            -> parser.parseCommand("LSIT"));
+    }
+
+    @Test
+    public void parseCommand_commandWordInAnyCase_reachesTheSameCommand() throws Exception {
+        // Caps Lock left on, or Shift held a moment longer than meant, spells a command word
+        // TAB knows, and no two of them differ only in case
+        assertEquals(CommandWords.COMMAND_WORDS,
+                EXAMPLE_COMMANDS.stream().map(StudentBookParserTest::commandWordOf).toList(),
+                "the examples below no longer cover every command word");
+
+        for (String command : EXAMPLE_COMMANDS) {
+            Class<?> expectedType = parser.parseCommand(command).getClass();
+            for (String variant : List.of(withCapitalisedWord(command), withUpperCasedWord(command))) {
+                assertEquals(expectedType, parser.parseCommand(variant).getClass(), variant);
+            }
+        }
+    }
+
+    @Test
+    public void parseCommand_commandWordInAnotherCase_leavesTheArgumentsAsTyped() throws Exception {
+        FindCommand find = (FindCommand) parser.parseCommand("FIND Alex");
+        assertEquals(new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Alex"))), find);
+        assertNotEquals(new FindCommand(new DetailsContainsKeywordsPredicate(List.of("alex"))), find);
+
+        Student student = new StudentBuilder().withName("John Doe").withNusStudentId("A01234567X").build();
+        String typed = StudentUtil.getAddCommand(student);
+        AddCommand command = (AddCommand) parser.parseCommand(
+                "Add" + typed.substring(AddCommand.COMMAND_WORD.length()));
+        assertEquals(new AddCommand(student), command);
+    }
+
+    @Test
+    public void parseCommand_noArgumentCommandInAnotherCase_namesTheCommandItRefused() {
+        String expected = String.format(Messages.MESSAGE_UNEXPECTED_ARGUMENTS, "list", "oops");
+        assertThrows(ParseException.class, expected, () -> parser.parseCommand("LIST oops"));
+    }
+
+    /** Returns the command word {@code command} opens with. */
+    private static String commandWordOf(String command) {
+        return command.substring(0, endOfCommandWord(command));
+    }
+
+    /** Returns {@code command} with its command word capitalised. */
+    private static String withCapitalisedWord(String command) {
+        return Character.toUpperCase(command.charAt(0)) + command.substring(1);
+    }
+
+    /** Returns {@code command} with its command word in capitals. */
+    private static String withUpperCasedWord(String command) {
+        int wordEnd = endOfCommandWord(command);
+        return command.substring(0, wordEnd).toUpperCase(Locale.ROOT) + command.substring(wordEnd);
+    }
+
+    private static int endOfCommandWord(String command) {
+        int space = command.indexOf(' ');
+        return space == -1 ? command.length() : space;
     }
 
     @Test

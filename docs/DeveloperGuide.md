@@ -535,6 +535,32 @@ shortened to keep the reason visible. Quotes do not make an argument absent:
 nor `LogicManager`'s storage write, so it preserves both the displayed list
 and the JSON file.
 
+### Reading a command word in any case
+
+`StudentBookParser` folds the first word of the input to lower case before it
+dispatches, so `List`, `LIST` and `list` all reach `ListCommand`. No two
+command words differ only in case, so a capitalised word can only mean the one
+command, and refusing it over a Caps Lock left on or a Shift held a moment too
+long costs the User a retyping for nothing.
+
+The fold is `CommandWords.foldCase`, which `CommandWords.suggestFor` applies to
+the word it measures as well. Dispatch and suggestion therefore agree by
+construction, where a second fold written into the parser could come to differ
+from this one, leaving a word that is refused and then suggested back to the
+User unchanged. The fold is `Locale.ROOT`'s rather than the User's, whose
+Turkish rules would turn `LIST` into a word with a dotless `ı` that answers to
+nothing.
+
+The first word alone is folded. The arguments reach the command parsers as
+typed, so `Find Alex` searches for `Alex` with its capital and `Add John Doe`
+stores the name as it was written. Option spellings stay case-sensitive, as the
+User Guide documents them: an option is read among the values rather than in
+front of them, so folding there would have to leave the values it sits beside
+untouched, which is a decision of its own. The typed word is kept beside
+the folded one, because an unknown word is quoted back in the case it was
+typed in, while a command refusing arguments names the command: `LIST oops`
+reports that `list` takes no arguments.
+
 ### Suggesting a command word
 
 A command word TAB does not dispatch on is answered with the word the User
@@ -582,9 +608,11 @@ that with the command words TAB has: `edit` and `exit` are the only two
 sharing a first letter, so at most two are ever named at once, and the limit
 is there for the command words it may gain.
 
-The comparison folds case, so `LIST` is read as an attempt at `list`, while
-the message quotes the word as it was typed, because a User who typed capitals
-needs to see them to recognise what they did. The quoted word is shortened the
+The comparison folds case with the `CommandWords.foldCase` the parser
+dispatches with, so `Delte` is read as an attempt at `delete`; a word spelt
+correctly in any case is dispatched before it reaches here. The message quotes
+the word as it was typed, because a User who typed capitals needs to see them
+to recognise what they did. The quoted word is shortened the
 way a rejected field value is, so that a pasted line cannot push the rest of
 the message out of sight. Lengths are compared before any distance is, which
 also settles such a line against every command word without measuring it.
@@ -1933,6 +1961,30 @@ testers are expected to do more *exploratory* testing.
       trailing whitespace only when the test data can be removed; it follows
       the documented clear flow.
 
+### Typing a command word in another case
+
+1. A correctly spelt command word in capitals
+
+   1. Prerequisites: at least one student listed.
+
+   1. Test cases: `List`, `LIST`, and `Help`<br>
+      Expected: Each runs the command of that name, so all students are listed
+      and the help summary opens. No reply names a word TAB does not know.
+
+   1. Test case: `ADD McDonald Tan -p 91234567`<br>
+      Expected: A student named `McDonald Tan` is added with the capitals as
+      typed, in the card and in `data/tab.json`, the fold reaching the command
+      word alone.
+
+   1. Test case: `LIST oops`, after taking a copy of `data/tab.json`, since
+      the step above writes to it<br>
+      Expected: The reply reads `list takes no arguments. Unexpected input:
+      "oops".`, naming the command rather than the capitals typed. The list is
+      unchanged and the JSON file matches that copy byte for byte.
+
+   1. Test case: `EXIT`<br>
+      Expected: TAB closes, with the added student in the saved file.
+
 ### Mistyping a command word
 
 1. A command word one slip away from a real one
@@ -2638,6 +2690,7 @@ testers are expected to do more *exploratory* testing.
 1. Deleting a student while all students are being shown
 
    1. Prerequisites: List all students using the `list` command, with multiple students in the list.
+      Note one student's NUS Student ID, such as Charlotte Oliveiro's `A02345678G` in the sample data.
 
    1. Test case: `delete 1`<br>
       Expected: The first student record is deleted from the list. The status message identifies
@@ -2647,14 +2700,33 @@ testers are expected to do more *exploratory* testing.
       Expected: No student is deleted. The status message shows error details, and the student book
       remains unchanged.
 
+   1. Test case: `delete A02345678G`<br>
+      Expected: Charlotte Oliveiro is deleted from the book wherever she appears, and the status
+      message identifies her. `delete a02345678g` does the same, because matching an ID ignores case.
+
+   1. Test case: `add "Digit Ida" -p 91234567 --id 1ABC`, then `delete --id 1ABC`<br>
+      Expected: The student holding `1ABC` is deleted, and the status message identifies them.
+      `delete 1ABC` is refused with the command's format, because a target starting with a digit
+      reads as an index.
+
+   1. Test case: `find Alex` followed by `delete A02345678G`, where the search hides
+      Charlotte Oliveiro<br>
+      Expected: Charlotte Oliveiro is deleted from the book, and the status message identifies her.
+
+   1. Test case: `delete A99999999Z`, where no student holds that ID<br>
+      Expected: No student is deleted. The status message reads
+      `No student has NUS Student ID A99999999Z.`, and the student book remains unchanged.
+
    1. Test case: `delete 1` where the space after the `1` is a non-breaking space (`U+00A0`),
       pasted from a word processor or a web page, or a full-width space (`U+3000`) typed
       with a Chinese input method<br>
       Expected: The first student record is deleted, exactly as with an ordinary space.
       TAB does not call the command an invalid format for a character the user cannot see.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Other incorrect delete commands to try: `delete`, `delete 999` (where the number is larger
+      than the list size)<br>
+      Expected: `delete` is refused with the command's format, and `delete 999` is refused as past
+      the end of the displayed list. Neither deletes a student, and the student book is unchanged.
 
 1. _{ more test cases … }_
 
