@@ -65,6 +65,20 @@ public class WindowBoundsTest {
     }
 
     @Test
+    public void restore_equalOverlap_prefersPrimaryDisplay() {
+        assertBounds(new GuiSettings(800, 650, -400, 30), DISPLAYS,
+                new Rectangle2D(0, 30, 800, 650));
+    }
+
+    @Test
+    public void restore_spanningAdjacentDisplays_fitsOnDisplayWithMostOverlap() {
+        List<Rectangle2D> adjacentDisplays = List.of(new Rectangle2D(0, 0, 1920, 1040),
+                new Rectangle2D(1920, 0, 1920, 1040));
+        assertBounds(new GuiSettings(800, 650, 1500, 100), adjacentDisplays,
+                new Rectangle2D(1120, 100, 800, 650));
+    }
+
+    @Test
     public void restore_oversizedOrUndersizedDimensions_fitsUsableArea() {
         assertBounds(new GuiSettings(1.0E9, 1.0E9, 99999, 99999), DISPLAYS, PRIMARY);
         assertBounds(new GuiSettings(1, 1, 100, 100), DISPLAYS,

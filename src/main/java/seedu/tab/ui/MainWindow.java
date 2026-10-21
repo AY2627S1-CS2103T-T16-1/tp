@@ -80,7 +80,7 @@ public class MainWindow extends UiPart<Stage> {
 
         // Configure the UI
         UiFonts.applyTo(primaryStage.getScene());
-        setWindowDefaultSize(logic.getGuiSettings());
+        restoreWindowBounds(logic.getGuiSettings());
 
         setAccelerators();
     }
@@ -163,9 +163,9 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
-     * Sets the default size based on {@code guiSettings}.
+     * Restores the saved size and position onto an available screen, lowering minimums if needed.
      */
-    private void setWindowDefaultSize(GuiSettings guiSettings) {
+    private void restoreWindowBounds(GuiSettings guiSettings) {
         List<Rectangle2D> displays = WindowBounds.prioritizePrimary(Screen.getPrimary().getVisualBounds(),
                 Screen.getScreens().stream().map(Screen::getVisualBounds).toList());
         Rectangle2D bounds = WindowBounds.restore(guiSettings, displays,

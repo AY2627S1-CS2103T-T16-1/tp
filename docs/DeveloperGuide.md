@@ -134,12 +134,15 @@ command box so quitting cannot insert a stray character. No student data is chan
 #### Restoring window geometry
 
 `MainWindow` supplies each screen's visual bounds to `WindowBounds`, with the
-primary screen first. Restoration chooses the screen with the greatest overlap
-with the saved window, preserving valid secondary-screen positions, including
-negative coordinates. With no overlap or no saved position, it centers on the
-primary screen. It clamps size and position to that screen's usable area;
+primary screen first. Equal overlap therefore favors the primary screen.
+Restoration chooses the screen with the greatest overlap with the saved window,
+preserving valid secondary-screen positions, including negative coordinates.
+With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
 nonpositive or nonfinite dimensions use the default size. The window minimum
 also yields to a smaller usable area so it cannot defeat the size correction.
+A window spanning adjacent displays is fitted entirely onto the selected screen,
+even when it was visible across both. This keeps restoration predictable when
+displays have different usable heights or gaps between them.
 
 #### Fitting names and tags on a card
 
