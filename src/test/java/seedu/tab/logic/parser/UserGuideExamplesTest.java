@@ -1,5 +1,6 @@
 package seedu.tab.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,8 +21,10 @@ import seedu.tab.logic.commands.DeleteCommand;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.HelpCommand;
+import seedu.tab.logic.commands.ListCommand;
 import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.parser.exceptions.ParseException;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 
 /**
  * Checks that the commands printed in the User Guide are ones the parser accepts. A guide that
@@ -68,6 +71,20 @@ public class UserGuideExamplesTest {
     @Test
     public void userGuide_everyTagExample_parses() throws IOException {
         assertEveryExampleParses(TagCommand.COMMAND_WORD, new TagCommandParser());
+    }
+
+    @Test
+    public void userGuide_commandWordInAnyCase_isWhatTheParserAccepts() throws Exception {
+        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
+        assertTrue(guide.contains("A command word may be typed in any case"));
+        for (String typed : List.of("list", "List", "LIST")) {
+            assertInstanceOf(ListCommand.class, new StudentBookParser().parseCommand(typed));
+        }
+
+        // the guide promises the fold stops at the command word
+        assertTrue(guide.contains("`Find Alex` still looks for `Alex`"));
+        assertEquals(new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Alex"))),
+                new StudentBookParser().parseCommand("Find Alex"));
     }
 
     @Test

@@ -48,6 +48,11 @@ public class StudentBookParser {
      * the tokenizer; the rest look for an ordinary space and would otherwise keep the
      * separator as the first character of their arguments.
      *
+     * <p>The command word is read in any case, because no two commands differ only in case
+     * and so a capitalised word can only mean the one command. The fold reaches the first
+     * word alone: {@code Find Alex} searches for {@code Alex} with its capital, and the word
+     * is quoted back as typed when it is no command at all.
+     *
      * @param userInput full user input string
      * @return the command based on the user input
      * @throws ParseException if the user input does not conform to the expected format
@@ -60,7 +65,8 @@ public class StudentBookParser {
         int wordEnd = indexOfNextSeparator(userInput, wordStart);
         int argumentsStart = indexOfNextValue(userInput, wordEnd);
 
-        final String commandWord = userInput.substring(wordStart, wordEnd);
+        final String typedWord = userInput.substring(wordStart, wordEnd);
+        final String commandWord = CommandWords.foldCase(typedWord);
         final String arguments = argumentsStart == NOT_FOUND
                 ? ""
                 : ARGUMENT_SEPARATOR + userInput.substring(argumentsStart);
@@ -82,7 +88,7 @@ public class StudentBookParser {
             case HelpCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new HelpCommand());
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
-                throw new ParseException(describeUnknownCommand(commandWord));
+                throw new ParseException(describeUnknownCommand(typedWord));
             }
         };
     }
