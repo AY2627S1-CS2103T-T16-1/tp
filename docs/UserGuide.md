@@ -73,7 +73,7 @@ it before pressing Enter.
 
 * A command word may be typed in any case, so `list`, `List` and `LIST` all
   list your students. Only the first word is read this way: the rest of the
-  command keeps the capitals you typed, so `Find Alex` still looks for `Alex`.
+  command keeps the capitals you typed, so `Find -n Alex` still looks for `Alex`.
   Option spellings are case-sensitive, so `-P` is not the `-p` option.
 
 * Items in square brackets are optional.<br>
@@ -205,7 +205,7 @@ showing, so you can see the shape of your cohort without running a command.
 <box type="tip" seamless>
 
 **Tip:** The summary describes the students currently listed, not the whole
-student book. Run `find Alex` and it counts only the students that match;
+student book. Run `find -n Alex` and it counts only the students that match;
 run `list` to see the whole cohort again.
 </box>
 
@@ -610,40 +610,53 @@ Examples:
 
 ### Locating students by detail: `find`
 
-Finds students whose details contain any of the given keywords.
+Finds students matching every supplied search term within its selected field.
 
-Format: `find KEYWORD [MORE_KEYWORDS]`
+Format: `find FIELD_OPTION TERM [FIELD_OPTION TERM]...`
 
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* Enclose a phrase in double quotes to search for words with spaces together; for example, `find "Lab 3"` matches only details containing the full phrase `Lab 3` and excludes records with only separate `Lab` and `3` fragments.
-* Multiple terms perform an `OR` search across individual words and quoted phrases; for example, `find Hans Bo` returns `Hans Gruber` and `Bo Yang`, while `find Alice "Lab 3"` returns students matching `Alice` or the phrase `Lab 3`.
-* To include a literal double quote or backslash inside a search term, escape it with a backslash: `\"` or `\\`.
-* An unclosed quote (for example, leaving off the closing quote in `"Lab 3`) or an empty search term (such as `""` or `"   "`) is refused without changing the current student list.
-* Repeated spaces inside a quoted phrase are collapsed to a single space, matching how student details are stored; for example, `find "Lab  3"` matches `Lab 3`.
-* The search covers all details of a student: name, NUS Student ID, phone number, email
-  address, tags and follow-up status. For example, `find follow-up` can find
-  flagged students, and `find a0123` can find a student with NUS Student ID `A01234567X`.
-* Parts of details match; for example, `Han` matches `Hans`, and `912` matches the phone number `91234567`.
-  The follow-up status is the exception: only the opening letters of `Needs follow-up` or of one of
-  its words match it, so `find follow-up`, `find follow` and `find needs` find flagged students while
-  `find low` and `find up` do not. A phrase that opens the label matches as well, so
-  `find "needs follow"` finds the flagged students too.
-* A keyword containing only digits, or only digits and phone punctuation (`+`, `-`, `(`, `)`, `.`), also searches the phone number with all non-digit characters removed.
-  For example, `find 91234567`, `find 91234`, `find 9123-4567` and `find +6591234567` all match `+65 9123 4567`, and
-  `find 98765432` matches `9876-5432`. You can include the country code, as in `find 6591234567`.
-  Terms containing other characters, such as `"ext 21"` or `"9123 4567"`, still match the stored text.
-* TAB reports the number of matches found: `Found 0 students.` when none match,
-  `Found 1 student.` for a single match, and `Found 3 students.` for multiple matches.
+Every term needs a field option. Each option takes one word or one double-quoted phrase.
+
+| Field | Options | Example |
+| --- | --- | --- |
+| Name | `-n`, `--name` | `find -n Jason` |
+| NUS Student ID | `--id`, `-i` | `find --id A0123` |
+| Phone | `-p`, `--phone` | `find -p 9123` |
+| Email | `-e`, `--email` | `find -e nus.edu` |
+| Tag | `-t`, `--tag` | `find -t friend` |
+
+* Matching is case-insensitive and allows partial values: `find -n jas` matches `Jason`.
+* All terms use **AND** matching, within and between fields. There is no OR search mode.
+  For example, `find -n Jason -t Lab -n Tan` requires both name terms and the tag term.
+  The order of the options does not matter.
+* Field options restrict each term to that field. `find -t friend` excludes students
+  who have `friend` only in their name or email. Absent optional fields do not match.
+* Repeat an option to require more terms. `find -n Jason -t lab -t tutorial` matches
+  Jason Lim with tag `lab tutorial` and Jason Zhou with tags `lab 5` and `tutorial 3`,
+  but excludes Jason Tan with only tag `lab`. Terms may match the same tag or different tags.
+* Enclose a multi-word term in double quotes: `find -n "Jason Tan"` requires that whole
+  phrase in the name. `find -t "lab tutorial"` requires the phrase within one tag;
+  separate tags are never joined. Repeated spaces inside a phrase are collapsed to one space.
+* Apostrophes are literal characters, so `find -n O'Brien` searches for `O'Brien`.
+  Single quotation marks do not group words; use double quotes for phrases.
+* General searches without field options retain the legacy OR matching.
+  Field searches require an option for each term and cannot be mixed with bare terms.
+* To include a literal double quote or backslash inside a term, escape it with a backslash:
+  `\"` or `\\`. An unclosed quote or an empty or whitespace-only term is refused
+  without changing the current student list.
+* Quote a term starting with a hyphen, or attach it with `=`:
+  `find -t "-Lab"` and `find --tag=-Lab` search for the literal tag text `-Lab`.
+* Phone terms containing only digits, or digits and phone punctuation (`+`, `-`, `(`, `)`, `.`),
+  also search the phone with all non-digit characters removed. `find -p 91234567`,
+  `find -p 91234`, `find -p 9123-4567` and `find -p +6591234567` all match `+65 9123 4567`.
+  Terms containing other characters, such as `"ext 21"` or `"9123 4567"`, match the stored text.
+* TAB reports the number of matches: `Found 0 students.`, `Found 1 student.` or `Found 3 students.`.
 
 Examples:
-* `find john` returns `john` and `John Doe`
-* `find "Lab 3"` returns students whose details contain the exact phrase `Lab 3`
-* `find Alice "Lab 3"` returns students whose details contain `Alice` or the phrase `Lab 3`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
-* `find 91234 friend` returns students whose phone numbers or tags contain `91234` or `friend`
-* `find a0123` returns students whose NUS Student IDs contain `A0123`, regardless of case
+* `find -n john` returns students whose names contain `john`, including `John Doe`.
+* `find -t "Lab 3"` returns students with a tag containing the phrase `Lab 3`.
+* `find -n Alice -t "Lab 3"` requires both the name fragment and the tag phrase.
+* `find -p 91234 -t friend` requires both the phone fragment and the tag fragment.
+* `find --id a0123 -p 9123 -e nus.edu` requires all three field conditions.
 
 ### Deleting a student: `delete`
 
@@ -665,12 +678,12 @@ Format: `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd student in the student book.
-* `find Betsy` followed by `delete 1` deletes the 1st student in the results of the `find` command.
+* `find -n Betsy` followed by `delete 1` deletes the 1st student in the results of the `find` command.
 * `delete A01234567X` deletes the student holding the NUS Student ID `A01234567X`.
 * `delete a01234567x` deletes the same student, because matching an ID ignores case.
 * `delete --id 1A2B3C` deletes the student whose NUS Student ID is `1A2B3C`, which the plain
   form would otherwise read as an index.
-* `find Alex` followed by `delete A02345678G` deletes Charlotte Oliveiro, whose NUS Student
+* `find -n Alex` followed by `delete A02345678G` deletes Charlotte Oliveiro, whose NUS Student
   ID is `A02345678G` in the sample data, even while the search hides her.
 
 ### Clearing all entries: `clear`
@@ -814,7 +827,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`<br> The ID option, spelled `-i`/`--id` or `--id=VALUE`, is what an ID starting with a digit needs<br> e.g., `delete 3`, `delete A01234567X`, `delete --id 1A2B3C`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A01234567X`
 **Tag**    | `tag INDEX -a TAG` or `tag INDEX -r TAG` <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James "Lab 3" A0123`
+**Find**   | `find FIELD_OPTION TERM [FIELD_OPTION TERM]...`<br> e.g., `find -n Jason -t lab -t tutorial` (all terms required)
 **List**   | `list`
 **Exit**   | `exit`
 **Help**   | `help` (also `F1` or Help menu); Space/`b` to page, `c` to copy the guide URL, `q`/Esc to return

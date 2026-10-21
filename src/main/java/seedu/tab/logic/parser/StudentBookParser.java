@@ -55,7 +55,7 @@ public class StudentBookParser {
      *
      * <p>The command word is read in any case, because no two commands differ only in case
      * and so a capitalised word can only mean the one command. The fold reaches the first
-     * word alone: {@code Find Alex} searches for {@code Alex} with its capital, and the word
+     * word alone: {@code Find -n Alex} searches for {@code Alex} with its capital, and the word
      * is quoted back as typed when it is no command at all.
      *
      * @param userInput full user input string

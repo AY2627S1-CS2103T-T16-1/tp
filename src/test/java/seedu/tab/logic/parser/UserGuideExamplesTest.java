@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,6 +26,7 @@ import seedu.tab.logic.commands.ListCommand;
 import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 
 /**
  * Checks that the commands printed in the User Guide are ones the parser accepts. A guide that
@@ -36,7 +38,7 @@ public class UserGuideExamplesTest {
 
     /** The placeholders a format line holds, which mark it as something other than an example. */
     private static final List<String> PLACEHOLDERS =
-            List.of("INDEX", "NAME", "PHONE_NUMBER", "EMAIL", "NUS_STUDENT_ID", "TAG", "KEYWORD");
+            List.of("INDEX", "NAME", "PHONE_NUMBER", "EMAIL", "NUS_STUDENT_ID", "TAG", "KEYWORD", "FIELD_OPTION");
 
     /** Enough that the guide has stopped showing a command if it drops below. */
     private static final int MINIMUM_EXAMPLES = 5;
@@ -82,9 +84,9 @@ public class UserGuideExamplesTest {
         }
 
         // the guide promises the fold stops at the command word
-        assertTrue(guide.contains("`Find Alex` still looks for `Alex`"));
-        assertEquals(new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Alex"))),
-                new StudentBookParser().parseCommand("Find Alex"));
+        assertTrue(guide.contains("`Find -n Alex` still looks for `Alex`"));
+        assertEquals(new FindCommand(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Alex")))),
+                new StudentBookParser().parseCommand("Find -n Alex"));
     }
 
     @Test
