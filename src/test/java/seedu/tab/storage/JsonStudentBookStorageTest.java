@@ -78,6 +78,7 @@ public class JsonStudentBookStorageTest {
                 Files.writeString(path, json);
                 DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
                         DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+                assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
                 assertTrue(exception.getMessage().contains("Unknown field \"" + field + "\" in student \"Bernice Yu\""),
                         exception.getMessage());
                 assertTrue(exception.getMessage().contains("Expected: name, phone, email, nusStudentId, tags, flag."));
@@ -97,8 +98,28 @@ public class JsonStudentBookStorageTest {
             DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
                     DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
 
-            assertEquals("The data is not in the expected JSON format: Unknown field \"Email\" in student record."
+            assertEquals("Student record 1: The data is not in the expected JSON format: "
+                    + "Unknown field \"Email\" in student record."
                     + " Check its spelling. Expected: name, phone, email, nusStudentId, tags, flag."
+                    + " The legacy address field is also accepted and ignored.", exception.getMessage());
+            assertEquals(json, Files.readString(path));
+        }
+    }
+
+    @Test
+    public void readStudentBook_unknownKeyInSecondRecord_reportsIndexAndPreservesFile() throws Exception {
+        Path path = testFolder.resolve("ambiguous-student.json");
+        for (String nameField : List.of("\"name\":\"Alex\",", "", "\"name\":null,")) {
+            String json = "{\"students\":[{\"name\":\"Alex\",\"phone\":\"87438807\"},{"
+                    + nameField + "\"phone\":\"99272758\",\"emial\":\"a@b.c\"}]}";
+            Files.writeString(path, json);
+
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+            String record = nameField.contains("Alex") ? "student \"Alex\"" : "student record";
+            assertEquals("Student record 2: The data is not in the expected JSON format: Unknown field \"emial\" in "
+                    + record + ". Check its spelling. Expected: name, phone, email, nusStudentId, tags, flag."
                     + " The legacy address field is also accepted and ignored.", exception.getMessage());
             assertEquals(json, Files.readString(path));
         }

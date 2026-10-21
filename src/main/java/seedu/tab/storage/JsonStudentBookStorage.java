@@ -4,8 +4,11 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
+
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.exceptions.DataLoadingException;
@@ -50,8 +53,7 @@ public class JsonStudentBookStorage {
     public Optional<ReadOnlyStudentBook> readStudentBook(Path filePath) throws DataLoadingException {
         requireNonNull(filePath);
 
-        Optional<JsonSerializableStudentBook> jsonStudentBook = JsonUtil.readJsonFile(
-                filePath, JsonSerializableStudentBook.class);
+        Optional<JsonSerializableStudentBook> jsonStudentBook = readJsonStudentBook(filePath);
         if (!jsonStudentBook.isPresent()) {
             return Optional.empty();
         }
@@ -61,6 +63,22 @@ public class JsonStudentBookStorage {
         } catch (IllegalValueException ive) {
             logger.info("Illegal values found in " + filePath + ": " + ive.getMessage());
             throw new DataLoadingException(ive.getMessage(), ive);
+        }
+    }
+
+    private Optional<JsonSerializableStudentBook> readJsonStudentBook(Path filePath) throws DataLoadingException {
+        try {
+            return JsonUtil.readJsonFile(filePath, JsonSerializableStudentBook.class);
+        } catch (DataLoadingException e) {
+            if (e.getCause() instanceof JsonMappingException mappingException) {
+                List<JsonMappingException.Reference> path = mappingException.getPath();
+                if (path.size() >= 2 && "students".equals(path.get(0).getFieldName())
+                        && path.get(1).getIndex() >= 0) {
+                    throw new DataLoadingException("Student record " + (path.get(1).getIndex() + 1)
+                            + ": " + e.getMessage(), e);
+                }
+            }
+            throw e;
         }
     }
 

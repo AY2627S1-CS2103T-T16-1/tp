@@ -708,7 +708,8 @@ Field names are case-sensitive. Each student record accepts `name`, `phone`,
 `email`, `nusStudentId`, `tags` and `flag`. The removed `address` field is still
 accepted and ignored for compatibility with older files. Other keys, such as
 `nusStudentID`, `Email` or `tag`, stop loading with an error naming the unknown
-key and student, rather than silently losing that value on the next save.
+key, student record number (counting from 1), and name when present, rather
+than silently losing that value on the next save.
 The top-level object accepts `students` and an optional `_comment` description.
 Correct the spelling or remove the unsupported field, then restart TAB; the
 rejected file stays unchanged.

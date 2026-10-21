@@ -90,6 +90,7 @@ public class MainAppTest {
         MainApp initializedApp = new MainApp(testFolder.resolve("prefs.json"), path);
 
         initializedApp.init();
+        assertTrue(getUiManagerLoadingError(initializedApp).orElseThrow().contains("Student record 1: "));
         assertTrue(getUiManagerLoadingError(initializedApp).orElseThrow()
                 .contains("Unknown field \"nusStudentID\" in student \"Bernice Yu\""));
         assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());

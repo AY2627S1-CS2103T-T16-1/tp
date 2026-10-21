@@ -355,6 +355,8 @@ the storage delegate returns successfully.
 `@JsonAnySetter` callbacks to reject unknown keys while the data is being read.
 The student callback includes the record name and allowed field names in its
 error, and permits the removed `address` key as a compatibility exception.
+`JsonStudentBookStorage` adds the one-based student record number from Jackson's
+mapping path, so even unnamed records or students sharing a name can be located.
 The book also accepts the existing `_comment` metadata key.
 This prevents hand-edited values from disappearing during a later unrelated
 save. The shared JSON mapper keeps its existing behavior for preferences;
@@ -2961,9 +2963,9 @@ testers are expected to do more *exploratory* testing.
 
    1. Launch TAB.<br>
       Expected: The startup error names `data/tab.json`, the unknown key
-      `nusStudentID`, and the affected student's name. It lists the supported
-      student fields. The main window does not open; dismissing the error
-      leaves the file byte-for-byte unchanged.
+      `nusStudentID`, student record 2, and the affected student's name. It lists
+      the supported student fields. The main window does not open; dismissing the
+      error leaves the file byte-for-byte unchanged.
 
    1. Restore the backup and repeat with `Email`, `tag` or `Flag` in place of
       the corresponding supported key. Also try an unknown top-level key

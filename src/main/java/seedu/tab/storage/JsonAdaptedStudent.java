@@ -81,7 +81,7 @@ class JsonAdaptedStudent {
     /** Rejects unrecognized keys before their values can be lost on the next save. */
     @JsonAnySetter
     public void rejectUnknownField(String field, Object value) {
-        // AB3 data files retain this removed field, so they must still load.
+        // TAB data files from before the address field was removed still contain it and must still load.
         if (field.equals("address")) {
             return;
         }
