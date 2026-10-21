@@ -733,6 +733,16 @@ Files saved in another encoding, such as Windows-1252 (ANSI), may contain
 invalid UTF-8. TAB rejects those files without changing their bytes and asks
 you to reopen them with their original encoding and save them as UTF-8.
 
+Field names are case-sensitive. Each student record accepts `name`, `phone`,
+`email`, `nusStudentId`, `tags` and `flag`. The removed `address` field is still
+accepted and ignored for compatibility with older files. Other keys, such as
+`nusStudentID`, `Email` or `tag`, stop loading with an error naming the unknown
+key, student record number (counting from 1), and name when present, rather
+than silently losing that value on the next save.
+The top-level object accepts `students` and an optional `_comment` description.
+Correct the spelling or remove the unsupported field, then restart TAB; the
+rejected file stays unchanged.
+
 A student who needs follow-up has `"flag": true` in their JSON record. An
 unflagged student normally has no `flag` key; absence, `false`, and `null` all
 mean that no follow-up is needed. Data files created before this field existed

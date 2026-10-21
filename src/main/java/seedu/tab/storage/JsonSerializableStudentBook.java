@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
+import seedu.tab.logic.Messages;
 import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.student.Student;
@@ -40,6 +42,17 @@ class JsonSerializableStudentBook {
      */
     public JsonSerializableStudentBook(ReadOnlyStudentBook source) {
         students = source.getStudentList().stream().map(JsonAdaptedStudent::new).collect(Collectors.toList());
+    }
+
+    /** Rejects unknown top-level keys instead of silently dropping their contents. */
+    @JsonAnySetter
+    public void rejectUnknownField(String field, Object value) {
+        // Existing hand-editable fixtures use this key for a file description.
+        if (field.equals("_comment")) {
+            return;
+        }
+        throw new IllegalArgumentException("Unknown field \"" + Messages.shorten(field)
+                + "\" in the student book. Expected top-level fields: students, _comment (optional description).");
     }
 
     /**
