@@ -137,6 +137,13 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_bareHyphenAfterTheIndex_namesItAsTheExtraValue() {
+        // a bare hyphen is spelled like an option without being one, and delete takes it
+        // as the extra value rather than showing the usage message an option would
+        assertParseFailure(parser, "1 -", valueAfterIndexMessage("-"));
+    }
+
+    @Test
     public void parse_longExtraneousToken_shortensItInTheFeedback() {
         String extra = "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH + 1);
         assertParseFailure(parser, "1 " + extra,
