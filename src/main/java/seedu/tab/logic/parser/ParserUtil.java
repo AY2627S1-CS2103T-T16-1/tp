@@ -58,6 +58,30 @@ public class ParserUtil {
     }
 
     /**
+     * Parses a required student target, reporting an empty preamble as the missing
+     * {@code fieldName}. The first word is read the way {@link #parseStudentTarget} reads
+     * it, as a displayed index or an NUS Student ID, and any word after it is refused,
+     * because a target is one word before the command's options.
+     *
+     * @throws ParseException if the target is missing, holds extra words, or names no student.
+     */
+    public static StudentTarget parseRequiredStudentTarget(String preamble, String fieldName, String usage)
+            throws ParseException {
+        requireNonNull(fieldName);
+        requireNonNull(usage);
+        String trimmedPreamble = preamble.trim();
+        if (trimmedPreamble.isEmpty()) {
+            throw new ParseException(Messages.getErrorMessageForMissingFields(fieldName));
+        }
+        String[] values = trimmedPreamble.split("(?U)\\s+", 2);
+        StudentTarget target = parseStudentTarget(values[0], usage);
+        if (values.length > 1) {
+            throw new ParseException(String.format(MESSAGE_VALUE_AFTER_INDEX, fieldName, Messages.shorten(values[1])));
+        }
+        return target;
+    }
+
+    /**
      * Parses {@code target} as the address of one student: a target opening with a letter is
      * an NUS Student ID, and any other target is the index shown in the displayed student
      * list. An index is all digits and a natural NUS Student ID opens with a letter, so the
