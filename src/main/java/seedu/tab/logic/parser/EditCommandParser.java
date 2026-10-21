@@ -56,7 +56,8 @@ public class EditCommandParser implements Parser<EditCommand> {
         ParseProblems problems = new ParseProblems();
 
         StudentTarget target = problems.collect(() -> ParserUtil.parseRequiredStudentTarget(
-                arguments.getPreamble(), EditCommand.FIELD_INDEX, EditCommand.MESSAGE_USAGE));
+                arguments.getPreamble(), EditCommand.FIELD_TARGET, EditCommand.FIELD_INDEX,
+                EditCommand.MESSAGE_USAGE));
         if (!hasAnyField(arguments)) {
             problems.add(EditCommand.MESSAGE_NOT_EDITED);
         }

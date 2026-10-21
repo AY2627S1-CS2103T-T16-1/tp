@@ -40,6 +40,9 @@ public class EditCommand extends Command {
     /** The target is given before any option rather than marked by one. */
     public static final String FIELD_INDEX = "INDEX";
 
+    /** How the missing target is named, so a user who typed only an option is shown both forms. */
+    public static final String FIELD_TARGET = FIELD_INDEX + " or NUS_STUDENT_ID";
+
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the student identified "
             + "by the index number used in the displayed student list, or by the NUS Student ID "
             + "they hold anywhere in the book. A target ID opens with a letter; a digit-leading ID "

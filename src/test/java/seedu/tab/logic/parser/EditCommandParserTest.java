@@ -355,14 +355,22 @@ public class EditCommandParserTest {
     @Test
     public void parse_missingIndex_namesItAsMissing() {
         assertParseFailure(parser, FLAG_NAME_AMY,
-                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_INDEX));
+                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_TARGET));
     }
 
     @Test
     public void parse_missingIndexAndField_reportsBothAtOnce() {
         assertParseFailure(parser, "",
-                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_INDEX)
+                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_TARGET)
                         + "\n" + EditCommand.MESSAGE_NOT_EDITED);
+    }
+
+    @Test
+    public void parse_missingTarget_namesEveryTargetForm() {
+        // a user who gives only options, expecting -i/--id to choose the student, is shown
+        // that an index and an NUS Student ID are both valid targets
+        assertParseFailure(parser, "--id 1A2B3C -p 81112222",
+                "Missing required field(s): INDEX or NUS_STUDENT_ID");
     }
 
     @Test
@@ -386,8 +394,6 @@ public class EditCommandParserTest {
         // --id names the field to set rather than the student to edit
         assertParseFailure(parser, "1A2B3C" + FLAG_NAME_AMY,
                 String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE));
-        assertParseFailure(parser, "--id 1A2B3C -p 81112222",
-                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_INDEX));
 
         // a token before the options that is not part of the target
         assertParseFailure(parser, "1 some random string" + FLAG_NAME_AMY,

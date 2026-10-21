@@ -55,19 +55,21 @@ public class ParserUtil {
 
     /**
      * Parses a required student target, reporting an empty preamble as the missing
-     * {@code fieldName}. The first word is read the way {@link #parseStudentTarget} reads
+     * {@code missingField}. The first word is read the way {@link #parseStudentTarget} reads
      * it, as a displayed index or an NUS Student ID, and any word after it is refused,
      * because a target is one word before the command's options.
      *
+     * @param missingField How a missing target is named, so the caller can show every target form.
      * @throws ParseException if the target is missing, holds extra words, or names no student.
      */
-    public static StudentTarget parseRequiredStudentTarget(String preamble, String fieldName, String usage)
-            throws ParseException {
+    public static StudentTarget parseRequiredStudentTarget(String preamble, String missingField, String fieldName,
+            String usage) throws ParseException {
+        requireNonNull(missingField);
         requireNonNull(fieldName);
         requireNonNull(usage);
         String trimmedPreamble = preamble.trim();
         if (trimmedPreamble.isEmpty()) {
-            throw new ParseException(Messages.getErrorMessageForMissingFields(fieldName));
+            throw new ParseException(Messages.getErrorMessageForMissingFields(missingField));
         }
         String[] values = trimmedPreamble.split("(?U)\\s+", 2);
         StudentTarget target = parseStudentTarget(values[0], usage);
