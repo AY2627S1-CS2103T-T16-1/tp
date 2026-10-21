@@ -1,6 +1,11 @@
 package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
+import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
+import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
 import java.util.logging.Logger;
 
@@ -11,17 +16,20 @@ import seedu.tab.model.Model;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 
 /**
- * Finds and lists all students in the student book whose details contain any of the argument keywords.
+ * Finds and lists all students in the student book whose details match every supplied search condition.
  * Keyword matching is case insensitive and allows partial matches.
  */
 public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds all students whose details contain any of "
-            + "the specified keywords (case-insensitive) and displays them as a list with index numbers.\n"
-            + "Parameters: KEYWORD [MORE_KEYWORDS]...\n"
-            + "Example: " + COMMAND_WORD + " alice bob charlie";
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds students matching every search term "
+            + "(case-insensitive partial matches). Field options restrict terms to selected details.\n"
+            + "Parameters: KEYWORD [MORE_KEYWORDS] or field options: "
+            + FLAG_NAME.getLabel() + ", " + FLAG_NUS_STUDENT_ID.getLabel() + ", " + FLAG_PHONE.getLabel() + ", "
+            + FLAG_EMAIL.getLabel() + ", " + FLAG_TAG.getLabel() + ".\n"
+            + "Each option takes one word or quoted phrase; repeat an option to require another term.\n"
+            + "Example: " + COMMAND_WORD + " -n Jason -t lab -t tutorial";
 
     private final Logger logger = LogsCenter.getLogger(FindCommand.class);
 
