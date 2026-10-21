@@ -9,6 +9,7 @@ import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -26,6 +27,7 @@ import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
@@ -140,7 +142,7 @@ public class CommandLoggingTest {
 
     @Test
     public void execute_find_recordsTheMatchesAtFine() {
-        new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Alice"))).execute(model);
+        new FindCommand(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Alice")))).execute(model);
 
         // find is the one entry below the level the product runs at, so nothing but a
         // listener turned down to FINE says whether it is written at all
@@ -178,7 +180,7 @@ public class CommandLoggingTest {
         details.add(replacementPhone);
 
         new AddCommand(newcomer).execute(model);
-        new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Alice"))).execute(model);
+        new FindCommand(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Alice")))).execute(model);
         new EditCommand(FIRST, new EditStudentDescriptorBuilder().withPhone(replacementPhone).build())
                 .execute(model);
         // addressing a student by their NUS Student ID must not put the ID in the log either

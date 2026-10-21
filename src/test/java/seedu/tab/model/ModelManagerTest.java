@@ -9,11 +9,13 @@ import static seedu.tab.testutil.TypicalStudents.ALICE;
 import static seedu.tab.testutil.TypicalStudents.BENSON;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 import seedu.tab.testutil.StudentBookBuilder;
 
 public class ModelManagerTest {
@@ -98,7 +100,8 @@ public class ModelManagerTest {
 
         // different filteredList -> returns false
         String[] keywords = ALICE.getName().fullName.split("\\s+");
-        modelManager.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of(keywords)));
+        modelManager.updateFilteredStudentList(
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of(keywords))));
         assertFalse(modelManager.equals(new ModelManager(studentBook, userPrefs)));
 
         // resets modelManager to initial state for upcoming tests

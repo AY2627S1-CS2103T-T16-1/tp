@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.tab.logic.commands.StudentTarget;
@@ -50,7 +51,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         arguments.verifyNoDuplicateFlagsFor(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
                 FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
         if (arguments.getValue(FLAG_FOLLOW_UP).isPresent() && arguments.getValue(FLAG_NO_FOLLOW_UP).isPresent()) {
-            throw new ParseException(EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP);
+            throw new ParseException(Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
         }
 
         ParseProblems problems = new ParseProblems();

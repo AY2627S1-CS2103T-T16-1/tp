@@ -16,6 +16,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
@@ -33,6 +34,7 @@ import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.ListCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
+import seedu.tab.logic.parser.FindCommandParser;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
@@ -94,18 +96,123 @@ public class LogicManagerTest {
         setUp();
 
         for (String keyword : List.of("91234567", "91234", "6591234567", "\"9123 4567\"", "  91234567  ")) {
-            assertEquals(new CommandResult(Messages.getStudentsFoundOverview(1)), logic.execute("find " + keyword));
+            assertEquals(new CommandResult(Messages.getStudentsFoundOverview(1)), logic.execute("find -p " + keyword));
             assertEquals(List.of(students.get(0)), model.getFilteredStudentList());
         }
-        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(1)), logic.execute("find 98765432"));
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(1)), logic.execute("find -p 98765432"));
         assertEquals(List.of(students.get(1)), model.getFilteredStudentList());
-        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(2)), logic.execute("find 91234567 Bernice"));
-        assertEquals(students, model.getFilteredStudentList());
-        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(0)), logic.execute("find 91234568"));
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(0)),
+                logic.execute("find -p 91234567 -n Bernice"));
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(0)), logic.execute("find -p 91234568"));
         assertTrue(model.getFilteredStudentList().isEmpty());
         assertEquals(students, model.getStudentBook().getStudentList());
         assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
         assertEquals(students, storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_findFieldCombinations_preservesRecordsAndStorage() throws Exception {
+        addSearchStudents();
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        model = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
+        setUp();
+        for (var entry : Map.of(
+                "find -n Jason -t lab -t tutorial", List.of(students.get(0), students.get(1)),
+                "find --tag friend", List.of(students.get(0)),
+                "find -t \"lab tutorial\"", List.of(students.get(0)),
+                "find --id a0123 -p 9123-4567 -e NUS.EDU", List.of(students.get(0)),
+                "find -n Jason -t lab -t tutorial -n Zhou", List.of(students.get(1)),
+                "find -n Friend -t friend", List.<Student>of()).entrySet()) {
+            assertEquals(new CommandResult(Messages.getStudentsFoundOverview(entry.getValue().size())),
+                    logic.execute(entry.getKey()));
+            assertEquals(entry.getValue(), model.getFilteredStudentList(), entry.getKey());
+        }
+        assertEquals(students, model.getStudentBook().getStudentList());
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        assertEquals(students, storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_invalidFindFields_preservesFilterRecordsAndStorage() throws Exception {
+        addSearchStudents();
+        logic.execute("find -t friend");
+        List<Student> filtered = List.copyOf(model.getFilteredStudentList());
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        String savedJson = Files.readString(dataPath);
+        String unexpectedValueMessage = "\"%1$s\" does not belong to any option. "
+                + "If the command takes a name or index without an option, put it before all options. "
+                + "Options that take a value take one token, and a value holding spaces goes in double quotes.";
+        for (var entry : Map.of(
+                "find Jason -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
+                "find Jason", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
+                "find -t \"\"", FindCommandParser.MESSAGE_EMPTY_KEYWORD,
+                "find --unknown friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"),
+                "find -t lab tutorial", String.format(unexpectedValueMessage, "tutorial"),
+                "find -n Jason Tan", String.format(unexpectedValueMessage, "Tan"),
+                "find -n 'Jason Tan'", String.format(unexpectedValueMessage, "Tan'"),
+                "find -f true", String.format(unexpectedValueMessage, "true"),
+                "find -t", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-t TAG")).entrySet()) {
+            assertThrows(ParseException.class, entry.getValue(), () -> logic.execute(entry.getKey()));
+            assertEquals(filtered, model.getFilteredStudentList());
+            assertEquals(students, model.getStudentBook().getStudentList());
+            assertEquals(savedJson, Files.readString(dataPath));
+        }
+    }
+
+    @Test
+    public void execute_findNames_distinguishesPhrasesFromRepeatedTermsAndKeepsApostrophes() throws Exception {
+        logic.execute("add Jason Tan -p 91111111");
+        logic.execute("add Jason Wei Tan -p 92222222");
+        logic.execute("add O'Brien -p 93333333");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(2)), logic.execute("find -n Jason -n Tan"));
+        assertEquals(students.subList(0, 2), model.getFilteredStudentList());
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(1)), logic.execute("find -n \"Jason Tan\""));
+        assertEquals(List.of(students.get(0)), model.getFilteredStudentList());
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(1)), logic.execute("find -n O'Brien"));
+        assertEquals(List.of(students.get(2)), model.getFilteredStudentList());
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(0)), logic.execute("find -n 'Jason'"));
+        assertTrue(model.getFilteredStudentList().isEmpty());
+    }
+
+    @Test
+    public void execute_findFollowUpStatus_preservesRecordsAndStorage() throws Exception {
+        logic.execute("add Jason Tan -p 91111111 -f -t Lab");
+        logic.execute("add Jason Lim -p 92222222 -t Lab");
+        logic.execute("add Alice Lee -p 93333333 -f -t Tutorial");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        String savedJson = Files.readString(dataPath);
+        model = new ModelManager(new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow(), new UserPrefs());
+        setUp();
+        for (var entry : Map.of(
+                "find -f", List.of(students.get(0), students.get(2)),
+                "find --no-follow-up", List.of(students.get(1)),
+                "find -f -n Jason -t Lab", List.of(students.get(0)),
+                "find -n Jason -nf -t Lab", List.of(students.get(1)),
+                "find -nf -t Tutorial", List.<Student>of()).entrySet()) {
+            assertEquals(new CommandResult(Messages.getStudentsFoundOverview(entry.getValue().size())),
+                    logic.execute(entry.getKey()));
+            assertEquals(entry.getValue(), model.getFilteredStudentList());
+        }
+        List<Student> filtered = List.copyOf(model.getFilteredStudentList());
+        assertThrows(ParseException.class, Messages.MESSAGE_CONFLICTING_FOLLOW_UP, () ->
+                logic.execute("find -f -nf"));
+        assertEquals(filtered, model.getFilteredStudentList());
+        assertEquals(students, model.getStudentBook().getStudentList());
+        assertEquals(savedJson, Files.readString(dataPath));
+    }
+
+    private void addSearchStudents() throws Exception {
+        logic.execute("add Jason Lim -p \"+65 9123 4567\" --id A01234567X -e jason@nus.edu"
+                + " -t \"lab tutorial\" -t friend");
+        logic.execute("add Jason Zhou -p 93333333 -t \"lab 5\" -t \"tutorial 3\"");
+        logic.execute("add Jason Tan -p 94444444 -t lab");
+        logic.execute("add Friend Lee -p 95555555 -e friend@example.com");
     }
 
     @Test
@@ -128,11 +235,11 @@ public class LogicManagerTest {
         assertEquals(2, model.getFilteredStudentList().size());
 
         // Find matches
-        result = logic.execute(FindCommand.COMMAND_WORD + " Amy");
+        result = logic.execute(FindCommand.COMMAND_WORD + " -n Amy");
         assertEquals(Messages.getStudentsFoundOverview(1), result.getFeedbackToUser());
         assertEquals(1, model.getFilteredStudentList().size());
 
-        result = logic.execute(FindCommand.COMMAND_WORD + " Nonexistent");
+        result = logic.execute(FindCommand.COMMAND_WORD + " -n Nonexistent");
         assertEquals(Messages.getStudentsFoundOverview(0), result.getFeedbackToUser());
         assertEquals(0, model.getFilteredStudentList().size());
 
@@ -247,7 +354,7 @@ public class LogicManagerTest {
                     "-f --no-follow-up", "--no-follow-up -f -p 81112222", "--follow-up -nf", "-nf --follow-up",
                     "-f -nf", "-nf -f -p 81112222")) {
                 assertCommandFailure("edit 1 " + options, ParseException.class,
-                        EditCommand.MESSAGE_CONFLICTING_FOLLOW_UP, expectedModel);
+                        Messages.MESSAGE_CONFLICTING_FOLLOW_UP, expectedModel);
                 assertTrue(model.getFilteredStudentList().isEmpty());
                 assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
             }
@@ -448,7 +555,7 @@ public class LogicManagerTest {
     }
 
     private void assertReadOnlyCommandsSucceed() throws Exception {
-        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(0)), logic.execute("find Nobody"));
+        assertEquals(new CommandResult(Messages.getStudentsFoundOverview(0)), logic.execute("find -n Nobody"));
         assertTrue(model.getFilteredStudentList().isEmpty());
         assertEquals(new CommandResult(ListCommand.formatSuccessMessage(1)), logic.execute("list"));
         assertEquals(model.getStudentBook().getStudentList(), model.getFilteredStudentList());

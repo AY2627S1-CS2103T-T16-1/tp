@@ -246,7 +246,7 @@ student model or persisted data.
 `SummaryPanel` shows the flagged count, a count per tag and the total, beside
 the list. It counts `Logic#getFilteredStudentList()`, which is the only list
 `Logic` exposes, so it summarises **what the list is showing** rather than the
-whole student book: after `find Alex` it counts the matches. That is the
+whole student book: after `find -n Alex` it counts the matches. That is the
 reading the User Guide documents, and it keeps the panel answering the same
 question as the list it sits beside. Summarising the whole book instead would
 need `Logic` to expose it.
@@ -579,7 +579,7 @@ Turkish rules would turn `LIST` into a word with a dotless `ı` that answers to
 nothing.
 
 The first word alone is folded. The arguments reach the command parsers as
-typed, so `Find Alex` searches for `Alex` with its capital and `Add John Doe`
+typed, so `Find -n Alex` searches for `Alex` with its capital and `Add John Doe`
 stores the name as it was written. Option spellings stay case-sensitive, as the
 User Guide documents them: an option is read among the values rather than in
 front of them, so folding there would have to leave the values it sits beside
@@ -668,11 +668,9 @@ but `isSameStudent` does not: changing whether a student needs a reply does not
 change their identity. The flag is stored as `Optional<Flag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
-Search matches ordinary tags as parts of their inherited `tagName` values, but
-matches the optional flag only when a term opens the label `Needs follow-up`
-or one of its words, ignoring case (`Flag.matchesKeyword`), so a phrase quoted
-as one search term, such as `needs follow`, names the flag the way each of its
-words does on its own.
+Tag searches match ordinary tags as parts of their inherited `tagName` values,
+ignoring case. Follow-up status is selected independently through `-f` or `-nf`, so its
+displayed label never produces a text-field match.
 The student card and command feedback display the same value, while the card
 keeps the flag in its separate follow-up row.
 
@@ -868,25 +866,36 @@ same number, and `isSameStudent` does not read it. It is normalized only so
 that a number typed with unusual whitespace, or wrapped in the invisible marks a
 chat app puts around a copied number, is stored consistently.
 
-`FindCommandParser` reads search arguments using `CommandTokenizer`, allowing
-keywords to be enclosed in double quotes to match phrases containing spaces
-(such as `"Lab 3"`). Unterminated quotes report `CommandTokenizer.MESSAGE_UNCLOSED_QUOTE`,
-while empty or whitespace-only quoted terms are rejected with `MESSAGE_EMPTY_KEYWORD`.
-Search terms are normalized with `StringUtil.normalizeFieldValue`, collapsing internal
-whitespace runs and applying Unicode NFC normalization. It creates a
-`DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
-against the student's name, NUS Student ID, phone, email, ordinary tags,
-and optional follow-up flag. Matching is case-insensitive; those details
-match partially, while the follow-up flag matches only an opening of the label
-`Needs follow-up` or of one of its words, so a fragment beginning mid-word such
-as `low` cannot list every flagged student.
-For a keyword containing only Unicode decimal digits, or those digits with the
-punctuation a phone number is written with (`+`, `-`, `(`, `)`, `.`), the phone
-comparison also checks a copy of the stored phone with non-digit characters
-removed. This lets `91234567`, `9123-4567` and `+6591234567` all match
-`+65 9123 4567`.
-Literal phone matching remains available for formatted phrases and annotations;
-other fields retain their text matching. The stored phone and saved data do not change.
+`FindCommandParser` uses `FlagTokenizer` and the existing `CliFlags` aliases for
+name, NUS Student ID, phone, email and tag. Every search term must have a field
+option. An option takes one word or one double-quoted phrase; apostrophes are
+literal characters, so names such as `O'Brien` do not need quoting. Repeated
+options retain all values. Bare terms receive `MESSAGE_UNQUALIFIED_TERM`, and
+an extra bare word after an option receives the shared tokenizer's
+unexpected-value diagnostic. Empty or whitespace-only values receive
+`MESSAGE_EMPTY_KEYWORD`; unterminated double quotes report
+`CommandTokenizer.MESSAGE_UNCLOSED_QUOTE`.
+
+Search terms are normalized with `StringUtil.normalizeFieldValue`, collapsing
+whitespace runs and applying Unicode NFC normalization. The parser creates a
+`DetailsContainsKeywordsPredicate` with terms grouped by its `Field` enum.
+Every term must match its selected field, using case-insensitive substrings:
+AND applies both within and between fields. Each tag term must occur within
+one tag, but separate terms may match the same tag or different tags. Absent
+optional fields do not match. Explicit field selectors prevent unrelated
+matches in other details and replace the earlier unqualified OR search.
+Follow-up status is selected with the presence-only `-f`/`--follow-up` and
+`-nf`/`--no-follow-up` options. The predicate holds an `Optional<Boolean>`:
+empty imposes no status restriction, true requires follow-up, and false
+requires its absence. A status-only search is valid, and combinations require
+both the status and every field term. The parser rejects conflicting or
+repeated status options before execution, matching the existing edit rules.
+
+For phone terms containing only Unicode decimal digits, or those digits with
+phone punctuation (`+`, `-`, `(`, `)`, `.`), matching also compares the digits
+with non-digit characters removed. This lets `91234567`, `9123-4567` and
+`+6591234567` match `+65 9123 4567`. Formatted phrases and annotations still
+match literally. Stored student details and saved data do not change.
 
 `FindCommand` and `ListCommand` report the count of displayed students in
 their execution feedback. `FindCommand` counts only the matching students
@@ -1216,7 +1225,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *` | teaching assistant who can type fast and prefers CLI | complete every task TAB offers using only the keyboard | never break out of typing to reach for a mouse or trackpad |
 | `* * *` | teaching assistant in Singapore | save a name containing s/o, d/o, hyphens or apostrophes | record students under the name that appears on the official roster |
 | `* * *` | teaching assistant | flag a student as needing follow-up, and clear the flag once I have replied | keep an accurate list of who is still waiting on me |
-| `* * *` | teaching assistant | find students by part of any detail I remember, whatever the letter case | locate a student from a fragment, such as part of a name or a few digits of a phone number |
+| `* * *` | teaching assistant | find students by part of a detail in a field I choose, whatever the letter case | locate a student from a fragment, such as part of a name or a few digits of a phone number |
 | `* * *` | teaching assistant handling student data | use TAB fully offline with data stored only on my own machine | comply with the expectation that student data stays off third-party services |
 | `* *` | forgetful or new user | see a summary of everything TAB can do, from inside TAB | learn or recall how to use it without leaving the keyboard |
 | `* *` | teaching assistant | edit a student's record | ensure a student's record reflect the latest information I know |
@@ -1349,10 +1358,10 @@ These were raised during requirement gathering and left out of the product.
 
 **MSS**
 
-1.  User requests to find students, providing one or more search terms.
-2.  TAB shows the students for whom any term matches any part of a name, NUS Student ID,
-    phone, email or tag, or opens the follow-up status label or one of its words,
-    regardless of letter case.
+1.  User requests to find students, specifying a field for each search term.
+2.  TAB shows the students for whom every term matches part of its specified
+    name, NUS Student ID, phone, email or tag, regardless of letter case,
+    and any requested follow-up status matches.
 3.  User identifies the intended student.
 4.  User initiates the desired action on that student.
 
@@ -1861,7 +1870,7 @@ testers are expected to do more *exploratory* testing.
       warning has no stack trace or `SEVERE` label. There is no
       `ExceptionInInitializerError` or `NullPointerException` from logging.
 
-   1. Run `find Read Only Test`, then `list`, then `help`.<br>
+   1. Run `find -n "Read Only Test"`, then `list`, then `help`.<br>
       Expected: The search shows no matches, `list` restores all sample
       records, and the help page opens. None reports a data-file save error.
       Press q or Esc to return to the command box.
@@ -1903,7 +1912,7 @@ testers are expected to do more *exploratory* testing.
       box. No q is inserted into it. The next command works normally; the
       previous result and student filter are preserved while help is open.
 
-   1. Type `find Alex` without submitting it, press F1, then q.<br>
+   1. Type `find -n Alex` without submitting it, press F1, then q.<br>
       Expected: Help takes the whole content area and the unfinished command
       is restored on return. Repeat with Help → Help. Reopening help starts
       at the beginning.
@@ -1975,7 +1984,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Commands that take no parameters
 
-   1. Prerequisites: Add a student, run `find no-such-student` to hide the
+   1. Prerequisites: Add a student, run `find -n no-such-student` to hide the
       student, and keep a copy of `data/tab.json`.
 
    1. Test cases: `clear oops`, `list oops`, `help oops`, and `exit oops`.<br>
@@ -2089,23 +2098,9 @@ testers are expected to do more *exploratory* testing.
       Expected: Bob is added. His card and the command result both show
       `Needs follow-up`, and his saved record has `"flag": true`.
 
-1. Finding students by follow-up status
-
-   1. Prerequisites: Continue from the preceding test with Alice unflagged
-      and Bob flagged.
-
-   1. Test cases: `find follow-up` and `find NEEDS`<br>
-      Expected: Each search shows Bob and excludes Alice, matching a whole
-      word of the flag's displayed name without regard to case.
-
-   1. Test case: `add Low Jia Hui -p 91112222`, then `find low`<br>
-      Expected: Only Low Jia Hui is listed, reported as `Found 1 student.`,
-      although Bob still needs follow-up: `low` sits inside `Needs follow-up`
-      but is not a word of it, so it never matches the follow-up status.
-
 1. Setting and clearing follow-up while editing
 
-   1. Prerequisites: Run `list` after the preceding search, restoring Alice
+   1. Prerequisites: Run `list`, restoring Alice
       at index 1 and Bob at index 2.
 
    1. Test case: Run `edit 1 --follow-up` twice, then `edit 1 -f`.<br>
@@ -2170,7 +2165,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Prerequisites: Add a uniquely named student with `add Tag Test -p 91234567
       -e tag@example.com --id A01234567X -t T1 --follow-up` as one line.
-      Run `find "Tag Test"` and confirm only this student is shown.
+      Run `find -n "Tag Test"` and confirm only this student is shown.
 
    1. Test case: `tag 1 --add "Lab 3"`.<br>
       Expected: Feedback starts with `Added tag [Lab 3]:`. The student has both
@@ -2180,7 +2175,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Rejecting duplicates and invalid input without mutation
 
-   1. Prerequisites: Continue with the student above and run `find "Tag Test"`.
+   1. Prerequisites: Continue with the student above and run `find -n "Tag Test"`.
       Back up `data/tab.json` and compare it after each refused command.
 
    1. Test case: `tag 1 -a "  lab   3  "`.<br>
@@ -2210,7 +2205,7 @@ testers are expected to do more *exploratory* testing.
 1. Preserving other details and persisting removal
 
    1. Prerequisites: Complete the single-tag addition tests above. Run
-      `find "Tag Test"`; the student has `T1`, `Lab 3` and follow-up enabled.
+      `find -n "Tag Test"`; the student has `T1`, `Lab 3` and follow-up enabled.
 
    1. Test case: `tag 1 --remove "  LAB   3  "`.<br>
       Expected: Feedback starts with `Removed tag [Lab 3]:`. Only `Lab 3` is
@@ -2218,14 +2213,14 @@ testers are expected to do more *exploratory* testing.
       remain unchanged. The search stays active. Exit and relaunch TAB from
       the same folder; confirm every remaining field is preserved.
 
-   1. Test case: Run `find "Tag Test"` again after restarting and confirm only
+   1. Test case: Run `find -n "Tag Test"` again after restarting and confirm only
       that student is shown, then run `tag 1 -r T1`.<br>
       Expected: The student has no general tags and still needs follow-up.
       After restarting TAB, that state remains.
 
 1. Reporting absent tags and invalid input without saving
 
-   1. Prerequisites: Run `find "Tag Test"` again. Back up `data/tab.json`
+   1. Prerequisites: Run `find -n "Tag Test"` again. Back up `data/tab.json`
       and compare it after every refused command below.
 
    1. Test cases: `tag 1 -r "Lab 3"`, `tag 1 --remove "  lab   3  "`.<br>
@@ -2241,7 +2236,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Removing a tag that supplies the search match
 
-   1. Test case: Run `tag 1 -a "Lab 3"`, `find "Lab 3"`, then
+   1. Test case: Run `tag 1 -a "Lab 3"`, `find -t "Lab 3"`, then
       `tag 1 -r "Lab 3"`.<br>
       Expected: The student disappears from the filtered list. Run `list`
       to see the preserved student without `Lab 3`.
@@ -2250,13 +2245,13 @@ testers are expected to do more *exploratory* testing.
 
    1. Prerequisites: Exit TAB. Back up the data file, then set Tag Test's
       `tags` array to `["Lab 3", "  lab   3  ", "T1", "Needs follow-up"]`.
-      Keep `"flag": true` and restart TAB. Run `find "Tag Test"`.
+      Keep `"flag": true` and restart TAB. Run `find -n "Tag Test"`.
 
    1. Test case: `tag 1 -r "LAB 3"`.<br>
       Expected: Both case variants disappear. `T1`, `Needs follow-up`, the
       follow-up flag and all other fields remain after restart.
 
-   1. Test case: Run `find "Tag Test"` again after restarting and confirm only
+   1. Test case: Run `find -n "Tag Test"` again after restarting and confirm only
       that student is shown, then run `tag 1 -r "needs follow-up"`.<br>
       Expected: Only the general tag disappears. `T1` and the follow-up flag
       remain. Restore the backup when finished.
@@ -2514,7 +2509,7 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Run `edit 1 -i A01234567X`, then exit and relaunch TAB from
       the same folder.
 
-   1. Test cases: `find a0123` and `find 23456`.<br>
+   1. Test cases: `find --id a0123` and `find --id 23456`.<br>
       Expected: Each search shows Alice, demonstrating partial,
       case-insensitive NUS Student ID matching. The ID remains after the restart.
 
@@ -2671,7 +2666,7 @@ testers are expected to do more *exploratory* testing.
 1. Repeating an edit after a search
 
    1. Prerequisites: Add `add Alex Yeoh -p 87438807` and
-      `add John Doe -p 98765432`, then run `find john`.
+      `add John Doe -p 98765432`, then run `find -n john`.
 
    1. Test case: Run `edit 1 --follow-up` twice.<br>
       Expected: Both commands flag John Doe, the only student listed. The
@@ -2682,7 +2677,7 @@ testers are expected to do more *exploratory* testing.
       Expected: John Doe's phone becomes `9876543` and is then restored to
       `98765432`. Alex Yeoh's phone remains `87438807` throughout.
 
-   1. Test case: Run `add John Smith -p 91112222`, then `find john`,
+   1. Test case: Run `add John Smith -p 91112222`, then `find -n john`,
       `edit 1 -n Jack`, then `edit 1 -p 91112233`.<br>
       Expected: The first `edit` renames John Doe to Jack, who no longer
       matches `john` and leaves the displayed list; John Smith shifts up to
@@ -2780,7 +2775,7 @@ testers are expected to do more *exploratory* testing.
       `delete 1ABC` is refused with the command's format, because a target starting with a digit
       reads as an index.
 
-   1. Test case: `find Alex` followed by `delete A02345678G`, where the search hides
+   1. Test case: `find -n Alex` followed by `delete A02345678G`, where the search hides
       Charlotte Oliveiro<br>
       Expected: Charlotte Oliveiro is deleted from the book, and the status message identifies her.
 
@@ -2812,7 +2807,7 @@ testers are expected to do more *exploratory* testing.
 
    1. In a fresh session, type `draft` and press Up and Down.<br>
       Expected: The text remains `draft` because no command has been submitted.
-   1. Replace it with `list` and press Enter. Run `find "Siti Nur-Aisyah"`,
+   1. Replace it with `list` and press Enter. Run `find -n "Siti Nur-Aisyah"`,
       then type `add draft` without submitting it.
    1. Press Up twice, then Up again.<br>
       Expected: The line recalls the find command, then `list`, then stays at
@@ -2890,7 +2885,7 @@ testers are expected to do more *exploratory* testing.
       Expected: The panel's total matches the number of cards. Each tag in use
       is listed with its count, most used first, and tags with equal counts
       are in alphabetical order whatever case they were typed in.
-   1. Test case: `find Alex`<br>
+   1. Test case: `find -n Alex`<br>
       Expected: The counts fall to cover only the students now listed. The
       total reads the number of matches.
    1. Note: the sample data ships no flagged student, so flag one with
@@ -2919,19 +2914,19 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `list`<br>
       Expected: Feedback reports `Listed 0 students.` and the displayed list is empty.
 
-   1. Test case: `find Alex`<br>
+   1. Test case: `find -n Alex`<br>
       Expected: Feedback reports `Found 0 students.` and no students are displayed.
 
    1. Test case: `add "Amy Bee" -p 85355255 -e amy@example.com`, then `list`<br>
       Expected: Feedback reports `Listed 1 student.` with proper singular wording.
 
-   1. Test case: `find Amy`<br>
+   1. Test case: `find -n Amy`<br>
       Expected: Feedback reports `Found 1 student.`.
 
    1. Test case: `add "Bob Choo" -p 88888888 -e bob@example.com`, then `list`<br>
       Expected: Feedback reports `Listed 2 students.` with plural wording and accurate count.
 
-   1. Test case: `find Amy Bob`<br>
+   1. Test case: `find -e example.com`<br>
       Expected: Feedback reports `Found 2 students.`.
 
    1. Test case: `delete 1`, then `list`<br>
@@ -2944,40 +2939,19 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: In a disposable copy of TAB, clear all students (`clear`, then `yes`).
       Run `add Alex Yeoh -p "+65 9123 4567"` and `add Bernice Yu -p 9876-5432`.
       Restart TAB and keep a copy of `data/tab.json`.
-   1. Test cases: `find 91234567`, `find 91234`, and `find 6591234567`.<br>
+   1. Test cases: `find -p 91234567`, `find -p 91234`, and `find -p 6591234567`.<br>
       Expected: Only Alex Yeoh is shown, with `Found 1 student.` and phone `+65 9123 4567`.
-   1. Test cases: `find 9123-4567` and `find +6591234567`.<br>
+   1. Test cases: `find -p 9123-4567` and `find -p +6591234567`.<br>
       Expected: Only Alex Yeoh is shown, with `Found 1 student.`, even though the stored phone
       is written `+65 9123 4567`. A keyword of digits and phone punctuation compares by the
       digits alone.
-   1. Test case: `find 98765432`.<br>
+   1. Test case: `find -p 98765432`.<br>
       Expected: Only Bernice Yu is shown, with `Found 1 student.` and phone `9876-5432`.
-   1. Test case: `find 91234567 Bernice`.<br>
-      Expected: Both students are shown, with `Found 2 students.`.
-   1. Test cases: `find 91234568` and `find 9123-4568`.<br>
+   1. Test case: `find -p 91234567 -n Bernice`.<br>
+      Expected: No students are shown, with `Found 0 students.`; both terms are required.
+   1. Test cases: `find -p 91234568` and `find -p 9123-4568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
-
-### Locating students by the follow-up status
-
-1. Openings of the label and of its words, but not fragments from the middle
-
-   1. Prerequisites: Clear all students (`clear`, then `yes`). Add a flagged student,
-      `add Alex Yeoh -p 91234567 -f`, an unflagged student, `add Bernice Yu -p 98765432`,
-      and a student whose name is not the label, `add Low Jia Hui -p 91112222`.
-
-   1. Test cases: `find follow-up`, `find follow`, `find fol`, and `find needs`.<br>
-      Expected: Only Alex Yeoh is shown, with `Found 1 student.`. A term that opens a word of
-      the label `Needs follow-up` names the flag.
-   1. Test case: `find "needs follow"`.<br>
-      Expected: Only Alex Yeoh is shown, with `Found 1 student.`. A phrase quoted as one term
-      that opens the whole label names the flag, as each of its words does on its own.
-   1. Test case: `find low`.<br>
-      Expected: Only Low Jia Hui is shown, with `Found 1 student.`. A fragment beginning
-      mid-word in the label does not name the flag, so a search for the surname does not list
-      the flagged student.
-   1. Test case: `find up`.<br>
-      Expected: No students are shown, with `Found 0 students.`.
 
 ### Locating students with quoted phrases and error handling
 
@@ -2987,27 +2961,28 @@ testers are expected to do more *exploratory* testing.
       `add "Alice Tan" -p 91111111 -t "Lab 3"` and
       `add "Bob Lee" -p 93333333 -t Lab`.
 
-   1. Test case: `find "Lab 3"`<br>
+   1. Test case: `find -t "Lab 3"`<br>
       Expected: Matches only `Alice Tan` (`Found 1 student.`). `Bob Lee` is excluded because
       the phrase "Lab 3" does not match separate "Lab" and "3" fragments.
 
-   1. Test case: `find Bob "Lab 3"`<br>
-      Expected: Matches both `Alice Tan` and `Bob Lee` (`Found 2 students.`), showing OR matching
-      across words and quoted phrases.
+   1. Test case: `find -n Bob -t "Lab 3"`<br>
+      Expected: No students match (`Found 0 students.`); neither has both required terms.
+   1. Test case: `find -n Alice -t "Lab 3"`<br>
+      Expected: Only `Alice Tan` matches (`Found 1 student.`), with the terms in different fields.
 
-   1. Test case: `find "Lab 3`<br>
+   1. Test case: `find -t "Lab 3`<br>
       Expected: Error reported: `A quoted value is never closed. Add the closing " or remove the opening one.`
       The displayed student list remains unchanged.
 
-   1. Test case: `find "Lab  3"` (two spaces inside the quotes)<br>
+   1. Test case: `find -t "Lab  3"` (two spaces inside the quotes)<br>
       Expected: Matches `Alice Tan` (`Found 1 student.`), because search terms are normalized
       like stored field values, collapsing interior whitespace runs.
 
-   1. Test case: `find ""` or `find "   "`<br>
+   1. Test case: `find -t ""` or `find -t "   "`<br>
       Expected: Error reported: `A search term is empty. Remove the empty quotes or put a value between them.`
       The displayed student list remains unchanged.
 
-   1. Test case: `find Alice ""` or `find Alice "   "`<br>
+   1. Test case: `find -n Alice -t ""` or `find -n Alice -t "   "`<br>
       Expected: Error reported: `A search term is empty. Remove the empty quotes or put a value between them.`
       The displayed student list remains unchanged.
 
@@ -3015,11 +2990,87 @@ testers are expected to do more *exploratory* testing.
       Expected: Error reported: `Invalid command format! ...` followed by find usage instructions.
       The displayed student list remains unchanged.
 
+### Finding students within selected fields
+
+1. Field isolation and required combinations
+
+   1. Prerequisites: Use a disposable copy of TAB. Clear all students (`clear`, then `yes`).
+      Add `add Jason Lim -p "+65 9123 4567" --id A01234567X -e jason@nus.edu -t "lab tutorial" -t friend`,
+      `add Jason Zhou -p 93333333 -t "lab 5" -t "tutorial 3"`,
+      `add Jason Tan -p 94444444 -t lab` and
+      `add Friend Lee -p 95555555 -e friend@example.com`.
+      Restart TAB and save a copy of `data/tab.json`.
+   1. Test case: `find -t friend`<br>
+      Expected: Only Jason Lim, excluding Friend Lee's name and email matches.
+   1. Test case: `find -n Jason -t lab -t tutorial`<br>
+      Expected: Jason Lim and Jason Zhou. Jason Tan lacks the required tutorial tag term.
+      Repeating a selector requires all terms, without requiring different tags.
+   1. Test case: `find -t "lab tutorial"`<br>
+      Expected: Only Jason Lim; the phrase cannot be assembled across tags.
+   1. Test case: `find --id a0123 -p 9123-4567 -e NUS.EDU`<br>
+      Expected: Only Jason Lim. Optional email and ID fields that are absent do not match.
+   1. Test case: `find --name Jason --tag lab --tag tutorial`, then
+      `find -i a0123 --phone 9123 --email nus.edu`.<br>
+      Expected: The first search shows Jason Lim and Jason Zhou, and the second only Jason Lim.
+   1. Test case: `find -n Jason -t Lab -n Zhou`<br>
+      Expected: Only Jason Zhou; both name terms and the tag term are required.
+
+1. Double quotes group phrases; apostrophes remain literal
+
+   1. Prerequisites: Add `add Jason Wei Tan -p 96666666`, then run
+      `add O'Brien -p 97777777`. Save a new copy of `data/tab.json`.
+   1. Test case: `find -n Jason -n Tan`<br>
+      Expected: Jason Tan and Jason Wei Tan; both separate name terms are required.
+   1. Test case: `find -n "Jason Tan"`<br>
+      Expected: Only Jason Tan; Jason Wei Tan lacks the whole phrase.
+   1. Test case: `find -n O'Brien`<br>
+      Expected: Only O'Brien. The apostrophe belongs to the name.
+   1. Test case: `find -n 'Jason Tan'`<br>
+      Expected: An error identifies `Tan'` as an unexpected value. Single quotes do not group words.
+
+1. Rejected input preserves the current results and saved data
+
+   1. Test cases: `find Jason`, `find Jason -t lab` and `find -t lab tutorial`.<br>
+      Expected: The first two ask for a field option for every term. The third
+      identifies `tutorial` as an unexpected value and explains that a multi-word value needs quotes.
+   1. Test cases: `find -t`, `find -t -n Jason`, `find --unknown friend`,
+      `find -t ""`, `find -t "   "` and an unclosed quote in `find -t "lab`.<br>
+      Expected: An error identifies the missing value, unknown option, empty term or unclosed quote.
+      The displayed list is unchanged after each rejected command.
+   1. Run `list` and restart TAB.<br>
+      Expected: All six students and their original details remain. `data/tab.json`
+      is identical to the saved copy after all successful and rejected searches.
+
+### Finding students by follow-up status
+
+1. Status-only and combined searches preserve data
+
+   1. Prerequisites: In a disposable TAB folder, clear students (`clear`, then `yes`).
+      Run `add Jason Tan -p 91111111 -t Lab -f`, `add Jason Lim -p 92222222 -t Lab`,
+      and `add Alice Lee -p 93333333 -t Tutorial -f`. Restart TAB and save a copy of `data/tab.json`.
+   1. Test cases: `find -f` and `find --follow-up`.<br>
+      Expected: Jason Tan and Alice Lee, with `Found 2 students.`.
+   1. Test cases: `find -nf` and `find --no-follow-up`.<br>
+      Expected: Only Jason Lim, with `Found 1 student.`.
+   1. Test case: `find -f -n Jason -t Lab`.<br>
+      Expected: Only Jason Tan; the status and every field term must match.
+   1. Test case: `find -n Jason -nf -t Lab`.<br>
+      Expected: Only Jason Lim; the status option may appear between field options.
+   1. Test case: `find -nf -t Tutorial`.<br>
+      Expected: No students, with `Found 0 students.`.
+   1. Test cases: `find -f -nf`, `find -f --follow-up`, `find -nf --no-follow-up`,
+      `find -f true` and `find -nf=none`.<br>
+      Expected: A clear error for conflicting or repeated status selectors, an extra bare
+      value, or a value attached to an option that takes none. The empty result list remains unchanged.
+   1. Run `list` and restart TAB.<br>
+      Expected: All three students retain their details and follow-up states. `data/tab.json`
+      is identical to the saved copy after all successful and rejected searches.
+
 ### Confirming before clearing all students
 
 1. Confirmation, cancellation, and keyboard use
 
-   1. Prerequisites: Add at least two students, run `find no-such-student`
+   1. Prerequisites: Add at least two students, run `find -n no-such-student`
       so none is visible, and keep a copy of `data/tab.json`.
 
    1. Test case: Type `clear` and press Enter.<br>
@@ -3183,7 +3234,7 @@ testers are expected to do more *exploratory* testing.
       Confirming the clear also reports the save error and restores every
       student.
 
-   1. Test case: Enter `list`, `find Amy`, and `help`, then press q to leave the
+   1. Test case: Enter `list`, `find -n Amy`, and `help`, then press q to leave the
       help page and enter `exit`.<br>
       Expected: Each command succeeds, including opening the help page and
       closing TAB. The read-only `data/tab.json` still matches the saved copy

@@ -12,6 +12,7 @@ import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.logic.Messages;
@@ -19,6 +20,7 @@ import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.model.Model;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
@@ -145,7 +147,8 @@ public class CommandTestUtil {
 
         Student student = model.getFilteredStudentList().get(targetIndex.getZeroBased());
         final String[] splitName = student.getName().fullName.split("\\s+");
-        model.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of(splitName[0])));
+        model.updateFilteredStudentList(
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of(splitName[0]))));
 
         assertEquals(1, model.getFilteredStudentList().size());
     }
