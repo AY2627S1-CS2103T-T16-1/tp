@@ -735,7 +735,11 @@ they were before the command. Commands that do not change student records, inclu
 cancellation, and invalid replies also leave the saved file unchanged.
 
 Window size and position are saved separately in `preferences.json` in TAB's
-home folder. If the file contains only `null`, `guiSettings` is `null`, or the
+home folder. On launch, TAB keeps the saved size and position when they fit
+an available screen. If a screen was disconnected, TAB moves the window onto
+an available screen; oversized windows shrink to its usable area. This also
+applies after a resolution or display-scaling change.
+If the file contains only `null`, `guiSettings` is `null`, or the
 file cannot be parsed, TAB opens with default window settings and rewrites the
 preferences file when it can. This recovery does not change saved student records in `data/tab.json`.
 If preferences cannot be saved, TAB prints a concise warning naming the path
@@ -751,6 +755,16 @@ TAB accepts both forms and preserves accented letters and other Unicode text.
 Files saved in another encoding, such as Windows-1252 (ANSI), may contain
 invalid UTF-8. TAB rejects those files without changing their bytes and asks
 you to reopen them with their original encoding and save them as UTF-8.
+
+Field names are case-sensitive. Each student record accepts `name`, `phone`,
+`email`, `nusStudentId`, `tags` and `flag`. The removed `address` field is still
+accepted and ignored for compatibility with older files. Other keys, such as
+`nusStudentID`, `Email` or `tag`, stop loading with an error naming the unknown
+key, student record number (counting from 1), and name when present, rather
+than silently losing that value on the next save.
+The top-level object accepts `students` and an optional `_comment` description.
+Correct the spelling or remove the unsupported field, then restart TAB; the
+rejected file stays unchanged.
 
 A student who needs follow-up has `"flag": true` in their JSON record. An
 unflagged student normally has no `flag` key; absence, `false`, and `null` all
@@ -810,7 +824,7 @@ closed, since TAB rewrites it from its own copy at the next change.
 
 ## Known issues
 
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
+No known issues are listed at this time.
 
 --------------------------------------------------------------------------------------------------------------------
 

@@ -93,6 +93,8 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentListPanel`, `SummaryPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
+`CommandBox` owns its `CommandHistory` and `CommandTextField`, and calls the static `CommandHighlighter.highlight` method to color the input. The card controls extend JavaFX classes directly: `CardHeadline` extends `Pane`, `CardName` extends `Label`, `TagRow` extends `Region`, and `ContactRow` extends `FlowPane`. These controls are composed in `StudentListCard.fxml`.
+
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/MainWindow.java).
 
 The `UI` component,
@@ -130,6 +132,19 @@ a command. The reference keeps explicit lines short enough for minimum width;
 the long User Guide address is available through c instead of wrapping in the label.
 Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
 command box so quitting cannot insert a stray character. No student data is changed.
+
+#### Restoring window geometry
+
+`MainWindow` supplies each screen's visual bounds to `WindowBounds`, with the
+primary screen first. Equal overlap therefore favors the primary screen.
+Restoration chooses the screen with the greatest overlap with the saved window,
+preserving valid secondary-screen positions, including negative coordinates.
+With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
+nonpositive or nonfinite dimensions use the default size. The window minimum
+also yields to a smaller usable area so it cannot defeat the size correction.
+A window spanning adjacent displays is fitted entirely onto the selected screen,
+even when it was visible across both. This keeps restoration predictable when
+displays have different usable heights or gaps between them.
 
 #### Fitting names and tags on a card
 
@@ -350,6 +365,17 @@ remains unchanged and TAB removes the temporary file where possible.
 including preference-file operations. Entries identify the file path without
 copying student or preference contents. Save completion is logged only after
 the storage delegate returns successfully.
+
+`JsonAdaptedStudent` and `JsonSerializableStudentBook` use Jackson's
+`@JsonAnySetter` callbacks to reject unknown keys while the data is being read.
+The student callback includes the record name and allowed field names in its
+error, and permits the removed `address` key as a compatibility exception.
+`JsonStudentBookStorage` adds the one-based student record number from Jackson's
+mapping path, so even unnamed records or students sharing a name can be located.
+The book also accepts the existing `_comment` metadata key.
+This prevents hand-edited values from disappearing during a later unrelated
+save. The shared JSON mapper keeps its existing behavior for preferences;
+startup follows the existing loading-error path and leaves rejected data intact.
 
 ### Common classes
 
@@ -1892,7 +1918,24 @@ testers are expected to do more *exploratory* testing.
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
    1. Relaunch TAB by double-clicking the JAR file.<br>
-       Expected: The most recent window size and location are retained.
+       Expected: The most recent window size and location are retained when
+       they fit the available display's usable area.
+
+   1. With TAB closed, set `windowWidth` and `windowHeight` in
+      `preferences.json` under `guiSettings` to `1.0E9` and set
+      `windowCoordinates` to `{"x":99999,"y":99999}`. Relaunch.<br>
+      Expected: The entire window fits the primary display's usable area.
+      Its title bar, command box and status bar remain reachable. Close and
+      relaunch again: the corrected bounds are retained and student data is
+      unchanged.
+
+   1. Move a normally sized window to a secondary display, close and relaunch
+      while both displays are connected, then close, disconnect that display
+      and relaunch again.<br>
+      Expected: With both displays, the saved position is retained, including
+      on a display left of the primary. After disconnection, TAB opens fully
+      on an available display without deleting preferences. Repeat after
+      reducing resolution or increasing scaling, including 1280×720 at 150%.
 
 1. Recovering from null preferences or window settings
 
@@ -3100,6 +3143,29 @@ testers are expected to do more *exploratory* testing.
       existed, including its removed `address` keys, and relaunch TAB.<br>
       Expected: TAB loads every student, ignores the old address values and
       treats a missing flag as not needing follow-up.
+
+1. Detecting misspelled data-file keys
+
+   1. Prerequisites: Close TAB and back up a valid multi-student `data/tab.json`.
+      In the second student's record, change `nusStudentId` to `nusStudentID`
+      while retaining the value and leave the other records unchanged.
+
+   1. Launch TAB.<br>
+      Expected: The startup error names `data/tab.json`, the unknown key
+      `nusStudentID`, student record 2, and the affected student's name. It lists
+      the supported student fields. The main window does not open; dismissing the
+      error leaves the file byte-for-byte unchanged.
+
+   1. Restore the backup and repeat with `Email`, `tag` or `Flag` in place of
+      the corresponding supported key. Also try an unknown top-level key
+      beside `students`.<br>
+      Expected: Each unknown key stops loading with a diagnostic identifying
+      its location in a student or in the student book; no value is erased.
+
+   1. Correct the spelling and relaunch, then change another student through
+      TAB and relaunch again.<br>
+      Expected: Every supported value survives the save and relaunch. A legacy
+      `address` key is still ignored and does not prevent loading old files.
 
 1. Recovering from a save failure
 

@@ -17,6 +17,8 @@ import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.exceptions.ParseException;
+import seedu.tab.model.student.Email;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -106,10 +108,9 @@ public class EditCommandParser implements Parser<EditCommand> {
             descriptor.clearEmail();
             return;
         }
-        try {
-            descriptor.setEmail(ParserUtil.parseEmail(trimmedValue));
-        } catch (ParseException e) {
-            problems.add(e.getMessage());
+        Email email = problems.collect(() -> ParserUtil.parseEmail(trimmedValue));
+        if (email != null) {
+            descriptor.setEmail(email);
         }
     }
 
@@ -123,10 +124,9 @@ public class EditCommandParser implements Parser<EditCommand> {
             descriptor.clearNusStudentId();
             return;
         }
-        try {
-            descriptor.setNusStudentId(ParserUtil.parseNusStudentId(trimmedValue));
-        } catch (ParseException e) {
-            problems.add(e.getMessage());
+        NusStudentId nusStudentId = problems.collect(() -> ParserUtil.parseNusStudentId(trimmedValue));
+        if (nusStudentId != null) {
+            descriptor.setNusStudentId(nusStudentId);
         }
     }
 

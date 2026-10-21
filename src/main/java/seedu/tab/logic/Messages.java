@@ -41,6 +41,8 @@ public class Messages {
             + "an option. Options that take a value take one token, and a value holding spaces "
             + "goes in double quotes.";
 
+    private Messages() {} // this class only holds the messages
+
     /**
      * Returns an error message indicating the flags that were given more than once.
      */
