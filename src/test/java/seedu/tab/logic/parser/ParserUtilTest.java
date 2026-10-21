@@ -78,13 +78,11 @@ public class ParserUtilTest {
 
     @Test
     public void parseIndex_outOfRangeInput_throwsParseException() {
-        // the first index that does not fit in an int. The addition is done as a long, because
-        // an int would wrap around and produce a negative index instead of this one
-        String onePastTheLargestIndex = Long.toString((long) Integer.MAX_VALUE + 1);
-        assertEquals("2147483648", onePastTheLargestIndex);
-
+        // the first index that does not fit in an int, one more than the largest one that
+        // does. It is written out rather than added up, because an int addition would wrap
+        // around and produce a negative index instead
         assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
-                ParserUtil.parseIndex(onePastTheLargestIndex));
+                ParserUtil.parseIndex("2147483648"));
     }
 
     @Test
