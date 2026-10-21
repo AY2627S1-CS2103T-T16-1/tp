@@ -100,6 +100,15 @@ public class ParseProblemsTest {
     }
 
     @Test
+    public void collectEach_aValueGivenTwice_keepsItOnce() throws ParseException {
+        ParseProblems problems = new ParseProblems();
+
+        // the same tag named twice is one tag, and naming it twice is not a fault
+        assertEquals(Set.of("T1"), problems.collectEach(List.of("T1", "T1"), String::toUpperCase));
+        problems.throwIfAny();
+    }
+
+    @Test
     public void collectEach_someValuesRejected_keepsTheRestAndRecordsEachReason() {
         ParseProblems problems = new ParseProblems();
 

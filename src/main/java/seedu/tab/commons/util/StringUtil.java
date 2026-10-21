@@ -23,6 +23,8 @@ public class StringUtil {
     private static final Pattern WHITESPACE = Pattern.compile("(?U)\\s+");
     private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
 
+    private StringUtil() {} // this class only holds the helpers
+
     /**
      * Returns true if {@code character} separates one value from the next.
      *
