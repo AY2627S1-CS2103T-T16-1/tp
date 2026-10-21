@@ -54,6 +54,17 @@ public class FlagTest {
     }
 
     @Test
+    public void matchesKeyword_phraseOpeningTheWholeLabel_ignoringCase() {
+        // a phrase quoted as one search term reaches the flag whole rather than word by word,
+        // and it should open the label the way each of its unquoted words does
+        Flag flag = new Flag();
+        for (String opening : List.of("needs follow", "Needs Fo", "NEEDS FOLLOW")) {
+            assertTrue(flag.matchesKeyword(opening), opening + " opens the whole label");
+        }
+        assertFalse(flag.matchesKeyword("follow needs"), "the words in reverse open nothing");
+    }
+
+    @Test
     public void matchesKeyword_fragmentFromMiddleOfWord_returnsFalse() {
         Flag flag = new Flag();
         for (String fragment : List.of("low", "ee", "ed", "lo", "ow", "up", "ollow-up")) {

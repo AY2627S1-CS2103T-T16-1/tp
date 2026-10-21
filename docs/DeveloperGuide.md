@@ -643,8 +643,10 @@ change their identity. The flag is stored as `Optional<Flag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
 Search matches ordinary tags as parts of their inherited `tagName` values, but
-matches the optional flag only when a term names it: the whole label
-`Needs follow-up` or one of its words, ignoring case (`Flag.matchesKeyword`).
+matches the optional flag only when a term opens the label `Needs follow-up`
+or one of its words, ignoring case (`Flag.matchesKeyword`), so a phrase quoted
+as one search term, such as `needs follow`, names the flag the way each of its
+words does on its own.
 The student card and command feedback display the same value, while the card
 keeps the flag in its separate follow-up row.
 
@@ -849,9 +851,9 @@ whitespace runs and applying Unicode NFC normalization. It creates a
 `DetailsContainsKeywordsPredicate`, which checks each keyword or phrase
 against the student's name, NUS Student ID, phone, email, ordinary tags,
 and optional follow-up flag. Matching is case-insensitive; those details
-match partially, while the follow-up flag matches only the whole label
-`Needs follow-up`, one of its words, or the opening letters of a word, so a
-fragment beginning mid-word such as `low` cannot list every flagged student.
+match partially, while the follow-up flag matches only an opening of the label
+`Needs follow-up` or of one of its words, so a fragment beginning mid-word such
+as `low` cannot list every flagged student.
 For a keyword containing only Unicode decimal digits, or those digits with the
 punctuation a phone number is written with (`+`, `-`, `(`, `)`, `.`), the phone
 comparison also checks a copy of the stored phone with non-digit characters
@@ -1323,7 +1325,7 @@ These were raised during requirement gathering and left out of the product.
 
 1.  User requests to find students, providing one or more search terms.
 2.  TAB shows the students for whom any term matches any part of a name, NUS Student ID,
-    phone, email or tag, or names the follow-up status by its label or one of its words,
+    phone, email or tag, or opens the follow-up status label or one of its words,
     regardless of letter case.
 3.  User identifies the intended student.
 4.  User initiates the desired action on that student.
@@ -2876,7 +2878,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Locating students by the follow-up status
 
-1. Whole words and openings of words, but not fragments from the middle
+1. Openings of the label and of its words, but not fragments from the middle
 
    1. Prerequisites: Clear all students (`clear`, then `yes`). Add a flagged student,
       `add Alex Yeoh -p 91234567 -f`, an unflagged student, `add Bernice Yu -p 98765432`,
@@ -2885,6 +2887,9 @@ testers are expected to do more *exploratory* testing.
    1. Test cases: `find follow-up`, `find follow`, `find fol`, and `find needs`.<br>
       Expected: Only Alex Yeoh is shown, with `Found 1 student.`. A term that opens a word of
       the label `Needs follow-up` names the flag.
+   1. Test case: `find "needs follow"`.<br>
+      Expected: Only Alex Yeoh is shown, with `Found 1 student.`. A phrase quoted as one term
+      that opens the whole label names the flag, as each of its words does on its own.
    1. Test case: `find low`.<br>
       Expected: Only Low Jia Hui is shown, with `Found 1 student.`. A fragment beginning
       mid-word in the label does not name the flag, so a search for the surname does not list

@@ -144,7 +144,7 @@ public class DetailsContainsKeywordsPredicateTest {
         Student unflaggedStudent = new StudentBuilder().withName("Alice").withFlag(false).build();
 
         for (String keyword : List.of("follow-up", "FOLLOW-UP", "needs", "NEEDS", "Needs follow-up",
-                "follow", "fol", "need")) {
+                "needs follow", "follow", "fol", "need")) {
             DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of(keyword));
             assertTrue(predicate.test(flaggedStudent), keyword + " should name the follow-up status");
             assertFalse(predicate.test(unflaggedStudent), keyword + " should not match a student without it");

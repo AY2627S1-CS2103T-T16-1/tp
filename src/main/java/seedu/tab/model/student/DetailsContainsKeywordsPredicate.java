@@ -11,8 +11,7 @@ import seedu.tab.commons.util.ToStringBuilder;
  * Tests that a {@code Student}'s details match any of the keywords given.
  * A keyword matches when it appears in the student's name, phone, email, NUS Student ID
  * or tags, ignoring case and allowing partial matches, or when it names the follow-up
- * flag by the whole label {@code Needs follow-up} or by the opening letters of one of
- * its words.
+ * flag by opening the label {@code Needs follow-up} or one of its words.
  * A keyword made only of digits and the punctuation a phone number is written with
  * also matches the phone's digits with non-digit characters removed.
  */

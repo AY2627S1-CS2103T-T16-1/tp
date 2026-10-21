@@ -14,8 +14,10 @@ public class Flag extends Tag {
     }
 
     /**
-     * Returns true if the keyword names this flag: the whole label {@code Needs follow-up},
-     * or the opening letters of one of its words, ignoring case. A fragment from the middle
+     * Returns true if the keyword names this flag: the opening letters of the label
+     * {@code Needs follow-up} as a whole, or of one of its words, ignoring case. Opening
+     * the whole label lets a phrase quoted as one search term, such as {@code "needs follow"},
+     * find the flagged students the unquoted words would. A fragment from the middle
      * of a word, such as {@code low}, never matches, so a search for a surname cannot list
      * every flagged student, while {@code fol} still finds the flagged students a TA
      * remembering only "follow" would look for.
@@ -24,7 +26,7 @@ public class Flag extends Tag {
         if (keyword.isEmpty()) {
             return false;
         }
-        if (FOLLOW_UP_NAME.equalsIgnoreCase(keyword)) {
+        if (FOLLOW_UP_NAME.regionMatches(true, 0, keyword, 0, keyword.length())) {
             return true;
         }
         return Arrays.stream(FOLLOW_UP_NAME.split("\\s+"))
