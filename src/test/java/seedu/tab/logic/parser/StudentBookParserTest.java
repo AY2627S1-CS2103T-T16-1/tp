@@ -10,6 +10,7 @@ import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ import seedu.tab.logic.commands.ListCommand;
 import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
@@ -44,7 +46,7 @@ public class StudentBookParserTest {
             "delete 1",
             "edit 1 -p 91234567",
             "exit",
-            "find John",
+            "find -n John",
             "help",
             "list",
             "tag 1 -a Lab");
@@ -149,9 +151,9 @@ public class StudentBookParserTest {
     @Test
     public void parseCommand_find() throws Exception {
         List<String> keywords = List.of("foo", "bar", "baz");
-        FindCommand command = (FindCommand) parser.parseCommand(
-                FindCommand.COMMAND_WORD + " " + keywords.stream().collect(Collectors.joining(" ")));
-        assertEquals(new FindCommand(new DetailsContainsKeywordsPredicate(keywords)), command);
+        String arguments = keywords.stream().map(keyword -> "-n " + keyword).collect(Collectors.joining(" "));
+        FindCommand command = (FindCommand) parser.parseCommand(FindCommand.COMMAND_WORD + " " + arguments);
+        assertEquals(new FindCommand(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, keywords))), command);
     }
 
     @Test
@@ -168,9 +170,9 @@ public class StudentBookParserTest {
     public void parseCommand_everySeparator_givesTheSameCommandAsASpace() {
         // only add and edit read their arguments with the tokenizer, so testing those alone
         // hides the rest: the others look for an ordinary space and used to keep the separator
-        // as their first character, turning "delete 1" into an invalid index and "find John"
+        // as their first character, turning "delete 1" into an invalid index and "find -n John"
         // into a search for a keyword nobody typed
-        String[] commands = {"delete 1", "edit 1 -p 91234567", "find John", "add John Doe -p 91234567"};
+        String[] commands = {"delete 1", "edit 1 -p 91234567", "find -n John", "add John Doe -p 91234567"};
 
         for (String command : commands) {
             int space = command.indexOf(' ');
@@ -207,7 +209,7 @@ public class StudentBookParserTest {
         // a command pasted from a web page keeps the invisible separator the page ended it
         // with; in delete that separator used to travel into the index itself, where it was
         // reported as an index that is not a positive integer
-        String[] commands = {"delete 1", "edit 1 -p 91234567", "find John", "add John Doe -p 91234567"};
+        String[] commands = {"delete 1", "edit 1 -p 91234567", "find -n John", "add John Doe -p 91234567"};
 
         for (String command : commands) {
             Command baseline = parseOrNull(command);
@@ -363,9 +365,10 @@ public class StudentBookParserTest {
 
     @Test
     public void parseCommand_commandWordInAnotherCase_leavesTheArgumentsAsTyped() throws Exception {
-        FindCommand find = (FindCommand) parser.parseCommand("FIND Alex");
-        assertEquals(new FindCommand(new DetailsContainsKeywordsPredicate(List.of("Alex"))), find);
-        assertNotEquals(new FindCommand(new DetailsContainsKeywordsPredicate(List.of("alex"))), find);
+        FindCommand find = (FindCommand) parser.parseCommand("FIND -n Alex");
+        assertEquals(new FindCommand(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Alex")))), find);
+        assertNotEquals(new FindCommand(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("alex")))),
+                find);
 
         Student student = new StudentBuilder().withName("John Doe").withNusStudentId("A01234567X").build();
         String typed = StudentUtil.getAddCommand(student);

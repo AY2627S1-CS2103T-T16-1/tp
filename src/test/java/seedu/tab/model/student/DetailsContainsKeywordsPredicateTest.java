@@ -20,16 +20,16 @@ public class DetailsContainsKeywordsPredicateTest {
         List<String> secondPredicateKeywordList = List.of("first", "second");
 
         DetailsContainsKeywordsPredicate firstPredicate =
-                new DetailsContainsKeywordsPredicate(firstPredicateKeywordList);
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, firstPredicateKeywordList));
         DetailsContainsKeywordsPredicate secondPredicate =
-                new DetailsContainsKeywordsPredicate(secondPredicateKeywordList);
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, secondPredicateKeywordList));
 
         // same object -> returns true
         assertTrue(firstPredicate.equals(firstPredicate));
 
         // same values -> returns true
         DetailsContainsKeywordsPredicate firstPredicateCopy =
-                new DetailsContainsKeywordsPredicate(firstPredicateKeywordList);
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, firstPredicateKeywordList));
         assertTrue(firstPredicate.equals(firstPredicateCopy));
 
         // different types -> returns false
@@ -45,43 +45,21 @@ public class DetailsContainsKeywordsPredicateTest {
     @Test
     public void test_keywordInName_returnsTrue() {
         // Full name match
-        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of("Alice"));
+        DetailsContainsKeywordsPredicate predicate =
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Alice")));
         assertTrue(predicate.test(new StudentBuilder().withName("Alice Bob").build()));
 
         // Single word of a multi-word name
-        predicate = new DetailsContainsKeywordsPredicate(List.of("Bob"));
+        predicate = new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Bob")));
         assertTrue(predicate.test(new StudentBuilder().withName("Alice Bob").build()));
 
         // Partial match
-        predicate = new DetailsContainsKeywordsPredicate(List.of("lic"));
+        predicate = new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("lic")));
         assertTrue(predicate.test(new StudentBuilder().withName("Alice Bob").build()));
 
         // Mixed-case keyword
-        predicate = new DetailsContainsKeywordsPredicate(List.of("aLIce"));
+        predicate = new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("aLIce")));
         assertTrue(predicate.test(new StudentBuilder().withName("Alice Bob").build()));
-    }
-
-    @Test
-    public void test_keywordInOtherDetails_returnsTrue() {
-        StudentBuilder studentBuilder = new StudentBuilder().withName("Alice")
-                .withPhone("91234567").withEmail("alice@example.com")
-                .withTags("friend", "colleague", "home");
-
-        // Partial phone number match
-        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of("234"));
-        assertTrue(predicate.test(studentBuilder.build()));
-
-        // Partial email match
-        predicate = new DetailsContainsKeywordsPredicate(List.of("alice@example"));
-        assertTrue(predicate.test(studentBuilder.build()));
-
-        // Tag match
-        predicate = new DetailsContainsKeywordsPredicate(List.of("friend"));
-        assertTrue(predicate.test(studentBuilder.build()));
-
-        // Partial tag match
-        predicate = new DetailsContainsKeywordsPredicate(List.of("ho"));
-        assertTrue(predicate.test(studentBuilder.build()));
     }
 
     @Test
@@ -90,14 +68,14 @@ public class DetailsContainsKeywordsPredicateTest {
                 "9123\u20114567", "9123 4567 ext 21")) {
             Student student = new StudentBuilder().withPhone(phone).build();
             for (String keyword : List.of("91234567", "91234", "345", "7")) {
-                assertTrue(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student),
+                assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
                         phone + " should match " + keyword);
             }
         }
         Student student = new StudentBuilder().withPhone("+65 9123 4567").build();
-        assertTrue(new DetailsContainsKeywordsPredicate(List.of("6591234567")).test(student));
+        assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of("6591234567"))).test(student));
         Student unicodeStudent = new StudentBuilder().withPhone("٩١٢٣-٤٥٦٧").build();
-        assertTrue(new DetailsContainsKeywordsPredicate(List.of("٩١٢٣٤٥٦٧")).test(unicodeStudent));
+        assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of("٩١٢٣٤٥٦٧"))).test(unicodeStudent));
     }
 
     @Test
@@ -107,7 +85,7 @@ public class DetailsContainsKeywordsPredicateTest {
         Student student = new StudentBuilder().withPhone("+65 9123 4567").build();
         for (String keyword : List.of("+6591234567", "9123-4567", "(9123)4567", "9123.4567",
                 "+65-9123-4567", "+65")) {
-            assertTrue(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student),
+            assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
                     keyword + " should match +65 9123 4567 by its digits");
         }
     }
@@ -116,7 +94,7 @@ public class DetailsContainsKeywordsPredicateTest {
     public void test_punctuatedDigitsNotInPhone_returnsFalse() {
         Student student = new StudentBuilder().withPhone("+65 9123 4567").build();
         for (String keyword : List.of("9123-4568", "999-9999", "ext-21", "---", "+()-.")) {
-            assertFalse(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student),
+            assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
                     keyword + " should not match +65 9123 4567");
         }
     }
@@ -125,11 +103,11 @@ public class DetailsContainsKeywordsPredicateTest {
     public void test_formattedPhoneText_preservesLiteralMatching() {
         Student student = new StudentBuilder().withPhone("+65 9123 4567 ext 21").build();
         for (String keyword : List.of("+65", "9123 4567", "EXT 21", "ext")) {
-            assertTrue(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student));
+            assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student));
         }
         for (String keyword : List.of("91234568", "76543219", "123456789", "missing91234567",
                 "ext 22", "---")) {
-            assertFalse(new DetailsContainsKeywordsPredicate(List.of(keyword)).test(student));
+            assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student));
         }
     }
 
@@ -137,30 +115,7 @@ public class DetailsContainsKeywordsPredicateTest {
     public void test_digitsAcrossOtherDetailFormatting_returnsFalse() {
         Student student = new StudentBuilder().withName("Lab 9123 4567").withPhone("88888888")
                 .withEmail("9123-4567@example.com").withTags("9123-4567").build();
-        assertFalse(new DetailsContainsKeywordsPredicate(List.of("91234567")).test(student));
-    }
-
-    @Test
-    public void test_keywordInFollowUpFlag_matchesOnlyFlaggedStudent() {
-        Student flaggedStudent = new StudentBuilder().withName("Alice").withFlag(true).build();
-        Student unflaggedStudent = new StudentBuilder().withName("Alice").withFlag(false).build();
-
-        for (String keyword : List.of("follow-up", "FOLLOW-UP", "needs", "NEEDS", "Needs follow-up",
-                "needs follow", "follow", "fol", "need")) {
-            DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of(keyword));
-            assertTrue(predicate.test(flaggedStudent), keyword + " should name the follow-up status");
-            assertFalse(predicate.test(unflaggedStudent), keyword + " should not match a student without it");
-        }
-    }
-
-    @Test
-    public void test_fragmentOfFollowUpFlag_doesNotMatchFlaggedStudent() {
-        Student flaggedStudent = new StudentBuilder().withName("Alex Yeoh").withFlag(true).build();
-
-        for (String fragment : List.of("low", "ee", "ed", "lo", "ow", "up")) {
-            DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of(fragment));
-            assertFalse(predicate.test(flaggedStudent), fragment + " begins mid-word in the flag's label");
-        }
+        assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of("91234567"))).test(student));
     }
 
     @Test
@@ -170,7 +125,8 @@ public class DetailsContainsKeywordsPredicateTest {
                 .withPhone("91234567").withoutEmail()
                 .withTags("friend");
 
-        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of("example"));
+        DetailsContainsKeywordsPredicate predicate =
+                new DetailsContainsKeywordsPredicate(Map.of(Field.EMAIL, List.of("example")));
         assertFalse(predicate.test(studentBuilder.build()));
 
         // Student with email should match
@@ -185,29 +141,21 @@ public class DetailsContainsKeywordsPredicateTest {
         Student withoutNusStudentId = new StudentBuilder().withName("Alice").withoutNusStudentId().build();
         Student withNusStudentId = new StudentBuilder(withoutNusStudentId).withNusStudentId("A01234567X").build();
         DetailsContainsKeywordsPredicate predicate =
-                new DetailsContainsKeywordsPredicate(List.of("a0123"));
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NUS_STUDENT_ID, List.of("a0123")));
 
         assertTrue(predicate.test(withNusStudentId));
         assertFalse(predicate.test(withoutNusStudentId));
     }
 
     @Test
-    public void test_keywordsMatchingDifferentDetails_returnsTrue() {
-        // One keyword matches the name, another only the phone number
-        DetailsContainsKeywordsPredicate predicate =
-                new DetailsContainsKeywordsPredicate(List.of("ALICE", "234"));
-        assertTrue(predicate.test(new StudentBuilder().withName("Alice Bob")
-                .withPhone("91234567").build()));
-    }
-
-    @Test
     public void test_noKeywordMatches_returnsFalse() {
         // Zero keywords
-        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of());
+        DetailsContainsKeywordsPredicate predicate =
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of()));
         assertFalse(predicate.test(new StudentBuilder().withName("Alice").build()));
 
         // Non-matching keyword
-        predicate = new DetailsContainsKeywordsPredicate(List.of("Carol"));
+        predicate = new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Carol")));
         assertFalse(predicate.test(new StudentBuilder().withName("Alice Bob")
                 .withPhone("91234567").withEmail("alice@example.com")
                 .withTags("friend").build()));
@@ -291,9 +239,11 @@ public class DetailsContainsKeywordsPredicateTest {
     @Test
     public void toStringMethod() {
         List<String> keywords = List.of("keyword1", "keyword2");
-        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(keywords);
+        DetailsContainsKeywordsPredicate predicate =
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, keywords));
 
-        String expected = DetailsContainsKeywordsPredicate.class.getCanonicalName() + "{keywords=" + keywords + "}";
+        String expected = DetailsContainsKeywordsPredicate.class.getCanonicalName()
+                + "{keywordsByField=" + Map.of(Field.NAME, keywords) + "}";
         assertEquals(expected, predicate.toString());
     }
 

@@ -28,7 +28,7 @@ public class HelpCommandTest {
     public void summary_supportedCommandsAndOptions_coversEverySpelling() throws Exception {
         StudentBookParser parser = new StudentBookParser();
         for (String example : List.of("add Alex -p 91234567", "edit 1 -n Alex", "tag 1 -a T1",
-                "tag 1 -r T1", "tag 1 --remove T1", "find Alex", "list", "delete 1", "clear", "help", "exit")) {
+                "tag 1 -r T1", "tag 1 --remove T1", "find -n Alex", "list", "delete 1", "clear", "help", "exit")) {
             parser.parseCommand(example);
             assertTrue(SHOWING_HELP_MESSAGE.lines().map(String::stripLeading).anyMatch(line ->
                     line.startsWith(example.split(" ")[0] + " —")

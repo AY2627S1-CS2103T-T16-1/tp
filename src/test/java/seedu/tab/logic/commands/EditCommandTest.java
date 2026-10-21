@@ -21,6 +21,7 @@ import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,7 @@ import seedu.tab.model.ModelManager;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
@@ -328,14 +330,16 @@ public class EditCommandTest {
 
     @Test
     public void execute_editRemovingMatchAfterFilter_shiftsRemainingIndices() {
-        model.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of("Meier")));
+        model.updateFilteredStudentList(
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Meier"))));
         Student firstMatch = model.getFilteredStudentList().get(0);
         Student secondMatch = model.getFilteredStudentList().get(1);
 
         EditCommand renameFirst = new EditCommand(INDEX_FIRST_STUDENT,
                 new EditStudentDescriptorBuilder().withName(VALID_NAME_BOB).build());
         Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
-        expectedModel.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of("Meier")));
+        expectedModel.updateFilteredStudentList(
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Meier"))));
         Student renamed = new StudentBuilder(firstMatch).withName(VALID_NAME_BOB).build();
         expectedModel.setStudent(firstMatch, renamed);
         assertCommandSuccess(renameFirst, model, String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
@@ -346,7 +350,8 @@ public class EditCommandTest {
         EditCommand editShifted = new EditCommand(INDEX_FIRST_STUDENT,
                 new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
         Model shiftedModel = new ModelManager(new StudentBook(expectedModel.getStudentBook()), new UserPrefs());
-        shiftedModel.updateFilteredStudentList(new DetailsContainsKeywordsPredicate(List.of("Meier")));
+        shiftedModel.updateFilteredStudentList(
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Meier"))));
         Student editedShifted = new StudentBuilder(secondMatch).withPhone(VALID_PHONE_BOB).build();
         shiftedModel.setStudent(secondMatch, editedShifted);
         assertCommandSuccess(editShifted, model, String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,

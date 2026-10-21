@@ -4,13 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandSuccess;
+import static seedu.tab.testutil.TypicalStudents.BENSON;
 import static seedu.tab.testutil.TypicalStudents.CARL;
 import static seedu.tab.testutil.TypicalStudents.DANIEL;
-import static seedu.tab.testutil.TypicalStudents.ELLE;
-import static seedu.tab.testutil.TypicalStudents.FIONA;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +20,7 @@ import seedu.tab.model.ModelManager;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -33,9 +34,9 @@ public class FindCommandTest {
     @Test
     public void equals() {
         DetailsContainsKeywordsPredicate firstPredicate =
-                new DetailsContainsKeywordsPredicate(List.of("first"));
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("first")));
         DetailsContainsKeywordsPredicate secondPredicate =
-                new DetailsContainsKeywordsPredicate(List.of("second"));
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("second")));
 
         FindCommand findFirstCommand = new FindCommand(firstPredicate);
         FindCommand findSecondCommand = new FindCommand(secondPredicate);
@@ -60,7 +61,7 @@ public class FindCommandTest {
     @Test
     public void execute_zeroKeywords_noStudentFound() {
         String expectedMessage = Messages.getStudentsFoundOverview(0);
-        DetailsContainsKeywordsPredicate predicate = preparePredicate(" ");
+        DetailsContainsKeywordsPredicate predicate = preparePredicate(Field.NAME, " ");
         FindCommand command = new FindCommand(predicate);
         expectedModel.updateFilteredStudentList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
@@ -68,19 +69,20 @@ public class FindCommandTest {
     }
 
     @Test
-    public void execute_multipleKeywords_multipleStudentsFound() {
-        String expectedMessage = Messages.getStudentsFoundOverview(3);
-        DetailsContainsKeywordsPredicate predicate = preparePredicate("Kurz Elle Kunz");
+    public void execute_multipleKeywords_requiresEveryKeyword() {
+        String expectedMessage = Messages.getStudentsFoundOverview(2);
+        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(Map.of(
+                Field.NAME, List.of("Meier"), Field.TAG, List.of("friends")));
         FindCommand command = new FindCommand(predicate);
         expectedModel.updateFilteredStudentList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
-        assertEquals(List.of(CARL, ELLE, FIONA), model.getFilteredStudentList());
+        assertEquals(List.of(BENSON, DANIEL), model.getFilteredStudentList());
     }
 
     @Test
     public void execute_phoneFragment_studentFound() {
         String expectedMessage = Messages.getStudentsFoundOverview(1);
-        DetailsContainsKeywordsPredicate predicate = preparePredicate("52533");
+        DetailsContainsKeywordsPredicate predicate = preparePredicate(Field.PHONE, "52533");
         FindCommand command = new FindCommand(predicate);
         expectedModel.updateFilteredStudentList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
@@ -90,21 +92,22 @@ public class FindCommandTest {
     @Test
     public void execute_repeatedSearches_updatesCount() {
         // First search matches 1 student
-        DetailsContainsKeywordsPredicate firstPredicate = preparePredicate("52533");
+        DetailsContainsKeywordsPredicate firstPredicate = preparePredicate(Field.PHONE, "52533");
         FindCommand firstCommand = new FindCommand(firstPredicate);
         expectedModel.updateFilteredStudentList(firstPredicate);
         assertCommandSuccess(firstCommand, model, Messages.getStudentsFoundOverview(1), expectedModel);
         assertEquals(List.of(DANIEL), model.getFilteredStudentList());
 
-        // Second search with different keywords matches 3 students
-        DetailsContainsKeywordsPredicate secondPredicate = preparePredicate("Kurz Elle Kunz");
+        // Second search with different keywords matches 2 students
+        DetailsContainsKeywordsPredicate secondPredicate = new DetailsContainsKeywordsPredicate(Map.of(
+                Field.NAME, List.of("Meier"), Field.TAG, List.of("friends")));
         FindCommand secondCommand = new FindCommand(secondPredicate);
         expectedModel.updateFilteredStudentList(secondPredicate);
-        assertCommandSuccess(secondCommand, model, Messages.getStudentsFoundOverview(3), expectedModel);
-        assertEquals(List.of(CARL, ELLE, FIONA), model.getFilteredStudentList());
+        assertCommandSuccess(secondCommand, model, Messages.getStudentsFoundOverview(2), expectedModel);
+        assertEquals(List.of(BENSON, DANIEL), model.getFilteredStudentList());
 
         // Third search with no matches reports 0 students
-        DetailsContainsKeywordsPredicate thirdPredicate = preparePredicate("nonexistent");
+        DetailsContainsKeywordsPredicate thirdPredicate = preparePredicate(Field.NAME, "nonexistent");
         FindCommand thirdCommand = new FindCommand(thirdPredicate);
         expectedModel.updateFilteredStudentList(thirdPredicate);
         assertCommandSuccess(thirdCommand, model, Messages.getStudentsFoundOverview(0), expectedModel);
@@ -114,7 +117,7 @@ public class FindCommandTest {
     @Test
     public void execute_nusStudentIdFragmentIgnoringCase_studentFound() {
         String expectedMessage = Messages.getStudentsFoundOverview(1);
-        DetailsContainsKeywordsPredicate predicate = preparePredicate("a2345");
+        DetailsContainsKeywordsPredicate predicate = preparePredicate(Field.NUS_STUDENT_ID, "a2345");
         FindCommand command = new FindCommand(predicate);
         expectedModel.updateFilteredStudentList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
@@ -135,7 +138,7 @@ public class FindCommandTest {
         Model localExpectedModel = new ModelManager(studentBook, new UserPrefs());
 
         DetailsContainsKeywordsPredicate predicate =
-                new DetailsContainsKeywordsPredicate(List.of("Lab 3"));
+                new DetailsContainsKeywordsPredicate(Map.of(Field.TAG, List.of("Lab 3")));
         FindCommand command = new FindCommand(predicate);
         localExpectedModel.updateFilteredStudentList(predicate);
 
@@ -159,7 +162,8 @@ public class FindCommandTest {
         Model localModel = new ModelManager(studentBook, new UserPrefs());
         Model localExpectedModel = new ModelManager(studentBook, new UserPrefs());
 
-        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of("low"));
+        DetailsContainsKeywordsPredicate predicate =
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("low")));
         FindCommand command = new FindCommand(predicate);
         localExpectedModel.updateFilteredStudentList(predicate);
 
@@ -169,7 +173,7 @@ public class FindCommandTest {
     }
 
     @Test
-    public void execute_mixedPhraseAndKeyword_matchesEither() {
+    public void execute_mixedPhraseAndKeyword_requiresBoth() {
         Student phraseStudent = new StudentBuilder().withName("Alice Tan")
                 .withPhone("91111111").withTags("Lab 3").build();
         Student keywordStudent = new StudentBuilder().withName("Bob Lee")
@@ -185,18 +189,19 @@ public class FindCommandTest {
         Model localExpectedModel = new ModelManager(studentBook, new UserPrefs());
 
         DetailsContainsKeywordsPredicate predicate =
-                new DetailsContainsKeywordsPredicate(List.of("Lab 3", "Bob"));
+                new DetailsContainsKeywordsPredicate(Map.of(Field.TAG, List.of("Lab 3"), Field.NAME, List.of("Alice")));
         FindCommand command = new FindCommand(predicate);
         localExpectedModel.updateFilteredStudentList(predicate);
 
         assertCommandSuccess(command, localModel,
-                Messages.getStudentsFoundOverview(2), localExpectedModel);
-        assertEquals(List.of(phraseStudent, keywordStudent), localModel.getFilteredStudentList());
+                Messages.getStudentsFoundOverview(1), localExpectedModel);
+        assertEquals(List.of(phraseStudent), localModel.getFilteredStudentList());
     }
 
     @Test
     public void toStringMethod() {
-        DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(List.of("keyword"));
+        DetailsContainsKeywordsPredicate predicate =
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("keyword")));
         FindCommand findCommand = new FindCommand(predicate);
         String expected = FindCommand.class.getCanonicalName() + "{predicate=" + predicate + "}";
         assertEquals(expected, findCommand.toString());
@@ -205,7 +210,7 @@ public class FindCommandTest {
     /**
      * Parses {@code userInput} into a {@code DetailsContainsKeywordsPredicate}.
      */
-    private DetailsContainsKeywordsPredicate preparePredicate(String userInput) {
-        return new DetailsContainsKeywordsPredicate(List.of(userInput.split("\\s+")));
+    private DetailsContainsKeywordsPredicate preparePredicate(Field field, String userInput) {
+        return new DetailsContainsKeywordsPredicate(Map.of(field, List.of(userInput.split("\\s+"))));
     }
 }

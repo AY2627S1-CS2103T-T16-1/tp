@@ -65,7 +65,7 @@ public class CommandDispatchAndPersistenceTest {
         assertEquals(ListCommand.formatSuccessMessage(1), listResult.getFeedbackToUser());
 
         // Find student
-        CommandResult findResult = logic.execute(FindCommand.COMMAND_WORD + " Amy");
+        CommandResult findResult = logic.execute(FindCommand.COMMAND_WORD + " -n Amy");
         assertEquals(1, model.getFilteredStudentList().size());
         assertEquals(Messages.getStudentsFoundOverview(1),
                 findResult.getFeedbackToUser());
