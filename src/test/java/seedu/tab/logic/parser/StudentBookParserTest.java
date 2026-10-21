@@ -268,6 +268,18 @@ public class StudentBookParserTest {
     }
 
     @Test
+    public void parseCommand_optionValueHoldingAFormatCharacter_isReadWithoutIt() throws Exception {
+        // a mark pasted between an option and its value would otherwise land in the field
+        // itself, where the stored value looks right to the user but fails validation (#308
+        // reports this for email); both fields that were left unnormalized are pinned here
+        Student student = new StudentBuilder().withName("Jane Tan").withPhone("90001111")
+                .withEmail("jane@example.com").withNusStudentId("A01234567X").build();
+        AddCommand command = (AddCommand) parser.parseCommand(
+                "add Jane Tan -p 90001111 -e \u200Ejane@example.com -i \u200EA01234567X");
+        assertEquals(new AddCommand(student), command);
+    }
+
+    @Test
     public void parseCommand_joinerFormatCharacters_areKept() {
         // Sinhala and Arabic need the joiners to shape a word, so a command word holding one
         // is a different word rather than the same word with a character removed
