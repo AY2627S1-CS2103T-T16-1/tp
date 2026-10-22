@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
@@ -134,14 +135,14 @@ public class EditCommandParser implements Parser<EditCommand> {
 
     /**
      * Parses the tags the command supplied into the set that replaces the student's own, or
-     * returns nothing when the command leaves the tags alone. A single empty value, which is
-     * how {@code -t ""} is spelled, asks for every tag to be removed.
+     * returns nothing when the command leaves the tags alone. A single value that is empty
+     * after field normalization, such as {@code -t " "}, asks for every tag to be removed.
      */
     private static Optional<Set<Tag>> parseTagsForEdit(ParseProblems problems, List<String> tags) {
         if (tags.isEmpty()) {
             return Optional.empty();
         }
-        if (tags.size() == 1 && tags.get(0).isEmpty()) {
+        if (tags.size() == 1 && StringUtil.normalizeFieldValue(tags.getFirst()).isEmpty()) {
             return Optional.of(Set.of());
         }
         return Optional.of(problems.collectEach(tags, ParserUtil::parseTag));

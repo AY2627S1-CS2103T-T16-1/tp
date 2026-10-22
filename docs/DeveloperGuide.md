@@ -454,6 +454,10 @@ for a single-valued field are duplicates rather than independent fields.
 Value-taking options take the token after them, and `-t` or `--tag` repeats
 for `add` and `edit`. The `tag` command takes exactly one tag through `-a`/`--add`
 for addition or `-r`/`--remove` for removal.
+For `edit`, a single tag value that is empty after
+`StringUtil.normalizeFieldValue` clears all tags. This makes quoted whitespace,
+including Unicode spaces, behave like `-t ""`. A blank value alongside another
+tag still fails validation so an ambiguous replacement cannot silently discard tags.
 They also accept a value joined to any short or long marker by an equals sign.
 `FlagTokenizer` splits only on the first equals sign, so later ones remain in
 the value. An attached value is unambiguously part of its option when it opens
@@ -2697,6 +2701,21 @@ testers are expected to do more *exploratory* testing.
    1. Test cases: `edit` and `edit INDEX`<br>
       Expected: No change. The first names the missing index and says a field
       to edit is needed; the second asks only for a field.
+
+### Clearing a student's tags with a blank value
+
+1. Removing all tags while preserving the rest of a record
+
+   1. Prerequisites: Add `add Alice Tan -p 91234567 -e alice@example.com
+      --id A1234567X -t T1 -t "Lab 1" -f` as one line and note Alice's `INDEX`.
+   1. Test case: `edit INDEX -t "   "`.<br>
+      Expected: All general tags disappear. Name, phone, email, NUS Student ID,
+      and follow-up status remain unchanged, including after restarting TAB.
+   1. Test case: Repeat with `edit INDEX --tag=" "` and a copied non-breaking
+      space (U+00A0) between the quotes.<br>
+      Expected: Success even when tags are already absent, with no other changes.
+   1. Test case: `edit INDEX -t " " -t T2`.<br>
+      Expected: An invalid-tag error. No record or saved-file changes.
 
 ### Clearing a student's email
 

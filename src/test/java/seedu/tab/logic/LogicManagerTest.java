@@ -43,6 +43,7 @@ import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
+import seedu.tab.model.tag.Tag;
 import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.storage.JsonUserPrefsStorage;
 import seedu.tab.storage.StorageManager;
@@ -294,6 +295,33 @@ public class LogicManagerTest {
                 Messages.getErrorMessageForInvalidValue("Email", "bob!yahoo",
                         Email.getFailureReason("bob!yahoo")));
         assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+    }
+
+    @Test
+    public void execute_blankTagValue_clearsOnlyTagsAndPersists() throws Exception {
+        Student student = new StudentBuilder(AMY).withNusStudentId("A1234567X")
+                .withTags("Lab 1", "T1").withFlag(true).build();
+        Student expected = new StudentBuilder(student).withTags().build();
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        for (String command : List.of("edit 1 -t \" \"", "edit 1 --tag=\"   \"",
+                "edit 1 -t \"\u00a0\u202f\u3000\"")) {
+            model = new ModelManager();
+            model.addStudent(student);
+            setUp();
+            assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(expected)),
+                    logic.execute(command).getFeedbackToUser());
+            assertEquals(List.of(expected), model.getStudentBook().getStudentList());
+            assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
+            model = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
+            setUp();
+            assertEquals(List.of(expected), model.getFilteredStudentList());
+            String savedJson = Files.readString(storage.getStudentBookFilePath());
+            logic.execute(command);
+            assertParseException("edit 1 -t \" \" -t T2",
+                    Messages.getErrorMessageForInvalidValue("Tag", "", Tag.getFailureReason("")));
+            assertEquals(List.of(expected), model.getStudentBook().getStudentList());
+            assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        }
     }
 
     @Test

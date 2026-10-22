@@ -453,12 +453,23 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_blankTagValue_clearsTags() {
+        EditCommand expected = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withTags().build());
+        for (String blank : List.of("", " ", "   ", "\t", "\u00a0", "\u202f\u3000")) {
+            assertParseSuccess(parser, "1 -t \"" + blank + "\"", expected);
+            assertParseSuccess(parser, "1 --tag=\"" + blank + "\"", expected);
+        }
+    }
+
+    @Test
     public void parse_emptyTagBesideAnotherTag_isRefused() {
-        // -t "" clears the tags only on its own; together with a tag it is an empty value
-        assertParseFailure(parser, "1" + TAG_FRIEND + NO_TAGS,
-                Messages.getErrorMessageForInvalidValue("Tag", "", Tag.getFailureReason("")));
-        assertParseFailure(parser, "1" + NO_TAGS + TAG_FRIEND,
-                Messages.getErrorMessageForInvalidValue("Tag", "", Tag.getFailureReason("")));
+        for (String blank : List.of("", " ", "   ", "\u00a0")) {
+            String blankTag = " -t \"" + blank + "\"";
+            String expected = Messages.getErrorMessageForInvalidValue("Tag", blank.trim(), Tag.getFailureReason(blank));
+            assertParseFailure(parser, "1" + TAG_FRIEND + blankTag, expected);
+            assertParseFailure(parser, "1" + blankTag + TAG_FRIEND, expected);
+        }
     }
 
     @Test
