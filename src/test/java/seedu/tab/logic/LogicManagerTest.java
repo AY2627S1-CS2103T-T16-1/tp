@@ -318,6 +318,33 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_repeatedFollowUpOptions_reportsOptionsAndPreservesStateAndStorage() throws Exception {
+        model.addStudent(new StudentBuilder(AMY).withFlag(true).build());
+        model.updateFilteredStudentList(student -> false);
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.updateFilteredStudentList(student -> false);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        storage.saveStudentBook(model.getStudentBook());
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        for (var entry : Map.of(
+                "add Priya Nair -p 91234567 --follow-up -f", "--follow-up",
+                "add Priya Nair -p 91234567 -f -f", "-f",
+                "edit 1 -f -f", "-f",
+                "edit 1 --follow-up --follow-up", "--follow-up",
+                "edit 1 -nf --no-follow-up", "-nf",
+                "find -f --follow-up", "-f",
+                "find --no-follow-up -nf", "--no-follow-up",
+                "edit 1 -p 81112222 --phone 82223333 -f -f", "-p -f").entrySet()) {
+            String expected = "Options given more than once: " + entry.getValue()
+                    + ". Give each listed option only once.";
+            assertCommandFailure(entry.getKey(), ParseException.class, expected, expectedModel);
+            assertTrue(model.getFilteredStudentList().isEmpty());
+            assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        }
+        assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
+    }
+
+    @Test
     public void execute_explicitFollowUpEdits_idempotentAndPersistAcrossReloads() throws Exception {
         Student original = new StudentBuilder(AMY).withNusStudentId("A01234567X").withFlag(false).build();
         model.addStudent(original);
