@@ -1055,9 +1055,11 @@ model. An empty book instead returns a no-op message without a prompt.
 `pendingClearCommand`, an `Optional<ClearCommand>`, and returns before the
 usual storage write. `Optional.empty()` represents no pending request.
 While the request is pending, it reads the
-next input as a reply to the concise `[y/N]` prompt. Only surrounding Unicode
-whitespace is trimmed; internal characters are kept so a value cannot become
-an accepted word by removing characters from within it. Replies ignore case.
+next input as a reply to the concise `[y/N]` prompt. It first applies
+`StringUtil.stripFormatCharacters`, sharing the command parser's treatment of
+copied invisible marks while preserving shaping joiners. It then trims only
+surrounding Unicode whitespace; internal spaces and visible characters are
+kept so extra words cannot become a confirmation. Replies ignore case.
 Trimming scans from both ends with `StringUtil.isWhitespace`, retaining the
 command parser's Unicode whitespace rules. This takes linear time at worst;
 an internal whitespace run is never searched for a trailing match.
@@ -3097,7 +3099,14 @@ testers are expected to do more *exploratory* testing.
       Expected: All students disappear, the saved book is empty, and
       restarting TAB shows an empty list.
 
-   1. Test case: Enter `clear` again.<br>
+   1. Test case: Add fresh records and enter `clear`. Paste `y` followed by
+      U+200E LEFT-TO-RIGHT MARK. Repeat with fresh records and U+200B ZERO WIDTH SPACE.<br>
+      Expected: Each reply confirms and saves an empty book. Add fresh records and repeat with `n`
+      followed by either mark, or the mark alone: each cancels without changing
+      the filter or JSON file. A marked `yellow`, or `y es`, remains invalid
+      and keeps confirmation pending without saving. Cancel with plain `n`.
+
+   1. Test case: Clear the test records, confirm, then enter `clear` again.<br>
       Expected: TAB reports that the book is already empty. No confirmation
       is pending, so `help` works immediately.
 
