@@ -770,7 +770,17 @@ on exit means the window settings could not be saved; TAB still closes normally.
 
 ### Editing the data file
 
-TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.json`. Advanced users are welcome to update data directly by editing that data file.
+TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.json`.
+Advanced users can edit this file directly:
+
+1. Close every TAB window using this file, then make a backup of `data/tab.json`.
+2. Edit the file, preserve its JSON structure, and save it as UTF-8.
+3. Restart TAB to load the edited records and check the changes.
+
+TAB reads student data only at startup. Edits made while TAB is open do not
+appear in that session and can be overwritten by the next command that changes
+student records (`add`, `edit`, `tag`, `delete`, or a confirmed `clear`). Always
+close TAB before making further edits to the file.
 
 Save the file as **UTF-8**, with or without a leading byte order mark (BOM).
 TAB accepts both forms and preserves accented letters and other Unicode text.
