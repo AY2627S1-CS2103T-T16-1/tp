@@ -1203,8 +1203,8 @@ slots per semester. They are usually fast typists who prefer a CLI.
 
 **Value proposition**: Manage a semester of students faster than a spreadsheet
 or a mouse-driven contact app. They can find anyone by any field, slice the list
-by tag, and see who is still awaiting a reply. Fully offline, in a plain-text
-file locally, with every change undoable.
+by tag, and see who is still awaiting a reply. Records stay fully offline in a
+local plain-text file.
 
 
 ### User stories
