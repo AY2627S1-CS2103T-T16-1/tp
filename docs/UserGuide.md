@@ -738,7 +738,10 @@ stay unchanged until you reply in the command line and press Enter:
 * `n`, `no`, or Enter without a reply cancels without changing any records or the saved file.
 
 Replies ignore case and surrounding whitespace: `Y`, `yEs`, and `yeS` also
-confirm; `N` and `nO` also cancel. Cancellation is the `[y/N]` default.
+confirm; `N` and `nO` also cancel. Invisible format marks copied with a reply
+are ignored, just as in commands; the shaping joiners needed by some scripts
+are preserved. A reply containing only ignored marks and whitespace cancels.
+Cancellation is the `[y/N]` default.
 Only the exact replies above are accepted: words such as
 `yellow` and `nope` are invalid. Any other reply, including another command,
 leaves the data unchanged and answers `Invalid reply. Enter y/yes or n/no
