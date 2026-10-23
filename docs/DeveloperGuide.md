@@ -172,10 +172,15 @@ The details container's clip remains a backstop protecting the follow-up pill.
 
 #### Colouring the command line
 
-`CommandTextField` converts tab and line separators to spaces in text
-replacement before JavaFX filters control characters. It preserves pasted
-word boundaries while keeping the command on one line, including when a
-paste replaces selected text. CRLF is treated as one separator.
+`CommandTextField` converts separators to spaces in text replacement before
+JavaFX filters control characters. It asks `StringUtil#isWhitespace` the
+question the tokenizer asks of each character, so the box cannot hide a
+boundary the parser reads: JavaFX deletes a vertical tab or a form feed along
+with the other control characters, and draws a line, paragraph or next-line
+separator with no width, each of which joins the words around it on screen.
+The field preserves pasted word boundaries while keeping the command on one
+line, including when a paste replaces selected text. CRLF is treated as one
+separator.
 
 A `TextField` cannot colour its own content, so `CommandBox` keeps the field
 for input and draws a coloured copy of the command behind it, with the field's
@@ -2880,6 +2885,24 @@ testers are expected to do more *exploratory* testing.
    1. Paste two lines into a selected part of another command.<br>
       Expected: Line breaks become spaces, the selection is replaced, and
       the caret follows the inserted text. Nothing runs before Enter.
+
+1. Pasting a soft line break
+
+   1. Put `Siew Ling` and `Goh` on the clipboard with a soft line break
+      between them, as a slide text box holds them when the two lines were
+      joined with Shift+Enter. Without slides, copy a vertical tab (`U+000B`)
+      between the words: on Linux `printf 'Siew Ling\vGoh' | xclip -selection
+      clipboard`, on macOS `printf 'Siew Ling\vGoh' | pbcopy`, on Windows
+      `Set-Clipboard -Value "Siew Ling$([char]11)Goh"`.
+   1. Test case: type `add `, paste, then type ` -p 91234563`, and press
+      Enter.<br>
+      Expected: The box reads `add Siew Ling Goh -p 91234563` with the words
+      apart, and the student is added as `Siew Ling Goh`.
+   1. Repeat with a form feed (`U+000C`), a line separator (`U+2028`), a
+      paragraph separator (`U+2029`) and a next-line character (`U+0085`)
+      in place of the vertical tab.<br>
+      Expected: Each reads as a space in the box, and the name saved matches
+      what the box shows.
 
 1. Checking what the colours say
 
