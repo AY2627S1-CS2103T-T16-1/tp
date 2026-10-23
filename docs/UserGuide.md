@@ -780,6 +780,15 @@ they were before the command. Commands that do not change student records, inclu
 `list`, `find`, `help`, and `exit`, do not write to the data file. Clear prompts,
 cancellation, and invalid replies also leave the saved file unchanged.
 
+If another TAB window has saved different student records since this window
+loaded them, TAB refuses this window's change and preserves both the saved file
+and this window's previous records. Close the stale window and restart TAB to
+load the saved records, then retry the change. If another window is saving at
+that moment, wait and retry; restart if TAB then reports changed records.
+Use one window per data file for editing. TAB keeps a small `.tab.json.lock`
+file beside `tab.json` to coordinate saves; leave it in place, even after exit.
+It contains no student records, and its presence alone does not block saving.
+
 Window size and position are saved separately in `preferences.json` in TAB's
 home folder. On launch, TAB keeps the saved size and position when they fit
 an available screen. If a screen was disconnected, TAB moves the window onto
@@ -803,9 +812,9 @@ Advanced users can edit this file directly:
 3. Restart TAB to load the edited records and check the changes.
 
 TAB reads student data only at startup. Edits made while TAB is open do not
-appear in that session and can be overwritten by the next command that changes
-student records (`add`, `edit`, `tag`, `delete`, or a confirmed `clear`). Always
-close TAB before making further edits to the file.
+appear in that session. TAB refuses a later save if the student records in the
+file differ from the records that window loaded. Text editors do not participate
+in TAB's save locking, so always close TAB before editing the file.
 
 Save the file as **UTF-8**, with or without a leading byte order mark (BOM).
 TAB accepts both forms and preserves accented letters and other Unicode text.
