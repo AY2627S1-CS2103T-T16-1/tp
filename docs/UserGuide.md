@@ -774,7 +774,8 @@ TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.jso
 Advanced users can edit this file directly:
 
 1. Close every TAB window using this file, then make a backup of `data/tab.json`.
-2. Edit the file, preserve its JSON structure, and save it as UTF-8.
+2. Edit the file, preserve its JSON structure, and follow the encoding guidance
+   below when saving.
 3. Restart TAB to load the edited records and check the changes.
 
 TAB reads student data only at startup. Edits made while TAB is open do not
