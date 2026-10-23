@@ -44,7 +44,7 @@ TAB is a **desktop application for teaching assistants to manage student records
 
    * `list` : Lists all students.
 
-   * `add John Doe -p 98765432 -e johnd@example.com --id A01234567X` : Adds a student named `John Doe` with an NUS Student ID.
+   * `add John Doe -p 98765432 -e johnd@example.com --id A05678901K` : Adds a student named `John Doe` with an NUS Student ID.
 
    * `delete 3` : Deletes the 3rd student shown in the current list. `delete A01234567X` deletes by NUS Student ID instead.
 
@@ -380,7 +380,7 @@ To put a double quote or a backslash inside a value, write `\"` or `\\`:
 Examples:
 * `add John Doe -p 98765432 -e johnd@example.com`
 * `add Alice Tan --phone=91234567 --email=alice@example.com --tag="Lab 3"`
-* `add "Betsy Crowe" --tag friend --email betsycrowe@example.com --phone 1234567 --id A01234567X -t criminal`
+*  `add "Betsy Crowe" --tag T1 --email betsycrowe@example.com --phone 1234567 --id A06789012L -t Lab3`
 * `add "Ravi s/o Kumaran" -p 91234567 -e e0923841@u.nus.edu`
 * `add Siti Nur-Aisyah -p 84420917 -e e1147203@u.nus.edu -i a11472030k -t T1 -t "Lab 3"`
 * `add Priya Nair -p 91234567 -e priya@example.com --follow-up`
@@ -458,10 +458,10 @@ Edits an existing student in the student book.
 
 Format: `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`
 
-The target may also be an NUS Student ID instead of an index: `edit A0123456X -p 91234567`
+The target may also be an NUS Student ID instead of an index: `edit A01234567X -p 91234567`
 edits the student holding that ID, found among all students even while a search is hiding
 them, and matching ignores case. `--id` still sets or clears the student's NUS Student ID,
-so `edit A0123456X --id A7654321Y` changes the ID of the student found by the old one.
+so `edit A01234567X --id A05678901K` changes the ID of the student found by the old one.
 
 The value options accept these equivalent spellings: `-n` and `--name`, `-p`
 and `--phone`, `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`.
@@ -542,7 +542,7 @@ Examples:
 *  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 1 --email ""` Removes the 1st student's email while keeping all other details.
 *  `edit 2 --name "Betsy Crower" --tag ""` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
-*  `edit 1 --id A01234567X` Records or replaces the 1st student's NUS Student ID.
+*  `edit 1 --id A08901234N` Records or replaces the 1st student's NUS Student ID.
 *  `edit 1 -i ""` Removes the 1st student's NUS Student ID while keeping all other details.
 *  `edit 1 -n "Ravi s/o Kumaran"` Edits the name of the 1st student to be `Ravi s/o Kumaran`.
 *  `edit 3 -p "+65 9123 4567" -t T1 -t "Lab 3"` Replaces the phone number and both tags of the 3rd student.
@@ -551,10 +551,10 @@ Examples:
 *  `edit 1 --no-follow-up` Clears the flag. Repeating it keeps the flag cleared.
 *  `edit 1 -nf` Also clears follow-up, even if the student is already unflagged.
 *  `edit 2 -p 91234567 --follow-up` Updates the phone number and sets follow-up in one command.
-*  `edit A0123456X --phone 91234567` Edits the phone number of the student holding the NUS
-   Student ID `A0123456X`, even while a search hides that student.
-*  `edit a0123456x -n "Betsy Crower"` Edits the same student, because matching an ID ignores case.
-*  `edit A0123456X --id A7654321Y` Changes that student's NUS Student ID from `A0123456X` to
+*  `edit A02345678G --phone 91234567` Edits the phone number of the student holding the NUS
+   Student ID `A02345678G`, even while a search hides that student.
+*  `edit a02345678g -n "Betsy Crower"` Edits the same student, because matching an ID ignores case.
+*  `edit A02345678G --id A7654321Y` Changes that student's NUS Student ID from `A02345678G` to
    `A7654321Y`, keeping all other details.
 
 A cleared email or NUS Student ID, a cleared tag set, and an explicitly set or cleared follow-up status are
@@ -947,11 +947,12 @@ No known issues are listed at this time.
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | Keeps the search if the new student matches; otherwise shows all students with a notice. <br> `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> e.g., `add James Ho --phone=22224444 -i=A01234567X --tag=friend -t colleague --follow-up`
+**Add**    | Keeps the search if the new student matches; otherwise shows all students with a notice. <br> `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> e.g., `add James Ho --phone=22224444 -i=A07890123M --tag=T1 -t Lab3 --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`<br> The ID option, spelled `-i`/`--id` or `--id=VALUE`, is what an ID starting with a digit needs<br> e.g., `delete 3`, `delete A01234567X`, `delete --id 1A2B3C`
-**Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> The target may be an NUS Student ID instead of an index <br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A01234567X`, `edit A0123456X -p 91234567`
-**Tag**    | `tag TARGET -a TAG` or `tag TARGET -r TAG` <br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--id NUS_STUDENT_ID` (alias `-i`) <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`, `tag --id 1234 --add T2`
+<<<<<<< HEAD
+**Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> The target may be an NUS Student ID instead of an index <br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A08901234N`, `edit A01234567X -p 91234567`
+**Tag**    | `tag TARGET -a TAG` or `tag TARGET -r TAG` <br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--id NUS_STUDENT_ID` (alias `-i`) <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`, `tag --id A02345678G --add T2`
 **Find**   | `find [FIELD_OPTION TERM]... [-f \| -nf]`<br> e.g., `find -n Jason -t lab -t tutorial` (all terms required)
 **List**   | `list`
 **Exit**   | `exit`
