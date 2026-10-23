@@ -773,6 +773,14 @@ User while still allowing the record to be added.
 
 <puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Add command duplicate check" width="500" />
 
+`ModelManager.addStudent` preserves the active filter. After a successful
+addition, `AddCommand` checks the new student against that filter. A matching
+student appears at the end of the results without changing earlier indexes.
+For a non-match, the command clears the filter and appends
+`Search cleared to show the new student.` to its feedback so the student is
+visible and the User knows to re-read indexes. A rejected addition leaves
+both the book and filter unchanged.
+
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
 ignore case; names already carry `normalizeFieldValue`'s whitespace
@@ -2280,6 +2288,24 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add Jane Doe -p 98765432 -i a01234567x`<br>
       Expected: No student is added. The status message names NUS Student ID
       `A01234567X` and `John Doe`, and no record is mutated.
+
+1. Adding during a search
+
+   1. Prerequisites: Back up the data file. In an empty book, add
+      `add Alice Tan -p 91110001 -t T1`, `add Bob Lim -p 91110002 -t T2`,
+      and `add Carl Ong -p 91110003 -t T1`.
+   1. Test case: `find -t T1`, then `add Eve Ng -p 91110005 -t T1`.<br>
+      Expected: Only Alice, Carl and Eve appear, in that order. The reply is
+      `New student added: Eve Ng; Phone: 91110005; Tags: [T1]`, with no
+      search-cleared notice. `tag 2 -a "Lab 3"` tags Carl; `delete 2` deletes
+      Carl, leaving Bob untouched.
+   1. Test case: `add Dan Koh -p 91110004 -t T2`.<br>
+      Expected: All four remaining students appear. The reply ends with
+      `Search cleared to show the new student.` Re-read indexes before
+      using another index command.
+   1. Exit and relaunch from the same folder, then run `list`.<br>
+      Expected: Alice, Bob, Eve and Dan remain; Carl is absent. Restore the
+      backup when finished.
 
 ### Long contact details on a card
 
