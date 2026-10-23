@@ -780,17 +780,29 @@ public class StudentCardTest {
 
     @Test
     public void constructor_countOnlyTags_returnsUnusedWidthToTheName() throws Exception {
-        for (String whole : List.of("Tan Ah Kow", "Siti Aminah", "Wong Wei Ming", "Bernice Xu", "Lee Wei Jie")) {
+        for (String whole : List.of("Tan Ah Kow", "Siti Aminah", "Wong Wei Ming", "Bernice Xu",
+                "Lee Wei Jie", "Wong Wei Ming Jonathan")) {
             onFxThread(() -> {
                 Student student = new StudentBuilder().withName(whole)
                         .withTags("attendance-low", "consult", "Project A/B").withFlag(true).build();
                 Label name = nameLaidOutRoomily(student);
                 TagRow tags = (TagRow) name.getParent().lookup("#tags");
-                // The name and count fit, but a readable chip plus count cannot fit beside them.
-                onALineOf(name, 64 + 8 + tags.minWidth(-1) - 1);
+                // Leave too little room for a readable chip and count beside the name minimum.
+                double lineWidth = 64 + 8 + tags.minWidth(-1) - 1;
+                onALineOf(name, lineWidth);
                 assertEquals(List.of("3 tags"), visibleChipsOf((Region) name.getScene().getRoot()));
-                assertEquals(whole, drawnTextOf(name));
-                assertNull(name.getTooltip());
+                Label count = (Label) tags.getChildrenUnmodifiable().stream()
+                        .filter(Node::isVisible).findFirst().orElseThrow();
+                double nameRoom = lineWidth - 8 - count.prefWidth(-1);
+                assertEquals(Math.min(name.prefWidth(-1), nameRoom), name.getWidth(), 0.5,
+                        "the name should use all space left by the count");
+                if (name.prefWidth(-1) <= nameRoom) {
+                    assertEquals(whole, drawnTextOf(name));
+                    assertNull(name.getTooltip());
+                } else {
+                    assertNotEquals(whole, drawnTextOf(name));
+                    assertEquals(whole, name.getTooltip().getText());
+                }
                 assertTrue(tags.getWidth() < tags.minWidth(-1), "unused count space should return to the name");
                 return null;
             });
