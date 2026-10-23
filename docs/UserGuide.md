@@ -59,10 +59,11 @@ TAB is a **desktop application for teaching assistants to manage student records
 
 --------------------------------------------------------------------------------------------------------------------
 
-Text pasted into the command box keeps its word boundaries: tabs and line
-breaks become spaces. This lets you paste names or values from spreadsheet
-cells without joining their words. Pasted text remains one command; inspect
-it before pressing Enter.
+Text pasted into the command box keeps its word boundaries: every separator
+TAB splits a command on becomes a space, from a tab to a line break to the
+soft line break a slide carries. This lets you paste names or values from
+spreadsheet cells, slides and documents without joining their words. Pasted
+text remains one command; inspect it before pressing Enter.
 
 ## Features
 
