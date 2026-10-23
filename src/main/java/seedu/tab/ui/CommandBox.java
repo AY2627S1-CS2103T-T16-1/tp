@@ -375,12 +375,11 @@ public class CommandBox extends UiPart<Region> {
         Text drawn = fieldText();
         PathElement[] shape = drawn == null
                 ? highlighted.caretShape(commandTextField.getCaretPosition(), true) : drawn.getCaretShape();
-        for (PathElement element : shape) {
-            if (element instanceof MoveTo start) {
-                return start.getX();
-            }
+        if (shape.length == 0) {
+            return 0;
         }
-        return 0;
+        // JavaFX starts both ordinary and split caret shapes with the primary MoveTo.
+        return ((MoveTo) shape[0]).getX();
     }
 
     /**
