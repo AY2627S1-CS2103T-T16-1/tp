@@ -3118,6 +3118,16 @@ testers are expected to do more *exploratory* testing.
 
 ### Saving data
 
+1. Loading a correctly hand-edited data file
+
+   1. Prerequisites: In a disposable copy of TAB, add a recognizable student,
+      close every TAB window using this data file, and back up `data/tab.json`.
+   1. Test case: Open `data/tab.json` in a text editor, change that student's
+      phone to `81234567`, preserve valid JSON, and save as UTF-8. Restart TAB.<br>
+      Expected: The student shows the edited phone. Run `list`, close TAB,
+      and restart again; the hand-edited value remains. Restore the backup
+      with TAB closed when finished.
+
 1. Preserving existing data when a save fails
 
    1. Prerequisites: Launch TAB, add a recognizable student, exit, and keep a
