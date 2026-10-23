@@ -31,6 +31,9 @@ import seedu.tab.testutil.StudentBuilder;
 public class SummaryPanelTest {
 
     private static final double SHORT_WINDOW = 600;
+    /** A pair of spellings {@code equalsIgnoreCase} joins but lowercasing them does not. */
+    private static final String CAPITAL_SIGMA = "\u03A3";
+    private static final String FINAL_SIGMA = "\u03C2";
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -264,6 +267,26 @@ public class SummaryPanelTest {
                 tagged("Ben Tan", false, "T1"));
 
         assertEquals(Map.of("T1", 2), SummaryPanel.countByTag(students));
+    }
+
+    @Test
+    public void countByTag_variantsThatTagRefusesAsDuplicates_countTogether() {
+        // tag reads a capital sigma and a final sigma as one tag, as equalsIgnoreCase does.
+        // Folding case by lowercasing would split them: the capital lowercases to a medial
+        // sigma, while the final sigma lowercases to itself
+        assertTrue(CAPITAL_SIGMA.equalsIgnoreCase(FINAL_SIGMA));
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, CAPITAL_SIGMA),
+                tagged("Ben Tan", false, FINAL_SIGMA));
+
+        assertEquals(Map.of(CAPITAL_SIGMA, 2), SummaryPanel.countByTag(students));
+    }
+
+    @Test
+    public void countByTag_oneStudentCarryingTwoSuchVariants_countsThatStudentOnce() {
+        List<Student> students = List.of(tagged("Ann Lee", false, CAPITAL_SIGMA, FINAL_SIGMA));
+
+        assertEquals(Map.of(CAPITAL_SIGMA, 1), SummaryPanel.countByTag(students));
     }
 
     @Test
