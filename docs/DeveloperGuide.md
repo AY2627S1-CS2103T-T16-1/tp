@@ -264,6 +264,20 @@ toolkit; only the rendering needs one.
 Tags counted the same are listed alphabetically ignoring case, because a
 reader does not read `Zoo` as coming before `apple`.
 
+Case variants of one tag are counted as one tag, because that is what `tag`
+makes of them when it refuses a tag a student already carries: a reader
+looking for the size of tutorial group `T1` would otherwise have to add up a
+row per spelling. The row is named with the spelling most of its students
+carry, which is settled by the counts rather than by the order of the list,
+so narrowing the list does not read as a second tag appearing.
+
+The panel groups two spellings with `String.CASE_INSENSITIVE_ORDER`, which
+calls them equal exactly when `String#equalsIgnoreCase` does, and so exactly
+when `TagCommand` refuses the second of them. Folding case by lowercasing
+would answer a different question and split a group `tag` has already joined:
+a Greek capital sigma lowercases to a medial sigma, while the final sigma a
+student may carry the same tag under lowercases to itself.
+
 ### Logic component
 
 **API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java)
@@ -488,6 +502,13 @@ with a hyphen. An empty attached value must be quoted as in `--tag=""`, so an
 accidental `--tag=` cannot clear data. `CommandTokenizer` records whether a
 token began with a quote so a fully quoted `"--tag=T1"` remains a value, while
 the quote around the value in `--tag="Lab 3"` does not hide the option marker.
+
+For `edit`, tag values use `StringUtil.normalizeFieldValue` before validation.
+A single normalized blank value clears all tags, including when the input holds
+Unicode spaces. A blank beside other tag values is rejected with an explanation
+that clearing requires the blank to be given on its own. Nonblank values are
+still validated so every problem can be reported without silently discarding tags.
+
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
@@ -2770,6 +2791,23 @@ testers are expected to do more *exploratory* testing.
       Expected: No change. The first names the missing index and says a field
       to edit is needed; the second asks only for a field.
 
+### Clearing a student's tags with a blank value
+
+1. Removing all tags while preserving the rest of a record
+
+   1. Prerequisites: Add `add Alice Tan -p 91234567 -e alice@example.com
+      --id A1234567X -t T1 -t "Lab 1" -f` as one line and note Alice's `INDEX`.
+   1. Test case: `edit INDEX -t "   "`.<br>
+      Expected: All general tags disappear. Name, phone, email, NUS Student ID,
+      and follow-up status remain unchanged, including after restarting TAB.
+   1. Test case: Repeat with `edit INDEX --tag=" "` and a copied non-breaking
+      space (U+00A0) between the quotes.<br>
+      Expected: Success even when tags are already absent, with no other changes.
+   1. Test case: `edit INDEX -t " " -t T2`.<br>
+      Expected: `A blank tag clears all tags only when it is given on its own.`
+      Repeat with a copied U+00A0 space between the quotes; the message is identical.
+      No record or saved-file changes.
+
 ### Clearing a student's email
 
 1. Removing a mistaken address without removing the record
@@ -2983,6 +3021,15 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `clear`, then `yes`.<br>
       Expected: The flagged count and the total read zero, and the tag list is
       empty rather than the panel disappearing.
+
+1. Counting case variants of one tag
+
+   1. Prerequisites: an empty student book, reached with `clear`, then `yes`.
+   1. Test case: `add Ann Lee -p 91234567`, `add Ben Tan -p 91234568`,
+      `add Cai Wei -p 91234569`, then `tag 1 -a T1`, `tag 2 -a t1`,
+      `tag 3 -a T1`.<br>
+      Expected: The TAGS section holds one row, `T1` with the count `3`,
+      rather than a row per spelling.
 
 1. Distinguishing long tags
 

@@ -204,10 +204,12 @@ showing, so you can see the shape of your cohort without running a command.
 
 * **Flagged** counts the students marked as needing a follow-up.
 * **Tags** lists each tag in use with the number of students carrying it,
-  most used first. Tags used by the same number of students are listed
-  alphabetically, ignoring case. Long tag names wrap onto multiple lines so
-  you can read their endings beside the count. Scroll the tag list to see
-  any rows below the visible area.
+  most used first. Case variants of one tag share a row, as they do for `tag`,
+  so `T1` and `t1` count as one tag; the row is named with the spelling most
+  of those students carry. Tags used by the same number of
+  students are listed alphabetically, ignoring case. Long tag names wrap onto
+  multiple lines so you can read their endings beside the count. Scroll the
+  tag list to see any rows below the visible area.
 * The foot of the panel gives the total.
 
 <box type="tip" seamless>
@@ -510,7 +512,11 @@ done to it beyond the quotes any value with spaces takes:
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
 * To remove all of a student's tags, give `-t` an empty value: `-t ""` or
-  `--tag=""`. A bare `-t` or unquoted `--tag=` is refused, so that a mistyped
+  `--tag=""`. A quoted whitespace-only value, such as `-t "   "`, also clears
+  all tags, including when the spaces were copied as Unicode spaces. Supply
+  the blank tag value on its own; combining it with another tag is refused with
+  `A blank tag clears all tags only when it is given on its own.`
+  A bare `-t` or unquoted `--tag=` is refused, so that a mistyped
   option is reported rather than read as a request to clear.
 * An NUS Student ID target that no student holds changes nothing and shows
   `No student has NUS Student ID A0123456X.` A letter-first target that is not
