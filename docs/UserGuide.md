@@ -702,7 +702,9 @@ Provide at least one field term or one follow-up status option. Every search ter
   `find -p 91234567`, `find -p 91234`, `find -p 9123-4567` and `find -p "9123 4567"`
   all match `+65 9123 4567` or `91234567`. `find -p +6591234567` also matches the number
   stored with the country code. Quote terms containing spaces;
-  copied Unicode spaces work too. Terms containing other characters, such as `"ext 21"`,
+  copied Unicode spaces work too. Equivalent Unicode decimal digits match across scripts:
+  `find -p 9123` matches `９１２３４５６７`, and `find -p "９１２３ ４５６７"` matches `91234567`.
+  Displayed and saved numbers keep their formatting. Terms containing other characters, such as `"ext 21"`,
   and punctuation-only terms match the stored text.
 * TAB reports the number of matches: `Found 0 students.`, `Found 1 student.` or `Found 3 students.`.
 

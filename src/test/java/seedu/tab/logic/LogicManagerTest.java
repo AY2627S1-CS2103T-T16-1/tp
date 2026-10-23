@@ -112,6 +112,34 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_findUnicodePhoneDigits_preservesRecordsAndStorage() throws Exception {
+        logic.execute("add Wang Fang -p ９１２３４５６７");
+        logic.execute("add Lim Jia Hui -p 87654321");
+        assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p 9123"));
+        assertEquals("Wang Fang", model.getFilteredStudentList().getFirst().getName().fullName);
+        logic.execute("edit 1 -p \"+６５ ９１２３ ４５６７\"");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        model = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
+        setUp();
+
+        for (String keyword : List.of("91234567", "9123", "6591234567", "９１２３", "٩١٢٣",
+                "\"９１２３ ４５６７\"", "\"٩١٢٣\u00a0٤٥٦٧\"", "\"9123 4567\"")) {
+            assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p " + keyword));
+            assertEquals(List.of(students.getFirst()), model.getFilteredStudentList());
+            assertEquals("+６５ ９１２３ ４５６７", model.getFilteredStudentList().getFirst().getPhone().value);
+        }
+        assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p \"８７６５ ４３２１\""));
+        assertEquals(List.of(students.get(1)), model.getFilteredStudentList());
+        assertEquals(new CommandResult("Found 0 students."), logic.execute("find -p 91234568"));
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        assertEquals(students, model.getStudentBook().getStudentList());
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        assertEquals(students, storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
     public void execute_findSpacedPhoneTerms_preservesConditionsRecordsAndStorage() throws Exception {
         logic.execute("add Alice Tan -p 91234567 -t Lab -f");
         logic.execute("add Bob Lim -p \"(9123)-4567 ext 21\" -t Tutorial");
@@ -124,7 +152,7 @@ public class LogicManagerTest {
                 "find -p \"9123 4567\"", students,
                 "find --phone=\"9123\u00a04567\"", students,
                 "find -p \"9123\u202f4567\"", students,
-                "find -p \"  23   45  \"", students,
+                "find -p \"  ２３   ４５  \"", students,
                 "find -p \"9123 4567\" -n Alice -t Lab -f", List.of(students.get(0)),
                 "find -p \"9123 4567\" -nf", List.of(students.get(1)),
                 "find -p \"9123 4567\" -n Alice -nf", List.<Student>of(),

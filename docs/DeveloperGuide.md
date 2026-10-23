@@ -954,13 +954,17 @@ repeated status options before execution, matching the existing edit rules.
 
 For phone terms containing only Unicode decimal digits, or those digits with
 grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), matching
-also compares the digits with non-digit characters removed. This lets
+also compares the digits with non-digit characters removed and each decimal digit
+mapped to its ASCII equivalent by numeric value. This lets
 `91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
 so copying a grouped number does not require manual reformatting. A query with
 a country code still requires those digits to occur in the stored phone.
 The digit fallback requires at least one digit; annotations such as `"ext 21"`
 and punctuation-only terms retain literal matching. Unicode whitespace follows
-the same rule as field normalization. Stored student details and saved data do not change.
+the same rule as field normalization. Normalizing both the phone digits and the
+search digits lets ASCII, full-width and other Unicode decimal digits match each
+other, including digits represented by supplementary code points. For example,
+`"９１２３ ４５６７"` matches `91234567`. Stored student details and saved data do not change.
 
 `FindCommand` and `ListCommand` report the count of displayed students in
 their execution feedback. `FindCommand` counts only the matching students
@@ -3090,6 +3094,21 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `find -p 91234567 -n Bernice`.<br>
       Expected: No students are shown, with `Found 0 students.`; both terms are required.
    1. Test cases: `find -p 91234568` and `find -p 9123-4568`.<br>
+      Expected: No students are shown, with `Found 0 students.`.
+      `data/tab.json` is identical to the saved copy after all these searches.
+
+1. Equivalent Unicode digits and unchanged saved values
+
+   1. Prerequisites: In a disposable copy of TAB, clear all students (`clear`, then `yes`).
+      Run `add Wang Fang -p ９１２３４５６７` and `add Lim Jia Hui -p 87654321`.
+   1. Test cases: `find -p 91234567` and `find -p 9123`.<br>
+      Expected: Only Wang Fang is shown, with `Found 1 student.` and phone `９１２３４５６７`.
+   1. Run `edit 1 -p "+６５ ９１２３ ４５６７"`, restart TAB and copy `data/tab.json`.
+   1. Test cases: `find -p 91234567`, `find -p 6591234567` and `find -p ٩١٢٣`.<br>
+      Expected: Only Wang Fang is shown, with `Found 1 student.` and phone `+６５ ９１２３ ４５６７`.
+   1. Test cases: `find -p ８７６５` and `find -p "８７６５ ４３２１"`.<br>
+      Expected: Only Lim Jia Hui is shown, with `Found 1 student.` and phone `87654321`.
+   1. Test case: `find -p 91234568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
 
