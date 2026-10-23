@@ -17,6 +17,8 @@ import seedu.tab.MainApp;
  */
 public class AppUtil {
 
+    private AppUtil() {} // this class only holds helpers
+
     /**
      * Returns the directory that application files should be stored in.
      * When the application is packaged, this is the directory containing the JAR file.

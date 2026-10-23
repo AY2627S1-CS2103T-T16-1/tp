@@ -112,6 +112,35 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_findSpacedPhoneTerms_preservesConditionsRecordsAndStorage() throws Exception {
+        logic.execute("add Alice Tan -p 91234567 -t Lab -f");
+        logic.execute("add Bob Lim -p \"(9123)-4567 ext 21\" -t Tutorial");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        String savedJson = Files.readString(dataPath);
+        model = new ModelManager(new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow(), new UserPrefs());
+        setUp();
+        for (var entry : Map.of(
+                "find -p \"9123 4567\"", students,
+                "find --phone=\"9123\u00a04567\"", students,
+                "find -p \"9123\u202f4567\"", students,
+                "find -p \"  23   45  \"", students,
+                "find -p \"9123 4567\" -n Alice -t Lab -f", List.of(students.get(0)),
+                "find -p \"9123 4567\" -nf", List.of(students.get(1)),
+                "find -p \"9123 4567\" -n Alice -nf", List.<Student>of(),
+                "find -p \"EXT 21\"", List.of(students.get(1)),
+                "find -p \"ext 2 1\"", List.<Student>of(),
+                "find -p \" + ( ) - . \"", List.<Student>of()).entrySet()) {
+            assertEquals(new CommandResult(Messages.getStudentsFoundOverview(entry.getValue().size())),
+                    logic.execute(entry.getKey()));
+            assertEquals(entry.getValue(), model.getFilteredStudentList());
+            assertEquals(students, model.getStudentBook().getStudentList());
+            assertEquals(savedJson, Files.readString(dataPath));
+        }
+        assertEquals(students, new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
     public void execute_findFieldCombinations_preservesRecordsAndStorage() throws Exception {
         addSearchStudents();
         List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
