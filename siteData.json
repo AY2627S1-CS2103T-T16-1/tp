@@ -88,6 +88,7 @@
         "long-value-option-names": "Long value-option names",
         "nus-student-ids": "NUS Student IDs",
         "editing-a-student": "Editing a student",
+        "clearing-a-student-s-tags-with-a-blank-value": "Clearing a student's tags with a blank value",
         "clearing-a-student-s-email": "Clearing a student's email",
         "rejecting-an-over-long-email": "Rejecting an over-long email",
         "deleting-a-student": "Deleting a student",
