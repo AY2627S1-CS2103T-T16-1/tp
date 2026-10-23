@@ -51,6 +51,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "protecting-saves-from-stale-windows": "Protecting saves from stale windows",
         "rolling-back-model-changes-when-saving-fails": "Rolling back model changes when saving fails",
         "resolving-application-file-locations": "Resolving application file locations",
         "how-commands-read-their-arguments": "How commands read their arguments",
