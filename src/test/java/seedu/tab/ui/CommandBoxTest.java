@@ -425,10 +425,13 @@ public class CommandBoxTest {
                         javafx.scene.shape.Path expected = new javafx.scene.shape.Path(
                                 nativeText.rangeShape(start, end));
                         expected.setStroke(null);
+                        expected.setFill(Color.BLACK);
                         double y = expected.getBoundsInLocal().getCenterY();
+                        // Text and overlay center different line boxes; compare horizontal glyph coverage.
                         for (double x = 0.5; x < nativeText.getLayoutBounds().getWidth(); x++) {
-                            Point2D point = band.sceneToLocal(nativeText.localToScene(x, y));
-                            assertEquals(expected.contains(x, y), band.contains(point),
+                            double bandX = band.sceneToLocal(nativeText.localToScene(x, 0)).getX();
+                            double bandY = band.getBoundsInLocal().getCenterY();
+                            assertEquals(expected.contains(x, y), band.contains(bandX, bandY),
                                     command + " selection " + start + ":" + end + " at " + x);
                         }
                     }
