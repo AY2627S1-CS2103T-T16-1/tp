@@ -190,6 +190,19 @@ The field preserves pasted word boundaries while keeping the command on one
 line, including when a paste replaces selected text. CRLF is treated as one
 separator.
 
+`CommandHighlighter` breaks a command where the parser breaks it, which the
+User Guide invites the User to rely on. That means two splits the colouring
+cannot make with the rule it uses for values. `StudentBookParser` ends the
+command word at the first separator whatever the quotes, so `add"Ravi s/o
+Kumaran"` is the command word `add"Ravi` and two words after it; reading that
+word with the value rule would draw one bold quoted word and then report an
+unknown command the colours never showed. `FlagTokenizer` reads `--tag="Lab
+3"` as an option and a value, so the marker and the equals sign are coloured
+as the option and the rest as its value. A marker holding a quote or a
+backslash is left whole instead, because either moves the equals sign the
+parser counts to, and a word split in the wrong place would be the same bug
+again.
+
 A `TextField` cannot colour its own content, so `CommandBox` keeps the field
 for input and draws a coloured copy of the command behind it, with the field's
 own text transparent. The field still takes every keystroke and still decides
@@ -3010,6 +3023,17 @@ testers are expected to do more *exploratory* testing.
       Expected: The whole line turns red and the reply quotes `addd` and
       suggests `add`, without adding anyone. Typing another character takes
       the red off again.
+   1. Test case: type `add"Ravi s/o Kumaran" -p 91234567` with no space
+      after `add`, then press Enter.<br>
+      Expected: The bold command word ends at `add"Ravi`, and `s/o` is an
+      ordinary word after it rather than part of the bold word. The reply
+      reports the unknown command `add"Ravi`, splitting the line where the
+      colours already did.
+   1. Test case: type `add Mei Tan --phone=91234567 --tag="Lab 3" -t "Lab 4"`
+      without pressing Enter.<br>
+      Expected: `--phone=` and `--tag=` are mauve like `-t`, `91234567` is
+      ordinary text, and `"Lab 3"` is green like `"Lab 4"`. Pressing Enter
+      adds Mei Tan with both tags.
 
 1. Checking a command longer than the line
 
