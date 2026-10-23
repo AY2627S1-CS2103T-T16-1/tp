@@ -3,6 +3,7 @@ package seedu.tab.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.CollectionUtil.requireAllNonNull;
 import static seedu.tab.logic.parser.CliFlags.FLAG_ADD_TAG;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_REMOVE_TAG;
 
 import java.util.Comparator;
@@ -18,6 +19,7 @@ import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.model.Model;
 import seedu.tab.model.student.Student;
+import seedu.tab.model.tag.Flag;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -41,6 +43,9 @@ public class TagCommand extends Command {
     public static final String MESSAGE_ALREADY_PRESENT = "This student already has tag [%1$s]. No changes made.";
     public static final String MESSAGE_REMOVE_SUCCESS = "Removed tag [%1$s]: %2$s";
     public static final String MESSAGE_NOT_PRESENT = "This student does not have tag [%1$s]. No changes made.";
+    public static final String MESSAGE_FOLLOW_UP_FLAG_HINT =
+            "This student is flagged for follow-up, which is not a tag. To clear the flag, use "
+                    + EditCommand.COMMAND_WORD + " %1$d " + FLAG_NO_FOLLOW_UP + ".";
     public static final String MESSAGE_CONFLICTING_ACTIONS = "Options " + FLAG_ADD_TAG.getMarkerSummary()
             + " and " + FLAG_REMOVE_TAG.getMarkerSummary() + " cannot be used together.";
     public static final String MESSAGE_ACTION_GUIDANCE =
@@ -86,7 +91,7 @@ public class TagCommand extends Command {
                     Messages.shorten(existingTag.get().tagName)));
         }
         if (action == Action.REMOVE && existingTag.isEmpty()) {
-            throw new CommandException(String.format(MESSAGE_NOT_PRESENT, Messages.shorten(tag.tagName)));
+            throw new CommandException(absentTagMessage(student));
         }
         Student updatedStudent = createUpdatedStudent(student);
         model.setStudent(student, updatedStudent);
@@ -94,6 +99,22 @@ public class TagCommand extends Command {
         Tag changedTag = action == Action.ADD ? tag : existingTag.orElseThrow();
         return new CommandResult(String.format(message, Messages.shorten(changedTag.tagName),
                 Messages.format(updatedStudent)));
+    }
+
+    /**
+     * Returns the reply for a tag {@code student} does not carry.
+     *
+     * <p>A flagged student asked to have the follow-up label removed is told where the label
+     * comes from and which command clears it. Reaching for {@code tag} here is a fair guess:
+     * the card draws the label beside the student's name, and the feedback of {@code edit}
+     * prints it after the tags.
+     */
+    private String absentTagMessage(Student student) {
+        String absent = String.format(MESSAGE_NOT_PRESENT, Messages.shorten(tag.tagName));
+        if (!student.isFlagged() || !Flag.FOLLOW_UP_NAME.equalsIgnoreCase(tag.tagName)) {
+            return absent;
+        }
+        return absent + "\n" + String.format(MESSAGE_FOLLOW_UP_FLAG_HINT, targetIndex.getOneBased());
     }
 
     /** Returns whether a stored tag denotes the requested tag, ignoring case. */
