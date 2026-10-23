@@ -23,6 +23,8 @@ public class ParserUtil {
     public static final String MESSAGE_VALUE_AFTER_INDEX_ONLY =
             "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index and nothing else.";
 
+    private ParserUtil() {} // this class only holds helpers
+
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
      * trimmed.
