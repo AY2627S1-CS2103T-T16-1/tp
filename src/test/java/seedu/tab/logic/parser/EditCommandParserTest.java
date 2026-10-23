@@ -453,12 +453,37 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_emptyTagBesideAnotherTag_isRefused() {
-        // -t "" clears the tags only on its own; together with a tag it is an empty value
-        assertParseFailure(parser, "1" + TAG_FRIEND + NO_TAGS,
-                Messages.getErrorMessageForInvalidValue("Tag", "", Tag.getFailureReason("")));
-        assertParseFailure(parser, "1" + NO_TAGS + TAG_FRIEND,
-                Messages.getErrorMessageForInvalidValue("Tag", "", Tag.getFailureReason("")));
+    public void parse_blankTagValue_clearsTags() {
+        EditCommand expected = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withTags().build());
+        for (String blank : List.of("", " ", "   ", "\t", "\u00a0", "\u202f\u3000")) {
+            assertParseSuccess(parser, "1 -t \"" + blank + "\"", expected);
+            assertParseSuccess(parser, "1 --tag=\"" + blank + "\"", expected);
+        }
+    }
+
+    @Test
+    public void parse_blankTagBesideAnotherTag_explainsHowToClearTags() {
+        for (String blank : List.of("", " ", "   ", "\t", "\u00a0", "\u202f\u3000")) {
+            String blankTag = " -t \"" + blank + "\"";
+            String expected = "A blank tag clears all tags only when it is given on its own.";
+            assertParseFailure(parser, "1" + TAG_FRIEND + blankTag, expected);
+            assertParseFailure(parser, "1" + blankTag + TAG_FRIEND, expected);
+            assertParseFailure(parser, "1 --tag=\"" + blank + "\"" + TAG_FRIEND, expected);
+        }
+    }
+
+    @Test
+    public void parse_severalBlankTags_reportsClearRuleOnce() {
+        assertParseFailure(parser, "1 -t \"\" --tag=\"\u00a0\"",
+                "A blank tag clears all tags only when it is given on its own.");
+    }
+
+    @Test
+    public void parse_blankAndInvalidTags_reportsBothProblems() {
+        assertParseFailure(parser, "1 -t \" \" -t \"---\"",
+                "A blank tag clears all tags only when it is given on its own.\n"
+                        + "Tag \"---\" is not valid: it holds no letter or number");
     }
 
     @Test

@@ -23,9 +23,6 @@ import seedu.tab.commons.util.StringUtil;
  */
 public class TagRow extends Region {
 
-    /** Enough of a chip to read the start of a tag, kept even beside a very long name. */
-    static final double READABLE_CHIP_WIDTH = 70;
-
     /** The gap between one chip and the next, matching the spacing the card uses. */
     private static final double SPACING = 6;
     /**
@@ -33,19 +30,6 @@ public class TagRow extends Region {
      * the alternative is saying nothing about how many tags were left out.
      */
     private static final double RECOGNISABLE_CHIP_WIDTH = 44;
-    /**
-     * How many characters of a tag a chip shows. A card is a summary, and the chips share
-     * the row with the name, so a long tag is cut and a long list is counted rather than
-     * letting the tags take the card. The whole of what is cut is a hover away.
-     *
-     * <p>The length is set by the tags a course actually uses: "attendance-low" and
-     * "needs-consult" are the length of an ordinary tag, and cutting shorter than this cuts
-     * most of what anyone types. How many chips then fit is decided by the row rather than
-     * by this, so a longer limit costs chips on a narrow card, not a broken layout.
-     */
-    private static final int MAX_TAG_CHARACTERS = 16;
-    private static final int MAX_CHIPS = 3;
-
     private final List<Label> chips = new ArrayList<>();
     private final Label overflow = new Label();
     private final Rectangle clip = new Rectangle();
@@ -60,15 +44,15 @@ public class TagRow extends Region {
     }
 
     /**
-     * Fills the row with up to {@code MAX_CHIPS} chips in the order given, retaining all names for overflow.
+     * Fills the row with complete tag labels in the order given.
      */
     public void setTags(List<String> names) {
         tagNames = List.copyOf(names);
         chips.clear();
         getChildren().clear();
-        for (String tagName : tagNames.subList(0, Math.min(tagNames.size(), MAX_CHIPS))) {
+        for (String tagName : tagNames) {
             Label chip = new Label();
-            UiText.showShortenedToFit(chip, tagName, MAX_TAG_CHARACTERS);
+            UiText.showToFit(chip, tagName);
             chips.add(chip);
         }
         getChildren().addAll(chips);
@@ -79,9 +63,26 @@ public class TagRow extends Region {
 
     @Override
     protected double computePrefWidth(double height) {
-        // only what the row would ever draw, since a student with twenty tags would otherwise
-        // ask for a row twenty chips wide and leave the name beside it nothing to shrink into
         return widthOf(chips.size());
+    }
+
+    /**
+     * Returns the width actually used within {@code available}, returning unused chip or
+     * count space to the name. A partially drawn chip uses the remaining allocation.
+     */
+    double fittedWidth(double available) {
+        if (chips.isEmpty()) {
+            return 0;
+        }
+        int shown = countThatFit(available);
+        if (shown > 0) {
+            return widthOf(shown);
+        }
+        if (tagNames.size() > 1
+                && available - widthOfTheRest(1) - SPACING < RECOGNISABLE_CHIP_WIDTH) {
+            return Math.min(available, widthOfTheRest(0));
+        }
+        return available;
     }
 
     @Override
@@ -113,7 +114,7 @@ public class TagRow extends Region {
             return;
         }
 
-        int shown = countThatFit();
+        int shown = countThatFit(getWidth());
         if (shown == 0) {
             showOneCutChip();
             return;
@@ -164,17 +165,20 @@ public class TagRow extends Region {
      * Returns how many chips the row can show whole, leaving room for the trailing chip when
      * it cannot show them all, or none when not even one chip and that trailing chip fit.
      */
-    private int countThatFit() {
-        for (int shown = chips.size(); shown > 0; shown--) {
-            if (fits(shown)) {
-                return shown;
+    private int countThatFit(double available) {
+        double chipsWidth = 0;
+        int fitting = 0;
+        for (int shown = 1; shown <= chips.size(); shown++) {
+            chipsWidth += drawnWidthOf(chips.get(shown - 1)) + (shown > 1 ? SPACING : 0);
+            double needed = chipsWidth;
+            if (shown < chips.size()) {
+                needed += SPACING + widthOfTheRest(shown);
+            }
+            if (needed <= available) {
+                fitting = shown;
             }
         }
-        return 0;
-    }
-
-    private boolean fits(int shown) {
-        return widthOf(shown) <= getWidth();
+        return fitting;
     }
 
     /**
@@ -254,8 +258,7 @@ public class TagRow extends Region {
     }
 
     /**
-     * Returns the width {@code chip} is drawn at: what its text needs, within the cap the
-     * stylesheet puts on a chip so that one long tag cannot take the row by itself.
+     * Returns the natural width of {@code chip}, including its styled padding.
      */
     private static double drawnWidthOf(Label chip) {
         return Math.min(chip.prefWidth(-1), chip.maxWidth(-1));

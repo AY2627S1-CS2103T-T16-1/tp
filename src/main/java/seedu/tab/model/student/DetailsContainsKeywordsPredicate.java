@@ -18,7 +18,8 @@ import seedu.tab.commons.util.ToStringBuilder;
  * Each term matches only its selected name, NUS Student ID, phone, email or tag field,
  * ignoring case and allowing partial matches.
  * A keyword made only of digits, grouping whitespace and phone punctuation
- * also matches the phone's digits with non-digit characters removed.
+ * also matches the phone's digits with non-digit characters removed and equivalent
+ * Unicode decimal digits compared by their numeric values.
  */
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     /** A keyword of digits, grouping whitespace and phone punctuation, holding at least one digit. */
@@ -96,7 +97,15 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
             return false;
         }
         String digits = NON_DIGIT.matcher(keyword).replaceAll("");
-        return phone.getDigits().contains(digits);
+        return normalizeDigits(phone.getDigits()).contains(normalizeDigits(digits));
+    }
+
+    /** Returns the ASCII equivalent of each Unicode decimal digit in {@code digits}. */
+    private static String normalizeDigits(String digits) {
+        return digits.codePoints()
+                .map(digit -> Character.digit(digit, 10) + '0')
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
     }
 
     private static boolean matchesAnyTag(Student student, String keyword) {
