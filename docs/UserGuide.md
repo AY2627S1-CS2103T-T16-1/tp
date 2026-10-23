@@ -256,8 +256,9 @@ Format: `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follo
 
 The value options accept these equivalent spellings: `-p` and `--phone`,
 `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`. The spellings may
-be mixed in one command, but giving the same field twice is an error even when
-the two spellings differ.
+be mixed in one command, but giving a single-valued field (phone, email or NUS
+Student ID) twice is an error even when the two spellings differ. Tags are
+repeatable: use `-t` or `--tag` once for each tag, mixing the spellings if you wish.
 
 <box type="tip" seamless>
 
@@ -436,8 +437,10 @@ so `edit A0123456X --id A7654321Y` changes the ID of the student found by the ol
 
 The value options accept these equivalent spellings: `-n` and `--name`, `-p`
 and `--phone`, `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`.
-The spellings may be mixed in one command, but giving the same field twice is
-an error even when the two spellings differ.
+The spellings may be mixed in one command, but giving a single-valued field
+(name, phone, email or NUS Student ID) twice is an error even when the two
+spellings differ. Tags are repeatable: use `-t` or `--tag` once for each
+replacement tag, mixing the spellings if you wish.
 
 <box type="tip" seamless>
 
@@ -677,10 +680,13 @@ Provide at least one field term or one follow-up status option. Every search ter
   without changing the current student list.
 * Quote a term starting with a hyphen, or attach it with `=`:
   `find -t "-Lab"` and `find --tag=-Lab` search for the literal tag text `-Lab`.
-* Phone terms containing only digits, or digits and phone punctuation (`+`, `-`, `(`, `)`, `.`),
-  also search the phone with all non-digit characters removed. `find -p 91234567`,
-  `find -p 91234`, `find -p 9123-4567` and `find -p +6591234567` all match `+65 9123 4567`.
-  Terms containing other characters, such as `"ext 21"` or `"9123 4567"`, match the stored text.
+* Phone terms containing only digits, grouping spaces and phone punctuation (`+`, `-`, `(`, `)`, `.`)
+  also search the phone with all non-digit characters removed, provided the term contains a digit.
+  `find -p 91234567`, `find -p 91234`, `find -p 9123-4567` and `find -p "9123 4567"`
+  all match `+65 9123 4567` or `91234567`. `find -p +6591234567` also matches the number
+  stored with the country code. Quote terms containing spaces;
+  copied Unicode spaces work too. Terms containing other characters, such as `"ext 21"`,
+  and punctuation-only terms match the stored text.
 * TAB reports the number of matches: `Found 0 students.`, `Found 1 student.` or `Found 3 students.`.
 
 Examples:
@@ -732,7 +738,10 @@ stay unchanged until you reply in the command line and press Enter:
 * `n`, `no`, or Enter without a reply cancels without changing any records or the saved file.
 
 Replies ignore case and surrounding whitespace: `Y`, `yEs`, and `yeS` also
-confirm; `N` and `nO` also cancel. Cancellation is the `[y/N]` default.
+confirm; `N` and `nO` also cancel. Invisible format marks copied with a reply
+are ignored, just as in commands; the shaping joiners needed by some scripts
+are preserved. A reply containing only ignored marks and whitespace cancels.
+Cancellation is the `[y/N]` default.
 Only the exact replies above are accepted: words such as
 `yellow` and `nope` are invalid. Any other reply, including another command,
 leaves the data unchanged and answers `Invalid reply. Enter y/yes or n/no
@@ -770,7 +779,18 @@ on exit means the window settings could not be saved; TAB still closes normally.
 
 ### Editing the data file
 
-TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.json`. Advanced users are welcome to update data directly by editing that data file.
+TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.json`.
+Advanced users can edit this file directly:
+
+1. Close every TAB window using this file, then make a backup of `data/tab.json`.
+2. Edit the file, preserve its JSON structure, and follow the encoding guidance
+   below when saving.
+3. Restart TAB to load the edited records and check the changes.
+
+TAB reads student data only at startup. Edits made while TAB is open do not
+appear in that session and can be overwritten by the next command that changes
+student records (`add`, `edit`, `tag`, `delete`, or a confirmed `clear`). Always
+close TAB before making further edits to the file.
 
 Save the file as **UTF-8**, with or without a leading byte order mark (BOM).
 TAB accepts both forms and preserves accented letters and other Unicode text.
