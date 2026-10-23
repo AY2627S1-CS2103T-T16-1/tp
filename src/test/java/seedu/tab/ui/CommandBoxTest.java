@@ -477,7 +477,11 @@ public class CommandBoxTest {
 
     @Test
     public void replaceSelection_pastedSeparators_preservesWordBoundariesAndColours() throws Exception {
-        for (String separator : List.of("\t", "\t\t", "\n", "\r", "\r\n", " ")) {
+        // every character the parser splits a command on, including the ones a slide, a web
+        // page or a document carries: vertical tab, form feed, next line, line and paragraph
+        // separators, a non-breaking space and an ideographic space
+        for (String separator : List.of("\t", "\t\t", "\n", "\r", "\r\n", " ",
+                "\u000B", "\u000C", "\u0085", "\u2028", "\u2029", "\u00A0", "\u3000")) {
             CommandBox box = boxShowing("add ");
             onFxThread(() -> {
                 TextField field = (TextField) box.getRoot().lookup("#commandTextField");
@@ -490,6 +494,20 @@ public class CommandBoxTest {
                 return null;
             });
         }
+    }
+
+    @Test
+    public void replaceSelection_pasteOpeningWithALineBreak_keepsItAsASpace() throws Exception {
+        CommandBox box = boxShowing("add ");
+        onFxThread(() -> {
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            field.positionCaret(field.getLength());
+            // a document or a spreadsheet cell whose copied text opens on a new line, which
+            // is a separator in its own right rather than the second half of a CRLF
+            field.replaceSelection("\nWei Ming Tan");
+            assertEquals("add  Wei Ming Tan", field.getText());
+            return null;
+        });
     }
 
     @Test
