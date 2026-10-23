@@ -226,6 +226,17 @@ public class SummaryPanelTest {
     }
 
     @Test
+    public void countByTag_variantMostStudentsCarry_namesTheGroup() {
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, "T1"),
+                tagged("Ben Tan", false, "t1"),
+                tagged("Cai Wei", false, "t1"));
+
+        // the row reads as most of the group typed the tag, whichever spelling that is
+        assertEquals(Map.of("t1", 3), SummaryPanel.countByTag(students));
+    }
+
+    @Test
     public void countByTag_variantsUsedEqually_listTheGroupUnderOneOfThem() {
         List<Student> students = List.of(
                 tagged("Ann Lee", false, "lab 3"),
