@@ -3,6 +3,7 @@ package seedu.tab.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -39,6 +40,33 @@ public class StudentListPanelTest {
 
     private static <T> T onFxThread(Callable<T> work) throws Exception {
         return FxToolkit.onFxThread(work);
+    }
+
+    @Test
+    public void cells_reusedAfterStudent_clearDetailsAndSupportUnspecifiedWidth() throws Exception {
+        onFxThread(() -> {
+            Student student = new StudentBuilder().withEmail("e0923841@u.nus.edu").build();
+            StudentListPanel panel = new StudentListPanel(FXCollections.observableArrayList(student));
+            StudentListPanel.StudentListViewCell cell = panel.new StudentListViewCell();
+            assertNotNull(new Scene(cell));
+            cell.applyCss();
+            cell.updateItem(student, false);
+            // JavaFX also queries preferred size before it assigns a concrete width.
+            assertTrue(cell.prefHeight(-1) > 0);
+            assertTrue(cell.prefHeight(LIST_WIDTH) > 0);
+            Label email = (Label) cell.getGraphic().lookup("#email");
+            assertEquals("e0923841@u.nus.edu", email.getText());
+
+            cell.updateItem(null, true);
+            assertNull(cell.getGraphic(), "an empty reused cell must not retain student details");
+            assertNull(cell.getText());
+            assertTrue(Double.isFinite(cell.prefHeight(LIST_WIDTH)));
+            cell.updateItem(student, false);
+            cell.updateItem(null, false);
+            assertNull(cell.getGraphic(), "a null item must not retain student details");
+            assertNull(cell.getText());
+            return null;
+        });
     }
 
     @Test
