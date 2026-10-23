@@ -163,6 +163,7 @@ public class JsonStudentBookStorage {
         writeStudentBook(studentBook, filePath);
     }
 
+    /** Writes the book through a delegate that tests can override to simulate a write failure. */
     void writeStudentBook(ReadOnlyStudentBook studentBook, Path filePath) throws IOException {
         JsonUtil.saveJsonFile(new JsonSerializableStudentBook(studentBook), filePath);
     }

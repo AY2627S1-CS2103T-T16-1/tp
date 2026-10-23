@@ -78,6 +78,20 @@ public class FileUtilTest {
     }
 
     @Test
+    public void writeToFile_brokenSymbolicLink_rejectsWithoutReplacingLink() throws Exception {
+        Path link = testFolder.resolve("tab.json");
+        Path destination = Path.of("missing-data.json");
+        createSymbolicLinkOrSkip(link, destination);
+
+        assertThrows(IOException.class, () -> FileUtil.writeToFile(link, "new contents"));
+
+        assertTrue(Files.isSymbolicLink(link));
+        assertEquals(destination, Files.readSymbolicLink(link));
+        assertFalse(Files.exists(testFolder.resolve(destination)));
+        assertEquals(List.of(link), listFilesInTestFolder());
+    }
+
+    @Test
     public void writeToFile_existingPosixPermissions_preservesPermissions() throws Exception {
         Path file = testFolder.resolve("tab.json");
         Files.writeString(file, "old contents");

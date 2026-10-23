@@ -358,16 +358,19 @@ without a reason are described as permission denied.
 
 `FileUtil.writeToFile` protects an existing JSON file from a partial save. It
 resolves an existing symbolic link to its destination, so replacing the saved
-data leaves the link in place. It also refuses a destination that is not
+data leaves the link in place. An unresolvable link is rejected without
+replacing it or creating its missing target. It also refuses a destination that is not
 writable and copies an existing file's POSIX permissions to its replacement.
 The new contents are written and forced to a temporary file beside the real
 destination before an atomic move replaces it. Keeping both files in one
 folder makes the atomic move possible, but also means that the folder must
 allow temporary-file creation. If writing or moving fails, the previous file
 remains unchanged and TAB removes the temporary file where possible.
-Student-book saving creates only missing parent directories before writing the
-temporary file; it never pre-creates an empty destination. A failed first save
-therefore preserves the absence of a book and allows normal sample-data startup.
+`FileUtil` creates only missing parent directories before writing the temporary
+file; it never pre-creates an empty destination. This applies to student-book
+and preference writes. A failed first save preserves the absence of a book and
+allows normal sample-data startup. On POSIX filesystems, a new file retains the
+temporary file's owner-only permissions; existing files retain their permissions.
 
 `StorageManager` logs read/write attempts and successful saves at `FINE`,
 including preference-file operations. Entries identify the file path without
@@ -3261,18 +3264,32 @@ testers are expected to do more *exploratory* testing.
 
 1. Recovering from a failed first save
 
-   1. Prerequisites: Use a disposable home folder without `data/tab.json`.
-      Launch TAB with its sample students. Make only this folder's data storage
-      unavailable (for example, remove directory write access as a non-root
-      account); do not fill your computer's drive.
+   1. Prerequisites (Linux): Use a disposable TAB home folder with the packaged
+      JAR. In a private mount namespace (for example, start a shell with
+      `unshare --user --map-root-user --mount`), enter that folder and run
+      `mkdir data`, then `mount -t tmpfs -o size=4096 tmpfs data`.
+      This limits only the throwaway data folder; do not fill the real drive.
+      Keep TAB and the following commands inside that namespace.
+
+   1. Launch `java -jar tab.jar` and confirm the sample students appear.
+      Fill the private filesystem with
+      `dd if=/dev/zero of=data/filler bs=4096 count=1`.
+      Verify `touch data/probe` succeeds while
+      `printf x > data/probe` fails with `No space left on device`, then
+      remove only `data/probe`. The directory must remain writable: removing
+      directory write access would fail before the old code creates its target
+      and would not reproduce this bug.
 
    1. Test case: Enter `add Mei Tan -p 91234567`.<br>
-      Expected: A save error reports that no changes were made. The sample
-      students remain visible, Mei is absent, and `data/tab.json` does not exist.
+      Expected: A save error reports `No space left on device` and that no
+      changes were made. The sample students remain visible, Mei is absent,
+      and `data/tab.json` does not exist, even as an empty file.
 
-   1. Test case: Exit, restore storage access, and relaunch.<br>
+   1. Test case: Exit TAB, run `rm data/filler` to free space, and relaunch
+      `java -jar tab.jar` inside the same namespace.<br>
       Expected: TAB opens with sample students without file repair. Repeat the
-      add, exit, and relaunch; Mei is now saved and present.
+      add, exit, and relaunch; Mei is now saved and present. Exit TAB, run
+      `umount data`, and exit the private namespace.
 
 1. Dealing with missing/corrupted data files
 
