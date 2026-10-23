@@ -93,7 +93,8 @@ public class StudentListPanelTest {
             }
             // Index glyph widths vary between cards and fonts. Compare each contact row
             // with its own card edge rather than requiring different cards to match.
-            assertEquals(cardBounds.getMaxX() - card.getInsets().getRight(), details.getMaxX(), 0.5,
+            // JavaFX can round the allocated edge by one pixel at native display scales.
+            assertEquals(cardBounds.getMaxX() - card.getInsets().getRight(), details.getMaxX(), 1.0,
                     "contacts must extend to the card's trailing padding, including beneath the flag");
         }
         assertFalse(root.lookupAll("#contacts").isEmpty(), "the list must contain populated cards");
