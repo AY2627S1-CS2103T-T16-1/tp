@@ -3,7 +3,14 @@ package seedu.tab.storage;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -15,6 +22,7 @@ import seedu.tab.commons.exceptions.IllegalValueException;
 import seedu.tab.commons.util.FileUtil;
 import seedu.tab.commons.util.JsonUtil;
 import seedu.tab.model.ReadOnlyStudentBook;
+import seedu.tab.model.StudentBook;
 
 /**
  * A class to access StudentBook data stored as a JSON file on the hard disk.
@@ -23,6 +31,7 @@ public class JsonStudentBookStorage {
 
     private static final Logger logger = LogsCenter.getLogger(JsonStudentBookStorage.class);
 
+    private final Map<Path, Optional<StudentBook>> loadedBooks = new HashMap<>();
     private Path filePath;
 
     public JsonStudentBookStorage(Path filePath) {
@@ -52,6 +61,12 @@ public class JsonStudentBookStorage {
     public Optional<ReadOnlyStudentBook> readStudentBook(Path filePath) throws DataLoadingException {
         requireNonNull(filePath);
 
+        Optional<ReadOnlyStudentBook> book = loadStudentBook(filePath);
+        loadedBooks.put(filePath.toAbsolutePath().normalize(), book.map(StudentBook::new));
+        return book;
+    }
+
+    private Optional<ReadOnlyStudentBook> loadStudentBook(Path filePath) throws DataLoadingException {
         Optional<JsonSerializableStudentBook> jsonStudentBook = readJsonStudentBook(filePath);
         if (!jsonStudentBook.isPresent()) {
             return Optional.empty();
@@ -99,8 +114,55 @@ public class JsonStudentBookStorage {
         requireNonNull(studentBook);
         requireNonNull(filePath);
 
+        Path absolutePath = filePath.toAbsolutePath().normalize();
+        Files.createDirectories(absolutePath.getParent());
+        Path target = Files.exists(absolutePath) ? absolutePath.toRealPath()
+                : absolutePath.getParent().toRealPath().resolve(absolutePath.getFileName());
+        Path lockPath = target.resolveSibling("." + target.getFileName() + ".lock");
+        try (FileChannel channel = FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                FileLock lock = channel.tryLock()) {
+            if (lock == null) {
+                throw new IOException(formatBusyMessage(filePath));
+            }
+            saveIfUnchanged(studentBook, filePath, absolutePath);
+        } catch (OverlappingFileLockException e) {
+            throw new IOException(formatBusyMessage(filePath), e);
+        }
+    }
+
+    /**
+     * Similar to {@link #saveStudentBook(ReadOnlyStudentBook)}.
+     *
+     * @param filePath location of the data. Cannot be null.
+     */
+    private void writeStudentBookFile(ReadOnlyStudentBook studentBook, Path filePath) throws IOException {
+        requireNonNull(studentBook);
+        requireNonNull(filePath);
+
         FileUtil.createIfMissing(filePath);
         JsonUtil.saveJsonFile(new JsonSerializableStudentBook(studentBook), filePath);
+    }
+
+    private void saveIfUnchanged(ReadOnlyStudentBook studentBook, Path filePath, Path key) throws IOException {
+        Optional<StudentBook> diskBook;
+        try {
+            diskBook = loadStudentBook(filePath).map(StudentBook::new);
+        } catch (DataLoadingException e) {
+            throw new IOException("Cannot verify saved student data in " + filePath
+                    + ". Close this window, check the file and restart TAB before retrying", e);
+        }
+        Optional<StudentBook> expectedBook = loadedBooks.getOrDefault(key, diskBook);
+        if (!expectedBook.equals(diskBook)) {
+            throw new IOException("Student data in " + filePath + " has changed since this window loaded it. "
+                    + "Close this window and restart TAB to load the saved records before retrying");
+        }
+        writeStudentBookFile(studentBook, filePath);
+        loadedBooks.put(key, Optional.of(new StudentBook(studentBook)));
+    }
+
+    private String formatBusyMessage(Path path) {
+        return "Another TAB window is saving " + path
+                + ". Wait for it to finish and retry; if the data changed, restart this window first";
     }
 
 }
