@@ -130,9 +130,11 @@ text remains one command; inspect it before pressing Enter.
 The command line marks the parts of a command as you type, so a mistake is
 visible before you press Enter:
 
-* the command word is in the line's accent colour and bold
-* an option such as `-p` is in mauve
-* a value in double quotes is in green
+* the command word is in the line's accent colour and bold, and ends at the
+  first space, so a quote typed against it is part of the word
+* an option such as `-p` is in mauve, as is the `--tag=` of an option written
+  with its value attached
+* a value in double quotes is in green, including one attached to an option
 * anything else is in ordinary text
 
 If a command is refused, the whole line turns red until you start correcting
