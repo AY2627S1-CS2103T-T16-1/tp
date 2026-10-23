@@ -2524,9 +2524,11 @@ testers are expected to do more *exploratory* testing.
       Expected: Both records load without an NUS Student ID.
 
    1. Exit TAB and change one `nusStudentId` value to `A0123-456X`, then relaunch.<br>
-      Expected: TAB rejects the malformed data file and starts with an empty
-      student book, leaving the invalid file in place. Restore the backup
-      before entering another command.
+      Expected: TAB shows a startup error identifying `data/tab.json`, the
+      affected student record, and the invalid NUS Student ID. The main window
+      does not open. Dismiss the dialog with `Close TAB`; the invalid file
+      remains byte-for-byte unchanged. Restore the backup with TAB closed,
+      then relaunch and check that the backed-up records load.
 
 1. Checking duplicate identity behavior
 
