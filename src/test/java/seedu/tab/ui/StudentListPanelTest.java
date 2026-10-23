@@ -73,7 +73,6 @@ public class StudentListPanelTest {
     private static void assertCardsFit(Region root, double width) {
         root.resize(width, 400);
         root.layout();
-        double contactWidth = -1;
         for (Node node : root.lookupAll(".list-cell")) {
             if (!(node instanceof ListCell<?> cell) || cell.getGraphic() == null) {
                 continue;
@@ -92,13 +91,12 @@ public class StudentListPanelTest {
                 assertTrue(bounds.getMaxY() <= cardBounds.getMaxY(), "a contact escapes the card");
                 assertTrue(bounds.getMaxY() <= details.getMaxY() + 0.5, "a contact is clipped");
             }
-            if (contactWidth >= 0) {
-                assertEquals(contactWidth, contacts.getWidth(), 0.5,
-                        "follow-up must not reduce the contact width");
-            }
-            contactWidth = contacts.getWidth();
+            // Index glyph widths vary between cards and fonts. Compare each contact row
+            // with its own card edge rather than requiring different cards to match.
+            assertEquals(cardBounds.getMaxX() - card.getInsets().getRight(), details.getMaxX(), 0.5,
+                    "contacts must extend to the card's trailing padding, including beneath the flag");
         }
-        assertTrue(contactWidth > 0, "the list must contain populated cards");
+        assertFalse(root.lookupAll("#contacts").isEmpty(), "the list must contain populated cards");
     }
 
     @Test

@@ -1118,6 +1118,26 @@ public class StudentCardTest {
         }
     }
 
+    @Test
+    public void constructor_countAtNameAllowanceBoundary_keepsCompleteCountBesideName() throws Exception {
+        onFxThread(() -> {
+            List<String> names = List.of("attendance-low", "consult");
+            Student student = new StudentBuilder().withName("Bernice Yu")
+                    .withTags(names.toArray(String[]::new)).withFlag(true).build();
+            Region root = new StudentCard(student, 2).getRoot();
+            assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 120));
+            Label count = (Label) root.lookup(".tag-overflow");
+            // Reproduce the Linux boundary using the local font's count width: the
+            // 64 px name allowance and 8 px gap leave the count one pixel short.
+            count.setText("2 tags");
+            Label name = (Label) root.lookup("#name");
+            onALineOf(name, 64 + 8 + Math.floor(count.prefWidth(-1)) - ONE_PIXEL);
+            assertHiddenTagsCounted((TagRow) root.lookup("#tags"), names);
+            assertTrue(drawnTextOf((Label) root.lookup("#name")).startsWith("Be"));
+            return null;
+        });
+    }
+
     private static void assertHiddenTagsCounted(TagRow tags, List<String> names) {
         Label overflow = (Label) tags.getChildrenUnmodifiable().stream()
                 .filter(node -> node.getStyleClass().contains("tag-overflow")).findFirst().orElseThrow();

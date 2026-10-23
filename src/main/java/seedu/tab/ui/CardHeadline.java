@@ -25,6 +25,8 @@ public class CardHeadline extends Pane {
      * name is what tells one card from another, so it gives way last.
      */
     private static final double READABLE_NAME_WIDTH = 64;
+    /** Keeps name letters visible when a complete tag count needs extra room. */
+    private static final double MINIMUM_NAME_WIDTH = 40;
     /** Enough of the tags to read the start of one, kept even beside a very long name. */
     private static final double READABLE_TAGS_WIDTH = TagRow.READABLE_CHIP_WIDTH;
 
@@ -75,10 +77,11 @@ public class CardHeadline extends Pane {
         // enough for a chip and a count of the tags it leaves out, so that a card beside a
         // long name still says there are more rather than showing one chip and nothing else
         double floor = Math.min(wanted, tags.minWidth(-1));
-        // but never so much that the name is left with nothing: a card whose name reads as
-        // an ellipsis says less about the student than one whose tag count is missing, and
-        // on a narrow window every flagged card with two tags came out that way
-        double sparedForTheName = getWidth() - READABLE_NAME_WIDTH - SPACING;
+        // Prefer a readable name, but allow it to yield enough room for a complete
+        // count across fonts. At extreme widths, keep some name letters visible.
+        double countWidth = Math.min(tags.getCountWidth(),
+                Math.max(0, getWidth() - MINIMUM_NAME_WIDTH - SPACING));
+        double sparedForTheName = Math.max(countWidth, getWidth() - READABLE_NAME_WIDTH - SPACING);
         return Math.clamp(spare, Math.min(floor, Math.max(0, sparedForTheName)), wanted);
     }
 
