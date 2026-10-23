@@ -2139,8 +2139,9 @@ testers are expected to do more *exploratory* testing.
       the second reports that `true` belongs to no option. The saved file is unchanged.
 
    1. Test cases: `edit 1 --follow-up -f` and `edit 1 --follow-up true`<br>
-      Expected: Neither command changes Alice. The first reports a repeated
-      `--follow-up`; the second reports that `true` belongs to no option.
+      Expected: Neither command changes Alice. The first reports
+      `Options given more than once: --follow-up. Give each listed option only once.`
+      The second reports that `true` belongs to no option.
 
    1. Test cases: `edit 1 --follow-up --no-follow-up` and
       `edit 1 -nf -f -p 89998888`<br>
