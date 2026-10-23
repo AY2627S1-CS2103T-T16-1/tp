@@ -354,6 +354,20 @@ public class CommandBoxTest {
     }
 
     @Test
+    public void replaceSelection_pasteOpeningWithALineBreak_keepsItAsASpace() throws Exception {
+        CommandBox box = boxShowing("add ");
+        onFxThread(() -> {
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            field.positionCaret(field.getLength());
+            // a document or a spreadsheet cell whose copied text opens on a new line, which
+            // is a separator in its own right rather than the second half of a CRLF
+            field.replaceSelection("\nWei Ming Tan");
+            assertEquals("add  Wei Ming Tan", field.getText());
+            return null;
+        });
+    }
+
+    @Test
     public void paste_tabSeparatedName_replacesSelectionAndAddsSeparateWords() throws Exception {
         onFxThread(() -> {
             ModelManager model = new ModelManager();
