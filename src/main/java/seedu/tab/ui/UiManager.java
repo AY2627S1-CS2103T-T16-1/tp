@@ -32,6 +32,7 @@ public class UiManager implements Ui {
     static final String DATA_LOADING_ERROR_RECOVERY =
             "Repair or replace it, then restart TAB.";
     static final String DATA_LOADING_ERROR_CLOSE = "Close TAB";
+    static final String FATAL_ERROR_TITLE = "Fatal error during initializing";
 
     private static final Logger logger = LogsCenter.getLogger(UiManager.class);
     private static final String ICON_APPLICATION = "/images/address_book_32.png";
@@ -77,8 +78,7 @@ public class UiManager implements Ui {
             mainWindow.fillInnerParts();
 
         } catch (Throwable e) {
-            logger.severe(StringUtil.getDetails(e));
-            showFatalErrorDialogAndShutdown("Fatal error during initializing", e);
+            showFatalErrorDialogAndShutdown(primaryStage, FATAL_ERROR_TITLE, e);
         }
     }
 
@@ -165,12 +165,32 @@ public class UiManager implements Ui {
     }
 
     /**
-     * Shows an error alert dialog with {@code title} and error message, {@code e},
-     * and exits the application after the user has closed the alert dialog.
+     * Shows an error alert dialog on {@code owner} with {@code title} and error message,
+     * {@code e}, and exits the application after the user has closed the alert dialog.
      */
-    private void showFatalErrorDialogAndShutdown(String title, Throwable e) {
-        logger.severe(title + " " + e.getMessage() + StringUtil.getDetails(e));
-        showAlertDialogAndWait(Alert.AlertType.ERROR, title, e.getMessage(), e.toString());
+    private void showFatalErrorDialogAndShutdown(Stage owner, String title, Throwable e) {
+        logger.severe(title + ": " + StringUtil.getDetails(e));
+        createFatalErrorAlert(owner, title, e).showAndWait();
+        shutdown();
+    }
+
+    /**
+     * Returns the dialog that reports {@code e} as having stopped TAB from starting.
+     *
+     * <p>Its owner is the stage TAB was started with rather than the main window, because the
+     * main window failing to be built is one of the failures that leads here, and a dialog owned
+     * by a window that was never built cannot be shown.
+     */
+    Alert createFatalErrorAlert(Stage owner, String title, Throwable e) {
+        Alert alert = createAlert(owner, AlertType.ERROR, title, e.getMessage());
+        alert.setContentText(e.toString());
+        return alert;
+    }
+
+    /**
+     * Stops TAB, reporting to whatever started it that the run failed.
+     */
+    void shutdown() {
         Platform.exit();
         System.exit(1);
     }
