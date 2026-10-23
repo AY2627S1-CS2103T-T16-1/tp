@@ -716,8 +716,7 @@
        says nothing about a run of text: selecting the whole command looked no different from
        not selecting it. This reads as a selection while leaving the command on top of it
        legible. */
-    -fx-background-color: -tab-selected-text;
-    -fx-background-radius: 2;
+    -fx-fill: -tab-selected-text;
 }
 
 /* a refused command is marked on the copy, which is what the User is reading */
