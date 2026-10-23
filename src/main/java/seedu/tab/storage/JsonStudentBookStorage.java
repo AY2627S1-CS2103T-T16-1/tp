@@ -80,22 +80,6 @@ public class JsonStudentBookStorage {
         }
     }
 
-    private Optional<JsonSerializableStudentBook> readJsonStudentBook(Path filePath) throws DataLoadingException {
-        try {
-            return JsonUtil.readJsonFile(filePath, JsonSerializableStudentBook.class);
-        } catch (DataLoadingException e) {
-            if (e.getCause() instanceof JsonMappingException mappingException) {
-                Optional<JsonMappingException.Reference> studentRecord = mappingException.getPath().stream()
-                        .filter(reference -> reference.getIndex() >= 0).findFirst();
-                if (studentRecord.isPresent()) {
-                    throw new DataLoadingException("Student record " + (studentRecord.get().getIndex() + 1)
-                            + ": " + e.getMessage(), e);
-                }
-            }
-            throw e;
-        }
-    }
-
     /**
      * Saves the given {@link ReadOnlyStudentBook} to the storage.
      * @param studentBook cannot be null.
@@ -130,19 +114,6 @@ public class JsonStudentBookStorage {
         }
     }
 
-    /**
-     * Similar to {@link #saveStudentBook(ReadOnlyStudentBook)}.
-     *
-     * @param filePath location of the data. Cannot be null.
-     */
-    private void writeStudentBookFile(ReadOnlyStudentBook studentBook, Path filePath) throws IOException {
-        requireNonNull(studentBook);
-        requireNonNull(filePath);
-
-        FileUtil.createIfMissing(filePath);
-        JsonUtil.saveJsonFile(new JsonSerializableStudentBook(studentBook), filePath);
-    }
-
     private void saveIfUnchanged(ReadOnlyStudentBook studentBook, Path filePath, Path key) throws IOException {
         Optional<StudentBook> diskBook;
         try {
@@ -163,6 +134,35 @@ public class JsonStudentBookStorage {
     private String formatBusyMessage(Path path) {
         return "Another TAB window is saving " + path
                 + ". Wait for it to finish and retry; if the data changed, restart this window first";
+    }
+
+    private Optional<JsonSerializableStudentBook> readJsonStudentBook(Path filePath) throws DataLoadingException {
+        try {
+            return JsonUtil.readJsonFile(filePath, JsonSerializableStudentBook.class);
+        } catch (DataLoadingException e) {
+            if (e.getCause() instanceof JsonMappingException mappingException) {
+                Optional<JsonMappingException.Reference> studentRecord = mappingException.getPath().stream()
+                        .filter(reference -> reference.getIndex() >= 0).findFirst();
+                if (studentRecord.isPresent()) {
+                    throw new DataLoadingException("Student record " + (studentRecord.get().getIndex() + 1)
+                            + ": " + e.getMessage(), e);
+                }
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Similar to {@link #saveStudentBook(ReadOnlyStudentBook)}.
+     *
+     * @param filePath location of the data. Cannot be null.
+     */
+    private void writeStudentBookFile(ReadOnlyStudentBook studentBook, Path filePath) throws IOException {
+        requireNonNull(studentBook);
+        requireNonNull(filePath);
+
+        FileUtil.createIfMissing(filePath);
+        JsonUtil.saveJsonFile(new JsonSerializableStudentBook(studentBook), filePath);
     }
 
 }
