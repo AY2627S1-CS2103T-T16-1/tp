@@ -131,7 +131,12 @@ it in the footer. Unused typed keys show a reminder to quit help before entering
 a command. The reference keeps explicit lines short enough for minimum width;
 the long User Guide address is available through c instead of wrapping in the label.
 Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
-command box so quitting cannot insert a stray character. No student data is changed.
+command box so quitting cannot insert a stray character. Enter navigates on
+`KEY_PRESSED`; its typed newline is consumed without changing the notice or scrolling
+again, including when focus moves into help after submitting `help`.
+The empty typed event emitted by macOS F1 is also consumed so it
+cannot overwrite the opening notice.
+No student data is changed.
 
 #### Restoring window geometry
 
@@ -1892,6 +1897,11 @@ testers are expected to do more *exploratory* testing.
       Expected: Help replaces the student list, summary sidebar, command box and
       result area. No extra window or browser opens. Navigation keys remain
       visible in the footer and work immediately without mouse interaction.
+      The notice reads `Help mode: press q or Esc to return to commands.`.
+
+   1. Press Down, then Enter.<br>
+      Expected: Each moves down exactly one line and leaves the opening notice
+      unchanged. Press q and reopen with F1; the same opening notice appears.
 
    1. Press Space/f and b to move forward/back a screenful. Try Enter/j and k,
       d/u, PgDn/PgUp, arrows and Home/End. Press g then G.<br>
