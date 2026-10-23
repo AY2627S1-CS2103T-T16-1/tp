@@ -86,7 +86,6 @@ public class ModelManager implements Model {
     @Override
     public void addStudent(Student student) {
         studentBook.addStudent(student);
-        updateFilteredStudentList(PREDICATE_SHOW_ALL_STUDENTS);
     }
 
     @Override
