@@ -112,6 +112,33 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_findUnicodePhoneDigits_preservesRecordsAndStorage() throws Exception {
+        logic.execute("add Wang Fang -p ９１２３４５６７");
+        logic.execute("add Lim Jia Hui -p 87654321");
+        assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p 9123"));
+        assertEquals("Wang Fang", model.getFilteredStudentList().getFirst().getName().fullName);
+        logic.execute("edit 1 -p \"+６５ ９１２３ ４５６７\"");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        model = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
+        setUp();
+
+        for (String keyword : List.of("91234567", "9123", "6591234567", "９１２３", "٩١٢٣")) {
+            assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p " + keyword));
+            assertEquals(List.of(students.getFirst()), model.getFilteredStudentList());
+            assertEquals("+６５ ９１２３ ４５６７", model.getFilteredStudentList().getFirst().getPhone().value);
+        }
+        assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p 87654321"));
+        assertEquals(List.of(students.get(1)), model.getFilteredStudentList());
+        assertEquals(new CommandResult("Found 0 students."), logic.execute("find -p 91234568"));
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        assertEquals(students, model.getStudentBook().getStudentList());
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        assertEquals(students, storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
     public void execute_findFieldCombinations_preservesRecordsAndStorage() throws Exception {
         addSearchStudents();
         List<Student> students = List.copyOf(model.getStudentBook().getStudentList());

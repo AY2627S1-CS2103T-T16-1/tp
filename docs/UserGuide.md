@@ -680,6 +680,9 @@ Provide at least one field term or one follow-up status option. Every search ter
 * Phone terms containing only digits, or digits and phone punctuation (`+`, `-`, `(`, `)`, `.`),
   also search the phone with all non-digit characters removed. `find -p 91234567`,
   `find -p 91234`, `find -p 9123-4567` and `find -p +6591234567` all match `+65 9123 4567`.
+  Equivalent Unicode decimal digits match across scripts: `find -p 9123` also matches
+  `９１２３４５６７`, and `find -p ９１２３` matches `91234567`. Displayed and saved numbers keep
+  their formatting.
   Terms containing other characters, such as `"ext 21"` or `"9123 4567"`, match the stored text.
 * TAB reports the number of matches: `Found 0 students.`, `Found 1 student.` or `Found 3 students.`.
 

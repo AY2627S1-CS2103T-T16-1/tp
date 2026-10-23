@@ -80,6 +80,25 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_equivalentUnicodePhoneDigits_matchesAcrossScripts() {
+        for (String phone : List.of("９１２３４５６７", "+６５ ９１２３ ４５６７", "٩١٢٣-٤٥٦٧",
+                "9１٢3４٥6７", "𝟡𝟙𝟚𝟛-𝟜𝟝𝟞𝟟", "91234567")) {
+            Student student = new StudentBuilder().withPhone(phone).build();
+            for (String keyword : List.of("91234567", "9123", "９１２３", "٩١٢٣", "9１٢3", "𝟡𝟙𝟚𝟛", "９１２３-４５６７")) {
+                assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
+                        phone + " should match " + keyword);
+            }
+            for (String keyword : List.of("91234568", "９１２３４５６８", "---", "missing9123")) {
+                assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
+                        phone + " should not match " + keyword);
+            }
+        }
+        Student student = new StudentBuilder().withPhone("+６５ ９１２３ ４５６７").build();
+        assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of("6591234567"))).test(student));
+        assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of("+65-9123-4567"))).test(student));
+    }
+
+    @Test
     public void test_punctuatedDigitsInFormattedPhone_returnsTrue() {
         // a number copied from a contact list carries the +, and someone may type the
         // hyphenated form the UG shows for add while the stored number uses a space
