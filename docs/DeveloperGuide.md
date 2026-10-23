@@ -341,6 +341,14 @@ The `Storage` component,
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonStudentBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
+`JsonUtil.readJsonFile` reports a file as missing only when its absence is
+established, with `Files.notExists`. `Files.exists` answers false both for a
+file that is not there and for one whose folder cannot be opened, and
+`MainApp.initModelManager` reads a missing file as a first run: it would show
+sample students over records it could never read, and save them over the file
+at the next change. A file whose existence cannot be determined is therefore
+read, and the access failure reported like any other.
+
 `JsonUtil.readJsonFile` rejects a whole-file `null` with a
 `DataLoadingException`, so both preference and student data loading use their
 existing error handling instead of crashing. Invalid student data is preserved
@@ -3318,6 +3326,16 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Move `data/tab.json` elsewhere and relaunch TAB.<br>
       Expected: TAB treats the missing file as a first launch and opens with
       sample students instead of showing an error.
+
+   1. Test case: Restore the file, then make the `data` folder one the account
+      cannot open. On Linux/macOS, run `chmod 000 data` as a non-root User. On
+      Windows, deny the test account permission to list the folder. Relaunch
+      TAB.<br>
+      Expected: An error dialog identifies `data/tab.json` and says that TAB
+      does not have permission to read the file or the folder holding it. The
+      main window does not open, and no sample students are shown. Restore the
+      folder's permission with `chmod 755 data`, relaunch, and confirm that
+      every saved student is back.
 
    1. Test case: Restore a valid file written before the optional `flag` field
       existed, including its removed `address` keys, and relaunch TAB.<br>

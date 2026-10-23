@@ -812,6 +812,11 @@ appear in that session. TAB refuses a later save if the student records in the
 file differ from the records that window loaded. Text editors do not participate
 in TAB's save locking, so always close TAB before editing the file.
 
+If TAB cannot open `data/tab.json` or the folder holding it, it reports that
+at the next run instead of opening the main window. It never treats a file it
+cannot read as a first launch, so your records are not replaced by sample
+students. Restore your permission to the file and the folder, then restart TAB.
+
 Save the file as **UTF-8**, with or without a leading byte order mark (BOM).
 TAB accepts both forms and preserves accented letters and other Unicode text.
 Files saved in another encoding, such as Windows-1252 (ANSI), may contain
