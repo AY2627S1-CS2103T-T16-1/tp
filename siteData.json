@@ -172,6 +172,18 @@
       "headingKeywords": {}
     },
     {
+      "src": "images/pr404/README.md",
+      "headings": {
+        "pr-404-packaged-gui-validation": "PR #404 packaged-GUI validation",
+        "environment-and-method": "Environment and method",
+        "commands-and-interactions": "Commands and interactions",
+        "before-and-after-captures": "Before and after captures",
+        "full-window-context": "Full-window context",
+        "jar-fingerprints": "JAR fingerprints"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "index.md",
       "title": "",
       "headings": {
