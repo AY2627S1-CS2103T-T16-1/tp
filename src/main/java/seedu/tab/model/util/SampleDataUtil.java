@@ -18,6 +18,7 @@ import seedu.tab.model.tag.Tag;
  * Contains utility methods for populating {@code StudentBook} with sample data.
  */
 public class SampleDataUtil {
+
     private SampleDataUtil() {} // this class only holds helpers
 
     public static Student[] getSampleStudents() {
