@@ -365,6 +365,9 @@ destination before an atomic move replaces it. Keeping both files in one
 folder makes the atomic move possible, but also means that the folder must
 allow temporary-file creation. If writing or moving fails, the previous file
 remains unchanged and TAB removes the temporary file where possible.
+Student-book saving creates only missing parent directories before writing the
+temporary file; it never pre-creates an empty destination. A failed first save
+therefore preserves the absence of a book and allows normal sample-data startup.
 
 `StorageManager` logs read/write attempts and successful saves at `FINE`,
 including preference-file operations. Entries identify the file path without
@@ -3214,6 +3217,21 @@ testers are expected to do more *exploratory* testing.
       Expected: The recognizable student and every record from the backup are
       present. Bob remains absent because the failed `add` was undone in memory
       and never replaced the last valid data file.
+
+1. Recovering from a failed first save
+
+   1. Prerequisites: Use a disposable home folder without `data/tab.json`.
+      Launch TAB with its sample students. Make only this folder's data storage
+      unavailable (for example, remove directory write access as a non-root
+      account); do not fill your computer's drive.
+
+   1. Test case: Enter `add Mei Tan -p 91234567`.<br>
+      Expected: A save error reports that no changes were made. The sample
+      students remain visible, Mei is absent, and `data/tab.json` does not exist.
+
+   1. Test case: Exit, restore storage access, and relaunch.<br>
+      Expected: TAB opens with sample students without file repair. Repeat the
+      add, exit, and relaunch; Mei is now saved and present.
 
 1. Dealing with missing/corrupted data files
 

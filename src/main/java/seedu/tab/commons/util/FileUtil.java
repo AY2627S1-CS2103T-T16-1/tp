@@ -65,6 +65,7 @@ public class FileUtil {
 
     static void writeToFile(Path file, String content, TemporaryFileWriter writer) throws IOException {
         Path targetFile = resolveWriteTarget(file);
+        createParentDirsOfFile(targetFile);
         ensureWritable(targetFile);
         Path temporaryFile = createTemporaryFile(targetFile);
 

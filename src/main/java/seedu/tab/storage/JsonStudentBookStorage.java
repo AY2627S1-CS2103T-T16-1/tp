@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.commons.exceptions.IllegalValueException;
-import seedu.tab.commons.util.FileUtil;
 import seedu.tab.commons.util.JsonUtil;
 import seedu.tab.model.ReadOnlyStudentBook;
 
@@ -99,7 +98,10 @@ public class JsonStudentBookStorage {
         requireNonNull(studentBook);
         requireNonNull(filePath);
 
-        FileUtil.createIfMissing(filePath);
+        writeStudentBook(studentBook, filePath);
+    }
+
+    void writeStudentBook(ReadOnlyStudentBook studentBook, Path filePath) throws IOException {
         JsonUtil.saveJsonFile(new JsonSerializableStudentBook(studentBook), filePath);
     }
 

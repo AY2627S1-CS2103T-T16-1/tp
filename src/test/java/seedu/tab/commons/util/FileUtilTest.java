@@ -2,6 +2,7 @@ package seedu.tab.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -32,6 +33,24 @@ public class FileUtilTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void writeToFile_firstPartialWriteFails_preservesAbsenceAndAllowsRetry() throws Exception {
+        Path file = testFolder.resolve("nested/data/tab.json");
+        IOException exception = assertThrows(IOException.class, () -> FileUtil.writeToFile(
+                file, "student data", (temporaryFile, content) -> {
+                    Files.writeString(temporaryFile, "partial");
+                    throw new IOException("No space left on device");
+                }));
+
+        assertEquals("No space left on device", exception.getMessage());
+        assertFalse(Files.exists(file));
+        try (var files = Files.list(file.getParent())) {
+            assertEquals(0, files.count());
+        }
+        FileUtil.writeToFile(file, "student data");
+        assertEquals("student data", Files.readString(file));
+    }
 
     @Test
     public void writeToFile_existingFile_replacesContents() throws Exception {

@@ -23,8 +23,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.tab.commons.exceptions.DataLoadingException;
+import seedu.tab.logic.LogicManager;
+import seedu.tab.logic.commands.exceptions.CommandException;
+import seedu.tab.model.Model;
+import seedu.tab.model.ModelManager;
 import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
+import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
@@ -34,6 +39,35 @@ public class JsonStudentBookStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void saveStudentBook_failedFirstSave_preservesAbsenceModelAndRestart() throws Exception {
+        Path path = testFolder.resolve("data/tab.json");
+        Model model = new ModelManager(getTypicalStudentBook(), new UserPrefs());
+        model.updateFilteredStudentList(ALICE::equals);
+        var originalFilter = model.getFilteredStudentPredicate();
+        StudentBook original = new StudentBook(model.getStudentBook());
+        JsonStudentBookStorage failingStorage = new JsonStudentBookStorage(path) {
+            @Override
+            void writeStudentBook(ReadOnlyStudentBook book, Path destination) throws IOException {
+                throw new IOException("No space left on device");
+            }
+        };
+        LogicManager logic = new LogicManager(model, new StorageManager(failingStorage,
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json"))));
+
+        String message = "Could not save data due to the following error: No space left on device. "
+                + "No changes were made.";
+        assertThrows(CommandException.class, message, () -> logic.execute("add Mei Tan -p 91234567"));
+        assertEquals(original, model.getStudentBook());
+        assertEquals(originalFilter, model.getFilteredStudentPredicate());
+        assertEquals(List.of(ALICE), model.getFilteredStudentList());
+        assertFalse(Files.exists(path));
+        JsonStudentBookStorage restartedStorage = new JsonStudentBookStorage(path);
+        assertEquals(Optional.empty(), restartedStorage.readStudentBook());
+        restartedStorage.saveStudentBook(original);
+        assertEquals(original, new JsonStudentBookStorage(path).readStudentBook().orElseThrow());
+    }
 
     @Test
     public void readAndSaveStudentBook_utf8WithOrWithoutBom_preservesUnicodeRecords() throws Exception {

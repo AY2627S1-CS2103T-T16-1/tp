@@ -775,6 +775,8 @@ If TAB cannot save a change, it reports the error and leaves the student records
 they were before the command. Commands that do not change student records, including
 `list`, `find`, `help`, and `exit`, do not write to the data file. Clear prompts,
 cancellation, and invalid replies also leave the saved file unchanged.
+A failed first save leaves no data file behind. After freeing disk space or
+restoring write access, retry the command, or restart with the sample students.
 
 Window size and position are saved separately in `preferences.json` in TAB's
 home folder. On launch, TAB keeps the saved size and position when they fit
