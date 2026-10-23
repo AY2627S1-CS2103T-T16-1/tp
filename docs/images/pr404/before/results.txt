@@ -1,0 +1,18 @@
+01-arabic-unquoted PASS
+02-hebrew-unquoted PASS
+03-arabic-quoted PASS
+04-hebrew-quoted PASS
+05-mixed-scripts PASS
+06-latin-control PASS
+07-cjk-control PASS
+08-arabic-click FAIL caret x=98.01611328125, native x=80.01318359375
+09-arabic-insert FAIL caret x=107.017578125, native x=116.01904296875
+10-hebrew-click FAIL caret x=89.0146484375, native x=80.01318359375
+11-arabic-partial-selection FAIL selection differs at x=81.5
+12-hebrew-partial-selection FAIL selection differs at x=81.5
+13-mixed-disjoint-selection FAIL selection differs at x=72.5
+14-horizontal-scroll PASS
+15-scrolled-selection FAIL selection differs at x=99.5
+16-narrow-window FAIL caret x=716.5, native x=0.0
+17-keyboard-and-delete INPUT FAIL caret x=71.01171875, native x=143.0234375
+17-keyboard-and-delete FAIL caret x=71.01171875, native x=143.0234375

@@ -52,7 +52,7 @@ public class HelpPage extends UiPart<Region> {
         getRoot().requestFocus();
     }
 
-    /** Handles navigation keys that do not produce typed characters. */
+    /** Handles navigation by key code, including Enter before its typed newline. */
     private void handleKeyPressed(KeyEvent event) {
         if (event.isAltDown() || event.isMetaDown() || event.isControlDown()) {
             return;
@@ -75,6 +75,12 @@ public class HelpPage extends UiPart<Region> {
     /** Handles pager letters on KEY_TYPED so quitting cannot type a stray q into the command box. */
     private void handleKeyTyped(KeyEvent event) {
         if (event.isAltDown() || event.isMetaDown() || event.isControlDown()) {
+            return;
+        }
+        // Enter and macOS F1 can send a newline or empty typed event after opening help.
+        if (event.getCharacter().isEmpty()
+                || "\r".equals(event.getCharacter()) || "\n".equals(event.getCharacter())) {
+            event.consume();
             return;
         }
         switch (event.getCharacter()) {

@@ -31,6 +31,9 @@ import seedu.tab.testutil.StudentBuilder;
 public class SummaryPanelTest {
 
     private static final double SHORT_WINDOW = 600;
+    /** A pair of spellings {@code equalsIgnoreCase} joins but lowercasing them does not. */
+    private static final String CAPITAL_SIGMA = "\u03A3";
+    private static final String FINAL_SIGMA = "\u03C2";
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -88,6 +91,14 @@ public class SummaryPanelTest {
         VBox rows = (VBox) scroll.getContent();
         return rows.getChildren().stream()
                 .map(row -> ((Label) ((HBox) row).getChildren().get(0)).getText())
+                .toList();
+    }
+
+    private static List<String> tagCountsOf(SummaryPanel panel) {
+        ScrollPane scroll = (ScrollPane) panel.getRoot().lookup("#tagScroll");
+        VBox rows = (VBox) scroll.getContent();
+        return rows.getChildren().stream()
+                .map(row -> ((Label) ((HBox) row).getChildren().getLast()).getText())
                 .toList();
     }
 
@@ -204,6 +215,91 @@ public class SummaryPanelTest {
 
         assertEquals(List.of("apple", "Mango", "Zoo"),
                 List.copyOf(SummaryPanel.countByTag(students).keySet()));
+    }
+
+    @Test
+    public void countByTag_caseVariantsOfOneTag_countTogether() {
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, "T1"),
+                tagged("Ben Tan", false, "t1"),
+                tagged("Cai Wei", false, "T1"));
+
+        // tag and find make T1 and t1 one tag, so the panel should give the size of that group
+        assertEquals(Map.of("T1", 3), SummaryPanel.countByTag(students));
+    }
+
+    @Test
+    public void countByTag_variantMostStudentsCarry_namesTheGroup() {
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, "T1"),
+                tagged("Ben Tan", false, "t1"),
+                tagged("Cai Wei", false, "t1"));
+
+        // the row reads as most of the group typed the tag, whichever spelling that is
+        assertEquals(Map.of("t1", 3), SummaryPanel.countByTag(students));
+    }
+
+    @Test
+    public void countByTag_variantsUsedEqually_listTheGroupUnderOneOfThem() {
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, "lab 3"),
+                tagged("Ben Tan", false, "Lab 3"));
+
+        assertEquals(Map.of("Lab 3", 2), SummaryPanel.countByTag(students));
+    }
+
+    @Test
+    public void countByTag_variantsOfSeveralTags_giveEachGroupOneRow() {
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, "T1", "Lab 3"),
+                tagged("Ben Tan", false, "t1", "lab 3"),
+                tagged("Cai Wei", false, "T1"));
+
+        assertEquals(Map.of("T1", 3, "Lab 3", 2), SummaryPanel.countByTag(students));
+        assertEquals(List.of("T1", "Lab 3"),
+                List.copyOf(SummaryPanel.countByTag(students).keySet()));
+    }
+
+    @Test
+    public void countByTag_oneStudentCarryingTwoVariants_countsThatStudentOnce() {
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, "T1", "t1"),
+                tagged("Ben Tan", false, "T1"));
+
+        assertEquals(Map.of("T1", 2), SummaryPanel.countByTag(students));
+    }
+
+    @Test
+    public void countByTag_variantsThatTagRefusesAsDuplicates_countTogether() {
+        // tag reads a capital sigma and a final sigma as one tag, as equalsIgnoreCase does.
+        // Folding case by lowercasing would split them: the capital lowercases to a medial
+        // sigma, while the final sigma lowercases to itself
+        assertTrue(CAPITAL_SIGMA.equalsIgnoreCase(FINAL_SIGMA));
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, CAPITAL_SIGMA),
+                tagged("Ben Tan", false, FINAL_SIGMA));
+
+        assertEquals(Map.of(CAPITAL_SIGMA, 2), SummaryPanel.countByTag(students));
+    }
+
+    @Test
+    public void countByTag_oneStudentCarryingTwoSuchVariants_countsThatStudentOnce() {
+        List<Student> students = List.of(tagged("Ann Lee", false, CAPITAL_SIGMA, FINAL_SIGMA));
+
+        assertEquals(Map.of(CAPITAL_SIGMA, 1), SummaryPanel.countByTag(students));
+    }
+
+    @Test
+    public void panel_caseVariantsOfOneTag_showOneRowWithTheWholeGroup() throws Exception {
+        ObservableList<Student> students = FXCollections.observableArrayList(
+                tagged("Ann Lee", false, "T1"),
+                tagged("Ben Tan", false, "t1"),
+                tagged("Cai Wei", false, "T1"));
+
+        SummaryPanel panel = onFxThread(() -> new SummaryPanel(students));
+
+        assertEquals(List.of("T1"), tagRowsOf(panel));
+        assertEquals(List.of("3"), tagCountsOf(panel));
     }
 
     @Test
