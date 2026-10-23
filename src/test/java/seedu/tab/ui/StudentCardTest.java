@@ -793,7 +793,9 @@ public class StudentCardTest {
                 assertEquals(List.of("3 tags"), visibleChipsOf((Region) name.getScene().getRoot()));
                 Label count = (Label) tags.getChildrenUnmodifiable().stream()
                         .filter(Node::isVisible).findFirst().orElseThrow();
-                double nameRoom = lineWidth - 8 - count.prefWidth(-1);
+                // Parent layout may snap the requested width to the platform's pixel grid.
+                double actualLineWidth = ((Region) name.getParent()).getWidth();
+                double nameRoom = actualLineWidth - 8 - count.prefWidth(-1);
                 assertEquals(Math.min(name.prefWidth(-1), nameRoom), name.getWidth(), 0.5,
                         "the name should use all space left by the count");
                 if (name.prefWidth(-1) <= nameRoom) {
