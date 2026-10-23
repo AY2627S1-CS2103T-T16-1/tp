@@ -395,6 +395,28 @@ Classes used by multiple components are in the `seedu.tab.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Protecting saves from stale windows
+
+`JsonStudentBookStorage` retains a separate copy of the student book loaded or
+successfully saved at each path. Before saving, it rereads the current records
+and compares them with that snapshot. A difference, a removed file, or an
+unreadable replacement refuses the save; `LogicManager` then restores records
+and the active filter. The snapshot advances only after a successful save.
+Comparison uses parsed student records, so harmless JSON formatting changes do
+not create a conflict. Each normal application startup reads the file before
+issuing commands; callers saving without a prior read adopt the on-disk book
+as their initial baseline.
+
+The comparison and replacement share an operating-system lock on
+`.tab.json.lock` beside the real destination. Resolving symbolic links makes
+windows reaching the same destination share a lock. A busy lock refuses the
+save with retry guidance. The sidecar remains after closing TAB: deleting it
+could allow different processes to lock different files with the same name.
+Closing its channel releases the lock, including on a failed save or process
+exit. This prevents stale TAB windows from overwriting each other's records;
+it does not add concurrent multi-user editing. External editors do not honor
+this lock and must be used with all TAB windows closed.
+
 ### Rolling back model changes when saving fails
 
 `LogicManager` takes a copy of the student book and its active display filter
@@ -3187,6 +3209,25 @@ testers are expected to do more *exploratory* testing.
       Expected: The student is still present and no confirmation is pending.
 
 ### Saving data
+
+1. Refusing a stale second window's save
+
+   1. Prerequisites: Use a disposable TAB home folder. Open two TAB windows
+      from that folder before making any changes. Repeat this check once with
+      sample data and no saved file, and once with an existing saved book.
+
+   1. Test case: In window A, enter
+      `add Alice StorageProbe -p 81230001 --id A1111111X`. In window B, enter
+      `add Bob StorageProbe -p 81230002 --id A2222222X`.<br>
+      Expected: A reports success. B reports that the student data file changed,
+      asks you to close this window and restart, and says no changes were made.
+      B retains its previous records and display filter. Its retry is also
+      refused. A's saved JSON remains byte for byte unchanged by B.
+
+   1. Test case: Close B, restart it, and search for Alice.<br>
+      Expected: Alice is present and Bob is absent. Adding Bob now succeeds.
+      Close both windows and relaunch; both students are present. The empty
+      `.tab.json.lock` file may remain and does not prevent ordinary saves.
 
 1. Loading a correctly hand-edited data file
 
