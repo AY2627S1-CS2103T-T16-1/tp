@@ -510,7 +510,11 @@ done to it beyond the quotes any value with spaces takes:
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
 * To remove all of a student's tags, give `-t` an empty value: `-t ""` or
-  `--tag=""`. A bare `-t` or unquoted `--tag=` is refused, so that a mistyped
+  `--tag=""`. A quoted whitespace-only value, such as `-t "   "`, also clears
+  all tags, including when the spaces were copied as Unicode spaces. Supply
+  the blank tag value on its own; combining it with another tag is refused with
+  `A blank tag clears all tags only when it is given on its own.`
+  A bare `-t` or unquoted `--tag=` is refused, so that a mistyped
   option is reported rather than read as a request to clear.
 * An NUS Student ID target that no student holds changes nothing and shows
   `No student has NUS Student ID A0123456X.` A letter-first target that is not

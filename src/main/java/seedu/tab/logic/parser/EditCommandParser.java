@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
@@ -26,6 +27,9 @@ import seedu.tab.model.tag.Tag;
  * Parses input arguments and creates a new EditCommand object
  */
 public class EditCommandParser implements Parser<EditCommand> {
+
+    public static final String MESSAGE_BLANK_TAG_WITH_OTHER_TAGS =
+            "A blank tag clears all tags only when it is given on its own.";
 
     /**
      * Parses the given {@code String} of arguments in the context of the EditCommand
@@ -134,17 +138,22 @@ public class EditCommandParser implements Parser<EditCommand> {
 
     /**
      * Parses the tags the command supplied into the set that replaces the student's own, or
-     * returns nothing when the command leaves the tags alone. A single empty value, which is
-     * how {@code -t ""} is spelled, asks for every tag to be removed.
+     * returns nothing when the command leaves the tags alone. A single value that is empty
+     * after field normalization, such as {@code -t " "}, asks for every tag to be removed.
      */
     private static Optional<Set<Tag>> parseTagsForEdit(ParseProblems problems, List<String> tags) {
         if (tags.isEmpty()) {
             return Optional.empty();
         }
-        if (tags.size() == 1 && tags.get(0).isEmpty()) {
+        List<String> normalizedTags = tags.stream().map(StringUtil::normalizeFieldValue).toList();
+        if (normalizedTags.size() == 1 && normalizedTags.getFirst().isEmpty()) {
             return Optional.of(Set.of());
         }
-        return Optional.of(problems.collectEach(tags, ParserUtil::parseTag));
+        List<String> nonBlankTags = normalizedTags.stream().filter(tag -> !tag.isEmpty()).toList();
+        if (nonBlankTags.size() != normalizedTags.size()) {
+            problems.add(MESSAGE_BLANK_TAG_WITH_OTHER_TAGS);
+        }
+        return Optional.of(problems.collectEach(nonBlankTags, ParserUtil::parseTag));
     }
 
 }

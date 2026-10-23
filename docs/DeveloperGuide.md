@@ -488,6 +488,13 @@ with a hyphen. An empty attached value must be quoted as in `--tag=""`, so an
 accidental `--tag=` cannot clear data. `CommandTokenizer` records whether a
 token began with a quote so a fully quoted `"--tag=T1"` remains a value, while
 the quote around the value in `--tag="Lab 3"` does not hide the option marker.
+
+For `edit`, tag values use `StringUtil.normalizeFieldValue` before validation.
+A single normalized blank value clears all tags, including when the input holds
+Unicode spaces. A blank beside other tag values is rejected with an explanation
+that clearing requires the blank to be given on its own. Nonblank values are
+still validated so every problem can be reported without silently discarding tags.
+
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
@@ -2765,6 +2772,23 @@ testers are expected to do more *exploratory* testing.
    1. Test cases: `edit` and `edit INDEX`<br>
       Expected: No change. The first names the missing index and says a field
       to edit is needed; the second asks only for a field.
+
+### Clearing a student's tags with a blank value
+
+1. Removing all tags while preserving the rest of a record
+
+   1. Prerequisites: Add `add Alice Tan -p 91234567 -e alice@example.com
+      --id A1234567X -t T1 -t "Lab 1" -f` as one line and note Alice's `INDEX`.
+   1. Test case: `edit INDEX -t "   "`.<br>
+      Expected: All general tags disappear. Name, phone, email, NUS Student ID,
+      and follow-up status remain unchanged, including after restarting TAB.
+   1. Test case: Repeat with `edit INDEX --tag=" "` and a copied non-breaking
+      space (U+00A0) between the quotes.<br>
+      Expected: Success even when tags are already absent, with no other changes.
+   1. Test case: `edit INDEX -t " " -t T2`.<br>
+      Expected: `A blank tag clears all tags only when it is given on its own.`
+      Repeat with a copied U+00A0 space between the quotes; the message is identical.
+      No record or saved-file changes.
 
 ### Clearing a student's email
 
