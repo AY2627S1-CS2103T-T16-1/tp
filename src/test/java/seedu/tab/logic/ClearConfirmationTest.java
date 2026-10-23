@@ -69,7 +69,8 @@ public class ClearConfirmationTest {
     @Test
     public void execute_clearAndCancel_preservesDisplayAndJsonBytes() throws Exception {
         for (String reply : List.of("", " ", "\t\n", "\u00A0\u3000", "n", "N", " \tn\u00A0\u3000",
-                "no", "nO", "No", "NO", " \tno\u00A0\u3000")) {
+                "no", "nO", "No", "NO", " \tno\u00A0\u3000", "n\u200e", "n\u200bo",
+                "\u200e", "\u200b", "\u200e \u00a0\u200b", "\u202aNO\u202c")) {
             assertEquals("Clear all 2 students? This cannot be undone. [y/N]",
                     logic.execute("clear").getFeedbackToUser());
             assertTrue(logic.isAwaitingConfirmation());
@@ -87,7 +88,8 @@ public class ClearConfirmationTest {
     public void execute_invalidReplies_keepsConfirmationPendingWithoutWriting() throws Exception {
         logic.execute("clear");
         for (String reply : List.of("yellow", "YESPLEASE", "yep", "yeah", "yess", "yes no", "\"yes\"", "\"y\"",
-                "yes!", "nope", "never", "nothing", "nonsense", "no!", "n o", "n\u200Bo", "y\u200Bes",
+                "yes!", "nope", "never", "nothing", "nonsense", "no!", "n o", "n\u200co", "y\u200des",
+                "y\u200ces", "y\u200e es", "yes\u200b!", "\u200eyellow\u200b",
                 "maybe", "clear", "clear oops", "exit", "help", "delete 1", "add New Student -p 81112222")) {
             String expected = ClearCommand.MESSAGE_INVALID_REPLY + "\n"
                     + "Clear all 2 students? This cannot be undone. [y/N]";
@@ -138,7 +140,8 @@ public class ClearConfirmationTest {
     @Test
     public void execute_yesReplyVariants_clearsHiddenRecordsAndPersistsOnce() throws Exception {
         for (String reply : List.of("y", "Y", " \tY\u00A0\u3000", "yes", "yeS", "yEs", "yES",
-                "Yes", "YeS", "YEs", "YES", " \tyes\u00A0\u3000")) {
+                "Yes", "YeS", "YEs", "YES", " \tyes\u00A0\u3000", "y\u200e", "y\u200bes",
+                "\u202aYeS\u202c", "\u200e \u00a0y\u200b \u200e")) {
             setUp();
             logic.execute("clear");
             assertUnchanged();
