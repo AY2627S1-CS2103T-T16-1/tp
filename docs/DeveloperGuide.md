@@ -264,6 +264,20 @@ toolkit; only the rendering needs one.
 Tags counted the same are listed alphabetically ignoring case, because a
 reader does not read `Zoo` as coming before `apple`.
 
+Case variants of one tag are counted as one tag, because that is what `tag`
+makes of them when it refuses a tag a student already carries: a reader
+looking for the size of tutorial group `T1` would otherwise have to add up a
+row per spelling. The row is named with the spelling most of its students
+carry, which is settled by the counts rather than by the order of the list,
+so narrowing the list does not read as a second tag appearing.
+
+The panel groups two spellings with `String.CASE_INSENSITIVE_ORDER`, which
+calls them equal exactly when `String#equalsIgnoreCase` does, and so exactly
+when `TagCommand` refuses the second of them. Folding case by lowercasing
+would answer a different question and split a group `tag` has already joined:
+a Greek capital sigma lowercases to a medial sigma, while the final sigma a
+student may carry the same tag under lowercases to itself.
+
 ### Logic component
 
 **API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java)
@@ -3003,6 +3017,15 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `clear`, then `yes`.<br>
       Expected: The flagged count and the total read zero, and the tag list is
       empty rather than the panel disappearing.
+
+1. Counting case variants of one tag
+
+   1. Prerequisites: an empty student book, reached with `clear`, then `yes`.
+   1. Test case: `add Ann Lee -p 91234567`, `add Ben Tan -p 91234568`,
+      `add Cai Wei -p 91234569`, then `tag 1 -a T1`, `tag 2 -a t1`,
+      `tag 3 -a T1`.<br>
+      Expected: The TAGS section holds one row, `T1` with the count `3`,
+      rather than a row per spelling.
 
 1. Distinguishing long tags
 
