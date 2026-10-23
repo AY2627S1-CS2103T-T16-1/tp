@@ -3,6 +3,8 @@ package seedu.tab.model.student;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.AppUtil.checkArgument;
 
+import seedu.tab.commons.util.StringUtil;
+
 /**
  * Represents a Student's email in the student book.
  * Guarantees: immutable; is valid as declared in {@link #isValidEmail(String)}
@@ -51,14 +53,15 @@ public class Email {
     public final String value;
 
     /**
-     * Constructs an {@code Email}.
+     * Constructs an {@code Email}, storing the form described by
+     * {@link StringUtil#normalizeFieldValue(String)}.
      *
      * @param email A valid email address.
      */
     public Email(String email) {
         requireNonNull(email);
         checkArgument(isValidEmail(email), MESSAGE_CONSTRAINTS);
-        value = email;
+        value = StringUtil.normalizeFieldValue(email);
     }
 
     /**
@@ -69,7 +72,8 @@ public class Email {
      * whole, which exhausts the stack on a long enough address.
      */
     public static boolean isValidEmail(String test) {
-        return test.matches(VALIDATION_REGEX);
+        requireNonNull(test);
+        return StringUtil.normalizeFieldValue(test).matches(VALIDATION_REGEX);
     }
 
     /**
@@ -78,7 +82,7 @@ public class Email {
      */
     public static boolean isWithinLengthLimit(String test) {
         requireNonNull(test);
-        return test.length() <= MAX_LENGTH;
+        return StringUtil.normalizeFieldValue(test).length() <= MAX_LENGTH;
     }
 
     /**
@@ -87,23 +91,24 @@ public class Email {
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);
+        String normalizedTest = StringUtil.normalizeFieldValue(test);
 
         // before anything that matches part of the address, for the reason given on MAX_LENGTH
-        if (test.length() > MAX_LENGTH) {
+        if (normalizedTest.length() > MAX_LENGTH) {
             return "an email may hold at most " + MAX_LENGTH + " characters, and this one holds "
-                    + test.length();
+                    + normalizedTest.length();
         }
 
-        int at = test.indexOf('@');
+        int at = normalizedTest.indexOf('@');
         if (at < 0) {
             return "an email needs an @ between the local part and the domain";
         }
-        if (test.indexOf('@', at + 1) >= 0) {
+        if (normalizedTest.indexOf('@', at + 1) >= 0) {
             return "an email may hold only one @";
         }
 
-        String localPart = test.substring(0, at);
-        String domain = test.substring(at + 1);
+        String localPart = normalizedTest.substring(0, at);
+        String domain = normalizedTest.substring(at + 1);
 
         if (localPart.isEmpty()) {
             return "there is nothing before the @";
