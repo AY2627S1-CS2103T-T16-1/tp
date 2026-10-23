@@ -105,6 +105,11 @@ it before pressing Enter.
   value after it. Where `edit` allows an empty value, write the deliberate
   empty value as `OPTION=""`, for example `--email=""`.
 
+* If a non-repeatable option is given twice, TAB names the repeated option
+  and asks you to give it only once. For example, repeating `-f` reports
+  `Options given more than once: -f. Give each listed option only once.`
+  This also covers mixed short and long spellings, such as `-f` and `--follow-up`.
+
 * Commands that take no parameters (`help`, `list`, `exit`, and `clear`)
   reject unexpected input and report it without executing the command.<br>
   For example, `help 123` reports `help takes no arguments. Unexpected input:
