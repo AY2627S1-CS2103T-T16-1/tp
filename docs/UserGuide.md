@@ -256,8 +256,9 @@ Format: `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follo
 
 The value options accept these equivalent spellings: `-p` and `--phone`,
 `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`. The spellings may
-be mixed in one command, but giving the same field twice is an error even when
-the two spellings differ.
+be mixed in one command, but giving a single-valued field (phone, email or NUS
+Student ID) twice is an error even when the two spellings differ. Tags are
+repeatable: use `-t` or `--tag` once for each tag, mixing the spellings if you wish.
 
 <box type="tip" seamless>
 
@@ -436,8 +437,10 @@ so `edit A0123456X --id A7654321Y` changes the ID of the student found by the ol
 
 The value options accept these equivalent spellings: `-n` and `--name`, `-p`
 and `--phone`, `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`.
-The spellings may be mixed in one command, but giving the same field twice is
-an error even when the two spellings differ.
+The spellings may be mixed in one command, but giving a single-valued field
+(name, phone, email or NUS Student ID) twice is an error even when the two
+spellings differ. Tags are repeatable: use `-t` or `--tag` once for each
+replacement tag, mixing the spellings if you wish.
 
 <box type="tip" seamless>
 
