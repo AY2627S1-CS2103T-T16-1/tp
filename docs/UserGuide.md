@@ -628,6 +628,10 @@ Format: `tag INDEX -r TAG`
 * If the tag is absent, TAB reports
   `This student does not have tag [TAG]. No changes made.` using your
   normalized input. The record, displayed list and saved file stay unchanged.
+  Asking a student flagged for follow-up to have `Needs follow-up` removed
+  adds `This student is flagged for follow-up, which is not a tag. To clear
+  the flag, use edit INDEX --no-follow-up.`, because the label beside the
+  name is that flag rather than a tag.
 * An invalid index or tag, an empty quoted tag, or a missing value is refused
   with a specific error and leaves records and the saved file unchanged.
 * Removing the last tag leaves a student with no general tags. Removing a

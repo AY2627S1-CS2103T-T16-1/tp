@@ -2276,6 +2276,14 @@ testers are expected to do more *exploratory* testing.
       and `This student does not have tag [lab 3]. No changes made.`,
       respectively. Record, displayed list and saved bytes stay unchanged.
 
+   1. Test case: `tag 1 -r "Needs follow-up"`, on this student, who needs
+      follow-up and carries no tag of that name.<br>
+      Expected: The reply adds a second line, `This student is flagged for
+      follow-up, which is not a tag. To clear the flag, use edit 1
+      --no-follow-up.` The card still shows the label, and running that
+      `edit` command takes it off. On a student who is not flagged, the same
+      command gives the first line alone.
+
    1. Test cases: `tag 0 -r T1`, `tag 2 -r T1`, `tag 2147483648 -r T1`,
       `tag 1 -r ""`, `tag 1 -r "---"`, `tag 1 -r`,
       `tag 1 -r T1 --remove T2` and `tag 1 -a T2 -r T1`.<br>
