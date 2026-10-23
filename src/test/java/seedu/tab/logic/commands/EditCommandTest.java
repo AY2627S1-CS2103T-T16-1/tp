@@ -121,7 +121,8 @@ public class EditCommandTest {
         expectedModel.setStudent(withoutEmail, editedStudent);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
-        assertEquals(Optional.empty(), editedStudent.getEmail());
+        assertEquals(Optional.empty(), model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased())
+                .getEmail());
     }
 
     @Test
@@ -141,7 +142,8 @@ public class EditCommandTest {
         expectedModel.setStudent(withoutEmail, editedStudent);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
-        assertEquals(Optional.of(new Email(VALID_EMAIL_BOB)), editedStudent.getEmail());
+        assertEquals(Optional.of(new Email(VALID_EMAIL_BOB)),
+                model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased()).getEmail());
     }
 
     @Test
@@ -282,7 +284,7 @@ public class EditCommandTest {
                 Messages.format(editedStudent));
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
-        assertTrue(editedStudent.isFlagged());
+        assertTrue(model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased()).isFlagged());
     }
 
     @Test
