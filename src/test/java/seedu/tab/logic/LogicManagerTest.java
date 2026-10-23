@@ -112,6 +112,35 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_findSpacedPhoneTerms_preservesConditionsRecordsAndStorage() throws Exception {
+        logic.execute("add Alice Tan -p 91234567 -t Lab -f");
+        logic.execute("add Bob Lim -p \"(9123)-4567 ext 21\" -t Tutorial");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        String savedJson = Files.readString(dataPath);
+        model = new ModelManager(new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow(), new UserPrefs());
+        setUp();
+        for (var entry : Map.of(
+                "find -p \"9123 4567\"", students,
+                "find --phone=\"9123\u00a04567\"", students,
+                "find -p \"9123\u202f4567\"", students,
+                "find -p \"  23   45  \"", students,
+                "find -p \"9123 4567\" -n Alice -t Lab -f", List.of(students.get(0)),
+                "find -p \"9123 4567\" -nf", List.of(students.get(1)),
+                "find -p \"9123 4567\" -n Alice -nf", List.<Student>of(),
+                "find -p \"EXT 21\"", List.of(students.get(1)),
+                "find -p \"ext 2 1\"", List.<Student>of(),
+                "find -p \" + ( ) - . \"", List.<Student>of()).entrySet()) {
+            assertEquals(new CommandResult(Messages.getStudentsFoundOverview(entry.getValue().size())),
+                    logic.execute(entry.getKey()));
+            assertEquals(entry.getValue(), model.getFilteredStudentList());
+            assertEquals(students, model.getStudentBook().getStudentList());
+            assertEquals(savedJson, Files.readString(dataPath));
+        }
+        assertEquals(students, new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
     public void execute_findFieldCombinations_preservesRecordsAndStorage() throws Exception {
         addSearchStudents();
         List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
@@ -315,6 +344,33 @@ public class LogicManagerTest {
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"), expectedModel);
 
         assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+    }
+
+    @Test
+    public void execute_repeatedFollowUpOptions_reportsOptionsAndPreservesStateAndStorage() throws Exception {
+        model.addStudent(new StudentBuilder(AMY).withFlag(true).build());
+        model.updateFilteredStudentList(student -> false);
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.updateFilteredStudentList(student -> false);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        storage.saveStudentBook(model.getStudentBook());
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        for (var entry : Map.of(
+                "add Priya Nair -p 91234567 --follow-up -f", "--follow-up",
+                "add Priya Nair -p 91234567 -f -f", "-f",
+                "edit 1 -f -f", "-f",
+                "edit 1 --follow-up --follow-up", "--follow-up",
+                "edit 1 -nf --no-follow-up", "-nf",
+                "find -f --follow-up", "-f",
+                "find --no-follow-up -nf", "--no-follow-up",
+                "edit 1 -p 81112222 --phone 82223333 -f -f", "-p -f").entrySet()) {
+            String expected = "Options given more than once: " + entry.getValue()
+                    + ". Give each listed option only once.";
+            assertCommandFailure(entry.getKey(), ParseException.class, expected, expectedModel);
+            assertTrue(model.getFilteredStudentList().isEmpty());
+            assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        }
+        assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
     }
 
     @Test

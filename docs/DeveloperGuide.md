@@ -478,6 +478,11 @@ both is rejected as a repeated single-valued field rather than letting one
 silently override the other. Usage labels and error messages use the canonical
 `--id NUS_STUDENT_ID` spelling.
 
+Duplicate-option feedback names repeated option markers rather than values,
+because presence-only options such as `--follow-up` do not take values.
+`FlagArgumentMap` retains the first spelling supplied for each repeated option;
+the shared message lists those options and asks for each listed option only once.
+
 The shape of the command is settled before any field is read. An unclosed
 quote, an unknown option, or a single-valued option given twice, including
 once under each alias, all leave it
@@ -900,10 +905,14 @@ both the status and every field term. The parser rejects conflicting or
 repeated status options before execution, matching the existing edit rules.
 
 For phone terms containing only Unicode decimal digits, or those digits with
-phone punctuation (`+`, `-`, `(`, `)`, `.`), matching also compares the digits
-with non-digit characters removed. This lets `91234567`, `9123-4567` and
-`+6591234567` match `+65 9123 4567`. Formatted phrases and annotations still
-match literally. Stored student details and saved data do not change.
+grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), matching
+also compares the digits with non-digit characters removed. This lets
+`91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
+so copying a grouped number does not require manual reformatting. A query with
+a country code still requires those digits to occur in the stored phone.
+The digit fallback requires at least one digit; annotations such as `"ext 21"`
+and punctuation-only terms retain literal matching. Unicode whitespace follows
+the same rule as field normalization. Stored student details and saved data do not change.
 
 `FindCommand` and `ListCommand` report the count of displayed students in
 their execution feedback. `FindCommand` counts only the matching students
@@ -1063,9 +1072,11 @@ model. An empty book instead returns a no-op message without a prompt.
 `pendingClearCommand`, an `Optional<ClearCommand>`, and returns before the
 usual storage write. `Optional.empty()` represents no pending request.
 While the request is pending, it reads the
-next input as a reply to the concise `[y/N]` prompt. Only surrounding Unicode
-whitespace is trimmed; internal characters are kept so a value cannot become
-an accepted word by removing characters from within it. Replies ignore case.
+next input as a reply to the concise `[y/N]` prompt. It first applies
+`StringUtil.stripFormatCharacters`, sharing the command parser's treatment of
+copied invisible marks while preserving shaping joiners. It then trims only
+surrounding Unicode whitespace; internal spaces and visible characters are
+kept so extra words cannot become a confirmation. Replies ignore case.
 Trimming scans from both ends with `StringUtil.isWhitespace`, retaining the
 command parser's Unicode whitespace rules. This takes linear time at worst;
 an internal whitespace run is never searched for a trailing match.
@@ -1211,8 +1222,8 @@ slots per semester. They are usually fast typists who prefer a CLI.
 
 **Value proposition**: Manage a semester of students faster than a spreadsheet
 or a mouse-driven contact app. They can find anyone by any field, slice the list
-by tag, and see who is still awaiting a reply. Fully offline, in a plain-text
-file locally, with every change undoable.
+by tag, and see who is still awaiting a reply. Records stay fully offline in a
+local plain-text file.
 
 
 ### User stories
@@ -2137,12 +2148,14 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `add Cara Ng -p 93456789 --follow-up -f` and
       `add Cara Ng -p 93456789 --follow-up true`<br>
-      Expected: Neither command adds Cara. The first reports a repeated `--follow-up`;
-      the second reports that `true` belongs to no option.
+      Expected: Neither command adds Cara. The first reports
+      `Options given more than once: --follow-up. Give each listed option only once.`;
+      the second reports that `true` belongs to no option. The saved file is unchanged.
 
    1. Test cases: `edit 1 --follow-up -f` and `edit 1 --follow-up true`<br>
-      Expected: Neither command changes Alice. The first reports a repeated
-      `--follow-up`; the second reports that `true` belongs to no option.
+      Expected: Neither command changes Alice. The first reports
+      `Options given more than once: --follow-up. Give each listed option only once.`
+      The second reports that `true` belongs to no option.
 
    1. Test cases: `edit 1 --follow-up --no-follow-up` and
       `edit 1 -nf -f -p 89998888`<br>
@@ -2544,9 +2557,11 @@ testers are expected to do more *exploratory* testing.
       Expected: Both records load without an NUS Student ID.
 
    1. Exit TAB and change one `nusStudentId` value to `A0123-456X`, then relaunch.<br>
-      Expected: TAB rejects the malformed data file and starts with an empty
-      student book, leaving the invalid file in place. Restore the backup
-      before entering another command.
+      Expected: TAB shows a startup error identifying `data/tab.json`, the
+      affected student record, and the invalid NUS Student ID. The main window
+      does not open. Dismiss the dialog with `Close TAB`; the invalid file
+      remains byte-for-byte unchanged. Restore the backup with TAB closed,
+      then relaunch and check that the backed-up records load.
 
 1. Checking duplicate identity behavior
 
@@ -2971,8 +2986,15 @@ testers are expected to do more *exploratory* testing.
       Expected: Only Alex Yeoh is shown, with `Found 1 student.`, even though the stored phone
       is written `+65 9123 4567`. A keyword of digits and phone punctuation compares by the
       digits alone.
-   1. Test case: `find -p 98765432`.<br>
+   1. Test cases: `find -p "9876 5432"`, `find -p "76 54"`, and `find -p 98765432`.<br>
       Expected: Only Bernice Yu is shown, with `Found 1 student.` and phone `9876-5432`.
+      Repeat the spaced full number with a copied non-breaking space (U+00A0) or narrow
+      non-breaking space (U+202F) between the groups; both find Bernice.
+   1. Test case: `find -p "9876 5432" -n Alex -f`.<br>
+      Expected: No students are shown, with `Found 0 students.`; the name and status still apply.
+   1. Test cases: `find -p "ext 21"` and `find -p " + ( ) - . "`.<br>
+      Expected: No students are shown, with `Found 0 students.`; annotations and punctuation-only
+      terms do not become digit-only searches.
    1. Test case: `find -p 91234567 -n Bernice`.<br>
       Expected: No students are shown, with `Found 0 students.`; both terms are required.
    1. Test cases: `find -p 91234568` and `find -p 9123-4568`.<br>
@@ -3123,7 +3145,14 @@ testers are expected to do more *exploratory* testing.
       Expected: All students disappear, the saved book is empty, and
       restarting TAB shows an empty list.
 
-   1. Test case: Enter `clear` again.<br>
+   1. Test case: Add fresh records and enter `clear`. Paste `y` followed by
+      U+200E LEFT-TO-RIGHT MARK. Repeat with fresh records and U+200B ZERO WIDTH SPACE.<br>
+      Expected: Each reply confirms and saves an empty book. Add fresh records and repeat with `n`
+      followed by either mark, or the mark alone: each cancels without changing
+      the filter or JSON file. A marked `yellow`, or `y es`, remains invalid
+      and keeps confirmation pending without saving. Cancel with plain `n`.
+
+   1. Test case: Clear the test records, confirm, then enter `clear` again.<br>
       Expected: TAB reports that the book is already empty. No confirmation
       is pending, so `help` works immediately.
 
@@ -3132,6 +3161,16 @@ testers are expected to do more *exploratory* testing.
       Expected: The student is still present and no confirmation is pending.
 
 ### Saving data
+
+1. Loading a correctly hand-edited data file
+
+   1. Prerequisites: In a disposable copy of TAB, add a recognizable student,
+      close every TAB window using this data file, and back up `data/tab.json`.
+   1. Test case: Open `data/tab.json` in a text editor, change that student's
+      phone to `81234567`, preserve valid JSON, and save as UTF-8. Restart TAB.<br>
+      Expected: The student shows the edited phone. Run `list`, close TAB,
+      and restart again; the hand-edited value remains. Restore the backup
+      with TAB closed when finished.
 
 1. Preserving existing data when a save fails
 
