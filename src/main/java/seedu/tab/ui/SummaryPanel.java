@@ -3,8 +3,12 @@ package seedu.tab.ui;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
 
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -50,21 +54,65 @@ public class SummaryPanel extends UiPart<Region> {
     /**
      * Returns how many students each tag is on, most-used first and alphabetically among ties,
      * so that the order does not shift between runs for tags used equally often.
+     *
+     * <p>Case variants of one tag are counted together, because one tag is what the rest of TAB
+     * makes of them: {@code tag} refuses to add a tag a student already carries in another case,
+     * and {@code find} matches every variant. A row therefore gives the size of the group a
+     * reader is looking for rather than the size of one spelling of it.
      */
     public static Map<String, Integer> countByTag(List<Student> students) {
+        Map<String, Integer> byVariant = new TreeMap<>();
         Map<String, Integer> counts = new TreeMap<>();
         for (Student student : students) {
-            student.getTags().forEach(tag -> counts.merge(tag.tagName, 1, Integer::sum));
+            student.getTags().forEach(tag -> byVariant.merge(tag.tagName, 1, Integer::sum));
+            // a student carrying two spellings of one tag is still one student in its group
+            tagsOf(student).forEach(tag -> counts.merge(tag, 1, Integer::sum));
         }
+        return orderByUse(counts, nameEachTag(byVariant));
+    }
 
+    /**
+     * Returns the tags {@code student} carries, with their case folded away so that two
+     * spellings of one tag come back as one tag.
+     */
+    private static Set<String> tagsOf(Student student) {
+        return student.getTags().stream()
+                .map(tag -> tag.tagName.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns the name to list each tag in {@code byVariant} under, keyed by the tag with its
+     * case folded away.
+     *
+     * <p>A group is named with the spelling most of its students carry, so that the panel reads
+     * as the cohort was typed. Spellings carried equally often are settled by order, because a
+     * name that moved with the list would read as a second tag appearing.
+     */
+    private static Map<String, String> nameEachTag(Map<String, Integer> byVariant) {
+        BinaryOperator<String> moreUsed = (named, other) ->
+                byVariant.get(other) > byVariant.get(named) ? other : named;
+        Map<String, String> names = new TreeMap<>();
+        byVariant.keySet().forEach(variant ->
+                names.merge(variant.toLowerCase(Locale.ROOT), variant, moreUsed));
+        return names;
+    }
+
+    /**
+     * Returns the tags in {@code counts} most-used first, each under the name {@code names}
+     * gives it.
+     *
+     * <p>The keys of {@code counts} are tags with their case folded away, so ordering by them
+     * orders the rows alphabetically without regard to case, and no two of them are equal.
+     */
+    private static Map<String, Integer> orderByUse(Map<String, Integer> counts, Map<String, String> names) {
         Map<String, Integer> ordered = new LinkedHashMap<>();
         counts.entrySet().stream()
                 // two tags counted the same read as a list in alphabetical order, and a
                 // reader does not read "Zoo" as coming before "apple"
                 .sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder())
-                        .thenComparing(Map.Entry::getKey, String.CASE_INSENSITIVE_ORDER)
                         .thenComparing(Map.Entry.comparingByKey()))
-                .forEach(entry -> ordered.put(entry.getKey(), entry.getValue()));
+                .forEach(entry -> ordered.put(names.get(entry.getKey()), entry.getValue()));
         return ordered;
     }
 

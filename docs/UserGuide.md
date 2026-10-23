@@ -198,10 +198,12 @@ showing, so you can see the shape of your cohort without running a command.
 
 * **Flagged** counts the students marked as needing a follow-up.
 * **Tags** lists each tag in use with the number of students carrying it,
-  most used first. Tags used by the same number of students are listed
-  alphabetically, ignoring case. Long tag names wrap onto multiple lines so
-  you can read their endings beside the count. Scroll the tag list to see
-  any rows below the visible area.
+  most used first. Case variants of one tag share a row, as they do for `tag`
+  and `find`, so `T1` and `t1` count as one tag; the row is named with the
+  spelling most of those students carry. Tags used by the same number of
+  students are listed alphabetically, ignoring case. Long tag names wrap onto
+  multiple lines so you can read their endings beside the count. Scroll the
+  tag list to see any rows below the visible area.
 * The foot of the panel gives the total.
 
 <box type="tip" seamless>

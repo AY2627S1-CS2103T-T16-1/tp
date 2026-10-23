@@ -91,6 +91,14 @@ public class SummaryPanelTest {
                 .toList();
     }
 
+    private static List<String> tagCountsOf(SummaryPanel panel) {
+        ScrollPane scroll = (ScrollPane) panel.getRoot().lookup("#tagScroll");
+        VBox rows = (VBox) scroll.getContent();
+        return rows.getChildren().stream()
+                .map(row -> ((Label) ((HBox) row).getChildren().getLast()).getText())
+                .toList();
+    }
+
     private static String textOf(SummaryPanel panel, String id) {
         return ((Label) panel.getRoot().lookup(id)).getText();
     }
@@ -204,6 +212,60 @@ public class SummaryPanelTest {
 
         assertEquals(List.of("apple", "Mango", "Zoo"),
                 List.copyOf(SummaryPanel.countByTag(students).keySet()));
+    }
+
+    @Test
+    public void countByTag_caseVariantsOfOneTag_countTogether() {
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, "T1"),
+                tagged("Ben Tan", false, "t1"),
+                tagged("Cai Wei", false, "T1"));
+
+        // tag and find make T1 and t1 one tag, so the panel should give the size of that group
+        assertEquals(Map.of("T1", 3), SummaryPanel.countByTag(students));
+    }
+
+    @Test
+    public void countByTag_variantsUsedEqually_listTheGroupUnderOneOfThem() {
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, "lab 3"),
+                tagged("Ben Tan", false, "Lab 3"));
+
+        assertEquals(Map.of("Lab 3", 2), SummaryPanel.countByTag(students));
+    }
+
+    @Test
+    public void countByTag_variantsOfSeveralTags_giveEachGroupOneRow() {
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, "T1", "Lab 3"),
+                tagged("Ben Tan", false, "t1", "lab 3"),
+                tagged("Cai Wei", false, "T1"));
+
+        assertEquals(Map.of("T1", 3, "Lab 3", 2), SummaryPanel.countByTag(students));
+        assertEquals(List.of("T1", "Lab 3"),
+                List.copyOf(SummaryPanel.countByTag(students).keySet()));
+    }
+
+    @Test
+    public void countByTag_oneStudentCarryingTwoVariants_countsThatStudentOnce() {
+        List<Student> students = List.of(
+                tagged("Ann Lee", false, "T1", "t1"),
+                tagged("Ben Tan", false, "T1"));
+
+        assertEquals(Map.of("T1", 2), SummaryPanel.countByTag(students));
+    }
+
+    @Test
+    public void panel_caseVariantsOfOneTag_showOneRowWithTheWholeGroup() throws Exception {
+        ObservableList<Student> students = FXCollections.observableArrayList(
+                tagged("Ann Lee", false, "T1"),
+                tagged("Ben Tan", false, "t1"),
+                tagged("Cai Wei", false, "T1"));
+
+        SummaryPanel panel = onFxThread(() -> new SummaryPanel(students));
+
+        assertEquals(List.of("T1"), tagRowsOf(panel));
+        assertEquals(List.of("3"), tagCountsOf(panel));
     }
 
     @Test
