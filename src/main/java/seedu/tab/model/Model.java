@@ -49,7 +49,7 @@ public interface Model {
     void deleteStudent(Student target);
 
     /**
-     * Adds the given student.
+     * Adds the given student, preserving the active filter.
      * {@code student} must not already exist in the student book.
      */
     void addStudent(Student student);
