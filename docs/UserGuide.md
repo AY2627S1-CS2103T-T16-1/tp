@@ -680,10 +680,13 @@ Provide at least one field term or one follow-up status option. Every search ter
   without changing the current student list.
 * Quote a term starting with a hyphen, or attach it with `=`:
   `find -t "-Lab"` and `find --tag=-Lab` search for the literal tag text `-Lab`.
-* Phone terms containing only digits, or digits and phone punctuation (`+`, `-`, `(`, `)`, `.`),
-  also search the phone with all non-digit characters removed. `find -p 91234567`,
-  `find -p 91234`, `find -p 9123-4567` and `find -p +6591234567` all match `+65 9123 4567`.
-  Terms containing other characters, such as `"ext 21"` or `"9123 4567"`, match the stored text.
+* Phone terms containing only digits, grouping spaces and phone punctuation (`+`, `-`, `(`, `)`, `.`)
+  also search the phone with all non-digit characters removed, provided the term contains a digit.
+  `find -p 91234567`, `find -p 91234`, `find -p 9123-4567` and `find -p "9123 4567"`
+  all match `+65 9123 4567` or `91234567`. `find -p +6591234567` also matches the number
+  stored with the country code. Quote terms containing spaces;
+  copied Unicode spaces work too. Terms containing other characters, such as `"ext 21"`,
+  and punctuation-only terms match the stored text.
 * TAB reports the number of matches: `Found 0 students.`, `Found 1 student.` or `Found 3 students.`.
 
 Examples:
