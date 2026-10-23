@@ -463,13 +463,27 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_emptyTagBesideAnotherTag_isRefused() {
-        for (String blank : List.of("", " ", "   ", "\u00a0")) {
+    public void parse_blankTagBesideAnotherTag_explainsHowToClearTags() {
+        for (String blank : List.of("", " ", "   ", "\t", "\u00a0", "\u202f\u3000")) {
             String blankTag = " -t \"" + blank + "\"";
-            String expected = Messages.getErrorMessageForInvalidValue("Tag", blank.trim(), Tag.getFailureReason(blank));
+            String expected = "A blank tag clears all tags only when it is given on its own.";
             assertParseFailure(parser, "1" + TAG_FRIEND + blankTag, expected);
             assertParseFailure(parser, "1" + blankTag + TAG_FRIEND, expected);
+            assertParseFailure(parser, "1 --tag=\"" + blank + "\"" + TAG_FRIEND, expected);
         }
+    }
+
+    @Test
+    public void parse_severalBlankTags_reportsClearRuleOnce() {
+        assertParseFailure(parser, "1 -t \"\" --tag=\"\u00a0\"",
+                "A blank tag clears all tags only when it is given on its own.");
+    }
+
+    @Test
+    public void parse_blankAndInvalidTags_reportsBothProblems() {
+        assertParseFailure(parser, "1 -t \" \" -t \"---\"",
+                "A blank tag clears all tags only when it is given on its own.\n"
+                        + "Tag \"---\" is not valid: it holds no letter or number");
     }
 
     @Test

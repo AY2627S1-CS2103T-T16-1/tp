@@ -43,7 +43,6 @@ import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
-import seedu.tab.model.tag.Tag;
 import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.storage.JsonUserPrefsStorage;
 import seedu.tab.storage.StorageManager;
@@ -318,10 +317,28 @@ public class LogicManagerTest {
             String savedJson = Files.readString(storage.getStudentBookFilePath());
             logic.execute(command);
             assertParseException("edit 1 -t \" \" -t T2",
-                    Messages.getErrorMessageForInvalidValue("Tag", "", Tag.getFailureReason("")));
+                    "A blank tag clears all tags only when it is given on its own.");
             assertEquals(List.of(expected), model.getStudentBook().getStudentList());
             assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
         }
+    }
+
+    @Test
+    public void execute_blankTagBesideAnotherTag_preservesRecordsFilterAndStorage() throws Exception {
+        model.addStudent(new StudentBuilder(AMY).withTags("Lab 1", "T1").withFlag(true).build());
+        model.updateFilteredStudentList(student -> false);
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.updateFilteredStudentList(student -> false);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        storage.saveStudentBook(model.getStudentBook());
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        for (String blank : List.of("", " ", "\u00a0", "\u202f\u3000")) {
+            assertCommandFailure("edit 1 --tag=\"" + blank + "\" -t T2", ParseException.class,
+                    "A blank tag clears all tags only when it is given on its own.", expectedModel);
+            assertTrue(model.getFilteredStudentList().isEmpty());
+            assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        }
+        assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
     }
 
     @Test

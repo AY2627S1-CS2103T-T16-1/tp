@@ -454,10 +454,6 @@ for a single-valued field are duplicates rather than independent fields.
 Value-taking options take the token after them, and `-t` or `--tag` repeats
 for `add` and `edit`. The `tag` command takes exactly one tag through `-a`/`--add`
 for addition or `-r`/`--remove` for removal.
-For `edit`, a single tag value that is empty after
-`StringUtil.normalizeFieldValue` clears all tags. This makes quoted whitespace,
-including Unicode spaces, behave like `-t ""`. A blank value alongside another
-tag still fails validation so an ambiguous replacement cannot silently discard tags.
 They also accept a value joined to any short or long marker by an equals sign.
 `FlagTokenizer` splits only on the first equals sign, so later ones remain in
 the value. An attached value is unambiguously part of its option when it opens
@@ -465,6 +461,13 @@ with a hyphen. An empty attached value must be quoted as in `--tag=""`, so an
 accidental `--tag=` cannot clear data. `CommandTokenizer` records whether a
 token began with a quote so a fully quoted `"--tag=T1"` remains a value, while
 the quote around the value in `--tag="Lab 3"` does not hide the option marker.
+
+For `edit`, tag values use `StringUtil.normalizeFieldValue` before validation.
+A single normalized blank value clears all tags, including when the input holds
+Unicode spaces. A blank beside other tag values is rejected with an explanation
+that clearing requires the blank to be given on its own. Nonblank values are
+still validated so every problem can be reported without silently discarding tags.
+
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
@@ -2715,7 +2718,9 @@ testers are expected to do more *exploratory* testing.
       space (U+00A0) between the quotes.<br>
       Expected: Success even when tags are already absent, with no other changes.
    1. Test case: `edit INDEX -t " " -t T2`.<br>
-      Expected: An invalid-tag error. No record or saved-file changes.
+      Expected: `A blank tag clears all tags only when it is given on its own.`
+      Repeat with a copied U+00A0 space between the quotes; the message is identical.
+      No record or saved-file changes.
 
 ### Clearing a student's email
 

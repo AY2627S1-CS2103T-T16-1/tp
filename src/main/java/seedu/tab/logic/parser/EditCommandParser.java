@@ -28,6 +28,9 @@ import seedu.tab.model.tag.Tag;
  */
 public class EditCommandParser implements Parser<EditCommand> {
 
+    public static final String MESSAGE_BLANK_TAG_WITH_OTHER_TAGS =
+            "A blank tag clears all tags only when it is given on its own.";
+
     /**
      * Parses the given {@code String} of arguments in the context of the EditCommand
      * and returns an EditCommand object for execution.
@@ -142,10 +145,15 @@ public class EditCommandParser implements Parser<EditCommand> {
         if (tags.isEmpty()) {
             return Optional.empty();
         }
-        if (tags.size() == 1 && StringUtil.normalizeFieldValue(tags.getFirst()).isEmpty()) {
+        List<String> normalizedTags = tags.stream().map(StringUtil::normalizeFieldValue).toList();
+        if (normalizedTags.size() == 1 && normalizedTags.getFirst().isEmpty()) {
             return Optional.of(Set.of());
         }
-        return Optional.of(problems.collectEach(tags, ParserUtil::parseTag));
+        List<String> nonBlankTags = normalizedTags.stream().filter(tag -> !tag.isEmpty()).toList();
+        if (nonBlankTags.size() != normalizedTags.size()) {
+            problems.add(MESSAGE_BLANK_TAG_WITH_OTHER_TAGS);
+        }
+        return Optional.of(problems.collectEach(nonBlankTags, ParserUtil::parseTag));
     }
 
 }
