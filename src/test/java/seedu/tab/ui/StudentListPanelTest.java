@@ -1,9 +1,11 @@
 package seedu.tab.ui;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -12,9 +14,11 @@ import org.junit.jupiter.api.Test;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.layout.Region;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
@@ -35,6 +39,66 @@ public class StudentListPanelTest {
 
     private static <T> T onFxThread(Callable<T> work) throws Exception {
         return FxToolkit.onFxThread(work);
+    }
+
+    @Test
+    public void resize_wrappingContacts_keepsHeadlineAndEveryDetailInsideEachCell() throws Exception {
+        for (String email : List.of("e0923841@u.nus.edu",
+                "muhammad.haziq.bin.abdul.rahman.shah@alumni.u.nus.edu",
+                "a".repeat(41) + "@u.nus.edu")) {
+            StudentBuilder builder = new StudentBuilder().withName("Siti Aminah")
+                    .withPhone("98765432").withEmail(email);
+            ObservableList<Student> students = FXCollections.observableArrayList(
+                    builder.withFlag(true).build(), builder.withFlag(false).build(),
+                    builder.withNusStudentId("A0234567X").withTags("T01", "Lab 3").withFlag(true).build(),
+                    builder.withFlag(false).build());
+            onFxThread(() -> {
+                Region root = new StudentListPanel(students).getRoot();
+                Scene scene = new Scene(root, 800, 400);
+                scene.getStylesheets().add(UiPart.class.getResource("/view/DarkTheme.css").toExternalForm());
+                root.applyCss();
+                // Visit each pixel in both directions, including scrollbar appearance and
+                // disappearance, rather than assuming a font-specific wrap threshold.
+                for (int width = 800; width >= 298; width--) {
+                    assertCardsFit(root, width);
+                }
+                for (int width = 298; width <= 800; width++) {
+                    assertCardsFit(root, width);
+                }
+                return null;
+            });
+        }
+    }
+
+    private static void assertCardsFit(Region root, double width) {
+        root.resize(width, 400);
+        root.layout();
+        double contactWidth = -1;
+        for (Node node : root.lookupAll(".list-cell")) {
+            if (!(node instanceof ListCell<?> cell) || cell.getGraphic() == null) {
+                continue;
+            }
+            Region card = (Region) cell.getGraphic();
+            Label name = (Label) card.lookup("#name");
+            Region contacts = (Region) card.lookup("#contacts");
+            Bounds headline = name.localToScene(name.getLayoutBounds());
+            Bounds details = contacts.localToScene(contacts.getLayoutBounds());
+            Bounds cardBounds = card.localToScene(card.getLayoutBounds());
+            assertTrue(name.getHeight() >= name.prefHeight(-1) - 0.5, "the name is squeezed");
+            assertTrue(headline.getMinY() >= cardBounds.getMinY(), "the name is clipped at the top");
+            assertTrue(headline.getMaxY() <= details.getMinY(), "the headline overlaps contacts");
+            for (Node field : contacts.getChildrenUnmodifiable().stream().filter(Node::isManaged).toList()) {
+                Bounds bounds = field.localToScene(field.getLayoutBounds());
+                assertTrue(bounds.getMaxY() <= cardBounds.getMaxY(), "a contact escapes the card");
+                assertTrue(bounds.getMaxY() <= details.getMaxY() + 0.5, "a contact is clipped");
+            }
+            if (contactWidth >= 0) {
+                assertEquals(contactWidth, contacts.getWidth(), 0.5,
+                        "follow-up must not reduce the contact width");
+            }
+            contactWidth = contacts.getWidth();
+        }
+        assertTrue(contactWidth > 0, "the list must contain populated cards");
     }
 
     @Test
