@@ -172,6 +172,13 @@
       "headingKeywords": {}
     },
     {
+      "src": "images/pr-evidence/333-help-notices.md",
+      "headings": {
+        "help-notice-evidence-for-issue-333": "Help notice evidence for issue #333"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "images/pr404/README.md",
       "headings": {
         "pr-404-packaged-gui-validation": "PR #404 packaged-GUI validation",
