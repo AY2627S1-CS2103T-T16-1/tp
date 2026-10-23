@@ -195,6 +195,11 @@ compare where each piece begins and ends, so a boundary that moves without
 changing the count slips through. It never rejects anything: a
 command is coloured while it is still half-typed.
 
+The copy measures its natural width from the whole shaped `TextFlow`, rounded
+up to avoid wrapping at a fractional pixel boundary. Ordinary value words and
+spaces share a text node so that splitting an unquoted right-to-left name does
+not change shaping or click positions.
+
 Three things then have to agree with the field, because the User reads our copy
 but interacts with the field:
 
@@ -213,10 +218,14 @@ but interacts with the field:
   prompt would otherwise be taken for the hidden one.
 * **the caret.** The field's caret is drawn in its text colour, which is
   transparent, so the line carries one of its own, sized from a run of the text
-  so it sits where the text does.
+  so it sits where the text does. Its horizontal position follows the primary
+  caret shape of the field’s text node, including its leading/trailing bias at
+  script boundaries. Logical prefix widths cannot locate RTL insertion points.
 * **the selection.** The field draws its highlight at its own offset, which
   broke into fragments behind the copy, so it is turned off in the stylesheet
-  and drawn here instead.
+  and drawn here instead. A path from `TextFlow.rangeShape` covers each visual
+  segment, including selections that cross RTL/LTR boundaries and appear as
+  separate bands.
 
 `CommandBoxTest` checks the contrast of the selection band against the line,
 and of every colour the line uses against that band, including the one a
@@ -2874,6 +2883,26 @@ testers are expected to do more *exploratory* testing.
       the window in to narrow it, then click in the middle of the command.<br>
       Expected: The command still runs to the edge of the line with the caret
       in view, and the caret lands on the character clicked.
+
+1. Checking right-to-left and mixed-script commands in the packaged JAR
+
+   1. Test case: type `add محمد علي حسن -p 91234567`, then try
+      `add דוד כהן -p 91234567`, without pressing Enter. Repeat with each name
+      in double quotes, with `add Ali محمد דוד Tan -p 91234567`, and with
+      `add 陈伟明 李 -p 98123344` and `add José Tan -p 91234567` as controls.<br>
+      Expected: Each command stays on one readable line. Repeating the name
+      until the command exceeds the available width scrolls horizontally.
+   1. Test case: type `find -n محمد`, click between letters, and type `Z`.
+      Undo, then try Backspace and Delete at that position. Repeat with
+      `find -n דוד` and move through each word using Left and Right.<br>
+      Expected: The caret marks the insertion or deletion position, including
+      after clicks and keyboard movement inside each RTL word.
+   1. Test case: use Shift+Left/Right and mouse dragging to select part of a
+      name, then a range across Latin and RTL words in the mixed-script case.
+      Repeat after scrolling and narrowing the window.<br>
+      Expected: Only selected characters are highlighted, even when the
+      selection occupies separate visual segments. Replacing the selection
+      changes exactly those characters.
 
 ### The summary beside the list
 
