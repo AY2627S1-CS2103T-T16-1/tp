@@ -892,10 +892,14 @@ both the status and every field term. The parser rejects conflicting or
 repeated status options before execution, matching the existing edit rules.
 
 For phone terms containing only Unicode decimal digits, or those digits with
-phone punctuation (`+`, `-`, `(`, `)`, `.`), matching also compares the digits
-with non-digit characters removed. This lets `91234567`, `9123-4567` and
-`+6591234567` match `+65 9123 4567`. Formatted phrases and annotations still
-match literally. Stored student details and saved data do not change.
+grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), matching
+also compares the digits with non-digit characters removed. This lets
+`91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
+so copying a grouped number does not require manual reformatting. A query with
+a country code still requires those digits to occur in the stored phone.
+The digit fallback requires at least one digit; annotations such as `"ext 21"`
+and punctuation-only terms retain literal matching. Unicode whitespace follows
+the same rule as field normalization. Stored student details and saved data do not change.
 
 `FindCommand` and `ListCommand` report the count of displayed students in
 their execution feedback. `FindCommand` counts only the matching students
@@ -2945,8 +2949,15 @@ testers are expected to do more *exploratory* testing.
       Expected: Only Alex Yeoh is shown, with `Found 1 student.`, even though the stored phone
       is written `+65 9123 4567`. A keyword of digits and phone punctuation compares by the
       digits alone.
-   1. Test case: `find -p 98765432`.<br>
+   1. Test cases: `find -p "9876 5432"`, `find -p "76 54"`, and `find -p 98765432`.<br>
       Expected: Only Bernice Yu is shown, with `Found 1 student.` and phone `9876-5432`.
+      Repeat the spaced full number with a copied non-breaking space (U+00A0) or narrow
+      non-breaking space (U+202F) between the groups; both find Bernice.
+   1. Test case: `find -p "9876 5432" -n Alex -f`.<br>
+      Expected: No students are shown, with `Found 0 students.`; the name and status still apply.
+   1. Test cases: `find -p "ext 21"` and `find -p " + ( ) - . "`.<br>
+      Expected: No students are shown, with `Found 0 students.`; annotations and punctuation-only
+      terms do not become digit-only searches.
    1. Test case: `find -p 91234567 -n Bernice`.<br>
       Expected: No students are shown, with `Found 0 students.`; both terms are required.
    1. Test cases: `find -p 91234568` and `find -p 9123-4568`.<br>

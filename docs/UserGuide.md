@@ -256,8 +256,9 @@ Format: `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follo
 
 The value options accept these equivalent spellings: `-p` and `--phone`,
 `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`. The spellings may
-be mixed in one command, but giving the same field twice is an error even when
-the two spellings differ.
+be mixed in one command, but giving a single-valued field (phone, email or NUS
+Student ID) twice is an error even when the two spellings differ. Tags are
+repeatable: use `-t` or `--tag` once for each tag, mixing the spellings if you wish.
 
 <box type="tip" seamless>
 
@@ -436,8 +437,10 @@ so `edit A0123456X --id A7654321Y` changes the ID of the student found by the ol
 
 The value options accept these equivalent spellings: `-n` and `--name`, `-p`
 and `--phone`, `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`.
-The spellings may be mixed in one command, but giving the same field twice is
-an error even when the two spellings differ.
+The spellings may be mixed in one command, but giving a single-valued field
+(name, phone, email or NUS Student ID) twice is an error even when the two
+spellings differ. Tags are repeatable: use `-t` or `--tag` once for each
+replacement tag, mixing the spellings if you wish.
 
 <box type="tip" seamless>
 
@@ -677,10 +680,13 @@ Provide at least one field term or one follow-up status option. Every search ter
   without changing the current student list.
 * Quote a term starting with a hyphen, or attach it with `=`:
   `find -t "-Lab"` and `find --tag=-Lab` search for the literal tag text `-Lab`.
-* Phone terms containing only digits, or digits and phone punctuation (`+`, `-`, `(`, `)`, `.`),
-  also search the phone with all non-digit characters removed. `find -p 91234567`,
-  `find -p 91234`, `find -p 9123-4567` and `find -p +6591234567` all match `+65 9123 4567`.
-  Terms containing other characters, such as `"ext 21"` or `"9123 4567"`, match the stored text.
+* Phone terms containing only digits, grouping spaces and phone punctuation (`+`, `-`, `(`, `)`, `.`)
+  also search the phone with all non-digit characters removed, provided the term contains a digit.
+  `find -p 91234567`, `find -p 91234`, `find -p 9123-4567` and `find -p "9123 4567"`
+  all match `+65 9123 4567` or `91234567`. `find -p +6591234567` also matches the number
+  stored with the country code. Quote terms containing spaces;
+  copied Unicode spaces work too. Terms containing other characters, such as `"ext 21"`,
+  and punctuation-only terms match the stored text.
 * TAB reports the number of matches: `Found 0 students.`, `Found 1 student.` or `Found 3 students.`.
 
 Examples:
