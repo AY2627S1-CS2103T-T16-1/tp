@@ -84,11 +84,12 @@ public class DetailsContainsKeywordsPredicateTest {
         for (String phone : List.of("９１２３４５６７", "+６５ ９１２３ ４５６７", "٩١٢٣-٤٥٦٧",
                 "9１٢3４٥6７", "𝟡𝟙𝟚𝟛-𝟜𝟝𝟞𝟟", "91234567")) {
             Student student = new StudentBuilder().withPhone(phone).build();
-            for (String keyword : List.of("91234567", "9123", "９１２３", "٩١٢٣", "9１٢3", "𝟡𝟙𝟚𝟛", "９１２３-４５６７")) {
+            for (String keyword : List.of("91234567", "9123", "９１２３", "٩١٢٣", "9１٢3", "𝟡𝟙𝟚𝟛",
+                    "９１２３-４５６７", "９１２３ ４５６７", "٩١٢٣\u00a0٤٥٦٧", "𝟡𝟙𝟚𝟛\u202f𝟜𝟝𝟞𝟟")) {
                 assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
                         phone + " should match " + keyword);
             }
-            for (String keyword : List.of("91234568", "９１２３４５６８", "---", "missing9123")) {
+            for (String keyword : List.of("91234568", "９１２３４５６８", "９１２３ ４５６８", "---", "missing9123")) {
                 assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
                         phone + " should not match " + keyword);
             }
@@ -111,6 +112,29 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_spacedPhoneDigits_matchesAcrossGroupingStyles() {
+        for (String phone : List.of("91234567", "+65 9123 4567", "(9123)-4567")) {
+            Student student = new StudentBuilder().withPhone(phone).build();
+            for (String keyword : List.of("9123 4567", "9123  4567", "9123\u00a04567", "9123\u202f4567",
+                    "9123\u20034567", "9123\t4567", "(9123) 4567", "23 45", " 7 ")) {
+                assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
+                        phone + " should match " + keyword);
+            }
+        }
+    }
+
+    @Test
+    public void test_spacedPhoneTerms_preservesLiteralAndNonmatchingTerms() {
+        Student student = new StudentBuilder().withPhone("91234567 ext 21").build();
+        for (String keyword : List.of("9123 4568", "ext 22", "ext 2 1", "x 21", " + ( ) - . ")) {
+            assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student));
+        }
+        assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of("EXT 21"))).test(student));
+        Student punctuated = new StudentBuilder().withPhone("9123 - 4567").build();
+        assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(" - "))).test(punctuated));
+    }
+
+    @Test
     public void test_punctuatedDigitsNotInPhone_returnsFalse() {
         Student student = new StudentBuilder().withPhone("+65 9123 4567").build();
         for (String keyword : List.of("9123-4568", "999-9999", "ext-21", "---", "+()-.")) {
@@ -126,7 +150,7 @@ public class DetailsContainsKeywordsPredicateTest {
             assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student));
         }
         for (String keyword : List.of("91234568", "76543219", "123456789", "missing91234567",
-                "ext 22", "---")) {
+                "ext 22", "ext ２１", "ext 2 1", "---")) {
             assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student));
         }
     }
