@@ -138,7 +138,9 @@ visible before you press Enter:
 If a command is refused, the whole line turns red until you start correcting
 it. A command longer than the line scrolls with the caret, so you can always
 see where you are typing, and selecting part of it (for example with
-`Ctrl`+`A`) draws a band behind the selection.
+`Ctrl`+`A`) draws a band behind the selection. Arabic, Hebrew and mixed-script
+commands also stay on this single line; the caret and selection follow the
+text’s displayed order.
 
 <box type="tip" seamless>
 
