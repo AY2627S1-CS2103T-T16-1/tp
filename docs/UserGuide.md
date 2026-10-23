@@ -242,6 +242,8 @@ Use these pager keys immediately, without clicking or pressing Enter after a let
 
 Press **c** to copy the complete User Guide address to your clipboard. The footer
 confirms `User Guide URL copied.`; paste it into a browser to read the full guide.
+Opening help shows `Help mode: press q or Esc to return to commands.`.
+Navigation keys, including Enter, leave this notice unchanged.
 Typing an unused key shows `Press q or Esc to return to the command box.` so you
 can leave help before typing a command.
 
