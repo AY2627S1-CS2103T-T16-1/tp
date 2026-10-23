@@ -107,7 +107,7 @@ public class TagCommandIntegrationTest {
                 "tag 2147483648 -a T2", "Index must be a positive integer.",
                 "tag 1 -a \"\"", "Tag \"\" is not valid: it holds no letter or number",
                 "tag 1 -a \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
-                "tag 1 -a T2 --add T3", "Multiple values specified for the following single-valued field(s): -a");
+                "tag 1 -a T2 --add T3", "Options given more than once: -a. Give each listed option only once.");
         for (Map.Entry<String, String> error : errors.entrySet()) {
             assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());
         }
@@ -209,7 +209,7 @@ public class TagCommandIntegrationTest {
                 "tag 1 -r \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
                 "tag 1 -r", "-r TAG needs a value after it. "
                         + "A value opening with a hyphen goes in double quotes." + hint,
-                "tag 1 -r T1 --remove T2", "Multiple values specified for the following single-valued field(s): -r",
+                "tag 1 -r T1 --remove T2", "Options given more than once: -r. Give each listed option only once.",
                 "tag 1 -a T2 --remove T1", "Options -a/--add and -r/--remove cannot be used together.");
         for (Map.Entry<String, String> error : errors.entrySet()) {
             assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());

@@ -12,6 +12,8 @@ import java.util.stream.Stream;
  */
 public class CollectionUtil {
 
+    private CollectionUtil() {} // this class only holds helpers
+
     /** @see #requireAllNonNull(Collection) */
     public static void requireAllNonNull(Object... items) {
         requireNonNull(items);
