@@ -239,8 +239,9 @@ The footer keeps the navigation keys visible and shows your progress, or `(END)`
 at the last screenful. Help has no scrollbars. Text wraps to the window width;
 you can resize the window while reading. Paging keys stay at the beginning or
 end when there is no more text in that direction. Press `q` or Esc to restore
-the student list, previous result and any partially typed command, then enter
-your next command. **F1** and **Help → Help** open the same page at the beginning
+the student list, previous result and any partially typed command. The command
+is unselected with the caret at the end, ready for you to continue typing.
+**F1** and **Help → Help** open the same page at the beginning
 without submitting a partially typed command. Pager keys apply only while help is open.
 
 ![Command summary in the main window](images/helpMessage.png)
