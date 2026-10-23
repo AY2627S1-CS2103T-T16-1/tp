@@ -17,6 +17,8 @@ public class FileUtil {
 
     private static final String CHARSET = "UTF-8";
 
+    private FileUtil() {} // this class only holds helpers
+
     /**
      * Creates a file if it does not exist along with its missing parent directories.
      * @throws IOException if the file or directory cannot be created.
