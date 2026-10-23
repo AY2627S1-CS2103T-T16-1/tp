@@ -382,17 +382,20 @@ A flagged student's card carries a `Needs follow-up` marker at its right-hand
 edge, on the same line as the name, and the command result says so too.
 
 A name too long for a card is shortened with an ellipsis in its middle, which
-keeps both the start and the end of the name, so two students whose names begin
-alike still read as two. Hover over any name the card cannot show in full,
+keeps both the start and the end of the name to help distinguish similar names.
+Hover over any name the card cannot show in full,
 whether it was shortened this way or left narrow by a crowded row, to see the
 whole of it. NUS Student ID, phone and email share a line when they fit. Details
 wrap onto another line when needed, so a long phone cannot hide the email.
 A value wider than a whole line ends with an ellipsis; hover over it to see
 its full value. Widening the window shows more text and brings details back
 onto one line without changing the stored record.
-At narrow widths, the name keeps its opening letters while tags give way to
-a count of those hidden. When no chip fits, the count reads `N tags`; otherwise
-it reads `N more…`. Hover over the count to read the hidden tag names.
+Names and tag labels appear in full whenever there is room, and the card shows
+as many complete tag chips as fit. At narrow widths, the name keeps both ends
+while tags give way to a count of those hidden. When no chip fits, the count reads `N tags`; otherwise
+it reads `N more…`. Unused count space returns to the name. A tag chip too
+wide for its allocation is shortened; hover over it to read the full tag.
+Hover over the count to read the hidden tag names.
 
 When a student is added, the command result displays the new record
 (`New student added: NAME; Phone: PHONE...`) so you can confirm the details

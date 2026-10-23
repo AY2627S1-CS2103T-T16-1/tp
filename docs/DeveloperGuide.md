@@ -104,9 +104,9 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
-The student card's `TagRow` retains every tag name, but creates at most three
-tag labels. Layout uses the full name count to size the overflow chip and
-list all hidden tags in its tooltip, even when fewer labels are created.
+The student card's `TagRow` creates a label for every tag, with its full text.
+Layout shows as many complete chips as fit and lists all hidden tags in the
+overflow chip's tooltip. There is no fixed chip count or label length cap.
 
 `SummaryPanel` wraps complete tag names within the fixed 150 px sidebar.
 Each count retains its preferred width, while the tag list scrolls vertically
@@ -151,7 +151,10 @@ displays have different usable heights or gaps between them.
 `CardHeadline` reserves a readable start of the name before allocating room
 to tags. When that leaves no room for a tag chip, `TagRow` uses the shorter
 `N tags` total instead of `N more…`, preserving a complete count beside the
-name. Its tooltip still lists every hidden tag.
+name. Its tooltip still lists every hidden tag. `TagRow.fittedWidth` reports
+the space its chosen chips or count actually use, so `CardHeadline` returns
+any unused allocation to the name before laying it out. The name requests
+its full natural width; a large tag list cannot take its readable minimum.
 
 #### Keeping contact details readable
 
@@ -1077,41 +1080,22 @@ took positional arguments and command options instead. `Name` itself never
 needed changing.
 
 **Showing a long name.** A card gives the name one line, shared with the tags
-and the follow-up pill, so a name longer than `StudentCard.MAX_NAME_CHARACTERS`
-is cut and the whole of it is left on the card as a tooltip. The count is fixed
-rather than taken from the room the row has left over, so the same name breaks
-off in the same place on every card instead of moving as the rest of the card
-changes. A name within the count is cut all the same where the row runs out of
-room, so the name goes on the card through `UiText.showMiddleShortenedToFit`,
-which hands the label the whole name on hover whenever it is drawn narrower
-than its text needs. The tags take that path for the same reason.
+and follow-up marker. `StudentCard` supplies the complete name through
+`UiText.showToFit`, and `CardName` measures it in the displayed font. Names
+appear in full whenever their allocated width permits; there is no fixed
+character limit. Widening the card restores text previously hidden by a cut.
 
-The cut is taken from the middle, keeping 13 characters of the start and 9 of
-the end. A cut at the close alone puts `Mohamed Abdul Rahman bin Ismail` and
-`Mohamed Abdul Rahman bin Ahmad` on two cards as the same text, and a reader
-scanning the list has nothing to tell the rows apart by; the end of a name is
-where two such students differ, which is what the 9 characters buy. Wrapping
-the name to a second line was weighed and dropped, because it lets any card
-grow to two lines tall and so costs the list more rows than the collision costs
-a reader, and the pill and the tags still have to fit beside the name. A name
-within one character of the count is left whole, since the ellipsis takes a
-place of its own and the cut would save no room. `UiText` counts both ends with
-`StringUtil.firstCharacters` and `StringUtil.lastCharacters`, so neither cut
-separates a letter from the accent that belongs to it nor an emoji from its
-other half.
+When space runs out, `CardName` shortens from the middle through
+`UiText.middleShortened`. It keeps both ends, retaining up to nine characters
+at the end and using the remaining character budget for the opening.
+`StringUtil.firstCharacters` and `StringUtil.lastCharacters` preserve complete
+characters, including combining accents and emoji. Names can still coincide
+when their distinguishing text is hidden, so a tooltip shows the complete
+name whenever it is shortened and disappears when the name fits again.
 
-Two cuts reach the name and they have to agree on where they take text from.
-The count is the card's own and is applied before the card is laid out, so it
-depends on the name alone. The second is taken once the line knows how much
-room it has, and so depends on what the card carries beside the name.
-`CardName` takes that second cut itself, from the middle and through the same
-`StringUtil` counting, rather than leaving it to the label. A cut at the end
-would read as the same text on two cards: at the window's smallest width both
-`Mohamed Abdul Rahman bin Ismail` and `Mohamed Abdul Rahman bin Ahmad` drew as
-`Mohamed Abd...`. A label told to elide from the middle instead cuts at a
-character index, which falls between the two halves of a character Java stores
-in two, so `Alexander 𠮷田` drew as `Ale…` with the back half of its fourth
-character after it.
+The cut happens during layout, after `CardHeadline` knows the actual width.
+Leaving middle shortening to JavaFX can split a surrogate pair: a character
+such as `𠮷` may then be drawn as a broken glyph.
 
 `DarkTheme.css` therefore tells `.card-name` to clip, so that a cut `CardName`
 gets a pixel wrong shows a glyph against the edge rather than a broken one.
@@ -2417,9 +2401,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `add Mohamed Abdul Rahman bin Ismail -p 91234567`, then
       `add Mohamed Abdul Rahman bin Ahmad -p 92345678`.<br>
-      Expected: The two cards read `Mohamed Abdul…in Ismail` and
-      `Mohamed Abdul…bin Ahmad`, so the names are distinguishable without
-      reading the index. Hovering over either name shows the whole of it.
+      Expected: Both names appear in full, with no name tooltip.
 
    1. Test case: narrow the window to its smallest width with both students
       listed.<br>
@@ -2444,16 +2426,38 @@ testers are expected to do more *exploratory* testing.
    1. Add `add Siti Nur-Aisyah Hassan -p 91234567 -t T01 -t "Lab 3" -f` and
       `add Siti Nur-Aisyah Hamid -p 98765432 -t T02 -t "Lab 4" -f`.
    1. Narrow the window to its minimum width and hover over each shortened name.<br>
-      Expected: Each tooltip shows the corresponding complete name, even though
-      neither name exceeds the card's character limit.
+      Expected: Each tooltip shows the corresponding complete name.
    1. Widen the window until both names fit.<br>
       Expected: Each name appears in full and its tooltip is removed.
 
 1. Leaving a name that nearly fits alone
 
    1. Test case: `add Jonathan Chuah Wei Ming -p 93456789`.<br>
-      Expected: The card shows the whole name with no ellipsis, because a cut
-      this close to the limit would save no room.
+      Expected: The card shows the whole name when it has sufficient width.
+
+1. Returning unused count space to a short name
+
+   1. Add `add Tan Ah Kow -p 94445555 -t attendance-low -t consult -t "Project A/B" --follow-up`.
+   1. Narrow the window to about 520 px.<br>
+      Expected: Where tags collapse to `3 tags` and the name plus count fit,
+      `Tan Ah Kow` appears in full. No unused chip allocation leaves the name
+      shortened beside a blank gap. Hover over the count to read all three tags.
+   1. Repeat with `Siti Aminah` and `Lee Wei Jie`, then remove the follow-up
+      marker and resize again. Names use the room released by the marker.
+
+1. Reading every tag that fits
+
+   1. Add `add Alex Yeoh -p 87438807 -t T01 -t "Lab 3" -t W5 -t consult`.
+   1. Widen the window to about 1400 px.<br>
+      Expected: All four chips appear in alphabetical order, without a count.
+   1. Add `add Charlotte Oliveiro -p 93210283 -t "Tutorial Group 01"`, then
+      `add David Li -p 91031282 -t "Tutorial Group 02"`.<br>
+      Expected: Both tag names appear in full, including their distinct endings.
+   1. Add `add Irfan Ibrahim -p 92492021 -t "CS2103T Tutorial W09" -t "CS2103T Tutorial W10"`.
+   1. Narrow and widen the window repeatedly.<br>
+      Expected: Chips that fit appear in full; hidden tags are counted and
+      listed on hover. A lone chip too wide for its allocation is shortened
+      and shows its complete tag on hover. Widening restores complete tags.
 
 ### Reading a clipped email address
 
