@@ -871,6 +871,14 @@ If preferences cannot be saved, TAB prints a concise warning naming the path
 and reason. It uses the loaded or default settings for that session. A warning
 on exit means the window settings could not be saved; TAB still closes normally.
 
+If saving reports that the required data folder is occupied by a file, close TAB
+and move or rename that unrelated file before restarting. TAB preserves it.
+A folder occupying the save-lock path (normally `data/.tab.json.lock`) also blocks
+saving. Close every TAB window before moving or renaming that folder. Keep any
+contents you need; TAB does not remove it automatically. The lock path must be a
+writable file, and both the data file and its folder need write permission.
+A failed save restores the previous student records and active search.
+
 ### Editing the data file
 
 TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.json`.
