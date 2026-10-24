@@ -361,6 +361,17 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_emailAndIdPastedWithInvisibleMarks_areStoredWithoutThem() {
+        // the marks draw nothing, so an error quoting the value would leave the User unable to
+        // see what to fix; both fields are normalized as names, phones and tags already are
+        Student expected = new StudentBuilder().withName("John Doe").withPhone(VALID_PHONE_BOB)
+                .withEmail(VALID_EMAIL_BOB).withNusStudentId(VALID_NUS_STUDENT_ID_BOB).withTags().build();
+        assertParseSuccess(parser, " John Doe -p " + VALID_PHONE_BOB
+                + " -e \u200E" + VALID_EMAIL_BOB + " -i \u200E" + VALID_NUS_STUDENT_ID_BOB,
+                new AddCommand(expected));
+    }
+
+    @Test
     public void parse_theSameTagGivenTwiceWithAnInvisibleMark_storesOneTag() {
         // the two spellings are one tag to a reader, so the set must not hold both
         Student expected = new StudentBuilder().withName("John Doe").withPhone(VALID_PHONE_BOB)
