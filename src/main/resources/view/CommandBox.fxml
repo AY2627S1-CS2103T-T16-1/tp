@@ -8,6 +8,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.TextFlow?>
+<?import javafx.scene.shape.Path?>
 
 <HBox fx:id="commandPane" styleClass="command-line" alignment="CENTER_LEFT" spacing="10"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
@@ -26,7 +27,7 @@
     <Pane fx:id="lane" maxWidth="Infinity" mouseTransparent="true">
       <!-- behind the text: the field's own highlight is drawn at the field's scroll offset,
            which is not ours, so it broke into fragments behind the copy -->
-      <Region fx:id="selection" styleClass="command-selection" />
+      <Path fx:id="selection" styleClass="command-selection" strokeWidth="0" />
       <TextFlow fx:id="highlighted" styleClass="command-highlight" />
       <Region fx:id="caret" styleClass="command-caret" />
     </Pane>

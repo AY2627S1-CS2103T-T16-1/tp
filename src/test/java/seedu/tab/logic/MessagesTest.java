@@ -141,20 +141,26 @@ public class MessagesTest {
     @Test
     public void getErrorMessageForDuplicateFlags_severalFlags_namesEachInTheOrderGiven() {
         // a set would let the order vary between runs, which makes the message unpredictable
-        assertEquals("Multiple values specified for the following single-valued field(s): -p -e",
+        assertEquals("Options given more than once: -p -e. Give each listed option only once.",
                 Messages.getErrorMessageForDuplicateFlags("-p", "-e"));
     }
 
     @Test
     public void getErrorMessageForDuplicateFlags_repeatedFlag_namesItOnce() {
-        assertEquals("Multiple values specified for the following single-valued field(s): -e",
+        assertEquals("Options given more than once: -e. Give each listed option only once.",
                 Messages.getErrorMessageForDuplicateFlags("-e", "-e"));
     }
 
     @Test
-    public void getErrorMessageForDuplicateFlags_oneFlag_namesTheField() {
-        assertEquals("Multiple values specified for the following single-valued field(s): -e",
+    public void getErrorMessageForDuplicateFlags_oneFlag_namesTheOption() {
+        assertEquals("Options given more than once: -e. Give each listed option only once.",
                 Messages.getErrorMessageForDuplicateFlags("-e"));
+    }
+
+    @Test
+    public void getErrorMessageForDuplicateFlags_presenceOptions_namesOptionsRatherThanValues() {
+        assertEquals("Options given more than once: -f -nf. Give each listed option only once.",
+                Messages.getErrorMessageForDuplicateFlags("-f", "-nf"));
     }
 
     @Test

@@ -104,9 +104,9 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
-The student card's `TagRow` retains every tag name, but creates at most three
-tag labels. Layout uses the full name count to size the overflow chip and
-list all hidden tags in its tooltip, even when fewer labels are created.
+The student card's `TagRow` creates a label for every tag, with its full text.
+Layout shows as many complete chips as fit and lists all hidden tags in the
+overflow chip's tooltip. There is no fixed chip count or label length cap.
 
 `SummaryPanel` wraps complete tag names within the fixed 150 px sidebar.
 Each count retains its preferred width, while the tag list scrolls vertically
@@ -133,7 +133,12 @@ it in the footer. Unused typed keys show a reminder to quit help before entering
 a command. The reference keeps explicit lines short enough for minimum width;
 the long User Guide address is available through c instead of wrapping in the label.
 Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
-command box so quitting cannot insert a stray character. No student data is changed.
+command box so quitting cannot insert a stray character. Enter navigates on
+`KEY_PRESSED`; its typed newline is consumed without changing the notice or scrolling
+again, including when focus moves into help after submitting `help`.
+The empty typed event emitted by macOS F1 is also consumed so it
+cannot overwrite the opening notice.
+No student data is changed.
 
 #### Restoring window geometry
 
@@ -153,7 +158,10 @@ displays have different usable heights or gaps between them.
 `CardHeadline` reserves a readable start of the name before allocating room
 to tags. When that leaves no room for a tag chip, `TagRow` uses the shorter
 `N tags` total instead of `N more…`, preserving a complete count beside the
-name. Its tooltip still lists every hidden tag.
+name. Its tooltip still lists every hidden tag. `TagRow.fittedWidth` reports
+the space its chosen chips or count actually use, so `CardHeadline` returns
+any unused allocation to the name before laying it out. The name requests
+its full natural width; a large tag list cannot take its readable minimum.
 
 #### Keeping contact details readable
 
@@ -174,10 +182,28 @@ The details container's clip remains a backstop protecting the follow-up pill.
 
 #### Colouring the command line
 
-`CommandTextField` converts tab and line separators to spaces in text
-replacement before JavaFX filters control characters. It preserves pasted
-word boundaries while keeping the command on one line, including when a
-paste replaces selected text. CRLF is treated as one separator.
+`CommandTextField` converts separators to spaces in text replacement before
+JavaFX filters control characters. It asks `StringUtil#isWhitespace` the
+question the tokenizer asks of each character, so the box cannot hide a
+boundary the parser reads: JavaFX deletes a vertical tab or a form feed along
+with the other control characters, and draws a line, paragraph or next-line
+separator with no width, each of which joins the words around it on screen.
+The field preserves pasted word boundaries while keeping the command on one
+line, including when a paste replaces selected text. CRLF is treated as one
+separator.
+
+`CommandHighlighter` breaks a command where the parser breaks it, which the
+User Guide invites the User to rely on. That means two splits the colouring
+cannot make with the rule it uses for values. `StudentBookParser` ends the
+command word at the first separator whatever the quotes, so `add"Ravi s/o
+Kumaran"` is the command word `add"Ravi` and two words after it; reading that
+word with the value rule would draw one bold quoted word and then report an
+unknown command the colours never showed. `FlagTokenizer` reads `--tag="Lab
+3"` as an option and a value, so the marker and the equals sign are coloured
+as the option and the rest as its value. A marker holding a quote or a
+backslash is left whole instead, because either moves the equals sign the
+parser counts to, and a word split in the wrong place would be the same bug
+again.
 
 A `TextField` cannot colour its own content, so `CommandBox` keeps the field
 for input and draws a coloured copy of the command behind it, with the field's
@@ -197,6 +223,11 @@ compare where each piece begins and ends, so a boundary that moves without
 changing the count slips through. It never rejects anything: a
 command is coloured while it is still half-typed.
 
+The copy measures its natural width from the whole shaped `TextFlow`, rounded
+up to avoid wrapping at a fractional pixel boundary. Ordinary value words and
+spaces share a text node so that splitting an unquoted right-to-left name does
+not change shaping or click positions.
+
 Three things then have to agree with the field, because the User reads our copy
 but interacts with the field:
 
@@ -215,10 +246,14 @@ but interacts with the field:
   prompt would otherwise be taken for the hidden one.
 * **the caret.** The field's caret is drawn in its text colour, which is
   transparent, so the line carries one of its own, sized from a run of the text
-  so it sits where the text does.
+  so it sits where the text does. Its horizontal position follows the primary
+  caret shape of the field’s text node, including its leading/trailing bias at
+  script boundaries. Logical prefix widths cannot locate RTL insertion points.
 * **the selection.** The field draws its highlight at its own offset, which
   broke into fragments behind the copy, so it is turned off in the stylesheet
-  and drawn here instead.
+  and drawn here instead. A path from `TextFlow.rangeShape` covers each visual
+  segment, including selections that cross RTL/LTR boundaries and appear as
+  separate bands.
 
 `CommandBoxTest` checks the contrast of the selection band against the line,
 and of every colour the line uses against that band, including the one a
@@ -260,6 +295,20 @@ toolkit; only the rendering needs one.
 
 Tags counted the same are listed alphabetically ignoring case, because a
 reader does not read `Zoo` as coming before `apple`.
+
+Case variants of one tag are counted as one tag, because that is what `tag`
+makes of them when it refuses a tag a student already carries: a reader
+looking for the size of tutorial group `T1` would otherwise have to add up a
+row per spelling. The row is named with the spelling most of its students
+carry, which is settled by the counts rather than by the order of the list,
+so narrowing the list does not read as a second tag appearing.
+
+The panel groups two spellings with `String.CASE_INSENSITIVE_ORDER`, which
+calls them equal exactly when `String#equalsIgnoreCase` does, and so exactly
+when `TagCommand` refuses the second of them. Folding case by lowercasing
+would answer a different question and split a group `tag` has already joined:
+a Greek capital sigma lowercases to a medial sigma, while the final sigma a
+student may carry the same tag under lowercases to itself.
 
 ### Logic component
 
@@ -389,6 +438,28 @@ Classes used by multiple components are in the `seedu.tab.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Protecting saves from stale windows
+
+`JsonStudentBookStorage` retains a separate copy of the student book loaded or
+successfully saved at each path. Before saving, it rereads the current records
+and compares them with that snapshot. A difference, a removed file, or an
+unreadable replacement refuses the save; `LogicManager` then restores records
+and the active filter. The snapshot advances only after a successful save.
+Comparison uses parsed student records, so harmless JSON formatting changes do
+not create a conflict. Each normal application startup reads the file before
+issuing commands; callers saving without a prior read adopt the on-disk book
+as their initial baseline.
+
+The comparison and replacement share an operating-system lock on
+`.tab.json.lock` beside the real destination. Resolving symbolic links makes
+windows reaching the same destination share a lock. A busy lock refuses the
+save with retry guidance. The sidecar remains after closing TAB: deleting it
+could allow different processes to lock different files with the same name.
+Closing its channel releases the lock, including on a failed save or process
+exit. This prevents stale TAB windows from overwriting each other's records;
+it does not add concurrent multi-user editing. External editors do not honor
+this lock and must be used with all TAB windows closed.
+
 ### Rolling back model changes when saving fails
 
 `LogicManager` takes a copy of the student book and its active display filter
@@ -463,6 +534,13 @@ with a hyphen. An empty attached value must be quoted as in `--tag=""`, so an
 accidental `--tag=` cannot clear data. `CommandTokenizer` records whether a
 token began with a quote so a fully quoted `"--tag=T1"` remains a value, while
 the quote around the value in `--tag="Lab 3"` does not hide the option marker.
+
+For `edit`, tag values use `StringUtil.normalizeFieldValue` before validation.
+A single normalized blank value clears all tags, including when the input holds
+Unicode spaces. A blank beside other tag values is rejected with an explanation
+that clearing requires the blank to be given on its own. Nonblank values are
+still validated so every problem can be reported without silently discarding tags.
+
 The presence-only `--follow-up` option (alias `-f`) and edit-only
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
 no following token. This lets
@@ -479,6 +557,11 @@ alias. Both spellings map to the same `FLAG_NUS_STUDENT_ID`, so giving
 both is rejected as a repeated single-valued field rather than letting one
 silently override the other. Usage labels and error messages use the canonical
 `--id NUS_STUDENT_ID` spelling.
+
+Duplicate-option feedback names repeated option markers rather than values,
+because presence-only options such as `--follow-up` do not take values.
+`FlagArgumentMap` retains the first spelling supplied for each repeated option;
+the shared message lists those options and asks for each listed option only once.
 
 The shape of the command is settled before any field is read. An unclosed
 quote, an unknown option, or a single-valued option given twice, including
@@ -775,6 +858,14 @@ User while still allowing the record to be added.
 
 <puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Add command duplicate check" width="500" />
 
+`ModelManager.addStudent` preserves the active filter. After a successful
+addition, `AddCommand` checks the new student against that filter. A matching
+student appears at the end of the results without changing earlier indexes.
+For a non-match, the command clears the filter and appends
+`Search cleared to show the new student.` to its feedback so the student is
+visible and the User knows to re-read indexes. A rejected addition leaves
+both the book and filter unchanged.
+
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
 ignore case; names already carry `normalizeFieldValue`'s whitespace
@@ -894,10 +985,18 @@ both the status and every field term. The parser rejects conflicting or
 repeated status options before execution, matching the existing edit rules.
 
 For phone terms containing only Unicode decimal digits, or those digits with
-phone punctuation (`+`, `-`, `(`, `)`, `.`), matching also compares the digits
-with non-digit characters removed. This lets `91234567`, `9123-4567` and
-`+6591234567` match `+65 9123 4567`. Formatted phrases and annotations still
-match literally. Stored student details and saved data do not change.
+grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), matching
+also compares the digits with non-digit characters removed and each decimal digit
+mapped to its ASCII equivalent by numeric value. This lets
+`91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
+so copying a grouped number does not require manual reformatting. A query with
+a country code still requires those digits to occur in the stored phone.
+The digit fallback requires at least one digit; annotations such as `"ext 21"`
+and punctuation-only terms retain literal matching. Unicode whitespace follows
+the same rule as field normalization. Normalizing both the phone digits and the
+search digits lets ASCII, full-width and other Unicode decimal digits match each
+other, including digits represented by supplementary code points. For example,
+`"９１２３ ４５６７"` matches `91234567`. Stored student details and saved data do not change.
 
 `FindCommand` and `ListCommand` report the count of displayed students in
 their execution feedback. `FindCommand` counts only the matching students
@@ -1001,41 +1100,22 @@ took positional arguments and command options instead. `Name` itself never
 needed changing.
 
 **Showing a long name.** A card gives the name one line, shared with the tags
-and the follow-up pill, so a name longer than `StudentCard.MAX_NAME_CHARACTERS`
-is cut and the whole of it is left on the card as a tooltip. The count is fixed
-rather than taken from the room the row has left over, so the same name breaks
-off in the same place on every card instead of moving as the rest of the card
-changes. A name within the count is cut all the same where the row runs out of
-room, so the name goes on the card through `UiText.showMiddleShortenedToFit`,
-which hands the label the whole name on hover whenever it is drawn narrower
-than its text needs. The tags take that path for the same reason.
+and follow-up marker. `StudentCard` supplies the complete name through
+`UiText.showToFit`, and `CardName` measures it in the displayed font. Names
+appear in full whenever their allocated width permits; there is no fixed
+character limit. Widening the card restores text previously hidden by a cut.
 
-The cut is taken from the middle, keeping 13 characters of the start and 9 of
-the end. A cut at the close alone puts `Mohamed Abdul Rahman bin Ismail` and
-`Mohamed Abdul Rahman bin Ahmad` on two cards as the same text, and a reader
-scanning the list has nothing to tell the rows apart by; the end of a name is
-where two such students differ, which is what the 9 characters buy. Wrapping
-the name to a second line was weighed and dropped, because it lets any card
-grow to two lines tall and so costs the list more rows than the collision costs
-a reader, and the pill and the tags still have to fit beside the name. A name
-within one character of the count is left whole, since the ellipsis takes a
-place of its own and the cut would save no room. `UiText` counts both ends with
-`StringUtil.firstCharacters` and `StringUtil.lastCharacters`, so neither cut
-separates a letter from the accent that belongs to it nor an emoji from its
-other half.
+When space runs out, `CardName` shortens from the middle through
+`UiText.middleShortened`. It keeps both ends, retaining up to nine characters
+at the end and using the remaining character budget for the opening.
+`StringUtil.firstCharacters` and `StringUtil.lastCharacters` preserve complete
+characters, including combining accents and emoji. Names can still coincide
+when their distinguishing text is hidden, so a tooltip shows the complete
+name whenever it is shortened and disappears when the name fits again.
 
-Two cuts reach the name and they have to agree on where they take text from.
-The count is the card's own and is applied before the card is laid out, so it
-depends on the name alone. The second is taken once the line knows how much
-room it has, and so depends on what the card carries beside the name.
-`CardName` takes that second cut itself, from the middle and through the same
-`StringUtil` counting, rather than leaving it to the label. A cut at the end
-would read as the same text on two cards: at the window's smallest width both
-`Mohamed Abdul Rahman bin Ismail` and `Mohamed Abdul Rahman bin Ahmad` drew as
-`Mohamed Abd...`. A label told to elide from the middle instead cuts at a
-character index, which falls between the two halves of a character Java stores
-in two, so `Alexander 𠮷田` drew as `Ale…` with the back half of its fourth
-character after it.
+The cut happens during layout, after `CardHeadline` knows the actual width.
+Leaving middle shortening to JavaFX can split a surrogate pair: a character
+such as `𠮷` may then be drawn as a broken glyph.
 
 `DarkTheme.css` therefore tells `.card-name` to clip, so that a cut `CardName`
 gets a pixel wrong shows a glyph against the edge rather than a broken one.
@@ -1057,9 +1137,11 @@ model. An empty book instead returns a no-op message without a prompt.
 `pendingClearCommand`, an `Optional<ClearCommand>`, and returns before the
 usual storage write. `Optional.empty()` represents no pending request.
 While the request is pending, it reads the
-next input as a reply to the concise `[y/N]` prompt. Only surrounding Unicode
-whitespace is trimmed; internal characters are kept so a value cannot become
-an accepted word by removing characters from within it. Replies ignore case.
+next input as a reply to the concise `[y/N]` prompt. It first applies
+`StringUtil.stripFormatCharacters`, sharing the command parser's treatment of
+copied invisible marks while preserving shaping joiners. It then trims only
+surrounding Unicode whitespace; internal spaces and visible characters are
+kept so extra words cannot become a confirmation. Replies ignore case.
 Trimming scans from both ends with `StringUtil.isWhitespace`, retaining the
 command parser's Unicode whitespace rules. This takes linear time at worst;
 an internal whitespace run is never searched for a trailing match.
@@ -1205,8 +1287,8 @@ slots per semester. They are usually fast typists who prefer a CLI.
 
 **Value proposition**: Manage a semester of students faster than a spreadsheet
 or a mouse-driven contact app. They can find anyone by any field, slice the list
-by tag, and see who is still awaiting a reply. Fully offline, in a plain-text
-file locally, with every change undoable.
+by tag, and see who is still awaiting a reply. Records stay fully offline in a
+local plain-text file.
 
 
 ### User stories
@@ -1894,6 +1976,11 @@ testers are expected to do more *exploratory* testing.
       Expected: Help replaces the student list, summary sidebar, command box and
       result area. No extra window or browser opens. Navigation keys remain
       visible in the footer and work immediately without mouse interaction.
+      The notice reads `Help mode: press q or Esc to return to commands.`.
+
+   1. Press Down, then Enter.<br>
+      Expected: Each moves down exactly one line and leaves the opening notice
+      unchanged. Press q and reopen with F1; the same opening notice appears.
 
    1. Press Space/f and b to move forward/back a screenful. Try Enter/j and k,
       d/u, PgDn/PgUp, arrows and Home/End. Press g then G.<br>
@@ -2134,12 +2221,14 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `add Cara Ng -p 93456789 --follow-up -f` and
       `add Cara Ng -p 93456789 --follow-up true`<br>
-      Expected: Neither command adds Cara. The first reports a repeated `--follow-up`;
-      the second reports that `true` belongs to no option.
+      Expected: Neither command adds Cara. The first reports
+      `Options given more than once: --follow-up. Give each listed option only once.`;
+      the second reports that `true` belongs to no option. The saved file is unchanged.
 
    1. Test cases: `edit 1 --follow-up -f` and `edit 1 --follow-up true`<br>
-      Expected: Neither command changes Alice. The first reports a repeated
-      `--follow-up`; the second reports that `true` belongs to no option.
+      Expected: Neither command changes Alice. The first reports
+      `Options given more than once: --follow-up. Give each listed option only once.`
+      The second reports that `true` belongs to no option.
 
    1. Test cases: `edit 1 --follow-up --no-follow-up` and
       `edit 1 -nf -f -p 89998888`<br>
@@ -2233,6 +2322,14 @@ testers are expected to do more *exploratory* testing.
       and `This student does not have tag [lab 3]. No changes made.`,
       respectively. Record, displayed list and saved bytes stay unchanged.
 
+   1. Test case: `tag 1 -r "Needs follow-up"`, on this student, who needs
+      follow-up and carries no tag of that name.<br>
+      Expected: The reply adds a second line, `This student is flagged for
+      follow-up, which is not a tag. To clear the flag, use edit 1
+      --no-follow-up.` The card still shows the label, and running that
+      `edit` command takes it off. On a student who is not flagged, the same
+      command gives the first line alone.
+
    1. Test cases: `tag 0 -r T1`, `tag 2 -r T1`, `tag 2147483648 -r T1`,
       `tag 1 -r ""`, `tag 1 -r "---"`, `tag 1 -r`,
       `tag 1 -r T1 --remove T2` and `tag 1 -a T2 -r T1`.<br>
@@ -2286,6 +2383,24 @@ testers are expected to do more *exploratory* testing.
       Expected: No student is added. The status message names NUS Student ID
       `A01234567X` and `John Doe`, and no record is mutated.
 
+1. Adding during a search
+
+   1. Prerequisites: Back up the data file. In an empty book, add
+      `add Alice Tan -p 91110001 -t T1`, `add Bob Lim -p 91110002 -t T2`,
+      and `add Carl Ong -p 91110003 -t T1`.
+   1. Test case: `find -t T1`, then `add Eve Ng -p 91110005 -t T1`.<br>
+      Expected: Only Alice, Carl and Eve appear, in that order. The reply is
+      `New student added: Eve Ng; Phone: 91110005; Tags: [T1]`, with no
+      search-cleared notice. `tag 2 -a "Lab 3"` tags Carl; `delete 2` deletes
+      Carl, leaving Bob untouched.
+   1. Test case: `add Dan Koh -p 91110004 -t T2`.<br>
+      Expected: All four remaining students appear. The reply ends with
+      `Search cleared to show the new student.` Re-read indexes before
+      using another index command.
+   1. Exit and relaunch from the same folder, then run `list`.<br>
+      Expected: Alice, Bob, Eve and Dan remain; Carl is absent. Restore the
+      backup when finished.
+
 ### Long contact details on a card
 
 1. Reading an annotated phone and an email
@@ -2322,9 +2437,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `add Mohamed Abdul Rahman bin Ismail -p 91234567`, then
       `add Mohamed Abdul Rahman bin Ahmad -p 92345678`.<br>
-      Expected: The two cards read `Mohamed Abdul…in Ismail` and
-      `Mohamed Abdul…bin Ahmad`, so the names are distinguishable without
-      reading the index. Hovering over either name shows the whole of it.
+      Expected: Both names appear in full, with no name tooltip.
 
    1. Test case: narrow the window to its smallest width with both students
       listed.<br>
@@ -2349,16 +2462,38 @@ testers are expected to do more *exploratory* testing.
    1. Add `add Siti Nur-Aisyah Hassan -p 91234567 -t T01 -t "Lab 3" -f` and
       `add Siti Nur-Aisyah Hamid -p 98765432 -t T02 -t "Lab 4" -f`.
    1. Narrow the window to its minimum width and hover over each shortened name.<br>
-      Expected: Each tooltip shows the corresponding complete name, even though
-      neither name exceeds the card's character limit.
+      Expected: Each tooltip shows the corresponding complete name.
    1. Widen the window until both names fit.<br>
       Expected: Each name appears in full and its tooltip is removed.
 
 1. Leaving a name that nearly fits alone
 
    1. Test case: `add Jonathan Chuah Wei Ming -p 93456789`.<br>
-      Expected: The card shows the whole name with no ellipsis, because a cut
-      this close to the limit would save no room.
+      Expected: The card shows the whole name when it has sufficient width.
+
+1. Returning unused count space to a short name
+
+   1. Add `add Tan Ah Kow -p 94445555 -t attendance-low -t consult -t "Project A/B" --follow-up`.
+   1. Narrow the window to about 520 px.<br>
+      Expected: Where tags collapse to `3 tags` and the name plus count fit,
+      `Tan Ah Kow` appears in full. No unused chip allocation leaves the name
+      shortened beside a blank gap. Hover over the count to read all three tags.
+   1. Repeat with `Siti Aminah` and `Lee Wei Jie`, then remove the follow-up
+      marker and resize again. Names use the room released by the marker.
+
+1. Reading every tag that fits
+
+   1. Add `add Alex Yeoh -p 87438807 -t T01 -t "Lab 3" -t W5 -t consult`.
+   1. Widen the window to about 1400 px.<br>
+      Expected: All four chips appear in alphabetical order, without a count.
+   1. Add `add Charlotte Oliveiro -p 93210283 -t "Tutorial Group 01"`, then
+      `add David Li -p 91031282 -t "Tutorial Group 02"`.<br>
+      Expected: Both tag names appear in full, including their distinct endings.
+   1. Add `add Irfan Ibrahim -p 92492021 -t "CS2103T Tutorial W09" -t "CS2103T Tutorial W10"`.
+   1. Narrow and widen the window repeatedly.<br>
+      Expected: Chips that fit appear in full; hidden tags are counted and
+      listed on hover. A lone chip too wide for its allocation is shortened
+      and shows its complete tag on hover. Widening restores complete tags.
 
 ### Reading a clipped email address
 
@@ -2523,9 +2658,11 @@ testers are expected to do more *exploratory* testing.
       Expected: Both records load without an NUS Student ID.
 
    1. Exit TAB and change one `nusStudentId` value to `A0123-456X`, then relaunch.<br>
-      Expected: TAB rejects the malformed data file and starts with an empty
-      student book, leaving the invalid file in place. Restore the backup
-      before entering another command.
+      Expected: TAB shows a startup error identifying `data/tab.json`, the
+      affected student record, and the invalid NUS Student ID. The main window
+      does not open. Dismiss the dialog with `Close TAB`; the invalid file
+      remains byte-for-byte unchanged. Restore the backup with TAB closed,
+      then relaunch and check that the backed-up records load.
 
 1. Checking duplicate identity behavior
 
@@ -2703,6 +2840,23 @@ testers are expected to do more *exploratory* testing.
       Expected: No change. The first names the missing index and says a field
       to edit is needed; the second asks only for a field.
 
+### Clearing a student's tags with a blank value
+
+1. Removing all tags while preserving the rest of a record
+
+   1. Prerequisites: Add `add Alice Tan -p 91234567 -e alice@example.com
+      --id A1234567X -t T1 -t "Lab 1" -f` as one line and note Alice's `INDEX`.
+   1. Test case: `edit INDEX -t "   "`.<br>
+      Expected: All general tags disappear. Name, phone, email, NUS Student ID,
+      and follow-up status remain unchanged, including after restarting TAB.
+   1. Test case: Repeat with `edit INDEX --tag=" "` and a copied non-breaking
+      space (U+00A0) between the quotes.<br>
+      Expected: Success even when tags are already absent, with no other changes.
+   1. Test case: `edit INDEX -t " " -t T2`.<br>
+      Expected: `A blank tag clears all tags only when it is given on its own.`
+      Repeat with a copied U+00A0 space between the quotes; the message is identical.
+      No record or saved-file changes.
+
 ### Clearing a student's email
 
 1. Removing a mistaken address without removing the record
@@ -2845,6 +2999,24 @@ testers are expected to do more *exploratory* testing.
       Expected: Line breaks become spaces, the selection is replaced, and
       the caret follows the inserted text. Nothing runs before Enter.
 
+1. Pasting a soft line break
+
+   1. Put `Siew Ling` and `Goh` on the clipboard with a soft line break
+      between them, as a slide text box holds them when the two lines were
+      joined with Shift+Enter. Without slides, copy a vertical tab (`U+000B`)
+      between the words: on Linux `printf 'Siew Ling\vGoh' | xclip -selection
+      clipboard`, on macOS `printf 'Siew Ling\vGoh' | pbcopy`, on Windows
+      `Set-Clipboard -Value "Siew Ling$([char]11)Goh"`.
+   1. Test case: type `add `, paste, then type ` -p 91234563`, and press
+      Enter.<br>
+      Expected: The box reads `add Siew Ling Goh -p 91234563` with the words
+      apart, and the student is added as `Siew Ling Goh`.
+   1. Repeat with a form feed (`U+000C`), a line separator (`U+2028`), a
+      paragraph separator (`U+2029`) and a next-line character (`U+0085`)
+      in place of the vertical tab.<br>
+      Expected: Each reads as a space in the box, and the name saved matches
+      what the box shows.
+
 1. Checking what the colours say
 
    1. Test case: type `add "Siti Nur-Aisyah" -p 98765432 -t T1` without
@@ -2856,6 +3028,17 @@ testers are expected to do more *exploratory* testing.
       Expected: The whole line turns red and the reply quotes `addd` and
       suggests `add`, without adding anyone. Typing another character takes
       the red off again.
+   1. Test case: type `add"Ravi s/o Kumaran" -p 91234567` with no space
+      after `add`, then press Enter.<br>
+      Expected: The bold command word ends at `add"Ravi`, and `s/o` is an
+      ordinary word after it rather than part of the bold word. The reply
+      reports the unknown command `add"Ravi`, splitting the line where the
+      colours already did.
+   1. Test case: type `add Mei Tan --phone=91234567 --tag="Lab 3" -t "Lab 4"`
+      without pressing Enter.<br>
+      Expected: `--phone=` and `--tag=` are mauve like `-t`, `91234567` is
+      ordinary text, and `"Lab 3"` is green like `"Lab 4"`. Pressing Enter
+      adds Mei Tan with both tags.
 
 1. Checking a command longer than the line
 
@@ -2880,6 +3063,26 @@ testers are expected to do more *exploratory* testing.
       Expected: The command still runs to the edge of the line with the caret
       in view, and the caret lands on the character clicked.
 
+1. Checking right-to-left and mixed-script commands in the packaged JAR
+
+   1. Test case: type `add محمد علي حسن -p 91234567`, then try
+      `add דוד כהן -p 91234567`, without pressing Enter. Repeat with each name
+      in double quotes, with `add Ali محمد דוד Tan -p 91234567`, and with
+      `add 陈伟明 李 -p 98123344` and `add José Tan -p 91234567` as controls.<br>
+      Expected: Each command stays on one readable line. Repeating the name
+      until the command exceeds the available width scrolls horizontally.
+   1. Test case: type `find -n محمد`, click between letters, and type `Z`.
+      Undo, then try Backspace and Delete at that position. Repeat with
+      `find -n דוד` and move through each word using Left and Right.<br>
+      Expected: The caret marks the insertion or deletion position, including
+      after clicks and keyboard movement inside each RTL word.
+   1. Test case: use Shift+Left/Right and mouse dragging to select part of a
+      name, then a range across Latin and RTL words in the mixed-script case.
+      Repeat after scrolling and narrowing the window.<br>
+      Expected: Only selected characters are highlighted, even when the
+      selection occupies separate visual segments. Replacing the selection
+      changes exactly those characters.
+
 ### The summary beside the list
 
 1. Checking that the summary follows the list
@@ -2898,6 +3101,15 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `clear`, then `yes`.<br>
       Expected: The flagged count and the total read zero, and the tag list is
       empty rather than the panel disappearing.
+
+1. Counting case variants of one tag
+
+   1. Prerequisites: an empty student book, reached with `clear`, then `yes`.
+   1. Test case: `add Ann Lee -p 91234567`, `add Ben Tan -p 91234568`,
+      `add Cai Wei -p 91234569`, then `tag 1 -a T1`, `tag 2 -a t1`,
+      `tag 3 -a T1`.<br>
+      Expected: The TAGS section holds one row, `T1` with the count `3`,
+      rather than a row per spelling.
 
 1. Distinguishing long tags
 
@@ -2950,11 +3162,33 @@ testers are expected to do more *exploratory* testing.
       Expected: Only Alex Yeoh is shown, with `Found 1 student.`, even though the stored phone
       is written `+65 9123 4567`. A keyword of digits and phone punctuation compares by the
       digits alone.
-   1. Test case: `find -p 98765432`.<br>
+   1. Test cases: `find -p "9876 5432"`, `find -p "76 54"`, and `find -p 98765432`.<br>
       Expected: Only Bernice Yu is shown, with `Found 1 student.` and phone `9876-5432`.
+      Repeat the spaced full number with a copied non-breaking space (U+00A0) or narrow
+      non-breaking space (U+202F) between the groups; both find Bernice.
+   1. Test case: `find -p "9876 5432" -n Alex -f`.<br>
+      Expected: No students are shown, with `Found 0 students.`; the name and status still apply.
+   1. Test cases: `find -p "ext 21"` and `find -p " + ( ) - . "`.<br>
+      Expected: No students are shown, with `Found 0 students.`; annotations and punctuation-only
+      terms do not become digit-only searches.
    1. Test case: `find -p 91234567 -n Bernice`.<br>
       Expected: No students are shown, with `Found 0 students.`; both terms are required.
    1. Test cases: `find -p 91234568` and `find -p 9123-4568`.<br>
+      Expected: No students are shown, with `Found 0 students.`.
+      `data/tab.json` is identical to the saved copy after all these searches.
+
+1. Equivalent Unicode digits and unchanged saved values
+
+   1. Prerequisites: In a disposable copy of TAB, clear all students (`clear`, then `yes`).
+      Run `add Wang Fang -p ９１２３４５６７` and `add Lim Jia Hui -p 87654321`.
+   1. Test cases: `find -p 91234567` and `find -p 9123`.<br>
+      Expected: Only Wang Fang is shown, with `Found 1 student.` and phone `９１２３４５６７`.
+   1. Run `edit 1 -p "+６５ ９１２３ ４５６７"`, restart TAB and copy `data/tab.json`.
+   1. Test cases: `find -p 91234567`, `find -p 6591234567` and `find -p ٩١٢٣`.<br>
+      Expected: Only Wang Fang is shown, with `Found 1 student.` and phone `+６５ ９１２３ ４５６７`.
+   1. Test cases: `find -p ８７６５` and `find -p "８７６５ ４３２１"`.<br>
+      Expected: Only Lim Jia Hui is shown, with `Found 1 student.` and phone `87654321`.
+   1. Test case: `find -p 91234568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
 
@@ -3102,7 +3336,14 @@ testers are expected to do more *exploratory* testing.
       Expected: All students disappear, the saved book is empty, and
       restarting TAB shows an empty list.
 
-   1. Test case: Enter `clear` again.<br>
+   1. Test case: Add fresh records and enter `clear`. Paste `y` followed by
+      U+200E LEFT-TO-RIGHT MARK. Repeat with fresh records and U+200B ZERO WIDTH SPACE.<br>
+      Expected: Each reply confirms and saves an empty book. Add fresh records and repeat with `n`
+      followed by either mark, or the mark alone: each cancels without changing
+      the filter or JSON file. A marked `yellow`, or `y es`, remains invalid
+      and keeps confirmation pending without saving. Cancel with plain `n`.
+
+   1. Test case: Clear the test records, confirm, then enter `clear` again.<br>
       Expected: TAB reports that the book is already empty. No confirmation
       is pending, so `help` works immediately.
 
@@ -3111,6 +3352,35 @@ testers are expected to do more *exploratory* testing.
       Expected: The student is still present and no confirmation is pending.
 
 ### Saving data
+
+1. Refusing a stale second window's save
+
+   1. Prerequisites: Use a disposable TAB home folder. Open two TAB windows
+      from that folder before making any changes. Repeat this check once with
+      sample data and no saved file, and once with an existing saved book.
+
+   1. Test case: In window A, enter
+      `add Alice StorageProbe -p 81230001 --id A1111111X`. In window B, enter
+      `add Bob StorageProbe -p 81230002 --id A2222222X`.<br>
+      Expected: A reports success. B reports that the student data file changed,
+      asks you to close this window and restart, and says no changes were made.
+      B retains its previous records and display filter. Its retry is also
+      refused. A's saved JSON remains byte for byte unchanged by B.
+
+   1. Test case: Close B, restart it, and search for Alice.<br>
+      Expected: Alice is present and Bob is absent. Adding Bob now succeeds.
+      Close both windows and relaunch; both students are present. The empty
+      `.tab.json.lock` file may remain and does not prevent ordinary saves.
+
+1. Loading a correctly hand-edited data file
+
+   1. Prerequisites: In a disposable copy of TAB, add a recognizable student,
+      close every TAB window using this data file, and back up `data/tab.json`.
+   1. Test case: Open `data/tab.json` in a text editor, change that student's
+      phone to `81234567`, preserve valid JSON, and save as UTF-8. Restart TAB.<br>
+      Expected: The student shows the edited phone. Run `list`, close TAB,
+      and restart again; the hand-edited value remains. Restore the backup
+      with TAB closed when finished.
 
 1. Preserving existing data when a save fails
 

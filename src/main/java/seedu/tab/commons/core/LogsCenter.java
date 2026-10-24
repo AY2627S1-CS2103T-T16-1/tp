@@ -33,6 +33,8 @@ public class LogsCenter {
         setBaseLogger();
     }
 
+    private LogsCenter() {} // this class only holds helpers
+
     /**
      * Creates a logger with the given name prefixed by the {@code baseLogger}'s name so that the created logger
      * becomes a descendant of the {@code baseLogger}. Furthermore, the returned logger will have the same log handlers
