@@ -39,39 +39,45 @@ public class LocaleConsistencyTest {
     @Test
     public void regionalDefaults_countsAndDiagnostics_keepAsciiDigits() throws Exception {
         withRegionalDefaults(() -> {
-            ModelManager model = new ModelManager();
-            model.addStudent(new StudentBuilder().withName("Priya").build());
-            StudentBookParser parser = new StudentBookParser();
-            assertEquals("Listed 1 student.", parser.parseCommand("list").execute(model).getFeedbackToUser());
-            assertEquals("Found 1 student.", parser.parseCommand("find -n Priya").execute(model).getFeedbackToUser());
-            assertEquals("Clear all 1 student? This cannot be undone. [y/N]",
-                    parser.parseCommand("clear").execute(model).getFeedbackToUser());
-            assertEquals(1, model.getStudentBook().getStudentList().size());
             for (int count : new int[] {0, 1, 24}) {
-                assertEquals(count + (count == 1 ? " student" : " students"), SummaryPanel.describeTotal(count));
+                ModelManager model = new ModelManager();
+                for (int index = 0; index < count; index++) {
+                    model.addStudent(new StudentBuilder().withName("Priya " + index).withoutNusStudentId().build());
+                }
+                StudentBookParser parser = new StudentBookParser();
+                String total = count + (count == 1 ? " student" : " students");
+                assertEquals("Listed " + total + ".", parser.parseCommand("list").execute(model).getFeedbackToUser());
+                assertEquals("Found " + total + ".",
+                        parser.parseCommand("find -n Priya").execute(model).getFeedbackToUser());
+                assertEquals(count == 0 ? "The student book is already empty. Nothing to clear."
+                        : "Clear all " + total + "? This cannot be undone. [y/N]",
+                        parser.parseCommand("clear").execute(model).getFeedbackToUser());
+                assertEquals(count, model.getStudentBook().getStudentList().size());
+                assertEquals(total, SummaryPanel.describeTotal(count));
             }
             assertMalformedRecords();
         });
     }
 
     private void assertMalformedRecords() throws Exception {
-        Path path = temporaryFolder.resolve("invalid.json");
-        for (String record : List.of("null", "{}")) {
-            String source = "{\"students\":[" + record + "]}";
-            Files.writeString(path, source);
-            DataLoadingException exception = assertThrows(
-                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
-            assertEquals(record.equals("null") ? "Student record 1 is missing."
-                    : "Student record 1: Name field is missing.", exception.getMessage());
-            assertEquals(source, Files.readString(path));
-        }
+        assertRejectedSource("{\"students\":[null]}", "Student record 1 is missing.");
+        assertRejectedSource("{\"students\":[{}]}", "Student record 1: Name field is missing.");
         String student = "{\"name\":\"Priya\",\"phone\":\"91234567\",\"nusStudentId\":\"A1234\"}";
-        String source = "{\"students\":[" + student + "," + student + "]}";
+        assertRejectedSource("{\"students\":[" + student + "," + student + "]}",
+                "Student record 2 (\"Priya\"): NUS Student ID A1234 is already used by "
+                        + "student record 1 (\"Priya\").");
+        String longEmail = "x".repeat(255);
+        assertRejectedSource("{\"students\":[{\"name\":\"Priya\",\"phone\":\"91234567\",\"email\":\""
+                + longEmail + "\"}]}", "Student record 1 (\"Priya\"): Email field is too long to read safely: "
+                + "it holds 255 characters, but saved emails may hold at most 254");
+    }
+
+    private void assertRejectedSource(String source, String expectedMessage) throws Exception {
+        Path path = temporaryFolder.resolve("invalid.json");
         Files.writeString(path, source);
         DataLoadingException exception = assertThrows(
                 DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
-        assertEquals("Student record 2 (\"Priya\"): NUS Student ID A1234 is already used by "
-                + "student record 1 (\"Priya\").", exception.getMessage());
+        assertEquals(expectedMessage, exception.getMessage());
         assertEquals(source, Files.readString(path));
     }
 
