@@ -45,7 +45,7 @@ public class LikelyDuplicateWarningTest {
             Student changed = new StudentBuilder().withName("Alicia Tan").withPhone(phone).withoutEmail().build();
 
             assertEquals(SUCCESS_MESSAGE + "\n\nWARNING: Possible duplicate student: Alice Tan "
-                    + "has the same phone (" + changed.getPhone().value + ").\n"
+                    + "has the same phone.\n"
                     + "Review the records and delete duplicates only if they are the same person.",
                     LikelyDuplicateWarning.appendTo(SUCCESS_MESSAGE, changed, List.of(existing)));
             assertEquals("9123-4567", existing.getPhone().value);
@@ -73,7 +73,7 @@ public class LikelyDuplicateWarningTest {
 
         String expected = SUCCESS_MESSAGE
                 + "\n\nWARNING: Possible duplicate student: Alex Yeoh has the same name (aLeX yEoH)."
-                + "\nWARNING: Possible duplicate student: Alex Yeoh has the same phone (+6591234567)."
+                + "\nWARNING: Possible duplicate student: Alex Yeoh has the same phone."
                 + "\nWARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.com)."
                 + "\nReview the records and delete duplicates only if they are the same person.";
 
@@ -110,7 +110,7 @@ public class LikelyDuplicateWarningTest {
         Student matching = new StudentBuilder(original).withPhone("9234 5678").build();
 
         String expected = SUCCESS_MESSAGE
-                + "\n\nWARNING: Possible duplicate student: Tan Wei Ming has the same phone (92345678)."
+                + "\n\nWARNING: Possible duplicate student: Tan Wei Ming has the same phone."
                 + "\nReview the records and delete duplicates only if they are the same person.";
 
         assertEquals(expected, LikelyDuplicateWarning.appendChangedFieldsTo(
@@ -125,7 +125,7 @@ public class LikelyDuplicateWarningTest {
 
         String expected = SUCCESS_MESSAGE
                 + "\n\nWARNING: Possible duplicate students: Student One and Student Two "
-                + "have the same phone (000)."
+                + "have the same phone."
                 + "\nReview the records and delete duplicates only if they are the same person.";
 
         assertEquals(expected, LikelyDuplicateWarning.appendTo(
@@ -141,7 +141,7 @@ public class LikelyDuplicateWarningTest {
 
         String expected = SUCCESS_MESSAGE
                 + "\n\nWARNING: Possible duplicate students: Student One, Student Two and 1 other "
-                + "have the same phone (000)."
+                + "have the same phone."
                 + "\nReview the records and delete duplicates only if they are the same person.";
 
         assertEquals(expected, LikelyDuplicateWarning.appendTo(
@@ -158,7 +158,7 @@ public class LikelyDuplicateWarningTest {
 
         String expected = SUCCESS_MESSAGE
                 + "\n\nWARNING: Possible duplicate students: Student One, Student Two and 2 others "
-                + "have the same phone (000)."
+                + "have the same phone."
                 + "\nReview the records and delete duplicates only if they are the same person.";
 
         assertEquals(expected, LikelyDuplicateWarning.appendTo(

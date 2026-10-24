@@ -160,7 +160,9 @@ were typing before pressing `Up`. The caret moves to the end of recalled text,
 and its colours follow the command shown. Press Enter to submit it again.
 
 Rejected commands are included so you can correct a typo. Consecutive identical
-submissions appear once; blank and whitespace-only replies are omitted. If the
+submissions appear once; blank input and all replies to a pending `clear`
+confirmation are omitted, including invalid replies. The `clear` command itself
+remains available for recall. If the
 box already shows the newest submission (for example after a rejection), the
 first `Up` skips to the preceding entry when there is one. `Down` still returns
 the rejected text. At the oldest entry, `Up` keeps the text unchanged;
@@ -336,7 +338,8 @@ names is insignificant. Phone numbers match when their complete digit sequences
 match, ignoring spaces and other non-digit characters; equivalent Unicode
 decimal digits also match. For example, `9123-4567`, `91234567`, and
 `９１２３４５６７` prompt the same phone warning. Entered phone formatting is
-preserved. The review advice appears once after all matching fields.
+preserved. Phone warnings omit the number because the matching records may
+format it differently. The review advice appears once after all matching fields.
 
 The warning is only a hint. It does not prove that two records describe the
 same person, and it does not find misspelled names, email aliases, or phone
