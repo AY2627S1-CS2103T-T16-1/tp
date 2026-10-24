@@ -1339,7 +1339,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | view a student's remarks | recall important context such as special needs |
 | `*` | teaching assistant | add a remark to a student's record | note down requests or needs I should remember |
 | `*` | teaching assistant | redo an action I undid | restore a change I reverted by accident |
-| `*` | teaching assistant | be warned when a new student matches an existing record on phone, email or NUS Student ID | catch genuine duplicates even when the two names are spelled differently |
+| `*` | teaching assistant | be warned when a new student matches an existing record on name, phone or email | catch genuine duplicates even when the two names are spelled differently |
 | `*` | teaching assistant | merge two duplicate student records after seeing how they differ | combine the information from both without losing either |
 | `*` | teaching assistant | find students who have no tag | spot students not yet assigned to a group |
 | `*` | teaching assistant | sort my list by a detail I choose, such as name, NUS Student ID, or when the student was added | read the list in the order that suits the task in front of me |
@@ -1419,7 +1419,7 @@ These were raised during requirement gathering and left out of the product.
 * 1b. At least one detail is not in an acceptable form.
 
     * 1b1. TAB names every detail it rejected and the reason.
-    * 1b2. TAB leaves the original input in the command box.
+    * 1b2. TAB retains the submitted input for correction.
     * 1b3. User corrects the details and submits again.
 
       Steps 1b1-1b3 are repeated until every detail is acceptable.
@@ -1461,7 +1461,7 @@ These were raised during requirement gathering and left out of the product.
 * 1a. The search terms are not in an acceptable form.
 
     * 1a1. TAB reports the error.
-    * 1a2. TAB leaves the original input in the command box.
+    * 1a2. TAB retains the submitted input for correction.
     * 1a3. User corrects the search terms and submits again.
 
       Steps 1a1-1a3 are repeated until the search terms are acceptable.
@@ -1844,6 +1844,9 @@ These were raised during requirement gathering and left out of the product.
     components at screen resolutions of 1920×1080 and higher with display scaling at 100% and 125%, and
     remain functional and usable down to 1280×720 with display scaling up to 150%. This satisfies
     `Constraint-Screen-Resolution`.
+10. **Data locality and offline operation**: TAB must store all student data only in local files,
+    must not transmit student data to any network service, and must support all student management
+    operations without a network connection.
 
 ### Glossary
 
