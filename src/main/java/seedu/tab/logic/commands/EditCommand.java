@@ -161,6 +161,11 @@ public class EditCommand extends Command {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(target, editStudentDescriptor);
+    }
+
+    @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .add("target", target)
@@ -319,6 +324,12 @@ public class EditCommand extends Command {
                     && nusStudentIdEdit.hasSameStateAs(otherEditStudentDescriptor.nusStudentIdEdit)
                     && Objects.equals(tags, otherEditStudentDescriptor.tags)
                     && Objects.equals(isFlagged, otherEditStudentDescriptor.isFlagged);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, phone, emailEdit.isEdited(), emailEdit.getValue(),
+                    nusStudentIdEdit.isEdited(), nusStudentIdEdit.getValue(), tags, isFlagged);
         }
 
         @Override

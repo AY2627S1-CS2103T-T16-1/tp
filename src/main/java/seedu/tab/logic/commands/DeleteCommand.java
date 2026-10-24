@@ -70,6 +70,11 @@ public class DeleteCommand extends Command {
     }
 
     @Override
+    public int hashCode() {
+        return target.hashCode();
+    }
+
+    @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .add("target", target)
