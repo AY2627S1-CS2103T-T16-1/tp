@@ -197,7 +197,7 @@ public class AddCommandIntegrationTest {
         assertCommandSuccess(new AddCommand(matchingPhone), model,
                 String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(matchingPhone))
                         + "\n\nWARNING: Possible duplicate student: " + studentInList.getName()
-                        + " has the same phone (9435 1253)."
+                        + " has the same phone."
                         + "\nReview the records and delete duplicates only if they are the same person.",
                 expectedModel);
     }
