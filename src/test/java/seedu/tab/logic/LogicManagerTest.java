@@ -231,10 +231,10 @@ public class LogicManagerTest {
         String advice = "\nReview the records and delete duplicates only if they are the same person.";
 
         assertEquals("New student added: Alicia Tan; Phone: 91234567\n\n"
-                + "WARNING: Possible duplicate student: Alice Tan has the same phone (91234567)." + advice,
+                + "WARNING: Possible duplicate student: Alice Tan has the same phone." + advice,
                 logic.execute("add Alicia Tan -p 91234567").getFeedbackToUser());
         assertEquals("Edited student: Alicia Tan; Phone: 9123.4567\n\n"
-                + "WARNING: Possible duplicate student: Alice Tan has the same phone (9123.4567)." + advice,
+                + "WARNING: Possible duplicate student: Alice Tan has the same phone." + advice,
                 logic.execute("edit 2 -p 9123.4567").getFeedbackToUser());
         assertEquals(Messages.getStudentsFoundOverview(2), logic.execute("find -p 91234567").getFeedbackToUser());
         JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
