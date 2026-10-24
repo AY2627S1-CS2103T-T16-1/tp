@@ -442,6 +442,8 @@ as many complete tag chips as fit. At narrow widths, the name keeps both ends
 while tags give way to a count of those hidden. When no chip fits, the count reads `N tags`; otherwise
 it reads `N more…`. Unused count space returns to the name. A tag chip too
 wide for its allocation is shortened; hover over it to read the full tag.
+With several tags, if there is too little room for a complete short tag or at
+least four characters of a longer tag, the row shows `N tags` instead.
 Hover over the count to read the hidden tag names.
 
 When a student is added, the command result displays the new record
