@@ -117,7 +117,9 @@ end remain distinguishable without hovering.
 `MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
 the entire student page (command box, result, summary sidebar and student list).
 The hidden student page remains intact so closing help restores its filter,
-previous result and any unfinished command. The summary uses command words and
+previous result and any unfinished command. When returning focus, `CommandBox`
+moves the caret to the end and clears JavaFX's automatic selection so the next
+keystroke continues editing the draft. The summary uses command words and
 flag labels from the command/parser definitions.
 
 `HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
@@ -2017,8 +2019,11 @@ testers are expected to do more *exploratory* testing.
 
    1. Type `find -n Alex` without submitting it, press F1, then q.<br>
       Expected: Help takes the whole content area and the unfinished command
-      is restored on return. Repeat with Help → Help. Reopening help starts
-      at the beginning.
+      is restored on return, unselected with the caret at the end. Type ` Tan`:
+      the box now contains `find -n Alex Tan`. Repeat with Help → Help and with
+      Esc to quit. On returning, Backspace removes only the final character;
+      Delete leaves the draft unchanged. Also repeat with an empty command box:
+      typing starts a new command normally. Reopening help starts at the beginning.
 
    1. Enter `help oops`, `help -p` and `help ""`.<br>
       Expected: Each reports `help takes no arguments. Unexpected input: ...`
