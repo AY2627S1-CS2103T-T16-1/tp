@@ -1,6 +1,8 @@
 package seedu.tab.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.tab.logic.parser.CommandTokenizer.OPTION_MARKER;
+import static seedu.tab.logic.parser.CommandTokenizer.VALUE_SEPARATOR;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +26,6 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  */
 public class FlagTokenizer {
 
-    private static final String FLAG_MARKER = "-";
-    private static final char VALUE_SEPARATOR = '=';
 
     private record AttachedOption(String marker, String value) {}
 
@@ -153,8 +153,8 @@ public class FlagTokenizer {
      */
     private static boolean isFlag(Token token) {
         return !token.isQuoted()
-                && token.value().startsWith(FLAG_MARKER)
-                && token.value().length() > FLAG_MARKER.length();
+                && token.value().startsWith(OPTION_MARKER)
+                && token.value().length() > OPTION_MARKER.length();
     }
 
     /** Returns true if {@code token} looks like either supported option form. */
@@ -166,8 +166,8 @@ public class FlagTokenizer {
     private static boolean isAttachedOption(Token token) {
         int separator = token.value().indexOf(VALUE_SEPARATOR);
         return !token.beginsQuoted()
-                && token.value().startsWith(FLAG_MARKER)
-                && separator > FLAG_MARKER.length();
+                && token.value().startsWith(OPTION_MARKER)
+                && separator > OPTION_MARKER.length();
     }
 
     /** Returns the option marker and value joined in {@code token}, if any. */

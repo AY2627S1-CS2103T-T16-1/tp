@@ -106,13 +106,7 @@ public class EditCommand extends Command {
         Student studentToEdit = target.resolve(model);
         Student editedStudent = createEditedStudent(studentToEdit, editStudentDescriptor);
 
-        Optional<Student> duplicateStudent = studentToEdit.isSameStudent(editedStudent)
-                ? Optional.empty()
-                : model.findSameStudent(editedStudent);
-        if (duplicateStudent.isPresent()) {
-            throw new CommandException(String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
-                    editedStudent.getNusStudentId().orElseThrow(), duplicateStudent.orElseThrow().getName()));
-        }
+        requireNoDuplicate(model, editedStudent, studentToEdit);
 
         String feedback = LikelyDuplicateWarning.appendChangedFieldsTo(
                 String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)),

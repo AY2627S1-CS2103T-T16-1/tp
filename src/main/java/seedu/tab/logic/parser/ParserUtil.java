@@ -1,6 +1,10 @@
 package seedu.tab.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
+
+import java.util.Optional;
 
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.StringUtil;
@@ -24,6 +28,24 @@ public class ParserUtil {
             "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index and nothing else.";
 
     private ParserUtil() {} // this class only holds helpers
+
+    /**
+     * Returns the optional follow-up selector, rejecting repeated or conflicting options.
+     *
+     * @throws ParseException if a selector is repeated or both states are requested.
+     */
+    public static Optional<Boolean> parseFollowUpSelector(FlagArgumentMap arguments) throws ParseException {
+        arguments.verifyNoDuplicateFlagsFor(FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
+        boolean hasFollowUp = arguments.getValue(FLAG_FOLLOW_UP).isPresent();
+        boolean hasNoFollowUp = arguments.getValue(FLAG_NO_FOLLOW_UP).isPresent();
+        if (hasFollowUp && hasNoFollowUp) {
+            throw new ParseException(Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
+        }
+        if (hasFollowUp) {
+            return Optional.of(true);
+        }
+        return hasNoFollowUp ? Optional.of(false) : Optional.empty();
+    }
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be

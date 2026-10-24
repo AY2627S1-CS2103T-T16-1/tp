@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import seedu.tab.commons.util.StringUtil;
-import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.parser.CommandTokenizer.Token;
 import seedu.tab.logic.parser.exceptions.ParseException;
@@ -56,7 +55,7 @@ public class FindCommandParser implements Parser<FindCommand> {
         if (!arguments.getPreamble().isEmpty() || tokens.getFirst().beginsQuoted()) {
             throw new ParseException(MESSAGE_UNQUALIFIED_TERM);
         }
-        Optional<Boolean> followUp = parseFollowUp(arguments);
+        Optional<Boolean> followUp = ParserUtil.parseFollowUpSelector(arguments);
         return new FindCommand(new DetailsContainsKeywordsPredicate(parseFieldKeywords(arguments), followUp));
     }
 
@@ -70,20 +69,6 @@ public class FindCommandParser implements Parser<FindCommand> {
             }
         }
         return keywordsByField;
-    }
-
-    /** Reads an optional status selector, rejecting duplicates and contradictory states. */
-    private static Optional<Boolean> parseFollowUp(FlagArgumentMap arguments) throws ParseException {
-        arguments.verifyNoDuplicateFlagsFor(FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
-        boolean hasFollowUp = arguments.getValue(FLAG_FOLLOW_UP).isPresent();
-        boolean hasNoFollowUp = arguments.getValue(FLAG_NO_FOLLOW_UP).isPresent();
-        if (hasFollowUp && hasNoFollowUp) {
-            throw new ParseException(Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
-        }
-        if (hasFollowUp) {
-            return Optional.of(true);
-        }
-        return hasNoFollowUp ? Optional.of(false) : Optional.empty();
     }
 
     /** Normalizes search values like stored details, rejecting empty terms. */
