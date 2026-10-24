@@ -119,7 +119,7 @@ public class StudentCardTest {
                 .withFlag(true).build();
         onFxThread(() -> {
             Region root = new StudentCard(student, 1).getRoot();
-            assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 120));
+            styledScene(root, NARROWEST_CARD_WIDTH, 120);
             Label email = (Label) root.lookup("#email");
             assertTrue(email.getWidth() < email.prefWidth(-1), "the card should cut the email");
             assertNotNull(email.getTooltip());
@@ -150,7 +150,7 @@ public class StudentCardTest {
     private static void assertContactDetailsReadable(Student student, double width) throws Exception {
         onFxThread(() -> {
             Region root = new StudentCard(student, 1).getRoot();
-            assertNotNull(styledScene(root, width, 160));
+            styledScene(root, width, 160);
             Region details = (Region) root.lookup("#details");
             Label phone = (Label) root.lookup("#phone");
             Label email = (Label) root.lookup("#email");
@@ -212,7 +212,7 @@ public class StudentCardTest {
                 .withNusStudentId("W".repeat(NusStudentId.MAX_LENGTH)).withFlag(true).build();
         onFxThread(() -> {
             Region root = new StudentCard(student, 99).getRoot();
-            assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 160));
+            styledScene(root, NARROWEST_CARD_WIDTH, 160);
             List<Label> fields = List.of((Label) root.lookup("#nusStudentId"),
                     (Label) root.lookup("#phone"), (Label) root.lookup("#email"));
             assertContactsClipped(fields.subList(1, fields.size()));
@@ -236,7 +236,7 @@ public class StudentCardTest {
                 .withFlag(true).build();
         onFxThread(() -> {
             Region root = new StudentCard(student, 99).getRoot();
-            assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 160));
+            styledScene(root, NARROWEST_CARD_WIDTH, 160);
             List<Label> fields = List.of((Label) root.lookup("#nusStudentId"),
                     (Label) root.lookup("#phone"), (Label) root.lookup("#email"));
             double widest = root.prefWidth(-1);
@@ -356,7 +356,7 @@ public class StudentCardTest {
     private static void assertDetailsInside(Student student, double width) throws Exception {
         Bounds[] measured = onFxThread(() -> {
             Region root = (Region) new StudentCard(student, 1).getRoot();
-            assertNotNull(styledScene(root, width, 120));
+            styledScene(root, width, 120);
             Region details = (Region) root.lookup("#details");
             Label nusStudentId = (Label) root.lookup("#nusStudentId");
             Label phone = (Label) root.lookup("#phone");
@@ -656,7 +656,7 @@ public class StudentCardTest {
     /** Returns a card laid out at the width its dressed content asks for. */
     private static Region cardLaidOutRoomily(Student student, int displayedIndex) {
         Region root = new StudentCard(student, displayedIndex).getRoot();
-        assertNotNull(roomyStyledScene(root));
+        roomyStyledScene(root);
         layOutAt(root, root.prefWidth(-1));
         return root;
     }
@@ -817,7 +817,7 @@ public class StudentCardTest {
             for (double width : List.of((double) NARROWEST_CARD_WIDTH, 368.0, 448.0)) {
                 onFxThread(() -> {
                     Region root = new StudentCard(studentNamed(whole), 1).getRoot();
-                    assertNotNull(styledScene(root, width, 120));
+                    styledScene(root, width, 120);
                     Label name = (Label) root.lookup("#name");
                     boolean isCut = !whole.equals(name.getText());
                     if (width == NARROWEST_CARD_WIDTH) {
@@ -1067,7 +1067,7 @@ public class StudentCardTest {
             int at = width;
             List<String> chips = onFxThread(() -> {
                 Region root = (Region) new StudentCard(student, 3).getRoot();
-                assertNotNull(styledScene(root, at, 120));
+                styledScene(root, at, 120);
                 return visibleChipsOf(root);
             });
             // the row counts what it left out while a chip is shown, and counts the tags
@@ -1111,7 +1111,7 @@ public class StudentCardTest {
                         .withTags(names.toArray(String[]::new)).withFlag(isFlagged).build();
                 onFxThread(() -> {
                     Region root = new StudentCard(student, 2).getRoot();
-                    assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 120));
+                    styledScene(root, NARROWEST_CARD_WIDTH, 120);
                     double widest = Math.max(NARROWEST_CARD_WIDTH, root.prefWidth(-1));
                     for (double width = NARROWEST_CARD_WIDTH; width <= widest; width += ONE_PIXEL) {
                         layOutAt(root, width);
@@ -1133,7 +1133,7 @@ public class StudentCardTest {
             Student student = new StudentBuilder().withName("Bernice Yu")
                     .withTags(names.toArray(String[]::new)).withFlag(true).build();
             Region root = new StudentCard(student, 2).getRoot();
-            assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 120));
+            styledScene(root, NARROWEST_CARD_WIDTH, 120);
             Label count = (Label) root.lookup(".tag-overflow");
             // Reproduce the Linux boundary using the local font's count width: the
             // preferred name allowance and gap leave the count one pixel short.
@@ -1177,7 +1177,7 @@ public class StudentCardTest {
             int at = width;
             String shown = onFxThread(() -> {
                 Region root = (Region) new StudentCard(student, 2).getRoot();
-                assertNotNull(styledScene(root, at, 120));
+                styledScene(root, at, 120);
                 Label name = (Label) root.lookup("#name");
                 return name.getWidth() + "|" + name.prefWidth(-1);
             });

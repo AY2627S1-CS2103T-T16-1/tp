@@ -1,7 +1,6 @@
 package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -68,7 +67,7 @@ public class SummaryPanelTest {
         boolean[] state = onFxThread(() -> {
             SummaryPanel panel = new SummaryPanel(students);
             Region root = (Region) panel.getRoot();
-            assertNotNull(styledScene(root, 160, SHORT_WINDOW));
+            styledScene(root, 160, SHORT_WINDOW);
 
             Label total = (Label) root.lookup("#total");
             Bounds inPanel = total.localToScene(total.getBoundsInLocal());
@@ -313,7 +312,7 @@ public class SummaryPanelTest {
         String[] shown = onFxThread(() -> {
             SummaryPanel panel = new SummaryPanel(students);
             Region root = (Region) panel.getRoot();
-            assertNotNull(styledScene(root, 150, 400));
+            styledScene(root, 150, 400);
             assertEquals(150, root.getWidth());
 
             ScrollPane scroll = (ScrollPane) root.lookup("#tagScroll");
@@ -347,7 +346,7 @@ public class SummaryPanelTest {
             SummaryPanel panel = new SummaryPanel(FXCollections.observableArrayList(
                     tagged("Alice", false, tags.toArray(String[]::new))));
             Region root = (Region) panel.getRoot();
-            assertNotNull(styledScene(root, 150, 600));
+            styledScene(root, 150, 600);
             ScrollPane scroll = (ScrollPane) root.lookup("#tagScroll");
             VBox rows = (VBox) scroll.getContent();
             assertEquals(tags.size(), rows.getChildren().size());
