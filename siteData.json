@@ -16,14 +16,6 @@
       "headingKeywords": {}
     },
     {
-      "src": "Configuration.md",
-      "title": "Configuration guide",
-      "headings": {
-        "configuration-guide": "Configuration guide"
-      },
-      "headingKeywords": {}
-    },
-    {
       "src": "DevOps.md",
       "title": "DevOps guide",
       "headings": {
@@ -199,14 +191,6 @@
         "value-proposition": "Value Proposition",
         "documentation": "Documentation",
         "acknowledgements": "Acknowledgements"
-      },
-      "headingKeywords": {}
-    },
-    {
-      "src": "team/johndoe.md",
-      "title": "John Doe's Project Portfolio Page",
-      "headings": {
-        "project-tab": "Project: TAB"
       },
       "headingKeywords": {}
     }
