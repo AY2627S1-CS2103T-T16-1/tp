@@ -148,37 +148,38 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a {@code String email} into an {@code Email}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Parses a {@code String email} into an {@code Email}, after normalizing it as described by
+     * {@link StringUtil#normalizeFieldValue(String)}.
      *
      * @throws ParseException if the given {@code email} is invalid.
      */
     public static Email parseEmail(String email) throws ParseException {
         requireNonNull(email);
-        String trimmedEmail = email.trim();
+        String normalizedEmail = StringUtil.normalizeFieldValue(email);
         // the length is examined first, because Email.isValidEmail exhausts the stack on a long
         // enough address: an address the User typed has to clear the limit before being matched
-        if (!Email.isWithinLengthLimit(trimmedEmail) || !Email.isValidEmail(trimmedEmail)) {
+        if (!Email.isWithinLengthLimit(normalizedEmail) || !Email.isValidEmail(normalizedEmail)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(
-                    Email.FIELD_NAME, trimmedEmail, Email.getFailureReason(trimmedEmail)));
+                    Email.FIELD_NAME, normalizedEmail, Email.getFailureReason(normalizedEmail)));
         }
-        return new Email(trimmedEmail);
+        return new Email(normalizedEmail);
     }
 
     /**
-     * Parses a {@code String nusStudentId} into a {@code NusStudentId}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Parses a {@code String nusStudentId} into a {@code NusStudentId}, after normalizing it as
+     * described by {@link StringUtil#normalizeFieldValue(String)}.
      *
      * @throws ParseException if the given {@code nusStudentId} is invalid.
      */
     public static NusStudentId parseNusStudentId(String nusStudentId) throws ParseException {
         requireNonNull(nusStudentId);
-        String trimmedNusStudentId = nusStudentId.trim();
-        if (!NusStudentId.isValidNusStudentId(trimmedNusStudentId)) {
+        String normalizedNusStudentId = StringUtil.normalizeFieldValue(nusStudentId);
+        if (!NusStudentId.isValidNusStudentId(normalizedNusStudentId)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(
-                    NusStudentId.FIELD_NAME, trimmedNusStudentId, NusStudentId.getFailureReason(trimmedNusStudentId)));
+                    NusStudentId.FIELD_NAME, normalizedNusStudentId,
+                    NusStudentId.getFailureReason(normalizedNusStudentId)));
         }
-        return new NusStudentId(trimmedNusStudentId);
+        return new NusStudentId(normalizedNusStudentId);
     }
 
     /**

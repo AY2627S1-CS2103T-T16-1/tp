@@ -2,6 +2,7 @@ package seedu.tab.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -34,6 +35,24 @@ public class FileUtilTest {
     public Path testFolder;
 
     @Test
+    public void writeToFile_firstPartialWriteFails_preservesAbsenceAndAllowsRetry() throws Exception {
+        Path file = testFolder.resolve("nested/data/tab.json");
+        IOException exception = assertThrows(IOException.class, () -> FileUtil.writeToFile(
+                file, "student data", (temporaryFile, content) -> {
+                    Files.writeString(temporaryFile, "partial");
+                    throw new IOException("No space left on device");
+                }));
+
+        assertEquals("No space left on device", exception.getMessage());
+        assertFalse(Files.exists(file));
+        try (var files = Files.list(file.getParent())) {
+            assertEquals(0, files.count());
+        }
+        FileUtil.writeToFile(file, "student data");
+        assertEquals("student data", Files.readString(file));
+    }
+
+    @Test
     public void writeToFile_existingFile_replacesContents() throws Exception {
         Path file = testFolder.resolve("tab.json");
         Files.writeString(file, "old contents");
@@ -56,6 +75,20 @@ public class FileUtilTest {
         assertTrue(Files.isSymbolicLink(link));
         assertEquals("new contents", Files.readString(target));
         assertEquals("new contents", Files.readString(link));
+    }
+
+    @Test
+    public void writeToFile_brokenSymbolicLink_rejectsWithoutReplacingLink() throws Exception {
+        Path link = testFolder.resolve("tab.json");
+        Path destination = Path.of("missing-data.json");
+        createSymbolicLinkOrSkip(link, destination);
+
+        assertThrows(IOException.class, () -> FileUtil.writeToFile(link, "new contents"));
+
+        assertTrue(Files.isSymbolicLink(link));
+        assertEquals(destination, Files.readSymbolicLink(link));
+        assertFalse(Files.exists(testFolder.resolve(destination)));
+        assertEquals(List.of(link), listFilesInTestFolder());
     }
 
     @Test
