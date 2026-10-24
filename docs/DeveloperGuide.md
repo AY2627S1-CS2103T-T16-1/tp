@@ -15,6 +15,11 @@
 
 * This project is based on the AddressBook-Level3 project created by the
   [SE-EDU initiative](https://se-education.org).
+* [JavaFX](https://openjfx.io/) is used for the GUI. TAB uses JavaFX controls,
+  FXML loading and related utilities to build and display its interface.
+* [Jackson](https://github.com/FasterXML/jackson) is used for JSON serialization
+  and deserialization of storage data (via `JacksonUtil`).
+* [JUnit 5](https://junit.org/junit5/) is used for automated testing.
 * `StringUtil.editDistance` implements the published
   [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance),
   a known algorithm whose recurrence we wrote out ourselves. No code was
@@ -1240,98 +1245,9 @@ submits an empty Enter only during confirmation; otherwise an empty Enter
 keeps its existing no-op behavior. Each `Logic` implementation must supply
 this state explicitly so a default cannot silently suppress cancellation.
 
-### \[Proposed\] Undo/redo feature
-
-#### Proposed Implementation
-
-The proposed undo/redo mechanism is facilitated by `VersionedStudentBook`. It extends `StudentBook` with an undo/redo history, stored internally as a `studentBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
-
-* `VersionedStudentBook#commit()` -- Saves the current state of the student book in its history.
-* `VersionedStudentBook#undo()` -- Restores the previous state of the student book from its history.
-* `VersionedStudentBook#redo()` -- Restores a previously undone state of the student book from its history.
-
-These operations would be exposed in the `Model` interface as `Model#commitStudentBook()`, `Model#undoStudentBook()` and `Model#redoStudentBook()` respectively.
-
-Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
-
-Step 1. The User launches TAB for the first time. The `VersionedStudentBook` will be initialized with the initial state of the student book, and the `currentStatePointer` pointing to that single state.
-
-<puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
-
-Step 2. The User executes `delete 5` command to delete the 5th student in the student book. The `delete` command calls `Model#commitStudentBook()`, causing the modified state of the student book after the `delete 5` command executes to be saved in the `studentBookStateList`, and the `currentStatePointer` is shifted to the newly inserted state.
-
-<puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
-
-Step 3. The User executes `add David …​` to add a new student. The `add` command also calls `Model#commitStudentBook()`, causing another modified state of the student book to be saved into the `studentBookStateList`.
-
-<puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
-
-<box type="info" seamless>
-
-**Note:** If a command fails its execution, it will not call `Model#commitStudentBook()`, so the state of the student book will not be saved into the `studentBookStateList`.
-</box>
-
-Step 4. The User now decides that adding the student was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoStudentBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous state, and restores the student book to that state.
-
-<puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
-
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial `StudentBook` state, then there are no previous `StudentBook` states to restore. The `undo` command uses `Model#canUndoStudentBook()` to check if this is the case. If so, it will return an error to the User rather
-than attempting to perform the undo.
-</box>
-
-The following sequence diagram shows how an undo operation goes through the `Logic` component:
-
-<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="UndoSequenceDiagram-Logic" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</box>
-
-Similarly, how an undo operation goes through the `Model` component is shown below:
-
-<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
-
-The `redo` command does the opposite — it calls `Model#redoStudentBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the student book to that state.
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index `studentBookStateList.size() - 1`, pointing to the latest `StudentBook` state, then there are no undone `StudentBook` states to restore. The `redo` command uses `Model#canRedoStudentBook()` to check if this is the case. If so, it will return an error to the User rather than attempting to perform the redo.
-</box>
-
-Step 5. The User then decides to execute the command `list`. Commands that do not modify the student book, such as `list`, will usually not call `Model#commitStudentBook()`, `Model#undoStudentBook()` or `Model#redoStudentBook()`. Thus, the `studentBookStateList` remains unchanged.
-
-<puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
-
-Step 6. The User executes `clear`, which calls `Model#commitStudentBook()`. Since the `currentStatePointer` is not pointing at the end of the `studentBookStateList`, all states of the student book after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add David …` command. This is the behavior that most modern desktop applications follow.
-
-<puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
-
-The following activity diagram summarizes what happens when the User executes a new command:
-
-<puml src="diagrams/CommitActivityDiagram.puml" width="250" />
-
-#### Design considerations:
-
-**Aspect: How undo & redo execute:**
-
-* **Alternative 1 (current choice):** Saves the entire student book.
-  * Pros: Easy to implement.
-  * Cons: May have performance issues in terms of memory usage.
-
-* **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the student being deleted).
-  * Cons: We must ensure that the implementation of each individual command is correct.
-
-_{more aspects and alternatives to be added}_
-
 ### \[Proposed\] Data archiving
 
-_{Explain here how the data archiving feature will be implemented}_
+This feature is proposed but not yet designed. No implementation plan is specified.
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -1458,11 +1374,11 @@ These were raised during requirement gathering and left out of the product.
 * [UC01 - Add a student](#uc01-add-a-student)
 * [UC02 - Find a student and act on the right one](#uc02-find-a-student-and-act-on-the-right-one)
 * [UC03 - Flag and clear a follow-up](#uc03-flag-and-clear-a-follow-up)
-* [UC04 - Import a roster](#uc04-import-a-roster)
+* [UC04 - Import a roster (proposed)](#uc04-import-a-roster)
 * [UC05 - Recover from an unreadable data file](#uc05-recover-from-an-unreadable-data-file)
-* [UC06 - Delete a class no longer taught](#uc06-delete-a-class-no-longer-taught)
-* [UC07 - Archive last semester's students](#uc07-archive-last-semester-s-students)
-* [UC08 - Semester close-out](#uc08-semester-close-out)
+* [UC06 - Delete a class no longer taught (proposed)](#uc06-delete-a-class-no-longer-taught)
+* [UC07 - Archive last semester's students (proposed)](#uc07-archive-last-semester-s-students)
+* [UC08 - Semester close-out (proposed)](#uc08-semester-close-out)
 * [UC09 - Edit a student's details](#uc09-edit-a-student-s-details)
 * [UC10 - Add/remove a tag from a student](#uc10-add-remove-a-tag-from-a-student)
 
@@ -1599,7 +1515,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-#### UC04 - Import a roster
+#### UC04 - Import a roster (proposed)
 
 **MSS**
 
@@ -1682,7 +1598,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 6.
 
-#### UC06 - Delete a class no longer taught
+#### UC06 - Delete a class no longer taught (proposed)
 
 **MSS**
 
@@ -1716,7 +1632,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-#### UC07 - Archive last semester's students
+#### UC07 - Archive last semester's students (proposed)
 
 **MSS**
 
@@ -1749,7 +1665,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-#### UC08 - Semester close-out
+#### UC08 - Semester close-out (proposed)
 
 **MSS**
 
@@ -1886,8 +1802,6 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-*{More to be added}*
-
 
 ### Non-Functional Requirements
 
@@ -1964,7 +1878,8 @@ These were raised during requirement gathering and left out of the product.
 * **Prefix**: See **Command prefix**.
 * **Roster**: A list of students belonging to a course, tutorial group, or lab group, particularly one prepared for
   import into TAB.
-* **Semester close-out**: The end-of-semester workflow (UC08) where active student records are archived
+* **Semester close-out (proposed)**: The end-of-semester workflow (UC08) where active student records
+are archived
   and the active list is reset in preparation for a new academic term, optionally retaining records with
   pending follow-ups.
 * **Student book**: The collection of student records managed by TAB.
@@ -3102,7 +3017,7 @@ testers are expected to do more *exploratory* testing.
       `delete` takes no field values. None of them deletes a student, and the student book
       is unchanged.
 
-1. _{ more test cases … }_
+1. More test cases to be added.
 
 ### The command line
 
@@ -3749,4 +3664,4 @@ testers are expected to do more *exploratory* testing.
       UTF-8 without BOM, and relaunch.<br>
       Expected: Both students load with their names intact.
 
-1. _{ more test cases … }_
+1. More test cases to be added.
