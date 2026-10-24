@@ -98,7 +98,7 @@ public class CommandBox extends UiPart<Region> {
     }
 
     /** Focuses the input field with the unfinished command unselected and the caret at its end. */
-    public void requestFocus() {
+    public void focusDraftAtEnd() {
         commandTextField.requestFocus();
         commandTextField.end();
     }
