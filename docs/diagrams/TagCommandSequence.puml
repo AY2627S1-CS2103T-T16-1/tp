@@ -50,3 +50,4 @@ deactivate TagCommand
 Parser --> User : "Edited student: ... Tags: [T1]"
 deactivate Parser
 @enduml
+
