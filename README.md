@@ -22,8 +22,8 @@ Computing—who manage 150 to 250 students across multiple tutorial or lab slots
   records—entirely from the keyboard without reaching for a mouse.
 * **Flexible tagging:** Group and filter students by module, tutorial group, lab slot,
   or team to focus on the class at hand.
-* **Follow-up tracking:** Flag students who require a reply or assistance, keeping track
-  of how long queries have been pending so no student is overlooked.
+* **Follow-up tracking:** Flag students who require a reply or assistance, and filter
+  the list to see who still needs follow-up.
 * **Offline and privacy-preserving:** Store student data locally in a plain-text JSON
   file, ensuring sensitive student records remain off third-party cloud services.
 * **Safe and forgiving:** Confirmation before clearing records and warnings about

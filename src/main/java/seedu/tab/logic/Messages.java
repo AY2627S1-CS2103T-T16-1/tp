@@ -28,8 +28,7 @@ public class Messages {
     public static final String MESSAGE_DUPLICATE_STUDENT =
             "Another student already has NUS Student ID %1$s (%2$s).";
     public static final String MESSAGE_STUDENTS_FOUND_OVERVIEW = "Found %1$d student%2$s.";
-    public static final String MESSAGE_DUPLICATE_FIELDS =
-                "Multiple values specified for the following single-valued field(s): ";
+    public static final String MESSAGE_DUPLICATE_OPTIONS = "Options given more than once: ";
     public static final String MESSAGE_MISSING_FIELDS = "Missing required field(s): %1$s";
     public static final String MESSAGE_INVALID_VALUE = "%1$s \"%2$s\" is not valid: %3$s";
     /** How much of a rejected value is quoted back, so that a long one cannot hide the reason. */
@@ -54,11 +53,11 @@ public class Messages {
     public static String getErrorMessageForDuplicateFlags(String... duplicateFlags) {
         assert duplicateFlags.length > 0;
 
-        String duplicateFields = Stream.of(duplicateFlags)
+        String duplicateOptions = Stream.of(duplicateFlags)
                 .distinct()
                 .collect(Collectors.joining(" "));
 
-        return MESSAGE_DUPLICATE_FIELDS + duplicateFields;
+        return MESSAGE_DUPLICATE_OPTIONS + duplicateOptions + ". Give each listed option only once.";
     }
 
     /**

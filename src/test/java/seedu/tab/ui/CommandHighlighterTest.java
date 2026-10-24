@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.parser.CommandTokenizer;
 import seedu.tab.ui.CommandHighlighter.Kind;
 import seedu.tab.ui.CommandHighlighter.Span;
@@ -126,17 +127,102 @@ public class CommandHighlighterTest {
     }
 
     @Test
+    public void highlight_quoteAttachedToTheCommandWord_endsTheWordWhereTheParserDoes() {
+        // the parser ends the command word at the first separator and answers
+        // `Unknown command "add"Ravi"`, so the bold word has to end there too
+        assertEquals(new Span("add\"Ravi", COMMAND_WORD),
+                CommandHighlighter.highlight("add\"Ravi s/o Kumaran\" -p 91234567").getFirst());
+        assertEquals(new Span("find\"Lab", COMMAND_WORD),
+                CommandHighlighter.highlight("find\"Lab 3\"").getFirst());
+        assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("find\"Lab 3\""));
+    }
+
+    @Test
+    public void highlight_optionCarryingItsValue_coloursTheOptionApartFromTheValue() {
+        // the parser reads --tag="Lab 3" as the option --tag and the value Lab 3
+        List<Span> spans = CommandHighlighter.highlight("edit 1 --tag=\"Lab 3\"");
+        assertEquals(List.of(new Span("--tag=", OPTION), new Span("\"Lab 3\"", QUOTED_VALUE)),
+                spans.subList(spans.size() - 2, spans.size()));
+        assertEquals(List.of(COMMAND_WORD, VALUE, OPTION, VALUE, OPTION, QUOTED_VALUE, OPTION, QUOTED_VALUE),
+                kindsOf("add Mei --phone=91234567 --tag=\"Lab 3\" -t \"Lab 4\""));
+    }
+
+    @Test
+    public void highlight_attachedValueOpeningWithTheOptionMarker_isStillAValue() {
+        assertEquals(List.of(COMMAND_WORD, VALUE, OPTION, VALUE), kindsOf("edit 1 --tag=-weird"));
+    }
+
+    @Test
+    public void highlight_optionWithNothingAfterItsEqualsSign_addsNoEmptySpan() {
+        assertEquals(List.of(COMMAND_WORD, VALUE, OPTION), kindsOf("edit 1 --tag="));
+        assertEquals("edit 1 --tag=", rejoined("edit 1 --tag="));
+    }
+
+    @Test
+    public void highlight_equalsSignWithNoMarkerBeforeIt_isOneOption() {
+        // the parser wants a marker longer than the hyphen before the equals sign
+        assertEquals(List.of(COMMAND_WORD, OPTION), kindsOf("add -=x"));
+    }
+
+    @Test
+    public void highlight_quotedWordHoldingAnEqualsSign_isOneValue() {
+        // a word the quotes open is a value to the parser, equals sign and all
+        assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("add \"--tag=Lab 3\""));
+    }
+
+    @Test
+    public void highlight_markerWrittenWithQuotesOrEscapes_isLeftWhole() {
+        // a quote or a backslash moves the equals sign the parser counts to, so rather than
+        // split such a word in the wrong place the colouring leaves it alone
+        assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("add --ta\"g\"=x"));
+        assertEquals(List.of(COMMAND_WORD, OPTION), kindsOf("add --ta\\\\g=x"));
+    }
+
+    /**
+     * Returns how many tokens the colouring claims the arguments hold, counting an option
+     * and the value attached to it by an equals sign as the one token they were typed as.
+     */
+    private static long argumentTokensOf(String command) {
+        long tokens = 0;
+        Span previous = null;
+        for (Span span : CommandHighlighter.highlight(command)) {
+            if (span.kind() == SPACE) {
+                previous = null;
+                continue;
+            }
+            boolean isAttachedValue = previous != null && previous.kind() == OPTION
+                    && previous.text().endsWith("=");
+            if (!isAttachedValue) {
+                tokens++;
+            }
+            previous = span;
+        }
+        return tokens - 1; // the command word is not one of the arguments
+    }
+
+    @Test
     public void highlight_everyCommand_breaksWhereTheParserDoes() throws Exception {
         // the colouring tells the User where one token ends and the next begins, so it has to
-        // break a command in the same places the parser does
+        // break a command in the same places the parser does: the command word at the first
+        // separator, and the arguments after it the way the tokenizer splits them
         for (String command : List.of("list", "add John -p 123", "add \"Siti Nur-Aisyah\"",
                 "add a\\ b", "add \\\"one", "add\u00a0John", "find  Siti   Nur", "edit 1 -t \"\"",
-                "add \"-Ahmad\" -p 84001122", "add John\u00a0-p\u00a0123")) {
-            long coloured = CommandHighlighter.highlight(command).stream()
-                    .filter(span -> span.kind() != SPACE)
-                    .count();
-            long parsed = CommandTokenizer.tokenize(command).size();
-            assertEquals(parsed, coloured, "disagreed about \"" + command + "\"");
+                "add \"-Ahmad\" -p 84001122", "add John\u00a0-p\u00a0123", "add\"\"x y",
+                "edit 1 --tag=\"Lab 3\"", "add Mei --phone=91234567", "add \"--tag=x\"",
+                "add -=x", "edit 1 --tag=", "edit 1 --tag= x")) {
+            int wordEnd = endOfCommandWord(command);
+            long parsed = CommandTokenizer.tokenize(command.substring(wordEnd)).size();
+            assertEquals(parsed, argumentTokensOf(command), "disagreed about \"" + command + "\"");
         }
+    }
+
+    /** Returns where the parser ends the command word, which is at the first separator. */
+    private static int endOfCommandWord(String command) {
+        for (int index = 0; index < command.length(); index++) {
+            if (StringUtil.isWhitespace(command.charAt(index))) {
+                return index;
+            }
+        }
+        return command.length();
     }
 }

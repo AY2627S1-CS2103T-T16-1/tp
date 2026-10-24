@@ -10,13 +10,55 @@ import org.junit.jupiter.api.Test;
 
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.logic.Messages;
+import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.commands.TagCommand.Action;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.tag.Tag;
 
 public class TagCommandParserTest {
 
     private final TagCommandParser parser = new TagCommandParser();
+
+    @Test
+    public void parse_studentIdTargets_acceptsPlainAndExplicitForms() {
+        for (String id : List.of("abc", "A01234567X", "a01234567x", "Z".repeat(32))) {
+            StudentTarget target = StudentTarget.byNusStudentId(new NusStudentId(id));
+            assertParseSuccess(parser, "\u00a0" + id + " -a \"Lab 3\"",
+                    new TagCommand(target, new Tag("Lab 3"), Action.ADD));
+            assertParseSuccess(parser, "\"  " + id + "  \" -a T1",
+                    new TagCommand(target, new Tag("T1"), Action.ADD));
+            assertParseSuccess(parser, id + " --remove=T1", new TagCommand(target, new Tag("T1"), Action.REMOVE));
+        }
+        for (String marker : List.of("--id", "-i")) {
+            for (String id : List.of("A01234567X", "1abc", "1234", "0", "9".repeat(32))) {
+                StudentTarget target = StudentTarget.byNusStudentId(new NusStudentId(id));
+                assertParseSuccess(parser, marker + "=\"  " + id + "  \" --add=\"组 1\"",
+                        new TagCommand(target, new Tag("组 1"), Action.ADD));
+                assertParseSuccess(parser, "--remove T1 " + marker + " " + id,
+                        new TagCommand(target, new Tag("T1"), Action.REMOVE));
+            }
+        }
+    }
+
+    @Test
+    public void parse_invalidStudentId_reportsValueAndReason() {
+        for (String id : List.of("", " ", "A-1", "王", "a".repeat(33))) {
+            assertParseFailure(parser, "--id \"" + id + "\" -a T1",
+                    Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, id.trim(),
+                            NusStudentId.getFailureReason(id.trim())));
+        }
+        assertFailureWithGuidance("--id -a T1", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE,
+                "--id NUS_STUDENT_ID"));
+    }
+
+    @Test
+    public void parse_multipleStudentTargets_rejected() {
+        assertParseFailure(parser, "1 --id A01234567X -a T1", TagCommand.MESSAGE_MULTIPLE_TARGETS);
+        assertParseFailure(parser, "A01234567X -i A01234567X -r T1", TagCommand.MESSAGE_MULTIPLE_TARGETS);
+        assertParseFailure(parser, "--id A01234567X -i B01234567X -a T1",
+                Messages.getErrorMessageForDuplicateFlags("--id"));
+    }
 
     @Test
     public void parse_validValues_success() {
@@ -35,15 +77,16 @@ public class TagCommandParserTest {
 
     @Test
     public void parse_missingFields_reportsEachField() {
-        assertFailureWithGuidance("", "Missing required field(s): INDEX\nMissing required field(s): -a TAG or -r TAG");
+        assertFailureWithGuidance("", "Missing required field(s): INDEX or NUS_STUDENT_ID\n"
+                + "Missing required field(s): -a TAG or -r TAG");
         assertFailureWithGuidance("1", "Missing required field(s): -a TAG or -r TAG");
-        assertParseFailure(parser, "-a T1", "Missing required field(s): INDEX");
-        assertParseFailure(parser, "\"\" -a T1", "Missing required field(s): INDEX");
+        assertParseFailure(parser, "-a T1", "Missing required field(s): INDEX or NUS_STUDENT_ID");
+        assertParseFailure(parser, "\"\" -a T1", "Missing required field(s): INDEX or NUS_STUDENT_ID");
     }
 
     @Test
     public void parse_invalidIndex_reportsIndex() {
-        for (String index : List.of("0", "abc", "1.5", "2147483648", "999999999999999999999")) {
+        for (String index : List.of("0", "1.5", "2147483648", "999999999999999999999")) {
             assertParseFailure(parser, index + " -a T1", ParserUtil.MESSAGE_INVALID_INDEX);
         }
         assertParseFailure(parser, "\"-1\" -a T1", ParserUtil.MESSAGE_INVALID_INDEX);
@@ -133,14 +176,14 @@ public class TagCommandParserTest {
     @Test
     public void parse_removeInvalidIndexOrTag_reportsSpecificProblems() {
         for (String marker : List.of("-r", "--remove")) {
-            for (String index : List.of("0", "abc", "1.5", "2147483648", "999999999999999999999")) {
+            for (String index : List.of("0", "1.5", "2147483648", "999999999999999999999")) {
                 assertParseFailure(parser, index + " " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX);
             }
             assertFailureWithGuidance("-1 " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX
                     + "\n" + String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-1"));
             assertParseSuccess(parser, "2147483647 " + marker + " T1",
                     new TagCommand(Index.fromOneBased(Integer.MAX_VALUE), new Tag("T1"), Action.REMOVE));
-            assertParseFailure(parser, marker + " T1", "Missing required field(s): INDEX");
+            assertParseFailure(parser, marker + " T1", "Missing required field(s): INDEX or NUS_STUDENT_ID");
             for (String value : List.of("", "   ", "\u00a0\u3000", "---", "🙂")) {
                 assertParseFailure(parser, "1 " + marker + " \"" + value + "\"",
                         Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, value.trim(),

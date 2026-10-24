@@ -63,11 +63,17 @@ public class HelpCommandTest {
     public void summary_tagActionSyntax_parsesAsTagCommands() throws Exception {
         StudentBookParser parser = new StudentBookParser();
         List<String> tagSyntax = SHOWING_HELP_MESSAGE.lines().map(String::stripLeading)
-                .filter(line -> line.startsWith("tag INDEX ")).toList();
+                .filter(line -> line.startsWith("tag INDEX ") || line.startsWith("tag NUS_STUDENT_ID ")
+                        || line.startsWith("tag --id ")).toList();
         assertTrue(tagSyntax.contains("tag INDEX -a TAG"));
         assertTrue(tagSyntax.contains("tag INDEX -r TAG"));
+        assertTrue(tagSyntax.contains("tag NUS_STUDENT_ID -a TAG"));
+        assertTrue(tagSyntax.contains("tag NUS_STUDENT_ID -r TAG"));
+        assertTrue(tagSyntax.contains("tag --id NUS_STUDENT_ID -a TAG"));
+        assertTrue(tagSyntax.contains("tag --id NUS_STUDENT_ID -r TAG"));
         for (String syntax : tagSyntax) {
-            assertTrue(parser.parseCommand(syntax.replace("INDEX", "1").replace("TAG", "T1"))
+            assertTrue(parser.parseCommand(syntax.replace("INDEX", "1").replace("NUS_STUDENT_ID", "A01234567X")
+                    .replace("TAG", "T1"))
                     instanceof TagCommand);
         }
     }
