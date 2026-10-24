@@ -320,13 +320,18 @@ Review the records and delete duplicates only if they are the same person.
 ```
 
 Names and emails are compared without regard to letter case. Repeated,
-leading, and trailing whitespace in names is insignificant, as are spaces in
-phone numbers. The review advice appears once after all matching fields.
+leading, and trailing whitespace in names is insignificant. Phone numbers
+match when their complete digit sequences match, ignoring spaces and other
+non-digit characters; equivalent Unicode decimal digits also match.
+For example, `9123-4567`, `91234567`, and `９１２３４５６７` prompt the same
+phone warning. Entered phone formatting is preserved. The review advice
+appears once after all matching fields.
 
 The warning is only a hint. It does not prove that two records describe the
 same person, and it does not find misspelled names, email aliases, or phone
-numbers whose punctuation differs. Review the records before deleting either
-one. A matching NUS Student ID is handled separately and still refuses the
+numbers with different digit sequences, such as a local number and the same
+number with an added country code or extension. Review the records before
+deleting either one. A matching NUS Student ID is handled separately and still refuses the
 command, as described above.
 </box>
 

@@ -885,9 +885,11 @@ both the book and filter unchanged.
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
 ignore case; names already carry `normalizeFieldValue`'s whitespace
-normalization, and phone comparisons remove spaces from their normalized
-stored forms. Other punctuation remains significant so the warning does not
-claim fuzzy matching it cannot provide. Absent emails do not match.
+normalization. Phone search and warnings share `Phone.normalizeDigits`, which
+removes non-digit characters and converts Unicode decimal digits to ASCII.
+Warnings require equality of the complete digit sequence; search permits
+substrings. Country codes and extension digits remain significant, while the
+stored number retains its formatting. Absent emails do not match.
 
 The commands collect the warnings before mutation and separate them from the
 ordinary success message with a blank line. Matches are grouped by field into
@@ -2719,9 +2721,16 @@ testers are expected to do more *exploratory* testing.
       Expected: The second record is saved. The result names Alex Yeoh and the
       matching `name`; case and repeated spaces do not prevent the match.
 
-   1. Test case: `add Bernice Yu -p +6591234567 -e bernice@example.com`<br>
+   1. Test case: `add Bernice Yu -p "+65 (9123)-4567" -e bernice@example.com`<br>
       Expected: Bernice is saved. The result names Alex Yeoh and the matching
-      `phone`, because spaces in a phone number are insignificant.
+      `phone`, because the complete digit sequences match despite punctuation.
+      Exit and restart TAB; both phone numbers retain their entered formatting.
+
+   1. Test case: `add Charlie Tan -p ６５９１２３４５６７`<br>
+      Expected: Charlie is saved with the full-width digits, and one phone
+      warning names both Alex Yeoh and Bernice Yu. Adding
+      `add Casey Tan -p 91234567` gives no phone warning: the country code
+      digits differ, even though a search for `91234567` would find all four.
 
    1. Test case: `add Chris Lim -p 82223333 -e alex@example.com`<br>
       Expected: Chris is saved. The result names Alex Yeoh and the matching

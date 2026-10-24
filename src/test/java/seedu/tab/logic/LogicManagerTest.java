@@ -86,6 +86,25 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_equivalentPhonePunctuation_warnsAndPersistsFormatting() throws Exception {
+        logic.execute("add Alice Tan -p 9123-4567");
+        String advice = "\nReview the records and delete duplicates only if they are the same person.";
+
+        assertEquals("New student added: Alicia Tan; Phone: 91234567\n\n"
+                + "WARNING: Possible duplicate student: Alice Tan has the same phone (91234567)." + advice,
+                logic.execute("add Alicia Tan -p 91234567").getFeedbackToUser());
+        assertEquals("Edited student: Alicia Tan; Phone: 9123.4567\n\n"
+                + "WARNING: Possible duplicate student: Alice Tan has the same phone (9123.4567)." + advice,
+                logic.execute("edit 2 -p 9123.4567").getFeedbackToUser());
+        assertEquals(Messages.getStudentsFoundOverview(2), logic.execute("find -p 91234567").getFeedbackToUser());
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+
+        assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
+        assertEquals(List.of("9123-4567", "9123.4567"), model.getStudentBook().getStudentList().stream()
+                .map(student -> student.getPhone().value).toList());
+    }
+
+    @Test
     public void execute_findFormattedPhoneDigits_preservesRecordsAndStorage() throws Exception {
         logic.execute("add Alex Yeoh -p \"+65 9123 4567\"");
         logic.execute("add Bernice Yu -p 9876-5432");
