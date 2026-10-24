@@ -13,6 +13,10 @@
 
 ## **Acknowledgements**
 
+* Email local-part validation follows the dot-atom grammar in
+  [RFC 5322 section 3.2.3](https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3).
+  The character set and dot-placement rules are used in `Email`; no code was copied.
+
 * This project is based on the AddressBook-Level3 project created by the
   [SE-EDU initiative](https://se-education.org).
 * [JavaFX](https://openjfx.io/) is used for the GUI. TAB uses JavaFX controls,
@@ -982,6 +986,14 @@ passes the optional value directly into the `Student` constructor, including
 an empty optional when clearing. The saved record omits the `email` key and
 reloads through the existing optional-email storage contract.
 
+`Email` accepts the RFC 5322 unquoted dot-atom local part so that legitimate
+student addresses with apostrophes, repeated symbols or trailing underscores
+can be recorded. Only dots require non-empty groups on both sides; other
+permitted symbols can repeat and appear at either end. Commands and saved
+records share this validator and preserve the address's spelling. Quoted
+local parts and domain literals remain unsupported; domain validation is
+unchanged.
+
 `Email.MAX_LENGTH` caps at 254 characters the address a **command** may enter.
 `ParserUtil.parseEmail` checks `Email.isWithinLengthLimit` before
 `Email.isValidEmail`, and `getFailureReason` carries the same guard because it
@@ -989,7 +1001,8 @@ matches the local part on its own.
 
 The limit is not there to simplify validation, which the guidance on arbitrary
 limits rules out. `VALIDATION_REGEX` nests one quantifier inside another,
-`([+_.-][^\W_]+)*`, and Java matches a repeated group by recursion, one frame
+a repeated dot followed by a non-empty local-part atom, and Java matches a
+repeated group by recursion, one frame
 per repetition, so an address with enough `.`-separated groups exhausts the
 stack. `StackOverflowError` is an `Error` that no parser catches, and
 `CommandBox` catches only `CommandException` and `ParseException`, so the User
@@ -2945,6 +2958,25 @@ testers are expected to do more *exploratory* testing.
       or required phone respectively. Neither the student
       nor the JSON file changes. Restore an email with
       `edit INDEX -e alice@example.com` and check that it is displayed again.
+
+### Recording email addresses with symbols
+
+1. Test case: `add Mei Tan -p 91234567 -e mei__tan@hotmail.com`.<br>
+   Expected: The student is added with both underscores in the email.
+1. Test case: `add Sean O'Brien -p 82345678 -e sean.o'brien@example.com`.<br>
+   Expected: The student is added with the apostrophe in the name and email.
+1. Find Mei's displayed index and run `edit INDEX -e mei_@example.com`.<br>
+   Expected: The edit succeeds and preserves the trailing underscore. Exit and
+   restart TAB; both addresses remain exactly as recorded in the saved file.
+1. Test case: `edit INDEX -e mei..tan@example.com` using Mei's index.<br>
+   Expected: An Email error explains that dots must separate non-empty groups.
+   The record and saved file remain unchanged. Repeat with a leading or
+   trailing dot, a space inside the address, and an underscore in the domain.
+1. With TAB closed and the data file backed up, change Mei's email to
+   `mei__tan@hotmail.com` by hand, then restart.<br>
+   Expected: The file loads and preserves both underscores. Repeat with
+   `sean.o'brien@example.com`. Changing it to `mei..tan@example.com` instead
+   produces a data-file error identifying Email; restore the backup afterward.
 
 ### Rejecting an over-long email
 

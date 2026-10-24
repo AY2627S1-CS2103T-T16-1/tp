@@ -51,6 +51,24 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_handEditedEmailSymbols_preservesAddress() throws Exception {
+        for (String address : List.of("mei__tan@hotmail.com", "sean.o'brien@example.com", "mei_@example.com")) {
+            JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, address, VALID_TAGS, false);
+            assertEquals(address, student.toModelType().getEmail().orElseThrow().value);
+        }
+    }
+
+    @Test
+    public void toModelType_consecutiveEmailDots_throwsIllegalValueException() {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, "mei..tan@example.com", VALID_TAGS, false);
+        String expectedMessage = "Email \"mei..tan@example.com\" is not valid: "
+                + "the part before the @ may hold letters, digits and !#$%&'*+/=?^_`{|}~-"
+                + ", with dots allowed only between non-empty groups";
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
     public void toModelType_validEmailWithSurroundingWhitespace_buildsStudentHoldingTrimmedEmail() throws Exception {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, "  " + VALID_EMAIL + "\t", VALID_TAGS, false);

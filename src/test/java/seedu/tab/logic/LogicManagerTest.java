@@ -68,6 +68,31 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_validEmailSymbols_preservesAddressesThroughAddEditAndReload() throws Exception {
+        Student student = new StudentBuilder().withName("Mei Tan").withPhone("91234567")
+                .withEmail("mei__tan@hotmail.com").withTags().build();
+        assertEquals(new CommandResult(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(student))),
+                logic.execute("add Mei Tan -p 91234567 -e mei__tan@hotmail.com"));
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        assertEquals(List.of(student), storage.readStudentBook().orElseThrow().getStudentList());
+
+        for (String address : List.of("sean.o'brien@example.com", "Mei_@example.com",
+                "!#$%&'*+/=?^_`{|}~-@example.com", "-mei@example.com")) {
+            student = new StudentBuilder(student).withEmail(address).build();
+            assertEquals(new CommandResult(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                    Messages.format(student))), logic.execute("edit 1 -e \"" + address + "\""));
+            assertEquals(List.of(student), model.getStudentBook().getStudentList());
+            assertEquals(List.of(student), storage.readStudentBook().orElseThrow().getStudentList());
+        }
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        assertParseException("edit 1 -e mei..tan@example.com",
+                "Email \"mei..tan@example.com\" is not valid: the part before the @ may hold letters, digits and "
+                + "!#$%&'*+/=?^_`{|}~-, with dots allowed only between non-empty groups");
+        assertEquals(List.of(student), model.getStudentBook().getStudentList());
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+    }
+
+    @Test
     public void execute_findEquivalentNames_preservesRecordsAndStorage() throws Exception {
         String[][] cases = {
             {"Sean O’Brien", "O'Brien"},

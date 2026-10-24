@@ -41,8 +41,8 @@ public class EmailTest {
         assertFalse(Email.isValidEmail("peterjack@exam ple.com")); // spaces in domain name
         assertFalse(Email.isValidEmail("peterjack@@example.com")); // double '@' symbol
         assertFalse(Email.isValidEmail("peter@jack@example.com")); // '@' symbol in local part
-        assertFalse(Email.isValidEmail("-peterjack@example.com")); // local part starts with a hyphen
-        assertFalse(Email.isValidEmail("peterjack-@example.com")); // local part ends with a hyphen
+        assertFalse(Email.isValidEmail(".peterjack@example.com")); // local part starts with a period
+        assertFalse(Email.isValidEmail("peterjack.@example.com")); // local part ends with a period
         assertFalse(Email.isValidEmail("peter..jack@example.com")); // local part has two consecutive periods
         assertFalse(Email.isValidEmail("peterjack@example@com")); // '@' symbol in domain name
         assertFalse(Email.isValidEmail("peterjack@.example.com")); // domain name starts with a period
@@ -63,6 +63,18 @@ public class EmailTest {
         assertTrue(Email.isValidEmail("peter_jack@very-very-very-long-example.com")); // long domain name
         assertTrue(Email.isValidEmail("if.you.dream.it_you.can.do.it@example.com")); // long local part
         assertTrue(Email.isValidEmail("e1234567@u.nus.edu")); // more than one period in domain
+    }
+
+    @Test
+    public void constructor_validLocalPartSymbols_preservesAddress() {
+        for (char symbol : "!#$%&'*+/=?^_`{|}~-".toCharArray()) {
+            for (String localPart : new String[] {symbol + "Mei", "Mei" + symbol,
+                "Mei" + symbol + symbol + "Tan", String.valueOf(symbol)}) {
+                String address = localPart + "@example.com";
+                assertEquals(address, new Email(address).value);
+            }
+        }
+        assertEquals("sean.o'brien@example.com", new Email("sean.o'brien@example.com").value);
     }
 
     @Test
@@ -152,7 +164,8 @@ public class EmailTest {
         assertEquals("there is nothing after the @", Email.getFailureReason("john@"));
         assertEquals("the last part of the domain needs at least 2 characters",
                 Email.getFailureReason("john@x"));
-        assertEquals("the part before the @ may hold letters and digits, joined by any of +_.-",
+        assertEquals("the part before the @ may hold letters, digits and !#$%&'*+/=?^_`{|}~-"
+                + ", with dots allowed only between non-empty groups",
                 Email.getFailureReason("john doe@x.com"));
         assertEquals("the domain may hold letters and digits in labels separated by dots, "
                 + "with hyphens allowed inside a label", Email.getFailureReason("john@x_y.com"));

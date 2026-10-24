@@ -25,13 +25,13 @@ public class Email {
      */
     public static final int MAX_LENGTH = 254;
 
-    private static final String SPECIAL_CHARACTERS = "+_.-";
+    private static final String SPECIAL_CHARACTERS = "!#$%&'*+/=?^_`{|}~-";
 
     public static final String MESSAGE_CONSTRAINTS = "Emails should be of the format local-part@domain "
             + "and adhere to the following constraints:\n"
             + "1. The local-part should only contain alphanumeric characters and these special characters, excluding "
-            + "the parentheses, (" + SPECIAL_CHARACTERS + "). The local-part may not start or end with any special "
-            + "characters.\n"
+            + "the parentheses, (" + SPECIAL_CHARACTERS + "), and periods. Periods may not appear at the start "
+            + "or end, or consecutively.\n"
             + "2. The local-part is followed by an '@' and then a domain name. The domain name is made up of domain "
             + "labels separated by periods.\n"
             + "The domain name must:\n"
@@ -40,8 +40,10 @@ public class Email {
             + "    - have each domain label consist of alphanumeric characters, separated only by hyphens, if any.";
     // alphanumeric and special characters
     private static final String ALPHANUMERIC_NO_UNDERSCORE = "[^\\W_]+"; // alphanumeric characters except underscore
-    private static final String LOCAL_PART_REGEX = "^" + ALPHANUMERIC_NO_UNDERSCORE + "([" + SPECIAL_CHARACTERS + "]"
-            + ALPHANUMERIC_NO_UNDERSCORE + ")*";
+    // Implements the dot-atom syntax in RFC 5322 section 3.2.3:
+    // https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3
+    private static final String LOCAL_ATOM_REGEX = "[a-zA-Z0-9" + SPECIAL_CHARACTERS + "]+";
+    private static final String LOCAL_PART_REGEX = "^" + LOCAL_ATOM_REGEX + "(\\." + LOCAL_ATOM_REGEX + ")*";
     private static final String DOMAIN_PART_REGEX = ALPHANUMERIC_NO_UNDERSCORE
             + "(-" + ALPHANUMERIC_NO_UNDERSCORE + ")*";
     private static final int MINIMUM_LAST_LABEL_LENGTH = 2;
@@ -114,8 +116,8 @@ public class Email {
             return "there is nothing before the @";
         }
         if (!localPart.matches(LOCAL_PART_REGEX)) {
-            return "the part before the @ may hold letters and digits, joined by any of "
-                    + SPECIAL_CHARACTERS;
+            return "the part before the @ may hold letters, digits and " + SPECIAL_CHARACTERS
+                    + ", with dots allowed only between non-empty groups";
         }
         if (domain.isEmpty()) {
             return "there is nothing after the @";

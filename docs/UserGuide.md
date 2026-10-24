@@ -287,11 +287,20 @@ repeatable: use `-t` or `--tag` once for each tag, mixing the spellings if you w
 for, rather than inventing an address to satisfy the command. To remove an
 email entered by mistake, use `edit INDEX -e ""`.
 
-An address may run to 254 characters, the longest an email address is allowed
-to be, so no real address is turned away. A longer value is refused and TAB
+An address may run to 254 characters. A longer value is refused and TAB
 tells you how long it was — useful when a copy-and-paste has picked up more
 than you meant.
 </box>
+
+The email's part before `@` accepts ASCII letters, digits and the symbols
+<code>!#$%&amp;'*+/=?^_&#96;{|}~-</code>, including repeated symbols and symbols
+at either end. Dots may separate non-empty groups; leading, trailing and
+consecutive dots are refused. For example, `mei__tan@hotmail.com` and
+`sean.o'brien@example.com` are accepted and stored as entered. Addresses that
+require a quoted local part (such as one containing spaces) are unsupported.
+The domain uses letters and digits with internal hyphens, separated by dots;
+its final label must have at least two characters. If an address starts with
+`-`, wrap the whole address in double quotes so it is read as a value.
 
 <box type="tip" seamless>
 
@@ -394,6 +403,8 @@ To put a double quote or a backslash inside a value, write `\"` or `\\`:
 
 Examples:
 * `add John Doe -p 98765432 -e johnd@example.com`
+* `add Mei Tan -p 91234567 -e mei__tan@hotmail.com`
+* `add Sean O'Brien -p 82345678 -e sean.o'brien@example.com`
 * `add Alice Tan --phone=91234567 --email=alice@example.com --tag="Lab 3"`
 *  `add "Betsy Crowe" --tag T1 --email betsycrowe@example.com --phone 1234567 --id A06789012L -t Lab3`
 * `add "Ravi s/o Kumaran" -p 91234567 -e e0923841@u.nus.edu`
@@ -526,6 +537,8 @@ done to it beyond the quotes any value with spaces takes:
   containing only spaces also removes it. Leaving out `-e` keeps the email
   unchanged; a bare `-e` or `--email=` is an error. Clearing an already absent
   email succeeds.
+* Email syntax follows the rules in [Adding a student](#adding-a-student-add),
+  including repeated underscores and apostrophes.
 * A new email may run to 254 characters, the same limit `add` applies. A longer
   value is refused, TAB tells you how long it was, and the student's details
   stay as they were.
@@ -557,6 +570,7 @@ done to it beyond the quotes any value with spaces takes:
 
 Examples:
 *  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 1 -e mei__tan@hotmail.com` Records the address with both underscores.
 *  `edit 1 --email ""` Removes the 1st student's email while keeping all other details.
 *  `edit 2 --name "Betsy Crower" --tag ""` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 --id A08901234N` Records or replaces the 1st student's NUS Student ID.
