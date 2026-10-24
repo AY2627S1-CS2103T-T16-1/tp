@@ -15,8 +15,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.shape.MoveTo;
+import javafx.scene.shape.Path;
+import javafx.scene.shape.PathElement;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
@@ -56,7 +58,7 @@ public class CommandBox extends UiPart<Region> {
     private Pane lane;
 
     @FXML
-    private Region selection;
+    private Path selection;
 
     /**
      * Creates a {@code CommandBox} with the given {@code CommandExecutor}.
@@ -95,9 +97,10 @@ public class CommandBox extends UiPart<Region> {
         blink();
     }
 
-    /** Focuses the input field while preserving the command being typed. */
-    public void requestFocus() {
+    /** Focuses the input field with the unfinished command unselected and the caret at its end. */
+    public void focusDraftAtEnd() {
         commandTextField.requestFocus();
+        commandTextField.end();
     }
 
     /**
@@ -152,15 +155,23 @@ public class CommandBox extends UiPart<Region> {
      */
     private void recolour(String typed) {
         highlighted.getChildren().clear();
+        // Keep ordinary words and spaces together so bidi shaping agrees with the field.
+        Text value = null;
         for (CommandHighlighter.Span span : CommandHighlighter.highlight(typed)) {
+            if (value != null && (span.kind() == CommandHighlighter.Kind.VALUE
+                    || span.kind() == CommandHighlighter.Kind.SPACE)) {
+                value.setText(value.getText() + span.text());
+                continue;
+            }
             Text text = new Text(span.text());
             text.getStyleClass().addAll("command-token", styleClassFor(span.kind()));
             highlighted.getChildren().add(text);
+            value = span.kind() == CommandHighlighter.Kind.VALUE ? text : null;
         }
 
         // a Text added just now has not had the stylesheet applied to it, so asking for its
-        // font would give the default proportional one. The caret is measured from these
-        // fonts, so it has to be the font they will actually be drawn in.
+        // font would give the default proportional one. The line must be measured in the
+        // fonts it will actually be drawn in.
         highlighted.applyCss();
         layOutColours();
     }
@@ -193,15 +204,18 @@ public class CommandBox extends UiPart<Region> {
             return;
         }
 
-        double content = widthBefore(commandTextField.getLength());
+        // Measure the shaped line as a whole: separate RTL runs can round differently.
+        highlighted.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        double content = Math.ceil(highlighted.prefWidth(-1));
         // the copy is sized to the command rather than to the lane holding it, because a
         // TextFlow wraps at the width it is given: sized to the lane, a long command came
         // out on several lines and made the box grow down the window.
         highlighted.setPrefWidth(content);
         highlighted.autosize();
+        highlighted.layout();
         caret.autosize();
 
-        double caretAt = widthBefore(commandTextField.getCaretPosition());
+        double caretAt = caretOnTheCopy();
         matchCaretToTheLine();
 
         // where the field is drawing its own text, which is the one thing the copy has to
@@ -210,7 +224,7 @@ public class CommandBox extends UiPart<Region> {
         // attempt to work them out again here has been wrong in some case or other.
         double drawnFrom = whereTheFieldDrawsItsText();
         double middle = lane.getHeight() / 2;
-        showSelection(-drawnFrom, middle);
+        showSelection(drawnFrom, middle);
         highlighted.relocate(drawnFrom, middle - highlighted.getHeight() / 2);
         caret.relocate(inTheLine(drawnFrom + caretAt - caret.getWidth() / 2),
                 middle - caret.getHeight() / 2);
@@ -266,6 +280,7 @@ public class CommandBox extends UiPart<Region> {
         followed = drawn;
         drawn.layoutXProperty().addListener(theFieldScrolled);
         drawn.translateXProperty().addListener(theFieldScrolled);
+        drawn.caretShapeProperty().addListener((unused, old, now) -> layOutColours());
     }
 
     /**
@@ -314,27 +329,14 @@ public class CommandBox extends UiPart<Region> {
         lane.setClip(clip);
     }
 
-    /**
-     * Draws the selected run of the command behind the copy.
-     *
-     * <p>The field draws its own highlight at the offset it has scrolled to, which is not the
-     * offset the copy is drawn at, so the two disagreed and the highlight came out in
-     * fragments between the characters. The field's highlight is turned off in the stylesheet
-     * and this stands in for it, measured the same way as everything else on the line.
-     */
+    /** Draws every visual segment of the selection, including disjoint bidirectional ranges. */
     private void showSelection(double drawnFrom, double middle) {
         IndexRange range = commandTextField.getSelection();
-        boolean hasSelection = range.getLength() > 0;
-        selection.setVisible(hasSelection);
-        if (!hasSelection) {
-            return;
-        }
-        double from = widthBefore(range.getStart());
-        double to = widthBefore(range.getEnd());
-        // a managed child is laid out at its preferred size, so resizing it has no effect
-        selection.setPrefSize(to - from, caret.getHeight());
-        selection.autosize();
-        selection.relocate(from - drawnFrom, middle - caret.getHeight() / 2);
+        selection.setVisible(range.getLength() > 0);
+        selection.getElements().setAll(highlighted.rangeShape(range.getStart(), range.getEnd()));
+        // Path coordinates already include the selected characters' offsets within the flow.
+        selection.setLayoutX(drawnFrom);
+        selection.setLayoutY(middle - highlighted.getHeight() / 2);
     }
 
     /**
@@ -364,34 +366,21 @@ public class CommandBox extends UiPart<Region> {
     }
 
     /**
-     * Returns how wide the copy is up to {@code caretPosition}.
+     * Returns the primary caret's visual position from the field's shaped text.
      *
-     * <p>Each run is measured in its own font. The command word is drawn bold and so is wider
-     * than the rest, which is why one font cannot measure the whole line: doing that pushed
-     * the caret past the end of the text by about the extra width of that first word.
+     * <p>The skin keeps the character index and leading/trailing bias on its text node.
+     * Both matter at script boundaries, where one insertion index has two visual positions.
+     * A logical prefix width cannot locate a caret inside a right-to-left word.
      */
-    private double widthBefore(int caretPosition) {
-        double width = 0;
-        int seen = 0;
-        for (Node node : highlighted.getChildren()) {
-            Text run = (Text) node;
-            if (seen >= caretPosition) {
-                break;
-            }
-            int take = Math.min(run.getText().length(), caretPosition - seen);
-            width += measure(run.getText().substring(0, take), run.getFont());
-            seen += run.getText().length();
+    private double caretOnTheCopy() {
+        Text drawn = fieldText();
+        PathElement[] shape = drawn == null
+                ? highlighted.caretShape(commandTextField.getCaretPosition(), true) : drawn.getCaretShape();
+        if (shape.length == 0) {
+            return 0;
         }
-        return width;
-    }
-
-    /**
-     * Returns the width {@code text} takes in {@code font}.
-     */
-    private static double measure(String text, Font font) {
-        Text ruler = new Text(text);
-        ruler.setFont(font);
-        return ruler.getLayoutBounds().getWidth();
+        // JavaFX starts both ordinary and split caret shapes with the primary MoveTo.
+        return ((MoveTo) shape[0]).getX();
     }
 
     /**

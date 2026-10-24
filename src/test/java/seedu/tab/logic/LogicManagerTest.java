@@ -86,6 +86,49 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_addNameMistakes_preservesRecordsAndStorage() throws Exception {
+        logic.execute("add Alex Yeoh -p 91234567");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        String savedJson = Files.readString(dataPath);
+        for (var entry : Map.of(
+                "add --name \"Betsy Crowe\" --phone 1234567",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--name"),
+                "add --phone 1234567 -n=\"Betsy Crowe\"",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-n"),
+                "add -p 1234567", Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME)).entrySet()) {
+            assertThrows(ParseException.class, entry.getValue() + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE, ()
+                    -> logic.execute(entry.getKey()));
+            assertEquals(students, model.getStudentBook().getStudentList());
+            assertEquals(students, model.getFilteredStudentList());
+            assertEquals(savedJson, Files.readString(dataPath));
+        }
+        logic.execute("add Betsy Crowe --phone 1234567");
+        assertEquals(2, model.getStudentBook().getStudentList().size());
+        assertEquals(model.getStudentBook().getStudentList(),
+                new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_equivalentPhonePunctuation_warnsAndPersistsFormatting() throws Exception {
+        logic.execute("add Alice Tan -p 9123-4567");
+        String advice = "\nReview the records and delete duplicates only if they are the same person.";
+
+        assertEquals("New student added: Alicia Tan; Phone: 91234567\n\n"
+                + "WARNING: Possible duplicate student: Alice Tan has the same phone (91234567)." + advice,
+                logic.execute("add Alicia Tan -p 91234567").getFeedbackToUser());
+        assertEquals("Edited student: Alicia Tan; Phone: 9123.4567\n\n"
+                + "WARNING: Possible duplicate student: Alice Tan has the same phone (9123.4567)." + advice,
+                logic.execute("edit 2 -p 9123.4567").getFeedbackToUser());
+        assertEquals(Messages.getStudentsFoundOverview(2), logic.execute("find -p 91234567").getFeedbackToUser());
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+
+        assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
+        assertEquals(List.of("9123-4567", "9123.4567"), model.getStudentBook().getStudentList().stream()
+                .map(student -> student.getPhone().value).toList());
+    }
+
+    @Test
     public void execute_findFormattedPhoneDigits_preservesRecordsAndStorage() throws Exception {
         logic.execute("add Alex Yeoh -p \"+65 9123 4567\"");
         logic.execute("add Bernice Yu -p 9876-5432");
@@ -112,6 +155,34 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_findUnicodePhoneDigits_preservesRecordsAndStorage() throws Exception {
+        logic.execute("add Wang Fang -p ９１２３４５６７");
+        logic.execute("add Lim Jia Hui -p 87654321");
+        assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p 9123"));
+        assertEquals("Wang Fang", model.getFilteredStudentList().getFirst().getName().fullName);
+        logic.execute("edit 1 -p \"+６５ ９１２３ ４５６７\"");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        model = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
+        setUp();
+
+        for (String keyword : List.of("91234567", "9123", "6591234567", "９１２３", "٩١٢٣",
+                "\"９１２３ ４５６７\"", "\"٩١٢٣\u00a0٤٥٦٧\"", "\"9123 4567\"")) {
+            assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p " + keyword));
+            assertEquals(List.of(students.getFirst()), model.getFilteredStudentList());
+            assertEquals("+６５ ９１２３ ４５６７", model.getFilteredStudentList().getFirst().getPhone().value);
+        }
+        assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p \"８７６５ ４３２１\""));
+        assertEquals(List.of(students.get(1)), model.getFilteredStudentList());
+        assertEquals(new CommandResult("Found 0 students."), logic.execute("find -p 91234568"));
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        assertEquals(students, model.getStudentBook().getStudentList());
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        assertEquals(students, storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
     public void execute_findSpacedPhoneTerms_preservesConditionsRecordsAndStorage() throws Exception {
         logic.execute("add Alice Tan -p 91234567 -t Lab -f");
         logic.execute("add Bob Lim -p \"(9123)-4567 ext 21\" -t Tutorial");
@@ -124,7 +195,7 @@ public class LogicManagerTest {
                 "find -p \"9123 4567\"", students,
                 "find --phone=\"9123\u00a04567\"", students,
                 "find -p \"9123\u202f4567\"", students,
-                "find -p \"  23   45  \"", students,
+                "find -p \"  ２３   ４５  \"", students,
                 "find -p \"9123 4567\" -n Alice -t Lab -f", List.of(students.get(0)),
                 "find -p \"9123 4567\" -nf", List.of(students.get(1)),
                 "find -p \"9123 4567\" -n Alice -nf", List.<Student>of(),
@@ -323,6 +394,51 @@ public class LogicManagerTest {
                 Messages.getErrorMessageForInvalidValue("Email", "bob!yahoo",
                         Email.getFailureReason("bob!yahoo")));
         assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+    }
+
+    @Test
+    public void execute_blankTagValue_clearsOnlyTagsAndPersists() throws Exception {
+        Student student = new StudentBuilder(AMY).withNusStudentId("A1234567X")
+                .withTags("Lab 1", "T1").withFlag(true).build();
+        Student expected = new StudentBuilder(student).withTags().build();
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        for (String command : List.of("edit 1 -t \" \"", "edit 1 --tag=\"   \"",
+                "edit 1 -t \"\u00a0\u202f\u3000\"")) {
+            model = new ModelManager();
+            model.addStudent(student);
+            setUp();
+            assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(expected)),
+                    logic.execute(command).getFeedbackToUser());
+            assertEquals(List.of(expected), model.getStudentBook().getStudentList());
+            assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
+            model = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
+            setUp();
+            assertEquals(List.of(expected), model.getFilteredStudentList());
+            String savedJson = Files.readString(storage.getStudentBookFilePath());
+            logic.execute(command);
+            assertParseException("edit 1 -t \" \" -t T2",
+                    "A blank tag clears all tags only when it is given on its own.");
+            assertEquals(List.of(expected), model.getStudentBook().getStudentList());
+            assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        }
+    }
+
+    @Test
+    public void execute_blankTagBesideAnotherTag_preservesRecordsFilterAndStorage() throws Exception {
+        model.addStudent(new StudentBuilder(AMY).withTags("Lab 1", "T1").withFlag(true).build());
+        model.updateFilteredStudentList(student -> false);
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.updateFilteredStudentList(student -> false);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        storage.saveStudentBook(model.getStudentBook());
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        for (String blank : List.of("", " ", "\u00a0", "\u202f\u3000")) {
+            assertCommandFailure("edit 1 --tag=\"" + blank + "\" -t T2", ParseException.class,
+                    "A blank tag clears all tags only when it is given on its own.", expectedModel);
+            assertTrue(model.getFilteredStudentList().isEmpty());
+            assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        }
+        assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
     }
 
     @Test

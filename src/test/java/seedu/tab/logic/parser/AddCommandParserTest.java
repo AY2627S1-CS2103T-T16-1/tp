@@ -141,7 +141,8 @@ public class AddCommandParserTest {
 
         // missing name
         assertParseFailure(parser, PHONE_BOB + EMAIL_BOB,
-                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME));
+                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME)
+                        + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE);
 
         // missing phone
         assertParseFailure(parser, NAME_BOB + EMAIL_BOB,
@@ -149,11 +150,13 @@ public class AddCommandParserTest {
 
         // several fields missing -> every one of them is named, in the order of the format
         assertParseFailure(parser, TAG_FRIEND,
-                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME, FLAG_PHONE.getLabel()));
+                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME, FLAG_PHONE.getLabel())
+                        + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE);
 
         // nothing at all
         assertParseFailure(parser, " ",
-                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME, FLAG_PHONE.getLabel()));
+                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME, FLAG_PHONE.getLabel())
+                        + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE);
     }
 
     @Test
@@ -277,6 +280,25 @@ public class AddCommandParserTest {
         assertParseFailure(parser, NAME_BOB + PHONE_BOB
                 + " --id A01234567X -i A76543210Y",
                 Messages.getErrorMessageForDuplicateFlags("--id"));
+    }
+
+    @Test
+    public void parse_nameOption_explainsNamePlacement() {
+        for (String marker : new String[] {"-n", "--name"}) {
+            String expected = String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker)
+                    + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE;
+            for (String value : new String[] {" \"Betsy Crowe\"", "=\"Betsy Crowe\"", "", "=", "=\"\""}) {
+                assertParseFailure(parser, " " + marker + value + PHONE_BOB, expected);
+                assertParseFailure(parser, PHONE_BOB + " " + marker + value, expected);
+            }
+            assertParseFailure(parser, NAME_BOB + PHONE_BOB + " " + marker + " Betsy", expected);
+        }
+    }
+
+    @Test
+    public void parse_quotedNameOptionText_success() {
+        Student expected = new StudentBuilder(BOB).withName("--name").withTags().build();
+        assertParseSuccess(parser, " \"--name\"" + PHONE_BOB + EMAIL_BOB, new AddCommand(expected));
     }
 
     @Test

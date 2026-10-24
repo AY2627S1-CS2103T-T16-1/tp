@@ -18,12 +18,12 @@ import seedu.tab.commons.util.ToStringBuilder;
  * Each term matches only its selected name, NUS Student ID, phone, email or tag field,
  * ignoring case and allowing partial matches.
  * A keyword made only of digits, grouping whitespace and phone punctuation
- * also matches the phone's digits with non-digit characters removed.
+ * also matches the phone's digits with non-digit characters removed and equivalent
+ * Unicode decimal digits compared by their numeric values.
  */
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     /** A keyword of digits, grouping whitespace and phone punctuation, holding at least one digit. */
     private static final Pattern PHONE_KEYWORD = Pattern.compile("(?U)[\\p{Nd}\\s+().-]*\\p{Nd}[\\p{Nd}\\s+().-]*");
-    private static final Pattern NON_DIGIT = Pattern.compile("\\P{Nd}");
 
     /** The student field in which a search term must occur. */
     public enum Field {
@@ -95,8 +95,7 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
         if (!PHONE_KEYWORD.matcher(keyword).matches()) {
             return false;
         }
-        String digits = NON_DIGIT.matcher(keyword).replaceAll("");
-        return phone.getDigits().contains(digits);
+        return phone.getDigits().contains(Phone.normalizeDigits(keyword));
     }
 
     private static boolean matchesAnyTag(Student student, String keyword) {

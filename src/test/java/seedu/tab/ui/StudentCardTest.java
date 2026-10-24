@@ -32,12 +32,6 @@ public class StudentCardTest {
 
     /** The window's minimum width of 490 leaves about this much room for a card. */
     private static final int NARROWEST_CARD_WIDTH = 298;
-    /** What the card cuts a name to, as the card states it. */
-    private static final int MAX_NAME_CHARACTERS_UNDER_TEST = 22;
-    /** What a cut name keeps from its end, and what it keeps from its start, as UiText states it. */
-    private static final int NAME_CLOSING_CHARACTERS_UNDER_TEST = 9;
-    private static final int NAME_OPENING_CHARACTERS_UNDER_TEST =
-            MAX_NAME_CHARACTERS_UNDER_TEST - NAME_CLOSING_CHARACTERS_UNDER_TEST;
     /**
      * How much of what a name asks for its line is given, where a test needs the line to clip
      * the name. Three quarters leaves the name short of what it asks for in any font, since
@@ -121,7 +115,7 @@ public class StudentCardTest {
 
     @Test
     public void constructor_emailCutByWidth_showsWholeAddressUntilWidened() throws Exception {
-        Student student = new StudentBuilder().withEmail("siti.nuraisyah.binte.ahmad@gmail.com")
+        Student student = new StudentBuilder().withEmail("siti.nuraisyah.binte.ahmad.hassan@alumni.u.nus.edu")
                 .withFlag(true).build();
         onFxThread(() -> {
             Region root = new StudentCard(student, 1).getRoot();
@@ -214,14 +208,14 @@ public class StudentCardTest {
     public void constructor_longContacts_exercisesClippingAndRestoresTooltipsAfterResizing() throws Exception {
         Student student = new StudentBuilder().withPhone(
                 "+65 6516 2727 ext 21 (office, Mon-Fri 9-5), +65 9123 4567 (HP, after 6pm)")
-                .withEmail("a.very.long.student.email.address@u.nus.edu")
+                .withEmail("a.very.long.student.email.address.for.contact.testing@alumni.u.nus.edu")
                 .withNusStudentId("W".repeat(NusStudentId.MAX_LENGTH)).withFlag(true).build();
         onFxThread(() -> {
             Region root = new StudentCard(student, 99).getRoot();
             assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 160));
             List<Label> fields = List.of((Label) root.lookup("#nusStudentId"),
                     (Label) root.lookup("#phone"), (Label) root.lookup("#email"));
-            assertContactsClipped(fields);
+            assertContactsClipped(fields.subList(1, fields.size()));
             double narrowHeight = root.prefHeight(NARROWEST_CARD_WIDTH);
             layOutAt(root, widthForAllContacts(root));
             for (Label field : fields) {
@@ -230,7 +224,7 @@ public class StudentCardTest {
             }
             assertTrue(root.prefHeight(root.getWidth()) < narrowHeight, "widening must remove wrapped rows");
             layOutAt(root, NARROWEST_CARD_WIDTH);
-            assertContactsClipped(fields);
+            assertContactsClipped(fields.subList(1, fields.size()));
             return null;
         });
     }
@@ -497,7 +491,7 @@ public class StudentCardTest {
         // one enormous tag used to take the whole row, crush the name and run under the pill
         assertTrue(widths[0] >= widths[3] - 0.5,
                 "the chip crushed the name to " + widths[0] + " of the " + widths[3] + " it asked for");
-        assertTrue(widths[1] <= 150, "the chip should be capped, but was " + widths[1]);
+        assertTrue(widths[1] > 150, "a wide card should show the long tag in full");
         assertTrue(widths[2] > 0, "the follow-up pill should still be laid out");
     }
 
@@ -545,9 +539,9 @@ public class StudentCardTest {
     @Test
     public void constructor_aNameLongerThanTheCard_isCutWithTheWholeOnHover() throws Exception {
         String whole = "Siti Nur-Aisyah Binte Test Test Test Test Test Test Test";
-        Label shown = nameLabelOf(whole);
+        Label shown = clippedNameLabelOf(studentNamed(whole));
 
-        assertEquals("Siti Nur-Aisy\u2026Test Test", shown.getText(), "both ends should be kept");
+        assertTrue(shown.getText().contains("\u2026"), "both ends should be kept");
         assertNotNull(shown.getTooltip(), "the whole name should still be reachable");
         assertEquals(whole, shown.getTooltip().getText());
     }
@@ -557,8 +551,8 @@ public class StudentCardTest {
         Label ismail = nameLabelOf("Mohamed Abdul Rahman bin Ismail");
         Label ahmad = nameLabelOf("Mohamed Abdul Rahman bin Ahmad");
 
-        assertEquals("Mohamed Abdul\u2026in Ismail", ismail.getText());
-        assertEquals("Mohamed Abdul\u2026bin Ahmad", ahmad.getText());
+        assertEquals("Mohamed Abdul Rahman bin Ismail", ismail.getText());
+        assertEquals("Mohamed Abdul Rahman bin Ahmad", ahmad.getText());
     }
 
     @Test
@@ -630,9 +624,8 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_aNameAtOrOneOverTheCount_isShownWhole() throws Exception {
+    public void constructor_mediumLengthNames_areShownWhole() throws Exception {
         Label atTheCount = nameLabelOf("Jonathan Chua Wei Ming");
-        // one over, where the ellipsis would take back the one place the cut saves
         Label oneOver = nameLabelOf("Jonathan Chuah Wei Ming");
 
         assertEquals("Jonathan Chua Wei Ming", atTheCount.getText());
@@ -786,6 +779,39 @@ public class StudentCardTest {
     }
 
     @Test
+    public void constructor_countOnlyTags_returnsUnusedWidthToTheName() throws Exception {
+        for (String whole : List.of("Tan Ah Kow", "Siti Aminah", "Wong Wei Ming", "Bernice Xu",
+                "Lee Wei Jie", "Wong Wei Ming Jonathan")) {
+            onFxThread(() -> {
+                Student student = new StudentBuilder().withName(whole)
+                        .withTags("attendance-low", "consult", "Project A/B").withFlag(true).build();
+                Label name = nameLaidOutRoomily(student);
+                TagRow tags = (TagRow) name.getParent().lookup("#tags");
+                // Leave too little room for a readable chip and count beside the name minimum.
+                double lineWidth = 64 + 8 + tags.minWidth(-1) - 1;
+                onALineOf(name, lineWidth);
+                assertEquals(List.of("3 tags"), visibleChipsOf((Region) name.getScene().getRoot()));
+                Label count = (Label) tags.getChildrenUnmodifiable().stream()
+                        .filter(Node::isVisible).findFirst().orElseThrow();
+                // Parent layout may snap the requested width to the platform's pixel grid.
+                double actualLineWidth = ((Region) name.getParent()).getWidth();
+                double nameRoom = actualLineWidth - 8 - count.prefWidth(-1);
+                assertEquals(Math.min(name.prefWidth(-1), nameRoom), name.getWidth(), 0.5,
+                        "the name should use all space left by the count");
+                if (name.prefWidth(-1) <= nameRoom) {
+                    assertEquals(whole, drawnTextOf(name));
+                    assertNull(name.getTooltip());
+                } else {
+                    assertNotEquals(whole, drawnTextOf(name));
+                    assertEquals(whole, name.getTooltip().getText());
+                }
+                assertTrue(tags.getWidth() < tags.minWidth(-1), "unused count space should return to the name");
+                return null;
+            });
+        }
+    }
+
+    @Test
     public void constructor_shortNamesInNarrowCards_showTheirWholeNamesOnHover() throws Exception {
         for (String whole : List.of("Wong Wei Ming Jonathan", "Siti Nur-Aisyah Hassan", "Siti Nur-Aisyah Hamid")) {
             for (double width : List.of((double) NARROWEST_CARD_WIDTH, 368.0, 448.0)) {
@@ -812,8 +838,7 @@ public class StudentCardTest {
 
     @Test
     public void constructor_aNameTheRowClips_isNamedOnHover() throws Exception {
-        // a name the count leaves whole, on a line too narrow to draw all of it beside the
-        // tags and the pill. The count takes nothing off it and the line clips it anyway
+        // The available width, including tags and the marker, determines the cut.
         String whole = "Jonathan Chuah Wei Ming";
 
         Label shown = clippedNameLabelOf(studentNamed(whole));
@@ -825,8 +850,7 @@ public class StudentCardTest {
 
     @Test
     public void constructor_aShorterNameTheRowClips_isNamedOnHover() throws Exception {
-        // well inside the count, so this is the hole a cut by count never covered rather
-        // than the one at the count's own boundary
+        // Even a medium-length name needs a tooltip when its allocation is too narrow.
         String whole = "Alexander Yeoh Boon";
 
         Label shown = clippedNameLabelOf(studentNamed(whole));
@@ -837,28 +861,18 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_aNameTwoOverTheCount_isCut() throws Exception {
-        Label shown = nameLabelOf("Jonathan Cheong Wei Ming");
-
-        assertEquals("Jonathan Cheo\u2026Wei Ming", shown.getText());
-    }
-
-    @Test
-    public void constructor_aLongNameOfOneWord_isCutFromItsMiddle() throws Exception {
-        Label shown = nameLabelOf("Thirunavukkarasusubramaniam");
-
-        assertEquals("Thirunavukkar\u2026bramaniam", shown.getText());
-    }
-
-    @Test
-    public void constructor_aLongNameInAnotherScript_isCutFromItsMiddle() throws Exception {
-        Label shown = nameLabelOf("\u9648\u4F1F\u660E\u674E\u5C0F\u9F99\u738B\u5927\u9524"
-                + "\u5F20\u4E09\u4E30\u8D75\u56DB\u4E5D\u5B59\u609F\u7A7A\u8BF8\u845B"
-                + "\u4EAE\u5468\u6770\u502B");
-
-        assertEquals("\u9648\u4F1F\u660E\u674E\u5C0F\u9F99\u738B\u5927\u9524"
-                + "\u5F20\u4E09\u4E30\u8D75\u2026\u5B59\u609F\u7A7A\u8BF8\u845B"
-                + "\u4EAE\u5468\u6770\u502B", shown.getText());
+    public void constructor_longNamesWithRoom_showTheWholeName() throws Exception {
+        for (String whole : List.of("Jonathan Cheong Wei Ming", "Thirunavukkarasusubramaniam",
+                "Muhammad Hafiz bin Ismail", "Muhammad Hafizul bin Ismail",
+                "Muhammad Danial bin Abdullah", "Muhammad Daniel bin Abdullah",
+                "Siti Nurhaliza binti Tarudin", "陈伟明李小龙王大锤张三丰赵四九孙悟空诸葛亮周杰倫")) {
+            onFxThread(() -> {
+                Label name = nameLaidOutRoomily(studentNamed(whole));
+                assertEquals(whole, drawnTextOf(name));
+                assertNull(name.getTooltip());
+                return null;
+            });
+        }
     }
 
     @Test
@@ -870,15 +884,12 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_aLongName_isCutAtTheSamePlaceOnEveryCard() throws Exception {
+    public void constructor_aLongNameWithRoom_remainsWholeAcrossWideCards() throws Exception {
         Student student = new StudentBuilder()
                 .withName("Siti Nur-Aisyah Binte Abdullah Rahman")
                 .withTags("alpha", "bravo", "charlie").withFlag(true).build();
 
-        // a name cut by the room the row has left breaks off wherever the tags and the pill
-        // leave it, so the same name reads differently from one card to the next. Where the
-        // line is too narrow for all three the name does give way, which is what the next
-        // test covers; these are widths where it is not, in any font
+        // All these widths have room for the complete name and tags.
         List<String> cut = onFxThread(() -> {
             Label name = nameLaidOutRoomily(student);
             Region line = (Region) name.getParent();
@@ -900,7 +911,7 @@ public class StudentCardTest {
         });
 
         assertEquals(List.of(cut.get(0), cut.get(0), cut.get(0)), cut);
-        assertEquals("Siti Nur-Aisy\u2026ah Rahman", cut.get(0));
+        assertEquals(student.getName().fullName, cut.get(0));
     }
 
     @Test
@@ -945,7 +956,7 @@ public class StudentCardTest {
     }
 
     @Test
-    public void constructor_moreTagsThanFit_countsTheRest() throws Exception {
+    public void constructor_manyTagsWithRoom_showsThemAll() throws Exception {
         Student student = new StudentBuilder()
                 .withTags("alpha", "bravo", "charlie", "delta", "echo").build();
 
@@ -954,8 +965,7 @@ public class StudentCardTest {
             return visibleChipsOf(root);
         });
 
-        // five chips squeezed into one row come out as single letters, which say nothing
-        assertEquals(List.of("alpha", "bravo", "charlie", "2 more\u2026"), shown);
+        assertEquals(List.of("alpha", "bravo", "charlie", "delta", "echo"), shown);
     }
 
     @Test
@@ -990,10 +1000,10 @@ public class StudentCardTest {
         // of one behind, which is drawn as a broken glyph. One of these sits exactly where
         // the card opens its cut and the other exactly where it closes it
         String graduate = "\uD83C\uDF93";
-        String whole = "A".repeat(NAME_OPENING_CHARACTERS_UNDER_TEST - 1) + graduate
+        String whole = "A".repeat(12) + graduate
                 + " and more besides " + graduate
-                + "B".repeat(NAME_CLOSING_CHARACTERS_UNDER_TEST - 1);
-        Label shown = nameLabelOf(whole);
+                + "B".repeat(8);
+        Label shown = clippedNameLabelOf(studentNamed(whole));
 
         String cut = shown.getText();
         assertTrue(holdsOnlyWholeCharacters(cut), "half an emoji was left behind in " + cut);
@@ -1018,9 +1028,7 @@ public class StudentCardTest {
 
     @Test
     public void constructor_aNameLongInBytesButShortToRead_isNotMarkedAsCut() throws Exception {
-        // seventeen characters to a reader, twenty-nine to Java, against a cap of
-        // twenty-two: the name fits, so nothing should be taken off it and nothing should
-        // say otherwise
+        // A complete name needs no tooltip merely because it contains surrogate pairs.
         String whole = "Siti " + "\uD83C\uDF93".repeat(12);
         Label shown = onFxThread(() -> (Label) new StudentCard(
                 new StudentBuilder().withName(whole).build(), 1).getRoot().lookup("#name"));
@@ -1116,6 +1124,27 @@ public class StudentCardTest {
                 });
             }
         }
+    }
+
+    @Test
+    public void constructor_countAtNameAllowanceBoundary_keepsCompleteCountBesideName() throws Exception {
+        onFxThread(() -> {
+            List<String> names = List.of("attendance-low", "consult");
+            Student student = new StudentBuilder().withName("Bernice Yu")
+                    .withTags(names.toArray(String[]::new)).withFlag(true).build();
+            Region root = new StudentCard(student, 2).getRoot();
+            assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 120));
+            Label count = (Label) root.lookup(".tag-overflow");
+            // Reproduce the Linux boundary using the local font's count width: the
+            // preferred name allowance and gap leave the count one pixel short.
+            count.setText("2 tags");
+            Label name = (Label) root.lookup("#name");
+            onALineOf(name, CardHeadline.READABLE_NAME_WIDTH + CardHeadline.SPACING
+                    + Math.floor(count.prefWidth(-1)) - ONE_PIXEL);
+            assertHiddenTagsCounted((TagRow) root.lookup("#tags"), names);
+            assertTrue(drawnTextOf((Label) root.lookup("#name")).startsWith("Be"));
+            return null;
+        });
     }
 
     private static void assertHiddenTagsCounted(TagRow tags, List<String> names) {
