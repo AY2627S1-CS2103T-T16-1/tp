@@ -72,6 +72,7 @@ public class HelpCommand extends Command {
             "",
             "  " + DeleteCommand.COMMAND_WORD + " — Delete a student",
             "    " + DeleteCommand.COMMAND_WORD + " INDEX",
+            "    " + DeleteCommand.COMMAND_WORD + " NUS_STUDENT_ID",
             "    " + DeleteCommand.COMMAND_WORD + " " + FLAG_NUS_STUDENT_ID.getLabel(),
             "    An ID starting with a digit needs the option.",
             "",
