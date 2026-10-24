@@ -1,5 +1,6 @@
 package seedu.tab.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -25,6 +26,12 @@ public class DeleteCommandParserTest {
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE);
 
     private DeleteCommandParser parser = new DeleteCommandParser();
+
+    @Test
+    public void parse_digitLeadingIdWithoutOption_reportsUsageWithExplicitIdExample() {
+        assertParseFailure(parser, "1ABC", USAGE_MESSAGE);
+        assertTrue(USAGE_MESSAGE.contains("Example: delete --id 1ABC"));
+    }
 
     @Test
     public void parse_validArgs_returnsDeleteCommand() {
