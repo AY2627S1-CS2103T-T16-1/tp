@@ -824,7 +824,7 @@ data. There are no overloads accepting nullable email or ID values, and no
 optionals directly into this contract. Nullable JSON strings remain confined
 to the storage adapter, preserving the existing file format.
 
-`Name`, `Tag` and `Phone` each store the form returned by
+`Name`, `Tag`, `Phone`, `Email` and `NusStudentId` each store the form returned by
 `StringUtil.normalizeFieldValue`: without invisible format characters such as
 direction marks, with each run of whitespace reduced to one ASCII space
 and leading and trailing whitespace removed, and with the result composed to
@@ -838,6 +838,8 @@ They normalize for different reasons, and the rule each one enforces differs.
 | `Name` | it is displayed and searched as text, so visually identical names should have the same stored form | at least one letter or number |
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
+| `Email` | it is displayed and searched as text, so visually identical addresses should have the same stored form | RFC 5321 address format, max 254 chars |
+| `NusStudentId` | it is the sole identity key, so visually identical IDs must have the same stored form | 1-32 ASCII letters/digits, stored uppercase |
 
 **The NUS Student ID may be absent.** `NusStudentId` accepts between 1 and 32
 ASCII letters and digits. Input letters are case-insensitive and the value is

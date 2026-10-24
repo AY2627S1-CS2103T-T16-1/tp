@@ -68,6 +68,13 @@ public class NusStudentIdTest {
     }
 
     @Test
+    public void isValidNusStudentId_unicodeCharacter_rejects() {
+        // Unicode character >= 128 should be rejected (fails character < 128 check)
+        assertFalse(NusStudentId.isValidNusStudentId("A0123456éX"));
+        assertFalse(NusStudentId.isValidNusStudentId("中"));
+    }
+
+    @Test
     public void equals() {
         NusStudentId nusStudentId = new NusStudentId("A01234567X");
 
