@@ -158,6 +158,10 @@ preserving valid secondary-screen positions, including negative coordinates.
 With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
 nonpositive or nonfinite dimensions use the default size. The window minimum
 also yields to a smaller usable area so it cannot defeat the size correction.
+The normal minimum height is 400 logical pixels, leaving room for window
+decorations and desktop panels within the 480 logical pixels available at
+1280×720 with 150% scaling. The student list and help text scroll within the
+remaining space, keeping the summary total, help footer and status bar visible.
 A window spanning adjacent displays is fitted entirely onto the selected screen,
 even when it was visible across both. This keeps restoration predictable when
 displays have different usable heights or gaps between them.
@@ -2041,6 +2045,18 @@ testers are expected to do more *exploratory* testing.
       Expected: Each reports `help takes no arguments. Unexpected input: ...`
       with the offending input quoted. No help page opens and student data stays
       unchanged. `help` with trailing spaces or tabs opens the pager normally.
+
+1. Using a compact window
+
+   1. Set the display to 1280×720 with 150% scaling. Launch TAB and resize
+      its bottom edge to fit above the taskbar.<br>
+      Expected: The entire window fits, including the command box, summary
+      total and data-file status bar.
+
+   1. With at least ten students listed, focus the list and press End.<br>
+      Expected: The last student's card is readable. Press F1 and then G:<br>
+      Expected: The help notice, `(END)` and both navigation hint lines remain
+      visible. Press Esc to return to the command box.
 
 1. Saving window preferences
 
