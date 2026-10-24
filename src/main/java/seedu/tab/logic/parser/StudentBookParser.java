@@ -49,9 +49,8 @@ public class StudentBookParser {
      * index reported as not a positive integer.
      *
      * <p>Whatever separated the two is handed on as a single space, so that a command means
-     * the same thing whichever one was typed. Only the add command reads its arguments with
-     * the tokenizer; the rest look for an ordinary space and would otherwise keep the
-     * separator as the first character of their arguments.
+     * the same thing whichever one was typed. Every value parser splits its arguments with
+     * the tokenizer, which reads this separator like any other.
      *
      * <p>The command word is read in any case, because no two commands differ only in case
      * and so a capitalised word can only mean the one command. The fold reaches the first
