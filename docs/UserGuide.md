@@ -849,6 +849,14 @@ The top-level object accepts `students` and an optional `_comment` description.
 Correct the spelling or remove the unsupported field, then restart TAB; the
 rejected file stays unchanged.
 
+Keep one student-book object in the file, with each key appearing only once
+within its object. TAB rejects extra records or JSON values after the closing
+brace and repeated keys such as two `phone` entries in one student or two
+top-level `students` lists. The error identifies the location and, for a
+repeated key, its name. Move extra records into the `students` array or keep
+only the intended value for the repeated key, then restart TAB. The rejected
+file stays unchanged.
+
 A student who needs follow-up has `"flag": true` in their JSON record. An
 unflagged student normally has no `flag` key; absence, `false`, and `null` all
 mean that no follow-up is needed. Data files created before this field existed

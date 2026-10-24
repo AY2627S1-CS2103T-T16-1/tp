@@ -36,6 +36,59 @@ public class JsonStudentBookStorageTest {
     public Path testFolder;
 
     @Test
+    public void readStudentBook_trailingContent_reportsLocationAndPreservesBytes() throws Exception {
+        for (String suffix : List.of("{}", "[]", "null", "true", "42", "\"extra\"", ", {}", "extra")) {
+            String json = "{\"students\":[]}\n" + suffix + "\n";
+            Path path = testFolder.resolve("trailing.json");
+            byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+            Files.write(path, bytes);
+
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+            assertTrue(exception.getMessage().contains("at line 2, column"), exception.getMessage());
+            assertTrue(exception.getMessage().contains("Affected source:"));
+            assertArrayEquals(bytes, Files.readAllBytes(path));
+        }
+    }
+
+    @Test
+    public void readStudentBook_duplicateKeys_reportsKeyAndPreservesBytes() throws Exception {
+        for (String json : List.of("{\"students\":[],\"students\":[]}",
+                "{\"students\":[{\"name\":\"Alex\",\"phone\":\"91112222\",\"phone\":\"87438807\"}]}")) {
+            Path path = testFolder.resolve("duplicate.json");
+            byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+            Files.write(path, bytes);
+
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+            String key = json.contains("phone") ? "phone" : "students";
+            assertTrue(exception.getMessage().contains("Duplicate field '" + key + "'"), exception.getMessage());
+            assertTrue(exception.getMessage().contains("at line 1"), exception.getMessage());
+            assertArrayEquals(bytes, Files.readAllBytes(path));
+        }
+    }
+
+    @Test
+    public void readStudentBook_handEditedWhitespaceAndRepeatedKeysAcrossStudents_loads() throws Exception {
+        Path path = testFolder.resolve("hand-edited.json");
+        String json = """
+                  {"students":[{"name":"Alex","phone":"91112222"},
+                {"phone":"87438807","name":"Bernice"}]} \t\r
+
+                """;
+        Files.writeString(path, json);
+
+        ReadOnlyStudentBook loaded = new JsonStudentBookStorage(path).readStudentBook().orElseThrow();
+
+        assertEquals(List.of(new StudentBuilder().withName("Alex").withPhone("91112222").withoutEmail().build(),
+                new StudentBuilder().withName("Bernice").withPhone("87438807").withoutEmail().build()),
+                loaded.getStudentList());
+        assertEquals(json, Files.readString(path));
+    }
+
+    @Test
     public void readAndSaveStudentBook_utf8WithOrWithoutBom_preservesUnicodeRecords() throws Exception {
         StudentBook expected = new StudentBook();
         expected.addStudent(new StudentBuilder().withName("José Tan").build());
