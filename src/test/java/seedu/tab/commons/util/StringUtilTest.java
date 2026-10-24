@@ -12,6 +12,35 @@ import org.junit.jupiter.api.Test;
 
 public class StringUtilTest {
 
+    @Test
+    public void containsIgnoreCase_unicodeCaseVariants_returnsTrue() {
+        String[][] cases = {
+            {"ΝΙΚΟΣ", "Σ"},
+            {"ΝΙΚΟΣ", "σ"},
+            {"ΝΙΚΟΣ", "ς"},
+            {"οσ", "ΟΣ"},
+            {"ΟΣ", "οσ"},
+            {"İ", "i"},
+            {"ı", "I"},
+            {"𐐀", "𐐨"}
+        };
+        for (String[] pair : cases) {
+            String text = pair[0];
+            String query = pair[1];
+            assertTrue(StringUtil.containsIgnoreCase(text, query));
+        }
+    }
+
+    @Test
+    public void normalizeNameForComparison_otherScriptsAndPunctuation_preservesDistinctions() {
+        assertFalse(StringUtil.normalizeNameForComparison("किरण")
+                .equals(StringUtil.normalizeNameForComparison("करण")));
+        assertFalse(StringUtil.normalizeNameForComparison("O'Brien")
+                .equals(StringUtil.normalizeNameForComparison("Obrien")));
+        assertEquals("", StringUtil.normalizeNameForComparison(""));
+        assertThrows(NullPointerException.class, () -> StringUtil.normalizeNameForComparison(null));
+    }
+
     //---------------- Tests for isNonZeroUnsignedInteger --------------------------------------
 
     @Test

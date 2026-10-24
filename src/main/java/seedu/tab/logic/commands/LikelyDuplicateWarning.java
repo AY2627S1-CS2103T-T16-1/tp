@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.Phone;
@@ -61,7 +62,8 @@ final class LikelyDuplicateWarning {
     private static void addMatches(List<Student> matchingNames, List<Student> matchingPhones,
             List<Student> matchingEmails, Student changedStudent, Student existingStudent, Student originalStudent) {
         if (isChanged(changedStudent.getName(), originalStudent == null ? null : originalStudent.getName())
-                && matchesIgnoringCase(changedStudent.getName().fullName, existingStudent.getName().fullName)) {
+                && StringUtil.normalizeNameForComparison(changedStudent.getName().fullName)
+                        .equals(StringUtil.normalizeNameForComparison(existingStudent.getName().fullName))) {
             matchingNames.add(existingStudent);
         }
         if (isChanged(changedStudent.getPhone(), originalStudent == null ? null : originalStudent.getPhone())
