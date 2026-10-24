@@ -284,8 +284,10 @@ trade-off is deliberate and worth revisiting if the palette changes.
 
 #### Recalling session commands
 
-`CommandBox` records each submitted line in `CommandHistory` before execution,
-so rejected input can be recalled too. The helper stores submissions separately
+`CommandBox` records each submitted command in `CommandHistory` before execution,
+so rejected commands can be recalled too. While clear confirmation is pending,
+replies are excluded because they cannot be reused as standalone commands; the
+navigation position resets without recording the reply. The helper stores submissions separately
 from the draft captured when Up first leaves the newest position. Down past
 the newest submission restores that draft. Up skips the newest submission when
 it already matches the text in the box and an earlier entry exists. Blank
@@ -3076,7 +3078,10 @@ testers are expected to do more *exploratory* testing.
       empty reply. Press Up.<br>
       Expected: Clear is cancelled without changing any students. Up recalls
       `clear` immediately, without a blank entry. Repeat with spaces as the reply;
-      the result is the same.
+      the result is the same. Repeat with `n`, `no`, `y`, and `yes` (repopulate the
+      book after confirming); Up still recalls `clear`. Submit `list` during a
+      pending confirmation: TAB retains the invalid reply and keeps waiting.
+      Up recalls `clear`, and Down restores the retained `list` draft.
    1. Close and reopen TAB, type `draft`, and press Up.<br>
       Expected: `draft` stays unchanged; history does not survive a restart.
 
