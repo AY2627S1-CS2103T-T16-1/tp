@@ -1,0 +1,52 @@
+@startuml
+!include style.puml
+
+actor User
+participant "StudentBookParser" as Parser LOGIC_COLOR
+participant "TagCommandParser" as TagParser LOGIC_COLOR
+participant "FlagTokenizer" as FlagTokenizer LOGIC_COLOR
+participant "ParserUtil" as ParserUtil LOGIC_COLOR
+participant "TagCommand" as TagCommand LOGIC_COLOR
+participant "Model" as Model MODEL_COLOR
+
+User -> Parser : execute("tag 1 -a T1")
+activate Parser
+
+Parser -> TagParser : parse("1 -a T1")
+activate TagParser
+
+TagParser -> FlagTokenizer : tokenizeWithIndex("1 -a T1")
+activate FlagTokenizer
+FlagTokenizer --> TagParser : FlagArgumentMap
+deactivate FlagTokenizer
+
+TagParser -> ParserUtil : parseRequiredIndex("1")
+activate ParserUtil
+ParserUtil --> TagParser : Index(1)
+deactivate ParserUtil
+
+TagParser -> ParserUtil : parseTag("T1")
+ParserUtil --> TagParser : Tag("T1")
+
+TagParser --> Parser : TagCommand(Index(1), Action.ADD, Tag("T1"))
+deactivate TagParser
+
+Parser -> TagCommand : execute(Index(1), Action.ADD, Tag("T1"))
+activate TagCommand
+
+TagCommand -> Model : getFilteredStudentList()
+activate Model
+Model --> TagCommand : displayed list
+deactivate Model
+
+TagCommand -> Model : setStudent(original, edited)
+activate Model
+Model --> TagCommand : updated
+deactivate Model
+
+TagCommand --> Parser : CommandResult
+deactivate TagCommand
+
+Parser --> User : "Edited student: ... Tags: [T1]"
+deactivate Parser
+@enduml

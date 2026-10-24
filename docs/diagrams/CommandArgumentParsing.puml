@@ -1,0 +1,31 @@
+@startuml
+!include style.puml
+
+actor User
+participant "StudentBookParser" as Parser LOGIC_COLOR
+participant "CommandTokenizer" as Tokenizer LOGIC_COLOR
+participant "FlagTokenizer" as FlagTokenizer LOGIC_COLOR
+participant "FlagArgumentMap" as FlagMap LOGIC_COLOR
+participant "ParserUtil" as ParserUtil LOGIC_COLOR
+
+User -> Parser : execute("add John Doe -p 98765432 -e johnd@example.com")
+activate Parser
+
+Parser -> Tokenizer : tokenize(command)
+activate Tokenizer
+Tokenizer --> Parser : List<Token>
+deactivate Tokenizer
+
+Parser -> FlagTokenizer : tokenize(tokens)
+activate FlagTokenizer
+FlagTokenizer --> Parser : FlagArgumentMap
+deactivate FlagTokenizer
+
+Parser -> ParserUtil : parseName/parsePhone/parseEmail/parseNusStudentId
+activate ParserUtil
+ParserUtil --> Parser : validated values
+deactivate ParserUtil
+
+Parser --> User : AddCommand
+deactivate Parser
+@enduml

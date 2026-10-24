@@ -1,0 +1,49 @@
+@startuml
+!include style.puml
+
+[*] --> IDLE : Launch
+
+state IDLE {
+    [*] --> NO_PENDING
+}
+
+state NO_PENDING {
+    User -> LogicManager : clear
+    LogicManager -> LogicManager : pendingClearCommand = ClearCommand
+    LogicManager -> User : "[y/N] prompt with count"
+}
+
+state PENDING : pendingClearCommand present
+PENDING : next input is reply
+
+state "Processing reply" as REPLY {
+    [*] --> STRIP
+    STRIP : stripFormatCharacters(reply)
+    STRIP --> TRIM
+    TRIM : trim Unicode whitespace
+    TRIM --> CHECK
+    CHECK : isEmpty || equals("n") || equals("no") ?
+    CHECK -[yes]-> DROP
+    CHECK -[no]-> IS_YES
+    IS_YES : equals("y") || equals("yes") ?
+    IS_YES -[yes]-> CONFIRM
+    IS_YES -[no]-> INVALID
+}
+
+DROP : pendingClearCommand = empty
+DROP -> NO_PENDING : no-op / message
+
+CONFIRM : pendingClearCommand = empty
+CONFIRM -> ClearCommand : executeConfirmed()
+ClearCommand -> Storage : save empty book
+Storage --> ClearCommand : result
+CONFIRM -> NO_PENDING : "All students deleted"
+
+INVALID : ParseException with feedback
+INVALID -> PENDING : prompt repeated
+
+NO_PENDING --> PENDING : clear (non-empty book)
+PENDING --> NO_PENDING : y / yes / n / no / empty
+
+NO_PENDING --> [*] : exit
+@enduml

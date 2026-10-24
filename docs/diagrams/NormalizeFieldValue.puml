@@ -1,0 +1,14 @@
+@startuml
+!include style.puml
+
+start
+
+:raw input string;
+:strip invisible format characters (direction marks, zero-width spaces);
+:collapse runs of whitespace to single ASCII space;
+:trim leading and trailing whitespace;
+:compose to Unicode NFC;
+:normalized string;
+
+stop
+@enduml
