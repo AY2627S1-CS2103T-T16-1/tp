@@ -13,6 +13,30 @@ public class LikelyDuplicateWarningTest {
     private static final String SUCCESS_MESSAGE = "Student saved.";
 
     @Test
+    public void appendTo_equivalentNames_warnsWithoutChangingSpelling() {
+        String[][] cases = {
+            {"Sean O’Brien", "Sean O'Brien"},
+            {"Mary O'Neil", "Mary O’Neil"},
+            {"José Rivera", "JOSE RIVERA"},
+            {"Nguyễn Văn An", "nguyen van an"},
+            {"ΝΙΚΟΣ", "νικοσ"},
+            {"νικοσ", "νικος"}
+        };
+        for (String[] pair : cases) {
+            String storedName = pair[0];
+            String typedName = pair[1];
+            Student existing = new StudentBuilder().withName(storedName).withPhone("91234567").withoutEmail().build();
+            Student changed = new StudentBuilder().withName(typedName).withPhone("92345678").withoutEmail().build();
+            String expected = SUCCESS_MESSAGE + "\n\nWARNING: Possible duplicate student: " + storedName
+                    + " has the same name (" + typedName + ")."
+                    + "\nReview the records and delete duplicates only if they are the same person.";
+            assertEquals(expected, LikelyDuplicateWarning.appendTo(SUCCESS_MESSAGE, changed, List.of(existing)));
+            assertEquals(storedName, existing.getName().fullName);
+            assertEquals(typedName, changed.getName().fullName);
+        }
+    }
+
+    @Test
     public void appendTo_equivalentPhoneDigits_warnsWithoutChangingFormatting() {
         Student existing = new StudentBuilder().withName("Alice Tan").withPhone("9123-4567")
                 .withoutEmail().build();

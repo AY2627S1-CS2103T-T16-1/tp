@@ -28,7 +28,8 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
 
     /** The student field in which a search term must occur. */
     public enum Field {
-        NAME((student, keyword) -> StringUtil.containsIgnoreCase(student.getName().fullName, keyword)),
+        NAME((student, keyword) -> StringUtil.normalizeNameForComparison(student.getName().fullName)
+                .contains(StringUtil.normalizeNameForComparison(keyword))),
         NUS_STUDENT_ID((student, keyword) -> StringUtil.containsIgnoreCase(
                 student.getNusStudentId().map(NusStudentId::toString).orElse(""), keyword)),
         PHONE((student, keyword) -> matchesPhone(student.getPhone(), keyword)),
