@@ -122,7 +122,7 @@ public class SummaryPanel extends UiPart<Region> {
     }
 
     /**
-     * Returns how many of {@code students} are waiting on a reply.
+     * Returns how many of {@code students} need follow-up.
      */
     public static long countFlagged(List<Student> students) {
         return students.stream().filter(Student::isFlagged).count();
