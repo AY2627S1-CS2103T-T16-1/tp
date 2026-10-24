@@ -93,7 +93,8 @@ it before pressing Enter.
   `-e EMAIL -p PHONE` is also acceptable. A parameter given before any
   option, such as the name in `add`, keeps its place at the front.
 
-* Every command marks its fields with options such as `-p`. Value options also
+* Commands use options such as `-p` for fields, except positional parameters
+  such as the leading name in `add` or the target in `edit`. Value options also
   have descriptive long aliases such as `--phone`; the command-specific
   sections list them. Separate a value from its option with a space, as in
   `--phone 91234567`, or join it with an equals sign, as in
@@ -339,9 +340,22 @@ least one letter or number, in any writing system.
 
 <box type="tip" seamless>
 
-**Tip:** The name comes first and may hold spaces as it is, so
+**Tip:** The name comes first, without `-n` or `--name`, and may hold spaces as it is, so
 `add Ravi s/o Kumaran -p 91234567` needs no quotes at all. Slashes, hyphens and
 apostrophes are ordinary characters here.
+
+If you use a name option from `edit`, TAB explains where to put the name:
+
+```text
+add --name "Betsy Crowe" --phone 1234567
+```
+
+```text
+There is no --name option.
+In add command, the name comes first, without an option: add NAME -p PHONE ...
+```
+
+The same placement hint appears for `-n` and when the name is missing.
 
 Use double quotes for an option value holding spaces, and for any value opening
 with a hyphen, so that TAB does not read it as an option:

@@ -471,6 +471,11 @@ option names its marker without echoing an attached value, while a value-taking
 option left without a value and a token belonging to no option are each
 reported for what they are, rather than as one generic complaint.
 
+`add` keeps its name before the options so names containing spaces need no
+quotes. If the tokenizer refuses `-n` or `--name`, `AddCommandParser` adds a
+placement hint to the existing error. A missing name gets the same hint,
+so users familiar with the name options in `edit` can recover immediately.
+
 `Flag` also lets a value-taking option carry aliases. NUS Student ID uses
 `--id` as its canonical option and the unused `-i` as its typing-friendly
 alias. Both spellings map to the same `FLAG_NUS_STUDENT_ID`, so giving
@@ -2271,6 +2276,19 @@ testers are expected to do more *exploratory* testing.
       Expected: Jane Doe is added with tags and follow-up flag. The status message
       shows `New student added: Jane Doe; Phone: 91234567; Tags: [lab1][urgent]; Needs follow-up`
       with tags sorted alphabetically ignoring case.
+
+1. Recovering from a name option or a missing name
+
+   1. Test cases: `add --name "Betsy Crowe" --phone 1234567`,
+      `add -n "Betsy Crowe" -p 1234567`, and
+      `add --phone 1234567 --name="Betsy Crowe"`.<br>
+      Expected: No student is added. The error names the unsupported option,
+      followed by `In add command, the name comes first, without an option: add NAME -p PHONE ...`.
+   1. Test case: `add -p 1234567`.<br>
+      Expected: `Missing required field(s): NAME`, followed by the same placement
+      hint. The student list is unchanged.
+   1. Test case: `add Betsy Crowe --phone 1234567`.<br>
+      Expected: Betsy Crowe is added. Exit and reopen TAB; the student remains saved.
 
 1. Adding a duplicate NUS Student ID
 
