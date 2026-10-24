@@ -500,8 +500,9 @@ done to it beyond the quotes any value with spaces takes:
   immediately after the target.
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
-* `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it and is
-  available only with `edit`. New students are unflagged by default when added.
+* `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it.
+  Both options are also available with `find` to filter by follow-up status.
+  New students are unflagged by default when added.
   Both options take no value, so forms such as `--follow-up=true` are refused.
   Repeating either request succeeds and keeps the requested state.
   Leaving both out preserves the student's follow-up status.
