@@ -298,7 +298,9 @@ WARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.
 Review the records and delete duplicates only if they are the same person.
 ```
 
-Names and emails are compared without regard to letter case. Repeated,
+Names and emails are compared without regard to letter case. Names also ignore
+Latin accents and straight/curly apostrophe differences: `José` matches `Jose`,
+and `O’Brien` matches `O'Brien`. Repeated,
 leading, and trailing whitespace in names is insignificant, as are spaces in
 phone numbers. The review advice appears once after all matching fields.
 
@@ -661,8 +663,13 @@ Provide at least one field term or one follow-up status option. Every search ter
 * Enclose a multi-word term in double quotes: `find -n "Jason Tan"` requires that whole
   phrase in the name. `find -t "lab tutorial"` requires the phrase within one tag;
   separate tags are never joined. Repeated spaces inside a phrase are collapsed to one space.
-* Apostrophes are literal characters, so `find -n O'Brien` searches for `O'Brien`.
-  Single quotation marks do not group words; use double quotes for phrases.
+* Name searches ignore Latin accents and straight/curly apostrophe differences:
+  `find -n nguyen` matches `Nguyễn Văn An`, `find -n jose` matches `José Rivera`,
+  and `find -n O'Brien` matches `Sean O’Brien`. The stored spelling stays unchanged.
+* Unicode case variants match in names and tags: `find -n σ` matches `ΝΙΚΟΣ`,
+  and `find -t οσ` matches tag `ΟΣ`, consistent with adding/removing that tag.
+  Accents and apostrophes remain significant in tags and other fields.
+* Single quotation marks do not group words; use double quotes for phrases.
 * Bare terms are refused, including a name given before any option. Use a field option
   for every term. An extra word after an option is also refused; repeat the option or quote a phrase.
   This replaces the earlier unqualified cross-field search syntax and OR matching.
