@@ -40,7 +40,8 @@ public class AddCommandIntegrationTest {
         expectedModel.addStudent(validStudent);
 
         assertCommandSuccess(new AddCommand(validStudent), model,
-                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(validStudent)),
+                new CommandResult(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(validStudent)),
+                        validStudent),
                 expectedModel);
     }
 
@@ -53,7 +54,7 @@ public class AddCommandIntegrationTest {
         expectedModel.addStudent(validStudent);
 
         assertCommandSuccess(new AddCommand(validStudent), model,
-                "New student added: Bob Choo; Phone: 81112222",
+                new CommandResult("New student added: Bob Choo; Phone: 81112222", validStudent),
                 expectedModel);
     }
 
@@ -67,8 +68,8 @@ public class AddCommandIntegrationTest {
         expectedModel.addStudent(validStudent);
 
         assertCommandSuccess(new AddCommand(validStudent), model,
-                "New student added: Bob Choo; Phone: 81112222; Email: bob@example.com; "
-                + "Tags: [lab3][urgent]; Needs follow-up",
+                new CommandResult("New student added: Bob Choo; Phone: 81112222; Email: bob@example.com; "
+                + "Tags: [lab3][urgent]; Needs follow-up", validStudent),
                 expectedModel);
     }
 
@@ -164,9 +165,9 @@ public class AddCommandIntegrationTest {
         expectedModel.addStudent(sameName);
 
         assertCommandSuccess(new AddCommand(sameName), model,
-                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(sameName))
+                new CommandResult(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(sameName))
                         + "\n\nWARNING: Possible duplicate student: Alice Pauline has the same name (aLiCe pAuLiNe)."
-                        + "\nReview the records and delete duplicates only if they are the same person.",
+                        + "\nReview the records and delete duplicates only if they are the same person.", sameName),
                 expectedModel);
     }
 
@@ -180,9 +181,9 @@ public class AddCommandIntegrationTest {
         expectedModel.addStudent(second);
 
         assertCommandSuccess(new AddCommand(second), model,
-                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(second))
+                new CommandResult(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(second))
                         + "\n\nWARNING: Possible duplicate student: Tan Wei Ming has the same name (Tan Wei Ming)."
-                        + "\nReview the records and delete duplicates only if they are the same person.",
+                        + "\nReview the records and delete duplicates only if they are the same person.", second),
                 expectedModel);
     }
 
@@ -195,10 +196,11 @@ public class AddCommandIntegrationTest {
         expectedModel.addStudent(matchingPhone);
 
         assertCommandSuccess(new AddCommand(matchingPhone), model,
-                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(matchingPhone))
+                new CommandResult(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(matchingPhone))
                         + "\n\nWARNING: Possible duplicate student: " + studentInList.getName()
                         + " has the same phone."
                         + "\nReview the records and delete duplicates only if they are the same person.",
+                        matchingPhone),
                 expectedModel);
     }
 
@@ -212,11 +214,11 @@ public class AddCommandIntegrationTest {
         expectedModel.addStudent(matchingEmail);
 
         assertCommandSuccess(new AddCommand(matchingEmail), model,
-                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(matchingEmail))
+                new CommandResult(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(matchingEmail))
                         + "\n\nWARNING: Possible duplicate student: " + studentInList.getName()
                         + " has the same email (ALICE@EXAMPLE.COM)."
                         + "\nReview the records and delete duplicates only if they are the same person."
-                        + "\nSearch cleared to show the new student.",
+                        + "\nSearch cleared to show the new student.", matchingEmail),
                 expectedModel);
     }
 
@@ -238,8 +240,8 @@ public class AddCommandIntegrationTest {
         expectedModel.addStudent(student);
 
         assertCommandSuccess(new AddCommand(student), model,
-                "New student added: Nus Student; NUS Student ID: A01234567X; Phone: 85355255; "
-                        + "Email: amy@gmail.com", expectedModel);
+                new CommandResult("New student added: Nus Student; NUS Student ID: A01234567X; Phone: 85355255; "
+                        + "Email: amy@gmail.com", student), expectedModel);
     }
 
 }

@@ -32,6 +32,6 @@
       <Region fx:id="caret" styleClass="command-caret" />
     </Pane>
     <CommandTextField fx:id="commandTextField" onAction="#handleCommandEntered"
-               promptText="Enter command here..." />
+               promptText="Enter command here…" />
   </StackPane>
 </HBox>

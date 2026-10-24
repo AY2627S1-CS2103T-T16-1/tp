@@ -1054,6 +1054,41 @@ public class StudentCardTest {
     }
 
     @Test
+    public void constructor_longNameWithFlagAndTags_showsReadableChipsOrTotal() throws Exception {
+        Student student = new StudentBuilder().withName("Siti Nur-Aisyah Binte Abdullah Rahman")
+                .withTags("consultation-week-3", "Lab 3", "Tutorial Group 11").withFlag(true).build();
+        onFxThread(() -> {
+            boolean sawTotal = false;
+            boolean sawChip = false;
+            for (int width = 300; width <= 800; width += 2) {
+                Region root = (Region) new StudentCard(student, 1).getRoot();
+                styledScene(root, width, 120);
+                TagRow tags = (TagRow) root.lookup("#tags");
+                List<String> shown = visibleChipsOf(root);
+                sawTotal |= shown.equals(List.of("3 tags"));
+                sawChip |= shown.size() > 1;
+                assertReadableTagChips(tags, width);
+                assertHiddenTagsCounted(tags, List.of("consultation-week-3", "Lab 3", "Tutorial Group 11"));
+            }
+            assertTrue(sawTotal, "the sweep should exercise the total-count fallback");
+            assertTrue(sawChip, "widening should restore tag chips");
+            return null;
+        });
+    }
+
+    private static void assertReadableTagChips(TagRow tags, int cardWidth) {
+        for (Node node : tags.getChildrenUnmodifiable()) {
+            Label label = (Label) node;
+            if (!label.isVisible() || label.getStyleClass().contains("tag-overflow")) {
+                continue;
+            }
+            String drawn = drawnTextOf(label);
+            assertTrue(drawn.equals(label.getText()) || drawn.startsWith("cons"),
+                    "unreadable chip at card width " + cardWidth + ": " + drawn);
+        }
+    }
+
+    @Test
     public void constructor_atEveryWidth_saysWhenItHasLeftTagsOut() throws Exception {
         // a card showing some of a student's tags must say that there are more, at whatever
         // width: a card that simply drops the count leaves the reader thinking that is all

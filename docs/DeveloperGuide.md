@@ -113,6 +113,14 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
+`AddCommand` includes the new student in its `CommandResult`.
+`MainWindow` asks `StudentListPanel` to reveal that card only after `Logic.execute`
+returns successfully, so failed saves cannot scroll to an unsaved student.
+Scrolling leaves focus in the command box and uses the displayed list after
+the existing search-preservation rules have been applied. It locates the exact
+saved student object so an earlier record with identical details is not revealed
+instead, and skips a target that has left the displayed list before layout.
+
 The student card's `TagRow` creates a label for every tag, with its full text.
 Layout shows as many complete chips as fit and lists all hidden tags in the
 overflow chip's tooltip. There is no fixed chip count or label length cap.
@@ -158,6 +166,10 @@ preserving valid secondary-screen positions, including negative coordinates.
 With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
 nonpositive or nonfinite dimensions use the default size. The window minimum
 also yields to a smaller usable area so it cannot defeat the size correction.
+The normal minimum height is 400 logical pixels, leaving room for window
+decorations and desktop panels within the 480 logical pixels available at
+1280×720 with 150% scaling. The student list and help text scroll within the
+remaining space, keeping the summary total, help footer and status bar visible.
 A window spanning adjacent displays is fitted entirely onto the selected screen,
 even when it was visible across both. This keeps restoration predictable when
 displays have different usable heights or gaps between them.
@@ -168,7 +180,10 @@ displays have different usable heights or gaps between them.
 tags, but yields part of that allowance for a complete tag count. The name
 retains space for a character from each end. When no tag chip fits, `TagRow`
 uses the shorter `N tags` total instead of `N more…`, preserving a complete
-count beside the name. Its tooltip still lists every hidden tag.
+count beside the name. Its tooltip still lists every hidden tag. A partial
+chip requires room for four characters and an ellipsis, measured in its
+styled font with padding, so a two-letter fragment gives way to the total.
+A shorter tag can still appear in full.
 `TagRow.fittedWidth` reports the space its chosen chips or count actually use,
 so `CardHeadline` returns any unused allocation to the name before laying it
 out. The name requests its full natural width.
@@ -654,6 +669,14 @@ unquoted negative
 number as both an invalid index and an unknown option. A value following a valid
 index is reported separately by `parseRequiredIndex`. Tag syntax failures and
 a missing action option include guidance for both addition and removal.
+
+`ParserUtil.parseIndex` distinguishes malformed/non-positive input from a positive
+integer exceeding the supported index range. `StudentTarget` reports out-of-range
+positions with their original input spelling and the current displayed count,
+including zero. Retaining that spelling also lets delete suggest an exact `--id`
+command for a stored numeric ID without dropping leading zeroes. An in-range
+number remains an index even when another record holds the same numeric ID.
+The original spelling affects diagnostics only, not target equality or hashing.
 
 `TagCommand` stores a `StudentTarget`, as edit and delete do. It resolves an
 index against the displayed list and an ID across the entire book, so a
@@ -1959,6 +1982,17 @@ testers are expected to do more *exploratory* testing.
       absolute path to the original `data/tab.json`, and no data, preference,
       or log file is created in the terminal's working folder.
 
+1. Reading a long data path
+
+   1. Put the JAR in a folder with a long absolute path and launch it.
+      Narrow the window until the status bar path no longer fits.<br>
+      Expected: The path is shortened in the middle, keeping `tab.json`
+      visible. Hovering over the path shows the full absolute path.
+
+   1. Widen the window until the full path fits.<br>
+      Expected: The path is shown unchanged and has no tooltip. Narrowing
+      the window again restores the tooltip.
+
 1. Launching from a read-only folder
 
    1. Prerequisites: Copy the JAR into a new folder that the current user can
@@ -2033,6 +2067,18 @@ testers are expected to do more *exploratory* testing.
       Expected: Each reports `help takes no arguments. Unexpected input: ...`
       with the offending input quoted. No help page opens and student data stays
       unchanged. `help` with trailing spaces or tabs opens the pager normally.
+
+1. Using a compact window
+
+   1. Set the display to 1280×720 with 150% scaling. Launch TAB and resize
+      its bottom edge to fit above the taskbar.<br>
+      Expected: The entire window fits, including the command box, summary
+      total and data-file status bar.
+
+   1. With at least ten students listed, focus the list and press End.<br>
+      Expected: The last student's card is readable. Press F1 and then G:<br>
+      Expected: The help notice, `(END)` and both navigation hint lines remain
+      visible. Press Esc to return to the command box.
 
 1. Saving window preferences
 
@@ -2415,6 +2461,29 @@ testers are expected to do more *exploratory* testing.
       The status message shows `New student added: John Doe; Phone: 98765432`
       without placeholder labels for absent email or tags.
 
+1. Revealing a newly saved student in an overflowing list
+
+   1. Prerequisites: Use a book with at least 30 students so the list scrolls.
+      Scroll to the top and return focus to the command box.
+   1. Test case: `add Newly Added Student -p 91234567`.<br>
+      Expected: The new card is visible without manual scrolling. Type the next
+      command immediately; input remains in the command box.
+   1. Repeat with a search that matches many students, first adding a matching
+      student and then one that does not match.<br>
+      Expected: Each new card is revealed. The matching search stays active;
+      the non-matching addition clears it and reports that it did so.
+   1. Add a student with the same details as an earlier record without a NUS
+      Student ID.<br>
+      Expected: The newly appended card is revealed, rather than the earlier
+      matching record. The possible-duplicate warning is still shown.
+   1. Return to the top and try `add Missing Phone`, then an addition with a
+      duplicate NUS Student ID.<br>
+      Expected: No student is added and the list does not jump to the end.
+   1. Make the data path unwritable, attempt a valid addition, then restore
+      write access.<br>
+      Expected: The save error is shown, the student and active search are
+      restored, and the list does not reveal the unsaved student.
+
 1. Adding a student with tags and follow-up
 
    1. Test case: `add Jane Doe -p 91234567 -t urgent -t lab1 --follow-up`<br>
@@ -2575,6 +2644,16 @@ testers are expected to do more *exploratory* testing.
       Expected: Chips that fit appear in full; hidden tags are counted and
       listed on hover. A lone chip too wide for its allocation is shortened
       and shows its complete tag on hover. Widening restores complete tags.
+
+1. Reading tags beside a long name and follow-up marker
+
+   1. Add `add Siti Nur-Aisyah Binte Abdullah Rahman -p 91234567 -f`
+      `-t consultation-week-3 -t "Lab 3" -t "Tutorial Group 11"` as one command.
+   1. Resize the window through about 740 px, then narrow and widen it.<br>
+      Expected: The row shows a readable tag prefix and `2 more…`, or `3 tags`
+      when there is too little room for that prefix. It never shows only one
+      or two letters of the first tag. Hovering over the count lists hidden
+      tags; widening restores chips. The follow-up marker remains visible.
 
 ### Reading a clipped email address
 
@@ -3299,6 +3378,25 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Restart TAB and repeat the name searches.<br>
       Expected: Original spellings survive saving and reloading; normalized
       comparisons still find the students. Run `list` to restore the full list.
+
+### Diagnosing student-target mistakes
+
+1. Start from an empty book and add `add Amy Bee -p 91234567 --id 001234` and
+   `add Other Student -p 82223333`. Run `find -n Amy`, then try `delete 3`,
+   `edit 3 -p 81112222`, and `tag 3 -a T1`.<br>
+   Expected: Each quotes index `3`, reports one displayed student, and suggests
+   `list`. No record, active filter or saved data changes. Repeat after
+   `find -n Missing`; the message reports zero displayed students.
+1. Try `edit 6591234567 -p 81112222`, `tag 6591234567 -a T1`, and
+   `delete 6591234567`.<br>
+   Expected: Each explains the upper index bound rather than calling the positive
+   integer non-positive. Delete also shows the explicit ID form. Nothing changes.
+1. With Amy hidden, try `delete 001234`.<br>
+   Expected: The error retains the leading zeroes and suggests `delete --id 001234`.
+   That explicit command deletes Amy even while the filter hides her.
+1. Open help and find the delete section.<br>
+   Expected: It lists index, plain NUS Student ID and explicit `--id` forms.
+   `delete 1ABC` shows usage including `delete --id 1ABC` as a recovery example.
 
 ### Locating students by digits in formatted phone numbers
 

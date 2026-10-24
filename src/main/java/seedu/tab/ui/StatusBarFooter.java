@@ -4,6 +4,7 @@ import java.nio.file.Path;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.layout.Region;
 
 /**
@@ -21,7 +22,8 @@ public class StatusBarFooter extends UiPart<Region> {
      */
     public StatusBarFooter(Path saveLocation) {
         super(FXML);
-        saveLocationStatus.setText(saveLocation.toAbsolutePath().normalize().toString());
+        saveLocationStatus.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
+        UiText.showToFit(saveLocationStatus, saveLocation.toAbsolutePath().normalize().toString());
     }
 
 }
