@@ -81,6 +81,7 @@
         "editing-a-student": "Editing a student",
         "clearing-a-student-s-tags-with-a-blank-value": "Clearing a student's tags with a blank value",
         "clearing-a-student-s-email": "Clearing a student's email",
+        "recording-email-addresses-with-symbols": "Recording email addresses with symbols",
         "rejecting-an-over-long-email": "Rejecting an over-long email",
         "deleting-a-student": "Deleting a student",
         "the-command-line": "The command line",
