@@ -568,14 +568,18 @@ alphabetically (ignoring case).
 Adds one tag to an existing student, keeping every existing tag and all other
 details, including follow-up status.
 
-Format: `tag INDEX -a TAG`
+Format: `tag TARGET -a TAG`
 
-* Use the index shown in the displayed list, including after `find`. The index
-  must be a positive integer and comes before the option. The current search
-  stays active after tagging.
+* `TARGET` is a positive index in the displayed list, a NUS Student ID starting
+  with a letter, or `--id NUS_STUDENT_ID` (alias `-i`). An ID is matched
+  case-insensitively across the whole student book, even when the current
+  search hides that student. IDs starting with a digit need `--id` or `-i`;
+  a bare number always means a displayed index. The current search stays active.
+* Give exactly one target. Mixing an index or plain ID with `--id`, or
+  repeating the ID option, is refused without changing or saving any record.
 * `-a` selects addition; `--add` is its long alias. Supply exactly one tag per command; repeat the
   command to add another. For replacing the full tag set, use `edit INDEX -t TAG`.
-  To remove one tag, use [`tag INDEX -r TAG`](#removing-one-tag-tag).
+  To remove one tag, use [`tag TARGET -r TAG`](#removing-one-tag-tag).
 * A tag must contain at least one letter or number in any writing system.
   Symbols are allowed alongside them. Put a tag containing spaces or starting
   with a hyphen in double quotes. Escape a literal quote as `\"` and a
@@ -590,7 +594,7 @@ Format: `tag INDEX -a TAG`
   `edit` or a data file are kept; this command does not merge them.
   When several stored spellings match, the reply uses the first in the tag
   display order.
-* An invalid index or tag, a missing value, or a repeated add option is refused
+* An invalid target or tag, a missing value, or a repeated add option is refused
   without changing any student details or writing the data file. An empty
   quoted tag is invalid; it does not clear tags.
 * If you omit an action option, the reply explains how to add or remove a tag. A tag entered
@@ -604,6 +608,8 @@ Format: `tag INDEX -a TAG`
 
 Examples:
 
+* `tag E7654321 -a "Lab 3"` adds a tag by ID, even if the student is hidden.
+* `tag --id 1234 --add T2` targets the student whose ID is `1234`.
 * `tag 1 -a T2` adds `T2` to the 1st displayed student while keeping existing tags.
 * `tag 1 --add "Lab 3"` adds a tag containing a space.
 * `tag 2 -a "Project A/B"` adds a tag containing a slash.
@@ -633,12 +639,12 @@ To add a tag, use -a or --add, e.g. tag 1 -a "Lab 3". To remove a tag, use -r or
 Removes one tag from an existing student, keeping unrelated tags and all other
 details, including follow-up status.
 
-Format: `tag INDEX -r TAG`
+Format: `tag TARGET -r TAG`
 
 * `-r` selects removal; `--remove` is its long alias. Use exactly one action
   and one tag per command. Combining addition and removal, or repeating the
   removal option (including mixed aliases), is refused without saving changes.
-* Indexes, quoting, valid tag characters and whitespace follow the
+* Student targets, quoting, valid tag characters and whitespace follow the
   [same rules as adding one tag](#adding-one-tag-tag). Option names are
   case-sensitive; tag matching ignores case and insignificant whitespace.
 * If the tag is present, feedback starts with `Removed tag [TAG]:` using its
@@ -652,8 +658,9 @@ Format: `tag INDEX -r TAG`
   Asking a student flagged for follow-up to have `Needs follow-up` removed
   adds `This student is flagged for follow-up, which is not a tag. To clear
   the flag, use edit INDEX --no-follow-up.`, because the label beside the
-  name is that flag rather than a tag.
-* An invalid index or tag, an empty quoted tag, or a missing value is refused
+  name is that flag rather than a tag. If the student is hidden by the current
+  search, the hint first asks you to run `list` and use their displayed index.
+* An invalid target or tag, an empty quoted tag, or a missing value is refused
   with a specific error and leaves records and the saved file unchanged.
 * Removing the last tag leaves a student with no general tags. Removing a
   general tag named `Needs follow-up` leaves the follow-up flag unchanged;
@@ -664,6 +671,8 @@ Format: `tag INDEX -r TAG`
 
 Examples:
 
+* `tag E7654321 -r "Lab 3"` removes a tag by ID.
+* `tag -i 1234 --remove T2` removes `T2` from the student whose ID is `1234`.
 * `tag 1 -r T2` removes `T2` from the 1st displayed student.
 * `tag 1 --remove "  lab   3  "` removes `Lab 3`, ignoring case and extra spaces.
 * `tag 2 -r "Project A/B"` removes a tag containing a slash.
@@ -938,7 +947,7 @@ Action     | Format, Examples
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`<br> The ID option, spelled `-i`/`--id` or `--id=VALUE`, is what an ID starting with a digit needs<br> e.g., `delete 3`, `delete A01234567X`, `delete --id 1A2B3C`
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> The target may be an NUS Student ID instead of an index <br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A01234567X`, `edit A0123456X -p 91234567`
-**Tag**    | `tag INDEX -a TAG` or `tag INDEX -r TAG` <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`
+**Tag**    | `tag TARGET -a TAG` or `tag TARGET -r TAG` <br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--id NUS_STUDENT_ID` (alias `-i`) <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`, `tag --id 1234 --add T2`
 **Find**   | `find [FIELD_OPTION TERM]... [-f \| -nf]`<br> e.g., `find -n Jason -t lab -t tutorial` (all terms required)
 **List**   | `list`
 **Exit**   | `exit`
