@@ -388,10 +388,18 @@ The `Storage` component,
 `JsonUtil.readJsonFile` reports a file as missing only when its absence is
 established, with `Files.notExists`. `Files.exists` answers false both for a
 file that is not there and for one whose folder cannot be opened, and
-`MainApp.initModelManager` reads a missing file as a first run: it would show
-sample students over records it could never read, and save them over the file
-at the next change. A file whose existence cannot be determined is therefore
-read, and the access failure reported like any other.
+`MainApp.initModelManager` reads a missing file as a first run, so a folder
+TAB merely cannot open would open the window on sample students in place of
+records it was never able to read. A file whose existence cannot be determined
+is therefore read, and the access failure reported like any other.
+
+The records themselves are already safe from that mistake. The baseline
+`JsonStudentBookStorage` records for an unreadable folder is `Optional.empty()`,
+so once access is restored `saveIfUnchanged` finds a book on disk that the
+window never loaded and refuses the save. What is left without this check is a
+window opened on sample data that then refuses every save as stale, telling a
+User who changed nothing to close it and restart. Reporting the access failure
+at startup replaces both with the reason.
 
 `JsonUtil.readJsonFile` rejects a whole-file `null` with a
 `DataLoadingException`, so both preference and student data loading use their
