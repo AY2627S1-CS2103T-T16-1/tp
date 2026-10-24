@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.tab.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.NAME_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.PHONE_AMY;
@@ -158,7 +157,7 @@ public class LogicManagerTest {
     @Test
     public void execute_commandExecutionError_throwsCommandException() {
         String deleteCommand = "delete 9";
-        assertCommandException(deleteCommand, MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertCommandException(deleteCommand, Messages.getErrorMessageForInvalidIndex("9", 0));
     }
 
     @Test
