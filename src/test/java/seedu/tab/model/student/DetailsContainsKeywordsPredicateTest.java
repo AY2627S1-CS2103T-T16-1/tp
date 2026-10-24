@@ -16,6 +16,17 @@ import seedu.tab.testutil.StudentBuilder;
 public class DetailsContainsKeywordsPredicateTest {
 
     @Test
+    public void test_equivalentNames_doesNotBroadenOtherFieldsOrRemovePunctuation() {
+        Student student = new StudentBuilder().withName("Sean O’Brien").withTags("José", "O’Brien").build();
+        for (String keyword : List.of("Jose", "O'Brien")) {
+            assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.TAG, List.of(keyword))).test(student));
+        }
+        assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Obrien"))).test(student));
+        Student otherScript = new StudentBuilder().withName("किरण").build();
+        assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("करण"))).test(otherScript));
+    }
+
+    @Test
     public void equals() {
         List<String> firstPredicateKeywordList = List.of("first");
         List<String> secondPredicateKeywordList = List.of("first", "second");
@@ -32,6 +43,16 @@ public class DetailsContainsKeywordsPredicateTest {
         DetailsContainsKeywordsPredicate firstPredicateCopy =
                 new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, firstPredicateKeywordList));
         assertTrue(firstPredicate.equals(firstPredicateCopy));
+        assertEquals(firstPredicate.hashCode(), firstPredicateCopy.hashCode());
+
+        for (boolean isFlagged : new boolean[] {true, false}) {
+            DetailsContainsKeywordsPredicate flaggedPredicate =
+                    new DetailsContainsKeywordsPredicate(Map.of(), Optional.of(isFlagged));
+            DetailsContainsKeywordsPredicate flaggedPredicateCopy =
+                    new DetailsContainsKeywordsPredicate(Map.of(), Optional.of(isFlagged));
+            assertEquals(flaggedPredicate, flaggedPredicateCopy);
+            assertEquals(flaggedPredicate.hashCode(), flaggedPredicateCopy.hashCode());
+        }
 
         // different types -> returns false
         assertFalse(firstPredicate.equals(1));
