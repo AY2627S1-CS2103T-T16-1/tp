@@ -27,8 +27,8 @@
     <HBox alignment="CENTER_LEFT" spacing="12">
       <CardHeadline HBox.hgrow="ALWAYS" minWidth="0">
         <!-- the tags sit against the name, so a reader follows one line from the name to
-             what is said about them. The name holds the length the card cuts it to while the
-             line has room for it, and gives way with an ellipsis below that. A row of its own
+             what is said about them. The name uses its full text while the line has room for
+             it, and gives way with an ellipsis below that. A row of its own
              rather than an HBox, which would share a shortfall between the name and the tags
              and leave neither readable. -->
         <CardName fx:id="name" text="\$first" styleClass="card-name" />

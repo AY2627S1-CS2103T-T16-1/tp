@@ -6,8 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -28,6 +33,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.tab.commons.core.GuiSettings;
+import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.logic.Logic;
 import seedu.tab.logic.commands.CommandResult;
 import seedu.tab.model.student.Student;
@@ -35,6 +41,7 @@ import seedu.tab.model.student.Student;
 public class UiManagerTest {
 
     private static final Path DATA_FILE_PATH = Paths.get("data", "tab.json");
+    private static final String BROKEN_WINDOW_MESSAGE = "the window settings could not be read";
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -114,6 +121,76 @@ public class UiManagerTest {
     }
 
     @Test
+    public void start_mainWindowFailsToBuild_showsFatalErrorOwnedByPrimaryStageAndShutsDown()
+            throws Exception {
+        FatalErrorDetails details = FxToolkit.onFxThread(() -> {
+            Stage stage = new Stage();
+            FatalErrorUiManager uiManager = new FatalErrorUiManager();
+            try {
+                uiManager.start(stage);
+                return new FatalErrorDetails(uiManager.alert != null, uiManager.owner == stage,
+                        uiManager.alert != null && uiManager.alert.getOwner() == stage,
+                        uiManager.alert != null && !uiManager.alert.isShowing(),
+                        uiManager.wasShutDown, uiManager.headerText);
+            } finally {
+                stage.hide();
+            }
+        });
+
+        assertTrue(details.wasAlertCreated, "a dialog should report a main window that cannot be built");
+        assertTrue(details.isOwnedByPrimaryStage, "the dialog should be owned by the stage TAB was given");
+        assertTrue(details.isAlertOwnerPrimaryStage, "the dialog should take that stage as its owner");
+        assertTrue(details.wasAlertClosed, "the dialog should have been shown and waited on");
+        assertTrue(details.wasShutDown, "TAB should stop once the user closes the dialog");
+        assertEquals(BROKEN_WINDOW_MESSAGE, details.headerText);
+    }
+
+    @Test
+    public void start_mainWindowFailsToBuild_logsTheFailureOnce() throws Exception {
+        List<LogRecord> severe = new ArrayList<>();
+        // every logger LogsCenter hands out is a child of one parent and takes its handlers,
+        // so listening there hears the whole of start-up rather than one class of it
+        Logger allLoggers = LogsCenter.getLogger(UiManagerTest.class).getParent();
+        Handler listener = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                if (record.getLevel().intValue() >= Level.SEVERE.intValue()) {
+                    severe.add(record);
+                }
+            }
+
+            @Override
+            public void flush() {
+                // nothing is buffered
+            }
+
+            @Override
+            public void close() {
+                // nothing is held open
+            }
+        };
+        allLoggers.addHandler(listener);
+
+        try {
+            FxToolkit.onFxThread(() -> {
+                Stage stage = new Stage();
+                try {
+                    new FatalErrorUiManager().start(stage);
+                    return null;
+                } finally {
+                    stage.hide();
+                }
+            });
+        } finally {
+            allLoggers.removeHandler(listener);
+        }
+
+        assertEquals(1, severe.size(), "the failure should be reported to the log once");
+        assertTrue(severe.get(0).getMessage().contains(UiManager.FATAL_ERROR_TITLE));
+        assertTrue(severe.get(0).getMessage().contains(BROKEN_WINDOW_MESSAGE));
+    }
+
+    @Test
     public void createDataLoadingErrorAlert_usesTabThemeAndActionableContent() throws Exception {
         String error = """
                 The data is not in the expected JSON format at line 4, column 6: Unexpected character
@@ -169,6 +246,10 @@ public class UiManagerTest {
         assertTrue(details.hasGraphic);
     }
 
+    private record FatalErrorDetails(boolean wasAlertCreated, boolean isOwnedByPrimaryStage,
+                                     boolean isAlertOwnerPrimaryStage, boolean wasAlertClosed,
+                                     boolean wasShutDown, String headerText) {}
+
     private record AlertDetails(String title, String header, boolean hasTabStyle,
                                 String fileText, String errorText, boolean isErrorWrapped,
                                 double errorMinHeight, double errorHeight,
@@ -203,6 +284,46 @@ public class UiManagerTest {
         @Override
         public void setGuiSettings(GuiSettings guiSettings) {
             // This UI test never changes the window settings.
+        }
+    }
+
+    /**
+     * A {@code Logic} whose window settings cannot be read, which is what makes the
+     * {@code MainWindow} constructor throw.
+     */
+    private static class FailingLogicStub extends LogicStub {
+        @Override
+        public GuiSettings getGuiSettings() {
+            throw new IllegalStateException(BROKEN_WINDOW_MESSAGE);
+        }
+    }
+
+    /**
+     * A {@code UiManager} that closes its fatal-error dialog for the test and records the
+     * shutdown instead of ending the test run with it.
+     */
+    private static class FatalErrorUiManager extends UiManager {
+        private Alert alert;
+        private Stage owner;
+        private String headerText;
+        private boolean wasShutDown;
+
+        FatalErrorUiManager() {
+            super(new FailingLogicStub(), DATA_FILE_PATH);
+        }
+
+        @Override
+        Alert createFatalErrorAlert(Stage owner, String title, Throwable e) {
+            this.owner = owner;
+            alert = super.createFatalErrorAlert(owner, title, e);
+            headerText = alert.getHeaderText();
+            Platform.runLater(alert::close);
+            return alert;
+        }
+
+        @Override
+        void shutdown() {
+            wasShutDown = true;
         }
     }
 

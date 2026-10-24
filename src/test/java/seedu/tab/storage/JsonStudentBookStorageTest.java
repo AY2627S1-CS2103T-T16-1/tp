@@ -16,9 +16,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -34,6 +37,129 @@ public class JsonStudentBookStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void readStudentBook_trailingContent_reportsLocationAndPreservesBytes() throws Exception {
+        for (String suffix : List.of("{}", "[]", "null", "true", "42", "\"extra\"", ", {}", "extra")) {
+            String json = "{\"students\":[]}\n" + suffix + "\n";
+            Path path = testFolder.resolve("trailing.json");
+            byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+            Files.write(path, bytes);
+
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+            assertTrue(exception.getMessage().contains("at line 2, column"), exception.getMessage());
+            assertTrue(exception.getMessage().contains("Affected source:"));
+            assertArrayEquals(bytes, Files.readAllBytes(path));
+        }
+    }
+
+    @Test
+    public void readStudentBook_duplicateKeys_reportsKeyAndPreservesBytes() throws Exception {
+        for (String json : List.of("{\"students\":[],\"students\":[]}",
+                "{\"students\":[{\"name\":\"Alex\",\"phone\":\"91112222\",\"phone\":\"87438807\"}]}")) {
+            Path path = testFolder.resolve("duplicate.json");
+            byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+            Files.write(path, bytes);
+
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+            String key = json.contains("phone") ? "phone" : "students";
+            assertTrue(exception.getMessage().contains("Duplicate field '" + key + "'"), exception.getMessage());
+            assertTrue(exception.getMessage().contains("at line 1"), exception.getMessage());
+            assertArrayEquals(bytes, Files.readAllBytes(path));
+        }
+    }
+
+    @Test
+    public void readStudentBook_multilineDuplicateKey_reportsOffendingLineAndPreservesBytes() throws Exception {
+        String json = """
+                {
+                  "students": [
+                    {"name":"Before","phone":"81111111"},
+                    {
+                      "name": "Alex",
+                      "phone": "91112222",
+                      "tags": [
+                        "Lab 3"
+                      ],
+                      "phone": "87438807"
+                    },
+                    {"name":"After","phone":"83333333"}
+                  ]
+                }
+                """;
+        Path path = testFolder.resolve("multiline-duplicate.json");
+        byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+        Files.write(path, bytes);
+
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+        assertTrue(exception.getMessage().contains("at line 10, column"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("Duplicate field 'phone'"));
+        assertTrue(exception.getMessage().contains("> 10 |       \"phone\": \"87438807\""));
+        assertFalse(exception.getMessage().contains("After"));
+        assertArrayEquals(bytes, Files.readAllBytes(path));
+    }
+
+    @Test
+    public void readStudentBook_handEditedWhitespaceAndRepeatedKeysAcrossStudents_loads() throws Exception {
+        Path path = testFolder.resolve("hand-edited.json");
+        String json = """
+                  {"students":[{"name":"Alex","phone":"91112222"},
+                {"phone":"87438807","name":"Bernice"}]} \t\r
+
+                """;
+        Files.writeString(path, json);
+
+        ReadOnlyStudentBook loaded = new JsonStudentBookStorage(path).readStudentBook().orElseThrow();
+
+        assertEquals(List.of(new StudentBuilder().withName("Alex").withPhone("91112222").withoutEmail().build(),
+                new StudentBuilder().withName("Bernice").withPhone("87438807").withoutEmail().build()),
+                loaded.getStudentList());
+        assertEquals(json, Files.readString(path));
+    }
+
+    @Test
+    public void readStudentBook_nonBooleanFlag_reportsRecordAndPreservesBytes() throws Exception {
+        for (String value : List.of("0", "1", "2", "-1", "1.5", "1e3", "999999999999999999999999",
+                "\"true\"", "\"false\"", "\"\"", "[]", "{}")) {
+            String json = "{\"students\":[{\"name\":\"Before\",\"phone\":\"81111111\"},"
+                    + "{\"name\":\"Alice Tan\",\"phone\":\"91234567\",\"flag\":" + value + "}]}";
+            Path path = testFolder.resolve("invalid-flag.json");
+            byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+            Files.write(path, bytes);
+
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+            assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
+            String shownValue = value.equals("[]") ? "[" : value.equals("{}") ? "{" : value;
+            assertTrue(exception.getMessage().contains("Invalid flag value " + shownValue
+                    + ". Use JSON true, false or null for the follow-up flag."), exception.getMessage());
+            assertArrayEquals(bytes, Files.readAllBytes(path));
+        }
+    }
+
+    @Test
+    public void readAndSaveStudentBook_documentedFlagValues_preservesStatus() throws Exception {
+        for (String field : List.of("", ",\"flag\":null", ",\"flag\":false", ",\"flag\":true")) {
+            Path path = testFolder.resolve("valid-flag.json");
+            String json = "{\"students\":[{\"name\":\"Alice Tan\",\"phone\":\"91234567\"" + field + "}]}";
+            Files.writeString(path, json);
+            JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+
+            ReadOnlyStudentBook loaded = storage.readStudentBook().orElseThrow();
+
+            assertEquals(field.endsWith("true"), loaded.getStudentList().getFirst().isFlagged());
+            assertEquals(json, Files.readString(path));
+            storage.saveStudentBook(loaded);
+            assertEquals(loaded, storage.readStudentBook().orElseThrow());
+        }
+    }
 
     @Test
     public void readAndSaveStudentBook_utf8WithOrWithoutBom_preservesUnicodeRecords() throws Exception {
@@ -52,6 +178,35 @@ public class JsonStudentBookStorageTest {
             storage.saveStudentBook(loaded);
             assertEquals(expected, storage.readStudentBook().orElseThrow());
         }
+    }
+
+    @Test
+    public void readStudentBook_unopenableFolder_reportsTheFailureRatherThanAFirstRun() throws Exception {
+        // a first run shows sample students and saves them over the file. Doing that for a
+        // folder TAB merely cannot open would replace records it was never able to read
+        Path directory = Files.createDirectory(testFolder.resolve("data"));
+        Path path = directory.resolve("tab.json");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        storage.saveStudentBook(getTypicalStudentBook());
+        byte[] saved = Files.readAllBytes(path);
+        Assumptions.assumeTrue(Files.getFileStore(directory).supportsFileAttributeView("posix"),
+                "POSIX permissions are unavailable.");
+        Assumptions.assumeFalse("root".equals(System.getProperty("user.name")),
+                "root is allowed past file permissions.");
+        Set<PosixFilePermission> originalPermissions = Files.getPosixFilePermissions(directory);
+        Files.setPosixFilePermissions(directory, Set.of());
+
+        try {
+            Assumptions.assumeFalse(Files.isReadable(path), "The test account can still read the file.");
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, storage::readStudentBook);
+
+            assertEquals("TAB does not have permission to read this file or the folder holding it.",
+                    exception.getMessage());
+        } finally {
+            Files.setPosixFilePermissions(directory, originalPermissions);
+        }
+        assertArrayEquals(saved, Files.readAllBytes(path));
     }
 
     @Test

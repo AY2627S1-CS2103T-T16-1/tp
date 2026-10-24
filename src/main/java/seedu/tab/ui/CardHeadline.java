@@ -7,14 +7,10 @@ import javafx.scene.layout.Region;
 /**
  * The first line of a student card: the name, with the tags against it.
  *
- * <p>A plain row shares out what it cannot fit between the two, so a long name and a row of
- * chips each lose about half of what they asked for and neither reads. This gives way in one
- * order instead. The name is drawn at the length the card cuts it to while the row has space
- * for it, so the same name breaks off at the same place from one card to the next. Below
- * that, the name gives way and is cut again with an ellipsis, down to the point where it
- * would crowd out the tags. What the tags then do with the room is the row's own
- * decision: it shows the chips that fit whole, falls back to one cut chip and a count,
- * and on a line too narrow for even that counts the tags instead.
+ * <p>The name and tags show their full values when they fit. On a crowded row, the name
+ * keeps a readable allowance while the tags collapse, yielding some of it for a complete
+ * count. Any space left by whole chips or a count is returned to the name, which shortens
+ * itself only to the width still available.
  */
 public class CardHeadline extends Pane {
 
@@ -25,8 +21,6 @@ public class CardHeadline extends Pane {
      * some of it, while the name retains space for a character from each end.
      */
     static final double READABLE_NAME_WIDTH = 64;
-    /** Enough of the tags to read the start of one, kept even beside a very long name. */
-    private static final double READABLE_TAGS_WIDTH = TagRow.READABLE_CHIP_WIDTH;
 
     private Label name;
     private TagRow tags;
@@ -52,7 +46,7 @@ public class CardHeadline extends Pane {
     @Override
     protected void layoutChildren() {
         read();
-        double forTheTags = roomForTheTags();
+        double forTheTags = tags.fittedWidth(roomForTheTags());
         double leftOver = Math.max(0, getWidth() - forTheTags - (forTheTags > 0 ? SPACING : 0));
         // the name is drawn no wider than its own text, so the tags sit against the name
         // rather than out at the edge of whatever room the line happens to have
