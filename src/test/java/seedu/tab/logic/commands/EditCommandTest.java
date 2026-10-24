@@ -157,8 +157,7 @@ public class EditCommandTest {
 
         assertCommandSuccess(command, model,
                 String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
-        assertCommandSuccess(command, model,
-                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+        assertCommandSuccess(command, model, EditCommand.MESSAGE_UNCHANGED, expectedModel);
     }
 
     @Test
@@ -247,7 +246,7 @@ public class EditCommandTest {
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
         // Repeating the request keeps the flag set.
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(editCommand, model, EditCommand.MESSAGE_UNCHANGED, expectedModel);
     }
 
     @Test
@@ -266,7 +265,7 @@ public class EditCommandTest {
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
         // Repeating the request keeps the flag cleared.
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(editCommand, model, EditCommand.MESSAGE_UNCHANGED, expectedModel);
     }
 
     @Test
@@ -363,16 +362,10 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_noFieldSpecifiedUnfilteredList_success() {
+    public void execute_noFieldSpecifiedUnfilteredList_reportsUnchanged() {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT, new EditStudentDescriptor());
-        Student editedStudent = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
-
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
-                Messages.format(editedStudent));
-
         Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
-
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(editCommand, model, EditCommand.MESSAGE_UNCHANGED, expectedModel);
     }
 
     @Test
@@ -494,7 +487,8 @@ public class EditCommandTest {
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withName(VALID_NAME_BOB).build();
         EditCommand editCommand = new EditCommand(outOfBoundIndex, descriptor);
 
-        assertCommandFailure(editCommand, model, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertCommandFailure(editCommand, model, Messages.getErrorMessageForInvalidIndex(
+                String.valueOf(outOfBoundIndex.getOneBased()), model.getFilteredStudentList().size()));
     }
 
     @Test
@@ -503,7 +497,8 @@ public class EditCommandTest {
         EditCommand editCommand = new EditCommand(outOfBoundIndex,
                 new EditStudentDescriptorBuilder().withFlag(true).build());
 
-        assertCommandFailure(editCommand, model, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertCommandFailure(editCommand, model, Messages.getErrorMessageForInvalidIndex(
+                String.valueOf(outOfBoundIndex.getOneBased()), model.getFilteredStudentList().size()));
     }
 
     /**
@@ -520,7 +515,8 @@ public class EditCommandTest {
         EditCommand editCommand = new EditCommand(outOfBoundIndex,
                 new EditStudentDescriptorBuilder().withName(VALID_NAME_BOB).build());
 
-        assertCommandFailure(editCommand, model, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertCommandFailure(editCommand, model, Messages.getErrorMessageForInvalidIndex(
+                String.valueOf(outOfBoundIndex.getOneBased()), model.getFilteredStudentList().size()));
     }
 
     @Test

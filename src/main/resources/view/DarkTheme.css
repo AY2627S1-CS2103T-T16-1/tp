@@ -242,6 +242,20 @@
     -fx-opacity: 0.9;
 }
 
+.menu-bar .menu-button:hover,
+.menu-bar .menu-button:focused,
+.menu-bar .menu-button:showing,
+.context-menu .menu-item:focused {
+    -fx-background-color: -tab-accent;
+}
+
+.menu-bar .menu-button:hover .label,
+.menu-bar .menu-button:focused .label,
+.menu-bar .menu-button:showing .label,
+.context-menu .menu-item:focused .label {
+    -fx-text-fill: -tab-bg;
+}
+
 .menu .left-container {
     -fx-background-color: -tab-bg;
 }

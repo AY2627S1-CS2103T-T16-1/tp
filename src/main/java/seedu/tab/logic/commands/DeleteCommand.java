@@ -29,7 +29,8 @@ public class DeleteCommand extends Command {
             + "   or " + FLAG_NUS_STUDENT_ID.getMarkerSummary()
             + " NUS_STUDENT_ID, which reads an ID starting with a digit as an ID\n"
             + "Example: " + COMMAND_WORD + " 1\n"
-            + "Example: " + COMMAND_WORD + " A0123456X";
+            + "Example: " + COMMAND_WORD + " A0123456X\n"
+            + "Example: " + COMMAND_WORD + " --id 1ABC";
 
     public static final String MESSAGE_DELETE_STUDENT_SUCCESS = "Deleted student: %1$s";
 
@@ -48,7 +49,7 @@ public class DeleteCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        Student studentToDelete = target.resolve(model);
+        Student studentToDelete = target.resolve(model, COMMAND_WORD);
         model.deleteStudent(studentToDelete);
         logger.info("Deleted the student " + target.describe()
                 + "; the book now holds " + model.getStudentBook().getStudentList().size());
