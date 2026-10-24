@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.Messages;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
@@ -140,10 +141,13 @@ class JsonAdaptedStudent {
 
         // A missing or null key represents an ID that has not been recorded. A malformed
         // value is rejected rather than being silently discarded from the student record.
-        if (nusStudentId != null && !NusStudentId.isValidNusStudentId(nusStudentId)) {
+        final String normalizedNusStudentId =
+                nusStudentId == null ? null : StringUtil.normalizeFieldValue(nusStudentId);
+        if (normalizedNusStudentId != null && !NusStudentId.isValidNusStudentId(normalizedNusStudentId)) {
             throw new IllegalValueException(NusStudentId.MESSAGE_CONSTRAINTS);
         }
-        final Optional<NusStudentId> modelNusStudentId = Optional.ofNullable(nusStudentId).map(NusStudentId::new);
+        final Optional<NusStudentId> modelNusStudentId = Optional.ofNullable(normalizedNusStudentId)
+                .map(NusStudentId::new);
 
         final Set<Tag> modelTags = new HashSet<>(studentTags);
         return new Student(modelName, modelPhone, modelEmail, modelNusStudentId, modelTags, Boolean.TRUE.equals(flag));
@@ -153,8 +157,8 @@ class JsonAdaptedStudent {
         if (rawEmail == null) {
             return null;
         }
-        String trimmedEmail = rawEmail.trim();
-        return trimmedEmail.isEmpty() ? null : trimmedEmail;
+        String normalizedEmail = StringUtil.normalizeFieldValue(rawEmail);
+        return normalizedEmail.isEmpty() ? null : normalizedEmail;
     }
 
     String getNameForErrorMessage() {

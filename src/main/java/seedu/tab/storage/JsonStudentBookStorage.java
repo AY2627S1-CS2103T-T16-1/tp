@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.commons.exceptions.IllegalValueException;
-import seedu.tab.commons.util.FileUtil;
 import seedu.tab.commons.util.JsonUtil;
 import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
@@ -161,7 +160,11 @@ public class JsonStudentBookStorage {
         requireNonNull(studentBook);
         requireNonNull(filePath);
 
-        FileUtil.createIfMissing(filePath);
+        writeStudentBook(studentBook, filePath);
+    }
+
+    /** Writes the book through a delegate that tests can override to simulate a write failure. */
+    void writeStudentBook(ReadOnlyStudentBook studentBook, Path filePath) throws IOException {
         JsonUtil.saveJsonFile(new JsonSerializableStudentBook(studentBook), filePath);
     }
 

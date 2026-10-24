@@ -2,6 +2,7 @@ package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NAME;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
@@ -38,8 +39,7 @@ public class AddCommandParser implements Parser<AddCommand> {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public AddCommand parse(String args) throws ParseException {
-        FlagArgumentMap arguments = FlagTokenizer.tokenize(
-                args, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG, FLAG_FOLLOW_UP);
+        FlagArgumentMap arguments = tokenize(args);
         arguments.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_FOLLOW_UP);
 
         ParseProblems problems = new ParseProblems();
@@ -47,6 +47,9 @@ public class AddCommandParser implements Parser<AddCommand> {
         String[] missingFields = findMissingFields(arguments);
         if (missingFields.length > 0) {
             problems.add(Messages.getErrorMessageForMissingFields(missingFields));
+            if (arguments.getPreamble().isEmpty()) {
+                problems.add(AddCommand.MESSAGE_NAME_GUIDANCE);
+            }
         }
 
         Name name = parseName(problems, arguments.getPreamble());
@@ -63,6 +66,21 @@ public class AddCommandParser implements Parser<AddCommand> {
         Student student = new Student(name, phone, email, nusStudentId, tagList, isFlagged);
 
         return new AddCommand(student);
+    }
+
+    /** Adds placement guidance when an edit-style name option is refused. */
+    private static FlagArgumentMap tokenize(String args) throws ParseException {
+        try {
+            return FlagTokenizer.tokenize(
+                    args, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG, FLAG_FOLLOW_UP);
+        } catch (ParseException e) {
+            boolean isNameOption = FLAG_NAME.getMarkers().stream()
+                    .anyMatch(marker -> String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker).equals(e.getMessage()));
+            if (isNameOption) {
+                throw new ParseException(e.getMessage() + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE, e);
+            }
+            throw e;
+        }
     }
 
     /**
