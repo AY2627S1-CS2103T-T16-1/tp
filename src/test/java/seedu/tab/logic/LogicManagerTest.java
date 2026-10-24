@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,6 +65,39 @@ public class LogicManagerTest {
         JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"));
         StorageManager storage = new StorageManager(studentBookStorage, userPrefsStorage);
         logic = new LogicManager(model, storage);
+    }
+
+    @Test
+    public void execute_unchangedEdits_preservesFilterRecordsAndSavedFile() throws Exception {
+        logic.execute("add Amy Bee -p 91234567");
+        logic.execute("add Other Student -p 82223333");
+        logic.execute("find -n Amy");
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        String savedJson = Files.readString(dataPath);
+        FileTime savedTime = FileTime.fromMillis(1_000);
+        Files.setLastModifiedTime(dataPath, savedTime);
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        Predicate<? super Student> filter = model.getFilteredStudentPredicate();
+        for (String fields : List.of("-p 91234567", "-n \"  Amy   Bee  \"", "-e \"\"", "-i \"\"", "-t \"\"", "-nf")) {
+            assertEquals("Student already has the requested details. No changes made.",
+                    logic.execute("edit 1 " + fields).getFeedbackToUser());
+            assertEquals(students, model.getStudentBook().getStudentList());
+            assertEquals(List.of(students.getFirst()), model.getFilteredStudentList());
+            assertSame(filter, model.getFilteredStudentPredicate());
+            assertEquals(savedJson, Files.readString(dataPath));
+            assertEquals(savedTime, Files.getLastModifiedTime(dataPath));
+        }
+    }
+
+    @Test
+    public void execute_partlyUnchangedEdit_reportsChangedStudent() throws Exception {
+        logic.execute("add Amy Bee -p 91234567");
+        Student edited = new StudentBuilder().withPhone("82223333").withoutEmail().build();
+        assertEquals("Edited student: Amy Bee; Phone: 82223333",
+                logic.execute("edit 1 -n \"Amy Bee\" -p 82223333").getFeedbackToUser());
+        assertEquals(List.of(edited), model.getStudentBook().getStudentList());
+        assertEquals(model.getStudentBook(), new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"))
+                .readStudentBook().orElseThrow());
     }
 
     @Test
@@ -196,10 +230,10 @@ public class LogicManagerTest {
         String advice = "\nReview the records and delete duplicates only if they are the same person.";
 
         assertEquals("New student added: Alicia Tan; Phone: 91234567\n\n"
-                + "WARNING: Possible duplicate student: Alice Tan has the same phone (91234567)." + advice,
+                + "WARNING: Possible duplicate student: Alice Tan has the same phone." + advice,
                 logic.execute("add Alicia Tan -p 91234567").getFeedbackToUser());
         assertEquals("Edited student: Alicia Tan; Phone: 9123.4567\n\n"
-                + "WARNING: Possible duplicate student: Alice Tan has the same phone (9123.4567)." + advice,
+                + "WARNING: Possible duplicate student: Alice Tan has the same phone." + advice,
                 logic.execute("edit 2 -p 9123.4567").getFeedbackToUser());
         assertEquals(Messages.getStudentsFoundOverview(2), logic.execute("find -p 91234567").getFeedbackToUser());
         JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
@@ -456,14 +490,17 @@ public class LogicManagerTest {
         Student cleared = new StudentBuilder(student).withoutEmail().build();
         JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
 
-        for (String command : new String[] {"edit 1 -e \"\"", "edit 1 -e \"\"",
-            "edit 1 -e \"\" -p 81112222 -t \"\" --no-follow-up"}) {
+        String[] commands = {"edit 1 -e \"\"", "edit 1 -e \"\"",
+            "edit 1 -e \"\" -p 81112222 -t \"\" --no-follow-up"};
+        for (int i = 0; i < commands.length; i++) {
+            String command = commands[i];
             if (command.contains("-p")) {
                 cleared = new StudentBuilder(cleared).withPhone("81112222").withTags().withFlag(false).build();
             }
             CommandResult result = logic.execute(command);
-            assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(cleared)),
-                    result.getFeedbackToUser());
+            String expectedMessage = i == 1 ? EditCommand.MESSAGE_UNCHANGED
+                    : String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(cleared));
+            assertEquals(expectedMessage, result.getFeedbackToUser());
             assertEquals(cleared, model.getFilteredStudentList().get(0));
             assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
             assertFalse(Files.readString(storage.getStudentBookFilePath()).contains("\"email\""));
@@ -575,20 +612,22 @@ public class LogicManagerTest {
         Student original = new StudentBuilder(AMY).withNusStudentId("A01234567X").withFlag(false).build();
         model.addStudent(original);
         Student flagged = new StudentBuilder(original).withFlag(true).build();
-        for (String command : List.of("edit 1 --follow-up", "edit 1 --follow-up", "edit 1 -f")) {
-            assertFollowUpEditPersists(command, flagged);
+        assertFollowUpEditPersists("edit 1 --follow-up", flagged, true);
+        for (String command : List.of("edit 1 --follow-up", "edit 1 -f")) {
+            assertFollowUpEditPersists(command, flagged, false);
         }
         flagged = new StudentBuilder(flagged).withPhone("81112222").build();
-        assertFollowUpEditPersists("edit 1 -p 81112222", flagged);
+        assertFollowUpEditPersists("edit 1 -p 81112222", flagged, true);
         Student cleared = new StudentBuilder(flagged).withFlag(false).build();
-        for (String command : List.of("edit 1 -nf", "edit 1 -nf", "edit 1 --no-follow-up")) {
-            assertFollowUpEditPersists(command, cleared);
+        assertFollowUpEditPersists("edit 1 -nf", cleared, true);
+        for (String command : List.of("edit 1 -nf", "edit 1 --no-follow-up")) {
+            assertFollowUpEditPersists(command, cleared, false);
         }
         cleared = new StudentBuilder(cleared).withPhone("82223333").build();
-        assertFollowUpEditPersists("edit 1 -p 82223333", cleared);
-        assertFollowUpEditPersists("edit 1 --no-follow-up -p 82223333", cleared);
-        assertFollowUpEditPersists("edit 1 --follow-up", new StudentBuilder(cleared).withFlag(true).build());
-        assertFollowUpEditPersists("edit 1 --no-follow-up", cleared);
+        assertFollowUpEditPersists("edit 1 -p 82223333", cleared, true);
+        assertFollowUpEditPersists("edit 1 --no-follow-up -p 82223333", cleared, false);
+        assertFollowUpEditPersists("edit 1 --follow-up", new StudentBuilder(cleared).withFlag(true).build(), true);
+        assertFollowUpEditPersists("edit 1 --no-follow-up", cleared, true);
     }
 
     @Test
@@ -617,10 +656,12 @@ public class LogicManagerTest {
     /**
      * Checks feedback, all student fields, saved data, and a fresh model loaded from that data.
      */
-    private void assertFollowUpEditPersists(String command, Student expected) throws Exception {
+    private void assertFollowUpEditPersists(String command, Student expected, boolean isChanged) throws Exception {
         CommandResult result = logic.execute(command);
-        assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(expected)),
-                result.getFeedbackToUser());
+        String expectedMessage = isChanged
+                ? String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(expected))
+                : EditCommand.MESSAGE_UNCHANGED;
+        assertEquals(expectedMessage, result.getFeedbackToUser());
         assertEquals(List.of(expected), model.getFilteredStudentList());
         JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
         ReadOnlyStudentBook saved = storage.readStudentBook().orElseThrow();
@@ -790,8 +831,7 @@ public class LogicManagerTest {
 
         CommandResult result = logic.execute("edit 1 -p " + AMY.getPhone().value);
 
-        assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(AMY)),
-                result.getFeedbackToUser());
+        assertEquals(EditCommand.MESSAGE_UNCHANGED, result.getFeedbackToUser());
         assertEquals(List.of(AMY), model.getStudentBook().getStudentList());
     }
 
