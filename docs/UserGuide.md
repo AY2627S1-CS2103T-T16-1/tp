@@ -842,6 +842,9 @@ Format: `exit`
 
 ### Saving the data
 
+The status bar shows the absolute path to your student data file. If the path
+does not fit, it is shortened in the middle; hover over it to read the full path.
+
 TAB automatically saves changes to student records. You do not need to save manually.
 If TAB cannot save a change, it reports the error and leaves the student records as
 they were before the command. Commands that do not change student records, including

@@ -1943,6 +1943,17 @@ testers are expected to do more *exploratory* testing.
       absolute path to the original `data/tab.json`, and no data, preference,
       or log file is created in the terminal's working folder.
 
+1. Reading a long data path
+
+   1. Put the JAR in a folder with a long absolute path and launch it.
+      Narrow the window until the status bar path no longer fits.<br>
+      Expected: The path is shortened in the middle, keeping `tab.json`
+      visible. Hovering over the path shows the full absolute path.
+
+   1. Widen the window until the full path fits.<br>
+      Expected: The path is shown unchanged and has no tooltip. Narrowing
+      the window again restores the tooltip.
+
 1. Launching from a read-only folder
 
    1. Prerequisites: Copy the JAR into a new folder that the current user can
