@@ -33,6 +33,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.PathElement;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -285,19 +286,161 @@ public class CommandBoxTest {
             assertNotNull(styledScene(root, 400, 60));
 
             TextField field = (TextField) root.lookup("#commandTextField");
-            Region selection = (Region) root.lookup("#selection");
+            javafx.scene.shape.Path selection = (javafx.scene.shape.Path) root.lookup("#selection");
             TextFlow flow = (TextFlow) root.lookup("#highlighted");
 
             field.setText("add John");
             field.selectAll();
             root.layout();
-            return new double[] {selection.getWidth(), selection.getHeight(), flow.getWidth()};
+            return new double[] {selection.getBoundsInLocal().getWidth(),
+                selection.getBoundsInLocal().getHeight(), flow.getWidth()};
         });
 
         // the field's own highlight is turned off, because it is drawn at the offset the
         // field has scrolled to and broke into fragments behind the copy
         assertEquals(band[2], band[0], 1.0, "the band should cover exactly the selected text");
         assertTrue(band[1] > 0, "the band should be as tall as the line");
+    }
+
+    @Test
+    public void layout_bidirectionalCommands_staysOnOneLineAndMatchesNativeCaret() throws Exception {
+        onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            styledScene(root, WIDE_LINE, LINE_HEIGHT);
+            TextField field = (TextField) root.lookup("#commandTextField");
+            TextFlow copy = (TextFlow) root.lookup("#highlighted");
+            for (String command : List.of("add محمد علي حسن -p 91234567", "add דוד כהן -p 91234567",
+                    "add \"محمد علي حسن\" -p 91234567", "add \"דוד כהן\" -p 91234567",
+                    "find -n محمد", "find -n דוד", "add Ali محمد דוד Tan -p 91234567",
+                    "add 陈伟明 李 -p 98123344", "add José Tan -p 91234567")) {
+                field.setText(command);
+                root.layout();
+                Text nativeText = fieldTextOf(field);
+                assertTrue(copy.getHeight() <= nativeText.getLayoutBounds().getHeight() + 1,
+                        "command wrapped: " + command);
+                for (int position = 0; position <= command.length(); position++) {
+                    field.positionCaret(position);
+                    root.layout();
+                    assertCaretMatchesNative(root, field);
+                }
+                assertClicksMatchNative(root, field);
+            }
+            return null;
+        });
+    }
+
+    /** Checks clicks on both sides of each glyph, including trailing bias at script boundaries. */
+    private static void assertClicksMatchNative(Region root, TextField field) {
+        TextFieldSkin skin = (TextFieldSkin) field.getSkin();
+        Text nativeText = fieldTextOf(field);
+        TextFlow copy = (TextFlow) root.lookup("#highlighted");
+        for (double x = 2; x < nativeText.getLayoutBounds().getWidth(); x += 3) {
+            var hit = skin.getIndex(x, field.getHeight() / 2);
+            skin.positionCaret(hit, false);
+            root.layout();
+            assertCaretMatchesNative(root, field);
+            double copyX = copy.sceneToLocal(field.localToScene(x, 0)).getX();
+            assertEquals(hit.getInsertionIndex(),
+                    copy.hitTest(new Point2D(copyX, copy.getHeight() / 2)).getInsertionIndex(),
+                    "click on " + field.getText() + " at " + x);
+        }
+    }
+
+    /** Compares the visible caret to the field that receives insertion and deletion. */
+    private static void assertCaretMatchesNative(Region root, TextField field) {
+        Text nativeText = fieldTextOf(field);
+        Region mark = (Region) root.lookup("#caret");
+        for (PathElement element : nativeText.getCaretShape()) {
+            if (element instanceof javafx.scene.shape.MoveTo start) {
+                double expected = nativeText.getLayoutX() + nativeText.getTranslateX() + start.getX();
+                Region lane = (Region) root.lookup("#lane");
+                expected = Math.clamp(expected - mark.getWidth() / 2, 0,
+                        lane.getWidth() - mark.getWidth());
+                assertEquals(expected, mark.getLayoutX(), 0.75,
+                        field.getText() + " at insertion index " + field.getCaretPosition());
+                return;
+            }
+        }
+        throw new AssertionError("native caret is missing");
+    }
+
+    @Test
+    public void editing_scrolledBidirectionalCommand_keepsCaretAtInsertionAndDeletion() throws Exception {
+        onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            styledScene(root, NARROW_LINE, LINE_HEIGHT);
+            TextField field = (TextField) root.lookup("#commandTextField");
+            TextFieldSkin skin = (TextFieldSkin) field.getSkin();
+            for (String word : List.of("محمد", "דוד", "José", "陈伟明")) {
+                String command = "add " + (word + " ").repeat(12) + "-p 91234567";
+                field.setText(command);
+                field.end();
+                root.layout();
+                TextFlow copy = (TextFlow) root.lookup("#highlighted");
+                assertTrue(copy.getLayoutX() < 0, "long command should scroll");
+                assertTrue(copy.getHeight() < 40, "long command should remain one line");
+                skin.moveCaret(TextUnit.CHARACTER, Direction.LEFT, false);
+                root.layout();
+                assertCaretMatchesNative(root, field);
+                skin.positionCaret(skin.getIndex(100, field.getHeight() / 2), false);
+                int insertion = field.getCaretPosition();
+                skin.replaceText(insertion, insertion, "Z");
+                root.layout();
+                assertEquals(command.substring(0, insertion) + "Z" + command.substring(insertion),
+                        field.getText());
+                assertCaretMatchesNative(root, field);
+                skin.deleteChar(true);
+                root.layout();
+                assertEquals(command, field.getText());
+                assertCaretMatchesNative(root, field);
+                skin.deleteChar(false);
+                root.layout();
+                assertEquals(command.substring(0, insertion) + command.substring(insertion + 1),
+                        field.getText());
+                assertCaretMatchesNative(root, field);
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void selection_partialBidirectionalRanges_coversOnlySelectedGlyphs() throws Exception {
+        onFxThread(() -> {
+            CommandBox box = new CommandBox(unused -> null);
+            Region root = box.getRoot();
+            styledScene(root, WIDE_LINE, LINE_HEIGHT);
+            TextField field = (TextField) root.lookup("#commandTextField");
+            javafx.scene.shape.Path band = (javafx.scene.shape.Path) root.lookup("#selection");
+            for (String command : List.of("find -n محمد علي", "find -n דוד כהן",
+                    "add Ali محمد דוד Tan -p 91234567")) {
+                field.setText(command);
+                root.layout();
+                for (int start = 0; start < command.length(); start++) {
+                    for (int end = start + 1; end <= command.length(); end++) {
+                        field.selectRange(end, start);
+                        root.layout();
+                        Text nativeText = fieldTextOf(field);
+                        javafx.scene.shape.Path expected = new javafx.scene.shape.Path(
+                                nativeText.rangeShape(start, end));
+                        expected.setStroke(null);
+                        expected.setFill(Color.BLACK);
+                        double y = expected.getBoundsInLocal().getCenterY();
+                        // Text and overlay center different line boxes; compare horizontal glyph coverage.
+                        for (double x = 0.5; x < nativeText.getLayoutBounds().getWidth(); x++) {
+                            double bandX = band.sceneToLocal(nativeText.localToScene(x, 0)).getX();
+                            double bandY = band.getBoundsInLocal().getCenterY();
+                            assertEquals(expected.contains(x, y), band.contains(bandX, bandY),
+                                    command + " selection " + start + ":" + end + " at " + x);
+                        }
+                    }
+                }
+                field.deselect();
+                assertFalse(band.isVisible());
+            }
+            return null;
+        });
     }
 
     @Test
@@ -334,7 +477,11 @@ public class CommandBoxTest {
 
     @Test
     public void replaceSelection_pastedSeparators_preservesWordBoundariesAndColours() throws Exception {
-        for (String separator : List.of("\t", "\t\t", "\n", "\r", "\r\n", " ")) {
+        // every character the parser splits a command on, including the ones a slide, a web
+        // page or a document carries: vertical tab, form feed, next line, line and paragraph
+        // separators, a non-breaking space and an ideographic space
+        for (String separator : List.of("\t", "\t\t", "\n", "\r", "\r\n", " ",
+                "\u000B", "\u000C", "\u0085", "\u2028", "\u2029", "\u00A0", "\u3000")) {
             CommandBox box = boxShowing("add ");
             onFxThread(() -> {
                 TextField field = (TextField) box.getRoot().lookup("#commandTextField");
@@ -347,6 +494,20 @@ public class CommandBoxTest {
                 return null;
             });
         }
+    }
+
+    @Test
+    public void replaceSelection_pasteOpeningWithALineBreak_keepsItAsASpace() throws Exception {
+        CommandBox box = boxShowing("add ");
+        onFxThread(() -> {
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            field.positionCaret(field.getLength());
+            // a document or a spreadsheet cell whose copied text opens on a new line, which
+            // is a separator in its own right rather than the second half of a CRLF
+            field.replaceSelection("\nWei Ming Tan");
+            assertEquals("add  Wei Ming Tan", field.getText());
+            return null;
+        });
     }
 
     @Test
@@ -702,10 +863,10 @@ public class CommandBoxTest {
             TextField field = (TextField) root.lookup("#commandTextField");
             field.selectAll();
             root.layout();
-            Region band = (Region) root.lookup("#selection");
+            javafx.scene.shape.Path band = (javafx.scene.shape.Path) root.lookup("#selection");
             assertTrue(band.isVisible(), "selecting the command should draw a band behind it");
             Color behind = backgroundOf(root);
-            Color over = backgroundOf(band);
+            Color over = (Color) band.getFill();
             // the band is translucent, so what the User sees is it over the line behind it
             Color seen = behind.interpolate(over, over.getOpacity());
             return contrastBetween(seen, behind);
@@ -744,9 +905,9 @@ public class CommandBoxTest {
             }
             field.selectAll();
             root.layout();
-            Region band = (Region) root.lookup("#selection");
+            javafx.scene.shape.Path band = (javafx.scene.shape.Path) root.lookup("#selection");
             Color behind = backgroundOf(root);
-            Color over = backgroundOf(band);
+            Color over = (Color) band.getFill();
             Color seen = behind.interpolate(over, over.getOpacity());
 
             TextFlow copy = (TextFlow) root.lookup("#highlighted");

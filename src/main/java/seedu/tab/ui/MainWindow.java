@@ -159,7 +159,7 @@ public class MainWindow extends UiPart<Stage> {
         helpPagePlaceholder.setManaged(false);
         studentPage.setManaged(true);
         studentPage.setVisible(true);
-        commandBox.requestFocus();
+        commandBox.focusDraftAtEnd();
     }
 
     /**

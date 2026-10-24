@@ -79,7 +79,7 @@ public class LogicManager implements Logic {
     private CommandResult respondToClearConfirmation(String commandText) throws CommandException, ParseException {
         ClearCommand clearCommand = pendingClearCommand.orElseThrow(() ->
                 new CommandException(ClearCommand.MESSAGE_NO_PENDING_CONFIRMATION));
-        String reply = stripSurroundingWhitespace(commandText);
+        String reply = stripSurroundingWhitespace(StringUtil.stripFormatCharacters(commandText));
         if (reply.isEmpty() || reply.equalsIgnoreCase("n") || reply.equalsIgnoreCase("no")) {
             pendingClearCommand = Optional.empty();
             return new CommandResult(ClearCommand.MESSAGE_CANCELLED);
