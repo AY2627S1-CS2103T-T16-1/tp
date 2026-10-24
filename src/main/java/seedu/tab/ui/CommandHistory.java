@@ -18,6 +18,11 @@ final class CommandHistory {
         if (!isBlank && (commands.isEmpty() || !commands.getLast().equals(command))) {
             commands.add(command);
         }
+        resetNavigation();
+    }
+
+    /** Starts navigation at the newest command without recording a confirmation reply. */
+    void resetNavigation() {
         position = commands.size();
         draft = "";
     }
