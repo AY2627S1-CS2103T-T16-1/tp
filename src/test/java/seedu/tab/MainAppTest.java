@@ -65,6 +65,23 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_ambiguousJson_passesErrorToUiAndPreservesBytesOnShutdown() throws Exception {
+        for (String json : new String[] {"{\"students\":[]}\n{}", "{\"students\":[],\"students\":[]}"}) {
+            Path path = testFolder.resolve("ambiguous.json");
+            byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+            Files.write(path, bytes);
+            MainApp initializedApp = new MainApp(testFolder.resolve("prefs.json"), path);
+
+            initializedApp.init();
+            String error = getUiManagerLoadingError(initializedApp).orElseThrow();
+            assertTrue(error.contains(json.contains("\n") ? "Expected a single JSON value" : "Duplicate field"));
+            assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());
+            initializedApp.stop();
+            assertArrayEquals(bytes, Files.readAllBytes(path));
+        }
+    }
+
+    @Test
     public void init_numericFollowUpFlag_passesErrorToUiAndPreservesBytesOnShutdown() throws Exception {
         Path path = testFolder.resolve("numeric-flag.json");
         byte[] bytes = "{\"students\":[{\"name\":\"Alice Tan\",\"phone\":\"91234567\",\"flag\":2}]}"

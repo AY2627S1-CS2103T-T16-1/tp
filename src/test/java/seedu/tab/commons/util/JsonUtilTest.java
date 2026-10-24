@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -38,6 +39,25 @@ public class JsonUtilTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void fromJsonString_trailingValue_reportsExactReasonAndLocation() {
+        JsonParseException exception = assertThrows(
+                JsonParseException.class, () -> JsonUtil.fromJsonString("{}\n{}", Object.class));
+
+        assertEquals("Expected a single JSON value; remove content after the document.",
+                exception.getOriginalMessage());
+        assertEquals(2, exception.getLocation().getLineNr());
+        assertEquals(1, exception.getLocation().getColumnNr());
+    }
+
+    @Test
+    public void fromJsonString_duplicateKey_reportsExactKey() {
+        JsonParseException exception = assertThrows(
+                JsonParseException.class, () -> JsonUtil.fromJsonString("{\"key\":1,\"key\":2}", Object.class));
+
+        assertEquals("Duplicate field 'key'", exception.getOriginalMessage());
+    }
 
     @Test
     public void serializeObjectToJsonFile_noExceptionThrown() throws IOException {

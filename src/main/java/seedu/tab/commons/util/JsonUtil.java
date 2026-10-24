@@ -15,6 +15,8 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +42,7 @@ public class JsonUtil {
     private static final Logger logger = LogsCenter.getLogger(JsonUtil.class);
 
     private static ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules()
+            .configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true)
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
@@ -109,8 +112,9 @@ public class JsonUtil {
 
     private static JsonProcessingException getDetailedJsonProcessingException(JsonProcessingException exception) {
         JsonProcessingException detailedException = exception;
-        while (detailedException.getCause() instanceof JsonProcessingException) {
-            detailedException = (JsonProcessingException) detailedException.getCause();
+        while (detailedException.getCause() instanceof JsonProcessingException cause
+                && (cause.getLocation() != null || detailedException.getLocation() == null)) {
+            detailedException = cause;
         }
         return detailedException;
     }
@@ -288,7 +292,27 @@ public class JsonUtil {
      * @return The instance of T with the specified values in the JSON string
      */
     public static <T> T fromJsonString(String json, Class<T> instanceClass) throws IOException {
-        return objectMapper.readValue(json, instanceClass);
+        try (JsonParser parser = objectMapper.getFactory().createParser(json)) {
+            T value = readJsonValue(parser, instanceClass);
+            if (parser.nextToken() != null) {
+                throw new JsonParseException(parser,
+                        "Expected a single JSON value; remove content after the document.", parser.getTokenLocation());
+            }
+            return value;
+        }
+    }
+
+    private static <T> T readJsonValue(JsonParser parser, Class<T> instanceClass) throws IOException {
+        try {
+            return objectMapper.readValue(parser, instanceClass);
+        } catch (JsonProcessingException e) {
+            JsonProcessingException detail = getDetailedJsonProcessingException(e);
+            // Jackson 2.7.4 omits duplicate-key locations; retain the parser's position.
+            if (detail instanceof JsonParseException && detail.getLocation() == null) {
+                throw new JsonParseException(parser, detail.getOriginalMessage(), e);
+            }
+            throw e;
+        }
     }
 
     /**
