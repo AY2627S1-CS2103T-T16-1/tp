@@ -2,6 +2,7 @@ package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -33,6 +34,7 @@ import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.storage.JsonUserPrefsStorage;
 import seedu.tab.storage.StorageManager;
 import seedu.tab.testutil.StudentBuilder;
+import seedu.tab.testutil.StudentUtil;
 
 public class AddStudentUiTest {
     @TempDir
@@ -80,6 +82,50 @@ public class AddStudentUiTest {
             } finally {
                 closeWindow();
             }
+        }
+    }
+
+    @Test
+    public void add_equalRecord_revealsNewCardRatherThanEarlierEqualCard() throws Exception {
+        Student added = FxToolkit.onFxThread(() -> {
+            createWindow();
+            Student existing = model.getFilteredStudentList().get(1);
+            enter(StudentUtil.getAddCommand(existing));
+            Student saved = model.getStudentBook().getStudentList().getLast();
+            assertEquals(existing, saved);
+            assertNotSame(existing, saved);
+            return saved;
+        });
+        try {
+            FxToolkit.awaitAssertion(() -> {
+                assertVisible(added);
+                assertSame(field, window.getPrimaryStage().getScene().getFocusOwner());
+            });
+        } finally {
+            closeWindow();
+        }
+    }
+
+    @Test
+    public void add_targetFilteredBeforeLayout_revealsNextSavedStudent() throws Exception {
+        Student added = FxToolkit.onFxThread(() -> {
+            createWindow();
+            enter("add First Addition -p 91234567 -t T1");
+            enter("find -t T2");
+            var predicate = model.getFilteredStudentPredicate();
+            enter("add Second Addition -p 91234568 -t T2");
+            assertSame(predicate, model.getFilteredStudentPredicate());
+            assertEquals(42, model.getStudentBook().getStudentList().size());
+            assertEquals(21, list.getItems().size());
+            return model.getStudentBook().getStudentList().getLast();
+        });
+        try {
+            FxToolkit.awaitAssertion(() -> {
+                assertVisible(added);
+                assertSame(field, window.getPrimaryStage().getScene().getFocusOwner());
+            });
+        } finally {
+            closeWindow();
         }
     }
 
@@ -186,7 +232,7 @@ public class AddStudentUiTest {
         }
         Bounds viewport = list.localToScene(list.getLayoutBounds());
         assertTrue(list.lookupAll(".list-cell").stream()
-                .filter(node -> node instanceof ListCell<?> cell && student.equals(cell.getItem()))
+                .filter(node -> node instanceof ListCell<?> cell && student == cell.getItem())
                 .anyMatch(node -> {
                     Bounds card = node.localToScene(node.getLayoutBounds());
                     return card.getMinY() >= viewport.getMinY() && card.getMaxY() <= viewport.getMaxY();

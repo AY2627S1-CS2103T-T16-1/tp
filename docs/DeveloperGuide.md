@@ -117,7 +117,9 @@ The `UI` component,
 `MainWindow` asks `StudentListPanel` to reveal that card only after `Logic.execute`
 returns successfully, so failed saves cannot scroll to an unsaved student.
 Scrolling leaves focus in the command box and uses the displayed list after
-the existing search-preservation rules have been applied.
+the existing search-preservation rules have been applied. It locates the exact
+saved student object so an earlier record with identical details is not revealed
+instead, and skips a target that has left the displayed list before layout.
 
 The student card's `TagRow` creates a label for every tag, with its full text.
 Layout shows as many complete chips as fit and lists all hidden tags in the
@@ -2416,6 +2418,10 @@ testers are expected to do more *exploratory* testing.
       student and then one that does not match.<br>
       Expected: Each new card is revealed. The matching search stays active;
       the non-matching addition clears it and reports that it did so.
+   1. Add a student with the same details as an earlier record without a NUS
+      Student ID.<br>
+      Expected: The newly appended card is revealed, rather than the earlier
+      matching record. The possible-duplicate warning is still shown.
    1. Return to the top and try `add Missing Phone`, then an addition with a
       duplicate NUS Student ID.<br>
       Expected: No student is added and the list does not jump to the end.

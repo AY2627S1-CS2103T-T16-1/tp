@@ -43,7 +43,7 @@ public class StudentListPanel extends UiPart<Region> {
                 if (hasScrolled) {
                     scene.removePostLayoutPulseListener(this);
                 }
-                int index = studentListView.getItems().indexOf(student);
+                int index = indexOfReference(student);
                 if (index >= 0) {
                     VirtualFlow<?> flow = (VirtualFlow<?>) studentListView.lookup(".virtual-flow");
                     flow.scrollTo(index);
@@ -55,6 +55,15 @@ public class StudentListPanel extends UiPart<Region> {
         // The first scroll materializes cards; the next pulse corrects their measured heights.
         scene.addPostLayoutPulseListener(reveal);
         Platform.requestNextPulse();
+    }
+
+    private int indexOfReference(Student student) {
+        for (int index = 0; index < studentListView.getItems().size(); index++) {
+            if (studentListView.getItems().get(index) == student) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     /**
