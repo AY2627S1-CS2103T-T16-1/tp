@@ -1036,6 +1036,12 @@ An existing file is first parsed as JSON and then every student record and
 field is converted to its model type. Both stages finish before the normal UI
 can accept a command.
 
+`JsonUtil` enables Jackson's strict duplicate-key detection and checks for
+another token after reading the root value. A repeated key or trailing value
+would otherwise silently lose data on the next save. Both are rejected through
+the existing loading-error path, with the key or offending token's location;
+whitespace after the document and keys reused in separate objects remain valid.
+
 `FileUtil.readFromFile` decodes UTF-8 strictly and removes only an optional
 leading BOM before JSON parsing. This accepts files saved by editors that add
 a BOM while rejecting malformed byte sequences rather than silently replacing
@@ -1045,13 +1051,14 @@ boundary; startup preserves the original bytes and blocks the normal UI.
 
 `JsonUtil` turns malformed JSON or an incompatible JSON shape into a
 `DataLoadingException`. For a syntax error, it uses the deepest parser
-exception so that the displayed line and column identify the offending token
-rather than the last successfully mapped value. It pairs the concise parser
-explanation with the affected line and at most one line on either side. Each
-source line is limited to 160 characters; an affected long line is cropped
-around the reported column so that minified JSON remains useful without
-filling the dialog. If the parser supplies no usable location, `JsonUtil`
-omits the source instead of falling back to Jackson's source-bearing message.
+exception with a usable location so that the displayed line and column
+identify the offending token rather than the last successfully mapped
+value. It pairs the concise parser explanation with the affected line
+and at most one line on either side. Each source line is limited to 160
+characters; an affected long line is cropped around the reported column
+so that minified JSON remains useful without filling the dialog. If the
+parser supplies no usable location, `JsonUtil` omits the source instead
+of falling back to Jackson's source-bearing message.
 During model conversion, `JsonAdaptedStudent` identifies the invalid field and
 `JsonSerializableStudentBook` adds the one-based record number and its name
 when available. `JsonStudentBookStorage` carries that explanation through the
@@ -3457,6 +3464,13 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Replace the file contents with `{}` and launch TAB.<br>
       Expected: The dialog reports that the student list is missing. The main
       window does not open and the file remains byte-for-byte unchanged.
+
+   1. Test case: Restore the backup, append a second `{"students":[]}` after
+      the final closing brace, and launch TAB. Repeat with a second `"phone"`
+      key inside one student, and then with two top-level `"students"` keys.<br>
+      Expected: Each launch reports the malformed location (and repeated key
+      when applicable). The main window does not open, and the file stays
+      byte-for-byte unchanged. Restore the backup before continuing.
 
    1. Test case: Replace the file contents with `null` and launch TAB.<br>
       Expected: The dialog reports `The JSON document must not be null.`
