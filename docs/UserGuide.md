@@ -397,7 +397,9 @@ keeps both the start and the end of the name to help distinguish similar names.
 Hover over any name the card cannot show in full,
 whether it was shortened this way or left narrow by a crowded row, to see the
 whole of it. NUS Student ID, phone and email share a line when they fit. Details
-wrap onto another line when needed, so a long phone cannot hide the email.
+use the full width below the name, including beneath the follow-up marker.
+Cards grow as details wrap onto another line, so a long phone cannot hide
+the email or overlap the name.
 A value wider than a whole line ends with an ellipsis; hover over it to see
 its full value. Widening the window shows more text and brings details back
 onto one line without changing the stored record.

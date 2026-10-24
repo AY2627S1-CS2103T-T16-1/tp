@@ -155,13 +155,14 @@ displays have different usable heights or gaps between them.
 
 #### Fitting names and tags on a card
 
-`CardHeadline` reserves a readable start of the name before allocating room
-to tags. When that leaves no room for a tag chip, `TagRow` uses the shorter
-`N tags` total instead of `N more…`, preserving a complete count beside the
-name. Its tooltip still lists every hidden tag. `TagRow.fittedWidth` reports
-the space its chosen chips or count actually use, so `CardHeadline` returns
-any unused allocation to the name before laying it out. The name requests
-its full natural width; a large tag list cannot take its readable minimum.
+`CardHeadline` prefers a readable start of the name when allocating room to
+tags, but yields part of that allowance for a complete tag count. The name
+retains space for a character from each end. When no tag chip fits, `TagRow`
+uses the shorter `N tags` total instead of `N more…`, preserving a complete
+count beside the name. Its tooltip still lists every hidden tag.
+`TagRow.fittedWidth` reports the space its chosen chips or count actually use,
+so `CardHeadline` returns any unused allocation to the name before laying it
+out. The name requests its full natural width.
 
 #### Keeping contact details readable
 
@@ -178,7 +179,15 @@ This keeps ordinary cards compact while allowing crowded cards to grow by
 only the rows they need. `UiText.showToFit` gives all three fields their full
 values on hover when clipped, and removes the tooltip when widening makes
 it unnecessary. Absent optional fields remain unmanaged, reserving no space.
-The details container's clip remains a backstop protecting the follow-up pill.
+The follow-up pill shares an `HBox` with `CardHeadline` inside the details
+container, so it reserves width only on the headline. Contact rows use the
+same width with or without a flag. The details clip prevents drawing outside
+the card.
+
+`StudentListViewCell` measures preferred height at the smaller of the cell's
+content width and the card's maximum width, matching the width used by its
+skin during layout. Measuring at the wider cell width would miss a wrapped
+contact row near a wrap threshold and squeeze the headline.
 
 #### Colouring the command line
 
@@ -784,7 +793,7 @@ Tag searches match ordinary tags as parts of their inherited `tagName` values,
 ignoring case. Follow-up status is selected independently through `-f` or `-nf`, so its
 displayed label never produces a text-field match.
 The student card and command feedback display the same value, while the card
-keeps the flag in its separate follow-up row.
+keeps the flag at the trailing edge of its headline.
 
 The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
 For edit, the `EditStudentDescriptor` stores a nullable `Boolean isFlagged`:
@@ -2509,6 +2518,26 @@ testers are expected to do more *exploratory* testing.
       with a list of phone-only students.<br>
       Expected: Details that fit share one line. These ordinary cards retain
       the compact height; optional fields do not force extra rows.
+
+1. Checking full-width details and height around wrap thresholds
+
+   1. Prerequisites: Use a disposable empty student book.
+   1. Add `add Siti Aminah -p 98765432 --id A0234567X -e e0923841@u.nus.edu -t T01 -t "Lab 3" --follow-up`.
+   1. Add `add Hafiz Ismail -p 91234567 --id A0123456X -e muhammad.hafiz.bin.ismail@gmail.com -t T01 -t "Lab 3" --follow-up`.
+   1. Add `add Priya Nair -p 91234567 -e aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@u.nus.edu`.
+   1. Start at the default window size, then resize slowly through 760 px and
+      640 px down to the minimum width and back.<br>
+      Expected: Every name remains above the contact rows without clipping or
+      overlap. A card grows whenever a contact wraps, including Priya's card
+      without tags or a flag. Complete clipped values remain accessible on hover.
+   1. Add `add Muhammad Haziq -p 91234567 -e muhammad.haziq.bin.abdul.rahman.shah@alumni.u.nus.edu --follow-up`.
+   1. Add `add Muhammad Haziq Shah -p 91234567 -e muhammad.haziq.bin.abdul.rahman.shah@alumni.u.nus.edu`.
+      The duplicate contact warning is expected.
+   1. Compare these last two cards while repeating the resize.<br>
+      Expected: Their contact rows have equal widths and wrap or shorten at
+      the same points. Details extend beneath the marker, which remains on
+      the headline. Repeat with an NUS Student ID on both cards and with a
+      short NUS email; toggling follow-up never changes the contact layout.
 
 ### Long names on a card
 
