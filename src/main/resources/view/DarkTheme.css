@@ -378,8 +378,9 @@
     -fx-border-width: 1;
     -fx-font-family: "Monospaced";
     -fx-font-size: 12px;
-    /* the same horizontal inset as the message box below, so the two read as one column */
-    -fx-padding: 9 14 9 14;
+    /* thirteen plus the one-pixel border above matches the fourteen the message box below
+       insets its text by, so the two read as one column */
+    -fx-padding: 9 13 9 13;
     -fx-text-fill: -tab-accent;
 }
 
