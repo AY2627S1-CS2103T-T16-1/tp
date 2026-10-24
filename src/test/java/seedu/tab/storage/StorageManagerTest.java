@@ -2,7 +2,6 @@ package seedu.tab.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import java.nio.file.Path;
@@ -65,12 +64,12 @@ public class StorageManagerTest {
 
     @Test
     public void getStudentBookFilePath() {
-        assertNotNull(storageManager.getStudentBookFilePath());
+        assertEquals(getTempFilePath("ab"), storageManager.getStudentBookFilePath());
     }
 
     @Test
     public void getUserPrefsFilePath() {
-        assertNotNull(storageManager.getUserPrefsFilePath());
+        assertEquals(getTempFilePath("prefs"), storageManager.getUserPrefsFilePath());
     }
 
     @Test

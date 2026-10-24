@@ -73,7 +73,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseIndex_invalidInput_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseIndex("10 a"));
+        assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () -> ParserUtil.parseIndex("10 a"));
     }
 
     @Test
@@ -193,7 +193,9 @@ public class ParserUtilTest {
 
     @Test
     public void parseName_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseName(INVALID_NAME));
+        assertThrows(ParseException.class, Messages.getErrorMessageForInvalidValue(
+                Name.FIELD_NAME, INVALID_NAME, Name.getFailureReason(INVALID_NAME)), () ->
+                ParserUtil.parseName(INVALID_NAME));
     }
 
     @Test
@@ -216,7 +218,9 @@ public class ParserUtilTest {
 
     @Test
     public void parsePhone_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parsePhone(INVALID_PHONE));
+        assertThrows(ParseException.class, Messages.getErrorMessageForInvalidValue(
+                Phone.FIELD_NAME, INVALID_PHONE, Phone.getFailureReason(INVALID_PHONE)), () ->
+                ParserUtil.parsePhone(INVALID_PHONE));
     }
 
     @Test
@@ -239,7 +243,9 @@ public class ParserUtilTest {
 
     @Test
     public void parseEmail_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseEmail(INVALID_EMAIL));
+        assertThrows(ParseException.class, Messages.getErrorMessageForInvalidValue(
+                Email.FIELD_NAME, INVALID_EMAIL, Email.getFailureReason(INVALID_EMAIL)), () ->
+                ParserUtil.parseEmail(INVALID_EMAIL));
     }
 
     @Test
@@ -315,7 +321,9 @@ public class ParserUtilTest {
 
     @Test
     public void parseTag_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseTag(INVALID_TAG));
+        assertThrows(ParseException.class, Messages.getErrorMessageForInvalidValue(
+                Tag.FIELD_NAME, INVALID_TAG, Tag.getFailureReason(INVALID_TAG)), () ->
+                ParserUtil.parseTag(INVALID_TAG));
     }
 
     @Test
