@@ -24,7 +24,6 @@ import seedu.tab.commons.util.ToStringBuilder;
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     /** A keyword of digits, grouping whitespace and phone punctuation, holding at least one digit. */
     private static final Pattern PHONE_KEYWORD = Pattern.compile("(?U)[\\p{Nd}\\s+().-]*\\p{Nd}[\\p{Nd}\\s+().-]*");
-    private static final Pattern NON_DIGIT = Pattern.compile("\\P{Nd}");
 
     /** The student field in which a search term must occur. */
     public enum Field {
@@ -96,16 +95,7 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
         if (!PHONE_KEYWORD.matcher(keyword).matches()) {
             return false;
         }
-        String digits = NON_DIGIT.matcher(keyword).replaceAll("");
-        return normalizeDigits(phone.getDigits()).contains(normalizeDigits(digits));
-    }
-
-    /** Returns the ASCII equivalent of each Unicode decimal digit in {@code digits}. */
-    private static String normalizeDigits(String digits) {
-        return digits.codePoints()
-                .map(digit -> Character.digit(digit, 10) + '0')
-                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                .toString();
+        return phone.getDigits().contains(Phone.normalizeDigits(keyword));
     }
 
     private static boolean matchesAnyTag(Student student, String keyword) {
