@@ -378,7 +378,7 @@ add --name "Betsy Crowe" --phone 1234567
 
 ```text
 There is no --name option.
-In add command, the name comes first, without an option: add NAME -p PHONE ...
+In the add command, the name comes first, without an option: add NAME -p PHONE ...
 ```
 
 The same placement hint appears for `-n` and when the name is missing.

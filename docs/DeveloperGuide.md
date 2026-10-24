@@ -2463,7 +2463,7 @@ testers are expected to do more *exploratory* testing.
       `add -n "Betsy Crowe" -p 1234567`, and
       `add --phone 1234567 --name="Betsy Crowe"`.<br>
       Expected: No student is added. The error names the unsupported option,
-      followed by `In add command, the name comes first, without an option: add NAME -p PHONE ...`.
+      followed by `In the add command, the name comes first, without an option: add NAME -p PHONE ...`.
    1. Test case: `add -p 1234567`.<br>
       Expected: `Missing required field(s): NAME`, followed by the same placement
       hint. The student list is unchanged.
