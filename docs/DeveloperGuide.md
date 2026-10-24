@@ -148,10 +148,11 @@ displays have different usable heights or gaps between them.
 
 #### Fitting names and tags on a card
 
-`CardHeadline` reserves a readable start of the name before allocating room
-to tags. When that leaves no room for a tag chip, `TagRow` uses the shorter
-`N tags` total instead of `N more…`, preserving a complete count beside the
-name. Its tooltip still lists every hidden tag.
+`CardHeadline` prefers a readable start of the name when allocating room to
+tags, but yields part of that allowance for a complete tag count. The name
+retains space for a character from each end. When no tag chip fits, `TagRow`
+uses the shorter `N tags` total instead of `N more…`, preserving a complete
+count beside the name. Its tooltip still lists every hidden tag.
 
 #### Keeping contact details readable
 

@@ -1128,10 +1128,11 @@ public class StudentCardTest {
             assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 120));
             Label count = (Label) root.lookup(".tag-overflow");
             // Reproduce the Linux boundary using the local font's count width: the
-            // 64 px name allowance and 8 px gap leave the count one pixel short.
+            // preferred name allowance and gap leave the count one pixel short.
             count.setText("2 tags");
             Label name = (Label) root.lookup("#name");
-            onALineOf(name, 64 + 8 + Math.floor(count.prefWidth(-1)) - ONE_PIXEL);
+            onALineOf(name, CardHeadline.READABLE_NAME_WIDTH + CardHeadline.SPACING
+                    + Math.floor(count.prefWidth(-1)) - ONE_PIXEL);
             assertHiddenTagsCounted((TagRow) root.lookup("#tags"), names);
             assertTrue(drawnTextOf((Label) root.lookup("#name")).startsWith("Be"));
             return null;

@@ -54,7 +54,7 @@ public class StudentListPanel extends UiPart<Region> {
             // The skin caps the graphic at its maximum width during layout. Measure at
             // that same width so a wrapped contact row receives all the height it needs.
             double contentWidth = Math.max(0, width - snappedLeftInset() - snappedRightInset());
-            double cardWidth = Math.min(contentWidth, card.maxWidth(-1));
+            double cardWidth = Math.max(0, Math.min(contentWidth, card.maxWidth(-1)));
             return snappedTopInset() + card.prefHeight(cardWidth) + snappedBottomInset();
         }
 

@@ -19,12 +19,12 @@ import javafx.scene.layout.Region;
 public class CardHeadline extends Pane {
 
     /** The gap between the name and the tags beside it. */
-    private static final double SPACING = 8;
+    static final double SPACING = 8;
     /**
-     * Enough of the name for a few letters of it, which the tags beside it never take. A
-     * name is what tells one card from another, so it gives way last.
+     * Preferred room for a readable start of the name. A complete tag count may take
+     * some of it, while the name retains space for a character from each end.
      */
-    private static final double READABLE_NAME_WIDTH = 64;
+    static final double READABLE_NAME_WIDTH = 64;
     /** Enough of the tags to read the start of one, kept even beside a very long name. */
     private static final double READABLE_TAGS_WIDTH = TagRow.READABLE_CHIP_WIDTH;
 
