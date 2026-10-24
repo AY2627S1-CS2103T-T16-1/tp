@@ -669,6 +669,52 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_dataFolderOccupiedByFile_explainsFailureAndPreservesFile() throws Exception {
+        Path dataFolder = temporaryFolder.resolve("data");
+        Files.writeString(dataFolder, "unrelated file");
+        Path dataPath = dataFolder.resolve("tab.json");
+        assertBlockedSavePreservesModelAndFilter(dataPath, "Cannot create data folder " + dataFolder
+                + " because a file already occupies that path. Close TAB and move or rename that file"
+                + " before restarting");
+        assertEquals("unrelated file", Files.readString(dataFolder));
+        assertFalse(Files.exists(dataPath));
+    }
+
+    @Test
+    public void execute_lockPathOccupiedByFolder_explainsFailureAndPreservesSavedData() throws Exception {
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(dataPath);
+        model.addStudent(AMY);
+        storage.saveStudentBook(model.getStudentBook());
+        String savedJson = Files.readString(dataPath);
+        Path lockPath = temporaryFolder.resolve(".studentBook.json.lock");
+        Files.delete(lockPath);
+        Files.createDirectory(lockPath);
+        Path unrelated = lockPath.resolve("keep.txt");
+        Files.writeString(unrelated, "unrelated contents");
+        assertBlockedSavePreservesModelAndFilter(dataPath, "Cannot open save lock " + lockPath
+                + " because it is a folder. Close all TAB windows and move or rename that folder before retrying");
+        assertEquals(savedJson, Files.readString(dataPath));
+        assertEquals("unrelated contents", Files.readString(unrelated));
+    }
+
+    private void assertBlockedSavePreservesModelAndFilter(Path dataPath, String reason) {
+        if (model.getStudentBook().getStudentList().isEmpty()) {
+            model.addStudent(AMY);
+        }
+        model.updateFilteredStudentList(AMY::equals);
+        Predicate<? super Student> filter = model.getFilteredStudentPredicate();
+        Model expected = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expected.updateFilteredStudentList(filter);
+        logic = new LogicManager(model, new StorageManager(new JsonStudentBookStorage(dataPath),
+                new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json"))));
+        assertCommandFailure("edit 1 -p 81112222", CommandException.class,
+                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, reason), expected);
+        assertSame(filter, model.getFilteredStudentPredicate());
+        assertEquals(List.of(AMY), model.getFilteredStudentList());
+    }
+
+    @Test
     public void execute_storageThrowsIoException_throwsCommandException() {
         assertCommandFailureForExceptionFromStorage(DUMMY_IO_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()));
