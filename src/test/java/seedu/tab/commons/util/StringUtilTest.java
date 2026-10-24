@@ -32,6 +32,20 @@ public class StringUtilTest {
     }
 
     @Test
+    public void normalizeNameForComparison_curlyApostrophes_matchesStraightApostrophe() {
+        assertEquals("sean o'brien", StringUtil.normalizeNameForComparison("Sean O‘Brien"));
+        assertEquals("sean o'brien", StringUtil.normalizeNameForComparison("Sean O’Brien"));
+    }
+
+    @Test
+    public void normalizeNameForComparison_combiningMarkCategories_removesOnlyLatinMarks() {
+        // Nonspacing, spacing and enclosing marks all belong to the preceding base letter.
+        assertEquals("a", StringUtil.normalizeNameForComparison("A\u0301\u093f\u20dd"));
+        assertEquals("क\u0301\u093f\u20dd",
+                StringUtil.normalizeNameForComparison("क\u0301\u093f\u20dd"));
+    }
+
+    @Test
     public void normalizeNameForComparison_otherScriptsAndPunctuation_preservesDistinctions() {
         assertFalse(StringUtil.normalizeNameForComparison("किरण")
                 .equals(StringUtil.normalizeNameForComparison("करण")));
