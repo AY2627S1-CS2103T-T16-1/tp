@@ -12,14 +12,19 @@ import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalStudents.AMY;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -673,9 +678,10 @@ public class LogicManagerTest {
         Path dataFolder = temporaryFolder.resolve("data");
         Files.writeString(dataFolder, "unrelated file");
         Path dataPath = dataFolder.resolve("tab.json");
-        assertBlockedSavePreservesModelAndFilter(dataPath, "Cannot create data folder " + dataFolder
+        String reason = "Cannot create data folder " + dataFolder
                 + " because a file already occupies that path. Close TAB and move or rename that file"
-                + " before restarting");
+                + " before restarting";
+        assertBlockedSavePreservesModelAndFilter(dataPath, String.format(LogicManager.FILE_OPS_ERROR_FORMAT, reason));
         assertEquals("unrelated file", Files.readString(dataFolder));
         assertFalse(Files.exists(dataPath));
     }
@@ -692,13 +698,51 @@ public class LogicManagerTest {
         Files.createDirectory(lockPath);
         Path unrelated = lockPath.resolve("keep.txt");
         Files.writeString(unrelated, "unrelated contents");
-        assertBlockedSavePreservesModelAndFilter(dataPath, "Cannot open save lock " + lockPath
-                + " because it is a folder. Close all TAB windows and move or rename that folder before retrying");
+        String reason = "Cannot open save lock " + lockPath.toRealPath()
+                + " because it is a folder. Close all TAB windows and move or rename that folder before retrying";
+        assertBlockedSavePreservesModelAndFilter(dataPath, String.format(LogicManager.FILE_OPS_ERROR_FORMAT, reason));
         assertEquals(savedJson, Files.readString(dataPath));
         assertEquals("unrelated contents", Files.readString(unrelated));
     }
 
-    private void assertBlockedSavePreservesModelAndFilter(Path dataPath, String reason) {
+    @Test
+    public void execute_readOnlyLock_preservesPermissionDiagnosticAndFile() throws Exception {
+        Assumptions.assumeTrue(Files.getFileStore(temporaryFolder).supportsFileAttributeView("posix"));
+        Path lockPath = Files.createFile(temporaryFolder.resolve(".studentBook.json.lock")).toRealPath();
+        Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(lockPath);
+        try {
+            Files.setPosixFilePermissions(lockPath, Set.of(PosixFilePermission.OWNER_READ));
+            Assumptions.assumeFalse(Files.isWritable(lockPath));
+            assertBlockedSavePreservesModelAndFilter(temporaryFolder.resolve("studentBook.json"),
+                    String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, lockPath));
+            assertEquals("", Files.readString(lockPath));
+            assertFalse(Files.exists(temporaryFolder.resolve("studentBook.json")));
+        } finally {
+            Files.setPosixFilePermissions(lockPath, permissions);
+        }
+    }
+
+    @Test
+    public void execute_cyclicLockLink_explainsOperationAndPreservesLink() throws Exception {
+        Assumptions.assumeTrue(Files.getFileStore(temporaryFolder).supportsFileAttributeView("posix"));
+        Path lockPath = temporaryFolder.toRealPath().resolve(".studentBook.json.lock");
+        Path linkTarget = lockPath.getFileName();
+        Files.createSymbolicLink(lockPath, linkTarget);
+        IOException cause = org.junit.jupiter.api.Assertions.assertThrows(IOException.class, () -> {
+            try (FileChannel channel = FileChannel.open(lockPath,
+                    StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+                channel.force(true);
+            }
+        });
+        String reason = "Cannot open save lock " + lockPath + ": " + cause.getMessage()
+                + ". Close all TAB windows and check that this path is a writable file before retrying";
+        assertBlockedSavePreservesModelAndFilter(temporaryFolder.resolve("studentBook.json"),
+                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, reason));
+        assertEquals(linkTarget, Files.readSymbolicLink(lockPath));
+        assertFalse(Files.exists(temporaryFolder.resolve("studentBook.json")));
+    }
+
+    private void assertBlockedSavePreservesModelAndFilter(Path dataPath, String expectedMessage) {
         if (model.getStudentBook().getStudentList().isEmpty()) {
             model.addStudent(AMY);
         }
@@ -708,8 +752,7 @@ public class LogicManagerTest {
         expected.updateFilteredStudentList(filter);
         logic = new LogicManager(model, new StorageManager(new JsonStudentBookStorage(dataPath),
                 new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json"))));
-        assertCommandFailure("edit 1 -p 81112222", CommandException.class,
-                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, reason), expected);
+        assertCommandFailure("edit 1 -p 81112222", CommandException.class, expectedMessage, expected);
         assertSame(filter, model.getFilteredStudentPredicate());
         assertEquals(List.of(AMY), model.getFilteredStudentList());
     }
