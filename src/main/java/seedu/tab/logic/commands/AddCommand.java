@@ -28,6 +28,9 @@ public class AddCommand extends Command {
     /** The name is given before any option rather than marked by one. */
     public static final String FIELD_NAME = "NAME";
 
+    public static final String MESSAGE_NAME_GUIDANCE = "In the add command, the name comes first, without an option: "
+            + COMMAND_WORD + " " + FIELD_NAME + " " + FLAG_PHONE.getLabel() + " ...";
+
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a student to the student book. "
             + "Parameters: " + FIELD_NAME + " "
             + FLAG_PHONE.getLabel() + " "
@@ -100,6 +103,11 @@ public class AddCommand extends Command {
         }
 
         return toAdd.equals(otherAddCommand.toAdd);
+    }
+
+    @Override
+    public int hashCode() {
+        return toAdd.hashCode();
     }
 
     @Override
