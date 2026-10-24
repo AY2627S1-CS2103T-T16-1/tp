@@ -51,9 +51,35 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_handEditedEmailSymbols_preservesAddress() throws Exception {
+        for (String address : List.of("mei__tan@hotmail.com", "sean.o'brien@example.com", "mei_@example.com")) {
+            JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, address, VALID_TAGS, false);
+            assertEquals(address, student.toModelType().getEmail().orElseThrow().value);
+        }
+    }
+
+    @Test
+    public void toModelType_consecutiveEmailDots_throwsIllegalValueException() {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, "mei..tan@example.com", VALID_TAGS, false);
+        String expectedMessage = "Email \"mei..tan@example.com\" is not valid: "
+                + "the part before the @ may hold letters, digits and !#$%&'*+/=?^_`{|}~-"
+                + ", with dots allowed only between non-empty groups";
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
     public void toModelType_validEmailWithSurroundingWhitespace_buildsStudentHoldingTrimmedEmail() throws Exception {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, "  " + VALID_EMAIL + "\t", VALID_TAGS, false);
+
+        assertEquals(Optional.of(new Email(VALID_EMAIL)), student.toModelType().getEmail());
+    }
+
+    @Test
+    public void toModelType_validEmailWithInvisibleMark_buildsStudentHoldingNormalizedEmail() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, "\u200E" + VALID_EMAIL, VALID_TAGS, false);
 
         assertEquals(Optional.of(new Email(VALID_EMAIL)), student.toModelType().getEmail());
     }
@@ -180,6 +206,17 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_NUS_STUDENT_ID, VALID_TAGS, false);
         assertEquals(Optional.of(new NusStudentId(VALID_NUS_STUDENT_ID)), student.toModelType().getNusStudentId());
+    }
+
+    @Test
+    public void toModelType_nusStudentIdWithWhitespaceAndInvisibleMark_buildsStudentHoldingNormalizedId()
+            throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, " \u200E" + VALID_NUS_STUDENT_ID.toLowerCase() + " ",
+                VALID_TAGS, false);
+
+        assertEquals(Optional.of(new NusStudentId(VALID_NUS_STUDENT_ID)),
+                student.toModelType().getNusStudentId());
     }
 
     @Test

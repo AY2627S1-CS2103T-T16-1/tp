@@ -39,6 +39,25 @@ public class JsonStudentBookStorageTest {
     public Path testFolder;
 
     @Test
+    public void saveStudentBook_firstSaveFails_leavesNoFileAndAllowsRestart() throws Exception {
+        Path path = testFolder.resolve("data/tab.json");
+        StudentBook original = getTypicalStudentBook();
+        JsonStudentBookStorage failingStorage = new JsonStudentBookStorage(path) {
+            @Override
+            void writeStudentBook(ReadOnlyStudentBook book, Path destination) throws IOException {
+                throw new IOException("No space left on device");
+            }
+        };
+
+        assertThrows(IOException.class, "No space left on device", () -> failingStorage.saveStudentBook(original));
+        assertFalse(Files.exists(path));
+        JsonStudentBookStorage restartedStorage = new JsonStudentBookStorage(path);
+        assertEquals(Optional.empty(), restartedStorage.readStudentBook());
+        restartedStorage.saveStudentBook(original);
+        assertEquals(original, new JsonStudentBookStorage(path).readStudentBook().orElseThrow());
+    }
+
+    @Test
     public void readStudentBook_trailingContent_reportsLocationAndPreservesBytes() throws Exception {
         for (String suffix : List.of("{}", "[]", "null", "true", "42", "\"extra\"", ", {}", "extra")) {
             String json = "{\"students\":[]}\n" + suffix + "\n";

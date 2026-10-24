@@ -5,6 +5,8 @@ import static seedu.tab.commons.util.AppUtil.checkArgument;
 
 import java.util.Locale;
 
+import seedu.tab.commons.util.StringUtil;
+
 /**
  * Represents a Student's NUS Student ID in the student book.
  * Guarantees: immutable; is valid as declared in {@link #isValidNusStudentId(String)}.
@@ -32,14 +34,15 @@ public class NusStudentId {
     public final String value;
 
     /**
-     * Constructs a {@code NusStudentId}.
+     * Constructs a {@code NusStudentId}, storing the form described by
+     * {@link StringUtil#normalizeFieldValue(String)}.
      *
      * @param nusStudentId A valid NUS Student ID.
      */
     public NusStudentId(String nusStudentId) {
         requireNonNull(nusStudentId);
         checkArgument(isValidNusStudentId(nusStudentId), MESSAGE_CONSTRAINTS);
-        value = nusStudentId.toUpperCase(Locale.ROOT);
+        value = StringUtil.normalizeFieldValue(nusStudentId).toUpperCase(Locale.ROOT);
     }
 
     /**
@@ -54,14 +57,15 @@ public class NusStudentId {
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);
+        String normalizedTest = StringUtil.normalizeFieldValue(test);
 
-        if (test.isEmpty()) {
+        if (normalizedTest.isEmpty()) {
             return MESSAGE_EMPTY;
         }
-        if (test.length() > MAX_LENGTH) {
+        if (normalizedTest.length() > MAX_LENGTH) {
             return MESSAGE_TOO_LONG;
         }
-        if (!test.chars().allMatch(character -> character < 128 && Character.isLetterOrDigit(character))) {
+        if (!normalizedTest.chars().allMatch(character -> character < 128 && Character.isLetterOrDigit(character))) {
             return MESSAGE_NON_ALPHANUMERIC;
         }
         return "";

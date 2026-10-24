@@ -94,7 +94,8 @@ text remains one command; inspect it before pressing Enter.
   `-e EMAIL -p PHONE` is also acceptable. A parameter given before any
   option, such as the name in `add`, keeps its place at the front.
 
-* Every command marks its fields with options such as `-p`. Value options also
+* Commands use options such as `-p` for fields, except positional parameters
+  such as the leading name in `add` or the target in `edit`. Value options also
   have descriptive long aliases such as `--phone`; the command-specific
   sections list them. Separate a value from its option with a space, as in
   `--phone 91234567`, or join it with an equals sign, as in
@@ -286,11 +287,20 @@ repeatable: use `-t` or `--tag` once for each tag, mixing the spellings if you w
 for, rather than inventing an address to satisfy the command. To remove an
 email entered by mistake, use `edit INDEX -e ""`.
 
-An address may run to 254 characters, the longest an email address is allowed
-to be, so no real address is turned away. A longer value is refused and TAB
+An address may run to 254 characters. A longer value is refused and TAB
 tells you how long it was — useful when a copy-and-paste has picked up more
 than you meant.
 </box>
+
+The email's part before `@` accepts ASCII letters, digits and the symbols
+<code>!#$%&amp;'*+/=?^_&#96;{|}~-</code>, including repeated symbols and symbols
+at either end. Dots may separate non-empty groups; leading, trailing and
+consecutive dots are refused. For example, `mei__tan@hotmail.com` and
+`sean.o'brien@example.com` are accepted and stored as entered. Addresses that
+require a quoted local part (such as one containing spaces) are unsupported.
+The domain uses letters and digits with internal hyphens, separated by dots;
+its final label must have at least two characters. If an address starts with
+`-`, wrap the whole address in double quotes so it is read as a value.
 
 <box type="tip" seamless>
 
@@ -319,13 +329,14 @@ WARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.
 Review the records and delete duplicates only if they are the same person.
 ```
 
-Names and emails are compared without regard to letter case. Repeated,
-leading, and trailing whitespace in names is insignificant. Phone numbers
-match when their complete digit sequences match, ignoring spaces and other
-non-digit characters; equivalent Unicode decimal digits also match.
-For example, `9123-4567`, `91234567`, and `９１２３４５６７` prompt the same
-phone warning. Entered phone formatting is preserved. The review advice
-appears once after all matching fields.
+Names and emails are compared without regard to letter case. Names also ignore
+Latin accents and straight/curly apostrophe differences: `José` matches `Jose`,
+and `O’Brien` matches `O'Brien`. Repeated, leading, and trailing whitespace in
+names is insignificant. Phone numbers match when their complete digit sequences
+match, ignoring spaces and other non-digit characters; equivalent Unicode
+decimal digits also match. For example, `9123-4567`, `91234567`, and
+`９１２３４５６７` prompt the same phone warning. Entered phone formatting is
+preserved. The review advice appears once after all matching fields.
 
 The warning is only a hint. It does not prove that two records describe the
 same person, and it does not find misspelled names, email aliases, or phone
@@ -365,9 +376,22 @@ least one letter or number, in any writing system.
 
 <box type="tip" seamless>
 
-**Tip:** The name comes first and may hold spaces as it is, so
+**Tip:** The name comes first, without `-n` or `--name`, and may hold spaces as it is, so
 `add Ravi s/o Kumaran -p 91234567` needs no quotes at all. Slashes, hyphens and
 apostrophes are ordinary characters here.
+
+If you use a name option from `edit`, TAB explains where to put the name:
+
+```text
+add --name "Betsy Crowe" --phone 1234567
+```
+
+```text
+There is no --name option.
+In the add command, the name comes first, without an option: add NAME -p PHONE ...
+```
+
+The same placement hint appears for `-n` and when the name is missing.
 
 Use double quotes for an option value holding spaces, and for any value opening
 with a hyphen, so that TAB does not read it as an option:
@@ -379,6 +403,8 @@ To put a double quote or a backslash inside a value, write `\"` or `\\`:
 
 Examples:
 * `add John Doe -p 98765432 -e johnd@example.com`
+* `add Mei Tan -p 91234567 -e mei__tan@hotmail.com`
+* `add Sean O'Brien -p 82345678 -e sean.o'brien@example.com`
 * `add Alice Tan --phone=91234567 --email=alice@example.com --tag="Lab 3"`
 *  `add "Betsy Crowe" --tag T1 --email betsycrowe@example.com --phone 1234567 --id A06789012L -t Lab3`
 * `add "Ravi s/o Kumaran" -p 91234567 -e e0923841@u.nus.edu`
@@ -396,7 +422,9 @@ keeps both the start and the end of the name to help distinguish similar names.
 Hover over any name the card cannot show in full,
 whether it was shortened this way or left narrow by a crowded row, to see the
 whole of it. NUS Student ID, phone and email share a line when they fit. Details
-wrap onto another line when needed, so a long phone cannot hide the email.
+use the full width below the name, including beneath the follow-up marker.
+Cards grow as details wrap onto another line, so a long phone cannot hide
+the email or overlap the name.
 A value wider than a whole line ends with an ellipsis; hover over it to see
 its full value. Widening the window shows more text and brings details back
 onto one line without changing the stored record.
@@ -509,6 +537,8 @@ done to it beyond the quotes any value with spaces takes:
   containing only spaces also removes it. Leaving out `-e` keeps the email
   unchanged; a bare `-e` or `--email=` is an error. Clearing an already absent
   email succeeds.
+* Email syntax follows the rules in [Adding a student](#adding-a-student-add),
+  including repeated underscores and apostrophes.
 * A new email may run to 254 characters, the same limit `add` applies. A longer
   value is refused, TAB tells you how long it was, and the student's details
   stay as they were.
@@ -540,6 +570,7 @@ done to it beyond the quotes any value with spaces takes:
 
 Examples:
 *  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 1 -e mei__tan@hotmail.com` Records the address with both underscores.
 *  `edit 1 --email ""` Removes the 1st student's email while keeping all other details.
 *  `edit 2 --name "Betsy Crower" --tag ""` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 --id A08901234N` Records or replaces the 1st student's NUS Student ID.
@@ -709,8 +740,13 @@ Provide at least one field term or one follow-up status option. Every search ter
 * Enclose a multi-word term in double quotes: `find -n "Jason Tan"` requires that whole
   phrase in the name. `find -t "lab tutorial"` requires the phrase within one tag;
   separate tags are never joined. Repeated spaces inside a phrase are collapsed to one space.
-* Apostrophes are literal characters, so `find -n O'Brien` searches for `O'Brien`.
-  Single quotation marks do not group words; use double quotes for phrases.
+* Name searches ignore Latin accents and straight/curly apostrophe differences:
+  `find -n nguyen` matches `Nguyễn Văn An`, `find -n jose` matches `José Rivera`,
+  and `find -n O'Brien` matches `Sean O’Brien`. The stored spelling stays unchanged.
+* Unicode case variants match in names and tags: `find -n σ` matches `ΝΙΚΟΣ`,
+  and `find -t οσ` matches tag `ΟΣ`, consistent with adding/removing that tag.
+  Accents and apostrophes remain significant in tags and other fields.
+* Single quotation marks do not group words; use double quotes for phrases.
 * Bare terms are refused, including a name given before any option. Use a field option
   for every term. An extra word after an option is also refused; repeat the option or quote a phrase.
   This replaces the earlier unqualified cross-field search syntax and OR matching.
@@ -811,6 +847,8 @@ If TAB cannot save a change, it reports the error and leaves the student records
 they were before the command. Commands that do not change student records, including
 `list`, `find`, `help`, and `exit`, do not write to the data file. Clear prompts,
 cancellation, and invalid replies also leave the saved file unchanged.
+A failed first save leaves no data file behind. After freeing disk space or
+restoring write access, retry the command, or restart with the sample students.
 
 If another TAB window has saved different student records since this window
 loaded them, TAB refuses this window's change and preserves both the saved file
@@ -950,7 +988,6 @@ Action     | Format, Examples
 **Add**    | Keeps the search if the new student matches; otherwise shows all students with a notice. <br> `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> e.g., `add James Ho --phone=22224444 -i=A07890123M --tag=T1 -t Lab3 --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`<br> The ID option, spelled `-i`/`--id` or `--id=VALUE`, is what an ID starting with a digit needs<br> e.g., `delete 3`, `delete A01234567X`, `delete --id 1A2B3C`
-<<<<<<< HEAD
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> The target may be an NUS Student ID instead of an index <br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A08901234N`, `edit A01234567X -p 91234567`
 **Tag**    | `tag TARGET -a TAG` or `tag TARGET -r TAG` <br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--id NUS_STUDENT_ID` (alias `-i`) <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`, `tag --id A02345678G --add T2`
 **Find**   | `find [FIELD_OPTION TERM]... [-f \| -nf]`<br> e.g., `find -n Jason -t lab -t tutorial` (all terms required)

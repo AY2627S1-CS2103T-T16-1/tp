@@ -114,10 +114,7 @@ public final class StudentTarget {
 
     @Override
     public int hashCode() {
-        // Index compares by position but does not hash by it, so hash the position instead
-        return index != null
-                ? Integer.hashCode(index.getZeroBased())
-                : Objects.hash(nusStudentId);
+        return Objects.hash(index, nusStudentId);
     }
 
     @Override
