@@ -68,6 +68,63 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_findEquivalentNames_preservesRecordsAndStorage() throws Exception {
+        String[][] cases = {
+            {"Sean O’Brien", "O'Brien"},
+            {"Mary O'Neil", "O’Neil"},
+            {"Nguyễn Văn An", "nguyen"},
+            {"José Rivera", "jose"},
+            {"Jose Rivera", "José"},
+            {"José Rivera", "Jose\u0301"},
+            {"ΝΙΚΟΣ", "Σ"},
+            {"ΝΙΚΟΣ", "σ"},
+            {"ΝΙΚΟΣ", "ς"}
+        };
+        for (String[] pair : cases) {
+            model = new ModelManager();
+            setUp();
+            assertNameSearchPreservesStorage(pair[0], pair[1]);
+        }
+    }
+
+    private void assertNameSearchPreservesStorage(String name, String query) throws Exception {
+        logic.execute("add " + name + " -p 91234567");
+        logic.execute("add Unrelated Student -p 92345678");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        model = new ModelManager(storage.readStudentBook().orElseThrow(), new UserPrefs());
+        setUp();
+        assertEquals(new CommandResult("Found 1 student."), logic.execute("find -n " + query));
+        assertEquals(List.of(students.getFirst()), model.getFilteredStudentList());
+        assertEquals(name, model.getFilteredStudentList().getFirst().getName().fullName);
+        assertEquals(new CommandResult("Found 0 students."), logic.execute("find -n missing"));
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        assertEquals(students, model.getStudentBook().getStudentList());
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+    }
+
+    @Test
+    public void execute_greekTagCaseVariants_searchAndIdentityAgree() throws Exception {
+        logic.execute("add ΝΙΚΟΣ -p 91234567 -t ΟΣ");
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        String savedJson = Files.readString(dataPath);
+        for (String query : List.of("ΟΣ", "οσ", "ος", "Σ", "σ", "ς")) {
+            assertEquals(new CommandResult("Found 1 student."), logic.execute("find -t " + query));
+        }
+        for (String tag : List.of("ΟΣ", "οσ", "ος")) {
+            assertCommandException("tag 1 -a " + tag, "This student already has tag [ΟΣ]. No changes made.");
+            assertEquals(savedJson, Files.readString(dataPath));
+        }
+        logic.execute("tag 1 -r οσ");
+        assertTrue(model.getStudentBook().getStudentList().getFirst().getTags().isEmpty());
+        assertEquals(new CommandResult("Found 0 students."), logic.execute("find -t ος"));
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        assertTrue(new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow()
+                .getStudentList().getFirst().getTags().isEmpty());
+    }
+
+    @Test
     public void execute_invalidCommandFormat_throwsParseException() {
         String invalidCommand = "uicfhmowqewca";
         assertParseException(invalidCommand, Messages.getErrorMessageForUnknownCommand(invalidCommand));

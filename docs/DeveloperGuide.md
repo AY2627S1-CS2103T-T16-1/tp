@@ -940,6 +940,10 @@ once after every matching field.
 selected record. It excludes the selected `Student` instance but still uses
 the complete unfiltered student book, so a filtered list cannot hide a match
 and unrelated tag or follow-up edits do not repeat an acknowledged warning.
+Name comparisons share `StringUtil.normalizeNameForComparison` with name
+searches: Latin accents and straight/curly apostrophe differences are ignored,
+so copied roster names can be found or flagged using ordinary keyboard input.
+
 These comparisons are advisory only: they never feed `isSameStudent` or the
 storage duplicate check, and therefore cannot reject or discard a legitimate
 shared detail.
@@ -1039,6 +1043,15 @@ empty imposes no status restriction, true requires follow-up, and false
 requires its absence. A status-only search is valid, and combinations require
 both the status and every field term. The parser rejects conflicting or
 repeated status options before execution, matching the existing edit rules.
+
+Case comparison folds each Unicode code point independently using
+`Character.toLowerCase(Character.toUpperCase(...))`, avoiding context-sensitive
+whole-word lowercasing of Greek final sigma. Tag searches therefore agree with
+the case comparison used by `TagCommand`. Name comparison additionally applies
+canonical decomposition and removes marks attached to Latin letters, then maps
+curly apostrophes to straight ones. Marks in other scripts remain significant,
+so vowels needed to distinguish names are retained. This is a comparison key,
+not transliteration; model values and JSON retain their existing spelling.
 
 For phone terms containing only Unicode decimal digits, or those digits with
 grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), matching
@@ -3279,6 +3292,33 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `delete 1`, then `list`<br>
       Expected: Feedback reports `Listed 1 student.`.
+
+### Locating equivalent name spellings and Unicode case variants
+
+1. Searching copied roster names without changing their stored spelling
+
+   1. Prerequisites: In a disposable data folder, add `add Sean O’Brien -p 87654321`,
+      `add Nguyễn Văn An -p 81234567`, `add José Rivera -p 81234568`, and
+      `add ΝΙΚΟΣ -p 91234567 -t ΟΣ`.
+
+   1. Test cases: `find -n O'Brien`, `find -n nguyen`, and `find -n jose`.<br>
+      Expected: Each finds its respective student. Curly apostrophes and accents
+      remain on the cards. `find -n missing` returns `Found 0 students.`.
+
+   1. Test cases: `find -n Σ`, `find -n σ`, `find -n ς`, and `find -t οσ`.<br>
+      Expected: Each finds ΝΙΚΟΣ. `tag 1 -a οσ` reports
+      `This student already has tag [ΟΣ]. No changes made.`.
+      `tag 1 -r οσ` removes the tag; `find -t ος` no longer finds it.
+
+   1. Test case: `add Sean O'Brien -p 83334444`.<br>
+      Expected: The add succeeds with a possible duplicate **name** warning for
+      Sean O’Brien. Likewise, adding `JOSE RIVERA` or `νικοσ` with a distinct
+      phone warns about the respective existing name. These remain hints, not
+      grounds to reject a student.
+
+   1. Test case: Restart TAB and repeat the name searches.<br>
+      Expected: Original spellings survive saving and reloading; normalized
+      comparisons still find the students. Run `list` to restore the full list.
 
 ### Locating students by digits in formatted phone numbers
 
