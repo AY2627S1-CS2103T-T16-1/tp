@@ -1078,6 +1078,9 @@ mapped to its ASCII equivalent by numeric value. This lets
 `91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
 so copying a grouped number does not require manual reformatting. A query with
 a country code still requires those digits to occur in the stored phone.
+The allowed-character check uses a possessive quantifier to scan long phone terms
+without backtracking. Digit normalization separately checks that at least one digit
+remains, so punctuation-only terms cannot match every phone.
 The digit fallback requires at least one digit; annotations such as `"ext 21"`
 and punctuation-only terms retain literal matching. Unicode whitespace follows
 the same rule as field normalization. Normalizing both the phone digits and the
@@ -3294,6 +3297,12 @@ testers are expected to do more *exploratory* testing.
    1. Test cases: `find -p 91234568` and `find -p 9123-4568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
+
+1. Long nonmatching phone terms
+
+   1. Test case: Paste `find -p ` followed by 50,000 digits and a final `!`.<br>
+      Expected: TAB promptly reports `Found 0 students.` and remains responsive.
+      Run `list` to restore all students; their details and saved data are unchanged.
 
 1. Equivalent Unicode digits and unchanged saved values
 
