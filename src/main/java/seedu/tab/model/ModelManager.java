@@ -3,6 +3,7 @@ package seedu.tab.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -133,6 +134,11 @@ public class ModelManager implements Model {
         return studentBook.equals(otherModelManager.studentBook)
                 && userPrefs.equals(otherModelManager.userPrefs)
                 && filteredStudents.equals(otherModelManager.filteredStudents);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(studentBook, userPrefs, filteredStudents);
     }
 
 }

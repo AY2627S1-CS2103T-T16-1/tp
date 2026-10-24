@@ -32,6 +32,16 @@ public class DetailsContainsKeywordsPredicateTest {
         DetailsContainsKeywordsPredicate firstPredicateCopy =
                 new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, firstPredicateKeywordList));
         assertTrue(firstPredicate.equals(firstPredicateCopy));
+        assertEquals(firstPredicate.hashCode(), firstPredicateCopy.hashCode());
+
+        for (boolean isFlagged : new boolean[] {true, false}) {
+            DetailsContainsKeywordsPredicate flaggedPredicate =
+                    new DetailsContainsKeywordsPredicate(Map.of(), Optional.of(isFlagged));
+            DetailsContainsKeywordsPredicate flaggedPredicateCopy =
+                    new DetailsContainsKeywordsPredicate(Map.of(), Optional.of(isFlagged));
+            assertEquals(flaggedPredicate, flaggedPredicateCopy);
+            assertEquals(flaggedPredicate.hashCode(), flaggedPredicateCopy.hashCode());
+        }
 
         // different types -> returns false
         assertFalse(firstPredicate.equals(1));
