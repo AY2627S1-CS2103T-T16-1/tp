@@ -49,6 +49,17 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_caseVariantTags_keepsFirstSpelling() {
+        Student expected = new StudentBuilder().withName("Casey Low").withPhone("91234567")
+                .withoutEmail().withTags("Lab 3", "Σ", "T1").build();
+        assertParseSuccess(parser, " Casey Low -p 91234567 -t \"Lab  3\" --tag \"lab 3\" -t \"LAB 3\""
+                + " -t Σ -t ς -t σ -t T1", new AddCommand(expected));
+        expected = new StudentBuilder(expected).withTags("lab 3", "ς", "T1").build();
+        assertParseSuccess(parser, " Casey Low -p 91234567 -t \"lab 3\" -t \"Lab 3\""
+                + " -t ς -t Σ -t T1", new AddCommand(expected));
+    }
+
+    @Test
     public void parse_allFieldsPresent_success() {
         Student expectedStudent = new StudentBuilder(BOB).withTags(VALID_TAG_FRIEND)
                 .withNusStudentId(VALID_NUS_STUDENT_ID_BOB).build();
