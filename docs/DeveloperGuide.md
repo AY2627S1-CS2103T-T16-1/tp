@@ -2445,12 +2445,12 @@ testers are expected to do more *exploratory* testing.
 
 1. Adding a duplicate NUS Student ID
 
-   1. Prerequisites: A student named `John Doe` with NUS Student ID `A01234567X`
-      is already in the list.
+   1. Prerequisites: In a fresh launch, add `add John Doe -p 91234567 -i A05678901K`
+      so that a student named `John Doe` with NUS Student ID `A05678901K` is in the list.
 
-   1. Test case: `add Jane Doe -p 98765432 -i a01234567x`<br>
+   1. Test case: `add Jane Doe -p 98765432 -i a05678901k`<br>
       Expected: No student is added. The status message names NUS Student ID
-      `A01234567X` and `John Doe`, and no record is mutated.
+      `A05678901K` and `John Doe`, and no record is mutated.
 
 1. Adding during a search
 
@@ -2841,7 +2841,7 @@ testers are expected to do more *exploratory* testing.
       Expected: The command identifies the same student by their ID both times,
       even though the rename takes them off any list a search had narrowed to.
 
-   1. Test case: `find Alex` followed by `edit A02345678G -p 81112222`, where the
+   1. Test case: `find -n Alex` followed by `edit A02345678G -p 81112222`, where the
       search hides Charlotte Oliveiro<br>
       Expected: Charlotte Oliveiro's phone changes even though she is not in the
       displayed list. A complete `edit 1 -p 81112222` in the same state would edit
@@ -2852,7 +2852,7 @@ testers are expected to do more *exploratory* testing.
       `A09876543Z`, and no other detail changes. Editing it back with
       `edit A09876543Z --id A02345678G` works the same way.
 
-   1. Test case: `edit A01234567X --id A12345678C`, where `A12345678C` is another
+   1. Test case: `edit A01234567X --id A03456789H`, where `A03456789H` is another
       student's ID<br>
       Expected: No change. The message refuses the ID another student already
       holds, the same way an `edit INDEX --id` would.
