@@ -94,7 +94,8 @@ text remains one command; inspect it before pressing Enter.
   `-e EMAIL -p PHONE` is also acceptable. A parameter given before any
   option, such as the name in `add`, keeps its place at the front.
 
-* Every command marks its fields with options such as `-p`. Value options also
+* Commands use options such as `-p` for fields, except positional parameters
+  such as the leading name in `add` or the target in `edit`. Value options also
   have descriptive long aliases such as `--phone`; the command-specific
   sections list them. Separate a value from its option with a space, as in
   `--phone 91234567`, or join it with an equals sign, as in
@@ -365,9 +366,22 @@ least one letter or number, in any writing system.
 
 <box type="tip" seamless>
 
-**Tip:** The name comes first and may hold spaces as it is, so
+**Tip:** The name comes first, without `-n` or `--name`, and may hold spaces as it is, so
 `add Ravi s/o Kumaran -p 91234567` needs no quotes at all. Slashes, hyphens and
 apostrophes are ordinary characters here.
+
+If you use a name option from `edit`, TAB explains where to put the name:
+
+```text
+add --name "Betsy Crowe" --phone 1234567
+```
+
+```text
+There is no --name option.
+In the add command, the name comes first, without an option: add NAME -p PHONE ...
+```
+
+The same placement hint appears for `-n` and when the name is missing.
 
 Use double quotes for an option value holding spaces, and for any value opening
 with a hyphen, so that TAB does not read it as an option:
@@ -952,7 +966,6 @@ Action     | Format, Examples
 **Add**    | Keeps the search if the new student matches; otherwise shows all students with a notice. <br> `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> e.g., `add James Ho --phone=22224444 -i=A07890123M --tag=T1 -t Lab3 --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`<br> The ID option, spelled `-i`/`--id` or `--id=VALUE`, is what an ID starting with a digit needs<br> e.g., `delete 3`, `delete A01234567X`, `delete --id 1A2B3C`
-<<<<<<< HEAD
 **Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> The target may be an NUS Student ID instead of an index <br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A08901234N`, `edit A01234567X -p 91234567`
 **Tag**    | `tag TARGET -a TAG` or `tag TARGET -r TAG` <br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--id NUS_STUDENT_ID` (alias `-i`) <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`, `tag --id A02345678G --add T2`
 **Find**   | `find [FIELD_OPTION TERM]... [-f \| -nf]`<br> e.g., `find -n Jason -t lab -t tutorial` (all terms required)
