@@ -18,6 +18,8 @@ import seedu.tab.model.tag.Tag;
  */
 public class ParserUtil {
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+    public static final String MESSAGE_INDEX_TOO_LARGE = "Index \"%s\" exceeds the largest supported index ("
+            + Integer.MAX_VALUE + "). Use an index from the displayed list.";
     public static final String MESSAGE_VALUE_AFTER_INDEX =
             "Unexpected value after %1$s: \"%2$s\". Put field values after an option.";
     public static final String MESSAGE_VALUE_AFTER_INDEX_ONLY =
@@ -33,6 +35,11 @@ public class ParserUtil {
     public static Index parseIndex(String oneBasedIndex) throws ParseException {
         String trimmedIndex = oneBasedIndex.trim();
         if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex)) {
+            boolean hasOnlyDigits = trimmedIndex.chars().allMatch(Character::isDigit);
+            boolean hasNonZeroDigit = trimmedIndex.chars().anyMatch(digit -> Character.digit(digit, 10) > 0);
+            if (hasOnlyDigits && hasNonZeroDigit) {
+                throw new ParseException(String.format(MESSAGE_INDEX_TOO_LARGE, Messages.shorten(trimmedIndex)));
+            }
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
         return Index.fromOneBased(Integer.parseInt(trimmedIndex));
@@ -89,7 +96,8 @@ public class ParserUtil {
      * the exception, and is addressed by index.
      *
      * <p>An NUS Student ID that is not a valid one keeps the reason it was refused, so the
-     * User is told which value was rejected and why. An index that is not a positive integer
+     * User is told which value was rejected and why. Oversized positive indices retain their
+     * bounded-index diagnostic. An index that is not a positive integer
      * is reported through {@code usage} instead, because a target of that shape reads as a
      * mistyped index rather than as a candidate ID.
      *
@@ -109,8 +117,11 @@ public class ParserUtil {
             return StudentTarget.byNusStudentId(parseNusStudentId(trimmedTarget));
         }
         try {
-            return StudentTarget.byIndex(parseIndex(trimmedTarget));
+            return StudentTarget.byIndex(parseIndex(trimmedTarget), trimmedTarget);
         } catch (ParseException pe) {
+            if (!pe.getMessage().equals(MESSAGE_INVALID_INDEX)) {
+                throw pe;
+            }
             throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage), pe);
         }
     }
