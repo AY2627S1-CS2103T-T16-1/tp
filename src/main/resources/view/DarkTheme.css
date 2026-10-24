@@ -378,7 +378,8 @@
     -fx-border-width: 1;
     -fx-font-family: "Monospaced";
     -fx-font-size: 12px;
-    -fx-padding: 9 12 9 12;
+    /* the same horizontal inset as the message box below, so the two read as one column */
+    -fx-padding: 9 14 9 14;
     -fx-text-fill: -tab-accent;
 }
 
@@ -387,7 +388,8 @@
     -fx-background-insets: 0, 0 0 0 3;
     -fx-background-radius: 6, 6;
     -fx-font-size: 13px;
-    -fx-padding: 12 14 12 17;
+    /* the accent bar sits in the left inset rather than pushing the text past it */
+    -fx-padding: 12 14 12 14;
     -fx-text-fill: -tab-text;
 }
 
