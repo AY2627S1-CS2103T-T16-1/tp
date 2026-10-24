@@ -2,6 +2,7 @@ package seedu.tab.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.model.Model.PREDICATE_SHOW_ALL_STUDENTS;
 import static seedu.tab.testutil.Assert.assertThrows;
@@ -68,6 +69,18 @@ public class ModelManagerTest {
     public void findSameStudent_studentInStudentBook_returnsStudent() {
         modelManager.addStudent(ALICE);
         assertEquals(ALICE, modelManager.findSameStudent(ALICE).orElseThrow());
+    }
+
+    @Test
+    public void addStudent_activeFilter_preservesFilterAndStoresHiddenStudent() {
+        var predicate = new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Alice")));
+        modelManager.updateFilteredStudentList(predicate);
+        modelManager.addStudent(ALICE);
+        modelManager.addStudent(BENSON);
+
+        assertSame(predicate, modelManager.getFilteredStudentPredicate());
+        assertEquals(List.of(ALICE), modelManager.getFilteredStudentList());
+        assertEquals(List.of(ALICE, BENSON), modelManager.getStudentBook().getStudentList());
     }
 
     @Test

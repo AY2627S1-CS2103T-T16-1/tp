@@ -18,13 +18,13 @@ import seedu.tab.commons.util.ToStringBuilder;
  * Tests that a {@code Student}'s details match every search condition given.
  * Each term matches only its selected name, NUS Student ID, phone, email or tag field,
  * ignoring case and allowing partial matches.
- * A keyword made only of digits and the punctuation a phone number is written with
- * also matches the phone's digits with non-digit characters removed.
+ * A keyword made only of digits, grouping whitespace and phone punctuation
+ * also matches the phone's digits with non-digit characters removed and equivalent
+ * Unicode decimal digits compared by their numeric values.
  */
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
-    /** A keyword of digits and phone punctuation, holding at least one digit. */
-    private static final Pattern PHONE_KEYWORD = Pattern.compile("[\\p{Nd}+().-]*\\p{Nd}[\\p{Nd}+().-]*");
-    private static final Pattern NON_DIGIT = Pattern.compile("\\P{Nd}");
+    /** A keyword of digits, grouping whitespace and phone punctuation, holding at least one digit. */
+    private static final Pattern PHONE_KEYWORD = Pattern.compile("(?U)[\\p{Nd}\\s+().-]*\\p{Nd}[\\p{Nd}\\s+().-]*");
 
     /** The student field in which a search term must occur. */
     public enum Field {
@@ -87,8 +87,8 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
 
     /**
      * Returns true if the digits {@code keyword} holds appear in {@code phone} in order.
-     * The keyword must be one a user would type as a number: made only of digits and the
-     * punctuation a phone number is written with, and holding at least one digit, so a
+     * The keyword must be one a user would type as a number: made only of digits, grouping
+     * whitespace and phone punctuation, and holding at least one digit, so a
      * keyword such as {@code ---} or one drawn from a name or a tag stays with the literal
      * comparison above.
      */
@@ -96,8 +96,7 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
         if (!PHONE_KEYWORD.matcher(keyword).matches()) {
             return false;
         }
-        String digits = NON_DIGIT.matcher(keyword).replaceAll("");
-        return phone.getDigits().contains(digits);
+        return phone.getDigits().contains(Phone.normalizeDigits(keyword));
     }
 
     private static boolean matchesAnyTag(Student student, String keyword) {

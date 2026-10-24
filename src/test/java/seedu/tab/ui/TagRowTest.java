@@ -78,6 +78,23 @@ public class TagRowTest {
     }
 
     @Test
+    public void setTags_longSimilarLabelsWithRoom_remainDistinct() throws Exception {
+        List<String> names = List.of("Tutorial Group 01", "Tutorial Group 02",
+                "CS2103T Tutorial W09", "CS2103T Tutorial W10");
+        TagRow row = rowOf(1000, names);
+
+        assertEquals(names, drawnChipsOf(row));
+        onFxThread(() -> {
+            row.resize(100, row.getHeight());
+            row.layout();
+            row.resize(1000, row.getHeight());
+            row.layout();
+            assertEquals(names, drawnChipsOf(row));
+            return null;
+        });
+    }
+
+    @Test
     public void setTags_noTags_takesNoSpace() throws Exception {
         TagRow row = rowOf(400, List.of());
 
@@ -87,23 +104,20 @@ public class TagRowTest {
     }
 
     @Test
-    public void setTags_moreTagsThanTheCapAllows_countsTheRest() throws Exception {
+    public void setTags_moreThanThreeTags_showsEveryChipThatFits() throws Exception {
         TagRow row = rowOf(400, List.of("alpha", "bravo", "charlie", "delta", "echo"));
 
-        // a card is a summary, so the chips beyond the cap are counted rather than shown
-        assertEquals(List.of("alpha", "bravo", "charlie", "2 more" + ELLIPSIS), chipsOf(row));
+        // A wide row uses its room for complete chips.
+        assertEquals(List.of("alpha", "bravo", "charlie", "delta", "echo"), chipsOf(row));
     }
 
     @Test
-    public void setTags_manyTags_createsOnlyDisplayableLabels() throws Exception {
+    public void setTags_manyTags_showsAllWhenTheyFit() throws Exception {
         List<String> names = IntStream.range(0, 20).mapToObj(i -> "tag" + i).toList();
-        TagRow row = rowOf(1000, names);
+        TagRow row = rowOf(2000, names);
 
-        assertEquals(4, row.getChildrenUnmodifiable().size(), "three tag labels and one overflow label");
-        assertEquals(List.of("tag0", "tag1", "tag2", "17 more" + ELLIPSIS), chipsOf(row));
-        Label overflow = (Label) row.getChildrenUnmodifiable().get(3);
-        assertEquals(String.join(", ", names.subList(3, names.size())), overflow.getTooltip().getText());
-        assertEquals(row.prefHeight(-1), rowOf(1000, names.subList(0, 3)).prefHeight(-1), 0.5);
+        assertEquals(names, chipsOf(row));
+        assertEquals(names.size() + 1, row.getChildrenUnmodifiable().size());
     }
 
     @Test
@@ -118,9 +132,9 @@ public class TagRowTest {
 
         List<String> visibleChips = chipsOf(row);
         assertEquals(1, visibleChips.size());
-        // The allocation cap must not cap the total, regardless of count-only wording.
+        // Every hidden tag must be included in the total.
         assertEquals(20, Integer.parseInt(visibleChips.getFirst().split(" ")[0]));
-        Label overflow = (Label) row.getChildrenUnmodifiable().get(3);
+        Label overflow = (Label) row.getChildrenUnmodifiable().getLast();
         assertEquals(String.join(", ", names), overflow.getTooltip().getText());
     }
 
@@ -136,11 +150,11 @@ public class TagRowTest {
                 return null;
             });
 
-            assertEquals(Math.min(names.size(), 3) + 1, row.getChildrenUnmodifiable().size());
-            List<String> expected = names.size() <= 3 ? names : List.of("T1", "T2", "T3", "1 more" + ELLIPSIS);
+            assertEquals(names.size() + 1, row.getChildrenUnmodifiable().size());
+            List<String> expected = names;
             assertEquals(expected, chipsOf(row));
             Label overflow = (Label) row.getChildrenUnmodifiable().getLast();
-            assertEquals(String.join(", ", names.subList(Math.min(names.size(), 3), names.size())),
+            assertEquals(String.join(", ", List.<String>of()),
                     overflow.getTooltip().getText());
         }
     }
@@ -280,32 +294,34 @@ public class TagRowTest {
 
     @Test
     public void setTags_theTrailingChip_namesWhatItLeftOut() throws Exception {
-        TagRow row = rowOf(400, List.of("alpha", "bravo", "charlie", "delta", "echo"));
+        TagRow row = narrowRowOf(180, List.of("alpha", "bravo", "charlie", "delta", "echo"));
 
         Label trailing = (Label) row.getChildrenUnmodifiable().stream()
                 .filter(node -> node.getStyleClass().contains("tag-overflow"))
                 .findFirst().orElseThrow();
-        assertEquals("delta, echo", trailing.getTooltip().getText());
+        int shown = chipsOf(row).size() - 1;
+        assertEquals(String.join(", ", List.of("alpha", "bravo", "charlie", "delta", "echo")
+                .subList(shown, 5)), trailing.getTooltip().getText());
     }
 
     @Test
     public void setTags_aTagLongerThanAChip_isCutWithTheWholeOnHover() throws Exception {
         String whole = "test".repeat(20);
-        TagRow row = rowOf(400, List.of(whole));
+        TagRow row = narrowRowOf(100, List.of(whole));
 
         Label chip = (Label) row.getChildrenUnmodifiable().get(0);
-        assertTrue(chip.getText().length() < whole.length(), "the chip should be cut");
+        assertTrue(chip.getWidth() < chip.prefWidth(-1), "the chip should be cut");
         assertEquals(whole, chip.getTooltip().getText());
     }
 
     @Test
-    public void prefWidth_manyTags_asksOnlyForWhatItDraws() throws Exception {
+    public void prefWidth_manyTags_asksForEveryCompleteChip() throws Exception {
         List<String> many = IntStream.range(0, 20).mapToObj(i -> "tag" + i).toList();
         double wide = onFxThread(() -> rowOfWidth(many));
         double few = onFxThread(() -> rowOfWidth(List.of("tag0", "tag1", "tag2")));
 
-        // a row that asked for all twenty chips left the name beside it nothing to shrink into
-        assertTrue(wide < few * 2,
+        // Headline allocation protects the name; the row reports all its content.
+        assertTrue(wide > few * 2,
                 "twenty tags asked for " + wide + " against " + few + " for three");
     }
 
@@ -392,9 +408,7 @@ public class TagRowTest {
 
     @Test
     public void setTags_aTagTheRowCuts_namesTheWholeOfItOnHover() throws Exception {
-        // under the sixteen characters a chip is cut to, but too wide for the room the row
-        // has, which is what happens beside a long name or a follow-up pill
-        // wide enough for a chip and a count, but not for the whole of the chip
+        // This allocation fits a partial chip and a count, but not the complete tag.
         TagRow row = rowOf(400, List.of("attendance-low", "needs-consult"));
         onFxThread(() -> {
             row.resize(140, row.getHeight());
@@ -403,7 +417,7 @@ public class TagRowTest {
         });
 
         Label chip = (Label) row.getChildrenUnmodifiable().get(0);
-        assertEquals("attendance-low", chip.getText(), "the text is under the cut length");
+        assertEquals("attendance-low", chip.getText(), "the held text should remain complete");
         assertTrue(chip.getWidth() < chip.prefWidth(-1), "the row should have cut the chip");
         assertNotNull(chip.getTooltip(), "a chip the row cut should still be readable");
         assertEquals("attendance-low", chip.getTooltip().getText());

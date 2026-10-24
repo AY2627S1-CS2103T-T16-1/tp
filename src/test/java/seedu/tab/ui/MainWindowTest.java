@@ -19,6 +19,8 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Screen;
@@ -122,6 +124,28 @@ public class MainWindowTest {
                 return null;
             });
         }
+    }
+
+    @Test
+    public void help_f1WithMacTypedCharacter_preservesOpeningNotice() throws Exception {
+        onFxThread(() -> {
+            MainWindow window = filledWindow2();
+            try {
+                window.show();
+                TextField field = (TextField) window.getRoot().getScene().lookup("#commandTextField");
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.F1,
+                        false, false, false, false));
+                StackPane help = (StackPane) window.getRoot().getScene().lookup("#helpPagePlaceholder");
+                assertTrue(help.isVisible());
+                help.getChildren().get(0).fireEvent(new KeyEvent(KeyEvent.KEY_TYPED, "", "",
+                        KeyCode.UNDEFINED, false, false, false, false));
+                Label notice = (Label) help.lookup("#helpNotice");
+                assertEquals("Help mode: press q or Esc to return to commands.", notice.getText());
+            } finally {
+                window.getPrimaryStage().hide();
+            }
+            return null;
+        });
     }
 
     @Test

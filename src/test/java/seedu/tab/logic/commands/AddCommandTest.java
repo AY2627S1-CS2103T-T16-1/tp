@@ -195,6 +195,11 @@ public class AddCommandTest {
         final ArrayList<Student> studentsAdded = new ArrayList<>();
 
         @Override
+        public Predicate<? super Student> getFilteredStudentPredicate() {
+            return PREDICATE_SHOW_ALL_STUDENTS;
+        }
+
+        @Override
         public Optional<Student> findSameStudent(Student student) {
             requireNonNull(student);
             return studentsAdded.stream().filter(student::isSameStudent).findFirst();

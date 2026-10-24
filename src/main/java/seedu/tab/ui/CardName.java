@@ -42,6 +42,13 @@ public class CardName extends Label {
     }
 
     @Override
+    protected double computeMinWidth(double height) {
+        // Preserve a character from each end when tags need extra room. Font metrics
+        // decide how much that takes; a fixed pixel floor can lose the final character.
+        return widthOf(UiText.middleShortened(whole, 2)) + besideTheText();
+    }
+
+    @Override
     protected void layoutChildren() {
         drawWhatFits();
         super.layoutChildren();
