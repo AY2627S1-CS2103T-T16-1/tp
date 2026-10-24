@@ -49,9 +49,11 @@ public class HelpCommandTest {
     public void summary_deleteSyntax_parsesAsDeleteCommands() throws Exception {
         StudentBookParser parser = new StudentBookParser();
         List<String> deleteSyntax = SHOWING_HELP_MESSAGE.lines().map(String::stripLeading)
-                .filter(line -> line.startsWith("delete INDEX") || line.startsWith("delete --id "))
+                .filter(line -> line.startsWith("delete INDEX") || line.startsWith("delete NUS_STUDENT_ID")
+                        || line.startsWith("delete --id "))
                 .toList();
         assertTrue(deleteSyntax.contains("delete INDEX"));
+        assertTrue(deleteSyntax.contains("delete NUS_STUDENT_ID"));
         assertTrue(deleteSyntax.contains("delete --id NUS_STUDENT_ID"));
         for (String syntax : deleteSyntax) {
             assertTrue(parser.parseCommand(syntax.replace("INDEX", "1")

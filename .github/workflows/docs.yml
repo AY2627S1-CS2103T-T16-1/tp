@@ -13,6 +13,14 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+      - name: Read locked MarkBind version
+        id: markbind
+        # Use the same CLI release as npm ci in docs/, without a second version setting.
+        run: >-
+          node -p "'version=' + require('./docs/package-lock.json').packages['node_modules/markbind-cli'].version"
+          >> "$GITHUB_OUTPUT"
       - name: Install Graphviz
         run: sudo apt-get install graphviz
       - name: Install Java
@@ -26,4 +34,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           rootDirectory: './docs'
           baseUrl: '/tp' # assuming your repo name is tp
-          version: '^7.2.1'
+          version: ${{ steps.markbind.outputs.version }}
