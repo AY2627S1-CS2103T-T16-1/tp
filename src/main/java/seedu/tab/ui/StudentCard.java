@@ -20,19 +20,6 @@ public class StudentCard extends UiPart<Region> {
     private static final String FXML = "StudentListCard.fxml";
 
     /**
-     * How much of a name a card shows. A card is a summary and the name shares its row with
-     * the tags and the pill, so a name longer than this is cut rather than taking the row.
-     * The whole of it is still a hover away. The count is what a name is cut to, whatever
-     * else the card holds, so every long name on the list breaks off at the same place.
-     *
-     * <p>The cut is taken from the middle. Students who share the front of a name are common
-     * enough in a tutorial group, and a cut at the close puts two of them on the list as the
-     * same text, which leaves a reader scanning it nothing to go by. Keeping the end of the
-     * name as well tells the two cards apart on sight.
-     */
-    private static final int MAX_NAME_CHARACTERS = 22;
-
-    /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
      * As a consequence, UI elements' variable names cannot be set to such keywords
      * or an exception will be thrown by JavaFX during runtime.
@@ -70,7 +57,7 @@ public class StudentCard extends UiPart<Region> {
         super(FXML);
         this.student = student;
         id.setText(String.valueOf(displayedIndex));
-        UiText.showMiddleShortenedToFit(name, student.getName().fullName, MAX_NAME_CHARACTERS);
+        UiText.showToFit(name, student.getName().fullName);
         UiText.showToFit(phone, student.getPhone().value);
         if (student.getEmail().isPresent()) {
             UiText.showToFit(email, student.getEmail().orElseThrow().toString());
@@ -90,9 +77,8 @@ public class StudentCard extends UiPart<Region> {
     }
 
     /**
-     * Holds {@code details} to the space the card gives it, so that nothing in it is ever
-     * drawn over the pill at the card's trailing edge. The lines inside give way on their
-     * own, so this is the backstop rather than the rule.
+     * Holds {@code details} to the space the card gives it. The lines inside give way on
+     * their own, so clipping is a backstop against drawing outside the card.
      */
     private static void clipToItsOwnBox(Region details) {
         Rectangle clip = new Rectangle();

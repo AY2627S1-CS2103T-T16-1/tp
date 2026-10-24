@@ -15,6 +15,8 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +42,7 @@ public class JsonUtil {
     private static final Logger logger = LogsCenter.getLogger(JsonUtil.class);
 
     private static ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules()
+            .configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true)
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
@@ -55,6 +58,10 @@ public class JsonUtil {
      * Returns the JSON object from the given file or {@code Optional.empty()} object if the file is not found.
      * If any values are missing from the file, default values will be used, as long as the file is a valid JSON file.
      *
+     * <p>Only a file whose absence is established is reported as not found. A file whose folder
+     * cannot be opened is read and the failure reported, because the caller treats a missing
+     * file as a first run and would otherwise put sample data over records it could not see.
+     *
      * @param filePath cannot be null.
      * @param classOfObjectToDeserialize JSON file has to correspond to the structure in the class given here.
      * @throws DataLoadingException if loading of the JSON file failed or the document is null.
@@ -63,7 +70,7 @@ public class JsonUtil {
             Path filePath, Class<T> classOfObjectToDeserialize) throws DataLoadingException {
         requireNonNull(filePath);
 
-        if (!Files.exists(filePath)) {
+        if (Files.notExists(filePath)) {
             return Optional.empty();
         }
         logger.info("JSON file " + filePath + " found.");
@@ -105,8 +112,9 @@ public class JsonUtil {
 
     private static JsonProcessingException getDetailedJsonProcessingException(JsonProcessingException exception) {
         JsonProcessingException detailedException = exception;
-        while (detailedException.getCause() instanceof JsonProcessingException) {
-            detailedException = (JsonProcessingException) detailedException.getCause();
+        while (detailedException.getCause() instanceof JsonProcessingException cause
+                && (cause.getLocation() != null || detailedException.getLocation() == null)) {
+            detailedException = cause;
         }
         return detailedException;
     }
@@ -258,7 +266,7 @@ public class JsonUtil {
                     + " then restart TAB.";
         }
         if (exception instanceof AccessDeniedException) {
-            return "TAB does not have permission to read this file.";
+            return "TAB does not have permission to read this file or the folder holding it.";
         }
         return "The file could not be read: " + exception.getMessage();
     }
@@ -284,7 +292,27 @@ public class JsonUtil {
      * @return The instance of T with the specified values in the JSON string
      */
     public static <T> T fromJsonString(String json, Class<T> instanceClass) throws IOException {
-        return objectMapper.readValue(json, instanceClass);
+        try (JsonParser parser = objectMapper.getFactory().createParser(json)) {
+            T value = readJsonValue(parser, instanceClass);
+            if (parser.nextToken() != null) {
+                throw new JsonParseException(parser,
+                        "Expected a single JSON value; remove content after the document.", parser.getTokenLocation());
+            }
+            return value;
+        }
+    }
+
+    private static <T> T readJsonValue(JsonParser parser, Class<T> instanceClass) throws IOException {
+        try {
+            return objectMapper.readValue(parser, instanceClass);
+        } catch (JsonProcessingException e) {
+            JsonProcessingException detail = getDetailedJsonProcessingException(e);
+            // Jackson 2.7.4 omits duplicate-key locations; retain the parser's position.
+            if (detail instanceof JsonParseException && detail.getLocation() == null) {
+                throw new JsonParseException(parser, detail.getOriginalMessage(), e);
+            }
+            throw e;
+        }
     }
 
     /**
