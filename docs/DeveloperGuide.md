@@ -605,27 +605,34 @@ same option, so mixing them is also detected as a duplicate.
 
 ### Adding or removing one tag
 
-`TagCommandParser` reads `tag INDEX -a TAG` (alias `--add`) or
-`tag INDEX -r TAG` (alias `--remove`) with the existing
+`TagCommandParser` reads `tag TARGET -a TAG` (alias `--add`) or
+`tag TARGET -r TAG` (alias `--remove`) with the existing
 `FlagTokenizer` and `ParserUtil`. The option names the action: both spellings
 map to `FLAG_ADD_TAG` or `FLAG_REMOVE_TAG`, respectively. Exactly one action
 option is accepted; conflicting actions and repeated options, including mixed
 aliases, are rejected. Missing fields and invalid field values are collected
 before a command is created.
-`TagCommandParser` and `EditCommandParser` share `ParserUtil.parseRequiredIndex`
-to distinguish a missing index from an invalid one; each collects its errors
-with `ParseProblems` and applies its own tag rules.
-Both use `FlagTokenizer.tokenizeWithIndex`, which reports an unquoted negative
+`TagCommandParser` retains `ParserUtil.parseRequiredIndex` for numeric targets
+and shares `parseRequiredStudentTarget` with edit for letter-leading IDs.
+`--id`/`-i` explicitly selects any valid ID, including one starting with a
+digit. Mixing the explicit ID option with a preamble or repeating it is
+rejected rather than guessing which student to change. `ParseProblems`
+collects target and tag validation errors before constructing the command.
+Tag and edit both use `FlagTokenizer.tokenizeWithIndex`, which reports an
+unquoted negative
 number as both an invalid index and an unknown option. A value following a valid
 index is reported separately by `parseRequiredIndex`. Tag syntax failures and
 a missing action option include guidance for both addition and removal.
 
-`TagCommand` resolves the index against the displayed list. It compares the
+`TagCommand` stores a `StudentTarget`, as edit and delete do. It resolves an
+index against the displayed list and an ID across the entire book, so a
+roster ID remains usable while a search hides the student. It compares the
 normalized tag names ignoring case before copying the existing tag set and
 constructing a replacement student with every other field preserved. The
 search filter stays active; removing a tag used by that filter may hide the
 student from the displayed list. `TagCommand.Action` selects addition or
-removal while sharing index lookup, matching, student replacement and feedback.
+removal while sharing target resolution, matching, student replacement and
+feedback.
 Tag equality and storage remain unchanged. Addition preserves existing case
 variants; removal removes every matching variant of the requested group while
 retaining unrelated tags. A general tag named `Needs follow-up` remains separate
@@ -633,8 +640,12 @@ from the follow-up flag. Duplicate and successful removal feedback use a matchin
 stored tag's spelling. If several case variants match, the reply chooses the
 first in the card's tag display order.
 
-Invalid indexes, existing tags on addition and absent tags on removal throw
-`CommandException` before mutation; invalid syntax or values throw
+For a hidden flagged student, the absent-tag hint asks the User to run `list`
+and use that student's displayed index to clear follow-up. It never suggests
+an unavailable index or an edit target that could identify someone else.
+
+Invalid indexes or absent IDs, existing tags on addition and absent tags
+on removal throw `CommandException` before mutation; invalid syntax or values throw
 `ParseException`. These paths never reach
 `LogicManager`'s save. Successful additions and removals use the normal JSON
 save path without changing the schema. Integration tests exercise reloads,
@@ -2289,6 +2300,28 @@ testers are expected to do more *exploratory* testing.
       `T1` and `Lab 3`, and all other details and follow-up status are unchanged.
       The search stays active. Exit TAB and relaunch the same JAR from the same
       folder; the tags and every other field remain as recorded.
+
+1. Tagging by stable student ID
+
+   1. Prerequisites: Add `add ID Tag Test -p 92345678 --id E7654321 -t T1
+      --follow-up` as one line. Use an ID not already recorded in the book.
+      Run `find -n NoMatchingStudent` so the new student is hidden.
+
+   1. Test case: `tag e7654321 --add="Lab 3"`, then
+      `tag --id E7654321 -r "Lab 3"`.<br>
+      Expected: Both succeed on ID Tag Test, preserving the active search and
+      every unrelated field. Exit and restart TAB; `find --id E7654321` shows
+      the original `T1` tag and follow-up state.
+
+   1. Test case: Add `add Numeric Tag Test -p 93456789 --id 1234`, then run
+      `tag -i 1234 -a T2` and `tag --id=1234 --remove T2`.<br>
+      Expected: Both actions address Numeric Tag Test. A bare `tag 1234 -a T2`
+      remains an index request and fails when fewer than 1234 students are shown.
+
+   1. Test case: `tag 1 --id E7654321 -a T2`.<br>
+      Expected: The reply asks for one target. No record, displayed list or
+      saved file changes. Delete the two students added in this section by ID
+      (`delete E7654321` and `delete --id 1234`) before continuing.
 
 1. Rejecting duplicates and invalid input without mutation
 
