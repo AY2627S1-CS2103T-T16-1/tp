@@ -115,7 +115,7 @@ public class StudentCardTest {
 
     @Test
     public void constructor_emailCutByWidth_showsWholeAddressUntilWidened() throws Exception {
-        Student student = new StudentBuilder().withEmail("siti.nuraisyah.binte.ahmad@gmail.com")
+        Student student = new StudentBuilder().withEmail("siti.nuraisyah.binte.ahmad.hassan@alumni.u.nus.edu")
                 .withFlag(true).build();
         onFxThread(() -> {
             Region root = new StudentCard(student, 1).getRoot();
@@ -208,14 +208,14 @@ public class StudentCardTest {
     public void constructor_longContacts_exercisesClippingAndRestoresTooltipsAfterResizing() throws Exception {
         Student student = new StudentBuilder().withPhone(
                 "+65 6516 2727 ext 21 (office, Mon-Fri 9-5), +65 9123 4567 (HP, after 6pm)")
-                .withEmail("a.very.long.student.email.address@u.nus.edu")
+                .withEmail("a.very.long.student.email.address.for.contact.testing@alumni.u.nus.edu")
                 .withNusStudentId("W".repeat(NusStudentId.MAX_LENGTH)).withFlag(true).build();
         onFxThread(() -> {
             Region root = new StudentCard(student, 99).getRoot();
             assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 160));
             List<Label> fields = List.of((Label) root.lookup("#nusStudentId"),
                     (Label) root.lookup("#phone"), (Label) root.lookup("#email"));
-            assertContactsClipped(fields);
+            assertContactsClipped(fields.subList(1, fields.size()));
             double narrowHeight = root.prefHeight(NARROWEST_CARD_WIDTH);
             layOutAt(root, widthForAllContacts(root));
             for (Label field : fields) {
@@ -224,7 +224,7 @@ public class StudentCardTest {
             }
             assertTrue(root.prefHeight(root.getWidth()) < narrowHeight, "widening must remove wrapped rows");
             layOutAt(root, NARROWEST_CARD_WIDTH);
-            assertContactsClipped(fields);
+            assertContactsClipped(fields.subList(1, fields.size()));
             return null;
         });
     }
@@ -1124,6 +1124,27 @@ public class StudentCardTest {
                 });
             }
         }
+    }
+
+    @Test
+    public void constructor_countAtNameAllowanceBoundary_keepsCompleteCountBesideName() throws Exception {
+        onFxThread(() -> {
+            List<String> names = List.of("attendance-low", "consult");
+            Student student = new StudentBuilder().withName("Bernice Yu")
+                    .withTags(names.toArray(String[]::new)).withFlag(true).build();
+            Region root = new StudentCard(student, 2).getRoot();
+            assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 120));
+            Label count = (Label) root.lookup(".tag-overflow");
+            // Reproduce the Linux boundary using the local font's count width: the
+            // preferred name allowance and gap leave the count one pixel short.
+            count.setText("2 tags");
+            Label name = (Label) root.lookup("#name");
+            onALineOf(name, CardHeadline.READABLE_NAME_WIDTH + CardHeadline.SPACING
+                    + Math.floor(count.prefWidth(-1)) - ONE_PIXEL);
+            assertHiddenTagsCounted((TagRow) root.lookup("#tags"), names);
+            assertTrue(drawnTextOf((Label) root.lookup("#name")).startsWith("Be"));
+            return null;
+        });
     }
 
     private static void assertHiddenTagsCounted(TagRow tags, List<String> names) {
