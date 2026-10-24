@@ -1340,7 +1340,7 @@ These were raised during requirement gathering and left out of the product.
 * [UC02 - Find a student and act on the right one](#uc02-find-a-student-and-act-on-the-right-one)
 * [UC03 - Flag and clear a follow-up](#uc03-flag-and-clear-a-follow-up)
 * [UC04 - Import a roster (proposed)](#uc04-import-a-roster)
-* [UC05 - Record a reply to a follow-up](#uc05-record-a-reply-to-a-follow-up)
+* [UC05 - Recover from an unreadable data file](#uc05-recover-from-an-unreadable-data-file)
 * [UC06 - Delete a class no longer taught (proposed)](#uc06-delete-a-class-no-longer-taught)
 * [UC07 - Archive last semester's students (proposed)](#uc07-archive-last-semester-s-students)
 * [UC08 - Semester close-out (proposed)](#uc08-semester-close-out)
