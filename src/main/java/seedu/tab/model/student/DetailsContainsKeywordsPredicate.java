@@ -23,8 +23,8 @@ import seedu.tab.commons.util.ToStringBuilder;
  * Unicode decimal digits compared by their numeric values.
  */
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
-    /** A keyword of digits, grouping whitespace and phone punctuation, holding at least one digit. */
-    private static final Pattern PHONE_KEYWORD = Pattern.compile("(?U)[\\p{Nd}\\s+().-]*\\p{Nd}[\\p{Nd}\\s+().-]*");
+    /** Characters permitted in a phone keyword; digit presence is checked after normalization. */
+    private static final Pattern PHONE_KEYWORD = Pattern.compile("(?U)[\\p{Nd}\\s+().-]++");
 
     /** The student field in which a search term must occur. */
     public enum Field {
@@ -97,7 +97,8 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
         if (!PHONE_KEYWORD.matcher(keyword).matches()) {
             return false;
         }
-        return phone.getDigits().contains(Phone.normalizeDigits(keyword));
+        String digits = Phone.normalizeDigits(keyword);
+        return !digits.isEmpty() && phone.getDigits().contains(digits);
     }
 
     private static boolean matchesAnyTag(Student student, String keyword) {

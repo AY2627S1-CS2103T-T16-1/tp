@@ -40,7 +40,7 @@ public class CommandBox extends UiPart<Region> {
 
     private final CommandHistory history = new CommandHistory();
     private final CommandExecutor commandExecutor;
-    private final BooleanSupplier canSubmitEmptyReply;
+    private final BooleanSupplier isAwaitingConfirmation;
     private final ChangeListener<Number> theFieldScrolled = (unused, old, now) -> layOutColours();
 
     /** The node the field draws its own text in, once the copy is following it. */
@@ -69,12 +69,12 @@ public class CommandBox extends UiPart<Region> {
     }
 
     /**
-     * Creates a command box that can submit an empty reply while confirmation is pending.
+     * Creates a command box that handles confirmation replies separately from reusable commands.
      */
-    public CommandBox(CommandExecutor commandExecutor, BooleanSupplier canSubmitEmptyReply) {
+    public CommandBox(CommandExecutor commandExecutor, BooleanSupplier isAwaitingConfirmation) {
         super(FXML);
         this.commandExecutor = commandExecutor;
-        this.canSubmitEmptyReply = canSubmitEmptyReply;
+        this.isAwaitingConfirmation = isAwaitingConfirmation;
         commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleHistoryKeyPressed);
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
@@ -110,11 +110,16 @@ public class CommandBox extends UiPart<Region> {
     @FXML
     private void handleCommandEntered() {
         String commandText = commandTextField.getText();
-        if (commandText.isEmpty() && !canSubmitEmptyReply.getAsBoolean()) {
+        boolean isConfirmationReply = isAwaitingConfirmation.getAsBoolean();
+        if (commandText.isEmpty() && !isConfirmationReply) {
             return;
         }
 
-        history.add(commandText);
+        if (isConfirmationReply) {
+            history.resetNavigation();
+        } else {
+            history.add(commandText);
+        }
         try {
             commandExecutor.execute(commandText);
             commandTextField.setText("");

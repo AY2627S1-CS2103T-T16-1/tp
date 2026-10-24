@@ -53,7 +53,7 @@ public class TagCommandParser implements Parser<TagCommand> {
             return ParserUtil.parseRequiredStudentTarget(preamble, TagCommand.FIELD_TARGET,
                     TagCommand.FIELD_INDEX, TagCommand.MESSAGE_USAGE);
         }
-        return StudentTarget.byIndex(ParserUtil.parseRequiredIndex(preamble, TagCommand.FIELD_INDEX));
+        return StudentTarget.byIndex(ParserUtil.parseRequiredIndex(preamble, TagCommand.FIELD_INDEX), preamble);
     }
 
     /** Adds command-specific guidance when the arguments cannot be read as options. */
