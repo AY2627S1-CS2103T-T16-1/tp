@@ -24,8 +24,8 @@ how it read at `FINE`. The following commands also log their effects:
 * `clear` at `INFO`, with how many it emptied, once the confirmation is given.
 * `find` at `FINE`, with how many matched, since it changes only what is on screen.
 
-`tag` has no separate effect entry; its command text is still logged by
-`LogicManager`. `list`, `exit` and `help` also have no separate effect entries.
+`tag`, `list`, `exit` and `help` have no separate effect entries.
+`LogicManager` still logs their command text.
 
 An entry counts records and names the index the User saw rather than writing the
 student out. The command text in the log already holds whatever the User typed,
