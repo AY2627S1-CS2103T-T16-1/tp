@@ -21,6 +21,16 @@ public class TagCommandParserTest {
     private final TagCommandParser parser = new TagCommandParser();
 
     @Test
+    public void parse_oversizedIndex_explainsBound() {
+        for (String index : List.of("2147483648", "999999999999999999999")) {
+            for (String action : List.of("-a", "-r", "--remove")) {
+                assertParseFailure(parser, index + " " + action + " T1",
+                        String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, index));
+            }
+        }
+    }
+
+    @Test
     public void parse_studentIdTargets_acceptsPlainAndExplicitForms() {
         for (String id : List.of("abc", "A01234567X", "a01234567x", "Z".repeat(32))) {
             StudentTarget target = StudentTarget.byNusStudentId(new NusStudentId(id));
@@ -86,7 +96,7 @@ public class TagCommandParserTest {
 
     @Test
     public void parse_invalidIndex_reportsIndex() {
-        for (String index : List.of("0", "1.5", "2147483648", "999999999999999999999")) {
+        for (String index : List.of("0", "1.5")) {
             assertParseFailure(parser, index + " -a T1", ParserUtil.MESSAGE_INVALID_INDEX);
         }
         assertParseFailure(parser, "\"-1\" -a T1", ParserUtil.MESSAGE_INVALID_INDEX);
@@ -176,7 +186,7 @@ public class TagCommandParserTest {
     @Test
     public void parse_removeInvalidIndexOrTag_reportsSpecificProblems() {
         for (String marker : List.of("-r", "--remove")) {
-            for (String index : List.of("0", "1.5", "2147483648", "999999999999999999999")) {
+            for (String index : List.of("0", "1.5")) {
                 assertParseFailure(parser, index + " " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX);
             }
             assertFailureWithGuidance("-1 " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX
