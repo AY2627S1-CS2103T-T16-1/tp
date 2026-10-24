@@ -800,6 +800,11 @@ Only `Boolean.TRUE` creates a `Flag` in the model; a missing key, JSON `null`, a
 as `"flag": true`, while an absent flag is represented as null and omitted by
 Jackson's `NON_NULL` policy. Files created before the field existed therefore
 load without migration or gratuitous rewrites.
+`JsonFollowUpFlagDeserializer` accepts only JSON Boolean tokens, with Jackson
+retaining `null` for a missing or null key. Rejecting other token types before
+Jackson can coerce them prevents numeric hand edits from silently changing
+follow-up status. The normal loading-error path identifies the record and
+`flag`, blocks startup, and preserves the file.
 
 `StudentCard` shows a `Needs follow-up` label for true. For false it makes the
 label both invisible and unmanaged, so the card keeps no blank placeholder
@@ -2288,6 +2293,12 @@ testers are expected to do more *exploratory* testing.
       `"flag": null`, and no `flag` key. Relaunch TAB.<br>
       Expected: Only the record with `true` shows `Needs follow-up`. The other
       three load as unflagged, including the legacy record with no key.
+
+   1. Exit TAB and change one record to `"flag": 2`, then relaunch. Repeat
+      with `"flag": "true"`.<br>
+      Expected: The error identifies that record and its invalid `flag` value.
+      The main window does not open, and the file stays byte-for-byte
+      unchanged. Restore the backup before continuing.
 
 ### Adding one tag
 

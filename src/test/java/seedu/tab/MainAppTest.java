@@ -82,6 +82,24 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_numericFollowUpFlag_passesErrorToUiAndPreservesBytesOnShutdown() throws Exception {
+        Path path = testFolder.resolve("numeric-flag.json");
+        byte[] bytes = "{\"students\":[{\"name\":\"Alice Tan\",\"phone\":\"91234567\",\"flag\":2}]}"
+                .getBytes(StandardCharsets.UTF_8);
+        Files.write(path, bytes);
+        MainApp initializedApp = new MainApp(testFolder.resolve("prefs.json"), path);
+
+        initializedApp.init();
+
+        String error = getUiManagerLoadingError(initializedApp).orElseThrow();
+        assertTrue(error.startsWith("Student record 1: "), error);
+        assertTrue(error.contains("Invalid flag value 2. Use JSON true, false or null for the follow-up flag."));
+        assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());
+        initializedApp.stop();
+        assertArrayEquals(bytes, Files.readAllBytes(path));
+    }
+
+    @Test
     public void init_invalidUtf8_passesEncodingErrorToUiAndPreservesBytesOnShutdown() throws Exception {
         Path path = testFolder.resolve("students.json");
         byte[] bytes = "{\"students\":[{\"name\":\"José Tan\",\"phone\":\"91234567\"}]}"
