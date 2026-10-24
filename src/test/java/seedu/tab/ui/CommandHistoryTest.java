@@ -65,6 +65,18 @@ public class CommandHistoryTest {
     }
 
     @Test
+    public void resetNavigation_browsingCommands_startsFromNewestWithNewDraft() {
+        CommandHistory history = new CommandHistory();
+        history.add("list");
+        history.add("clear");
+        assertEquals("clear", history.previous("old draft"));
+        assertEquals("list", history.previous("clear"));
+        history.resetNavigation();
+        assertEquals("clear", history.previous("new draft"));
+        assertEquals("new draft", history.next("clear"));
+    }
+
+    @Test
     public void add_blankInput_skipsEntryAndResetsNavigation() {
         for (String blank : List.of("", "  ", "\t", "\u00a0", "\u2003")) {
             CommandHistory history = new CommandHistory();
