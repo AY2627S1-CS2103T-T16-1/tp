@@ -18,14 +18,14 @@
 ## What TAB logs
 
 `LogicManager` writes the command as it was typed, and `StudentBookParser` writes
-how it read at `FINE`. Neither says what came of it, so a command that changes or
-selects records logs its own effect:
+how it read at `FINE`. The following commands also log their effects:
 
 * `add`, `delete` and `edit` at `INFO`, with how many records the book then holds.
 * `clear` at `INFO`, with how many it emptied, once the confirmation is given.
 * `find` at `FINE`, with how many matched, since it changes only what is on screen.
 
-`list`, `exit` and `help` change nothing worth recording and stay quiet.
+`tag` has no separate effect entry; its command text is still logged by
+`LogicManager`. `list`, `exit` and `help` also have no separate effect entries.
 
 An entry counts records and names the index the User saw rather than writing the
 student out. The command text in the log already holds whatever the User typed,
