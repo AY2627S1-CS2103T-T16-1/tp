@@ -168,7 +168,10 @@ displays have different usable heights or gaps between them.
 tags, but yields part of that allowance for a complete tag count. The name
 retains space for a character from each end. When no tag chip fits, `TagRow`
 uses the shorter `N tags` total instead of `N more…`, preserving a complete
-count beside the name. Its tooltip still lists every hidden tag.
+count beside the name. Its tooltip still lists every hidden tag. A partial
+chip requires room for four characters and an ellipsis, measured in its
+styled font with padding, so a two-letter fragment gives way to the total.
+A shorter tag can still appear in full.
 `TagRow.fittedWidth` reports the space its chosen chips or count actually use,
 so `CardHeadline` returns any unused allocation to the name before laying it
 out. The name requests its full natural width.
@@ -2559,6 +2562,16 @@ testers are expected to do more *exploratory* testing.
       Expected: Chips that fit appear in full; hidden tags are counted and
       listed on hover. A lone chip too wide for its allocation is shortened
       and shows its complete tag on hover. Widening restores complete tags.
+
+1. Reading tags beside a long name and follow-up marker
+
+   1. Add `add Siti Nur-Aisyah Binte Abdullah Rahman -p 91234567 -f`
+      `-t consultation-week-3 -t "Lab 3" -t "Tutorial Group 11"` as one command.
+   1. Resize the window through about 740 px, then narrow and widen it.<br>
+      Expected: The row shows a readable tag prefix and `2 more…`, or `3 tags`
+      when there is too little room for that prefix. It never shows only one
+      or two letters of the first tag. Hovering over the count lists hidden
+      tags; widening restores chips. The follow-up marker remains visible.
 
 ### Reading a clipped email address
 
