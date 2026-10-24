@@ -16,9 +16,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -52,6 +55,35 @@ public class JsonStudentBookStorageTest {
             storage.saveStudentBook(loaded);
             assertEquals(expected, storage.readStudentBook().orElseThrow());
         }
+    }
+
+    @Test
+    public void readStudentBook_unopenableFolder_reportsTheFailureRatherThanAFirstRun() throws Exception {
+        // a first run shows sample students and saves them over the file. Doing that for a
+        // folder TAB merely cannot open would replace records it was never able to read
+        Path directory = Files.createDirectory(testFolder.resolve("data"));
+        Path path = directory.resolve("tab.json");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        storage.saveStudentBook(getTypicalStudentBook());
+        byte[] saved = Files.readAllBytes(path);
+        Assumptions.assumeTrue(Files.getFileStore(directory).supportsFileAttributeView("posix"),
+                "POSIX permissions are unavailable.");
+        Assumptions.assumeFalse("root".equals(System.getProperty("user.name")),
+                "root is allowed past file permissions.");
+        Set<PosixFilePermission> originalPermissions = Files.getPosixFilePermissions(directory);
+        Files.setPosixFilePermissions(directory, Set.of());
+
+        try {
+            Assumptions.assumeFalse(Files.isReadable(path), "The test account can still read the file.");
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, storage::readStudentBook);
+
+            assertEquals("TAB does not have permission to read this file or the folder holding it.",
+                    exception.getMessage());
+        } finally {
+            Files.setPosixFilePermissions(directory, originalPermissions);
+        }
+        assertArrayEquals(saved, Files.readAllBytes(path));
     }
 
     @Test

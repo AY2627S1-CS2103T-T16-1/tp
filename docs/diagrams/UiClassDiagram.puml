@@ -60,7 +60,7 @@ MainWindow *-down-> "1" StudentListPanel
 MainWindow *-down-> "1" SummaryPanel
 MainWindow *-down-> "1" StatusBarFooter
 
-StudentListPanel -down-> "*" StudentCard
+StudentListPanel .down.> StudentCard : <<create>>
 StudentCard *-down-> "1" CardHeadline
 StudentCard *-down-> "1" ContactRow
 CardHeadline *-down-> "1" CardName

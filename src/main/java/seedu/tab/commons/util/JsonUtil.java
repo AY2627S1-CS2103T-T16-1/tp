@@ -55,6 +55,10 @@ public class JsonUtil {
      * Returns the JSON object from the given file or {@code Optional.empty()} object if the file is not found.
      * If any values are missing from the file, default values will be used, as long as the file is a valid JSON file.
      *
+     * <p>Only a file whose absence is established is reported as not found. A file whose folder
+     * cannot be opened is read and the failure reported, because the caller treats a missing
+     * file as a first run and would otherwise put sample data over records it could not see.
+     *
      * @param filePath cannot be null.
      * @param classOfObjectToDeserialize JSON file has to correspond to the structure in the class given here.
      * @throws DataLoadingException if loading of the JSON file failed or the document is null.
@@ -63,7 +67,7 @@ public class JsonUtil {
             Path filePath, Class<T> classOfObjectToDeserialize) throws DataLoadingException {
         requireNonNull(filePath);
 
-        if (!Files.exists(filePath)) {
+        if (Files.notExists(filePath)) {
             return Optional.empty();
         }
         logger.info("JSON file " + filePath + " found.");
@@ -258,7 +262,7 @@ public class JsonUtil {
                     + " then restart TAB.";
         }
         if (exception instanceof AccessDeniedException) {
-            return "TAB does not have permission to read this file.";
+            return "TAB does not have permission to read this file or the folder holding it.";
         }
         return "The file could not be read: " + exception.getMessage();
     }
