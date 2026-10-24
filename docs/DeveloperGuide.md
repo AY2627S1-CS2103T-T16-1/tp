@@ -117,7 +117,9 @@ end remain distinguishable without hovering.
 `MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
 the entire student page (command box, result, summary sidebar and student list).
 The hidden student page remains intact so closing help restores its filter,
-previous result and any unfinished command. The summary uses command words and
+previous result and any unfinished command. When returning focus, `CommandBox`
+moves the caret to the end and clears JavaFX's automatic selection so the next
+keystroke continues editing the draft. The summary uses command words and
 flag labels from the command/parser definitions.
 
 `HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
@@ -384,6 +386,22 @@ The `Storage` component,
 * can save both the student book's data and the User's preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonStudentBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+
+`JsonUtil.readJsonFile` reports a file as missing only when its absence is
+established, with `Files.notExists`. `Files.exists` answers false both for a
+file that is not there and for one whose folder cannot be opened, and
+`MainApp.initModelManager` reads a missing file as a first run, so a folder
+TAB merely cannot open would open the window on sample students in place of
+records it was never able to read. A file whose existence cannot be determined
+is therefore read, and the access failure reported like any other.
+
+The records themselves are already safe from that mistake. The baseline
+`JsonStudentBookStorage` records for an unreadable folder is `Optional.empty()`,
+so once access is restored `saveIfUnchanged` finds a book on disk that the
+window never loaded and refuses the save. What is left without this check is a
+window opened on sample data that then refuses every save as stale, telling a
+User who changed nothing to close it and restart. Reporting the access failure
+at startup replaces both with the reason.
 
 `JsonUtil.readJsonFile` rejects a whole-file `null` with a
 `DataLoadingException`, so both preference and student data loading use their
@@ -2008,8 +2026,11 @@ testers are expected to do more *exploratory* testing.
 
    1. Type `find -n Alex` without submitting it, press F1, then q.<br>
       Expected: Help takes the whole content area and the unfinished command
-      is restored on return. Repeat with Help → Help. Reopening help starts
-      at the beginning.
+      is restored on return, unselected with the caret at the end. Type ` Tan`:
+      the box now contains `find -n Alex Tan`. Repeat with Help → Help and with
+      Esc to quit. On returning, Backspace removes only the final character;
+      Delete leaves the draft unchanged. Also repeat with an empty command box:
+      typing starts a new command normally. Reopening help starts at the beginning.
 
    1. Enter `help oops`, `help -p` and `help ""`.<br>
       Expected: Each reports `help takes no arguments. Unexpected input: ...`
@@ -3473,6 +3494,16 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Move `data/tab.json` elsewhere and relaunch TAB.<br>
       Expected: TAB treats the missing file as a first launch and opens with
       sample students instead of showing an error.
+
+   1. Test case: Restore the file, then make the `data` folder one the account
+      cannot open. On Linux/macOS, run `chmod 000 data` as a non-root User. On
+      Windows, deny the test account permission to list the folder. Relaunch
+      TAB.<br>
+      Expected: An error dialog identifies `data/tab.json` and says that TAB
+      does not have permission to read the file or the folder holding it. The
+      main window does not open, and no sample students are shown. Restore the
+      folder's permission with `chmod 755 data`, relaunch, and confirm that
+      every saved student is back.
 
    1. Test case: Restore a valid file written before the optional `flag` field
       existed, including its removed `address` keys, and relaunch TAB.<br>

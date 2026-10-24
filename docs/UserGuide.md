@@ -253,8 +253,9 @@ The footer keeps the navigation keys visible and shows your progress, or `(END)`
 at the last screenful. Help has no scrollbars. Text wraps to the window width;
 you can resize the window while reading. Paging keys stay at the beginning or
 end when there is no more text in that direction. Press `q` or Esc to restore
-the student list, previous result and any partially typed command, then enter
-your next command. **F1** and **Help → Help** open the same page at the beginning
+the student list, previous result and any partially typed command. The command
+is unselected with the caret at the end, ready for you to continue typing.
+**F1** and **Help → Help** open the same page at the beginning
 without submitting a partially typed command. Pager keys apply only while help is open.
 
 ![Command summary in the main window](images/helpMessage.png)
@@ -832,6 +833,11 @@ TAB reads student data only at startup. Edits made while TAB is open do not
 appear in that session. TAB refuses a later save if the student records in the
 file differ from the records that window loaded. Text editors do not participate
 in TAB's save locking, so always close TAB before editing the file.
+
+If TAB cannot open `data/tab.json` or the folder holding it, it reports that
+at the next run instead of opening the main window. It never treats a file it
+cannot read as a first launch, so your records are not replaced by sample
+students. Restore your permission to the file and the folder, then restart TAB.
 
 Save the file as **UTF-8**, with or without a leading byte order mark (BOM).
 TAB accepts both forms and preserves accented letters and other Unicode text.
