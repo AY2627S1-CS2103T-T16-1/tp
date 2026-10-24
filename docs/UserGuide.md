@@ -331,8 +331,8 @@ The warning is only a hint. It does not prove that two records describe the
 same person, and it does not find misspelled names, email aliases, or phone
 numbers with different digit sequences, such as a local number and the same
 number with an added country code or extension. Review the records before
-deleting either one. A matching NUS Student ID is handled separately and still refuses the
-command, as described above.
+deleting either one. A matching NUS Student ID is handled separately and
+still refuses the command, as described above.
 </box>
 
 <box type="tip" seamless>
