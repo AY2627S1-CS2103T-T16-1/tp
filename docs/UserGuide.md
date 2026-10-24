@@ -863,7 +863,9 @@ Window size and position are saved separately in `preferences.json` in TAB's
 home folder. On launch, TAB keeps the saved size and position when they fit
 an available screen. If a screen was disconnected, TAB moves the window onto
 an available screen; oversized windows shrink to its usable area. This also
-applies after a resolution or display-scaling change.
+applies after a resolution or display-scaling change. You can also resize the
+window to fit a 1280×720 display at 150% scaling; the student list and help text
+scroll while the summary total, help footer and status bar remain visible.
 If the file contains only `null`, `guiSettings` is `null`, or the
 file cannot be parsed, TAB opens with default window settings and rewrites the
 preferences file when it can. This recovery does not change saved student records in `data/tab.json`.

@@ -282,8 +282,11 @@ public class HelpSummaryTest {
         assertTrue(viewport.getVvalue() > 0);
         press(window, KeyCode.PAGE_UP);
         assertEquals(0, viewport.getVvalue(), 0.0001);
-        for (int pageNumber = 0; pageNumber < 20; pageNumber++) {
+        // A shorter window needs more pages; each press must advance until the end.
+        while (viewport.getVvalue() < 1) {
+            double previousPosition = viewport.getVvalue();
             type(window, " ");
+            assertTrue(viewport.getVvalue() > previousPosition, "paging stops before the end");
         }
         assertEquals(1, viewport.getVvalue());
         assertEquals("(END)", ((Label) node(window, "helpProgress")).getText());
