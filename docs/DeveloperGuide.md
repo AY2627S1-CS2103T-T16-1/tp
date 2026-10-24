@@ -945,7 +945,9 @@ ordinary success message with a blank line. Matches are grouped by field into
 one prominently labelled `WARNING: Possible duplicate student` line. A line
 names at most two students and summarizes further matches as `N others`, so a
 shared placeholder does not fill the result box. The review advice appears
-once after every matching field.
+once after every matching field. Phone warnings omit the parenthetical value:
+matched records can store different formatting for the same digits, so no single
+formatted value represents all named students.
 
 `EditCommand` compares only name, phone, or email values that differ from the
 selected record. It excludes the selected `Student` instance but still uses
@@ -2776,6 +2778,8 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add Bernice Yu -p "+65 (9123)-4567" -e bernice@example.com`<br>
       Expected: Bernice is saved. The result names Alex Yeoh and the matching
       `phone`, because the complete digit sequences match despite punctuation.
+      The warning says `Alex Yeoh has the same phone.` without a parenthetical
+      number; neither stored formatting is attributed to the other record.
       Exit and restart TAB; both phone numbers retain their entered formatting.
 
    1. Test case: `add Charlie Tan -p ６５９１２３４５６７`<br>
