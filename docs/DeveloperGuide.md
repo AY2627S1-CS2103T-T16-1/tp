@@ -417,10 +417,14 @@ as its application directory, preserving the development workflow.
 `add` and `edit` mark their fields with options,
 `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
 `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`,
-where AB3 marked them with prefixes such as `p/`.
+where AB3 marked them with prefixes such as `p/`. The `edit` target may also
+be an NUS Student ID that starts with a letter instead of a displayed index;
+IDs starting with a digit must be addressed by index. The `--id` option sets
+the ID field rather than selecting the target.
 The value options have descriptive long aliases: `--name`, `--phone`,
 `--email`, and `--tag` correspond to `-n`, `-p`, `-e`, and `-t` respectively.
-`add` takes its name in the preamble, so `--name` applies only to `edit`.
+`add` takes its name in the preamble. `edit` accepts `-n`/`--name` to change a
+name, and `find` accepts the same option to search names.
 
 A prefix has to be a sequence a value never contains, and no such sequence
 exists for a name. `s/o`, `d/o`, `a/l` and `a/p` are ordinary parts of
@@ -461,9 +465,10 @@ with a hyphen. An empty attached value must be quoted as in `--tag=""`, so an
 accidental `--tag=` cannot clear data. `CommandTokenizer` records whether a
 token began with a quote so a fully quoted `"--tag=T1"` remains a value, while
 the quote around the value in `--tag="Lab 3"` does not hide the option marker.
-The presence-only `--follow-up` option (alias `-f`) and edit-only
+The presence-only `--follow-up` option (alias `-f`) and
 `--no-follow-up` option (alias `-nf`) instead record an empty value and consume
-no following token. This lets
+no following token. `add` accepts only `--follow-up`; `edit` accepts both to set
+or clear the status, and `find` accepts both to filter by that status. This lets
 `FlagArgumentMap` distinguish an
 absent option from a present marker without a separate representation. An
 attached value on a presence-only option is refused specifically. An unknown
@@ -511,13 +516,16 @@ map to `FLAG_ADD_TAG` or `FLAG_REMOVE_TAG`, respectively. Exactly one action
 option is accepted; conflicting actions and repeated options, including mixed
 aliases, are rejected. Missing fields and invalid field values are collected
 before a command is created.
-`TagCommandParser` and `EditCommandParser` share `ParserUtil.parseRequiredIndex`
-to distinguish a missing index from an invalid one; each collects its errors
-with `ParseProblems` and applies its own tag rules.
-Both use `FlagTokenizer.tokenizeWithIndex`, which reports an unquoted negative
-number as both an invalid index and an unknown option. A value following a valid
-index is reported separately by `parseRequiredIndex`. Tag syntax failures and
-a missing action option include guidance for both addition and removal.
+`TagCommandParser` uses `ParserUtil.parseRequiredIndex` to distinguish a missing
+index from an invalid one. `EditCommandParser` uses
+`ParserUtil.parseRequiredStudentTarget` to read a displayed index or an NUS
+Student ID starting with a letter. Each collects errors with `ParseProblems`
+and applies its own tag rules. Both use `FlagTokenizer.tokenizeWithIndex`,
+which reports an unquoted negative number as both an invalid index and an
+unknown option. For `tag`, `parseRequiredIndex` reports a value following a
+valid index; for `edit`, `parseRequiredStudentTarget` reports a value following
+a valid target. Tag syntax failures and a missing action option include
+guidance for both addition and removal.
 
 `TagCommand` resolves the index against the displayed list. It compares the
 normalized tag names ignoring case before copying the existing tag set and
@@ -692,8 +700,8 @@ load without migration or gratuitous rewrites.
 `StudentCard` shows a `Needs follow-up` label for true. For false it makes the
 label both invisible and unmanaged, so the card keeps no blank placeholder
 row. Successful add, edit and delete feedback formats student records
-consistently with the student card: optional fields (email, tags, follow-up
-status) appear only when present, with tags ordered alphabetically ignoring
+consistently with the student card: optional fields (NUS Student ID, email, tags,
+follow-up status) appear only when present, with tags ordered alphabetically ignoring
 case, avoiding placeholder labels or empty tag markers.
 
 ### Field values
@@ -721,6 +729,11 @@ They normalize for different reasons, and the rule each one enforces differs.
 | `Name` | it is displayed and searched as text, so visually identical names should have the same stored form | at least one letter or number |
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
+
+Nothing else is rejected in any of the three. A phone number may hold `+`,
+whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
+script. None of those characters can hinder TAB, because none of these
+fields is parsed, dialled, or used to build a file path.
 
 **The NUS Student ID may be absent.** `NusStudentId` accepts between 1 and 32
 ASCII letters and digits. Input letters are case-insensitive and the value is
@@ -807,13 +820,15 @@ non-empty string is trimmed before validation, matching command input; a
 malformed address is still refused rather than being quietly dropped.
 
 `edit INDEX -e ""` clears an email without removing the student or changing
-other fields. `EditStudentDescriptor` stores an `Optional<Email>` and records
-`isEmailEdited` separately: false leaves the existing value alone, true with
-an empty optional clears it, and true with an address replaces it. `setEmail`
-requires an address and `clearEmail` explicitly requests removal. Both mark
-the email as edited, so callers cannot toggle the intent independently of the
-replacement value. Copies use those same methods to preserve all three states.
-The descriptor is not persisted, so its optional field does not affect JSON.
+other fields. `EditStudentDescriptor` stores an `OptionalFieldEdit<Email>`
+that encapsulates the value and edit intent; `isEmailEdited()` is derived from
+that state. An unedited field leaves the existing value alone, an edited field
+with an empty optional clears it, and an edited field with an address replaces
+it. `setEmail` requires an address and `clearEmail` explicitly requests removal.
+Both mark the email as edited, so callers cannot toggle the intent independently
+of the replacement value. The `OptionalFieldEdit` copy constructor preserves
+all three states. The descriptor is not persisted, so its state does not affect
+JSON.
 
 The parser leaves the email untouched when `-e` is absent, calls `clearEmail`
 for a token that is empty after trimming, and sets a replacement only after
@@ -903,53 +918,6 @@ their execution feedback. `FindCommand` counts only the matching students
 singular (`Found 1 student.`), and plural (`Found <n> students.`) results.
 `ListCommand` reports the number of students displayed after resetting the filter
 (`Listed 0 students.`, `Listed 1 student.`, or `Listed <n> students.`).
-
-Nothing else is rejected in any of the three. A phone number may hold `+`,
-whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
-script. None of those characters can hinder TAB, because none of these
-fields is parsed, dialled, or used to build a file path.
-
-### Handling an unreadable data file
-
-Startup distinguishes a missing student-book file from an unreadable one. A
-missing `data/tab.json` is a first launch and receives the sample student book.
-An existing file is first parsed as JSON and then every student record and
-field is converted to its model type. Both stages finish before the normal UI
-can accept a command.
-
-`FileUtil.readFromFile` decodes UTF-8 strictly and removes only an optional
-leading BOM before JSON parsing. This accepts files saved by editors that add
-a BOM while rejecting malformed byte sequences rather than silently replacing
-letters with U+FFFD. `JsonUtil` translates decoding failures into an encoding
-explanation and recovery guidance through the same `DataLoadingException`
-boundary; startup preserves the original bytes and blocks the normal UI.
-
-`JsonUtil` turns malformed JSON or an incompatible JSON shape into a
-`DataLoadingException`. For a syntax error, it uses the deepest parser
-exception so that the displayed line and column identify the offending token
-rather than the last successfully mapped value. It pairs the concise parser
-explanation with the affected line and at most one line on either side. Each
-source line is limited to 160 characters; an affected long line is cropped
-around the reported column so that minified JSON remains useful without
-filling the dialog. If the parser supplies no usable location, `JsonUtil`
-omits the source instead of falling back to Jackson's source-bearing message.
-During model conversion, `JsonAdaptedStudent` identifies the invalid field and
-`JsonSerializableStudentBook` adds the one-based record number and its name
-when available. `JsonStudentBookStorage` carries that explanation through the
-same `DataLoadingException` boundary.
-
-`MainApp` records a student-book loading error and creates an empty model only
-as an internal placeholder so that application shutdown remains safe. It gives
-the error to `UiManager`. Before constructing `MainWindow`, `UiManager` checks
-for that error. If one is present, it shows an error dialog containing the
-data-file path, the specific reason, and recovery guidance. Closing the dialog
-closes TAB because the normal window was never opened. No command, including
-`exit`, can therefore save the placeholder over the unreadable file.
-
-Failing closed was chosen over displaying a partial or read-only student book.
-It keeps recovery small and unambiguous: the User repairs or replaces the file
-and restarts TAB. Loading readable records separately and reloading without a
-restart remain separate future features.
 
 #### Student names
 
@@ -1045,6 +1013,48 @@ stylesheet overrides what code sets on a styleable property, so a
 drawn. The row shares its width out from what the name asks for, so a name
 that asked only for what it is drawn at would be handed less room on every
 pass, and the name and the tags beside it would chase each other down.
+
+### Handling an unreadable data file
+
+Startup distinguishes a missing student-book file from an unreadable one. A
+missing `data/tab.json` is a first launch and receives the sample student book.
+An existing file is first parsed as JSON and then every student record and
+field is converted to its model type. Both stages finish before the normal UI
+can accept a command.
+
+`FileUtil.readFromFile` decodes UTF-8 strictly and removes only an optional
+leading BOM before JSON parsing. This accepts files saved by editors that add
+a BOM while rejecting malformed byte sequences rather than silently replacing
+letters with U+FFFD. `JsonUtil` translates decoding failures into an encoding
+explanation and recovery guidance through the same `DataLoadingException`
+boundary; startup preserves the original bytes and blocks the normal UI.
+
+`JsonUtil` turns malformed JSON or an incompatible JSON shape into a
+`DataLoadingException`. For a syntax error, it uses the deepest parser
+exception so that the displayed line and column identify the offending token
+rather than the last successfully mapped value. It pairs the concise parser
+explanation with the affected line and at most one line on either side. Each
+source line is limited to 160 characters; an affected long line is cropped
+around the reported column so that minified JSON remains useful without
+filling the dialog. If the parser supplies no usable location, `JsonUtil`
+omits the source instead of falling back to Jackson's source-bearing message.
+During model conversion, `JsonAdaptedStudent` identifies the invalid field and
+`JsonSerializableStudentBook` adds the one-based record number and its name
+when available. `JsonStudentBookStorage` carries that explanation through the
+same `DataLoadingException` boundary.
+
+`MainApp` records a student-book loading error and creates an empty model only
+as an internal placeholder so that application shutdown remains safe. It gives
+the error to `UiManager`. Before constructing `MainWindow`, `UiManager` checks
+for that error. If one is present, it shows an error dialog containing the
+data-file path, the specific reason, and recovery guidance. Closing the dialog
+closes TAB because the normal window was never opened. No command, including
+`exit`, can therefore save the placeholder over the unreadable file.
+
+Failing closed was chosen over displaying a partial or read-only student book.
+It keeps recovery small and unambiguous: the User repairs or replaces the file
+and restarts TAB. Loading readable records separately and reloading without a
+restart remain separate future features.
 
 ### Confirming a clear
 
@@ -1818,8 +1828,9 @@ These were raised during requirement gathering and left out of the product.
 * **Whitespace**: The Unicode characters with the `White_Space` property, as matched by Java's `(?U)\s`: `U+0009` to
   `U+000D`, `U+0020`, `U+0085`, `U+00A0`, `U+1680`, `U+2000` to `U+200A`, `U+2028` to `U+2029`, `U+202F`, `U+205F`
   and `U+3000`. This set excludes the zero-width space (`U+200B`), byte order mark (`U+FEFF`), zero-width non-joiner
-  (`U+200C`) and zero-width joiner (`U+200D`). It governs `CommandTokenizer` and normalized field values, not every
-  parser: top-level command parsing retains narrower ASCII-oriented rules.
+  (`U+200C`) and zero-width joiner (`U+200D`). It governs `CommandTokenizer`, normalized field values, and
+  top-level command parsing, where `StudentBookParser` uses `StringUtil.isWhitespace`
+  to separate the command word from its arguments.
 
 --------------------------------------------------------------------------------------------------------------------
 
