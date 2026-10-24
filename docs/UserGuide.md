@@ -280,6 +280,8 @@ The value options accept these equivalent spellings: `-p` and `--phone`,
 be mixed in one command, but giving a single-valued field (phone, email or NUS
 Student ID) twice is an error even when the two spellings differ. Tags are
 repeatable: use `-t` or `--tag` once for each tag, mixing the spellings if you wish.
+Tags differing only in case or normalized whitespace become one tag; the first
+spelling in the command is kept. For example, `-t Lab -t lab -t LAB` keeps `Lab`.
 
 <box type="tip" seamless>
 
@@ -496,7 +498,8 @@ and `--phone`, `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`.
 The spellings may be mixed in one command, but giving a single-valued field
 (name, phone, email or NUS Student ID) twice is an error even when the two
 spellings differ. Tags are repeatable: use `-t` or `--tag` once for each
-replacement tag, mixing the spellings if you wish.
+replacement tag, mixing the spellings if you wish. Case and normalized whitespace
+variants become one tag, retaining the first spelling supplied in the command.
 
 <box type="tip" seamless>
 
