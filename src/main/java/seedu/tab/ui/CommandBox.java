@@ -1,5 +1,6 @@
 package seedu.tab.ui;
 
+import java.util.Locale;
 import java.util.function.BooleanSupplier;
 
 import javafx.animation.KeyFrame;
@@ -399,7 +400,7 @@ public class CommandBox extends UiPart<Region> {
      * Returns the style class that colours {@code kind}.
      */
     private static String styleClassFor(CommandHighlighter.Kind kind) {
-        return "command-" + kind.name().toLowerCase().replace('_', '-');
+        return "command-" + kind.name().toLowerCase(Locale.ROOT).replace('_', '-');
     }
 
     /**

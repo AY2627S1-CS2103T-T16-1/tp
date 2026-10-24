@@ -5,6 +5,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -125,7 +126,7 @@ public class Messages {
      * @return The formatted summary message.
      */
     public static String getStudentsFoundOverview(int count) {
-        return String.format(MESSAGE_STUDENTS_FOUND_OVERVIEW, count, StringUtil.getPluralSuffix(count));
+        return String.format(Locale.ROOT, MESSAGE_STUDENTS_FOUND_OVERVIEW, count, StringUtil.getPluralSuffix(count));
     }
 
     /**

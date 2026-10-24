@@ -117,6 +117,11 @@ The student card's `TagRow` creates a label for every tag, with its full text.
 Layout shows as many complete chips as fit and lists all hidden tags in the
 overflow chip's tooltip. There is no fixed chip count or label length cap.
 
+English numeric feedback and data-load diagnostics format with `Locale.ROOT`,
+and command highlight style names use the same locale when lowercasing. This
+keeps digits and CSS selectors consistent without changing the JVM locale or
+student data.
+
 `SummaryPanel` wraps complete tag names within the fixed 150 px sidebar.
 Each count retains its preferred width, while the tag list scrolls vertically
 as wrapped rows grow. Names are not shortened, so tags differing only at the
@@ -2097,6 +2102,24 @@ testers are expected to do more *exploratory* testing.
       `exit` with trailing whitespace closes TAB. Run plain `clear` with
       trailing whitespace only when the test data can be removed; it follows
       the documented clear flow.
+
+### Regional settings
+
+1. Consistent English output
+
+   1. Launch TAB with `java -Duser.language=tr -Duser.country=TR -jar tab.jar`,
+      then repeat with `az` / `AZ`. Type `add Priya -p 91234567 --follow-up`.<br>
+      Expected: Both options are mauve; the command executes as usual.
+
+   1. Relaunch with `fa` / `IR`, `ar` / `EG`, then `bn` / `BD`. Run `list`,
+      `find -n Priya`, and `clear`, cancelling with `n`.<br>
+      Expected: Reply and summary counts use digits 0–9. No data changes on
+      cancellation. Repeat under `en` / `SG` for comparison.
+
+   1. Close TAB and make an invalid edit in a **copy** of its data file, such
+      as deleting a comma between records, then open that copy.<br>
+      Expected: The load error's line, column and excerpt numbers use 0–9.
+      An invalid field instead identifies its student record with 0–9.
 
 ### Typing a command word in another case
 

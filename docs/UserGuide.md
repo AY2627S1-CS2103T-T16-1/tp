@@ -128,6 +128,9 @@ text remains one command; inspect it before pressing Enter.
 
 ### Typing a command
 
+TAB uses an English interface. Counts, displayed indices and data-file line
+numbers use digits 0–9 regardless of your computer’s regional settings.
+
 The command line marks the parts of a command as you type, so a mistake is
 visible before you press Enter:
 
