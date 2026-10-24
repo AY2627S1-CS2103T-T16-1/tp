@@ -931,6 +931,11 @@ For a non-match, the command clears the filter and appends
 visible and the User knows to re-read indexes. A rejected addition leaves
 both the book and filter unchanged.
 
+`EditCommand` first compares the prospective record with the selected record using
+full equality. An unchanged edit returns an explicit no-change response before
+checking duplicates or replacing the student, preserving the filter and avoiding
+unnecessary list notifications. `LogicManager` continues to skip saving an unchanged book.
+
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
 ignore case; names already carry `normalizeFieldValue`'s whitespace
@@ -985,7 +990,8 @@ The parser leaves the email untouched when `-e` is absent, calls `clearEmail`
 for a token that is empty after trimming, and sets a replacement only after
 validation succeeds. A rejected value is recorded as a parse problem without
 assigning a null email or requesting a clear. A bare option is still an error.
-Clearing counts as an edit even when the email is already absent. `EditCommand`
+A clear satisfies the parser's requirement for a provided field even when the email
+is already absent; execution then reports no changes if no other value changes. `EditCommand`
 passes the optional value directly into the `Student` constructor, including
 an empty optional when clearing. The saved record omits the `email` key and
 reloads through the existing optional-email storage contract.
@@ -2738,6 +2744,18 @@ testers are expected to do more *exploratory* testing.
       does not open. Dismiss the dialog with `Close TAB`; the invalid file
       remains byte-for-byte unchanged. Restore the backup with TAB closed,
       then relaunch and check that the backed-up records load.
+
+1. Reporting unchanged edits
+
+   1. Prerequisites: Start from an empty book; run `add Amy Bee -p 91234567`,
+      then `find -n Amy`.
+   1. Test cases: `edit 1 -p 91234567`, `edit 1 -e ""`, `edit 1 -i ""`,
+      `edit 1 -t ""`, and `edit 1 -nf`.<br>
+      Expected: Each replies `Student already has the requested details. No changes made.`
+      The student, active search, displayed list and saved file remain unchanged.
+   1. Test case: `edit 1 -n "Amy Bee" -p 82223333`.<br>
+      Expected: `Edited student: Amy Bee; Phone: 82223333`. The new phone is saved,
+      Amy remains visible, and repeating the command reports no changes.
 
 1. Checking duplicate identity behavior
 
