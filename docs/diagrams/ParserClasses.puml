@@ -42,3 +42,4 @@ FlagArgumentMap -down-> Flag
 FlagTokenizer .down.> Flag
 XYZCommand -up-|> Command
 @enduml
+

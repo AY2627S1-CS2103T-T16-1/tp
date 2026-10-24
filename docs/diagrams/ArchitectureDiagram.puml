@@ -36,3 +36,4 @@ Storage -up[STORAGE_COLOR].> Model
 Storage .right[STORAGE_COLOR].>File
 User ..> UI
 @enduml
+
