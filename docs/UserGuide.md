@@ -112,6 +112,12 @@ text remains one command; inspect it before pressing Enter.
   `Options given more than once: -f. Give each listed option only once.`
   This also covers mixed short and long spellings, such as `-f` and `--follow-up`.
 
+* An `INDEX` refers to a positive position in the **displayed** student list.
+  If it exceeds that list, TAB quotes the index and reports the number of students
+  currently shown; `list` restores all students before you choose an index again.
+  Indices up to 2147483647 can be read; a larger positive integer gets a specific
+  upper-bound message instead of being described as non-positive.
+
 * Commands that take no parameters (`help`, `list`, `exit`, and `clear`)
   reject unexpected input and report it without executing the command.<br>
   For example, `help 123` reports `help takes no arguments. Unexpected input:
@@ -797,6 +803,9 @@ Format: `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID
   the book — even while a search is hiding them. The match ignores case.
 * `--id NUS_STUDENT_ID` names the value as an ID, which an ID starting with a digit
   needs — the plain form would read it as an index. `-i` works in place of `--id`.
+* If an out-of-range numeric target is also a stored NUS Student ID, TAB suggests
+  the exact `delete --id VALUE` command. Leading zeroes in an ID are preserved.
+  A bare number that is a valid displayed position still deletes by that position.
 * The command result identifies the removed record (`Deleted student: NAME; Phone: PHONE...`)
   so you can verify exactly which student was deleted from the book.
 * `delete` takes no field values, so a value found after the target is refused with

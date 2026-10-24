@@ -655,6 +655,14 @@ number as both an invalid index and an unknown option. A value following a valid
 index is reported separately by `parseRequiredIndex`. Tag syntax failures and
 a missing action option include guidance for both addition and removal.
 
+`ParserUtil.parseIndex` distinguishes malformed/non-positive input from a positive
+integer exceeding the supported index range. `StudentTarget` reports out-of-range
+positions with their original input spelling and the current displayed count,
+including zero. Retaining that spelling also lets delete suggest an exact `--id`
+command for a stored numeric ID without dropping leading zeroes. An in-range
+number remains an index even when another record holds the same numeric ID.
+The original spelling affects diagnostics only, not target equality or hashing.
+
 `TagCommand` stores a `StudentTarget`, as edit and delete do. It resolves an
 index against the displayed list and an ID across the entire book, so a
 roster ID remains usable while a search hides the student. It compares the
@@ -3299,6 +3307,25 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Restart TAB and repeat the name searches.<br>
       Expected: Original spellings survive saving and reloading; normalized
       comparisons still find the students. Run `list` to restore the full list.
+
+### Diagnosing student-target mistakes
+
+1. Start from an empty book and add `add Amy Bee -p 91234567 --id 001234` and
+   `add Other Student -p 82223333`. Run `find -n Amy`, then try `delete 3`,
+   `edit 3 -p 81112222`, and `tag 3 -a T1`.<br>
+   Expected: Each quotes index `3`, reports one displayed student, and suggests
+   `list`. No record, active filter or saved data changes. Repeat after
+   `find -n Missing`; the message reports zero displayed students.
+1. Try `edit 6591234567 -p 81112222`, `tag 6591234567 -a T1`, and
+   `delete 6591234567`.<br>
+   Expected: Each explains the upper index bound rather than calling the positive
+   integer non-positive. Delete also shows the explicit ID form. Nothing changes.
+1. With Amy hidden, try `delete 001234`.<br>
+   Expected: The error retains the leading zeroes and suggests `delete --id 001234`.
+   That explicit command deletes Amy even while the filter hides her.
+1. Open help and find the delete section.<br>
+   Expected: It lists index, plain NUS Student ID and explicit `--id` forms.
+   `delete 1ABC` shows usage including `delete --id 1ABC` as a recovery example.
 
 ### Locating students by digits in formatted phone numbers
 
