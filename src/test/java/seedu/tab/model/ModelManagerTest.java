@@ -98,6 +98,7 @@ public class ModelManagerTest {
         modelManager = new ModelManager(studentBook, userPrefs);
         ModelManager modelManagerCopy = new ModelManager(studentBook, userPrefs);
         assertTrue(modelManager.equals(modelManagerCopy));
+        assertEquals(modelManager.hashCode(), modelManagerCopy.hashCode());
 
         // same object -> returns true
         assertTrue(modelManager.equals(modelManager));
@@ -116,6 +117,11 @@ public class ModelManagerTest {
         modelManager.updateFilteredStudentList(
                 new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of(keywords))));
         assertFalse(modelManager.equals(new ModelManager(studentBook, userPrefs)));
+
+        modelManagerCopy.updateFilteredStudentList(
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of(keywords))));
+        assertEquals(modelManager, modelManagerCopy);
+        assertEquals(modelManager.hashCode(), modelManagerCopy.hashCode());
 
         // resets modelManager to initial state for upcoming tests
         modelManager.updateFilteredStudentList(PREDICATE_SHOW_ALL_STUDENTS);

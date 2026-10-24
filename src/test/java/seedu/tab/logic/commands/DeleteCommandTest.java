@@ -200,6 +200,7 @@ public class DeleteCommandTest {
         // same values -> returns true
         DeleteCommand deleteFirstCommandCopy = new DeleteCommand(INDEX_FIRST_STUDENT);
         assertTrue(deleteFirstCommand.equals(deleteFirstCommandCopy));
+        assertEquals(deleteFirstCommand.hashCode(), deleteFirstCommandCopy.hashCode());
 
         // an index and the target that holds it name the same student -> returns true
         assertTrue(deleteFirstCommand.equals(
@@ -207,6 +208,8 @@ public class DeleteCommandTest {
 
         // same NUS Student ID -> returns true
         assertTrue(deleteAliceByIdCommand.equals(deleteById("A12345678C")));
+        assertTrue(deleteAliceByIdCommand.equals(deleteById("a12345678c")));
+        assertEquals(deleteAliceByIdCommand.hashCode(), deleteById("a12345678c").hashCode());
 
         // different types -> returns false
         assertFalse(deleteFirstCommand.equals(1));

@@ -5,6 +5,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
@@ -18,20 +19,6 @@ public class FileUtil {
     private static final String CHARSET = "UTF-8";
 
     private FileUtil() {} // this class only holds helpers
-
-    /**
-     * Creates a file if it does not exist along with its missing parent directories.
-     * @throws IOException if the file or directory cannot be created.
-     */
-    public static void createIfMissing(Path file) throws IOException {
-        if (Files.exists(file)) {
-            return;
-        }
-
-        createParentDirsOfFile(file);
-
-        Files.createFile(file);
-    }
 
     /**
      * Creates parent directories of file if it has a parent directory
@@ -56,8 +43,9 @@ public class FileUtil {
 
     /**
      * Writes the given string to a temporary file, then atomically replaces the target file.
-     * Will create the file if it does not exist yet.
+     * Creates missing parent directories and creates the target only after a successful write.
      * Preserves an existing file if writing the new contents fails.
+     * Rejects an unresolvable symbolic link without replacing it.
      */
     public static void writeToFile(Path file, String content) throws IOException {
         writeToFile(file, content, FileUtil::writeAndSync);
@@ -65,6 +53,7 @@ public class FileUtil {
 
     static void writeToFile(Path file, String content, TemporaryFileWriter writer) throws IOException {
         Path targetFile = resolveWriteTarget(file);
+        createParentDirsOfFile(targetFile);
         ensureWritable(targetFile);
         Path temporaryFile = createTemporaryFile(targetFile);
 
@@ -91,7 +80,7 @@ public class FileUtil {
 
     private static Path resolveWriteTarget(Path file) throws IOException {
         Path absoluteFile = file.toAbsolutePath();
-        return Files.exists(absoluteFile) ? absoluteFile.toRealPath() : absoluteFile;
+        return Files.exists(absoluteFile, LinkOption.NOFOLLOW_LINKS) ? absoluteFile.toRealPath() : absoluteFile;
     }
 
     private static void ensureWritable(Path file) throws AccessDeniedException {
