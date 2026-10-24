@@ -1,9 +1,12 @@
 package seedu.tab.ui;
 
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.layout.Region;
 import seedu.tab.model.student.Student;
 
@@ -25,6 +28,33 @@ public class StudentListPanel extends UiPart<Region> {
         super(FXML);
         studentListView.setItems(studentList);
         studentListView.setCellFactory(listView -> new StudentListViewCell());
+    }
+
+    /**
+     * Scrolls the student's card into view without moving keyboard focus.
+     */
+    public void scrollTo(Student student) {
+        Scene scene = studentListView.getScene();
+        Runnable reveal = new Runnable() {
+            private boolean hasScrolled;
+
+            @Override
+            public void run() {
+                if (hasScrolled) {
+                    scene.removePostLayoutPulseListener(this);
+                }
+                int index = studentListView.getItems().indexOf(student);
+                if (index >= 0) {
+                    VirtualFlow<?> flow = (VirtualFlow<?>) studentListView.lookup(".virtual-flow");
+                    flow.scrollTo(index);
+                }
+                hasScrolled = true;
+                Platform.requestNextPulse();
+            }
+        };
+        // The first scroll materializes cards; the next pulse corrects their measured heights.
+        scene.addPostLayoutPulseListener(reveal);
+        Platform.requestNextPulse();
     }
 
     /**

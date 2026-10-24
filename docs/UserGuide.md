@@ -266,7 +266,8 @@ Format: `help`
 
 ### Adding a student: `add`
 
-Adds a student to the student book.
+Adds a student to the student book. After a successful save, TAB scrolls the new
+student's card into view and keeps focus in the command box.
 
 If the new student matches the active search, the search stays active and the
 student appears at the end of its results. Otherwise, TAB shows all students
