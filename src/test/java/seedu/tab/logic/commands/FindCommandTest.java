@@ -45,8 +45,10 @@ public class FindCommandTest {
         assertTrue(findFirstCommand.equals(findFirstCommand));
 
         // same values -> returns true
-        FindCommand findFirstCommandCopy = new FindCommand(firstPredicate);
+        FindCommand findFirstCommandCopy = new FindCommand(
+                new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("first"))));
         assertTrue(findFirstCommand.equals(findFirstCommandCopy));
+        assertEquals(findFirstCommand.hashCode(), findFirstCommandCopy.hashCode());
 
         // different types -> returns false
         assertFalse(findFirstCommand.equals(1));

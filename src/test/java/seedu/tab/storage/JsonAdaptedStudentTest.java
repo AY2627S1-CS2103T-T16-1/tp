@@ -59,6 +59,14 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_validEmailWithInvisibleMark_buildsStudentHoldingNormalizedEmail() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, "\u200E" + VALID_EMAIL, VALID_TAGS, false);
+
+        assertEquals(Optional.of(new Email(VALID_EMAIL)), student.toModelType().getEmail());
+    }
+
+    @Test
     public void toModelType_invalidName_throwsIllegalValueException() {
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(INVALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
@@ -180,6 +188,17 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_NUS_STUDENT_ID, VALID_TAGS, false);
         assertEquals(Optional.of(new NusStudentId(VALID_NUS_STUDENT_ID)), student.toModelType().getNusStudentId());
+    }
+
+    @Test
+    public void toModelType_nusStudentIdWithWhitespaceAndInvisibleMark_buildsStudentHoldingNormalizedId()
+            throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, " \u200E" + VALID_NUS_STUDENT_ID.toLowerCase() + " ",
+                VALID_TAGS, false);
+
+        assertEquals(Optional.of(new NusStudentId(VALID_NUS_STUDENT_ID)),
+                student.toModelType().getNusStudentId());
     }
 
     @Test

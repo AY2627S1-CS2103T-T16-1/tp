@@ -96,6 +96,11 @@ public class TagRow extends Region {
         return Math.min(computePrefWidth(height), RECOGNISABLE_CHIP_WIDTH + forACount);
     }
 
+    /** Returns the width needed to show the total count when every tag is hidden. */
+    double getCountWidth() {
+        return tagNames.size() > 1 ? snapSizeX(widthOfTheRest(0)) : 0;
+    }
+
     @Override
     protected double computePrefHeight(double width) {
         double tallest = 0;

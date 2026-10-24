@@ -77,9 +77,8 @@ public class StudentCard extends UiPart<Region> {
     }
 
     /**
-     * Holds {@code details} to the space the card gives it, so that nothing in it is ever
-     * drawn over the pill at the card's trailing edge. The lines inside give way on their
-     * own, so this is the backstop rather than the rule.
+     * Holds {@code details} to the space the card gives it. The lines inside give way on
+     * their own, so clipping is a backstop against drawing outside the card.
      */
     private static void clipToItsOwnBox(Region details) {
         Rectangle clip = new Rectangle();
