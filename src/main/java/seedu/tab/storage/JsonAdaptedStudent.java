@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
 import seedu.tab.logic.Messages;
@@ -45,7 +46,7 @@ class JsonAdaptedStudent {
             @JsonProperty("email") String email,
             @JsonProperty("nusStudentId") String nusStudentId,
             @JsonProperty("tags") List<JsonAdaptedTag> tags,
-            @JsonProperty("flag") Boolean flag) {
+            @JsonProperty("flag") @JsonDeserialize(using = JsonFollowUpFlagDeserializer.class) Boolean flag) {
         this.name = name;
         this.phone = phone;
         this.email = email;

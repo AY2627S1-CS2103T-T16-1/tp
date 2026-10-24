@@ -53,6 +53,16 @@ public class PhoneTest {
     }
 
     @Test
+    public void getDigits_formattedUnicodeNumber_normalizesWithoutChangingValue() {
+        String formatted = "+٦٥ (９１２３)-४५६७ ext 𝟚𝟙";
+        Phone phone = new Phone(formatted);
+
+        assertEquals("659123456721", phone.getDigits());
+        assertEquals(formatted, phone.value);
+        assertEquals("", Phone.normalizeDigits("---"));
+    }
+
+    @Test
     public void equals() {
         Phone phone = new Phone("999");
 

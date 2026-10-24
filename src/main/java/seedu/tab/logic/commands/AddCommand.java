@@ -6,6 +6,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
+import static seedu.tab.model.Model.PREDICATE_SHOW_ALL_STUDENTS;
 
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -53,6 +54,8 @@ public class AddCommand extends Command {
 
     public static final String MESSAGE_SUCCESS = "New student added: %1$s";
 
+    public static final String MESSAGE_SEARCH_CLEARED = "Search cleared to show the new student.";
+
     private final Logger logger = LogsCenter.getLogger(AddCommand.class);
 
     private final Student toAdd;
@@ -79,6 +82,10 @@ public class AddCommand extends Command {
                 String.format(MESSAGE_SUCCESS, Messages.format(toAdd)),
                 toAdd, model.getStudentBook().getStudentList());
         model.addStudent(toAdd);
+        if (!model.getFilteredStudentPredicate().test(toAdd)) {
+            model.updateFilteredStudentList(PREDICATE_SHOW_ALL_STUDENTS);
+            feedback += "\n" + MESSAGE_SEARCH_CLEARED;
+        }
         logger.info("Added a student; the book now holds "
                 + model.getStudentBook().getStudentList().size());
         return new CommandResult(feedback);

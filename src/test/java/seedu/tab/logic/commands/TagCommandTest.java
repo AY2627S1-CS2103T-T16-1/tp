@@ -77,7 +77,7 @@ public class TagCommandTest {
         Tag tag = new Tag("Lab 3");
         TagCommand command = new TagCommand(INDEX_FIRST_STUDENT, tag);
         String expected = TagCommand.class.getCanonicalName()
-                + "{targetIndex=" + INDEX_FIRST_STUDENT + ", tag=" + tag + ", action=ADD}";
+                + "{target=" + StudentTarget.byIndex(INDEX_FIRST_STUDENT) + ", tag=" + tag + ", action=ADD}";
         assertEquals(expected, command.toString());
     }
 }

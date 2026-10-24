@@ -13,6 +13,34 @@ public class LikelyDuplicateWarningTest {
     private static final String SUCCESS_MESSAGE = "Student saved.";
 
     @Test
+    public void appendTo_equivalentPhoneDigits_warnsWithoutChangingFormatting() {
+        Student existing = new StudentBuilder().withName("Alice Tan").withPhone("9123-4567")
+                .withoutEmail().build();
+        for (String phone : List.of("91234567", "(9123) 4567", "9123.4567", "+9123-4567",
+                "９１２３４５６７", "٩١٢٣٤٥٦٧", "9123\u00a04567")) {
+            Student changed = new StudentBuilder().withName("Alicia Tan").withPhone(phone).withoutEmail().build();
+
+            assertEquals(SUCCESS_MESSAGE + "\n\nWARNING: Possible duplicate student: Alice Tan "
+                    + "has the same phone (" + changed.getPhone().value + ").\n"
+                    + "Review the records and delete duplicates only if they are the same person.",
+                    LikelyDuplicateWarning.appendTo(SUCCESS_MESSAGE, changed, List.of(existing)));
+            assertEquals("9123-4567", existing.getPhone().value);
+        }
+    }
+
+    @Test
+    public void appendTo_differentFullPhoneDigits_doesNotWarn() {
+        Student existing = new StudentBuilder().withName("Alice Tan").withPhone("9123-4567")
+                .withoutEmail().build();
+        for (String phone : List.of("+65 91234567", "91234567 ext 21", "91234568", "9123456")) {
+            Student changed = new StudentBuilder().withName("Alicia Tan").withPhone(phone).withoutEmail().build();
+
+            assertEquals(SUCCESS_MESSAGE, LikelyDuplicateWarning.appendTo(
+                    SUCCESS_MESSAGE, changed, List.of(existing)));
+        }
+    }
+
+    @Test
     public void appendTo_normalizedFieldsMatch_appendsEveryWarning() {
         Student existing = new StudentBuilder().withName("Alex Yeoh")
                 .withPhone("+65 9123 4567").withEmail("Alex@Example.com").build();
