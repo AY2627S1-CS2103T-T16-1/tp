@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -114,6 +115,11 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
         }
 
         return keywordsByField.equals(otherPredicate.keywordsByField) && followUp.equals(otherPredicate.followUp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(keywordsByField, followUp);
     }
 
     @Override
