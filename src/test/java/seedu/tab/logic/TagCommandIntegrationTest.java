@@ -64,6 +64,58 @@ public class TagCommandIntegrationTest {
     }
 
     @Test
+    public void execute_studentIdOutsideFilter_addsAndRemovesTagsWithoutChangingOtherFields() throws Exception {
+        model.updateFilteredStudentList(shown -> shown.getName().equals(otherStudent.getName()));
+        Student expected = new StudentBuilder(student).withTags("T1", "Lab 3", "组 1").build();
+
+        assertEquals("Added tag [组 1]: Amy Bee; NUS Student ID: A01234567X; Phone: 85355255; "
+                + "Email: amy@gmail.com; Tags: [Lab 3][T1][组 1]; Needs follow-up",
+                logic.execute("tag a01234567x --add=\"组 1\"").getFeedbackToUser());
+        assertEquals(List.of(otherStudent), model.getFilteredStudentList());
+        assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
+        assertEquals("Removed tag [组 1]: Amy Bee; NUS Student ID: A01234567X; Phone: 85355255; "
+                + "Email: amy@gmail.com; Tags: [Lab 3][T1]; Needs follow-up",
+                logic.execute("tag --id a01234567x -r \"组 1\"").getFeedbackToUser());
+        assertEquals(List.of(otherStudent), model.getFilteredStudentList());
+        assertEquals(List.of(otherStudent, student), storage.readStudentBook().orElseThrow().getStudentList());
+        assertEquals(2, saveCount);
+    }
+
+    @Test
+    public void execute_digitLeadingId_usesExplicitTargetAndPreservesIndexMeaning() throws Exception {
+        Student numericIdStudent = new StudentBuilder(student).withNusStudentId("1234").build();
+        model.setStudent(student, numericIdStudent);
+        storage.saveStudentBook(model.getStudentBook());
+        saveCount = 0;
+        model.updateFilteredStudentList(shown -> false);
+
+        assertFailureWithoutMutation("tag 1234 -a T2", CommandException.class,
+                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        logic.execute("tag -i 1234 -a T2");
+        Student expected = new StudentBuilder(numericIdStudent).withTags("T1", "Lab 3", "T2").build();
+        assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        logic.execute("tag --id=1234 -r T2");
+        assertEquals(List.of(otherStudent, numericIdStudent), storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_studentIdFailures_preservesModelDisplayAndSavedBytes() throws Exception {
+        assertFailureWithoutMutation("tag A0999999Z -a T2", CommandException.class,
+                String.format(Messages.MESSAGE_NO_STUDENT_WITH_NUS_ID, "A0999999Z"));
+        assertFailureWithoutMutation("tag --id A0999999Z -r T1", CommandException.class,
+                String.format(Messages.MESSAGE_NO_STUDENT_WITH_NUS_ID, "A0999999Z"));
+        assertFailureWithoutMutation("tag 1 --id A01234567X -a T2", ParseException.class,
+                TagCommand.MESSAGE_MULTIPLE_TARGETS);
+        assertFailureWithoutMutation("tag A01234567X -a t1", CommandException.class,
+                "This student already has tag [T1]. No changes made.");
+        model.updateFilteredStudentList(shown -> false);
+        assertFailureWithoutMutation("tag A01234567X -r \"Needs follow-up\"", CommandException.class,
+                "This student does not have tag [Needs follow-up]. No changes made.\n"
+                        + TagCommand.MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT);
+    }
+
+    @Test
     public void execute_addTag_preservesEveryFieldAndPersistsAfterReload() throws Exception {
         // The first displayed student is the second record in storage.
         model.updateFilteredStudentList(shown -> shown.getName().equals(student.getName()));
