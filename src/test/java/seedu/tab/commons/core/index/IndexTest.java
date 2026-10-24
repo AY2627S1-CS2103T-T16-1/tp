@@ -5,6 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
 public class IndexTest {
@@ -43,7 +48,9 @@ public class IndexTest {
 
         // same values -> returns true
         assertTrue(fifthStudentIndex.equals(Index.fromOneBased(5)));
+        assertEquals(fifthStudentIndex.hashCode(), Index.fromOneBased(5).hashCode());
         assertTrue(fifthStudentIndex.equals(Index.fromZeroBased(4)));
+        assertEquals(fifthStudentIndex.hashCode(), Index.fromZeroBased(4).hashCode());
 
         // same object -> returns true
         assertTrue(fifthStudentIndex.equals(fifthStudentIndex));
@@ -56,6 +63,20 @@ public class IndexTest {
 
         // different index -> returns false
         assertFalse(fifthStudentIndex.equals(Index.fromOneBased(1)));
+    }
+
+    @Test
+    public void hashCode_equalIndices_hashCollectionsRecognizeEqualKeys() {
+        Index oneBasedIndex = Index.fromOneBased(5);
+        Index zeroBasedIndex = Index.fromZeroBased(4);
+        Set<Index> indices = new HashSet<>();
+        indices.add(oneBasedIndex);
+        assertFalse(indices.add(zeroBasedIndex));
+        assertEquals(1, indices.size());
+
+        Map<Index, String> valuesByIndex = new HashMap<>();
+        valuesByIndex.put(oneBasedIndex, "fifth student");
+        assertEquals("fifth student", valuesByIndex.get(zeroBasedIndex));
     }
 
     @Test

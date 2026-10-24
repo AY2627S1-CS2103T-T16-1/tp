@@ -256,6 +256,13 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseEmail_valueWithInvisibleMark_returnsNormalizedEmail() throws Exception {
+        // a pasted address keeps a format character that the message cannot show, so the value
+        // is normalized before it is judged rather than quoted back with the mark hidden
+        assertEquals(new Email(VALID_EMAIL), ParserUtil.parseEmail("\u200E" + VALID_EMAIL));
+    }
+
+    @Test
     public void parseEmail_addressAtTheLengthLimit_returnsEmail() throws Exception {
         assertEquals(new Email(VALID_EMAIL_AT_MAX_LENGTH), ParserUtil.parseEmail(VALID_EMAIL_AT_MAX_LENGTH));
     }
@@ -293,6 +300,12 @@ public class ParserUtilTest {
     public void parseNusStudentId_validValueWithWhitespace_returnsNormalizedNusStudentId() throws Exception {
         String nusStudentIdWithWhitespace = WHITESPACE + VALID_NUS_STUDENT_ID.toLowerCase() + WHITESPACE;
         assertEquals(new NusStudentId(VALID_NUS_STUDENT_ID), ParserUtil.parseNusStudentId(nusStudentIdWithWhitespace));
+    }
+
+    @Test
+    public void parseNusStudentId_valueWithInvisibleMark_returnsNormalizedNusStudentId() throws Exception {
+        String withMark = "\u200E" + VALID_NUS_STUDENT_ID.toLowerCase();
+        assertEquals(new NusStudentId(VALID_NUS_STUDENT_ID), ParserUtil.parseNusStudentId(withMark));
     }
 
     @Test

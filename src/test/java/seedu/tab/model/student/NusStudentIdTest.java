@@ -32,8 +32,7 @@ public class NusStudentIdTest {
         assertFalse(NusStudentId.isValidNusStudentId("A0123-456X"));
         assertFalse(NusStudentId.isValidNusStudentId("A0123_456X"));
         assertFalse(NusStudentId.isValidNusStudentId("A0123!456X"));
-        assertFalse(NusStudentId.isValidNusStudentId("学1234567X"));
-        assertFalse(NusStudentId.isValidNusStudentId(" A01234567X "));
+        assertFalse(NusStudentId.isValidNusStudentId("?1234567X"));
         assertFalse(NusStudentId.isValidNusStudentId("A".repeat(NusStudentId.MAX_LENGTH + 1)));
 
         assertTrue(NusStudentId.isValidNusStudentId("A01234567X"));
@@ -42,6 +41,15 @@ public class NusStudentIdTest {
         assertTrue(NusStudentId.isValidNusStudentId("A"));
         assertTrue(NusStudentId.isValidNusStudentId("1"));
         assertTrue(NusStudentId.isValidNusStudentId("A".repeat(NusStudentId.MAX_LENGTH)));
+    }
+
+    @Test
+    public void isValidNusStudentId_surroundingWhitespaceOrInvisibleMarks_isAccepted() {
+        // an ID pasted from a web page carries marks the reader cannot see, so the value is
+        // normalized before it is judged, as names, phones and tags already are
+        assertTrue(NusStudentId.isValidNusStudentId(" A01234567X ")); // leading and trailing space
+        assertTrue(NusStudentId.isValidNusStudentId("\u200EA01234567X")); // leading direction mark
+        assertEquals("A01234567X", new NusStudentId("\u200Ea01234567x").value);
     }
 
     @Test
@@ -57,6 +65,13 @@ public class NusStudentIdTest {
     @Test
     public void isValidNusStudentId_veryLongAlphanumericValue_rejectsWithoutStackOverflow() {
         assertFalse(NusStudentId.isValidNusStudentId("A".repeat(100_000)));
+    }
+
+    @Test
+    public void isValidNusStudentId_unicodeCharacter_rejects() {
+        // Unicode character >= 128 should be rejected (fails character < 128 check)
+        assertFalse(NusStudentId.isValidNusStudentId("A0123456éX"));
+        assertFalse(NusStudentId.isValidNusStudentId("中"));
     }
 
     @Test

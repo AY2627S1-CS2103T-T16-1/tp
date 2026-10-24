@@ -39,8 +39,6 @@ public class EmailTest {
         assertFalse(Email.isValidEmail("peterjack@exam_ple.com")); // underscore in domain name
         assertFalse(Email.isValidEmail("peter jack@example.com")); // spaces in local part
         assertFalse(Email.isValidEmail("peterjack@exam ple.com")); // spaces in domain name
-        assertFalse(Email.isValidEmail(" peterjack@example.com")); // leading space
-        assertFalse(Email.isValidEmail("peterjack@example.com ")); // trailing space
         assertFalse(Email.isValidEmail("peterjack@@example.com")); // double '@' symbol
         assertFalse(Email.isValidEmail("peter@jack@example.com")); // '@' symbol in local part
         assertFalse(Email.isValidEmail("-peterjack@example.com")); // local part starts with a hyphen
@@ -65,6 +63,16 @@ public class EmailTest {
         assertTrue(Email.isValidEmail("peter_jack@very-very-very-long-example.com")); // long domain name
         assertTrue(Email.isValidEmail("if.you.dream.it_you.can.do.it@example.com")); // long local part
         assertTrue(Email.isValidEmail("e1234567@u.nus.edu")); // more than one period in domain
+    }
+
+    @Test
+    public void isValidEmail_surroundingWhitespaceOrInvisibleMarks_isAccepted() {
+        // an address pasted from a web page or a chat app carries marks the reader cannot see,
+        // so the value is normalized before it is judged, as names, phones and tags already are
+        assertTrue(Email.isValidEmail(" peterjack@example.com ")); // leading and trailing space
+        assertTrue(Email.isValidEmail("\u200Epeterjack@example.com")); // leading direction mark
+        assertTrue(Email.isValidEmail("peterjack@\u200Bexample.com")); // zero-width space inside
+        assertEquals("peterjack@example.com", new Email("\u200Epeterjack@example.com").value);
     }
 
     @Test

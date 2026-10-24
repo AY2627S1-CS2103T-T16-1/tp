@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.BreakIterator;
 import java.text.Normalizer;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -116,7 +115,40 @@ public class StringUtil {
         requireNonNull(keyword);
         checkArgument(!keyword.isEmpty(), "empty keyword");
 
-        return sentence.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
+        return foldCase(sentence).contains(foldCase(keyword));
+    }
+
+    /**
+     * Returns a comparison key for a name, ignoring case, Latin accents and curly apostrophes.
+     * The stored name is left unchanged. Marks belonging to other scripts are retained because
+     * they may represent separate vowels rather than optional accents.
+     */
+    public static String normalizeNameForComparison(String name) {
+        requireNonNull(name);
+        String decomposed = Normalizer.normalize(name, Normalizer.Form.NFD);
+        StringBuilder result = new StringBuilder();
+        boolean isLatin = false;
+        for (int codePoint : decomposed.codePoints().toArray()) {
+            int type = Character.getType(codePoint);
+            boolean isMark = type == Character.NON_SPACING_MARK || type == Character.COMBINING_SPACING_MARK
+                    || type == Character.ENCLOSING_MARK;
+            if (!isMark) {
+                isLatin = Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.LATIN;
+            }
+            if (!isMark || !isLatin) {
+                result.appendCodePoint(codePoint == '’' || codePoint == '‘' ? '\'' : codePoint);
+            }
+        }
+        return foldCase(result.toString());
+    }
+
+    private static String foldCase(String value) {
+        // Fold each code point independently: whole-word lowercasing turns final Σ into ς,
+        // while an isolated Σ query becomes σ. This also follows equalsIgnoreCase for tags.
+        StringBuilder result = new StringBuilder();
+        value.codePoints().forEach(codePoint ->
+                result.appendCodePoint(Character.toLowerCase(Character.toUpperCase(codePoint))));
+        return result.toString();
     }
 
     /**
