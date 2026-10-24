@@ -27,6 +27,17 @@ public class EditStudentDescriptorTest {
         // same values -> returns true
         EditStudentDescriptor descriptorWithSameValues = new EditStudentDescriptor(DESC_AMY);
         assertTrue(DESC_AMY.equals(descriptorWithSameValues));
+        assertEquals(DESC_AMY.hashCode(), descriptorWithSameValues.hashCode());
+
+        // empty and cleared optional fields also compare by state rather than object identity
+        EditStudentDescriptor emptyDescriptor = new EditStudentDescriptor();
+        assertEquals(emptyDescriptor, new EditStudentDescriptor());
+        assertEquals(emptyDescriptor.hashCode(), new EditStudentDescriptor().hashCode());
+        EditStudentDescriptor clearedDescriptor = new EditStudentDescriptorBuilder()
+                .withoutEmail().withoutNusStudentId().withTags().withFlag(false).build();
+        EditStudentDescriptor clearedDescriptorCopy = new EditStudentDescriptor(clearedDescriptor);
+        assertEquals(clearedDescriptor, clearedDescriptorCopy);
+        assertEquals(clearedDescriptor.hashCode(), clearedDescriptorCopy.hashCode());
 
         // same object -> returns true
         assertTrue(DESC_AMY.equals(DESC_AMY));
