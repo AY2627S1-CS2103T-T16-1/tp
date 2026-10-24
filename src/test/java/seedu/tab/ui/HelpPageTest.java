@@ -84,6 +84,47 @@ public class HelpPageTest {
     }
 
     @Test
+    public void show_trailingEnterCharacter_preservesOpeningNoticeAndPosition() throws Exception {
+        FxToolkit.onFxThread(() -> {
+            HelpPage page = pageAt(490, 360, new AtomicInteger());
+            Label notice = (Label) page.getRoot().lookup("#helpNotice");
+            for (String character : new String[] {"\r", "\n"}) {
+                type(page, "x");
+                page.show();
+                // The Enter submitting help can finish typing after focus moves to the pager.
+                type(page, character);
+                assertEquals("Help mode: press q or Esc to return to commands.", notice.getText());
+                assertEquals(0, viewportOf(page).getVvalue());
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void navigation_enterPressAndTypedCharacter_movesOneLineAndPreservesNotice() throws Exception {
+        FxToolkit.onFxThread(() -> {
+            HelpPage page = pageAt(490, 360, new AtomicInteger());
+            ScrollPane viewport = viewportOf(page);
+            Label notice = (Label) page.getRoot().lookup("#helpNotice");
+            press(page, KeyCode.DOWN);
+            double afterLine = viewport.getVvalue();
+            assertTrue(afterLine > 0);
+            for (String character : new String[] {"\r", "\n"}) {
+                page.show();
+                press(page, KeyCode.ENTER);
+                type(page, character);
+                assertEquals(afterLine, viewport.getVvalue(), TOLERANCE);
+                assertEquals("Help mode: press q or Esc to return to commands.", notice.getText());
+            }
+            type(page, "x");
+            press(page, KeyCode.ENTER);
+            type(page, "\r");
+            assertEquals("Press q or Esc to return to the command box.", notice.getText());
+            return null;
+        });
+    }
+
+    @Test
     public void navigation_modifiedKeys_preserveReadingPositionAndKeepHelpOpen() throws Exception {
         FxToolkit.onFxThread(() -> {
             AtomicInteger quitCount = new AtomicInteger();

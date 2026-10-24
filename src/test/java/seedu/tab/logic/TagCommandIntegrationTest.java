@@ -2,6 +2,7 @@ package seedu.tab.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.io.IOException;
@@ -188,7 +189,7 @@ public class TagCommandIntegrationTest {
     @Test
     public void execute_removeAbsentVariants_preservesModelDisplayAndSavedBytes() throws Exception {
         Map<String, String> variants = Map.of("Lab 4", "Lab 4", "lab 4", "lab 4",
-                "  LAB\u00a0  4  ", "LAB 4", "Needs follow-up", "Needs follow-up");
+                "  LAB\u00a0  4  ", "LAB 4");
         for (Map.Entry<String, String> variant : variants.entrySet()) {
             assertFailureWithoutMutation("tag 1 -r \"" + variant.getKey() + "\"", CommandException.class,
                     "This student does not have tag [" + variant.getValue() + "]. No changes made.");
@@ -245,6 +246,29 @@ public class TagCommandIntegrationTest {
         logic.execute("tag 1 --remove \" CAFE\u0301 \"");
         Student withoutTags = new StudentBuilder(legacy).withTags().build();
         assertEquals(List.of(otherStudent, withoutTags), storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_removeFollowUpLabelFromFlaggedStudent_pointsToTheCommandThatClearsIt()
+            throws Exception {
+        // the card draws the label beside the name, so reaching for tag to take it off is a
+        // fair guess, and saying only that the student has no such tag leaves it drawn there
+        String hint = "\n" + String.format(TagCommand.MESSAGE_FOLLOW_UP_FLAG_HINT, 1);
+        assertTrue(hint.endsWith("edit 1 --no-follow-up."), "the hint should name the command: " + hint);
+        Map<String, String> spellings = Map.of("Needs follow-up", "Needs follow-up",
+                "needs follow-up", "needs follow-up", "  NEEDS   follow-up ", "NEEDS follow-up");
+        for (Map.Entry<String, String> spelling : spellings.entrySet()) {
+            assertFailureWithoutMutation("tag 1 -r \"" + spelling.getKey() + "\"", CommandException.class,
+                    "This student does not have tag [" + spelling.getValue() + "]. No changes made." + hint);
+        }
+    }
+
+    @Test
+    public void execute_removeFollowUpLabelFromUnflaggedStudent_saysOnlyThatTheTagIsAbsent()
+            throws Exception {
+        model.updateFilteredStudentList(shown -> shown.getName().equals(otherStudent.getName()));
+        assertFailureWithoutMutation("tag 1 -r \"Needs follow-up\"", CommandException.class,
+                "This student does not have tag [Needs follow-up]. No changes made.");
     }
 
     @Test

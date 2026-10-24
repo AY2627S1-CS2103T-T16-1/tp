@@ -130,15 +130,19 @@ text remains one command; inspect it before pressing Enter.
 The command line marks the parts of a command as you type, so a mistake is
 visible before you press Enter:
 
-* the command word is in the line's accent colour and bold
-* an option such as `-p` is in mauve
-* a value in double quotes is in green
+* the command word is in the line's accent colour and bold, and ends at the
+  first space, so a quote typed against it is part of the word
+* an option such as `-p` is in mauve, as is the `--tag=` of an option written
+  with its value attached
+* a value in double quotes is in green, including one attached to an option
 * anything else is in ordinary text
 
 If a command is refused, the whole line turns red until you start correcting
 it. A command longer than the line scrolls with the caret, so you can always
 see where you are typing, and selecting part of it (for example with
-`Ctrl`+`A`) draws a band behind the selection.
+`Ctrl`+`A`) draws a band behind the selection. Arabic, Hebrew and mixed-script
+commands also stay on this single line; the caret and selection follow the
+text’s displayed order.
 
 <box type="tip" seamless>
 
@@ -204,10 +208,12 @@ showing, so you can see the shape of your cohort without running a command.
 
 * **Flagged** counts the students marked as needing a follow-up.
 * **Tags** lists each tag in use with the number of students carrying it,
-  most used first. Tags used by the same number of students are listed
-  alphabetically, ignoring case. Long tag names wrap onto multiple lines so
-  you can read their endings beside the count. Scroll the tag list to see
-  any rows below the visible area.
+  most used first. Case variants of one tag share a row, as they do for `tag`,
+  so `T1` and `t1` count as one tag; the row is named with the spelling most
+  of those students carry. Tags used by the same number of
+  students are listed alphabetically, ignoring case. Long tag names wrap onto
+  multiple lines so you can read their endings beside the count. Scroll the
+  tag list to see any rows below the visible area.
 * The foot of the panel gives the total.
 
 <box type="tip" seamless>
@@ -238,6 +244,8 @@ Use these pager keys immediately, without clicking or pressing Enter after a let
 
 Press **c** to copy the complete User Guide address to your clipboard. The footer
 confirms `User Guide URL copied.`; paste it into a browser to read the full guide.
+Opening help shows `Help mode: press q or Esc to return to commands.`.
+Navigation keys, including Enter, leave this notice unchanged.
 Typing an unused key shows `Press q or Esc to return to the command box.` so you
 can leave help before typing a command.
 
@@ -378,17 +386,20 @@ A flagged student's card carries a `Needs follow-up` marker at its right-hand
 edge, on the same line as the name, and the command result says so too.
 
 A name too long for a card is shortened with an ellipsis in its middle, which
-keeps both the start and the end of the name, so two students whose names begin
-alike still read as two. Hover over any name the card cannot show in full,
+keeps both the start and the end of the name to help distinguish similar names.
+Hover over any name the card cannot show in full,
 whether it was shortened this way or left narrow by a crowded row, to see the
 whole of it. NUS Student ID, phone and email share a line when they fit. Details
 wrap onto another line when needed, so a long phone cannot hide the email.
 A value wider than a whole line ends with an ellipsis; hover over it to see
 its full value. Widening the window shows more text and brings details back
 onto one line without changing the stored record.
-At narrow widths, the name keeps its opening letters while tags give way to
-a count of those hidden. When no chip fits, the count reads `N tags`; otherwise
-it reads `N more…`. Hover over the count to read the hidden tag names.
+Names and tag labels appear in full whenever there is room, and the card shows
+as many complete tag chips as fit. At narrow widths, the name keeps both ends
+while tags give way to a count of those hidden. When no chip fits, the count reads `N tags`; otherwise
+it reads `N more…`. Unused count space returns to the name. A tag chip too
+wide for its allocation is shortened; hover over it to read the full tag.
+Hover over the count to read the hidden tag names.
 
 When a student is added, the command result displays the new record
 (`New student added: NAME; Phone: PHONE...`) so you can confirm the details
@@ -510,7 +521,11 @@ done to it beyond the quotes any value with spaces takes:
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
 * To remove all of a student's tags, give `-t` an empty value: `-t ""` or
-  `--tag=""`. A bare `-t` or unquoted `--tag=` is refused, so that a mistyped
+  `--tag=""`. A quoted whitespace-only value, such as `-t "   "`, also clears
+  all tags, including when the spaces were copied as Unicode spaces. Supply
+  the blank tag value on its own; combining it with another tag is refused with
+  `A blank tag clears all tags only when it is given on its own.`
+  A bare `-t` or unquoted `--tag=` is refused, so that a mistyped
   option is reported rather than read as a request to clear.
 * An NUS Student ID target that no student holds changes nothing and shows
   `No student has NUS Student ID A0123456X.` A letter-first target that is not
@@ -628,6 +643,10 @@ Format: `tag INDEX -r TAG`
 * If the tag is absent, TAB reports
   `This student does not have tag [TAG]. No changes made.` using your
   normalized input. The record, displayed list and saved file stay unchanged.
+  Asking a student flagged for follow-up to have `Needs follow-up` removed
+  adds `This student is flagged for follow-up, which is not a tag. To clear
+  the flag, use edit INDEX --no-follow-up.`, because the label beside the
+  name is that flag rather than a tag.
 * An invalid index or tag, an empty quoted tag, or a missing value is refused
   with a specific error and leaves records and the saved file unchanged.
 * Removing the last tag leaves a student with no general tags. Removing a
@@ -696,7 +715,9 @@ Provide at least one field term or one follow-up status option. Every search ter
   `find -p 91234567`, `find -p 91234`, `find -p 9123-4567` and `find -p "9123 4567"`
   all match `+65 9123 4567` or `91234567`. `find -p +6591234567` also matches the number
   stored with the country code. Quote terms containing spaces;
-  copied Unicode spaces work too. Terms containing other characters, such as `"ext 21"`,
+  copied Unicode spaces work too. Equivalent Unicode decimal digits match across scripts:
+  `find -p 9123` matches `９１２３４５６７`, and `find -p "９１２３ ４５６７"` matches `91234567`.
+  Displayed and saved numbers keep their formatting. Terms containing other characters, such as `"ext 21"`,
   and punctuation-only terms match the stored text.
 * TAB reports the number of matches: `Found 0 students.`, `Found 1 student.` or `Found 3 students.`.
 
