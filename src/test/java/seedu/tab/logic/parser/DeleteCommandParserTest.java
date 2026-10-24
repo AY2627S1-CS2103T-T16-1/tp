@@ -1,5 +1,6 @@
 package seedu.tab.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -25,6 +26,12 @@ public class DeleteCommandParserTest {
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE);
 
     private DeleteCommandParser parser = new DeleteCommandParser();
+
+    @Test
+    public void parse_digitLeadingIdWithoutOption_reportsUsageWithExplicitIdExample() {
+        assertParseFailure(parser, "1ABC", USAGE_MESSAGE);
+        assertTrue(USAGE_MESSAGE.contains("Example: delete --id 1ABC"));
+    }
 
     @Test
     public void parse_validArgs_returnsDeleteCommand() {
@@ -72,8 +79,9 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_zeroIndex_throwsParseException() {
-        assertParseFailure(parser, "0", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
-        assertParseFailure(parser, "  0  ", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+        String expected = USAGE_MESSAGE + " If \"0\" is an NUS Student ID, use delete --id 0.";
+        assertParseFailure(parser, "0", expected);
+        assertParseFailure(parser, "  0  ", expected);
     }
 
     @Test
@@ -119,10 +127,9 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_overflowIndex_throwsParseException() {
-        assertParseFailure(parser, Long.toString(Integer.MAX_VALUE + 1L),
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
-        assertParseFailure(parser, Long.toString(Long.MAX_VALUE),
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "2147483648", "Index \"2147483648\" exceeds the largest supported index "
+                + "(2147483647). Use an index from the displayed list. "
+                + "If \"2147483648\" is an NUS Student ID, use delete --id 2147483648.");
     }
 
     @Test
