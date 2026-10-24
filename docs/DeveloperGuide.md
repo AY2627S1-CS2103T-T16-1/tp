@@ -284,8 +284,10 @@ trade-off is deliberate and worth revisiting if the palette changes.
 
 #### Recalling session commands
 
-`CommandBox` records each submitted line in `CommandHistory` before execution,
-so rejected input can be recalled too. The helper stores submissions separately
+`CommandBox` records each submitted command in `CommandHistory` before execution,
+so rejected commands can be recalled too. While clear confirmation is pending,
+replies are excluded because they cannot be reused as standalone commands; the
+navigation position resets without recording the reply. The helper stores submissions separately
 from the draft captured when Up first leaves the newest position. Down past
 the newest submission restores that draft. Up skips the newest submission when
 it already matches the text in the box and an earlier entry exists. Blank
@@ -929,6 +931,11 @@ For a non-match, the command clears the filter and appends
 visible and the User knows to re-read indexes. A rejected addition leaves
 both the book and filter unchanged.
 
+`EditCommand` first compares the prospective record with the selected record using
+full equality. An unchanged edit returns an explicit no-change response before
+checking duplicates or replacing the student, preserving the filter and avoiding
+unnecessary list notifications. `LogicManager` continues to skip saving an unchanged book.
+
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
 ignore case; names already carry `normalizeFieldValue`'s whitespace
@@ -943,7 +950,9 @@ ordinary success message with a blank line. Matches are grouped by field into
 one prominently labelled `WARNING: Possible duplicate student` line. A line
 names at most two students and summarizes further matches as `N others`, so a
 shared placeholder does not fill the result box. The review advice appears
-once after every matching field.
+once after every matching field. Phone warnings omit the parenthetical value:
+matched records can store different formatting for the same digits, so no single
+formatted value represents all named students.
 
 `EditCommand` compares only name, phone, or email values that differ from the
 selected record. It excludes the selected `Student` instance but still uses
@@ -981,7 +990,8 @@ The parser leaves the email untouched when `-e` is absent, calls `clearEmail`
 for a token that is empty after trimming, and sets a replacement only after
 validation succeeds. A rejected value is recorded as a parse problem without
 assigning a null email or requesting a clear. A bare option is still an error.
-Clearing counts as an edit even when the email is already absent. `EditCommand`
+A clear satisfies the parser's requirement for a provided field even when the email
+is already absent; execution then reports no changes if no other value changes. `EditCommand`
 passes the optional value directly into the `Student` constructor, including
 an empty optional when clearing. The saved record omits the `email` key and
 reloads through the existing optional-email storage contract.
@@ -1078,6 +1088,9 @@ mapped to its ASCII equivalent by numeric value. This lets
 `91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
 so copying a grouped number does not require manual reformatting. A query with
 a country code still requires those digits to occur in the stored phone.
+The allowed-character check uses a possessive quantifier to scan long phone terms
+without backtracking. Digit normalization separately checks that at least one digit
+remains, so punctuation-only terms cannot match every phone.
 The digit fallback requires at least one digit; annotations such as `"ext 21"`
 and punctuation-only terms retain literal matching. Unicode whitespace follows
 the same rule as field normalization. Normalizing both the phone digits and the
@@ -1339,7 +1352,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | view a student's remarks | recall important context such as special needs |
 | `*` | teaching assistant | add a remark to a student's record | note down requests or needs I should remember |
 | `*` | teaching assistant | redo an action I undid | restore a change I reverted by accident |
-| `*` | teaching assistant | be warned when a new student matches an existing record on phone, email or NUS Student ID | catch genuine duplicates even when the two names are spelled differently |
+| `*` | teaching assistant | be warned when a new student matches an existing record on name, phone or email | catch genuine duplicates even when the two names are spelled differently |
 | `*` | teaching assistant | merge two duplicate student records after seeing how they differ | combine the information from both without losing either |
 | `*` | teaching assistant | find students who have no tag | spot students not yet assigned to a group |
 | `*` | teaching assistant | sort my list by a detail I choose, such as name, NUS Student ID, or when the student was added | read the list in the order that suits the task in front of me |
@@ -1419,7 +1432,7 @@ These were raised during requirement gathering and left out of the product.
 * 1b. At least one detail is not in an acceptable form.
 
     * 1b1. TAB names every detail it rejected and the reason.
-    * 1b2. TAB leaves the original input in the command box.
+    * 1b2. TAB retains the submitted input for correction.
     * 1b3. User corrects the details and submits again.
 
       Steps 1b1-1b3 are repeated until every detail is acceptable.
@@ -1461,7 +1474,7 @@ These were raised during requirement gathering and left out of the product.
 * 1a. The search terms are not in an acceptable form.
 
     * 1a1. TAB reports the error.
-    * 1a2. TAB leaves the original input in the command box.
+    * 1a2. TAB retains the submitted input for correction.
     * 1a3. User corrects the search terms and submits again.
 
       Steps 1a1-1a3 are repeated until the search terms are acceptable.
@@ -1844,6 +1857,9 @@ These were raised during requirement gathering and left out of the product.
     components at screen resolutions of 1920×1080 and higher with display scaling at 100% and 125%, and
     remain functional and usable down to 1280×720 with display scaling up to 150%. This satisfies
     `Constraint-Screen-Resolution`.
+10. **Data locality and offline operation**: TAB must store all student data only in local files,
+    must not transmit student data to any network service, and must support all student management
+    operations without a network connection.
 
 ### Glossary
 
@@ -2729,6 +2745,18 @@ testers are expected to do more *exploratory* testing.
       remains byte-for-byte unchanged. Restore the backup with TAB closed,
       then relaunch and check that the backed-up records load.
 
+1. Reporting unchanged edits
+
+   1. Prerequisites: Start from an empty book; run `add Amy Bee -p 91234567`,
+      then `find -n Amy`.
+   1. Test cases: `edit 1 -p 91234567`, `edit 1 -e ""`, `edit 1 -i ""`,
+      `edit 1 -t ""`, and `edit 1 -nf`.<br>
+      Expected: Each replies `Student already has the requested details. No changes made.`
+      The student, active search, displayed list and saved file remain unchanged.
+   1. Test case: `edit 1 -n "Amy Bee" -p 82223333`.<br>
+      Expected: `Edited student: Amy Bee; Phone: 82223333`. The new phone is saved,
+      Amy remains visible, and repeating the command reports no changes.
+
 1. Checking duplicate identity behavior
 
    1. Prerequisites: Start from an empty book.
@@ -2771,6 +2799,8 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add Bernice Yu -p "+65 (9123)-4567" -e bernice@example.com`<br>
       Expected: Bernice is saved. The result names Alex Yeoh and the matching
       `phone`, because the complete digit sequences match despite punctuation.
+      The warning says `Alex Yeoh has the same phone.` without a parenthetical
+      number; neither stored formatting is attributed to the other record.
       Exit and restart TAB; both phone numbers retain their entered formatting.
 
    1. Test case: `add Charlie Tan -p ６５９１２３４５６７`<br>
@@ -3073,7 +3103,10 @@ testers are expected to do more *exploratory* testing.
       empty reply. Press Up.<br>
       Expected: Clear is cancelled without changing any students. Up recalls
       `clear` immediately, without a blank entry. Repeat with spaces as the reply;
-      the result is the same.
+      the result is the same. Repeat with `n`, `no`, `y`, and `yes` (repopulate the
+      book after confirming); Up still recalls `clear`. Submit `list` during a
+      pending confirmation: TAB retains the invalid reply and keeps waiting.
+      Up recalls `clear`, and Down restores the retained `list` draft.
    1. Close and reopen TAB, type `draft`, and press Up.<br>
       Expected: `draft` stays unchanged; history does not survive a restart.
 
@@ -3294,6 +3327,12 @@ testers are expected to do more *exploratory* testing.
    1. Test cases: `find -p 91234568` and `find -p 9123-4568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
+
+1. Long nonmatching phone terms
+
+   1. Test case: Paste `find -p ` followed by 50,000 digits and a final `!`.<br>
+      Expected: TAB promptly reports `Found 0 students.` and remains responsive.
+      Run `list` to restore all students; their details and saved data are unchanged.
 
 1. Equivalent Unicode digits and unchanged saved values
 
