@@ -49,11 +49,20 @@ public class Phone {
 
     /**
      * Returns the digits this phone number holds, in order, with every other character
-     * removed, so {@code +65 9123 4567} gives {@code 6591234567}. A search for the digits
-     * alone compares against this form, whatever punctuation the number is stored with.
+     * removed and Unicode decimal digits converted to ASCII. Search and duplicate warnings
+     * compare this form while the stored value retains its formatting.
      */
     public String getDigits() {
-        return NON_DIGIT.matcher(value).replaceAll("");
+        return normalizeDigits(value);
+    }
+
+    /** Returns the ASCII decimal digits in {@code value}, excluding all non-digit characters. */
+    public static String normalizeDigits(String value) {
+        requireNonNull(value);
+        return NON_DIGIT.matcher(value).replaceAll("").codePoints()
+                .map(digit -> Character.digit(digit, 10) + '0')
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
     }
 
     /**
