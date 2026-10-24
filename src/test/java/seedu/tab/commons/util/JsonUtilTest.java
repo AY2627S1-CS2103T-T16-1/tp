@@ -10,11 +10,16 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Optional;
+import java.util.Set;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -36,6 +41,25 @@ public class JsonUtilTest {
     public Path testFolder;
 
     @Test
+    public void fromJsonString_trailingValue_reportsExactReasonAndLocation() {
+        JsonParseException exception = assertThrows(
+                JsonParseException.class, () -> JsonUtil.fromJsonString("{}\n{}", Object.class));
+
+        assertEquals("Expected a single JSON value; remove content after the document.",
+                exception.getOriginalMessage());
+        assertEquals(2, exception.getLocation().getLineNr());
+        assertEquals(1, exception.getLocation().getColumnNr());
+    }
+
+    @Test
+    public void fromJsonString_duplicateKey_reportsExactKey() {
+        JsonParseException exception = assertThrows(
+                JsonParseException.class, () -> JsonUtil.fromJsonString("{\"key\":1,\"key\":2}", Object.class));
+
+        assertEquals("Duplicate field 'key'", exception.getOriginalMessage());
+    }
+
+    @Test
     public void serializeObjectToJsonFile_noExceptionThrown() throws IOException {
         SerializableTestClass serializableTestClass = new SerializableTestClass();
         serializableTestClass.setTestValues();
@@ -43,6 +67,44 @@ public class JsonUtilTest {
         JsonUtil.serializeObjectToJsonFile(SERIALIZATION_FILE, serializableTestClass);
 
         assertEquals(FileUtil.readFromFile(SERIALIZATION_FILE), SerializableTestClass.JSON_STRING_REPRESENTATION);
+    }
+
+    @Test
+    public void readJsonFile_missingFile_isEmpty() throws Exception {
+        assertEquals(Optional.empty(),
+                JsonUtil.readJsonFile(testFolder.resolve("absent.json"), SerializableTestClass.class));
+    }
+
+    @Test
+    public void readJsonFile_unopenableFolder_reportsTheFailureRatherThanAMissingFile() throws Exception {
+        // a folder the account cannot open hides whether the file is there. Answering "not
+        // found" would let the caller treat a loaded book as a first run and write sample
+        // data over records it never read
+        Path directory = Files.createDirectory(testFolder.resolve("data"));
+        Path filePath = directory.resolve("tab.json");
+        Files.writeString(filePath, SerializableTestClass.JSON_STRING_REPRESENTATION);
+        assumePosixPermissions(directory);
+        Set<PosixFilePermission> originalPermissions = Files.getPosixFilePermissions(directory);
+        Files.setPosixFilePermissions(directory, Set.of());
+
+        try {
+            Assumptions.assumeFalse(Files.isReadable(filePath), "The test account can still read the file.");
+            DataLoadingException exception = assertThrows(DataLoadingException.class, () ->
+                    JsonUtil.readJsonFile(filePath, SerializableTestClass.class));
+
+            assertEquals("TAB does not have permission to read this file or the folder holding it.",
+                    exception.getMessage());
+        } finally {
+            Files.setPosixFilePermissions(directory, originalPermissions);
+        }
+        assertEquals(SerializableTestClass.JSON_STRING_REPRESENTATION, Files.readString(filePath));
+    }
+
+    private void assumePosixPermissions(Path file) throws IOException {
+        Assumptions.assumeTrue(Files.getFileStore(file).supportsFileAttributeView("posix"),
+                "POSIX permissions are unavailable.");
+        Assumptions.assumeFalse("root".equals(System.getProperty("user.name")),
+                "root is allowed past file permissions.");
     }
 
     @Test
@@ -311,7 +373,8 @@ public class JsonUtilTest {
     public void getIoErrorMessage_accessDenied_explainsPermissionFailure() {
         AccessDeniedException exception = new AccessDeniedException("data/tab.json");
 
-        assertEquals("TAB does not have permission to read this file.", JsonUtil.getIoErrorMessage(exception));
+        assertEquals("TAB does not have permission to read this file or the folder holding it.",
+                JsonUtil.getIoErrorMessage(exception));
     }
 
     @Test

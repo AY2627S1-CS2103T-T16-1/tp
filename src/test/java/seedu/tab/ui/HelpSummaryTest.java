@@ -149,6 +149,63 @@ public class HelpSummaryTest {
     }
 
     @Test
+    public void help_returnToDraft_nextKeyContinuesEditing() throws Exception {
+        FxToolkit.onFxThread(() -> {
+            MainWindow window = createWindow(new ModelManager());
+            try {
+                for (boolean useMenu : List.of(false, true)) {
+                    for (KeyCode quitKey : List.of(KeyCode.Q, KeyCode.ESCAPE)) {
+                        assertDraftCanBeEdited(window, useMenu, quitKey);
+                        restoreDraft(window, useMenu, quitKey, "");
+                        type(window, "list");
+                        assertEquals("list", fieldOf(window).getText());
+                    }
+                }
+            } finally {
+                window.getRoot().hide();
+            }
+            return null;
+        });
+    }
+
+    private static void assertDraftCanBeEdited(MainWindow window, boolean useMenu, KeyCode quitKey) {
+        restoreDraft(window, useMenu, quitKey, "add Wei Ming");
+        type(window, " Tan");
+        assertEquals("add Wei Ming Tan", fieldOf(window).getText());
+
+        restoreDraft(window, useMenu, quitKey, "add Wei Ming");
+        press(window, KeyCode.BACK_SPACE);
+        assertEquals("add Wei Min", fieldOf(window).getText());
+
+        restoreDraft(window, useMenu, quitKey, "add Wei Ming");
+        press(window, KeyCode.DELETE);
+        assertEquals("add Wei Ming", fieldOf(window).getText());
+    }
+
+    private static void restoreDraft(MainWindow window, boolean useMenu, KeyCode quitKey, String draft) {
+        fieldOf(window).setText(draft);
+        fieldOf(window).requestFocus();
+        if (useMenu) {
+            MenuBar menu = (MenuBar) node(window, "menuBar");
+            menu.getMenus().get(1).getItems().get(0).fire();
+        } else {
+            press(window, KeyCode.F1);
+        }
+        assertTrue(node(window, "helpPagePlaceholder").isVisible());
+        if (quitKey == KeyCode.Q) {
+            type(window, "q");
+        } else {
+            press(window, quitKey);
+        }
+        assertFalse(node(window, "helpPagePlaceholder").isVisible());
+        assertEquals(fieldOf(window), window.getRoot().getScene().getFocusOwner());
+        assertEquals(draft, fieldOf(window).getText());
+        assertEquals(draft.length(), fieldOf(window).getCaretPosition());
+        assertEquals(0, fieldOf(window).getSelection().getLength());
+        assertFalse(node(window, "selection").isVisible());
+    }
+
+    @Test
     public void help_unexpectedArguments_reportsExactErrorWithoutSavingOrChangingData() throws Exception {
         FxToolkit.onFxThread(() -> {
             Model model = new ModelManager(TypicalStudents.getTypicalStudentBook(), new UserPrefs());

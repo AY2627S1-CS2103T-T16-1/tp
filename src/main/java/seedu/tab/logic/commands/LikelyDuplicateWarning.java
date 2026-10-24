@@ -67,7 +67,7 @@ final class LikelyDuplicateWarning {
             matchingNames.add(existingStudent);
         }
         if (isChanged(changedStudent.getPhone(), originalStudent == null ? null : originalStudent.getPhone())
-                && phoneWithoutSpaces(changedStudent).equals(phoneWithoutSpaces(existingStudent))) {
+                && changedStudent.getPhone().getDigits().equals(existingStudent.getPhone().getDigits())) {
             matchingPhones.add(existingStudent);
         }
         if (isChanged(changedStudent.getEmail(), originalStudent == null ? null : originalStudent.getEmail())
@@ -97,10 +97,6 @@ final class LikelyDuplicateWarning {
 
     private static boolean matchesIgnoringCase(String first, String second) {
         return first.toLowerCase(Locale.ROOT).equals(second.toLowerCase(Locale.ROOT));
-    }
-
-    private static String phoneWithoutSpaces(Student student) {
-        return student.getPhone().value.replace(" ", "");
     }
 
     private static void addWarning(List<String> warnings, List<Student> matchingStudents,

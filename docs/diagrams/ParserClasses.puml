@@ -35,10 +35,10 @@ XYZCommandParser ..> FlagTokenizer
 FlagTokenizer .left.> FlagArgumentMap
 FlagTokenizer ..> CommandTokenizer
 XYZCommandParser ..> CliFlags
-CliFlags ..> Flag
+CliFlags --> Flag
 XYZCommandParser ..> ParserUtil
 XYZCommandParser ..> ParseProblems
-FlagArgumentMap .down.> Flag
+FlagArgumentMap -down-> Flag
 FlagTokenizer .down.> Flag
 XYZCommand -up-|> Command
 @enduml
