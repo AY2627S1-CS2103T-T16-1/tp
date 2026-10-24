@@ -86,6 +86,30 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_addNameMistakes_preservesRecordsAndStorage() throws Exception {
+        logic.execute("add Alex Yeoh -p 91234567");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        String savedJson = Files.readString(dataPath);
+        for (var entry : Map.of(
+                "add --name \"Betsy Crowe\" --phone 1234567",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--name"),
+                "add --phone 1234567 -n=\"Betsy Crowe\"",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-n"),
+                "add -p 1234567", Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME)).entrySet()) {
+            assertThrows(ParseException.class, entry.getValue() + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE, ()
+                    -> logic.execute(entry.getKey()));
+            assertEquals(students, model.getStudentBook().getStudentList());
+            assertEquals(students, model.getFilteredStudentList());
+            assertEquals(savedJson, Files.readString(dataPath));
+        }
+        logic.execute("add Betsy Crowe --phone 1234567");
+        assertEquals(2, model.getStudentBook().getStudentList().size());
+        assertEquals(model.getStudentBook().getStudentList(),
+                new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
     public void execute_equivalentPhonePunctuation_warnsAndPersistsFormatting() throws Exception {
         logic.execute("add Alice Tan -p 9123-4567");
         String advice = "\nReview the records and delete duplicates only if they are the same person.";

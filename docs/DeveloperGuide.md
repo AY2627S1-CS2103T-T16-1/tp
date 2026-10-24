@@ -155,13 +155,14 @@ displays have different usable heights or gaps between them.
 
 #### Fitting names and tags on a card
 
-`CardHeadline` reserves a readable start of the name before allocating room
-to tags. When that leaves no room for a tag chip, `TagRow` uses the shorter
-`N tags` total instead of `N more…`, preserving a complete count beside the
-name. Its tooltip still lists every hidden tag. `TagRow.fittedWidth` reports
-the space its chosen chips or count actually use, so `CardHeadline` returns
-any unused allocation to the name before laying it out. The name requests
-its full natural width; a large tag list cannot take its readable minimum.
+`CardHeadline` prefers a readable start of the name when allocating room to
+tags, but yields part of that allowance for a complete tag count. The name
+retains space for a character from each end. When no tag chip fits, `TagRow`
+uses the shorter `N tags` total instead of `N more…`, preserving a complete
+count beside the name. Its tooltip still lists every hidden tag.
+`TagRow.fittedWidth` reports the space its chosen chips or count actually use,
+so `CardHeadline` returns any unused allocation to the name before laying it
+out. The name requests its full natural width.
 
 #### Keeping contact details readable
 
@@ -178,7 +179,15 @@ This keeps ordinary cards compact while allowing crowded cards to grow by
 only the rows they need. `UiText.showToFit` gives all three fields their full
 values on hover when clipped, and removes the tooltip when widening makes
 it unnecessary. Absent optional fields remain unmanaged, reserving no space.
-The details container's clip remains a backstop protecting the follow-up pill.
+The follow-up pill shares an `HBox` with `CardHeadline` inside the details
+container, so it reserves width only on the headline. Contact rows use the
+same width with or without a flag. The details clip prevents drawing outside
+the card.
+
+`StudentListViewCell` measures preferred height at the smaller of the cell's
+content width and the card's maximum width, matching the width used by its
+skin during layout. Measuring at the wider cell width would miss a wrapped
+contact row near a wrap threshold and squeeze the headline.
 
 #### Colouring the command line
 
@@ -420,13 +429,19 @@ without a reason are described as permission denied.
 
 `FileUtil.writeToFile` protects an existing JSON file from a partial save. It
 resolves an existing symbolic link to its destination, so replacing the saved
-data leaves the link in place. It also refuses a destination that is not
+data leaves the link in place. An unresolvable link is rejected without
+replacing it or creating its missing target. It also refuses a destination that is not
 writable and copies an existing file's POSIX permissions to its replacement.
 The new contents are written and forced to a temporary file beside the real
 destination before an atomic move replaces it. Keeping both files in one
 folder makes the atomic move possible, but also means that the folder must
 allow temporary-file creation. If writing or moving fails, the previous file
 remains unchanged and TAB removes the temporary file where possible.
+`FileUtil` creates only missing parent directories before writing the temporary
+file; it never pre-creates an empty destination. This applies to student-book
+and preference writes. A failed first save preserves the absence of a book and
+allows normal sample-data startup. On POSIX filesystems, a new file retains the
+temporary file's owner-only permissions; existing files retain their permissions.
 
 `StorageManager` logs read/write attempts and successful saves at `FINE`,
 including preference-file operations. Entries identify the file path without
@@ -566,6 +581,11 @@ attached value on a presence-only option is refused specifically. An unknown
 option names its marker without echoing an attached value, while a value-taking
 option left without a value and a token belonging to no option are each
 reported for what they are, rather than as one generic complaint.
+
+`add` keeps its name before the options so names containing spaces need no
+quotes. If the tokenizer refuses `-n` or `--name`, `AddCommandParser` adds a
+placement hint to the existing error. A missing name gets the same hint,
+so users familiar with the name options in `edit` can recover immediately.
 
 `Flag` also lets a value-taking option carry aliases. NUS Student ID uses
 `--id` as its canonical option and the unused `-i` as its typing-friendly
@@ -784,7 +804,7 @@ Tag searches match ordinary tags as parts of their inherited `tagName` values,
 ignoring case. Follow-up status is selected independently through `-f` or `-nf`, so its
 displayed label never produces a text-field match.
 The student card and command feedback display the same value, while the card
-keeps the flag in its separate follow-up row.
+keeps the flag at the trailing edge of its headline.
 
 The add parser maps the presence of `--follow-up`, or its `-f` alias, to true.
 For edit, the `EditStudentDescriptor` stores a nullable `Boolean isFlagged`:
@@ -2445,14 +2465,27 @@ testers are expected to do more *exploratory* testing.
       shows `New student added: Jane Doe; Phone: 91234567; Tags: [lab1][urgent]; Needs follow-up`
       with tags sorted alphabetically ignoring case.
 
+1. Recovering from a name option or a missing name
+
+   1. Test cases: `add --name "Betsy Crowe" --phone 1234567`,
+      `add -n "Betsy Crowe" -p 1234567`, and
+      `add --phone 1234567 --name="Betsy Crowe"`.<br>
+      Expected: No student is added. The error names the unsupported option,
+      followed by `In the add command, the name comes first, without an option: add NAME -p PHONE ...`.
+   1. Test case: `add -p 1234567`.<br>
+      Expected: `Missing required field(s): NAME`, followed by the same placement
+      hint. The student list is unchanged.
+   1. Test case: `add Betsy Crowe --phone 1234567`.<br>
+      Expected: Betsy Crowe is added. Exit and reopen TAB; the student remains saved.
+
 1. Adding a duplicate NUS Student ID
 
-   1. Prerequisites: A student named `John Doe` with NUS Student ID `A01234567X`
-      is already in the list.
+   1. Prerequisites: In a fresh launch, add `add John Doe -p 91234567 -i A05678901K`
+      so that a student named `John Doe` with NUS Student ID `A05678901K` is in the list.
 
-   1. Test case: `add Jane Doe -p 98765432 -i a01234567x`<br>
+   1. Test case: `add Jane Doe -p 98765432 -i a05678901k`<br>
       Expected: No student is added. The status message names NUS Student ID
-      `A01234567X` and `John Doe`, and no record is mutated.
+      `A05678901K` and `John Doe`, and no record is mutated.
 
 1. Adding during a search
 
@@ -2498,6 +2531,26 @@ testers are expected to do more *exploratory* testing.
       with a list of phone-only students.<br>
       Expected: Details that fit share one line. These ordinary cards retain
       the compact height; optional fields do not force extra rows.
+
+1. Checking full-width details and height around wrap thresholds
+
+   1. Prerequisites: Use a disposable empty student book.
+   1. Add `add Siti Aminah -p 98765432 --id A0234567X -e e0923841@u.nus.edu -t T01 -t "Lab 3" --follow-up`.
+   1. Add `add Hafiz Ismail -p 91234567 --id A0123456X -e muhammad.hafiz.bin.ismail@gmail.com -t T01 -t "Lab 3" --follow-up`.
+   1. Add `add Priya Nair -p 91234567 -e aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@u.nus.edu`.
+   1. Start at the default window size, then resize slowly through 760 px and
+      640 px down to the minimum width and back.<br>
+      Expected: Every name remains above the contact rows without clipping or
+      overlap. A card grows whenever a contact wraps, including Priya's card
+      without tags or a flag. Complete clipped values remain accessible on hover.
+   1. Add `add Muhammad Haziq -p 91234567 -e muhammad.haziq.bin.abdul.rahman.shah@alumni.u.nus.edu --follow-up`.
+   1. Add `add Muhammad Haziq Shah -p 91234567 -e muhammad.haziq.bin.abdul.rahman.shah@alumni.u.nus.edu`.
+      The duplicate contact warning is expected.
+   1. Compare these last two cards while repeating the resize.<br>
+      Expected: Their contact rows have equal widths and wrap or shorten at
+      the same points. Details extend beneath the marker, which remains on
+      the headline. Repeat with an NUS Student ID on both cards and with a
+      short NUS email; toggling follow-up never changes the contact layout.
 
 ### Long names on a card
 
@@ -2843,7 +2896,7 @@ testers are expected to do more *exploratory* testing.
       Expected: The command identifies the same student by their ID both times,
       even though the rename takes them off any list a search had narrowed to.
 
-   1. Test case: `find Alex` followed by `edit A02345678G -p 81112222`, where the
+   1. Test case: `find -n Alex` followed by `edit A02345678G -p 81112222`, where the
       search hides Charlotte Oliveiro<br>
       Expected: Charlotte Oliveiro's phone changes even though she is not in the
       displayed list. A complete `edit 1 -p 81112222` in the same state would edit
@@ -2854,7 +2907,7 @@ testers are expected to do more *exploratory* testing.
       `A09876543Z`, and no other detail changes. Editing it back with
       `edit A09876543Z --id A02345678G` works the same way.
 
-   1. Test case: `edit A01234567X --id A12345678C`, where `A12345678C` is another
+   1. Test case: `edit A01234567X --id A03456789H`, where `A03456789H` is another
       student's ID<br>
       Expected: No change. The message refuses the ID another student already
       holds, the same way an `edit INDEX --id` would.
@@ -3479,6 +3532,35 @@ testers are expected to do more *exploratory* testing.
       Expected: The recognizable student and every record from the backup are
       present. Bob remains absent because the failed `add` was undone in memory
       and never replaced the last valid data file.
+
+1. Recovering from a failed first save
+
+   1. Prerequisites (Linux): Use a disposable TAB home folder with the packaged
+      JAR. In a private mount namespace (for example, start a shell with
+      `unshare --user --map-root-user --mount`), enter that folder and run
+      `mkdir data`, then `mount -t tmpfs -o size=4096 tmpfs data`.
+      This limits only the throwaway data folder; do not fill the real drive.
+      Keep TAB and the following commands inside that namespace.
+
+   1. Launch `java -jar tab.jar` and confirm the sample students appear.
+      Fill the private filesystem with
+      `dd if=/dev/zero of=data/filler bs=4096 count=1`.
+      Verify `touch data/probe` succeeds while
+      `printf x > data/probe` fails with `No space left on device`, then
+      remove only `data/probe`. The directory must remain writable: removing
+      directory write access would fail before the old code creates its target
+      and would not reproduce this bug.
+
+   1. Test case: Enter `add Mei Tan -p 91234567`.<br>
+      Expected: A save error reports `No space left on device` and that no
+      changes were made. The sample students remain visible, Mei is absent,
+      and `data/tab.json` does not exist, even as an empty file.
+
+   1. Test case: Exit TAB, run `rm data/filler` to free space, and relaunch
+      `java -jar tab.jar` inside the same namespace.<br>
+      Expected: TAB opens with sample students without file repair. Repeat the
+      add, exit, and relaunch; Mei is now saved and present. Exit TAB, run
+      `umount data`, and exit the private namespace.
 
 1. Dealing with missing/corrupted data files
 

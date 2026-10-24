@@ -8,18 +8,19 @@ import javafx.scene.layout.Region;
  * The first line of a student card: the name, with the tags against it.
  *
  * <p>The name and tags show their full values when they fit. On a crowded row, the name
- * keeps a readable minimum while the tags collapse. Any space left by whole chips or a
- * count is returned to the name, which shortens itself only to the width still available.
+ * keeps a readable allowance while the tags collapse, yielding some of it for a complete
+ * count. Any space left by whole chips or a count is returned to the name, which shortens
+ * itself only to the width still available.
  */
 public class CardHeadline extends Pane {
 
     /** The gap between the name and the tags beside it. */
-    private static final double SPACING = 8;
+    static final double SPACING = 8;
     /**
-     * Enough of the name for a few letters of it, which the tags beside it never take. A
-     * name is what tells one card from another, so it gives way last.
+     * Preferred room for a readable start of the name. A complete tag count may take
+     * some of it, while the name retains space for a character from each end.
      */
-    private static final double READABLE_NAME_WIDTH = 64;
+    static final double READABLE_NAME_WIDTH = 64;
 
     private Label name;
     private TagRow tags;
@@ -68,10 +69,11 @@ public class CardHeadline extends Pane {
         // enough for a chip and a count of the tags it leaves out, so that a card beside a
         // long name still says there are more rather than showing one chip and nothing else
         double floor = Math.min(wanted, tags.minWidth(-1));
-        // but never so much that the name is left with nothing: a card whose name reads as
-        // an ellipsis says less about the student than one whose tag count is missing, and
-        // on a narrow window every flagged card with two tags came out that way
-        double sparedForTheName = getWidth() - READABLE_NAME_WIDTH - SPACING;
+        // Prefer a readable name, but allow it to yield enough room for a complete
+        // count across fonts. At extreme widths, keep some name letters visible.
+        double countWidth = Math.min(tags.getCountWidth(),
+                Math.max(0, getWidth() - Math.ceil(name.minWidth(-1)) - SPACING));
+        double sparedForTheName = Math.max(countWidth, getWidth() - READABLE_NAME_WIDTH - SPACING);
         return Math.clamp(spare, Math.min(floor, Math.max(0, sparedForTheName)), wanted);
     }
 
