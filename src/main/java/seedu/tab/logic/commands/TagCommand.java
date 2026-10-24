@@ -9,6 +9,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_REMOVE_TAG;
 
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -104,7 +105,7 @@ public class TagCommand extends Command {
                     Messages.shorten(existingTag.get().tagName)));
         }
         if (action == Action.REMOVE && existingTag.isEmpty()) {
-            throw new CommandException(absentTagMessage(student, model.getFilteredStudentList().indexOf(student)));
+            throw new CommandException(absentTagMessage(student, model.getFilteredStudentList()));
         }
         Student updatedStudent = createUpdatedStudent(student);
         model.setStudent(student, updatedStudent);
@@ -122,14 +123,17 @@ public class TagCommand extends Command {
      * the card draws the label beside the student's name, and the feedback of {@code edit}
      * prints it after the tags.
      */
-    private String absentTagMessage(Student student, int displayedIndex) {
+    private String absentTagMessage(Student student, List<Student> displayedStudents) {
         String absent = String.format(MESSAGE_NOT_PRESENT, Messages.shorten(tag.tagName));
         if (!student.isFlagged() || !Flag.FOLLOW_UP_NAME.equalsIgnoreCase(tag.tagName)) {
             return absent;
         }
-        String hint = displayedIndex < 0 ? MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT
-                : String.format(MESSAGE_FOLLOW_UP_FLAG_HINT, displayedIndex + 1);
-        return absent + "\n" + hint;
+        for (int index = 0; index < displayedStudents.size(); index++) {
+            if (displayedStudents.get(index) == student) {
+                return absent + "\n" + String.format(MESSAGE_FOLLOW_UP_FLAG_HINT, index + 1);
+            }
+        }
+        return absent + "\n" + MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT;
     }
 
     /** Returns whether a stored tag denotes the requested tag, ignoring case. */

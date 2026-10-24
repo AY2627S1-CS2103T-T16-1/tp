@@ -64,6 +64,23 @@ public class TagCommandIntegrationTest {
     }
 
     @Test
+    public void execute_identicalFlaggedRecords_keepsFollowUpHintOnSelectedRecord() throws Exception {
+        Student first = new StudentBuilder(student).withoutNusStudentId().build();
+        Student second = new StudentBuilder(first).build();
+        StudentBook book = new StudentBook();
+        book.addStudent(first);
+        book.addStudent(second);
+        model.setStudentBook(book);
+        model.updateFilteredStudentList(shown -> true);
+        storage.saveStudentBook(model.getStudentBook());
+        saveCount = 0;
+
+        assertFailureWithoutMutation("tag 2 -r \"Needs follow-up\"", CommandException.class,
+                "This student does not have tag [Needs follow-up]. No changes made.\n"
+                        + String.format(TagCommand.MESSAGE_FOLLOW_UP_FLAG_HINT, 2));
+    }
+
+    @Test
     public void execute_studentIdOutsideFilter_addsAndRemovesTagsWithoutChangingOtherFields() throws Exception {
         model.updateFilteredStudentList(shown -> shown.getName().equals(otherStudent.getName()));
         Student expected = new StudentBuilder(student).withTags("T1", "Lab 3", "组 1").build();
