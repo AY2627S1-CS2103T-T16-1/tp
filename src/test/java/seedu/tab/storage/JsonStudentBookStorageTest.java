@@ -39,6 +39,44 @@ public class JsonStudentBookStorageTest {
     public Path testFolder;
 
     @Test
+    public void readStudentBook_nonBooleanFlag_reportsRecordAndPreservesBytes() throws Exception {
+        for (String value : List.of("0", "1", "2", "-1", "1.5", "1e3", "999999999999999999999999",
+                "\"true\"", "\"false\"", "\"\"", "[]", "{}")) {
+            String json = "{\"students\":[{\"name\":\"Before\",\"phone\":\"81111111\"},"
+                    + "{\"name\":\"Alice Tan\",\"phone\":\"91234567\",\"flag\":" + value + "}]}";
+            Path path = testFolder.resolve("invalid-flag.json");
+            byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+            Files.write(path, bytes);
+
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+            assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
+            String shownValue = value.equals("[]") ? "[" : value.equals("{}") ? "{" : value;
+            assertTrue(exception.getMessage().contains("Invalid flag value " + shownValue
+                    + ". Use JSON true, false or null for the follow-up flag."), exception.getMessage());
+            assertArrayEquals(bytes, Files.readAllBytes(path));
+        }
+    }
+
+    @Test
+    public void readAndSaveStudentBook_documentedFlagValues_preservesStatus() throws Exception {
+        for (String field : List.of("", ",\"flag\":null", ",\"flag\":false", ",\"flag\":true")) {
+            Path path = testFolder.resolve("valid-flag.json");
+            String json = "{\"students\":[{\"name\":\"Alice Tan\",\"phone\":\"91234567\"" + field + "}]}";
+            Files.writeString(path, json);
+            JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+
+            ReadOnlyStudentBook loaded = storage.readStudentBook().orElseThrow();
+
+            assertEquals(field.endsWith("true"), loaded.getStudentList().getFirst().isFlagged());
+            assertEquals(json, Files.readString(path));
+            storage.saveStudentBook(loaded);
+            assertEquals(loaded, storage.readStudentBook().orElseThrow());
+        }
+    }
+
+    @Test
     public void readAndSaveStudentBook_utf8WithOrWithoutBom_preservesUnicodeRecords() throws Exception {
         StudentBook expected = new StudentBook();
         expected.addStudent(new StudentBuilder().withName("José Tan").build());

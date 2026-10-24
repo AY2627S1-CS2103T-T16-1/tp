@@ -859,6 +859,10 @@ A student who needs follow-up has `"flag": true` in their JSON record. An
 unflagged student normally has no `flag` key; absence, `false`, and `null` all
 mean that no follow-up is needed. Data files created before this field existed
 continue to load, with every record that lacks the key treated as unflagged.
+Use actual JSON Boolean values, without quotation marks. Numbers such as
+`0`, `1` or `2`, strings such as `"true"`, and other value types are rejected
+with an error naming the student record and `flag`. TAB leaves the file
+unchanged so that you can correct the value and restart.
 
 A student with an NUS Student ID has a `"nusStudentId"` string such as
 `"A01234567X"` in their JSON record. The key is optional: a missing key or
