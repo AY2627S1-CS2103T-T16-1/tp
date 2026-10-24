@@ -71,6 +71,38 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_multilineDuplicateKey_reportsOffendingLineAndPreservesBytes() throws Exception {
+        String json = """
+                {
+                  "students": [
+                    {"name":"Before","phone":"81111111"},
+                    {
+                      "name": "Alex",
+                      "phone": "91112222",
+                      "tags": [
+                        "Lab 3"
+                      ],
+                      "phone": "87438807"
+                    },
+                    {"name":"After","phone":"83333333"}
+                  ]
+                }
+                """;
+        Path path = testFolder.resolve("multiline-duplicate.json");
+        byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+        Files.write(path, bytes);
+
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+        assertTrue(exception.getMessage().contains("at line 10, column"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("Duplicate field 'phone'"));
+        assertTrue(exception.getMessage().contains("> 10 |       \"phone\": \"87438807\""));
+        assertFalse(exception.getMessage().contains("After"));
+        assertArrayEquals(bytes, Files.readAllBytes(path));
+    }
+
+    @Test
     public void readStudentBook_handEditedWhitespaceAndRepeatedKeysAcrossStudents_loads() throws Exception {
         Path path = testFolder.resolve("hand-edited.json");
         String json = """
