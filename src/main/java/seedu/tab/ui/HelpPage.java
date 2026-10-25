@@ -8,6 +8,7 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import seedu.tab.logic.commands.HelpCommand;
 
 /**
@@ -25,7 +26,7 @@ public class HelpPage extends UiPart<Region> {
     @FXML
     private ScrollPane helpViewport;
     @FXML
-    private Label helpText;
+    private TextFlow helpText;
     @FXML
     private Label helpProgress;
     @FXML
@@ -37,7 +38,7 @@ public class HelpPage extends UiPart<Region> {
         this.closeHelp = closeHelp;
         getRoot().addEventFilter(KeyEvent.KEY_PRESSED, this::handleKeyPressed);
         getRoot().addEventFilter(KeyEvent.KEY_TYPED, this::handleKeyTyped);
-        helpText.setText(HelpCommand.SHOWING_HELP_MESSAGE);
+        helpText.getChildren().setAll(HelpText.colour(HelpCommand.SHOWING_HELP_MESSAGE));
         helpNotice.setText(READY_MESSAGE);
         helpViewport.vvalueProperty().addListener((unused, old, value) -> updateProgress());
         helpViewport.viewportBoundsProperty().addListener((unused, old, bounds) -> updateProgress());
@@ -111,7 +112,10 @@ public class HelpPage extends UiPart<Region> {
 
     private double lineHeight() {
         Text line = new Text("Ag");
-        line.setFont(helpText.getFont());
+        // the spans all carry one monospaced font, so any of them measures a line of the block
+        if (helpText.getChildren().getFirst() instanceof Text span) {
+            line.setFont(span.getFont());
+        }
         return line.getLayoutBounds().getHeight();
     }
 

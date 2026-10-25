@@ -19,7 +19,9 @@ import javafx.scene.input.DataFormat;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import seedu.tab.logic.commands.HelpCommand;
 
 public class HelpPageTest {
@@ -147,7 +149,7 @@ public class HelpPageTest {
         FxToolkit.onFxThread(() -> {
             HelpPage page = pageAt(1200, 4000, new AtomicInteger());
             ScrollPane viewport = viewportOf(page);
-            Label text = (Label) page.getRoot().lookup("#helpText");
+            Region text = (Region) page.getRoot().lookup("#helpText");
             Label progress = (Label) page.getRoot().lookup("#helpProgress");
             assertTrue(text.getHeight() < viewport.getViewportBounds().getHeight());
             type(page, " ");
@@ -207,9 +209,9 @@ public class HelpPageTest {
         FxToolkit.onFxThread(() -> {
             // Reserve native frame space as well as the page padding at the 490px window minimum.
             HelpPage page = pageAt(474, 600, new AtomicInteger());
-            Label text = (Label) page.getRoot().lookup("#helpText");
-            for (String line : text.getText().split("\\n")) {
-                assertLineFits(text, line);
+            TextFlow text = (TextFlow) page.getRoot().lookup("#helpText");
+            for (String line : textOf(text).split("\\n")) {
+                assertLineFits(spanFont(text), text.getWidth(), line);
             }
             for (Node node : page.getRoot().lookupAll(".help-footer .label")) {
                 Label hint = (Label) node;
@@ -220,9 +222,27 @@ public class HelpPageTest {
     }
 
     private static void assertLineFits(Label label, String line) {
+        assertLineFits(label.getFont(), label.getWidth(), line);
+    }
+
+    private static void assertLineFits(Font font, double width, String line) {
         Text measured = new Text(line);
-        measured.setFont(label.getFont());
-        assertTrue(measured.getLayoutBounds().getWidth() <= label.getWidth(),
+        measured.setFont(font);
+        assertTrue(measured.getLayoutBounds().getWidth() <= width,
                 "help line wraps at minimum width: " + line);
+    }
+
+    /** Returns the reference as one string, joined back from the coloured spans. */
+    private static String textOf(TextFlow flow) {
+        StringBuilder whole = new StringBuilder();
+        for (Node node : flow.getChildrenUnmodifiable()) {
+            whole.append(((Text) node).getText());
+        }
+        return whole.toString();
+    }
+
+    /** Returns the font the spans share, which is the font one line of the block is set in. */
+    private static Font spanFont(TextFlow flow) {
+        return ((Text) flow.getChildrenUnmodifiable().get(0)).getFont();
     }
 }
