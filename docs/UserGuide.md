@@ -1037,29 +1037,6 @@ The linked reports track these limitations and their fixes:
   while the error names `data/tab.json` instead. Close all TAB windows and
   restore write access to the lock file before restarting. See
   [#438](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/438).
-* **Legacy follow-up tags:** A hand-edited file can load `Needs follow-up` as
-  an ordinary tag, duplicating the follow-up marker on a flagged card. Remove
-  the ordinary tag with `tag INDEX -r "Needs follow-up"`; the separate follow-up
-  flag stays set. See
-  [#494](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/494).
-* **Repeated saved tags:** Case variants in a hand-edited `tags` array can
-  appear as separate chips while sharing a summary row. Replace the student's
-  tags with `edit INDEX -t TAG ...`, supplying one spelling of every tag you
-  want to keep. See
-  [#495](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/495).
-* **Hidden characters in pasted values:** A hidden control character can make
-  a name or tag look unchanged but prevent an ordinary search from matching it.
-  Retype affected names or tags using `edit` rather than pasting them from the
-  same source. See
-  [#496](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/496).
-* **Malformed saved tags:** A wrong JSON type in `tags` can produce a technical
-  startup error. With TAB closed, correct the field to an array of quoted
-  strings, such as `"tags": ["Lab 3"]`, and restart. The rejected file stays
-  unchanged. See
-  [#497](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/497).
-* **Lengthy edit errors:** A zero or non-integer edit index can display the
-  full usage block. Use a positive index from the displayed list and retry.
-  See [#488](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/488).
 
 --------------------------------------------------------------------------------------------------------------------
 
