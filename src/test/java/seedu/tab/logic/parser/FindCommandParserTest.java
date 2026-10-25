@@ -129,6 +129,13 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_invalidStatusAndEmptyTerm_reportsStatusFirst() {
+        assertParseFailure(parser, "-n \"\" -f -nf", Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
+        assertParseFailure(parser, "-n \"\" -f --follow-up -nf",
+                Messages.getErrorMessageForDuplicateFlags("-f"));
+    }
+
+    @Test
     public void parse_invalidStatusSelectors_reportsSpecificProblem() {
         for (String input : List.of("-f -nf", "--no-follow-up --follow-up", "-nf -n Jason -f")) {
             assertParseFailure(parser, input, Messages.MESSAGE_CONFLICTING_FOLLOW_UP);

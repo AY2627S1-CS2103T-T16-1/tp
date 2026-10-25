@@ -323,6 +323,17 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_multipleErrors_keepsShapeErrorsAheadOfFieldErrors() {
+        assertParseFailure(parser, "0 -p invalid -f -nf", Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
+        assertParseFailure(parser, "0 -p invalid -f --follow-up -nf",
+                Messages.getErrorMessageForDuplicateFlags("-f"));
+        assertParseFailure(parser, "0 -p invalid --phone invalid -f -nf",
+                Messages.getErrorMessageForDuplicateFlags("-p"));
+        assertParseFailure(parser, "0 -p invalid --phone invalid -f --follow-up -nf",
+                Messages.getErrorMessageForDuplicateFlags("-p", "-f"));
+    }
+
+    @Test
     public void parse_contradictoryFollowUpOptions_failure() {
         for (String options : new String[] {"--follow-up --no-follow-up", "--no-follow-up --follow-up",
             "-f --no-follow-up", "--no-follow-up -f -p 81112222", "--follow-up -nf", "-nf --follow-up",

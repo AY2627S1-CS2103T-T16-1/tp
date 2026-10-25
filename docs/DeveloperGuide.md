@@ -162,6 +162,17 @@ The empty typed event emitted by macOS F1 is also consumed so it
 cannot overwrite the opening notice.
 No student data is changed.
 
+Parser and highlighter syntax characters are defined by `CommandTokenizer`,
+so quoting, escaping and attached option markers stay consistent. Each keeps
+its own scanning loop because highlighting must also accept unfinished input.
+`ParserUtil.parseFollowUpSelector` decodes the optional follow-up state for
+both find and edit. Edit performs its full duplicate-option check first, then
+checks the selector before collecting field errors, preserving error priority.
+Email and ID edits share clear-or-parse handling; each retains its own validator
+and descriptor setter. Add and edit share
+`StudentIdValidation.requireNoDuplicate`, with edit permitting the replaced
+record to retain its ID.
+
 #### Restoring window geometry
 
 `MainWindow` supplies each screen's visual bounds to `WindowBounds`, with the

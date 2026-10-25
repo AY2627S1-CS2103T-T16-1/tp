@@ -8,7 +8,6 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.model.Model.PREDICATE_SHOW_ALL_STUDENTS;
 
-import java.util.Optional;
 import java.util.logging.Logger;
 
 import seedu.tab.commons.core.LogsCenter;
@@ -72,11 +71,7 @@ public class AddCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
 
-        Optional<Student> duplicateStudent = model.findSameStudent(toAdd);
-        if (duplicateStudent.isPresent()) {
-            throw new CommandException(String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
-                    toAdd.getNusStudentId().orElseThrow(), duplicateStudent.orElseThrow().getName()));
-        }
+        StudentIdValidation.requireNoDuplicate(model, toAdd, null);
 
         String feedback = LikelyDuplicateWarning.appendTo(
                 String.format(MESSAGE_SUCCESS, Messages.format(toAdd)),

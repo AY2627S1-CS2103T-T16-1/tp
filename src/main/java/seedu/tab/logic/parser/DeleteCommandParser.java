@@ -3,6 +3,8 @@ package seedu.tab.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
+import static seedu.tab.logic.parser.CommandTokenizer.OPTION_MARKER;
+import static seedu.tab.logic.parser.CommandTokenizer.VALUE_SEPARATOR;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,8 +21,6 @@ import seedu.tab.model.student.NusStudentId;
  */
 public class DeleteCommandParser implements Parser<DeleteCommand> {
 
-    private static final char VALUE_SEPARATOR = '=';
-    private static final String OPTION_MARKER = "-";
 
     /**
      * Parses the given {@code String} of arguments in the context of the DeleteCommand
