@@ -32,10 +32,14 @@ class JsonTagsDeserializer extends JsonDeserializer<List<JsonAdaptedTag>> {
 
     private static JsonMappingException invalidValue(JsonParser parser, String field, String reason)
             throws IOException {
-        String value = Messages.shorten(parser.getText());
+        String value = switch (parser.getCurrentToken()) {
+            case START_OBJECT -> "an object";
+            case START_ARRAY -> "an array";
+            default -> Messages.shorten(parser.getText());
+        };
         if (parser.getCurrentToken() == JsonToken.VALUE_STRING) {
             value = "\"" + value + "\"";
         }
-        return JsonMappingException.from(parser, "Invalid " + field + " value " + value + ". " + reason);
+        return JsonMappingException.from(parser, "Invalid " + field + " value: " + value + ". " + reason);
     }
 }

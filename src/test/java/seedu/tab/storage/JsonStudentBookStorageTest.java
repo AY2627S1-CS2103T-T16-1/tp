@@ -166,8 +166,8 @@ public class JsonStudentBookStorageTest {
     @Test
     public void readStudentBook_nonArrayTags_reportsFieldAndPreservesBytes() throws Exception {
         for (String value : List.of("\"friends\"", "5", "true", "false", "{}")) {
-            String shownValue = value.equals("{}") ? "{" : value;
-            assertInvalidTagsPreservesFile(value, "Invalid tags value " + shownValue
+            String shownValue = value.equals("{}") ? "an object" : value;
+            assertInvalidTagsPreservesFile(value, "Invalid tags value: " + shownValue
                     + ". Use a JSON array of tag strings, such as [\"Lab 3\"].");
         }
     }
@@ -175,8 +175,8 @@ public class JsonStudentBookStorageTest {
     @Test
     public void readStudentBook_nonStringTag_reportsEntryAndPreservesBytes() throws Exception {
         for (String value : List.of("5", "1.5", "true", "false", "null", "{}", "[]")) {
-            String shownValue = value.equals("{}") ? "{" : value.equals("[]") ? "[" : value;
-            assertInvalidTagsPreservesFile("[\"Lab 3\"," + value + "]", "Invalid tags entry 2 value " + shownValue
+            String shownValue = value.equals("{}") ? "an object" : value.equals("[]") ? "an array" : value;
+            assertInvalidTagsPreservesFile("[\"Lab 3\"," + value + "]", "Invalid tags entry 2 value: " + shownValue
                     + ". Each tag must be a JSON string, such as \"Lab 3\".");
         }
     }
