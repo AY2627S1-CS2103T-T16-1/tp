@@ -242,6 +242,11 @@ Opens a help page inside TAB, replacing the student list and command box until
 you leave help. It shows every supported command, its purpose and concise syntax,
 option aliases, quoting rules and a shortcut to copy the User Guide address.
 
+The reference is coloured the way the command box colours what you type, so a
+command word, an option such as `-p` and a value you fill in such as `NAME` keep
+the same colour in both places. Section headings stand out from the body, and the
+brackets marking an optional field stay in the body colour.
+
 Use these pager keys immediately, without clicking or pressing Enter after a letter:
 
 | Key | Action |

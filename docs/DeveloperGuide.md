@@ -147,9 +147,15 @@ flag labels from the command/parser definitions.
 `HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
 context, Enter/j and k move a line, d/u move half a screenful, g/G go to either end,
 and q/Esc return to commands. PgUp/PgDn, arrows and Home/End are also accepted.
-A wrapped label inside a scrollbar-free viewport takes the remaining window height.
-Page movement uses the current viewport and font metrics, so resizing and different
-fonts do not skip text. A persistent footer shows progress and navigation keys.
+The reference is drawn as spans of `Text` in a wrapped `TextFlow` inside a
+scrollbar-free viewport, which takes the remaining window height. `HelpText` gives
+each span the class its token asks for — heading, command word, option, placeholder
+or plain — reusing the command box's own colours, so a marker reads the same where
+it is described as where it is typed. A command word carrying punctuation stays
+plain, since it is being named in a sentence rather than shown as syntax, and a
+two-letter capital such as `ID` is prose rather than a field.
+Page movement uses the current viewport and the font those spans share, so resizing
+and different fonts do not skip text. A persistent footer shows progress and navigation keys.
 The c key copies `HelpCommand.USER_GUIDE_URL` to the system clipboard and confirms
 it in the footer. Unused typed keys show a reminder to quit help before entering
 a command. The reference keeps explicit lines short enough for minimum width;
@@ -2083,6 +2089,15 @@ testers are expected to do more *exploratory* testing.
       the footer says `(END)`. Repeated paging at either end stays there.
       Repeat at minimum size and resize while on the last screenful: all text
       remains reachable without scrollbars.
+
+   1. Read the first screenful, then compare it with the command box: quit help
+      and type `add NAME -p PHONE`.<br>
+      Expected: `COMMANDS` and the other margin headings stand out from the body.
+      In both places `add` is bold in the accent colour, `-p` carries the option
+      colour and `NAME`/`PHONE` the value colour. In help, the brackets around an
+      optional field stay in the body colour, and the prose lines, including
+      `help, list, clear and exit take no arguments.` and `an ID instead of an
+      index`, carry no colour of their own.
 
    1. Press c while help is open, then paste into a browser address bar.<br>
       Expected: The exact address `https://ay2627s1-cs2103t-t16-1.github.io/tp/UserGuide.html`
