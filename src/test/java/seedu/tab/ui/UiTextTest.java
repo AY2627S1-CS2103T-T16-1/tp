@@ -41,7 +41,7 @@ public class UiTextTest {
         Label label = new Label();
         UiText.showShortenedToFit(label, value, LIMIT);
         StackPane holder = new StackPane(label);
-        assertNotNull(new Scene(holder, width, 40));
+        new Scene(holder, width, 40);
         holder.applyCss();
         holder.layout();
         label.resize(width, label.prefHeight(-1));

@@ -5,10 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import seedu.tab.commons.core.index.Index;
-import seedu.tab.model.Model;
-import seedu.tab.model.student.Student;
-
 /**
  * A utility class for test cases.
  */
@@ -32,24 +28,4 @@ public class TestUtil {
         return SANDBOX_FOLDER.resolve(fileName);
     }
 
-    /**
-     * Returns the middle index of the student in the {@code model}'s student list.
-     */
-    public static Index getMidIndex(Model model) {
-        return Index.fromOneBased(model.getFilteredStudentList().size() / 2);
-    }
-
-    /**
-     * Returns the last index of the student in the {@code model}'s student list.
-     */
-    public static Index getLastIndex(Model model) {
-        return Index.fromOneBased(model.getFilteredStudentList().size());
-    }
-
-    /**
-     * Returns the student in the {@code model}'s student list at {@code index}.
-     */
-    public static Student getStudent(Model model, Index index) {
-        return model.getFilteredStudentList().get(index.getZeroBased());
-    }
 }
