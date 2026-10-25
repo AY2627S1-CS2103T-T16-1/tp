@@ -5,6 +5,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.TextFlow?>
 
 <BorderPane fx:id="helpPage" focusTraversable="true" styleClass="help-page"
             xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
@@ -15,8 +16,8 @@
     <ScrollPane fx:id="helpViewport" fitToWidth="true" focusTraversable="false"
                 hbarPolicy="NEVER" vbarPolicy="NEVER" minWidth="0" minHeight="0">
       <content>
-        <Label fx:id="helpText" wrapText="true" minWidth="0" minHeight="-Infinity"
-               maxWidth="Infinity" styleClass="help-text" />
+        <TextFlow fx:id="helpText" minWidth="0" minHeight="-Infinity"
+                  maxWidth="Infinity" styleClass="help-text" />
       </content>
     </ScrollPane>
   </center>
