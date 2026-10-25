@@ -21,8 +21,9 @@ A JDK that bundles JavaFX can override these dependencies and produce different
 UI behavior.
 
 The JavaFX native libraries bundled by this project target x64. On Apple
-Silicon, use the x64 JDK under Rosetta rather than an ARM64 JDK; CI explicitly
-selects x64 for its JavaFX 17 jobs even when macOS uses Apple Silicon.
+Silicon, use the x64 JDK under Rosetta rather than an ARM64 JDK. CI runs its
+JavaFX 17 jobs on x64 throughout, and takes the macOS one on an Intel runner,
+so the same libraries are exercised without Rosetta translating them.
 
 CI also tests the [course's Mac setup](https://se-education.org/guides/tutorials/javaInstallationMac.html)
 in a separate job: Zulu JDK+FX **25.0.3**, with its bundled JavaFX **25**, on
