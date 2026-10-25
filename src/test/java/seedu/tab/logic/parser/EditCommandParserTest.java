@@ -183,9 +183,9 @@ public class EditCommandParserTest {
     @Test
     public void parse_quotedEmptyValuesJoinedByEquals_clearOptionalFieldsAndTags() {
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder()
-                .withoutEmail().withoutNusStudentId().withTags().build();
+                .withoutPhone().withoutEmail().withoutNusStudentId().withTags().build();
 
-        assertParseSuccess(parser, "1 --email=\"\" -i=\"\" --tag=\"\"",
+        assertParseSuccess(parser, "1 --phone=\"\" --email=\"\" -i=\"\" --tag=\"\"",
                 new EditCommand(INDEX_FIRST_STUDENT, descriptor));
     }
 
@@ -267,8 +267,31 @@ public class EditCommandParserTest {
                 Messages.getErrorMessageForDuplicateFlags("-e"));
         assertParseFailure(parser, "1 -n \"\" -e \"\"",
                 Messages.getErrorMessageForInvalidValue("Name", "", Name.getFailureReason("")));
-        assertParseFailure(parser, "1 -p \"\" -e \"\"",
-                Messages.getErrorMessageForInvalidValue("Phone", "", Phone.getFailureReason("")));
+    }
+
+    @Test
+    public void parse_clearPhoneAloneOrWithOtherFields_success() {
+        EditStudentDescriptor cleared = new EditStudentDescriptorBuilder().withoutPhone().build();
+        assertParseSuccess(parser, "1 -p \"\"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
+        assertParseSuccess(parser, "1 --phone \"\"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
+        assertParseSuccess(parser, "1 -p \"   \"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
+
+        EditStudentDescriptor combined = new EditStudentDescriptorBuilder().withoutPhone()
+                .withEmail(VALID_EMAIL_AMY).withTags().withFlag(true).build();
+        assertParseSuccess(parser, "1 -p \"\" -e " + VALID_EMAIL_AMY + " -t \"\" -f",
+                new EditCommand(INDEX_FIRST_STUDENT, combined));
+    }
+
+    @Test
+    public void parse_mistypedPhoneClear_reportsSpecificProblem() {
+        for (String input : List.of("1 -p", "1 -p ", "1 -p\u00A0", "1 -p -e a@b.com")) {
+            assertParseFailure(parser, input,
+                    String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_PHONE.getLabel()));
+        }
+        assertParseFailure(parser, "1 -p \"\" -p 91234567",
+                Messages.getErrorMessageForDuplicateFlags("-p"));
+        assertParseFailure(parser, "1 -n \"\" -p \"\"",
+                Messages.getErrorMessageForInvalidValue("Name", "", Name.getFailureReason("")));
     }
 
     @Test

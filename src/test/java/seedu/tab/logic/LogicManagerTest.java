@@ -47,6 +47,7 @@ import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.Email;
+import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.storage.JsonUserPrefsStorage;
@@ -153,6 +154,42 @@ public class LogicManagerTest {
                 + "!#$%&'*+/=?^_`{|}~-, with dots allowed only between non-empty groups");
         assertEquals(List.of(student), model.getStudentBook().getStudentList());
         assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+    }
+
+    @Test
+    public void execute_rosterStudentWithoutPhone_persistsReloadsAndTakesAPhoneLater() throws Exception {
+        // the roster entry from the issue: a name, a university email and an NUS Student ID
+        Student student = new StudentBuilder().withName("Email Only").withoutPhone()
+                .withEmail("e1234567@u.nus.edu").withNusStudentId("E1234567").withTags().build();
+        assertEquals(new CommandResult(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(student)), student),
+                logic.execute("add Email Only --email=e1234567@u.nus.edu --id=E1234567"));
+
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        assertEquals(List.of(student), storage.readStudentBook().orElseThrow().getStudentList());
+        assertFalse(Files.readString(storage.getStudentBookFilePath()).contains("\"phone\""));
+
+        // a phone search cannot reach a student who holds no number, while other fields still do
+        assertEquals(Messages.getStudentsFoundOverview(0), logic.execute("find -p 9123").getFeedbackToUser());
+        assertEquals(Messages.getStudentsFoundOverview(1), logic.execute("find --id E1234567").getFeedbackToUser());
+
+        Student withPhone = new StudentBuilder(student).withPhone("+65 9123 4567").build();
+        assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(withPhone)),
+                logic.execute("edit E1234567 -p \"+65 9123 4567\"").getFeedbackToUser());
+        assertEquals(List.of(withPhone), storage.readStudentBook().orElseThrow().getStudentList());
+        assertEquals(Messages.getStudentsFoundOverview(1), logic.execute("find -p 9123").getFeedbackToUser());
+
+        // the number can be taken back out again, leaving the key out of the saved file
+        assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(student)),
+                logic.execute("edit 1 -p \"\"").getFeedbackToUser());
+        assertEquals(List.of(student), storage.readStudentBook().orElseThrow().getStudentList());
+        assertFalse(Files.readString(storage.getStudentBookFilePath()).contains("\"phone\""));
+
+        // a number that is supplied is still validated
+        logic.execute("list");
+        assertParseException("edit 1 -p 12",
+                Messages.getErrorMessageForInvalidValue("Phone", "12", Phone.getFailureReason("12")));
+        assertParseException("add No Digits -p abc",
+                Messages.getErrorMessageForInvalidValue("Phone", "abc", Phone.getFailureReason("abc")));
     }
 
     @Test
@@ -288,7 +325,7 @@ public class LogicManagerTest {
 
         assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
         assertEquals(List.of("9123-4567", "9123.4567"), model.getStudentBook().getStudentList().stream()
-                .map(student -> student.getPhone().value).toList());
+                .map(student -> student.getPhone().orElseThrow().value).toList());
     }
 
     @Test
@@ -334,7 +371,7 @@ public class LogicManagerTest {
                 "\"９１２３ ４５６７\"", "\"٩١٢٣\u00a0٤٥٦٧\"", "\"9123 4567\"")) {
             assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p " + keyword));
             assertEquals(List.of(students.getFirst()), model.getFilteredStudentList());
-            assertEquals("+６５ ９１２３ ４５６７", model.getFilteredStudentList().getFirst().getPhone().value);
+            assertEquals("+６５ ９１２３ ４５６７", model.getFilteredStudentList().getFirst().getPhone().orElseThrow().value);
         }
         assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p \"８７６５ ４３２１\""));
         assertEquals(List.of(students.get(1)), model.getFilteredStudentList());
@@ -961,7 +998,7 @@ public class LogicManagerTest {
         model.addStudent(AMY);
         setUpUnwritableStorage();
 
-        CommandResult result = logic.execute("edit 1 -p " + AMY.getPhone().value);
+        CommandResult result = logic.execute("edit 1 -p " + AMY.getPhone().orElseThrow().value);
 
         assertEquals(EditCommand.MESSAGE_UNCHANGED, result.getFeedbackToUser());
         assertEquals(List.of(AMY), model.getStudentBook().getStudentList());
