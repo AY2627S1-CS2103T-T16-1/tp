@@ -141,7 +141,7 @@ numbers use digits 0–9 regardless of your computer’s regional settings.
 The command line marks the parts of a command as you type, so a mistake is
 visible before you press Enter:
 
-* the command word is in the line's accent colour and bold, and ends at the
+* the command word is in the line's accent color and bold, and ends at the
   first space, so a quote typed against it is part of the word
 * an option such as `-p` is in mauve, as is the `--tag=` of an option written
   with its value attached
@@ -157,8 +157,8 @@ text’s displayed order.
 
 <box type="tip" seamless>
 
-**Tip:** The colours break a command where the parser breaks it, so if a value
-you meant to quote is not coloured as a quoted value, the parser will not read
+**Tip:** The colors break a command where the parser breaks it, so if a value
+you meant to quote is not colored as a quoted value, the parser will not read
 it as one either.
 </box>
 
@@ -167,7 +167,7 @@ it as one either.
 In the command box, press `Up` to recall the previous submitted command and
 `Down` to move forward. Moving past the newest command restores the draft you
 were typing before pressing `Up`. The caret moves to the end of recalled text,
-and its colours follow the command shown. Press Enter to submit it again.
+and its colors follow the command shown. Press Enter to submit it again.
 
 Rejected commands are included so you can correct a typo. Consecutive identical
 submissions appear once; blank input and all replies to a pending `clear`
@@ -216,7 +216,7 @@ box, so you can correct the word rather than type the command again.
 
 ### Reading the summary beside the list
 
-The panel on the left of the window summarises the students the list is
+The panel on the left of the window summarizes the students the list is
 showing, so you can see the shape of your cohort without running a command.
 
 * **Flagged** counts the students marked as needing a follow-up.
