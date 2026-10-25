@@ -338,6 +338,33 @@ public class SummaryPanelTest {
     }
 
     @Test
+    public void rows_aWrappedTagName_centresItsCountAgainstTheWholeName() throws Exception {
+        ObservableList<Student> students = FXCollections.observableArrayList(
+                tagged("Ann Lee", false, "consultation-week-14"));
+
+        double[] centres = onFxThread(() -> {
+            SummaryPanel panel = new SummaryPanel(students);
+            Region root = (Region) panel.getRoot();
+            styledScene(root, 150, 400);
+            ScrollPane scroll = (ScrollPane) root.lookup("#tagScroll");
+            VBox rows = (VBox) scroll.getContent();
+            HBox row = (HBox) rows.getChildren().getFirst();
+            Label name = (Label) row.getChildren().getFirst();
+            Label count = (Label) row.getChildren().getLast();
+            assertTrue(name.getHeight() > count.getHeight() + 2,
+                    "the tag name should wrap onto more than one line for this check to mean anything");
+            return new double[] {
+                name.getBoundsInParent().getMinY() + name.getHeight() / 2,
+                count.getBoundsInParent().getMinY() + count.getHeight() / 2,
+            };
+        });
+
+        // a count level with the first line reads as belonging to that line rather than the tag
+        assertEquals(centres[0], centres[1], 0.5,
+                "the count should sit against the middle of the whole wrapped name");
+    }
+
+    @Test
     public void rows_tagsWithSharedPrefixes_drawWholeNamesWithoutOverlap() throws Exception {
         List<String> tags = List.of("consultation-week-3", "consultation-week-4",
                 "CS2103T Tutorial W09", "CS2103T Tutorial W10", "LongUnbrokenTag".repeat(10),

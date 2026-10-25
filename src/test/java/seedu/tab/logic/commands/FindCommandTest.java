@@ -2,17 +2,20 @@ package seedu.tab.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.TypicalStudents.BENSON;
 import static seedu.tab.testutil.TypicalStudents.CARL;
 import static seedu.tab.testutil.TypicalStudents.DANIEL;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.logic.parser.StudentBookParser;
 import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.StudentBook;
@@ -55,6 +58,17 @@ public class FindCommandTest {
 
         // different student -> returns false
         assertFalse(findFirstCommand.equals(findSecondCommand));
+    }
+
+    @Test
+    public void execute_longNonmatchingPhoneTerm_returnsPromptlyWithoutChangingRecords() {
+        StudentBook beforeSearch = new StudentBook(model.getStudentBook());
+        assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
+            Command command = new StudentBookParser().parseCommand("find -p " + "9".repeat(50_000) + "!");
+            assertEquals("Found 0 students.", command.execute(model).getFeedbackToUser());
+        });
+        assertEquals(List.of(), model.getFilteredStudentList());
+        assertEquals(beforeSearch, model.getStudentBook());
     }
 
     @Test

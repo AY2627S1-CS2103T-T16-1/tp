@@ -88,7 +88,7 @@ public class AddCommand extends Command {
         }
         logger.info("Added a student; the book now holds "
                 + model.getStudentBook().getStudentList().size());
-        return new CommandResult(feedback);
+        return new CommandResult(feedback, toAdd);
     }
 
     @Override

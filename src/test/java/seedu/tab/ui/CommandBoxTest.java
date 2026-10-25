@@ -601,13 +601,14 @@ public class CommandBoxTest {
     }
 
     @Test
-    public void history_blankClearReply_recallsClearWithoutBlankEntry() throws Exception {
-        for (String reply : List.of("", "  ", "\u00a0")) {
+    public void history_clearReplies_recallsClearWithoutReplyEntries() throws Exception {
+        for (String reply : List.of("", "  ", "\u00a0", "y", "YES", " n ", "No", "list")) {
+            Path caseFolder = Files.createTempDirectory(temporaryFolder, "clear-reply-");
             ModelManager model = new ModelManager();
             model.addStudent(new StudentBuilder().build());
             StorageManager storage = new StorageManager(
-                    new JsonStudentBookStorage(temporaryFolder.resolve("students.json")),
-                    new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json")));
+                    new JsonStudentBookStorage(caseFolder.resolve("students.json")),
+                    new JsonUserPrefsStorage(caseFolder.resolve("prefs.json")));
             LogicManager logic = new LogicManager(model, storage);
             List<String> feedback = new ArrayList<>();
             CommandBox box = onFxThread(() -> new CommandBox(command -> {
@@ -621,12 +622,19 @@ public class CommandBoxTest {
             onFxThread(() -> setTextOf(box, reply));
             pressEnter(box);
 
-            assertFalse(logic.isAwaitingConfirmation());
-            assertEquals(ClearCommand.MESSAGE_CANCELLED, feedback.getLast());
-            assertEquals(List.of(new StudentBuilder().build()), model.getStudentBook().getStudentList());
-            assertFalse(Files.exists(temporaryFolder.resolve("students.json")));
+            boolean isInvalid = reply.equals("list");
+            boolean isConfirmed = reply.equals("y") || reply.equals("YES");
+            assertEquals(isInvalid, logic.isAwaitingConfirmation());
+            if (!isInvalid) {
+                assertEquals(isConfirmed ? ClearCommand.MESSAGE_SUCCESS : ClearCommand.MESSAGE_CANCELLED,
+                        feedback.getLast());
+            }
+            assertEquals(isConfirmed ? List.of() : List.of(new StudentBuilder().build()),
+                    model.getStudentBook().getStudentList());
+            assertEquals(isConfirmed, Files.exists(caseFolder.resolve("students.json")));
+            assertEquals(isInvalid, styleClassesOf(box, "#commandTextField").contains(CommandBox.ERROR_STYLE_CLASS));
             assertHistoryKey(box, KeyCode.UP, "clear");
-            assertHistoryKey(box, KeyCode.DOWN, "");
+            assertHistoryKey(box, KeyCode.DOWN, isInvalid ? reply : "");
         }
     }
 

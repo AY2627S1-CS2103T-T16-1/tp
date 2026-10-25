@@ -225,6 +225,8 @@ public class MainWindow extends UiPart<Stage> {
                 resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
             }
 
+            commandResult.getStudentToReveal().ifPresent(studentListPanel::scrollTo);
+
             if (commandResult.isExit()) {
                 handleExit();
             }

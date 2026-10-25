@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -18,7 +19,10 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -129,6 +133,83 @@ public class MainWindowTest {
                 return null;
             });
         }
+    }
+
+    @Test
+    public void resize_shortWindow_keepsStudentAndHelpFootersReachable() throws Exception {
+        MainWindow window = onFxThread(MainWindowTest::compactWindow);
+        try {
+            FxToolkit.awaitAssertion(() -> assertCompactStudentView(window));
+            onFxThread(() -> {
+                window.handleHelp();
+                Node help = window.getRoot().getScene().lookup("#helpPage");
+                help.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.END,
+                        false, false, false, false));
+                return null;
+            });
+            FxToolkit.awaitAssertion(() -> assertCompactHelpView(window));
+        } finally {
+            onFxThread(() -> {
+                window.getPrimaryStage().hide();
+                return null;
+            });
+        }
+    }
+
+    private static MainWindow compactWindow() {
+        LogicStub logic = new LogicStub();
+        for (int i = 1; i < 10; i++) {
+            logic.students.add(new StudentBuilder().withName("Student " + i).build());
+        }
+        MainWindow window = new MainWindow(new Stage(), logic, DATA_FILE);
+        window.fillInnerParts();
+        window.show();
+        // Leave room for window decorations and desktop panels within 480 logical pixels.
+        window.getPrimaryStage().setWidth(820);
+        window.getPrimaryStage().setHeight(400);
+        TextField field = (TextField) window.getRoot().getScene().lookup("#commandTextField");
+        field.setText("Student added");
+        field.fireEvent(new ActionEvent());
+        return window;
+    }
+
+    private static void assertCompactStudentView(MainWindow window) {
+        Stage stage = window.getPrimaryStage();
+        assertTrue(stage.getHeight() <= 401, "the minimum height prevents resizing to fit");
+        Region root = (Region) stage.getScene().getRoot();
+        assertInside(root, root.lookup("#commandTextField"));
+        assertInside(root, root.lookup("#resultDisplay"));
+        assertInside(root, root.lookup("#saveLocationStatus"));
+        assertInside(root, root.lookup("#total"));
+        assertEquals("10 students", ((Label) root.lookup("#total")).getText());
+        ListView<?> list = (ListView<?>) root.lookup("#studentListView");
+        list.scrollTo(9);
+        Optional<ListCell<?>> last = list.lookupAll(".list-cell").stream()
+                .filter(node -> node instanceof ListCell<?> cell && cell.getIndex() == 9)
+                .<ListCell<?>>map(node -> (ListCell<?>) node).findFirst();
+        assertTrue(last.isPresent(), "the last student is not visible after scrolling");
+        assertInside(list, last.orElseThrow().getGraphic());
+    }
+
+    private static void assertCompactHelpView(MainWindow window) {
+        Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+        Node help = root.lookup("#helpPage");
+        assertInside(root, help);
+        assertInside(root, root.lookup("#saveLocationStatus"));
+        assertEquals("(END)", ((Label) help.lookup("#helpProgress")).getText());
+        for (Node label : help.lookupAll(".label")) {
+            if (!"helpText".equals(label.getId())) {
+                assertInside(root, label);
+            }
+        }
+    }
+
+    private static void assertInside(Node container, Node child) {
+        Bounds outer = container.localToScene(container.getLayoutBounds());
+        Bounds inner = child.localToScene(child.getLayoutBounds());
+        assertTrue(inner.getMinY() >= outer.getMinY() - 1, child + " extends above its container");
+        assertTrue(inner.getMaxY() <= outer.getMaxY() + 1, child + " extends below its container");
+        assertTrue(inner.getHeight() > 0, child + " has no visible height");
     }
 
     @Test

@@ -48,7 +48,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseRequiredIndex_invalidInput_throwsParseException() {
-        for (String index : List.of(" ", "0", "-1", "abc", "2147483648")) {
+        for (String index : List.of(" ", "0", "-1", "abc")) {
             assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
                     ParserUtil.parseRequiredIndex(index, "STUDENT_INDEX"));
         }
@@ -81,8 +81,12 @@ public class ParserUtilTest {
         // the first index that does not fit in an int, one more than the largest one that
         // does. It is written out rather than added up, because an int addition would wrap
         // around and produce a negative index instead
-        assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
-                ParserUtil.parseIndex("2147483648"));
+        for (String index : List.of("2147483648", "6591234567", "9".repeat(1_000))) {
+            String expected = String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, Messages.shorten(index));
+            assertThrows(ParseException.class, expected, () -> ParserUtil.parseIndex(index));
+            assertThrows(ParseException.class, expected, () -> ParserUtil.parseRequiredIndex(index, "INDEX"));
+            assertThrows(ParseException.class, expected, () -> ParserUtil.parseStudentTarget(index, USAGE));
+        }
     }
 
     @Test
@@ -135,7 +139,7 @@ public class ParserUtilTest {
     public void parseStudentTarget_unusableIndexTarget_throwsUsageMessage() {
         // a target of this shape reads as a mistyped index rather than as a candidate
         // NUS Student ID, so the usage message carries the refusal
-        for (String target : List.of("0", "-1", "!@#", "1a", "2147483648")) {
+        for (String target : List.of("0", "-1", "!@#", "1a")) {
             assertThrows(ParseException.class,
                     String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, USAGE), () ->
                     ParserUtil.parseStudentTarget(target, USAGE));
