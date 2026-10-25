@@ -49,7 +49,7 @@ class JsonAdaptedStudent {
     public JsonAdaptedStudent(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email,
             @JsonProperty("nusStudentId") String nusStudentId,
-            @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("tags") @JsonDeserialize(using = JsonTagsDeserializer.class) List<JsonAdaptedTag> tags,
             @JsonProperty("flag") @JsonDeserialize(using = JsonFollowUpFlagDeserializer.class) Boolean flag) {
         this.name = name;
         this.phone = phone;

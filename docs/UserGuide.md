@@ -962,6 +962,13 @@ repeated key, its name. Move extra records into the `students` array or keep
 only the intended value for the repeated key, then restart TAB. The rejected
 file stays unchanged.
 
+The `tags` field holds a JSON array of strings, such as `"tags": ["Lab 3", "组 1"]`.
+An absent key, `null`, or `[]` means no tags. A single string without array
+brackets, or an array entry that is a number, Boolean, object, array or `null`,
+is rejected with an error naming `tags` and the student record. For an invalid
+entry, the error also gives its position, counting from 1. Correct the value
+and restart; TAB leaves the rejected file unchanged.
+
 A student who needs follow-up has `"flag": true` in their JSON record. An
 unflagged student normally has no `flag` key; absence, `false`, and `null` all
 mean that no follow-up is needed. Data files created before this field existed

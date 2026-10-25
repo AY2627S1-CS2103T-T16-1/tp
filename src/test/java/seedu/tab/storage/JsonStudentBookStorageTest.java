@@ -185,6 +185,60 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_nonArrayTags_reportsFieldAndPreservesBytes() throws Exception {
+        for (String value : List.of("\"friends\"", "5", "true", "false", "{}")) {
+            String shownValue = value.equals("{}") ? "an object" : value;
+            assertInvalidTagsPreservesFile(value, "Invalid tags value: " + shownValue
+                    + ". Use a JSON array of tag strings, such as [\"Lab 3\"].");
+        }
+    }
+
+    @Test
+    public void readStudentBook_nonStringTag_reportsEntryAndPreservesBytes() throws Exception {
+        for (String value : List.of("5", "1.5", "true", "false", "null", "{}", "[]")) {
+            String shownValue = value.equals("{}") ? "an object" : value.equals("[]") ? "an array" : value;
+            assertInvalidTagsPreservesFile("[\"Lab 3\"," + value + "]", "Invalid tags entry 2 value: " + shownValue
+                    + ". Each tag must be a JSON string, such as \"Lab 3\".");
+        }
+    }
+
+    private void assertInvalidTagsPreservesFile(String tags, String expectedReason) throws Exception {
+        Path path = testFolder.resolve("invalid-tags.json");
+        String json = "{\"students\":[{\"name\":\"Before\",\"phone\":\"81111111\"},"
+                + "{\"name\":\"Alice Tan\",\"phone\":\"91234567\",\"tags\":" + tags + "}]}";
+        Files.writeString(path, json);
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+        assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
+        assertTrue(exception.getMessage().contains(expectedReason), exception.getMessage());
+        assertTrue(exception.getMessage().contains("at line 1, column"), exception.getMessage());
+        assertFalse(exception.getMessage().contains("java.util"));
+        assertFalse(exception.getMessage().contains("seedu.tab"));
+        assertEquals(json, Files.readString(path));
+    }
+
+    @Test
+    public void readAndSaveStudentBook_validTagRepresentations_preservesTags() throws Exception {
+        for (String field : List.of("", ",\"tags\":null", ",\"tags\":[]", ",\"tags\":[\"Lab 3\",\"组 1\"]")) {
+            Path path = testFolder.resolve("valid-tags.json");
+            String json = "{\"students\":[{\"name\":\"Alice Tan\",\"phone\":\"91234567\"" + field + "}]}";
+            Files.writeString(path, json);
+            JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+            ReadOnlyStudentBook loaded = storage.readStudentBook().orElseThrow();
+            StudentBuilder expected = new StudentBuilder().withName("Alice Tan").withPhone("91234567")
+                    .withoutEmail();
+            if (field.contains("Lab 3")) {
+                expected.withTags("Lab 3", "组 1");
+            }
+            assertEquals(List.of(expected.build()), loaded.getStudentList());
+            assertEquals(json, Files.readString(path));
+            storage.saveStudentBook(loaded);
+            assertEquals(loaded, storage.readStudentBook().orElseThrow());
+        }
+    }
+
+    @Test
     public void readAndSaveStudentBook_documentedFlagValues_preservesStatus() throws Exception {
         for (String field : List.of("", ",\"flag\":null", ",\"flag\":false", ",\"flag\":true")) {
             Path path = testFolder.resolve("valid-flag.json");
