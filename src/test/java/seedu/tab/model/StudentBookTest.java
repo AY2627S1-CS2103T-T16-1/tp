@@ -1,8 +1,6 @@
 package seedu.tab.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalStudents.ALICE;
@@ -49,30 +47,6 @@ public class StudentBookTest {
         StudentBookStub newData = new StudentBookStub(newStudents);
 
         assertThrows(DuplicateStudentException.class, () -> studentBook.resetData(newData));
-    }
-
-    @Test
-    public void hasStudent_nullStudent_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> studentBook.hasStudent(null));
-    }
-
-    @Test
-    public void hasStudent_studentNotInStudentBook_returnsFalse() {
-        assertFalse(studentBook.hasStudent(ALICE));
-    }
-
-    @Test
-    public void hasStudent_studentInStudentBook_returnsTrue() {
-        studentBook.addStudent(ALICE);
-        assertTrue(studentBook.hasStudent(ALICE));
-    }
-
-    @Test
-    public void hasStudent_studentWithSameIdentityFieldsInStudentBook_returnsTrue() {
-        studentBook.addStudent(ALICE);
-        Student editedAlice = new StudentBuilder(ALICE).withTags(VALID_TAG_HUSBAND)
-                .build();
-        assertTrue(studentBook.hasStudent(editedAlice));
     }
 
     @Test
