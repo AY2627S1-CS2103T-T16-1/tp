@@ -1,11 +1,13 @@
 package seedu.tab.storage;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -100,7 +102,8 @@ class JsonAdaptedStudent {
      * @throws IllegalValueException if there were any data constraints violated in the adapted student.
      */
     public Student toModelType() throws IllegalValueException {
-        final List<Tag> studentTags = new ArrayList<>();
+        final Set<Tag> studentTags = new TreeSet<>(
+                Comparator.comparing(tag -> tag.tagName, String.CASE_INSENSITIVE_ORDER));
         for (JsonAdaptedTag tag : tags) {
             if (tag == null) {
                 throw new IllegalValueException("Tag field is missing.");
