@@ -253,6 +253,19 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_storedFollowUpLabelAsTag_stillLoads() {
+        // refusing the label as a command argument must not make an existing file unreadable
+        List<JsonAdaptedTag> tags = new ArrayList<>(VALID_TAGS);
+        tags.add(new JsonAdaptedTag(Flag.FOLLOW_UP_NAME));
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, tags, true);
+
+        var loaded = assertDoesNotThrow(student::toModelType);
+        assertTrue(loaded.getTags().stream().anyMatch(tag -> Flag.isFollowUpName(tag.tagName)),
+                "the tag the file holds should survive the load");
+    }
+
+    @Test
     public void toModelType_nullTag_throwsIllegalValueException() {
         List<JsonAdaptedTag> invalidTags = new ArrayList<>(VALID_TAGS);
         invalidTags.add(null);
