@@ -160,28 +160,36 @@ public class ParserUtilTest {
     @Test
     public void parseRequiredStudentTarget_missingInput_namesSuppliedField() {
         assertThrows(ParseException.class, "Missing required field(s): INDEX or NUS_STUDENT_ID", () ->
-                ParserUtil.parseRequiredStudentTarget("", "INDEX or NUS_STUDENT_ID", "STUDENT_TARGET", USAGE));
+                ParserUtil.parseRequiredStudentTarget("", "INDEX or NUS_STUDENT_ID", "STUDENT_TARGET"));
         assertThrows(ParseException.class, "Missing required field(s): INDEX or NUS_STUDENT_ID", () ->
-                ParserUtil.parseRequiredStudentTarget("   ", "INDEX or NUS_STUDENT_ID", "STUDENT_TARGET", USAGE));
+                ParserUtil.parseRequiredStudentTarget("   ", "INDEX or NUS_STUDENT_ID", "STUDENT_TARGET"));
+    }
+
+    @Test
+    public void parseRequiredStudentTarget_invalidIndex_reportsPositiveIntegerReason() {
+        for (String target : List.of("0", "-1", "1.5", "+1", "!@#", "1a")) {
+            assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
+                    ParserUtil.parseRequiredStudentTarget(target, "STUDENT_TARGET", "STUDENT_TARGET"));
+        }
     }
 
     @Test
     public void parseRequiredStudentTarget_indexOrId_returnsTarget() throws Exception {
         assertEquals(StudentTarget.byIndex(INDEX_FIRST_STUDENT),
-                ParserUtil.parseRequiredStudentTarget("1", "STUDENT_TARGET", "STUDENT_TARGET", USAGE));
+                ParserUtil.parseRequiredStudentTarget("1", "STUDENT_TARGET", "STUDENT_TARGET"));
         assertEquals(StudentTarget.byNusStudentId(new NusStudentId(VALID_NUS_STUDENT_ID)),
-                ParserUtil.parseRequiredStudentTarget(VALID_NUS_STUDENT_ID, "STUDENT_TARGET", "STUDENT_TARGET", USAGE));
+                ParserUtil.parseRequiredStudentTarget(VALID_NUS_STUDENT_ID, "STUDENT_TARGET", "STUDENT_TARGET"));
     }
 
     @Test
     public void parseRequiredStudentTarget_extraValue_reportsValueAfterTarget() {
         assertThrows(ParseException.class,
                 "Unexpected value after STUDENT_TARGET: \"Alex\". Put field values after an option.", () ->
-                ParserUtil.parseRequiredStudentTarget("1 Alex", "STUDENT_TARGET", "STUDENT_TARGET", USAGE));
+                ParserUtil.parseRequiredStudentTarget("1 Alex", "STUDENT_TARGET", "STUDENT_TARGET"));
         assertThrows(ParseException.class,
                 "Unexpected value after STUDENT_TARGET: \"Alex\". Put field values after an option.", () ->
                 ParserUtil.parseRequiredStudentTarget(VALID_NUS_STUDENT_ID + " Alex", "STUDENT_TARGET",
-                        "STUDENT_TARGET", USAGE));
+                        "STUDENT_TARGET"));
     }
 
     @Test
