@@ -8,13 +8,11 @@ state IDLE {
 }
 
 state NO_PENDING {
-    User -> LogicManager : clear
-    LogicManager -> LogicManager : pendingClearCommand = ClearCommand
-    LogicManager -> User : "[y/N] prompt with count"
+    entry : pendingClearCommand = empty
 }
 
 state PENDING : pendingClearCommand present
-PENDING : next input is reply
+PENDING : awaiting user reply
 
 state "Processing reply" as REPLY {
     [*] --> STRIP
@@ -30,20 +28,29 @@ state "Processing reply" as REPLY {
     IS_YES --> INVALID : [no]
 }
 
-DROP : pendingClearCommand = empty
+state DROP {
+    entry : pendingClearCommand = empty
+}
 DROP --> NO_PENDING : no-op / message
 
-CONFIRM : pendingClearCommand = empty
-CONFIRM --> ClearCommand : executeConfirmed()
-ClearCommand --> Storage : save empty book
-Storage --> ClearCommand : result
-CONFIRM --> NO_PENDING : "All students deleted"
+state CONFIRM {
+    entry : pendingClearCommand = empty
+}
+CONFIRM --> NO_PENDING : confirmed
 
-INVALID : ParseException with feedback
+state INVALID {
+    entry : ParseException with feedback
+}
 INVALID --> PENDING : prompt repeated
 
 NO_PENDING --> PENDING : clear (non-empty book)
-PENDING --> NO_PENDING : y / yes / n / no / empty
+PENDING --> REPLY : user replies
+REPLY --> DROP : cancel / decline
+REPLY --> CONFIRM : confirm
+REPLY --> INVALID : invalid input
+CONFIRM --> NO_PENDING : executeConfirmed() then clear
+DROP --> NO_PENDING
+INVALID --> PENDING
 
 NO_PENDING --> [*] : exit
 @enduml
