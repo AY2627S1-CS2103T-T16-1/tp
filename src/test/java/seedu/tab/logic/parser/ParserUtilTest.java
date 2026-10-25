@@ -38,7 +38,7 @@ public class ParserUtilTest {
 
     private static final String WHITESPACE = " \t\r\n";
 
-    /** What a calling command hands parseStudentTarget to report a mistyped index through. */
+    /** What a calling command hands parseStudentTarget to report a missing target through. */
     private static final String USAGE = "delete: deletes a student by index or NUS Student ID.";
 
     @Test
@@ -137,12 +137,11 @@ public class ParserUtilTest {
     }
 
     @Test
-    public void parseStudentTarget_unusableIndexTarget_throwsUsageMessage() {
+    public void parseStudentTarget_unusableIndexTarget_reportsPositiveIntegerReason() {
         // a target of this shape reads as a mistyped index rather than as a candidate
-        // NUS Student ID, so the usage message carries the refusal
-        for (String target : List.of("0", "-1", "!@#", "1a")) {
-            assertThrows(ParseException.class,
-                    String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, USAGE), () ->
+        // NUS Student ID, and keeps the concise reason rather than the command usage
+        for (String target : List.of("0", "-1", "1.5", "+1", "!@#", "1a")) {
+            assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
                     ParserUtil.parseStudentTarget(target, USAGE));
         }
     }

@@ -65,6 +65,7 @@ public class EditCommand extends Command {
             + FLAG_EMAIL.getMarkerSummary() + ", " + FLAG_NUS_STUDENT_ID.getMarkerSummary() + " and "
             + FLAG_TAG.getMarkerSummary() + ". "
             + FLAG_TAG + " \"\" clears every tag; "
+            + FLAG_PHONE + " \"\" clears the phone number; "
             + FLAG_EMAIL + " \"\" clears the email; "
             + FLAG_NUS_STUDENT_ID + " \"\" clears it.\n"
             + "Example: " + COMMAND_WORD + " 1 "
@@ -134,7 +135,9 @@ public class EditCommand extends Command {
         assert studentToEdit != null;
 
         Name updatedName = editStudentDescriptor.getName().orElse(studentToEdit.getName());
-        Phone updatedPhone = editStudentDescriptor.getPhone().orElse(studentToEdit.getPhone());
+        Optional<Phone> updatedPhone = editStudentDescriptor.isPhoneEdited()
+                ? editStudentDescriptor.getPhone()
+                : studentToEdit.getPhone();
         Optional<Email> updatedEmail = editStudentDescriptor.isEmailEdited()
                 ? editStudentDescriptor.getEmail()
                 : studentToEdit.getEmail();
@@ -182,7 +185,7 @@ public class EditCommand extends Command {
      */
     public static class EditStudentDescriptor {
         private Name name;
-        private Phone phone;
+        private final OptionalFieldEdit<Phone> phoneEdit;
         private final OptionalFieldEdit<Email> emailEdit;
         private final OptionalFieldEdit<NusStudentId> nusStudentIdEdit;
         private Set<Tag> tags;
@@ -192,6 +195,7 @@ public class EditCommand extends Command {
          * Constructs an empty descriptor whose optional fields have not been edited.
          */
         public EditStudentDescriptor() {
+            phoneEdit = new OptionalFieldEdit<>();
             emailEdit = new OptionalFieldEdit<>();
             nusStudentIdEdit = new OptionalFieldEdit<>();
         }
@@ -202,10 +206,10 @@ public class EditCommand extends Command {
          */
         public EditStudentDescriptor(EditStudentDescriptor toCopy) {
             requireNonNull(toCopy);
+            phoneEdit = new OptionalFieldEdit<>(toCopy.phoneEdit);
             emailEdit = new OptionalFieldEdit<>(toCopy.emailEdit);
             nusStudentIdEdit = new OptionalFieldEdit<>(toCopy.nusStudentIdEdit);
             setName(toCopy.name);
-            setPhone(toCopy.phone);
             setTags(toCopy.tags);
             isFlagged = toCopy.isFlagged;
         }
@@ -214,8 +218,8 @@ public class EditCommand extends Command {
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, tags, isFlagged)
-                    || emailEdit.isEdited() || nusStudentIdEdit.isEdited();
+            return CollectionUtil.isAnyNonNull(name, tags, isFlagged)
+                    || phoneEdit.isEdited() || emailEdit.isEdited() || nusStudentIdEdit.isEdited();
         }
 
         public void setName(Name name) {
@@ -226,12 +230,28 @@ public class EditCommand extends Command {
             return Optional.ofNullable(name);
         }
 
+        /**
+         * Sets a replacement phone number and marks the phone as edited.
+         *
+         * @throws NullPointerException if {@code phone} is null.
+         */
         public void setPhone(Phone phone) {
-            this.phone = phone;
+            phoneEdit.set(requireNonNull(phone));
+        }
+
+        /**
+         * Marks the phone number for removal without changing any other field.
+         */
+        public void clearPhone() {
+            phoneEdit.clear();
+        }
+
+        public boolean isPhoneEdited() {
+            return phoneEdit.isEdited();
         }
 
         public Optional<Phone> getPhone() {
-            return Optional.ofNullable(phone);
+            return phoneEdit.getValue();
         }
 
         /**
@@ -322,7 +342,7 @@ public class EditCommand extends Command {
             }
 
             return Objects.equals(name, otherEditStudentDescriptor.name)
-                    && Objects.equals(phone, otherEditStudentDescriptor.phone)
+                    && phoneEdit.hasSameStateAs(otherEditStudentDescriptor.phoneEdit)
                     && emailEdit.hasSameStateAs(otherEditStudentDescriptor.emailEdit)
                     && nusStudentIdEdit.hasSameStateAs(otherEditStudentDescriptor.nusStudentIdEdit)
                     && Objects.equals(tags, otherEditStudentDescriptor.tags)
@@ -331,7 +351,8 @@ public class EditCommand extends Command {
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, phone, emailEdit.isEdited(), emailEdit.getValue(),
+            return Objects.hash(name, phoneEdit.isEdited(), phoneEdit.getValue(),
+                    emailEdit.isEdited(), emailEdit.getValue(),
                     nusStudentIdEdit.isEdited(), nusStudentIdEdit.getValue(), tags, isFlagged);
         }
 
@@ -339,7 +360,8 @@ public class EditCommand extends Command {
         public String toString() {
             return new ToStringBuilder(this)
                     .add("name", name)
-                    .add("phone", phone)
+                    .add("phone", phoneEdit.getValue())
+                    .add("isPhoneEdited", phoneEdit.isEdited())
                     .add("email", emailEdit.getValue())
                     .add("isEmailEdited", emailEdit.isEdited())
                     .add("nusStudentId", nusStudentIdEdit.getValue())

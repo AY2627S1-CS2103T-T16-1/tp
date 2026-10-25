@@ -30,6 +30,7 @@ import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.NusStudentId;
+import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -619,6 +620,67 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_handEditedNullPhone_loadsWithoutOne() throws Exception {
+        // a file edited by hand may spell an absent phone either way, and both have to load
+        // alongside a record that does hold one
+        ReadOnlyStudentBook loaded = readStudentBook("nullPhoneStudentBook.json").get();
+
+        Student explicitNull = new StudentBuilder().withName("Alice Pauline").withoutPhone()
+                .withEmail("alice@example.com").withTags("friends").build();
+        Student keyLeftOut = new StudentBuilder().withName("Benson Meier").withoutPhone()
+                .withEmail("benson@example.com").withTags("owesMoney").build();
+        Student keyPresent = new StudentBuilder().withName("Carl Kurz").withPhone("+65 9123 4567 (HP)")
+                .withEmail("carl@example.com").withTags().build();
+
+        assertEquals(3, loaded.getStudentList().size());
+        assertEquals(explicitNull, loaded.getStudentList().get(0));
+        assertEquals(keyLeftOut, loaded.getStudentList().get(1));
+        assertEquals(keyPresent, loaded.getStudentList().get(2));
+    }
+
+    @Test
+    public void readStudentBook_handEditedPhoneWhitespace_loadsWithoutOne() throws Exception {
+        Path filePath = testFolder.resolve("PhoneWhitespace.json");
+        Files.writeString(filePath, """
+                {
+                  "students": [ {
+                    "name": "Alex Yeoh",
+                    "phone": ""
+                  }, {
+                    "name": "Bernice Yu",
+                    "phone": " 99272758 "
+                  } ]
+                }
+                """);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        ReadOnlyStudentBook loaded = storage.readStudentBook().get();
+
+        assertEquals(Optional.empty(), loaded.getStudentList().get(0).getPhone());
+        assertEquals(Optional.of(new Phone("99272758")), loaded.getStudentList().get(1).getPhone());
+    }
+
+    @Test
+    public void readAndSaveStudentBook_studentWithoutPhone_roundTripsAndLeavesTheKeyOut() throws Exception {
+        Path filePath = testFolder.resolve("NoPhone.json");
+        Student student = new StudentBuilder().withName("Wong Mei Ling").withoutPhone()
+                .withEmail("meiling@u.nus.edu").withTags("Lab 3").build();
+
+        StudentBook original = new StudentBook();
+        original.addStudent(student);
+
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+        storage.saveStudentBook(original, filePath);
+
+        // the file is meant to stay editable by hand, so an absent phone is an absent key
+        assertFalse(Files.readString(filePath).contains("phone"));
+
+        ReadOnlyStudentBook readBack = storage.readStudentBook(filePath).get();
+        assertEquals(original, new StudentBook(readBack));
+        assertEquals(Optional.empty(), readBack.getStudentList().get(0).getPhone());
+    }
+
+    @Test
     public void readStudentBook_handEditedEmailWhitespace_loadsAndPreservesAllStudents() throws Exception {
         Path filePath = testFolder.resolve("EmailWhitespace.json");
         Files.writeString(filePath, """
@@ -722,7 +784,7 @@ public class JsonStudentBookStorageTest {
         assertEquals(original, new StudentBook(readBack));
 
         Student loaded = readBack.getStudentList().get(0);
-        assertEquals("+65 9123 4567", loaded.getPhone().value);
+        assertEquals("+65 9123 4567", loaded.getPhone().orElseThrow().value);
         assertEquals("Ravi s/o Kumaran", loaded.getName().fullName);
         assertEquals(student.getTags(), loaded.getTags());
     }

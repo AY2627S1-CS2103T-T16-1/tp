@@ -303,7 +303,7 @@ student appears at the end of its results. Otherwise, TAB shows all students
 and replies `Search cleared to show the new student.` Re-read the displayed
 indexes before your next command. A rejected addition leaves the search unchanged.
 
-Format: `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
+Format: `add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
 
 The value options accept these equivalent spellings: `-p` and `--phone`,
 `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`. The spellings may
@@ -374,7 +374,8 @@ format it differently. The review advice appears once after all matching fields.
 The warning is only a hint. It does not prove that two records describe the
 same person, and it does not find misspelled names, email aliases, or phone
 numbers with different digit sequences, such as a local number and the same
-number with an added country code or extension. Review the records before
+number with an added country code or extension. A student who has no phone
+number or no email is never reported as sharing that detail with anyone. Review the records before
 deleting either one. A matching NUS Student ID is handled separately and
 still refuses the command, as described above.
 </box>
@@ -400,6 +401,13 @@ accepted. Without either option, the student starts unflagged.
 **Tip:** A phone number may be written the way you would write it down:
 `+65 9123 4567`, `6516-2727 ext 21`, or even
 `1234 5678 (HP) 1111-3333 (Office)`. It only has to hold at least 3 digits.
+
+The phone number is optional too. Record a student from a class roster that
+gives only a name, an NUS Student ID and a university email, rather than
+inventing a number to satisfy the command: `add Email Only
+--email=e1234567@u.nus.edu --id=E1234567`. Supply the number later with
+`edit INDEX -p PHONE`, and remove one entered by mistake with
+`edit INDEX -p ""`. A number you do give is still checked for its 3 digits.
 </box>
 
 <box type="tip" seamless>
@@ -446,9 +454,12 @@ Examples:
 * `add Siti Nur-Aisyah -p 84420917 -e e1147203@u.nus.edu -i a11472030k -t T1 -t "Lab 3"`
 * `add Priya Nair -p 91234567 -e priya@example.com --follow-up`
 * `add 陈伟明 -p 98123344 -e e1077310@u.nus.edu`
+* `add Email Only --email=e1234567@u.nus.edu --id=E1234567` Records a roster entry whose phone number is unknown.
 
 A student's NUS Student ID appears among their card's details and in successful
 command feedback. A student without one has no placeholder or blank gap there.
+The same holds for a student without a phone number: the remaining details
+close up rather than leaving an empty line where the number would have been.
 A flagged student's card carries a `Needs follow-up` marker at its right-hand
 edge, on the same line as the name, and the command result says so too.
 
@@ -477,9 +488,9 @@ shortened name, hidden tag count and follow-up marker together.
 When a student is added, the command result displays the new record
 (`New student added: NAME; Phone: PHONE...`) so you can confirm the details
 immediately. Consistent with the student card, optional fields appear in the
-result only when present: an unflagged student or a student without an email
-or tags leaves no empty placeholder labels in the message, and tags appear
-in alphabetical order (ignoring case).
+result only when present: an unflagged student or a student without a phone
+number, an email or tags leaves no empty placeholder labels in the message,
+and tags appear in alphabetical order (ignoring case).
 
 Leading and trailing spaces are removed, repeated spaces inside a name are
 collapsed to one, and invisible characters are discarded, so that a name is
@@ -498,8 +509,9 @@ before the command is refused, so a command with more than one mistake tells
 you about all of them at once:
 
 ```
-> add John Doe -e e1234567
-Missing required field(s): -p PHONE
+> add -e e1234567
+Missing required field(s): NAME
+In the add command, the name comes first, without an option: add NAME -p PHONE ...
 Email "e1234567" is not valid: an email needs an @ between the local part and the domain
 ```
 
@@ -582,6 +594,11 @@ done to it beyond the quotes any value with spaces takes:
   Leaving both out preserves the student's follow-up status.
 * Choose at most one follow-up option. Combining `--follow-up` or `-f` with
   `--no-follow-up` or `-nf` is rejected without changing any student details.
+* To remove a student's phone number, use `-p ""` or `--phone=""`. A quoted
+  value containing only spaces also removes it. Leaving out `-p` keeps the
+  number unchanged; a bare `-p` or `--phone=` is an error. Clearing an already
+  absent phone number succeeds. A number that is supplied is still checked for
+  its 3 digits.
 * To remove a student's email, use `-e ""` or `--email=""`. A quoted value
   containing only spaces also removes it. Leaving out `-e` keeps the email
   unchanged; a bare `-e` or `--email=` is an error. Clearing an already absent
@@ -595,8 +612,8 @@ done to it beyond the quotes any value with spaces takes:
   corresponding `-i` form. Leaving the option out keeps the NUS Student ID
   unchanged; a quoted value containing only spaces removes it, while a bare
   option or an unquoted empty value such as `--id=` is an error. Clearing an
-  already absent NUS Student ID succeeds. Name and phone are required and
-  cannot be cleared.
+  already absent NUS Student ID succeeds. The name is the one detail that is
+  required and cannot be cleared.
 * An edit may give two students the same name, but cannot give a student an NUS
   Student ID already held by another record. NUS Student ID matching ignores case.
   A saved edit produces the same likely-duplicate notes described under `add`
@@ -624,6 +641,7 @@ Examples:
 *  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 1 -e mei__tan@hotmail.com` Records the address with both underscores.
 *  `edit 1 --email ""` Removes the 1st student's email while keeping all other details.
+*  `edit 1 -p ""` Removes the 1st student's phone number while keeping all other details.
 *  `edit 2 --name "Betsy Crower" --tag ""` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 --id A08901234N` Records or replaces the 1st student's NUS Student ID.
 *  `edit 1 -i ""` Removes the 1st student's NUS Student ID while keeping all other details.
@@ -638,7 +656,7 @@ Examples:
 *  `edit A02345678G --id A7654321Y` Changes that student's NUS Student ID from `A02345678G` to
    `A7654321Y`, keeping all other details.
 
-A cleared email or NUS Student ID, a cleared tag set, and an explicitly set or cleared follow-up status are
+A cleared phone number, email or NUS Student ID, a cleared tag set, and an explicitly set or cleared follow-up status are
 saved at once, and return as they were when you next launch TAB. The command result displays the updated
 record (`Edited student: NAME; Phone: PHONE...`) with fields formatted consistently
 with the student card, omitting cleared or absent optional fields and sorting tags
@@ -815,6 +833,7 @@ Provide at least one field term or one follow-up status option. Every search ter
   `find -t "-Lab"` and `find --tag=-Lab` search for the literal tag text `-Lab`.
 * Phone terms containing only digits, grouping spaces and phone punctuation (`+`, `-`, `(`, `)`, `.`)
   also search the phone with all non-digit characters removed, provided the term contains a digit.
+  A student who holds no phone number matches no phone term at all.
   `find -p 91234567`, `find -p 91234`, `find -p 9123-4567` and `find -p "9123 4567"`
   all match `+65 9123 4567` or `91234567`. `find -p +6591234567` also matches the number
   stored with the country code. Quote terms containing spaces;
@@ -843,6 +862,10 @@ Format: `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID
   the book — even while a search is hiding them. The match ignores case.
 * `--id NUS_STUDENT_ID` names the value as an ID, which an ID starting with a digit
   needs — the plain form would read it as an index. `-i` works in place of `--id`.
+* A target that is not a positive integer, such as `0`, `-1` or `1.5`, reports
+  `Index must be a positive integer.` without the full usage block. A refused
+  target that reads as an NUS Student ID, such as `1ABC`, also names the
+  `delete --id 1ABC` command that addresses it.
 * If an out-of-range numeric target is also a stored NUS Student ID, TAB suggests
   the exact `delete --id VALUE` command. Leading zeroes in an ID are preserved.
   A bare number that is a valid displayed position still deletes by that position.
@@ -1023,6 +1046,13 @@ the startup error names the repeated ID and both record locations so that you
 can correct it. Phone numbers and emails are searchable details rather than
 identity keys.
 
+A phone key is optional in the same way: a missing key, `null`, an empty
+string, or a string containing only spaces means that no phone number has been
+recorded, and TAB leaves the key out when it saves such a record. A non-null
+value must still hold at least 3 digits, so a malformed number stops the file
+loading rather than being dropped from the record. Files written before the
+phone became optional continue to load unchanged.
+
 An email key is optional: a missing key, `null`, an empty string, or a string
 containing only spaces means that no email has been recorded. TAB removes
 leading and trailing spaces from a non-empty saved email before validating it.
@@ -1081,7 +1111,7 @@ The linked reports track these limitations and their fixes:
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | Keeps the search if the new student matches; otherwise shows all students with a notice. <br> `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> e.g., `add James Ho --phone=22224444 -i=A07890123M --tag=T1 -t Lab3 --follow-up`
+**Add**    | Keeps the search if the new student matches; otherwise shows all students with a notice. <br> `add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> e.g., `add James Ho --phone=22224444 -i=A07890123M --tag=T1 -t Lab3 --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`<br> The ID option, spelled `-i`/`--id` or `--id=VALUE`, is what an ID starting with a digit needs<br> e.g., `delete 3`, `delete A01234567X`, `delete --id 1A2B3C`
 **Edit**   | `edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--target-id NUS_STUDENT_ID`; `--id` sets the ID field <br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A08901234N`, `edit A01234567X -p 91234567`

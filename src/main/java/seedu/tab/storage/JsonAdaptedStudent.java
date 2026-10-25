@@ -74,7 +74,7 @@ class JsonAdaptedStudent {
      */
     public JsonAdaptedStudent(Student source) {
         name = source.getName().fullName;
-        phone = source.getPhone().value;
+        phone = source.getPhone().map(sourcePhone -> sourcePhone.value).orElse(null);
         email = source.getEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
         nusStudentId = source.getNusStudentId().map(sourceNusStudentId -> sourceNusStudentId.value).orElse(null);
         tags.addAll(source.getTags().stream()
@@ -121,18 +121,18 @@ class JsonAdaptedStudent {
         }
         final Name modelName = new Name(name);
 
-        if (phone == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.FIELD_NAME));
-        }
-        if (!Phone.isValidPhone(phone)) {
+        // A hand-edited file may spell an absent phone as a missing key, null or a blank string,
+        // just as it may for an email. A non-blank value is still validated rather than dropped.
+        final String normalizedPhone = normalizeOptionalValue(phone);
+        if (normalizedPhone != null && !Phone.isValidPhone(normalizedPhone)) {
             throw new IllegalValueException(Messages.getErrorMessageForInvalidValue(
-                    Phone.FIELD_NAME, phone, Phone.getFailureReason(phone)));
+                    Phone.FIELD_NAME, normalizedPhone, Phone.getFailureReason(normalizedPhone)));
         }
-        final Phone modelPhone = new Phone(phone);
+        final Optional<Phone> modelPhone = Optional.ofNullable(normalizedPhone).map(Phone::new);
 
         // A hand-edited file may spell an absent email as a missing key, null or a blank string.
         // A non-blank value follows the same trimming behavior as command input before validation.
-        final String normalizedEmail = normalizeOptionalEmail(email);
+        final String normalizedEmail = normalizeOptionalValue(email);
         if (normalizedEmail != null && !Email.isWithinLengthLimit(normalizedEmail)) {
             throw new IllegalValueException(String.format(Locale.ROOT,
                     "%s field is too long to read safely: it holds %d characters, but saved emails may hold at most %d",
@@ -158,12 +158,16 @@ class JsonAdaptedStudent {
         return new Student(modelName, modelPhone, modelEmail, modelNusStudentId, modelTags, Boolean.TRUE.equals(flag));
     }
 
-    private static String normalizeOptionalEmail(String rawEmail) {
-        if (rawEmail == null) {
+    /**
+     * Returns the saved {@code rawValue} in the form a command would have stored, or null when the
+     * file leaves the detail out: a missing key, JSON null, or a string that normalizes to nothing.
+     */
+    private static String normalizeOptionalValue(String rawValue) {
+        if (rawValue == null) {
             return null;
         }
-        String normalizedEmail = StringUtil.normalizeFieldValue(rawEmail);
-        return normalizedEmail.isEmpty() ? null : normalizedEmail;
+        String normalizedValue = StringUtil.normalizeFieldValue(rawValue);
+        return normalizedValue.isEmpty() ? null : normalizedValue;
     }
 
     String getNameForErrorMessage() {

@@ -48,7 +48,7 @@ public class LikelyDuplicateWarningTest {
                     + "has the same phone.\n"
                     + "Review the records and delete duplicates only if they are the same person.",
                     LikelyDuplicateWarning.appendTo(SUCCESS_MESSAGE, changed, List.of(existing)));
-            assertEquals("9123-4567", existing.getPhone().value);
+            assertEquals("9123-4567", existing.getPhone().orElseThrow().value);
         }
     }
 
@@ -62,6 +62,19 @@ public class LikelyDuplicateWarningTest {
             assertEquals(SUCCESS_MESSAGE, LikelyDuplicateWarning.appendTo(
                     SUCCESS_MESSAGE, changed, List.of(existing)));
         }
+    }
+
+    @Test
+    public void appendTo_absentPhoneOnEitherSide_doesNotWarn() {
+        // two records that both lack a phone share no number, so neither is evidence of a duplicate
+        Student withPhone = new StudentBuilder().withName("Alice Tan").withPhone("91234567")
+                .withoutEmail().build();
+        Student alsoWithoutPhone = new StudentBuilder().withName("Alicia Tan").withoutPhone()
+                .withoutEmail().build();
+        Student changed = new StudentBuilder().withName("Casey Low").withoutPhone().withoutEmail().build();
+
+        assertEquals(SUCCESS_MESSAGE, LikelyDuplicateWarning.appendTo(
+                SUCCESS_MESSAGE, changed, List.of(withPhone, alsoWithoutPhone)));
     }
 
     @Test

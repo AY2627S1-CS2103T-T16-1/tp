@@ -102,7 +102,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentListPanel`, `SummaryPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-`CommandBox` owns its `CommandHistory` and `CommandTextField`, and calls the static `CommandHighlighter.highlight` method to color the input. The card controls extend JavaFX classes directly: `CardHeadline` extends `Pane`, `CardName` extends `Label`, `TagRow` extends `Region`, and `ContactRow` extends `FlowPane`. These controls are composed in `StudentListCard.fxml`.
+`CommandBox` owns its `CommandHistory`, `CommandTextField` and `HighlightedTextOverlay`. The overlay is what calls the static `CommandHighlighter.highlight` method to color the input, leaving `CommandBox` with running the command, recalling earlier ones and marking a failure. The card controls extend JavaFX classes directly: `CardHeadline` extends `Pane`, `CardName` extends `Label`, `TagRow` extends `Region`, and `ContactRow` extends `FlowPane`. These controls are composed in `StudentListCard.fxml`.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/MainWindow.java).
 
@@ -261,8 +261,9 @@ parser counts to, and a word split in the wrong place would be the same bug
 again.
 
 A `TextField` cannot color its own content, so `CommandBox` keeps the field
-for input and draws a colored copy of the command behind it, with the field's
-own text transparent. The field still takes every keystroke and still decides
+for input and hands `HighlightedTextOverlay` the nodes that draw a colored
+copy of the command behind it, with the field's own text transparent. The
+overlay owns that copy, the caret and the selection band. The field still takes every keystroke and still decides
 which character a click lands on, which keeps editing exactly as it was.
 
 `CommandHighlighter` decides the colors. It returns spans covering every
@@ -579,7 +580,7 @@ as its application directory, preserving the development workflow.
 ### How commands read their arguments
 
 `add` and `edit` mark their fields with options,
-`add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
+`add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
 `edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`,
 where AB3 marked them with prefixes such as `p/`. The `edit` target is a
 shown index, a letter-leading NUS Student ID, or `--target-id NUS_STUDENT_ID`.
@@ -678,9 +679,10 @@ unclear which field a value belongs to, so each is refused on its own instead
 of being collected with the field errors.
 
 `edit` clears a field with an explicitly empty value rather than with a bare
-option. `-e ""` removes the email, `--id ""` removes the NUS Student ID, and
-`-t ""` removes every tag. Email and NUS Student ID values are trimmed before
-this check, so quoted whitespace clears either optional field too.
+option. `-p ""` removes the phone number, `-e ""` removes the email,
+`--id ""` removes the NUS Student ID, and
+`-t ""` removes every tag. Phone, email and NUS Student ID values are trimmed
+before this check, so quoted whitespace clears any of those optional fields too.
 A bare option cannot mean "clear" here, because a bare option
 is what reports the mistake in `edit 1 -t -e a@b.com`: the `-e` is read as the
 value `-t` was left without, rather than being stored as a tag. An empty quoted
@@ -721,8 +723,10 @@ addition and removal.
 `ParserUtil.parseIndex` distinguishes malformed/non-positive input from a positive
 integer exceeding the supported index range. `StudentTarget` reports out-of-range
 positions with their original input spelling and the current displayed count,
-including zero. Invalid non-positive or non-integer edit targets retain the
-concise positive-integer reason from `parseIndex`, alongside any field errors.
+including zero. Invalid non-positive or non-integer targets of edit, tag and
+delete retain the concise positive-integer reason from `parseIndex`, alongside
+any field errors; delete adds the explicit `--id` form whenever the refused
+target reads as a valid NUS Student ID.
 Retaining that spelling also lets delete suggest an exact `--id`
 command for a stored numeric ID without dropping leading zeroes. An in-range
 number remains an index even when another record holds the same numeric ID.
@@ -926,14 +930,14 @@ follow-up status. The normal loading-error path identifies the record and
 `StudentCard` shows a `Needs follow-up` label for true. For false it makes the
 label both invisible and unmanaged, so the card keeps no blank placeholder
 row. Successful add, edit and delete feedback formats student records
-consistently with the student card: optional fields (NUS Student ID, email, tags,
-follow-up status) appear only when present, with tags ordered alphabetically ignoring
-case, avoiding placeholder labels or empty tag markers.
+consistently with the student card: optional fields (NUS Student ID, phone, email,
+tags, follow-up status) appear only when present, with tags ordered alphabetically
+ignoring case, avoiding placeholder labels or empty tag markers.
 
 ### Field values
 
-`Student` stores email and NUS Student ID as `Optional<Email>` and
-`Optional<NusStudentId>`. Both constructors require non-null arguments;
+`Student` stores phone, email and NUS Student ID as `Optional<Phone>`,
+`Optional<Email>` and `Optional<NusStudentId>`. Both constructors require non-null arguments;
 `Optional.empty()` explicitly represents an unknown detail. One constructor
 accepts the follow-up boolean, and the other defaults to unflagged for sample
 data. There are no overloads accepting nullable email or ID values, and no
@@ -1035,7 +1039,9 @@ normalization. Phone search and warnings share `Phone.normalizeDigits`, which
 removes non-digit characters and converts Unicode decimal digits to ASCII.
 Warnings require equality of the complete digit sequence; search permits
 substrings. Country codes and extension digits remain significant, while the
-stored number retains its formatting. Absent emails do not match.
+stored number retains its formatting. Absent phones and absent emails do not
+match: two records that both lack the detail share no value, so neither is
+offered as evidence of a duplicate.
 
 The commands collect the warnings before mutation and separate them from the
 ordinary success message with a blank line. Matches are grouped by field into
@@ -1137,9 +1143,34 @@ helper. Command parsing and storage share that message, so both paths report
 the same invalid value consistently.
 
 `Phone` is **not** an identity field and **not** a key: two students may hold the
-same number, and `isSameStudent` does not read it. It is normalized only so
-that a number typed with unusual whitespace, or wrapped in the invisible marks a
-chat app puts around a copied number, is stored consistently.
+same number, hold none at all, and `isSameStudent` reads neither case. It is
+normalized only so that a number typed with unusual whitespace, or wrapped in the
+invisible marks a chat app puts around a copied number, is stored consistently.
+
+**The phone number may be absent.** A class roster can give a name, an NUS
+Student ID and a university email without giving a personal mobile number, so a
+student is recorded before a number is known rather than one being invented.
+This follows the optional email in every layer, so that one pattern covers both
+details. `Student` accepts, stores and exposes `Optional<Phone>`.
+
+`AddCommandParser` wraps the parsed value in an optional and no longer reports a
+missing `-p`; the name is the only field it still requires. `EditStudentDescriptor`
+holds an `OptionalFieldEdit<Phone>`, so `edit INDEX -p ""` clears the number and a
+value replaces it, exactly as `-e ""` clears an email. A number that is supplied
+is still validated, and a rejected one is recorded as a parse problem rather than
+clearing the field.
+
+`JsonAdaptedStudent` shares `normalizeOptionalValue` with the email: a missing
+`phone` key, JSON `null`, and a string that is empty after normalization all load
+as absent, while a malformed non-null number rejects the data file instead of
+being silently dropped. Jackson omits the key on save when no number is present,
+so files written before the phone became optional continue to load and a saved
+record stays editable by hand.
+
+`StudentCard` leaves the phone label unmanaged when the number is absent, so the
+remaining contact details close up rather than keeping a blank line, and
+`Messages.format` omits the `Phone:` label. The `PHONE` search field returns false
+for a student without a number, consistent with every other absent optional field.
 
 `FindCommandParser` uses `FlagTokenizer` and the existing `CliFlags` aliases for
 name, NUS Student ID, phone, email and tag. Every search term must have a field
@@ -1297,15 +1328,17 @@ explanation and recovery guidance through the same `DataLoadingException`
 boundary; startup preserves the original bytes and blocks the normal UI.
 
 `JsonUtil` turns malformed JSON or an incompatible JSON shape into a
-`DataLoadingException`. For a syntax error, it uses the deepest parser
-exception with a usable location so that the displayed line and column
-identify the offending token rather than the last successfully mapped
-value. It pairs the concise parser explanation with the affected line
-and at most one line on either side. Each source line is limited to 160
-characters; an affected long line is cropped around the reported column
-so that minified JSON remains useful without filling the dialog. If the
-parser supplies no usable location, `JsonUtil` omits the source instead
-of falling back to Jackson's source-bearing message.
+`DataLoadingException`, and `JsonParseErrorFormatter` words the
+explanation it carries. For a syntax error, the formatter uses the
+deepest parser exception with a usable location so that the displayed
+line and column identify the offending token rather than the last
+successfully mapped value. It pairs the concise parser explanation with
+the affected line and at most one line on either side. Each source line
+is limited to 160 characters; an affected long line is cropped around
+the reported column so that minified JSON remains useful without
+filling the dialog. If the parser supplies no usable location, the
+formatter omits the source instead of falling back to Jackson's
+source-bearing message.
 During model conversion, `JsonAdaptedStudent` identifies the invalid field and
 `JsonSerializableStudentBook` adds the one-based record number and its name
 when available. `JsonStudentBookStorage` carries that explanation through the
@@ -2564,6 +2597,18 @@ testers are expected to do more *exploratory* testing.
       The status message shows `New student added: John Doe; Phone: 98765432`
       without placeholder labels for absent email or tags.
 
+   1. Test case: `add Email Only --email=e1234567@u.nus.edu --id=E1234567`<br>
+      Expected: The roster entry is added. The status message reads
+      `New student added: Email Only; NUS Student ID: E1234567; Email: e1234567@u.nus.edu`,
+      with no `Phone:` label, and the card shows the ID and the email with no
+      blank gap where a number would be. Exit and reopen TAB; the record
+      remains, still without a phone number.
+
+   1. Test case: `add Name Only`<br>
+      Expected: The student is added with the name alone. Only `-p 12` and
+      other malformed values are refused, with
+      `Phone "12" is not valid: a phone number needs at least 3 digits`.
+
 1. Revealing a newly saved student in an overflowing list
 
    1. Prerequisites: Use a book with at least 30 students so the list scrolls.
@@ -2579,7 +2624,7 @@ testers are expected to do more *exploratory* testing.
       Student ID.<br>
       Expected: The newly appended card is revealed, rather than the earlier
       matching record. The possible-duplicate warning is still shown.
-   1. Return to the top and try `add Missing Phone`, then an addition with a
+   1. Return to the top and try `add -p 91234567`, then an addition with a
       duplicate NUS Student ID.<br>
       Expected: No student is added and the list does not jump to the end.
    1. Make the data path unwritable, attempt a valid addition, then restore
@@ -2655,6 +2700,10 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add Mei Lin -p 91234567`.<br>
       Expected: The ordinary phone remains readable. Absent email and NUS
       Student ID leave no blank lines.
+   1. Test case: `add Mei Lin Without A Number -e e1234567@u.nus.edu`.<br>
+      Expected: The email sits where the phone would have started, and the card
+      keeps the same height as Mei Lin's. Narrow the window to its minimum
+      width; no blank line appears where the number would be.
    1. Add ten students with short names, ordinary phones, email addresses and
       NUS Student IDs. Compare the list at the default 740 by 600 window size
       with a list of phone-only students.<br>
@@ -3165,12 +3214,43 @@ testers are expected to do more *exploratory* testing.
       Expected: The email stays absent, the phone changes, tags are removed,
       and follow-up is cleared. All changes survive a restart.
 
-   1. Test cases: `edit INDEX -e`, `edit INDEX -e "" -e alice@example.com`,
-      and `edit INDEX -p "" -e ""`.<br>
-      Expected: Specific feedback for the missing email value, repeated option,
-      or required phone respectively. Neither the student
-      nor the JSON file changes. Restore an email with
-      `edit INDEX -e alice@example.com` and check that it is displayed again.
+   1. Test cases: `edit INDEX -e` and `edit INDEX -e "" -e alice@example.com`.<br>
+      Expected: Specific feedback for the missing email value or the repeated
+      option respectively. Neither the student nor the JSON file changes.
+      Restore an email with `edit INDEX -e alice@example.com` and check that it
+      is displayed again.
+
+### Clearing and supplying a student's phone number
+
+1. Recording a number only once it is known
+
+   1. Prerequisites: Add `add Alice Tan -p 91234567 -e alice@example.com
+      -t T1 --follow-up` as one line and note Alice's displayed `INDEX`.
+
+   1. Test case: `edit INDEX -p ""`<br>
+      Expected: The number disappears from the card and feedback, and the
+      remaining details close up with no blank line. Name, email, tags and
+      follow-up status remain unchanged. Alice's saved record has no `phone`
+      key, and the number stays absent after restarting TAB.
+
+   1. Test case: Repeat `edit INDEX -p ""`, then run `edit INDEX -p "   "`.<br>
+      Expected: Each command succeeds with no other change, even though the
+      number is already absent.
+
+   1. Test case: `find -p 9123`, then `list`, note Alice's displayed `INDEX`
+      again, and run `edit INDEX -p "+65 9123 4567"` followed by
+      `find -p 9123`.<br>
+      Expected: The first search does not list Alice, because she holds no
+      number, so `list` is needed before the edit can name her by position.
+      After the edit her card shows `+65 9123 4567` as entered, and the second
+      search lists her.
+
+   1. Test cases: `list`, note Alice's displayed `INDEX` once more, then
+      `edit INDEX -p` and `edit INDEX -p 12`.<br>
+      Expected: Specific feedback for the missing value and for the malformed
+      number respectively. Neither the student nor the JSON file changes. The
+      preceding search leaves its own list on screen, so `list` restores the
+      positions these commands count.
 
 ### Recording email addresses with symbols
 
@@ -3226,8 +3306,10 @@ testers are expected to do more *exploratory* testing.
       the removed student and shows their details (`Deleted student: NAME; Phone: PHONE...`).
 
    1. Test case: `delete 0`<br>
-      Expected: No student is deleted. The status message shows error details, and the student book
-      remains unchanged.
+      Expected: No student is deleted. The reply is `Index must be a positive integer.`
+      followed by the `delete --id 0` recovery, rather than the whole usage block,
+      and the student book remains unchanged. `delete -1` and `delete 1.5` report
+      the same reason on its own.
 
    1. Test case: `delete A02345678G`<br>
       Expected: Charlotte Oliveiro is deleted from the book wherever she appears, and the status
@@ -3235,8 +3317,8 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `add "Digit Ida" -p 91234567 --id 1ABC`, then `delete --id 1ABC`<br>
       Expected: The student holding `1ABC` is deleted, and the status message identifies them.
-      `delete 1ABC` is refused with the command's format, because a target starting with a digit
-      reads as an index.
+      `delete 1ABC` is refused as an unusable index, because a target starting with a digit
+      reads as an index, and the reply names `delete --id 1ABC` instead.
 
    1. Test case: `find -n Alex` followed by `delete A02345678G`, where the search hides
       Charlotte Oliveiro<br>
@@ -3536,7 +3618,8 @@ testers are expected to do more *exploratory* testing.
    That explicit command deletes Amy even while the filter hides her.
 1. Open help and find the delete section.<br>
    Expected: It lists index, plain NUS Student ID and explicit `--id` forms.
-   `delete 1ABC` shows usage including `delete --id 1ABC` as a recovery example.
+   `delete 1ABC` answers `Index must be a positive integer.` and names
+   `delete --id 1ABC` as the recovery.
 
 ### Locating students by digits in formatted phone numbers
 
@@ -3776,6 +3859,22 @@ testers are expected to do more *exploratory* testing.
       Expected: The student shows the edited phone. Run `list`, close TAB,
       and restart again; the hand-edited value remains. Restore the backup
       with TAB closed when finished.
+
+1. Loading a hand-edited record without a phone number
+
+   1. Prerequisites: Close every TAB window using this data file and back up
+      `data/tab.json`.
+   1. Test case: Remove one student's `phone` key entirely, set another's to
+      `null`, preserve valid JSON, and restart TAB.<br>
+      Expected: Both records load with no number and no blank line on their
+      cards. Run `edit 1 -p 91234567` for one of them and restart; the number
+      is saved and shown, while the other record still has no `phone` key.
+   1. Test case: With TAB closed, set a student's `phone` to `"12"` and
+      restart.<br>
+      Expected: Startup refuses the file with
+      `Phone "12" is not valid: a phone number needs at least 3 digits`, naming
+      the student record. The file stays unchanged, so the number is reported
+      rather than dropped. Restore the backup with TAB closed when finished.
 
 1. Merging duplicate tags from a hand-edited file
 

@@ -32,7 +32,8 @@ public class HelpCommand extends Command {
             "COMMANDS",
             "",
             "  " + AddCommand.COMMAND_WORD + " — Add a student",
-            "    " + AddCommand.COMMAND_WORD + " " + AddCommand.FIELD_NAME + " " + FLAG_PHONE.getLabel(),
+            "    " + AddCommand.COMMAND_WORD + " " + AddCommand.FIELD_NAME
+                    + " [" + FLAG_PHONE.getLabel() + "]",
             "        [" + FLAG_EMAIL.getLabel() + "] [" + FLAG_NUS_STUDENT_ID.getLabel() + "]",
             "        [" + FLAG_TAG.getLabel() + "]... [" + FLAG_FOLLOW_UP.getLabel() + "]",
             "",

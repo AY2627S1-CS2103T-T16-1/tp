@@ -175,7 +175,8 @@ public class EditStudentDescriptorTest {
         EditStudentDescriptor editStudentDescriptor = new EditStudentDescriptor();
         String expected = EditStudentDescriptor.class.getCanonicalName() + "{name="
                 + editStudentDescriptor.getName().orElse(null) + ", phone="
-                + editStudentDescriptor.getPhone().orElse(null) + ", email="
+                + editStudentDescriptor.getPhone() + ", isPhoneEdited="
+                + editStudentDescriptor.isPhoneEdited() + ", email="
                 + editStudentDescriptor.getEmail() + ", isEmailEdited="
                 + editStudentDescriptor.isEmailEdited() + ", nusStudentId="
                 + editStudentDescriptor.getNusStudentId() + ", isNusStudentIdEdited="
