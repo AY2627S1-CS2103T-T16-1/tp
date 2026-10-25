@@ -143,6 +143,26 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readAndSaveStudentBook_hiddenControls_normalizesNamesAndTagsWithoutRewritingOnRead() throws Exception {
+        Path path = testFolder.resolve("control-characters.json");
+        String json = "{\"students\":[{\"name\":\"Am\\u0001y\",\"phone\":\"91110000\","
+                + "\"tags\":[\"La\\u007fb\",\"组\\u009f1\"]}]}";
+        Files.writeString(path, json);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        ReadOnlyStudentBook loaded = storage.readStudentBook().orElseThrow();
+        Student expected = new StudentBuilder().withName("Amy").withPhone("91110000").withoutEmail()
+                .withTags("Lab", "组1").build();
+
+        assertEquals(List.of(expected), loaded.getStudentList());
+        assertEquals(json, Files.readString(path));
+        storage.saveStudentBook(loaded);
+        assertEquals(loaded, new JsonStudentBookStorage(path).readStudentBook().orElseThrow());
+        assertFalse(Files.readString(path).contains("\\u0001"));
+        assertFalse(Files.readString(path).contains("\\u007f"));
+        assertFalse(Files.readString(path).contains("\\u009f"));
+    }
+
+    @Test
     public void readStudentBook_tagVariants_keepsFirstNormalizedSpellingAcrossSaveAndReload() throws Exception {
         Path path = testFolder.resolve("tag-variants.json");
         String json = """

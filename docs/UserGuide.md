@@ -125,10 +125,12 @@ text remains one command; inspect it before pressing Enter.
   "123".` Whitespace after the command is accepted, but quoted values,
   including `""`, are still arguments.
 
-* Invisible format characters are ignored wherever they appear, so a command
-  word or an index copied from a web page with a direction mark or a zero-width
-  space still runs as the command it looks like. The joiners some scripts need
-  for shaping are the exception and are kept.
+* Invisible format characters and non-whitespace control characters are ignored
+  in commands and stored field values, including names, tags, phone numbers,
+  emails and NUS Student IDs. A pasted hidden control cannot make an
+  identical-looking name or tag differ in search or
+  duplicate warnings. Tabs and line breaks still separate values or become spaces
+  inside a field. The joiners some scripts need for shaping are kept.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
