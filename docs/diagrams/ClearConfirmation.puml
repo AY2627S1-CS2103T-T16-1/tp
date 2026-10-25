@@ -8,7 +8,7 @@ state IDLE {
 }
 
 state NO_PENDING {
-    entry : pendingClearCommand = empty
+    NO_PENDING : pendingClearCommand = empty
 }
 
 state PENDING : pendingClearCommand present
@@ -28,19 +28,13 @@ state "Processing reply" as REPLY {
     IS_YES --> INVALID : [no]
 }
 
-state DROP {
-    entry : pendingClearCommand = empty
-}
+DROP : pendingClearCommand = empty
 DROP --> NO_PENDING : no-op / message
 
-state CONFIRM {
-    entry : pendingClearCommand = empty
-}
-CONFIRM --> NO_PENDING : confirmed
+CONFIRM : pendingClearCommand = empty
+CONFIRM --> NO_PENDING : executeConfirmed() then clear
 
-state INVALID {
-    entry : ParseException with feedback
-}
+INVALID : ParseException with feedback
 INVALID --> PENDING : prompt repeated
 
 NO_PENDING --> PENDING : clear (non-empty book)
@@ -48,9 +42,6 @@ PENDING --> REPLY : user replies
 REPLY --> DROP : cancel / decline
 REPLY --> CONFIRM : confirm
 REPLY --> INVALID : invalid input
-CONFIRM --> NO_PENDING : executeConfirmed() then clear
-DROP --> NO_PENDING
-INVALID --> PENDING
 
 NO_PENDING --> [*] : exit
 @enduml

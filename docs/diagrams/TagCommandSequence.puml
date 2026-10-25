@@ -28,18 +28,18 @@ deactivate FlagTokenizer
 TagParser -> Problems : new ParseProblems()
 activate Problems
 
-TagParser -> TagParser : parseTarget(arguments)
+TagParser -> ParserUtil : parseRequiredStudentTarget("1", ...)
 activate ParserUtil
 ParserUtil --> TagParser : StudentTarget.byIndex(Index(1))
 deactivate ParserUtil
-
 TagParser -> Problems : collect(result)
 Problems --> TagParser : StudentTarget
 
-TagParser -> Problems : collectIfPresent(actionFlagValue, ParserUtil::parseTag)
+TagParser -> ParserUtil : parseTag("T1")
 activate ParserUtil
 ParserUtil --> TagParser : Tag("T1")
 deactivate ParserUtil
+TagParser -> Problems : collectIfPresent(actionFlagValue, result)
 Problems --> TagParser : Tag
 
 TagParser -> Problems : throwIfAny()
