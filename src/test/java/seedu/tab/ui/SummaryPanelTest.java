@@ -30,6 +30,15 @@ import seedu.tab.testutil.StudentBuilder;
 public class SummaryPanelTest {
 
     private static final double SHORT_WINDOW = 600;
+    /**
+     * How far apart the two number columns may sit before they read as misaligned.
+     *
+     * <p>The flagged row and the tag rows are built from different nodes, so their right edges
+     * round apart by up to a pixel where font metrics differ between platforms; a run on Linux
+     * reported 137 against 136 for a panel that is aligned to the eye. The defect this guards
+     * against moved them sixteen pixels apart, so a pixel of slack costs the check nothing.
+     */
+    private static final double ALIGNMENT_TOLERANCE = 1.5;
     /** A pair of spellings {@code equalsIgnoreCase} joins but lowercasing them does not. */
     private static final String CAPITAL_SIGMA = "\u03A3";
     private static final String FINAL_SIGMA = "\u03C2";
@@ -367,7 +376,7 @@ public class SummaryPanelTest {
                 };
             });
 
-            assertEquals(edges[0], edges[1], 0.5,
+            assertEquals(edges[0], edges[1], ALIGNMENT_TOLERANCE,
                     "the flagged count and the tag counts should share one right edge with "
                             + tagCount + " tags");
         }
