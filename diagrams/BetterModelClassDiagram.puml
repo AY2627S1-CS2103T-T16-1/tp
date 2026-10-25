@@ -7,7 +7,6 @@ skinparam classBackgroundColor MODEL_COLOR
 StudentBook *-right-> "1" UniqueStudentList
 StudentBook *-right-> "1" UniqueTagList
 UniqueTagList -[hidden]down- UniqueStudentList
-UniqueTagList -[hidden]down- UniqueStudentList
 
 UniqueTagList -right-> "*" Tag
 UniqueStudentList -right-> "*" Student
