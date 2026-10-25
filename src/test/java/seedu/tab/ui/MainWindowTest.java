@@ -18,8 +18,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -97,6 +99,196 @@ public class MainWindowTest {
             MainWindow window = new MainWindow(new Stage(), new LogicStub(), DATA_FILE);
             window.fillInnerParts();
             return window;
+        });
+    }
+
+    @Test
+    public void keyboardNavigation_tabFromCommandBox_marksStudentListFocus() throws Exception {
+        MainWindow window = onFxThread(() -> {
+            MainWindow opened = new MainWindow(new Stage(), new LogicStub(), DATA_FILE);
+            opened.show();
+            opened.fillInnerParts();
+            opened.getPrimaryStage().toFront();
+            opened.getPrimaryStage().requestFocus();
+            return opened;
+        });
+        try {
+            FxToolkit.awaitAssertion(() -> assertTrue(
+                    window.getRoot().getScene().lookup("#commandTextField").isFocused()));
+            onFxThread(() -> {
+                press(window.getRoot().getScene().getFocusOwner(), KeyCode.TAB, false);
+                return null;
+            });
+            FxToolkit.awaitAssertion(() -> assertTrue(
+                    window.getRoot().getScene().lookup("#studentListView").isFocused()));
+            onFxThread(() -> {
+                assertStudentFocusVisible(window.getRoot().getScene());
+                return null;
+            });
+        } finally {
+            onFxThread(() -> {
+                window.getPrimaryStage().hide();
+                return null;
+            });
+        }
+    }
+
+    private static void assertStudentFocusVisible(Scene scene) {
+        ListView<?> students = (ListView<?>) scene.lookup("#studentListView");
+        students.applyCss();
+        assertNotNull(students.getBorder(), "keyboard focus must have a visible outline");
+        Label prompt = (Label) scene.lookup(".command-prompt");
+        assertEquals(prompt.getTextFill(), students.getBorder().getStrokes().getFirst().getTopStroke());
+        assertEquals(Insets.EMPTY, students.getInsets(), "the focus outline must not shrink the list");
+    }
+
+    @Test
+    public void keyboardNavigation_hiddenReply_cyclesThroughStudentsAndTags() throws Exception {
+        onFxThread(() -> {
+            MainWindow window = filledWindow2();
+            try {
+                window.show();
+                window.getRoot().getScene().lookup("#commandTextField").requestFocus();
+                assertTraversal(window, false, "#studentListView", "#tagScroll", "#commandTextField");
+                assertTraversal(window, true, "#tagScroll", "#studentListView", "#commandTextField");
+            } finally {
+                window.getPrimaryStage().hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void keyboardNavigation_visibleReply_includesReplyAndPreservesDraftAndHistory() throws Exception {
+        onFxThread(() -> {
+            MainWindow window = filledWindow2();
+            try {
+                window.show();
+                TextField field = (TextField) window.getRoot().getScene().lookup("#commandTextField");
+                field.setText("list");
+                field.fireEvent(new ActionEvent());
+                field.setText("find -n Alex");
+                field.requestFocus();
+                assertTraversal(window, false, "#studentListView", "#tagScroll", "#resultDisplay",
+                        "#commandTextField");
+                assertTraversal(window, true, "#resultDisplay", "#tagScroll", "#studentListView",
+                        "#commandTextField");
+                assertEquals("find -n Alex", field.getText());
+                press(field, KeyCode.UP, false);
+                assertEquals("list", field.getText());
+                press(field, KeyCode.DOWN, false);
+                assertEquals("find -n Alex", field.getText());
+            } finally {
+                window.getPrimaryStage().hide();
+            }
+            return null;
+        });
+    }
+
+    /** Sends Tab through the real window, checking focus eligibility and both traversal directions. */
+    private static void assertTraversal(MainWindow window, boolean isBackwards, String... expectedIds) {
+        Scene scene = window.getRoot().getScene();
+        for (String id : expectedIds) {
+            press(scene.getFocusOwner(), KeyCode.TAB, isBackwards);
+            Node expected = scene.lookup(id);
+            assertTrue(expected.isFocusTraversable(), id + " must remain keyboard reachable");
+            assertEquals(expected, scene.getFocusOwner(), "Tab should reach " + id);
+        }
+    }
+
+    private static void press(Node node, KeyCode key, boolean isShiftDown) {
+        node.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", key,
+                isShiftDown, false, false, false));
+    }
+
+    @Test
+    public void keyboardNavigation_emptyLists_keepsCommandBoxReachable() throws Exception {
+        onFxThread(() -> {
+            LogicStub logic = new LogicStub();
+            logic.students.clear();
+            MainWindow window = new MainWindow(new Stage(), logic, DATA_FILE);
+            window.fillInnerParts();
+            try {
+                window.show();
+                window.getRoot().getScene().lookup("#commandTextField").requestFocus();
+                assertTraversal(window, false, "#studentListView", "#tagScroll", "#commandTextField");
+                assertTraversal(window, true, "#tagScroll", "#studentListView", "#commandTextField");
+                assertTrue(logic.students.isEmpty());
+            } finally {
+                window.getPrimaryStage().hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void keyboardNavigation_manyStudents_movesSelectionWithoutChangingRecords() throws Exception {
+        onFxThread(() -> {
+            LogicStub logic = new LogicStub();
+            for (int i = 1; i < 30; i++) {
+                logic.students.add(new StudentBuilder().withName("Student " + i).build());
+            }
+            MainWindow window = new MainWindow(new Stage(), logic, DATA_FILE);
+            window.fillInnerParts();
+            try {
+                window.show();
+                Scene scene = window.getRoot().getScene();
+                scene.getRoot().applyCss();
+                scene.getRoot().layout();
+                scene.lookup("#commandTextField").requestFocus();
+                assertTraversal(window, false, "#studentListView");
+                assertStudentNavigation((ListView<?>) scene.getFocusOwner());
+                assertTraversal(window, true, "#commandTextField");
+                assertEquals(30, logic.students.size());
+            } finally {
+                window.getPrimaryStage().hide();
+            }
+            return null;
+        });
+    }
+
+    private static void assertStudentNavigation(ListView<?> students) {
+        press(students, KeyCode.HOME, false);
+        assertEquals(0, students.getSelectionModel().getSelectedIndex());
+        press(students, KeyCode.DOWN, false);
+        assertEquals(1, students.getSelectionModel().getSelectedIndex());
+        press(students, KeyCode.UP, false);
+        assertEquals(0, students.getSelectionModel().getSelectedIndex());
+        press(students, KeyCode.PAGE_DOWN, false);
+        assertTrue(students.getSelectionModel().getSelectedIndex() > 1);
+        press(students, KeyCode.PAGE_UP, false);
+        assertEquals(0, students.getSelectionModel().getSelectedIndex());
+        press(students, KeyCode.END, false);
+        assertEquals(students.getItems().size() - 1, students.getSelectionModel().getSelectedIndex());
+        press(students, KeyCode.DOWN, false);
+        assertEquals(students.getItems().size() - 1, students.getSelectionModel().getSelectedIndex());
+        press(students, KeyCode.HOME, false);
+        press(students, KeyCode.UP, false);
+        assertEquals(0, students.getSelectionModel().getSelectedIndex());
+    }
+
+    @Test
+    public void keyboardNavigation_helpFromTags_restoresCommandFocusAndDraft() throws Exception {
+        onFxThread(() -> {
+            MainWindow window = filledWindow2();
+            try {
+                window.show();
+                Scene scene = window.getRoot().getScene();
+                TextField field = (TextField) scene.lookup("#commandTextField");
+                field.setText("find -n Alex");
+                field.requestFocus();
+                assertTraversal(window, false, "#studentListView", "#tagScroll");
+                press(scene.getFocusOwner(), KeyCode.F1, false);
+                assertTrue(scene.lookup("#helpPagePlaceholder").isVisible());
+                press(scene.getFocusOwner(), KeyCode.ESCAPE, false);
+                assertFalse(scene.lookup("#helpPagePlaceholder").isVisible());
+                assertEquals(field, scene.getFocusOwner());
+                assertEquals("find -n Alex", field.getText());
+                assertTraversal(window, false, "#studentListView");
+            } finally {
+                window.getPrimaryStage().hide();
+            }
+            return null;
         });
     }
 
