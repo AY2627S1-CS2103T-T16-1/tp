@@ -30,6 +30,17 @@ import seedu.tab.testutil.StudentBuilder;
 public class SummaryPanelTest {
 
     private static final double SHORT_WINDOW = 600;
+    /**
+     * How far apart the two number columns may sit before they read as misaligned.
+     *
+     * <p>The flagged row and the tag rows are built from different nodes, so their right edges
+     * round apart by up to a pixel where font metrics differ between platforms; a run on Linux
+     * reported 137 against 136 for a panel that is aligned to the eye. The defect this guards
+     * against moved them sixteen pixels apart, so a pixel of slack costs the check nothing.
+     */
+    private static final double ALIGNMENT_TOLERANCE = 1.5;
+    /** Where {@link #settledEdges} reports the width the tag list gives up to its scroll bar. */
+    private static final int RESERVED = 2;
     /** A pair of spellings {@code equalsIgnoreCase} joins but lowercasing them does not. */
     private static final String CAPITAL_SIGMA = "\u03A3";
     private static final String FINAL_SIGMA = "\u03C2";
@@ -54,6 +65,41 @@ public class SummaryPanelTest {
         root.applyCss();
         root.layout();
         return scene;
+    }
+
+    /**
+     * Returns a student carrying {@code tagCount} tags, enough of them to overflow the panel.
+     */
+    private static Student carrying(int tagCount) {
+        List<String> tags = new ArrayList<>();
+        for (int i = 1; i <= tagCount; i++) {
+            tags.add(String.format("tutorial-group-%02d", i));
+        }
+        return tagged("Ann Lee", true, tags.toArray(String[]::new));
+    }
+
+    /**
+     * Returns the right edge of the flagged count, the right edge of the first tag count, and
+     * the width the tag list is giving up to its scroll bar, once {@code root} has settled.
+     *
+     * <p>The scroll bar appears during layout, and keeping room for it beside the flagged count
+     * moves that row, which lays the panel out again. The edges are therefore only worth
+     * reading once the passes stop changing them.
+     */
+    private static double[] settledEdges(Region root) {
+        for (int pass = 0; pass < 5; pass++) {
+            root.applyCss();
+            root.layout();
+        }
+        ScrollPane scroll = (ScrollPane) root.lookup("#tagScroll");
+        VBox rows = (VBox) scroll.getContent();
+        Label flagged = (Label) root.lookup("#flaggedCount");
+        Label firstCount = (Label) ((HBox) rows.getChildren().getFirst()).getChildren().getLast();
+        return new double[] {
+            flagged.localToScene(flagged.getBoundsInLocal()).getMaxX(),
+            firstCount.localToScene(firstCount.getBoundsInLocal()).getMaxX(),
+            scroll.getWidth() - scroll.getViewportBounds().getWidth(),
+        };
     }
 
     @Test
@@ -335,6 +381,51 @@ public class SummaryPanelTest {
 
         assertEquals("12", shown[0]);
         assertEquals(longTag, shown[1], "the whole tag should be drawn across wrapped lines");
+    }
+
+    @Test
+    public void panel_tagListWithAndWithoutAScrollBar_keepsOneColumnOfNumbers() throws Exception {
+        for (int tagCount : new int[] {3, 30}) {
+            ObservableList<Student> students = FXCollections.observableArrayList(carrying(tagCount));
+
+            double[] edges = onFxThread(() -> {
+                SummaryPanel panel = new SummaryPanel(students);
+                Region root = (Region) panel.getRoot();
+                styledScene(root, 150, 320);
+                return settledEdges(root);
+            });
+
+            assertEquals(edges[0], edges[1], ALIGNMENT_TOLERANCE,
+                    "the flagged count and the tag counts should share one right edge with "
+                            + tagCount + " tags");
+        }
+    }
+
+    @Test
+    public void panel_aTagListThatOverflowsThenShrinks_keepsOneColumnOfNumbers() throws Exception {
+        ObservableList<Student> students = FXCollections.observableArrayList(carrying(3));
+
+        double[][] stages = onFxThread(() -> {
+            SummaryPanel panel = new SummaryPanel(students);
+            Region root = (Region) panel.getRoot();
+            styledScene(root, 150, 320);
+
+            double[] shortList = settledEdges(root);
+            students.setAll(carrying(30));
+            double[] overflowing = settledEdges(root);
+            students.setAll(carrying(3));
+            return new double[][] {shortList, overflowing, settledEdges(root)};
+        });
+
+        assertEquals(0, stages[0][RESERVED], 0.5, "three tags should fit without a scroll bar");
+        assertTrue(stages[1][RESERVED] > 1, "thirty tags should bring out the scroll bar");
+        assertEquals(0, stages[2][RESERVED], 0.5,
+                "the scroll bar should go once the list is short again");
+
+        assertEquals(stages[1][0], stages[1][1], ALIGNMENT_TOLERANCE,
+                "the columns should line up once a search widens the list past the panel");
+        assertEquals(stages[2][0], stages[2][1], ALIGNMENT_TOLERANCE,
+                "the room kept for the scroll bar should go with it, so the columns line up again");
     }
 
     @Test
