@@ -222,8 +222,8 @@ public class TagCommandIntegrationTest {
     }
 
     @Test
-    public void execute_humanEditedLegacyTags_normalizesWithoutDiscardingExistingVariants() throws Exception {
-        // Legacy/edit records may contain two case variants. Tagging must retain both.
+    public void execute_humanEditedLegacyTags_mergesVariantsBeforeTagging() throws Exception {
+        // Loading merges legacy variants before the command handles the student.
         model.updateFilteredStudentList(shown -> shown.getName().equals(student.getName()));
         Student legacy = new StudentBuilder(student).withTags("Lab 3", "lab 3", "Café").build();
         model.setStudent(student, legacy);
@@ -237,7 +237,7 @@ public class TagCommandIntegrationTest {
         assertFailureWithoutMutation("tag 1 -a \"LAB 3\"", CommandException.class,
                 "This student already has tag [Lab 3]. No changes made.");
         logic.execute("tag 1 -a T2");
-        Student expected = new StudentBuilder(legacy).withTags("Lab 3", "lab 3", "Café", "T2").build();
+        Student expected = new StudentBuilder(legacy).withTags("Lab 3", "Café", "T2").build();
         assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
     }
 
