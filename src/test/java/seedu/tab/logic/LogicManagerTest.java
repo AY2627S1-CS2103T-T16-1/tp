@@ -73,6 +73,29 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_caseVariantCommandTags_keepsFirstSpellingAndPreservesLegacyRecords() throws Exception {
+        Student legacy = new StudentBuilder().withName("Legacy Student").withPhone("82223333")
+                .withoutEmail().withTags("Lab", "LAB").build();
+        model.addStudent(legacy);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        storage.saveStudentBook(model.getStudentBook());
+        assertEquals("New student added: Casey Low; Phone: 91234567; Tags: [Lab][Σ]",
+                logic.execute("add Casey Low -p 91234567 -t Lab -t lab -t LAB -t Σ -t ς").getFeedbackToUser());
+        assertEquals("Edited student: Casey Low; Phone: 91234567; Tags: [lab][ς]",
+                logic.execute("edit 2 -t lab -t LAB -t ς -t Σ").getFeedbackToUser());
+        Student expected = new StudentBuilder().withName("Casey Low").withPhone("91234567")
+                .withoutEmail().withTags("lab", "ς").build();
+        assertEquals(List.of(legacy, expected), storage.readStudentBook().orElseThrow().getStudentList());
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        assertThrows(CommandException.class, "This student already has tag [lab]. No changes made.", () ->
+                logic.execute("tag 2 -a LAB"));
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        logic.execute("tag 2 -r LAB");
+        expected = new StudentBuilder(expected).withTags("ς").build();
+        assertEquals(List.of(legacy, expected), storage.readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
     public void execute_unchangedEdits_preservesFilterRecordsAndSavedFile() throws Exception {
         logic.execute("add Amy Bee -p 91234567");
         logic.execute("add Other Student -p 82223333");

@@ -2,7 +2,7 @@ package seedu.tab.logic.parser;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -55,10 +55,10 @@ public class ParseProblems {
 
     /**
      * Parses every value supplied for one repeatable field, recording why for each one that is
-     * rejected, and returns the ones that were accepted.
+     * rejected, and returns the ones that were accepted in input order.
      */
     public <T> Set<T> collectEach(Collection<String> values, ValueParser<T> parser) {
-        Set<T> parsed = new HashSet<>();
+        Set<T> parsed = new LinkedHashSet<>();
         for (String value : values) {
             T parsedValue = collect(() -> parser.parse(value));
             if (parsedValue != null) {

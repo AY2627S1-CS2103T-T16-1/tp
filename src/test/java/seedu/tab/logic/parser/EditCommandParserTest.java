@@ -59,6 +59,13 @@ public class EditCommandParserTest {
     private EditCommandParser parser = new EditCommandParser();
 
     @Test
+    public void parse_caseVariantTags_keepsFirstSpelling() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withTags("lab", "ς", "T1").build();
+        assertParseSuccess(parser, " 1 -t lab --tag Lab -t LAB -t ς -t Σ -t T1",
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+    }
+
+    @Test
     public void parse_allFieldsSpecified_success() {
         Index targetIndex = INDEX_SECOND_STUDENT;
         String userInput = targetIndex.getOneBased() + PHONE_BOB + TAG_HUSBAND
