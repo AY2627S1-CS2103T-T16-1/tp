@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
@@ -105,11 +107,11 @@ public class MainWindowTest {
     @Test
     public void keyboardNavigation_tabFromCommandBox_marksStudentListFocus() throws Exception {
         MainWindow window = onFxThread(() -> {
-            MainWindow opened = new MainWindow(new Stage(), new LogicStub(), DATA_FILE);
-            opened.show();
+            FxToolkit.FocusStage stage = new FxToolkit.FocusStage();
+            MainWindow opened = new MainWindow(stage, new LogicStub(), DATA_FILE);
             opened.fillInnerParts();
-            opened.getPrimaryStage().toFront();
-            opened.getPrimaryStage().requestFocus();
+            stage.activate();
+            stage.getScene().lookup("#commandTextField").requestFocus();
             return opened;
         });
         try {
@@ -199,6 +201,47 @@ public class MainWindowTest {
     private static void press(Node node, KeyCode key, boolean isShiftDown) {
         node.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", key,
                 isShiftDown, false, false, false));
+    }
+
+    @Test
+    public void keyboardNavigation_modifiedTabAndUnlistedFocus_preservesFocusAndDraft() throws Exception {
+        onFxThread(() -> {
+            MainWindow window = filledWindow2();
+            Scene scene = window.getRoot().getScene();
+            TextField field = (TextField) scene.lookup("#commandTextField");
+            field.setText("find -n Alex");
+            field.requestFocus();
+            for (int modifier = 0; modifier < 3; modifier++) {
+                assertTabIgnored(field, new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.TAB,
+                        false, modifier == 0, modifier == 1, modifier == 2));
+            }
+            assertEquals("find -n Alex", field.getText());
+            Node page = scene.lookup("#studentPage");
+            page.requestFocus();
+            assertEquals(page, scene.getFocusOwner());
+            assertTabIgnored(page, new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.TAB,
+                    false, false, false, false));
+            return null;
+        });
+    }
+
+    /** Stops default traversal after checking that the application leaves the event untouched. */
+    private static void assertTabIgnored(Node target, KeyEvent event) {
+        Node focused = target.getScene().getFocusOwner();
+        AtomicBoolean delivered = new AtomicBoolean();
+        EventHandler<KeyEvent> observer = received -> {
+            delivered.set(true);
+            assertEquals(focused, target.getScene().getFocusOwner());
+            received.consume();
+        };
+        target.addEventFilter(KeyEvent.KEY_PRESSED, observer);
+        try {
+            target.fireEvent(event);
+            assertTrue(delivered.get(), "modified or unlisted traversal must reach JavaFX");
+            assertEquals(focused, target.getScene().getFocusOwner());
+        } finally {
+            target.removeEventFilter(KeyEvent.KEY_PRESSED, observer);
+        }
     }
 
     @Test

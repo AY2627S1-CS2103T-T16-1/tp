@@ -1,18 +1,21 @@
 package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -119,13 +122,11 @@ public class SummaryPanelTest {
         }
     }
 
-    private static Stage tagWindow(ObservableList<Student> students) {
+    private static FxToolkit.FocusStage tagWindow(ObservableList<Student> students) {
         SummaryPanel panel = new SummaryPanel(students);
-        Stage window = new Stage();
+        FxToolkit.FocusStage window = new FxToolkit.FocusStage();
         window.setScene(styledScene(panel.getRoot(), 150, 400));
-        window.show();
-        window.toFront();
-        window.requestFocus();
+        window.activate();
         ScrollPane tags = (ScrollPane) panel.getRoot().lookup("#tagScroll");
         assertTrue(tags.isFocusTraversable());
         tags.requestFocus();
@@ -140,7 +141,8 @@ public class SummaryPanelTest {
         });
         onFxThread(() -> {
             assertTagNavigation((ScrollPane) stage.getScene().lookup("#tagScroll"));
-            stage.setHeight(300);
+            stage.getScene().getRoot().resize(150, 300);
+            stage.getScene().getRoot().layout();
             return null;
         });
         FxToolkit.awaitAssertion(() -> {
@@ -185,6 +187,44 @@ public class SummaryPanelTest {
     private static void press(ScrollPane tags, KeyCode key) {
         tags.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", key,
                 false, false, false, false));
+    }
+
+    @Test
+    public void keyboardNavigation_modifiedPageKeysAndInactiveWindow_preservesScrollPosition() throws Exception {
+        onFxThread(() -> {
+            FxToolkit.FocusStage stage = tagWindow(
+                    FXCollections.observableArrayList(carrying(30)));
+            ScrollPane tags = (ScrollPane) stage.getScene().lookup("#tagScroll");
+            tags.setVvalue(0.5);
+            for (int modifier = 0; modifier < 4; modifier++) {
+                assertPageKeyIgnored(tags, new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.PAGE_DOWN,
+                        modifier == 0, modifier == 1, modifier == 2, modifier == 3));
+            }
+            stage.deactivate();
+            assertFalse(tags.isFocused());
+            assertPageKeyIgnored(tags, new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.PAGE_UP,
+                    false, false, false, false));
+            return null;
+        });
+    }
+
+    /** Observes the application handler before JavaFX applies its own platform-dependent bindings. */
+    private static void assertPageKeyIgnored(ScrollPane tags, KeyEvent event) {
+        double before = tags.getVvalue();
+        AtomicBoolean delivered = new AtomicBoolean();
+        EventHandler<KeyEvent> observer = received -> {
+            delivered.set(true);
+            assertEquals(before, tags.getVvalue());
+            received.consume();
+        };
+        tags.addEventFilter(KeyEvent.KEY_PRESSED, observer);
+        try {
+            tags.fireEvent(event);
+            assertTrue(delivered.get(), "ignored page keys must reach JavaFX");
+            assertEquals(before, tags.getVvalue());
+        } finally {
+            tags.removeEventFilter(KeyEvent.KEY_PRESSED, observer);
+        }
     }
 
     @Test

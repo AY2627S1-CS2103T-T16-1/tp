@@ -46,6 +46,12 @@ stalled native toolkit while allowing cold downloads and slower runners.
 Failed tests print full exception traces without requiring Gradle's verbose
 `--info` logging.
 
+Keyboard navigation tests use an off-screen window whose activation is
+controlled through JavaFX's `WindowHelper`. They exercise scene focus and
+control key bindings without requiring desktop activation from the operating
+system. The test task exports this internal package when JavaFX is bundled
+with the JDK; JavaFX 17 on the classpath needs no module export.
+
 To reproduce CI locally, set `JAVA_HOME` to this JDK and put its `bin` directory
 first on `PATH`, then run `./gradlew clean check coverage` (Windows:
 `gradlew clean check coverage`). On Linux, use a graphical session or run under
