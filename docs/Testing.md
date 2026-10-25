@@ -30,11 +30,16 @@ native ARM64 macOS. To reproduce that job, follow the linked installation
 guide, select that JDK as both the IntelliJ SDK and Gradle JVM, and run the
 same Gradle command below. This setup does not need Rosetta.
 
-UI tests allow up to 60 seconds for work on the JavaFX thread. Cold window
-initialization under Rosetta can exceed ten seconds on hosted macOS runners;
-these tests verify behavior rather than enforce a startup performance target.
-Once a window is shown, the oversized-window test retries its geometry checks
-for up to ten seconds and reports the failing edge with actual bounds.
+UI tests allow up to 60 seconds for work on the JavaFX thread, including
+toolkit startup and initial window creation. Cold initialization under Rosetta
+can exceed ten seconds on hosted macOS runners; these tests verify behavior
+rather than enforce a startup performance target.
+
+The oversized-window test starts a separate ten-second geometry retry period
+only after window creation and `show()` have completed. This period allows
+window-manager adjustments to settle and reports the failing edge with actual
+bounds if they do not. It does not shorten the startup allowance.
+
 CI limits the complete Gradle build step to fifteen minutes to catch a
 stalled native toolkit while allowing cold downloads and slower runners.
 Failed tests print full exception traces without requiring Gradle's verbose
