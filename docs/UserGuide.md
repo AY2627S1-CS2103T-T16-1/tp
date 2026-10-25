@@ -250,6 +250,11 @@ Opens a help page inside TAB, replacing the student list and command box until
 you leave help. It shows every supported command, its purpose and concise syntax,
 option aliases, quoting rules and a shortcut to copy the User Guide address.
 
+The reference is coloured the way the command box colours what you type, so a
+command word, an option such as `-p` and a value you fill in such as `NAME` keep
+the same colour in both places. Section headings stand out from the body, and the
+brackets marking an optional field stay in the body colour.
+
 Use these pager keys immediately, without clicking or pressing Enter after a letter:
 
 | Key | Action |
@@ -279,7 +284,11 @@ is unselected with the caret at the end, ready for you to continue typing.
 **F1** and **Help → Help** open the same page at the beginning
 without submitting a partially typed command. Pager keys apply only while help is open.
 
-![Command summary in the main window](images/helpMessage.png)
+![Current help page showing tag addition and removal, ID targets, and all-term search](images/helpMessage.png)
+
+This view shows tag removal, ID targets and field-based search. Press Space to
+continue through the remaining commands and syntax notes; the footer shows
+your progress.
 
 Format: `help`
 
@@ -605,7 +614,6 @@ done to it beyond the quotes any value with spaces takes:
 * An NUS Student ID target that no student holds changes nothing and shows
   `No student has NUS Student ID A0123456X.` A letter-first target that is not
   a valid ID, such as `A0123-456`, is refused with the field-level reason.
-  `edit INDEX` behaves exactly as before.
 
 Examples:
 *  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
@@ -789,7 +797,6 @@ Provide at least one field term or one follow-up status option. Every search ter
 * Single quotation marks do not group words; use double quotes for phrases.
 * Bare terms are refused, including a name given before any option. Use a field option
   for every term. An extra word after an option is also refused; repeat the option or quote a phrase.
-  This replaces the earlier unqualified cross-field search syntax and OR matching.
 * Status options take no value. `find -f` lists students needing follow-up, and `find -nf`
   lists students not needing it. Combine a status option with field terms using AND:
   `find -f -n Jason -t Lab` requires the status, name fragment and tag fragment.
@@ -1031,10 +1038,6 @@ because their shape can otherwise exhaust Java's stack. This is the same limit
 used by commands. We still recommend backing up the file before editing it.
 </box>
 
-### Archiving data files `[coming in v2.0]`
-
-_Details coming soon ..._
-
 --------------------------------------------------------------------------------------------------------------------
 
 ## FAQ
@@ -1051,7 +1054,21 @@ closed, since TAB rewrites it from its own copy at the next change.
 
 ## Known issues
 
-No known issues are listed at this time.
+The linked reports track these limitations and their fixes:
+
+* **Pasted quotation marks:** Curly and full-width double quotes are read as
+  part of a value rather than grouping it. Use plain `"` characters when quoting
+  a phrase. See [#313](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/313).
+* **Keyboard access to summary tags:** The summary's tag list cannot receive
+  keyboard focus. Use a mouse or trackpad to scroll it, or narrow the displayed
+  students with `find` to reduce the summary. The student list can receive focus
+  with Tab and scroll with arrow keys, Page Up/Page Down and Home/End; use
+  Shift+Tab to move back. See
+  [#418](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/418).
+* **Read-only save lock:** A read-only `data/.tab.json.lock` can block saving
+  while the error names `data/tab.json` instead. Close all TAB windows and
+  restore write access to the lock file before restarting. See
+  [#438](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/438).
 
 --------------------------------------------------------------------------------------------------------------------
 
