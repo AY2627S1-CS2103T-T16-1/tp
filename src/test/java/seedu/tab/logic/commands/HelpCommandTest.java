@@ -35,7 +35,8 @@ public class HelpCommandTest {
                             || line.startsWith(example.split(" ")[0] + " INDEX —")));
         }
         for (Flag flag : List.of(CliFlags.FLAG_NAME, CliFlags.FLAG_PHONE, CliFlags.FLAG_EMAIL,
-                CliFlags.FLAG_NUS_STUDENT_ID, CliFlags.FLAG_TAG, CliFlags.FLAG_ADD_TAG, CliFlags.FLAG_REMOVE_TAG,
+                CliFlags.FLAG_NUS_STUDENT_ID, CliFlags.FLAG_TARGET_ID, CliFlags.FLAG_TAG,
+                CliFlags.FLAG_ADD_TAG, CliFlags.FLAG_REMOVE_TAG,
                 CliFlags.FLAG_FOLLOW_UP, CliFlags.FLAG_NO_FOLLOW_UP)) {
             assertTrue(SHOWING_HELP_MESSAGE.contains(flag.getMarkerSummary()));
         }
