@@ -11,6 +11,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -39,6 +40,25 @@ public class JsonUtilTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void getJsonProcessingErrorMessage_regionalDefaults_keepAsciiLocations() {
+        Locale general = Locale.getDefault();
+        Locale display = Locale.getDefault(Locale.Category.DISPLAY);
+        Locale format = Locale.getDefault(Locale.Category.FORMAT);
+        try {
+            for (String tag : new String[] {"en-SG", "tr-TR", "az-AZ", "fa-IR", "ar-EG", "bn-BD"}) {
+                Locale.setDefault(Locale.forLanguageTag(tag));
+                getJsonProcessingErrorMessage_withoutSource_keepsAvailableLocation();
+                getJsonProcessingErrorMessage_unusableColumn_reportsLineOnly();
+                getJsonProcessingErrorMessage_sourceDescriptions_omitsSourceDetails();
+            }
+        } finally {
+            Locale.setDefault(general);
+            Locale.setDefault(Locale.Category.DISPLAY, display);
+            Locale.setDefault(Locale.Category.FORMAT, format);
+        }
+    }
 
     @Test
     public void fromJsonString_trailingValue_reportsExactReasonAndLocation() {

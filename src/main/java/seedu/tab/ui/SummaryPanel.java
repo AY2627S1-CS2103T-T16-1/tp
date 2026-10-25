@@ -3,6 +3,7 @@ package seedu.tab.ui;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -132,7 +133,7 @@ public class SummaryPanel extends UiPart<Region> {
      * Returns {@code count} with the word for it, so that one student is not "1 students".
      */
     public static String describeTotal(int count) {
-        return String.format(count == 1 ? SINGULAR : PLURAL, count);
+        return String.format(Locale.ROOT, count == 1 ? SINGULAR : PLURAL, count);
     }
 
     private void summarise(List<Student> students) {

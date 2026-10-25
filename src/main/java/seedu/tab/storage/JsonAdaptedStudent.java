@@ -3,6 +3,7 @@ package seedu.tab.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -129,7 +130,7 @@ class JsonAdaptedStudent {
         // A non-blank value follows the same trimming behavior as command input before validation.
         final String normalizedEmail = normalizeOptionalEmail(email);
         if (normalizedEmail != null && !Email.isWithinLengthLimit(normalizedEmail)) {
-            throw new IllegalValueException(String.format(
+            throw new IllegalValueException(String.format(Locale.ROOT,
                     "%s field is too long to read safely: it holds %d characters, but saved emails may hold at most %d",
                     Email.FIELD_NAME, normalizedEmail.length(), Email.MAX_LENGTH));
         }

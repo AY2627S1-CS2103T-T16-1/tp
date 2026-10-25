@@ -3,6 +3,8 @@ package seedu.tab.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.model.Model.PREDICATE_SHOW_ALL_STUDENTS;
 
+import java.util.Locale;
+
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.model.Model;
 
@@ -29,6 +31,6 @@ public class ListCommand extends Command {
      * @return The formatted success message.
      */
     public static String formatSuccessMessage(int count) {
-        return String.format(MESSAGE_SUCCESS, count, StringUtil.getPluralSuffix(count));
+        return String.format(Locale.ROOT, MESSAGE_SUCCESS, count, StringUtil.getPluralSuffix(count));
     }
 }
