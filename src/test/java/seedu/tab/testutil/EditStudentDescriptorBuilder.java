@@ -35,7 +35,7 @@ public class EditStudentDescriptorBuilder {
     public EditStudentDescriptorBuilder(Student student) {
         descriptor = new EditStudentDescriptor();
         descriptor.setName(student.getName());
-        descriptor.setPhone(student.getPhone());
+        copyOptionalField(student.getPhone(), descriptor::setPhone, descriptor::clearPhone);
         copyOptionalField(student.getEmail(), descriptor::setEmail, descriptor::clearEmail);
         copyOptionalField(student.getNusStudentId(), descriptor::setNusStudentId, descriptor::clearNusStudentId);
         descriptor.setTags(student.getTags());
@@ -55,6 +55,14 @@ public class EditStudentDescriptorBuilder {
      */
     public EditStudentDescriptorBuilder withPhone(String phone) {
         descriptor.setPhone(new Phone(phone));
+        return this;
+    }
+
+    /**
+     * Sets the phone edit to clear the student's phone number.
+     */
+    public EditStudentDescriptorBuilder withoutPhone() {
+        descriptor.clearPhone();
         return this;
     }
 

@@ -155,7 +155,7 @@ public class AddStudentUiTest {
             FxToolkit.awaitAssertion(() -> assertVisible(first));
             var predicate = model.getFilteredStudentPredicate();
             var savedStudents = List.copyOf(model.getStudentBook().getStudentList());
-            for (String command : List.of("add Missing Phone",
+            for (String command : List.of("add -p 91234567",
                     "add Duplicate -p 91234567 --id A01234567X", "add Unsaved -p 91234567 -t T2")) {
                 FxToolkit.onFxThread(() -> {
                     assertRejectedAddition(command, savedStudents, predicate);
