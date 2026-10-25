@@ -131,7 +131,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         if (nonBlankTags.size() != normalizedTags.size()) {
             problems.add(MESSAGE_BLANK_TAG_WITH_OTHER_TAGS);
         }
-        return Optional.of(problems.collectEach(nonBlankTags, ParserUtil::parseTag));
+        return Optional.of(ParserUtil.parseTags(nonBlankTags, problems));
     }
 
 }

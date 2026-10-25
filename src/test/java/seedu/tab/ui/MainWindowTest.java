@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,7 @@ public class MainWindowTest {
     /** A reply of the length a command reporting several bad fields gives. */
     private static final String FIVE_LINE_REPLY =
             "Siti Nur-Aisyah\nAlex Yeoh\nBernice Yu\nDavid Li\nRoy Balakrishnan";
+    private static final long GEOMETRY_TIMEOUT_SECONDS = 10;
     private static final Path DATA_FILE = Paths.get("data", "tab.json");
 
     @BeforeAll
@@ -114,14 +116,17 @@ public class MainWindowTest {
                 Rectangle2D display = Screen.getPrimary().getVisualBounds();
                 Bounds content = stage.getScene().getRoot().localToScreen(
                         stage.getScene().getRoot().getBoundsInLocal());
+                assertNotNull(content, "the restored scene must be visible on a screen");
+                String geometry = "content=" + content + ", display=" + display
+                        + ", stage=" + stage.getWidth() + "x" + stage.getHeight();
                 // Window managers may include invisible frame shadows in the stage origin.
-                assertTrue(content.getMinX() >= display.getMinX());
-                assertTrue(content.getMinY() >= display.getMinY());
-                assertTrue(content.getMaxX() <= display.getMaxX() + 1);
-                assertTrue(content.getMaxY() <= display.getMaxY() + 1);
-                assertTrue(stage.getWidth() <= display.getWidth() + 1);
-                assertTrue(stage.getHeight() <= display.getHeight() + 1);
-            });
+                assertTrue(content.getMinX() >= display.getMinX(), "left edge: " + geometry);
+                assertTrue(content.getMinY() >= display.getMinY(), "top edge: " + geometry);
+                assertTrue(content.getMaxX() <= display.getMaxX() + 1, "right edge: " + geometry);
+                assertTrue(content.getMaxY() <= display.getMaxY() + 1, "bottom edge: " + geometry);
+                assertTrue(stage.getWidth() <= display.getWidth() + 1, "window width: " + geometry);
+                assertTrue(stage.getHeight() <= display.getHeight() + 1, "window height: " + geometry);
+            }, GEOMETRY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } finally {
             onFxThread(() -> {
                 window.getPrimaryStage().hide();

@@ -4,7 +4,12 @@ import static java.util.Objects.requireNonNull;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.StringUtil;
@@ -213,6 +218,16 @@ public class ParserUtil {
                     NusStudentId.getFailureReason(normalizedNusStudentId)));
         }
         return new NusStudentId(normalizedNusStudentId);
+    }
+
+    /**
+     * Parses tags while recording every invalid value, keeping the first spelling of
+     * case-insensitive duplicates consistently with the tag command and summary.
+     */
+    public static Set<Tag> parseTags(Collection<String> values, ParseProblems problems) {
+        Set<Tag> tags = new TreeSet<>(Comparator.comparing(tag -> tag.tagName, String.CASE_INSENSITIVE_ORDER));
+        tags.addAll(problems.collectEach(values, ParserUtil::parseTag));
+        return new HashSet<>(tags);
     }
 
     /**

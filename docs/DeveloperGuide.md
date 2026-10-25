@@ -704,6 +704,11 @@ search filter stays active; removing a tag used by that filter may hide the
 student from the displayed list. `TagCommand.Action` selects addition or
 removal while sharing target resolution, matching, student replacement and
 feedback.
+`ParserUtil.parseTags` folds case variants in `add` and replacement tags in `edit`
+using `String.CASE_INSENSITIVE_ORDER`, matching the tag command and summary.
+`ParseProblems` retains input order so the first normalized spelling wins while
+still collecting every invalid tag's diagnostic. Existing hand-edited case variants
+remain intact until the user explicitly replaces or removes those tags.
 Tag equality and storage remain unchanged. Addition preserves existing case
 variants; removal removes every matching variant of the requested group while
 retaining unrelated tags. A general tag named `Needs follow-up` remains separate
@@ -3395,6 +3400,18 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Restart TAB and repeat the name searches.<br>
       Expected: Original spellings survive saving and reloading; normalized
       comparisons still find the students. Run `list` to restore the full list.
+
+### Keeping one spelling of repeated command tags
+
+1. Start from an empty book and run
+   `add Casey Low -p 91234567 -t Lab -t lab -t LAB -t Σ -t ς`.<br>
+   Expected: Casey has only `Lab` and `Σ`, including after restarting TAB.
+1. Run `edit 1 -t lab -t LAB -t ς -t Σ`.<br>
+   Expected: The replacement tags are `lab` and `ς`; the first spelling of each
+   case-insensitive group is saved. Other student details remain unchanged.
+1. Run `tag 1 -a LAB`, then `tag 1 -r LAB`.<br>
+   Expected: Addition reports the tag is already present without changing the
+   file; removal removes `lab` and retains `ς`.
 
 ### Recovering from save-path collisions
 
