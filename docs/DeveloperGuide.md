@@ -507,6 +507,12 @@ This prevents hand-edited values from disappearing during a later unrelated
 save. The shared JSON mapper keeps its existing behavior for preferences;
 startup follows the existing loading-error path and leaves rejected data intact.
 
+`JsonTagsDeserializer` checks the array and string types before adapting tags,
+so malformed `tags` values report the field and entry position rather than
+Jackson class names. Missing or null arrays still mean no tags; tag text
+continues through the existing model validation. Mapping errors retain their
+source location and student record number, and do not rewrite the file.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.tab.commons` package.
@@ -3723,6 +3729,18 @@ testers are expected to do more *exploratory* testing.
       Expected: The student shows the edited phone. Run `list`, close TAB,
       and restart again; the hand-edited value remains. Restore the backup
       with TAB closed when finished.
+
+1. Diagnosing malformed saved tags
+
+   1. Prerequisites: Close TAB and back up `data/tab.json`.
+   1. Test case: Set a student's `tags` to `"friends"` and restart TAB.<br>
+      Expected: Startup refuses the file with an error naming the student
+      record and `tags`, and asks for a JSON array of strings. The file stays
+      unchanged.
+   1. Test case: With TAB closed, change the value to `["Lab 3", 5]` and restart.<br>
+      Expected: The error identifies `tags entry 2` and asks for a JSON string.
+      Change it to `["Lab 3", "5"]` and restart; both tags load successfully.
+      Restore the backup with TAB closed.
 
 1. Preserving existing data when a save fails
 
