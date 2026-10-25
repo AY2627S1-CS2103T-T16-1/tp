@@ -253,16 +253,36 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
-    public void toModelType_storedFollowUpLabelAsTag_stillLoads() {
-        // refusing the label as a command argument must not make an existing file unreadable
+    public void toModelType_storedFollowUpLabelAsTag_throwsIllegalValueException() {
+        // the label names no tag wherever it is read, so a card can never show it twice
         List<JsonAdaptedTag> tags = new ArrayList<>(VALID_TAGS);
         tags.add(new JsonAdaptedTag(Flag.FOLLOW_UP_NAME));
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, tags, true);
 
+        assertThrows(IllegalValueException.class, JsonAdaptedTag.MESSAGE_RESERVED_TAG, student::toModelType);
+    }
+
+    @Test
+    public void toModelType_storedFollowUpLabelInAnotherCase_throwsIllegalValueException() {
+        List<JsonAdaptedTag> tags = new ArrayList<>(VALID_TAGS);
+        tags.add(new JsonAdaptedTag("  NEEDS FOLLOW-UP  "));
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, tags, false);
+
+        assertThrows(IllegalValueException.class, JsonAdaptedTag.MESSAGE_RESERVED_TAG, student::toModelType);
+    }
+
+    @Test
+    public void toModelType_tagNamedAroundTheFollowUpLabel_stillLoads() {
+        // only the label itself is reserved; a name built around it stays an ordinary tag
+        List<JsonAdaptedTag> tags = new ArrayList<>(VALID_TAGS);
+        tags.add(new JsonAdaptedTag("Needs follow-up soon"));
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, tags, false);
+
         var loaded = assertDoesNotThrow(student::toModelType);
-        assertTrue(loaded.getTags().stream().anyMatch(tag -> Flag.isFollowUpName(tag.tagName)),
-                "the tag the file holds should survive the load");
+        assertTrue(loaded.getTags().stream().anyMatch(tag -> tag.tagName.equals("Needs follow-up soon")));
     }
 
     @Test

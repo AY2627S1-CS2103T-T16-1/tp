@@ -457,6 +457,14 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_reservedFollowUpTag_reportsTheFieldToEdit() {
+        String expectedMessage = "Student record 1 (\"Flagged One\"): " + JsonAdaptedTag.MESSAGE_RESERVED_TAG;
+
+        assertThrows(DataLoadingException.class, expectedMessage, () ->
+                readStudentBook("reservedTagStudentBook.json"));
+    }
+
+    @Test
     public void readStudentBook_duplicateNusStudentId_reportsNormalizedId() {
         String expectedMessage = "Student record 2 (\"Lee Wei Ming\"): NUS Student ID A01234567X "
                 + "is already used by student record 1 (\"Tan Wei Ming\").";

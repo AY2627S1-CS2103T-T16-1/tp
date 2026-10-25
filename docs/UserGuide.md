@@ -972,6 +972,14 @@ Use actual JSON Boolean values, without quotation marks. Numbers such as
 with an error naming the student record and `flag`. TAB leaves the file
 unchanged so that you can correct the value and restart.
 
+`Needs follow-up` is the label TAB shows on a flagged student's card, so it
+names no tag. A record whose `tags` list holds it, in any letter case or
+surrounding spacing, stops loading with an error naming the student record and
+the field to correct. Remove the entry from `tags` and set `"flag": true`
+instead. A file written before this rule needs that one edit before it loads. A
+name built around the label, such as `Needs follow-up soon`, stays an ordinary
+tag.
+
 A student with an NUS Student ID has a `"nusStudentId"` string such as
 `"A01234567X"` in their JSON record. The key is optional: a missing key or
 `null` means that no NUS Student ID has been recorded. A non-null value must

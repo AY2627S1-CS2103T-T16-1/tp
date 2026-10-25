@@ -861,11 +861,13 @@ against the list rather than leaving that to be noticed.
 `Flag` extends `Tag` and uses its validation, normalization, and display
 behavior. Its fixed name is `Needs follow-up`. A general tag with those words
 remains a distinct value: tag equality requires the same concrete class as
-well as the same normalized name. `ParserUtil.parseTagToAdd` refuses that name
-however it is spelt, so that a card cannot show the same label as a tag and as
-the marker, while `Tag` and `JsonAdaptedTag` still accept it and a file written
-before the rule still loads. Removal reads it as an ordinary tag, so `TagCommand`
-keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `Flag` and
+well as the same normalized name. `ParserUtil.parseTagToAdd` and
+`JsonAdaptedTag.toModelType` both refuse that name however it is spelt, so that
+a card cannot show the same label as a tag and as the marker whether the value
+arrives from a command or from a hand-edited file. A file written before the
+rule stops loading, with an error naming the record and the field to correct.
+`Tag` itself still accepts the name, so removal reads it as an ordinary tag and
+`TagCommand` keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `Flag` and
 exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
 interface for commands and the UI. Full equality and hashing include the flag,
 but `isSameStudent` does not: changing whether a student needs a reply does not
@@ -3723,6 +3725,22 @@ testers are expected to do more *exploratory* testing.
       Expected: The student shows the edited phone. Run `list`, close TAB,
       and restart again; the hand-edited value remains. Restore the backup
       with TAB closed when finished.
+
+1. Rejecting the follow-up label held as a tag
+
+   1. Prerequisites: Close every TAB window using this data file and back up
+      `data/tab.json`.
+   1. Test case: Add `"Needs follow-up"` to any record's `tags` list, preserve
+      valid JSON, and restart TAB.<br>
+      Expected: The main window does not open. TAB names the student record and
+      explains that the label marks a student for follow-up rather than naming
+      a tag, pointing at `"flag"`. The file is left unchanged.
+   1. Test case: Replace that entry with `"NEEDS FOLLOW-UP"` and restart.<br>
+      Expected: The same refusal, since letter case and surrounding spaces are
+      ignored.
+   1. Test case: Replace it with `"Needs follow-up soon"` and restart.<br>
+      Expected: TAB opens and the record carries that ordinary tag, because
+      only the label itself is reserved. Restore the backup when finished.
 
 1. Preserving existing data when a save fails
 

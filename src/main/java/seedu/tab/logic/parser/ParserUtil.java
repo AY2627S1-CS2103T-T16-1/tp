@@ -35,8 +35,7 @@ public class ParserUtil {
     public static final String MESSAGE_VALUE_AFTER_INDEX_ONLY =
             "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index and nothing else.";
     public static final String MESSAGE_FOLLOW_UP_IS_NOT_A_TAG =
-            "\"" + Flag.FOLLOW_UP_NAME + "\" marks a student for follow-up rather than naming a tag, "
-            + "so a card would show it twice. Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
+            Flag.MESSAGE_RESERVED + " Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
 
     private ParserUtil() {} // this class only holds helpers
 
