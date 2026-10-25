@@ -35,26 +35,48 @@ public class StudentListPanel extends UiPart<Region> {
      */
     public void scrollTo(Student student) {
         Scene scene = studentListView.getScene();
-        Runnable reveal = new Runnable() {
-            private boolean hasScrolled;
-
-            @Override
-            public void run() {
-                if (hasScrolled) {
-                    scene.removePostLayoutPulseListener(this);
-                }
-                int index = indexOfReference(student);
-                if (index >= 0) {
-                    VirtualFlow<?> flow = (VirtualFlow<?>) studentListView.lookup(".virtual-flow");
-                    flow.scrollTo(index);
-                }
-                hasScrolled = true;
-                Platform.requestNextPulse();
-            }
-        };
-        // The first scroll materializes cards; the next pulse corrects their measured heights.
-        scene.addPostLayoutPulseListener(reveal);
+        scene.addPostLayoutPulseListener(new Reveal(scene, student));
         Platform.requestNextPulse();
+    }
+
+    /** Scrolls the list so that {@code student}'s card is in view, if the list still holds it. */
+    private void scrollListTo(Student student) {
+        int index = indexOfReference(student);
+        if (index < 0) {
+            return;
+        }
+        VirtualFlow<?> flow = (VirtualFlow<?>) studentListView.lookup(".virtual-flow");
+        flow.scrollTo(index);
+    }
+
+    /**
+     * Scrolls a student's card into view once per layout pass, then takes itself off the
+     * scene. The first pass materializes the cards, which is what gives them their real
+     * heights; the second scrolls again now that those heights are known, since the first
+     * aimed at the estimates the list had before any card existed.
+     */
+    private final class Reveal implements Runnable {
+        private static final int PASSES = 2;
+
+        private final Scene scene;
+        private final Student student;
+        private int passesLeft = PASSES;
+
+        private Reveal(Scene scene, Student student) {
+            this.scene = scene;
+            this.student = student;
+        }
+
+        @Override
+        public void run() {
+            scrollListTo(student);
+            passesLeft--;
+            if (passesLeft > 0) {
+                Platform.requestNextPulse();
+                return;
+            }
+            scene.removePostLayoutPulseListener(this);
+        }
     }
 
     private int indexOfReference(Student student) {
