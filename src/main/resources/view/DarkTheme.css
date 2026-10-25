@@ -643,6 +643,11 @@
     -fx-background-insets: 0;
 }
 
+.summary-scroll:focused {
+    -fx-background-color: -tab-accent, -tab-bg-sunken;
+    -fx-background-insets: 0, 1;
+}
+
 /* a value too long for its row is elided rather than widening the card it sits in. The
    detail line gives way at its end: the start of an ID or an address still says whose it is */
 .card-detail, .card-detail-strong {

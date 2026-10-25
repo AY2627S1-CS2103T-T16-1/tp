@@ -17,10 +17,13 @@ import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -100,6 +103,88 @@ public class SummaryPanelTest {
             firstCount.localToScene(firstCount.getBoundsInLocal()).getMaxX(),
             scroll.getWidth() - scroll.getViewportBounds().getWidth(),
         };
+    }
+
+    @Test
+    public void keyboardNavigation_overflowingTags_scrollsByLinePageAndToEitherEnd() throws Exception {
+        ObservableList<Student> students = FXCollections.observableArrayList(carrying(30));
+        Stage stage = onFxThread(() -> tagWindow(students));
+        try {
+            assertNavigationAcrossLayouts(stage, students);
+        } finally {
+            onFxThread(() -> {
+                stage.hide();
+                return null;
+            });
+        }
+    }
+
+    private static Stage tagWindow(ObservableList<Student> students) {
+        SummaryPanel panel = new SummaryPanel(students);
+        Stage window = new Stage();
+        window.setScene(styledScene(panel.getRoot(), 150, 400));
+        window.show();
+        window.toFront();
+        window.requestFocus();
+        ScrollPane tags = (ScrollPane) panel.getRoot().lookup("#tagScroll");
+        assertTrue(tags.isFocusTraversable());
+        tags.requestFocus();
+        return window;
+    }
+
+    private static void assertNavigationAcrossLayouts(Stage stage, ObservableList<Student> students) throws Exception {
+        FxToolkit.awaitAssertion(() -> {
+            ScrollPane tags = (ScrollPane) stage.getScene().lookup("#tagScroll");
+            assertTrue(tags.isFocused(), "JavaFX scroll keys require actual keyboard focus");
+            assertTrue(tags.getViewportBounds().getHeight() > 0);
+        });
+        onFxThread(() -> {
+            assertTagNavigation((ScrollPane) stage.getScene().lookup("#tagScroll"));
+            stage.setHeight(300);
+            return null;
+        });
+        FxToolkit.awaitAssertion(() -> {
+            ScrollPane tags = (ScrollPane) stage.getScene().lookup("#tagScroll");
+            assertTrue(tags.getViewportBounds().getHeight() < 200);
+        });
+        onFxThread(() -> {
+            ScrollPane tags = (ScrollPane) stage.getScene().lookup("#tagScroll");
+            assertTagNavigation(tags);
+            students.clear();
+            stage.getScene().getRoot().layout();
+            press(tags, KeyCode.PAGE_DOWN);
+            press(tags, KeyCode.PAGE_UP);
+            assertEquals(tags.getVmin(), tags.getVvalue());
+            assertTrue(tags.isFocused());
+            return null;
+        });
+    }
+
+    private static void assertTagNavigation(ScrollPane tags) {
+        assertTrue(tags.getContent().getBoundsInLocal().getHeight() > tags.getViewportBounds().getHeight());
+        press(tags, KeyCode.HOME);
+        press(tags, KeyCode.DOWN);
+        double afterLine = tags.getVvalue();
+        assertTrue(afterLine > tags.getVmin());
+        press(tags, KeyCode.UP);
+        assertEquals(tags.getVmin(), tags.getVvalue());
+        press(tags, KeyCode.PAGE_DOWN);
+        assertTrue(tags.getVvalue() > afterLine, "page=" + tags.getVvalue() + ", line=" + afterLine
+                + ", viewport=" + tags.getViewportBounds() + ", content=" + tags.getContent().getBoundsInLocal());
+        press(tags, KeyCode.PAGE_UP);
+        assertEquals(tags.getVmin(), tags.getVvalue());
+        press(tags, KeyCode.END);
+        assertEquals(tags.getVmax(), tags.getVvalue());
+        press(tags, KeyCode.DOWN);
+        assertEquals(tags.getVmax(), tags.getVvalue());
+        press(tags, KeyCode.HOME);
+        press(tags, KeyCode.UP);
+        assertEquals(tags.getVmin(), tags.getVvalue());
+    }
+
+    private static void press(ScrollPane tags, KeyCode key) {
+        tags.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", key,
+                false, false, false, false));
     }
 
     @Test
