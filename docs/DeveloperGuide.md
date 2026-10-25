@@ -1062,63 +1062,6 @@ singular (`Found 1 student.`), and plural (`Found <n> students.`) results.
 `ListCommand` reports the number of students displayed after resetting the filter
 (`Listed 0 students.`, `Listed 1 student.`, or `Listed <n> students.`).
 
-<<<<<<< HEAD
-=======
-Nothing else is rejected in any of the three. A phone number may hold `+`,
-whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
-script. None of those characters can hinder TAB, because none of these
-fields is parsed, dialled, or used to build a file path.
-
-### Handling an unreadable data file
-
-Startup distinguishes a missing student-book file from an unreadable one. A
-missing `data/tab.json` is a first launch and receives the sample student book.
-An existing file is first parsed as JSON and then every student record and
-field is converted to its model type. Both stages finish before the normal UI
-can accept a command.
-
-`JsonUtil` enables Jackson's strict duplicate-key detection and checks for
-another token after reading the root value. A repeated key or trailing value
-would otherwise silently lose data on the next save. Both are rejected through
-the existing loading-error path, with the key or offending token's location;
-whitespace after the document and keys reused in separate objects remain valid.
-
-`FileUtil.readFromFile` decodes UTF-8 strictly and removes only an optional
-leading BOM before JSON parsing. This accepts files saved by editors that add
-a BOM while rejecting malformed byte sequences rather than silently replacing
-letters with U+FFFD. `JsonUtil` translates decoding failures into an encoding
-explanation and recovery guidance through the same `DataLoadingException`
-boundary; startup preserves the original bytes and blocks the normal UI.
-
-`JsonUtil` turns malformed JSON or an incompatible JSON shape into a
-`DataLoadingException`. For a syntax error, it uses the deepest parser
-exception with a usable location so that the displayed line and column
-identify the offending token rather than the last successfully mapped
-value. It pairs the concise parser explanation with the affected line
-and at most one line on either side. Each source line is limited to 160
-characters; an affected long line is cropped around the reported column
-so that minified JSON remains useful without filling the dialog. If the
-parser supplies no usable location, `JsonUtil` omits the source instead
-of falling back to Jackson's source-bearing message.
-During model conversion, `JsonAdaptedStudent` identifies the invalid field and
-`JsonSerializableStudentBook` adds the one-based record number and its name
-when available. `JsonStudentBookStorage` carries that explanation through the
-same `DataLoadingException` boundary.
-
-`MainApp` records a student-book loading error and creates an empty model only
-as an internal placeholder so that application shutdown remains safe. It gives
-the error to `UiManager`. Before constructing `MainWindow`, `UiManager` checks
-for that error. If one is present, it shows an error dialog containing the
-data-file path, the specific reason, and recovery guidance. Closing the dialog
-closes TAB because the normal window was never opened. No command, including
-`exit`, can therefore save the placeholder over the unreadable file.
-
-Failing closed was chosen over displaying a partial or read-only student book.
-It keeps recovery small and unambiguous: the User repairs or replaces the file
-and restarts TAB. Loading readable records separately and reloading without a
-restart remain separate future features.
-
->>>>>>> master
 #### Student names
 
 A name is displayed and searched as text, but is not an identity field.
@@ -1203,6 +1146,12 @@ An existing file is first parsed as JSON and then every student record and
 field is converted to its model type. Both stages finish before the normal UI
 can accept a command.
 
+`JsonUtil` enables Jackson's strict duplicate-key detection and checks for
+another token after reading the root value. A repeated key or trailing value
+would otherwise silently lose data on the next save. Both are rejected through
+the existing loading-error path, with the key or offending token's location;
+whitespace after the document and keys reused in separate objects remain valid.
+
 `FileUtil.readFromFile` decodes UTF-8 strictly and removes only an optional
 leading BOM before JSON parsing. This accepts files saved by editors that add
 a BOM while rejecting malformed byte sequences rather than silently replacing
@@ -1212,13 +1161,14 @@ boundary; startup preserves the original bytes and blocks the normal UI.
 
 `JsonUtil` turns malformed JSON or an incompatible JSON shape into a
 `DataLoadingException`. For a syntax error, it uses the deepest parser
-exception so that the displayed line and column identify the offending token
-rather than the last successfully mapped value. It pairs the concise parser
-explanation with the affected line and at most one line on either side. Each
-source line is limited to 160 characters; an affected long line is cropped
-around the reported column so that minified JSON remains useful without
-filling the dialog. If the parser supplies no usable location, `JsonUtil`
-omits the source instead of falling back to Jackson's source-bearing message.
+exception with a usable location so that the displayed line and column
+identify the offending token rather than the last successfully mapped
+value. It pairs the concise parser explanation with the affected line
+and at most one line on either side. Each source line is limited to 160
+characters; an affected long line is cropped around the reported column
+so that minified JSON remains useful without filling the dialog. If the
+parser supplies no usable location, `JsonUtil` omits the source instead
+of falling back to Jackson's source-bearing message.
 During model conversion, `JsonAdaptedStudent` identifies the invalid field and
 `JsonSerializableStudentBook` adds the one-based record number and its name
 when available. `JsonStudentBookStorage` carries that explanation through the
