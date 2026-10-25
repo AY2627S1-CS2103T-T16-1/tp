@@ -836,7 +836,7 @@ sharing a first letter, so at most two are ever named at once, and the limit
 is there for the command words it may gain.
 
 The comparison folds case with the `CommandWords.foldCase` the parser
-dispatches with, so `Delte` is read as an attempt at `delete`; a word spelt
+dispatches with, so `Delte` is read as an attempt at `delete`; a word spelled
 correctly in any case is dispatched before it reaches here. The message quotes
 the word as it was typed, because a User who typed capitals needs to see them
 to recognize what they did. The quoted word is shortened the
@@ -862,7 +862,7 @@ against the list rather than leaving that to be noticed.
 behavior. Its fixed name is `Needs follow-up`. A general tag with those words
 remains a distinct value: tag equality requires the same concrete class as
 well as the same normalized name. `ParserUtil.parseTagToAdd` refuses that name
-however it is spelt, so that a card cannot show the same label as a tag and as
+however it is spelled, so that a card cannot show the same label as a tag and as
 the marker, while `Tag` and `JsonAdaptedTag` still accept it and a file written
 before the rule still loads. Removal reads it as an ordinary tag, so `TagCommand`
 keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `Flag` and
@@ -2221,7 +2221,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Typing a command word in another case
 
-1. A correctly spelt command word in capitals
+1. A correctly spelled command word in capitals
 
    1. Prerequisites: at least one student listed.
 

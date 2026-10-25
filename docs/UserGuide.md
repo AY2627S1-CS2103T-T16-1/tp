@@ -204,7 +204,7 @@ letter out may differ in it, so `felete` still reaches `delete`.
 
 The comparison ignores case, so `Delte 3` is answered in the same way. A word
 that reaches nothing, such as `dlt`, is answered with the pointer to `help`.
-A word spelt correctly is no mistyping whatever case it is in: `List` and
+A word spelled correctly is no mistyping whatever case it is in: `List` and
 `LIST` run `list` rather than being suggested back to you.
 
 <box type="warning" seamless>
