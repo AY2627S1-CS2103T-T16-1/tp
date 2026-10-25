@@ -338,6 +338,42 @@ public class SummaryPanelTest {
     }
 
     @Test
+    public void panel_tagListWithAndWithoutAScrollBar_keepsOneColumnOfNumbers() throws Exception {
+        for (int tagCount : new int[] {3, 30}) {
+            List<String> tags = new ArrayList<>();
+            for (int i = 1; i <= tagCount; i++) {
+                tags.add(String.format("tutorial-group-%02d", i));
+            }
+            ObservableList<Student> students = FXCollections.observableArrayList(
+                    tagged("Ann Lee", true, tags.toArray(String[]::new)));
+
+            double[] edges = onFxThread(() -> {
+                SummaryPanel panel = new SummaryPanel(students);
+                Region root = (Region) panel.getRoot();
+                styledScene(root, 150, 320);
+                // the scroll bar appears during layout, and reserving room for it moves the
+                // flagged row, so the pane needs to settle before the edges are read
+                for (int pass = 0; pass < 5; pass++) {
+                    root.applyCss();
+                    root.layout();
+                }
+                ScrollPane scroll = (ScrollPane) root.lookup("#tagScroll");
+                VBox rows = (VBox) scroll.getContent();
+                Label flagged = (Label) root.lookup("#flaggedCount");
+                Label firstCount = (Label) ((HBox) rows.getChildren().getFirst()).getChildren().getLast();
+                return new double[] {
+                    flagged.localToScene(flagged.getBoundsInLocal()).getMaxX(),
+                    firstCount.localToScene(firstCount.getBoundsInLocal()).getMaxX(),
+                };
+            });
+
+            assertEquals(edges[0], edges[1], 0.5,
+                    "the flagged count and the tag counts should share one right edge with "
+                            + tagCount + " tags");
+        }
+    }
+
+    @Test
     public void rows_aWrappedTagName_centresItsCountAgainstTheWholeName() throws Exception {
         ObservableList<Student> students = FXCollections.observableArrayList(
                 tagged("Ann Lee", false, "consultation-week-14"));
