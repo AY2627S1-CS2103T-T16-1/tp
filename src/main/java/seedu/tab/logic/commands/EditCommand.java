@@ -73,6 +73,7 @@ public class EditCommand extends Command {
             + FLAG_PHONE + " 91234567";
 
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
+    public static final String MESSAGE_UNCHANGED = "Student already has the requested details. No changes made.";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
 
     private final Logger logger = LogsCenter.getLogger(EditCommand.class);
@@ -105,6 +106,9 @@ public class EditCommand extends Command {
         requireNonNull(model);
         Student studentToEdit = target.resolve(model);
         Student editedStudent = createEditedStudent(studentToEdit, editStudentDescriptor);
+        if (studentToEdit.equals(editedStudent)) {
+            return new CommandResult(MESSAGE_UNCHANGED);
+        }
 
         Optional<Student> duplicateStudent = studentToEdit.isSameStudent(editedStudent)
                 ? Optional.empty()
