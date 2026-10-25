@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -98,11 +100,11 @@ public class JsonStudentBookStorage {
         requireNonNull(filePath);
 
         Path absolutePath = filePath.toAbsolutePath().normalize();
-        Files.createDirectories(absolutePath.getParent());
+        createDataDirectory(absolutePath.getParent());
         Path target = Files.exists(absolutePath) ? absolutePath.toRealPath()
                 : absolutePath.getParent().toRealPath().resolve(absolutePath.getFileName());
         Path lockPath = target.resolveSibling("." + target.getFileName() + ".lock");
-        try (FileChannel channel = FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        try (FileChannel channel = openSaveLock(lockPath);
                 FileLock lock = channel.tryLock()) {
             if (lock == null) {
                 throw new IOException(formatBusyMessage(filePath));
@@ -110,6 +112,31 @@ public class JsonStudentBookStorage {
             saveIfUnchanged(studentBook, filePath, absolutePath);
         } catch (OverlappingFileLockException e) {
             throw new IOException(formatBusyMessage(filePath), e);
+        }
+    }
+
+    private static void createDataDirectory(Path directory) throws IOException {
+        try {
+            Files.createDirectories(directory);
+        } catch (FileAlreadyExistsException e) {
+            throw new IOException("Cannot create data folder " + e.getFile()
+                    + " because a file already occupies that path. Close TAB and move or rename that file"
+                    + " before restarting", e);
+        }
+    }
+
+    private static FileChannel openSaveLock(Path lockPath) throws IOException {
+        if (Files.isDirectory(lockPath)) {
+            throw new IOException("Cannot open save lock " + lockPath + " because it is a folder."
+                    + " Close all TAB windows and move or rename that folder before retrying");
+        }
+        try {
+            return FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        } catch (AccessDeniedException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new IOException("Cannot open save lock " + lockPath + ": " + e.getMessage()
+                    + ". Close all TAB windows and check that this path is a writable file before retrying", e);
         }
     }
 
