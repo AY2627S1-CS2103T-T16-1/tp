@@ -871,11 +871,13 @@ against the list rather than leaving that to be noticed.
 `Flag` extends `Tag` and uses its validation, normalization, and display
 behavior. Its fixed name is `Needs follow-up`. A general tag with those words
 remains a distinct value: tag equality requires the same concrete class as
-well as the same normalized name. `ParserUtil.parseTagToAdd` refuses that name
-however it is spelled, so that a card cannot show the same label as a tag and as
-the marker, while `Tag` and `JsonAdaptedTag` still accept it and a file written
-before the rule still loads. Removal reads it as an ordinary tag, so `TagCommand`
-keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `Flag` and
+well as the same normalized name. `ParserUtil.parseTagToAdd` and
+`JsonAdaptedTag.toModelType` both refuse that name however it is spelled, so that
+a card cannot show the same label as a tag and as the marker whether the value
+arrives from a command or from a hand-edited file. A file written before the
+rule stops loading, with an error naming the record and the field to correct.
+`Tag` itself still accepts the name, so removal reads it as an ordinary tag and
+`TagCommand` keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `Flag` and
 exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
 interface for commands and the UI. Full equality and hashing include the flag,
 but `isSameStudent` does not: changing whether a student needs a reply does not
@@ -2514,18 +2516,19 @@ testers are expected to do more *exploratory* testing.
 1. Removing variants from a human-edited data file
 
    1. Prerequisites: Exit TAB. Back up the data file, then set Tag Test's
-      `tags` array to `["Lab 3", "  lab   3  ", "T1", "Needs follow-up"]`.
-      Keep `"flag": true` and restart TAB. Run `find -n "Tag Test"`.
+      `tags` array to `["Lab 3", "  lab   3  ", "T1"]`. Keep `"flag": true`
+      and restart TAB. Run `find -n "Tag Test"`.
 
    1. Test case: `tag 1 -r "LAB 3"`.<br>
-      Expected: The variants load as one `Lab 3` tag, which is removed.
-      `T1`, `Needs follow-up`, the
-      follow-up flag and all other fields remain after restart.
+      Expected: The variants load as one `Lab 3` tag, which is removed. `T1`,
+      the follow-up flag and all other fields remain after restart.
 
    1. Test case: Run `find -n "Tag Test"` again after restarting and confirm only
       that student is shown, then run `tag 1 -r "needs follow-up"`.<br>
-      Expected: Only the general tag disappears. `T1` and the follow-up flag
-      remain. Restore the backup when finished.
+      Expected: TAB reports that the student carries no such tag and adds that
+      the label beside the name is the follow-up flag rather than a tag,
+      pointing at `edit INDEX --no-follow-up`. `T1` and the flag remain.
+      Restore the backup when finished.
 
 ### Adding a student
 
@@ -3770,6 +3773,22 @@ testers are expected to do more *exploratory* testing.
       Expected: The error identifies `tags entry 2` and asks for a JSON string.
       Change it to `["Lab 3", "5"]` and restart; both tags load successfully.
       Restore the backup with TAB closed.
+
+1. Rejecting the follow-up label held as a tag
+
+   1. Prerequisites: Close every TAB window using this data file and back up
+      `data/tab.json`.
+   1. Test case: Add `"Needs follow-up"` to any record's `tags` list, preserve
+      valid JSON, and restart TAB.<br>
+      Expected: The main window does not open. TAB names the student record and
+      explains that the label marks a student for follow-up rather than naming
+      a tag, pointing at `"flag"`. The file is left unchanged.
+   1. Test case: Replace that entry with `"NEEDS FOLLOW-UP"` and restart.<br>
+      Expected: The same refusal, since letter case and surrounding spaces are
+      ignored.
+   1. Test case: Replace it with `"Needs follow-up soon"` and restart.<br>
+      Expected: TAB opens and the record carries that ordinary tag, because
+      only the label itself is reserved. Restore the backup when finished.
 
 1. Preserving existing data when a save fails
 

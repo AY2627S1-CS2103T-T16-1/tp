@@ -565,6 +565,23 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_reservedFollowUpTag_reportsTheFieldToEdit() {
+        String expectedMessage = "Student record 1 (\"Flagged One\"): " + JsonAdaptedTag.MESSAGE_RESERVED_TAG;
+
+        assertThrows(DataLoadingException.class, expectedMessage, () ->
+                readStudentBook("reservedTagStudentBook.json"));
+    }
+
+    @Test
+    public void readStudentBook_reservedFollowUpTagInAnotherCase_isRefusedToo() {
+        // the rule folds case and spacing, so a file cannot slip the label past by shouting it
+        String expectedMessage = "Student record 1 (\"Flagged Two\"): " + JsonAdaptedTag.MESSAGE_RESERVED_TAG;
+
+        assertThrows(DataLoadingException.class, expectedMessage, () ->
+                readStudentBook("reservedTagCaseVariantStudentBook.json"));
+    }
+
+    @Test
     public void readStudentBook_duplicateNusStudentId_reportsNormalizedId() {
         String expectedMessage = "Student record 2 (\"Lee Wei Ming\"): NUS Student ID A01234567X "
                 + "is already used by student record 1 (\"Tan Wei Ming\").";

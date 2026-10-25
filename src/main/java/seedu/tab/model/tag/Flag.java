@@ -10,6 +10,14 @@ import seedu.tab.commons.util.StringUtil;
 public class Flag extends Tag {
     public static final String FOLLOW_UP_NAME = "Needs follow-up";
 
+    /**
+     * Explains why this label names no tag. Each entry point appends the remedy that suits it,
+     * since a command is corrected by typing a flag and a data file by editing a field.
+     */
+    public static final String MESSAGE_RESERVED =
+            "\"" + FOLLOW_UP_NAME + "\" marks a student for follow-up rather than naming a tag, "
+            + "so a card would show it twice.";
+
     /** Constructs the follow-up flag. */
     public Flag() {
         super(FOLLOW_UP_NAME);
