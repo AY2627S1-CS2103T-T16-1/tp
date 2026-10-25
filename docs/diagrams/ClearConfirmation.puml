@@ -23,24 +23,24 @@ state "Processing reply" as REPLY {
     TRIM : trim Unicode whitespace
     TRIM --> CHECK
     CHECK : isEmpty || equals("n") || equals("no") ?
-    CHECK -[yes]-> DROP
-    CHECK -[no]-> IS_YES
+    CHECK --> DROP : [yes]
+    CHECK --> IS_YES : [no]
     IS_YES : equals("y") || equals("yes") ?
-    IS_YES -[yes]-> CONFIRM
-    IS_YES -[no]-> INVALID
+    IS_YES --> CONFIRM : [yes]
+    IS_YES --> INVALID : [no]
 }
 
 DROP : pendingClearCommand = empty
-DROP -> NO_PENDING : no-op / message
+DROP --> NO_PENDING : no-op / message
 
 CONFIRM : pendingClearCommand = empty
-CONFIRM -> ClearCommand : executeConfirmed()
-ClearCommand -> Storage : save empty book
+CONFIRM --> ClearCommand : executeConfirmed()
+ClearCommand --> Storage : save empty book
 Storage --> ClearCommand : result
-CONFIRM -> NO_PENDING : "All students deleted"
+CONFIRM --> NO_PENDING : "All students deleted"
 
 INVALID : ParseException with feedback
-INVALID -> PENDING : prompt repeated
+INVALID --> PENDING : prompt repeated
 
 NO_PENDING --> PENDING : clear (non-empty book)
 PENDING --> NO_PENDING : y / yes / n / no / empty
