@@ -229,6 +229,12 @@ showing, so you can see the shape of your cohort without running a command.
   tag list to see any rows below the visible area.
 * The foot of the panel gives the total.
 
+![Summary counts beside student cards with a shortened name, hidden tag count and follow-up marker](images/cardSummary.png)
+
+In this example, three students are listed and one needs follow-up. `Lab3` and
+`T1` each belong to two students. The first card keeps both ends of its long
+name, shows one tag chip and counts the other two as `2 more…`.
+
 <box type="tip" seamless>
 
 **Tip:** The summary describes the students currently listed, not the whole
@@ -453,7 +459,9 @@ it reads `N more…`. Unused count space returns to the name. A tag chip too
 wide for its allocation is shortened; hover over it to read the full tag.
 With several tags, if there is too little room for a complete short tag or at
 least four characters of a longer tag, the row shows `N tags` instead.
-Hover over the count to read the hidden tag names.
+Hover over the count to read the hidden tag names. The
+[summary illustration](#reading-the-summary-beside-the-list) shows this
+shortened name, hidden tag count and follow-up marker together.
 
 When a student is added, the command result displays the new record
 (`New student added: NAME; Phone: PHONE...`) so you can confirm the details
@@ -607,9 +615,7 @@ Examples:
 *  `edit 1 -n "Ravi s/o Kumaran"` Edits the name of the 1st student to be `Ravi s/o Kumaran`.
 *  `edit 3 -p "+65 9123 4567" -t T1 -t "Lab 3"` Replaces the phone number and both tags of the 3rd student.
 *  `edit 1 --follow-up` Flags the 1st student for follow-up. Repeating it keeps the flag set.
-*  `edit 1 -f` Also sets follow-up, even if the student is already flagged.
 *  `edit 1 --no-follow-up` Clears the flag. Repeating it keeps the flag cleared.
-*  `edit 1 -nf` Also clears follow-up, even if the student is already unflagged.
 *  `edit 2 -p 91234567 --follow-up` Updates the phone number and sets follow-up in one command.
 *  `edit A02345678G --phone 91234567` Edits the phone number of the student holding the NUS
    Student ID `A02345678G`, even while a search hides that student.
