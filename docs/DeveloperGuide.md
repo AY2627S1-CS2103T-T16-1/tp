@@ -507,6 +507,12 @@ This prevents hand-edited values from disappearing during a later unrelated
 save. The shared JSON mapper keeps its existing behavior for preferences;
 startup follows the existing loading-error path and leaves rejected data intact.
 
+`JsonTagsDeserializer` checks the array and string types before adapting tags,
+so malformed `tags` values report the field and entry position rather than
+Jackson class names. Missing or null arrays still mean no tags; tag text
+continues through the existing model validation. Mapping errors retain their
+source location and student record number, and do not rewrite the file.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.tab.commons` package.
@@ -702,7 +708,9 @@ addition and removal.
 `ParserUtil.parseIndex` distinguishes malformed/non-positive input from a positive
 integer exceeding the supported index range. `StudentTarget` reports out-of-range
 positions with their original input spelling and the current displayed count,
-including zero. Retaining that spelling also lets delete suggest an exact `--id`
+including zero. Invalid non-positive or non-integer edit targets retain the
+concise positive-integer reason from `parseIndex`, alongside any field errors.
+Retaining that spelling also lets delete suggest an exact `--id`
 command for a stored numeric ID without dropping leading zeroes. An in-range
 number remains an index even when another record holds the same numeric ID.
 The original spelling affects diagnostics only, not target equality or hashing.
@@ -755,8 +763,9 @@ and the JSON file.
 ### Invisible characters on the command line
 
 Before the command word is read, `StudentBookParser` strips the same Unicode
-format characters that `StringUtil.normalizeFieldValue` strips from a stored
-value, through `StringUtil.stripFormatCharacters`. A direction mark or a
+format and non-whitespace control characters that `StringUtil.normalizeFieldValue`
+strips from a stored value, through `StringUtil.stripFormatCharacters`. Whitespace controls such as tabs
+and line breaks remain separators rather than joining adjacent words. A direction mark or a
 zero-width space pasted before a command word or an index is otherwise a word
 that looks right but matches no command, or an index reported as not a positive
 integer. The zero-width joiner and non-joiner are kept, because a script such as
@@ -919,7 +928,8 @@ to the storage adapter, preserving the existing file format.
 
 `Name`, `Tag`, `Phone`, `Email` and `NusStudentId` each store the form returned by
 `StringUtil.normalizeFieldValue`: without invisible format characters such as
-direction marks, with each run of whitespace reduced to one ASCII space
+direction marks and non-whitespace controls, with each run of whitespace reduced
+to one ASCII space
 and leading and trailing whitespace removed, and with the result composed to
 Unicode NFC. Composing happens last, because an invisible character between a
 base letter and its combining mark blocks the two from composing.
@@ -3079,8 +3089,9 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Run `list` and note the list size.
 
    1. Test case: `edit 0 -p 12`<br>
-      Expected: No change. One message names both the index and the phone
-      number, rather than only the first fault found.
+      Expected: No change. The reply starts `Index must be a positive integer.`
+      and also reports the invalid phone, without the full edit usage block.
+      `edit 1.5 -p 91234567` reports only the positive-integer reason.
 
    1. Test cases: `edit` and `edit INDEX`<br>
       Expected: No change. The first names the missing index and says a field
@@ -3444,6 +3455,18 @@ testers are expected to do more *exploratory* testing.
       Expected: Original spellings survive saving and reloading; normalized
       comparisons still find the students. Run `list` to restore the full list.
 
+### Normalizing hidden control characters in saved names and tags
+
+1. Prerequisites: Close TAB in a disposable data folder and back up the data file.
+1. Set one student's JSON name to `"Am\u0001y"` and tags to `["La\u007fb"]`.
+   Restart TAB.<br>
+   Expected: The card shows `Amy` and `Lab`. `find -n Amy` and `find -t Lab`
+   both find that student. Loading alone leaves the file unchanged.
+1. Run `add Amy -p 789` with a phone different from the saved student's.<br>
+   Expected: The add succeeds with a possible duplicate name warning. The saved
+   name and tag no longer contain the hidden controls. Restarting retains both
+   searchable students. Restore the backup with TAB closed.
+
 ### Keeping one spelling of repeated command tags
 
 1. Start from an empty book and run
@@ -3734,6 +3757,18 @@ testers are expected to do more *exploratory* testing.
       Expected: Their card shows only `t1` and `Lab 3`, matching the summary.
       Run `edit 1 -p 999` for that student at index 1, then restart. The saved
       tags retain those first normalized spellings with no duplicates.
+      Restore the backup with TAB closed.
+
+1. Diagnosing malformed saved tags
+
+   1. Prerequisites: Close TAB and back up `data/tab.json`.
+   1. Test case: Set a student's `tags` to `"friends"` and restart TAB.<br>
+      Expected: Startup refuses the file with an error naming the student
+      record and `tags`, and asks for a JSON array of strings. The file stays
+      unchanged.
+   1. Test case: With TAB closed, change the value to `["Lab 3", 5]` and restart.<br>
+      Expected: The error identifies `tags entry 2` and asks for a JSON string.
+      Change it to `["Lab 3", "5"]` and restart; both tags load successfully.
       Restore the backup with TAB closed.
 
 1. Preserving existing data when a save fails

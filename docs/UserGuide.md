@@ -125,10 +125,12 @@ text remains one command; inspect it before pressing Enter.
   "123".` Whitespace after the command is accepted, but quoted values,
   including `""`, are still arguments.
 
-* Invisible format characters are ignored wherever they appear, so a command
-  word or an index copied from a web page with a direction mark or a zero-width
-  space still runs as the command it looks like. The joiners some scripts need
-  for shaping are the exception and are kept.
+* Invisible format characters and non-whitespace control characters are ignored
+  in commands and stored field values, including names, tags, phone numbers,
+  emails and NUS Student IDs. A pasted hidden control cannot make an
+  identical-looking name or tag differ in search or
+  duplicate warnings. Tabs and line breaks still separate values or become spaces
+  inside a field. The joiners some scripts need for shaping are kept.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -228,6 +230,12 @@ showing, so you can see the shape of your cohort without running a command.
   multiple lines so you can read their endings beside the count. Scroll the
   tag list to see any rows below the visible area.
 * The foot of the panel gives the total.
+
+![Summary counts beside student cards with a shortened name, hidden tag count and follow-up marker](images/cardSummary.png)
+
+In this example, three students are listed and one needs follow-up. `Lab3` and
+`T1` each belong to two students. The first card keeps both ends of its long
+name, shows one tag chip and counts the other two as `2 more…`.
 
 <box type="tip" seamless>
 
@@ -457,7 +465,9 @@ it reads `N more…`. Unused count space returns to the name. A tag chip too
 wide for its allocation is shortened; hover over it to read the full tag.
 With several tags, if there is too little room for a complete short tag or at
 least four characters of a longer tag, the row shows `N tags` instead.
-Hover over the count to read the hidden tag names.
+Hover over the count to read the hidden tag names. The
+[summary illustration](#reading-the-summary-beside-the-list) shows this
+shortened name, hidden tag count and follow-up marker together.
 
 When a student is added, the command result displays the new record
 (`New student added: NAME; Phone: PHONE...`) so you can confirm the details
@@ -537,6 +547,8 @@ done to it beyond the quotes any value with spaces takes:
   starting with a digit reads as an index, so `edit` can only name a student by an ID
   that opens with a letter; to edit a student whose ID starts with a digit, use their
   index. Here `--id` always sets the student's ID rather than choosing who to edit.
+  A zero or non-integer index reports `Index must be a positive integer.`
+  without the full usage block; any invalid field values are reported alongside it.
   The current search stays active after editing, so the index keeps referring to
   the same student when you repeat a command, as long as that student still
   matches the search. An edit that removes a matching detail, such as renaming
@@ -608,9 +620,7 @@ Examples:
 *  `edit 1 -n "Ravi s/o Kumaran"` Edits the name of the 1st student to be `Ravi s/o Kumaran`.
 *  `edit 3 -p "+65 9123 4567" -t T1 -t "Lab 3"` Replaces the phone number and both tags of the 3rd student.
 *  `edit 1 --follow-up` Flags the 1st student for follow-up. Repeating it keeps the flag set.
-*  `edit 1 -f` Also sets follow-up, even if the student is already flagged.
 *  `edit 1 --no-follow-up` Clears the flag. Repeating it keeps the flag cleared.
-*  `edit 1 -nf` Also clears follow-up, even if the student is already unflagged.
 *  `edit 2 -p 91234567 --follow-up` Updates the phone number and sets follow-up in one command.
 *  `edit A02345678G --phone 91234567` Edits the phone number of the student holding the NUS
    Student ID `A02345678G`, even while a search hides that student.
@@ -963,6 +973,13 @@ top-level `students` lists. The error identifies the location and, for a
 repeated key, its name. Move extra records into the `students` array or keep
 only the intended value for the repeated key, then restart TAB. The rejected
 file stays unchanged.
+
+The `tags` field holds a JSON array of strings, such as `"tags": ["Lab 3", "组 1"]`.
+An absent key, `null`, or `[]` means no tags. A single string without array
+brackets, or an array entry that is a number, Boolean, object, array or `null`,
+is rejected with an error naming `tags` and the student record. For an invalid
+entry, the error also gives its position, counting from 1. Correct the value
+and restart; TAB leaves the rejected file unchanged.
 
 A student who needs follow-up has `"flag": true` in their JSON record. An
 unflagged student normally has no `flag` key; absence, `false`, and `null` all
