@@ -29,6 +29,7 @@ import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.student.Email;
+import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -548,7 +549,11 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readStudentBook_invalidNusStudentIdStudentBook_throwDataLoadingException() {
-        assertThrows(DataLoadingException.class, () -> readStudentBook("invalidNusStudentIdStudentBook.json"));
+        String expectedMessage = "Student record 1 (\"Student With Invalid NUS Student ID\"): "
+                + NusStudentId.MESSAGE_CONSTRAINTS;
+
+        assertThrows(DataLoadingException.class, expectedMessage, () ->
+                readStudentBook("invalidNusStudentIdStudentBook.json"));
     }
 
     @Test
