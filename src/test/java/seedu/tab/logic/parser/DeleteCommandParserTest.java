@@ -1,10 +1,13 @@
 package seedu.tab.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -28,9 +31,9 @@ public class DeleteCommandParserTest {
     private DeleteCommandParser parser = new DeleteCommandParser();
 
     @Test
-    public void parse_digitLeadingIdWithoutOption_reportsUsageWithExplicitIdExample() {
-        assertParseFailure(parser, "1ABC", USAGE_MESSAGE);
-        assertTrue(USAGE_MESSAGE.contains("Example: delete --id 1ABC"));
+    public void parse_digitLeadingIdWithoutOption_reportsExplicitIdCommand() {
+        assertParseFailure(parser, "1ABC", invalidIndexWithIdHint("1ABC"));
+        assertTrue(invalidIndexWithIdHint("1ABC").contains("use delete --id 1ABC"));
     }
 
     @Test
@@ -62,8 +65,7 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_quotedIndexHoldingTwoNumbers_throwsParseException() {
-        assertParseFailure(parser, "\"1 2\"", String.format(MESSAGE_INVALID_COMMAND_FORMAT,
-                DeleteCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "\"1 2\"", ParserUtil.MESSAGE_INVALID_INDEX);
     }
 
     @Test
@@ -79,15 +81,35 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_zeroIndex_throwsParseException() {
-        String expected = USAGE_MESSAGE + " If \"0\" is an NUS Student ID, use delete --id 0.";
+        // the reason stands on its own, as edit and tag report theirs, rather than under the
+        // usage block, and a target that reads as an ID still names the --id command for it
+        String expected = invalidIndexWithIdHint("0");
         assertParseFailure(parser, "0", expected);
         assertParseFailure(parser, "  0  ", expected);
+        assertEquals("Index must be a positive integer. "
+                + "If \"0\" is an NUS Student ID, use delete --id 0.", expected);
     }
 
     @Test
     public void parse_negativeIndex_throwsParseException() {
-        assertParseFailure(parser, "-1", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
-        assertParseFailure(parser, "-10", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+        // a marker followed by a digit is a negative number rather than an option delete
+        // does not know, so the index reason, not the usage block, carries the refusal
+        assertParseFailure(parser, "-1", ParserUtil.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "-10", ParserUtil.MESSAGE_INVALID_INDEX);
+    }
+
+    @Test
+    public void parse_nonIntegerIndex_throwsParseException() {
+        for (String target : List.of("1.5", "+1", "1,5", "1-2")) {
+            assertParseFailure(parser, target, ParserUtil.MESSAGE_INVALID_INDEX);
+        }
+    }
+
+    @Test
+    public void parse_loneOption_throwsUsageMessage() {
+        // an option spelled without its value names no target, so every form delete reads helps
+        assertParseFailure(parser, "--follow-up", USAGE_MESSAGE);
+        assertParseFailure(parser, "-i", USAGE_MESSAGE);
     }
 
     @Test
@@ -121,8 +143,8 @@ public class DeleteCommandParserTest {
     @Test
     public void parse_invalidArgs_throwsParseException() {
         // a target that does not open with a letter reads as a mistyped index, not as a
-        // candidate NUS Student ID, so it is refused with the usage message
-        assertParseFailure(parser, "!@#", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+        // candidate NUS Student ID, so the index reason is the one reported
+        assertParseFailure(parser, "!@#", ParserUtil.MESSAGE_INVALID_INDEX);
     }
 
     @Test
@@ -151,10 +173,22 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_negativeNumberAfterTheIndex_namesItAsTheExtraValue() {
+        // a negative number is a value rather than an option, so the part to remove is named
+        assertParseFailure(parser, "1 -1", valueAfterIndexMessage("-1"));
+    }
+
+    @Test
     public void parse_longExtraneousToken_shortensItInTheFeedback() {
         String extra = "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH + 1);
         assertParseFailure(parser, "1 " + extra,
                 valueAfterIndexMessage("x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…"));
+    }
+
+    /** The reply {@code delete} gives for a target that reads as an unusable index. */
+    private static String invalidIndexWithIdHint(String value) {
+        return ParserUtil.MESSAGE_INVALID_INDEX + " "
+                + Messages.getIdTargetHint(DeleteCommand.COMMAND_WORD, value);
     }
 
     /** The reply {@code delete} gives for the value it found after the index. */
@@ -187,7 +221,7 @@ public class DeleteCommandParserTest {
     public void parse_valueJoinedToAnotherMarker_readsTheTokenAsTheTarget() {
         // an equals sign joins a value to an option, so a token that opens any other way
         // is still read as the target itself
-        assertParseFailure(parser, "1=2", USAGE_MESSAGE);
+        assertParseFailure(parser, "1=2", ParserUtil.MESSAGE_INVALID_INDEX);
         assertParseFailure(parser, "a=b", Messages.getErrorMessageForInvalidValue(
                 NusStudentId.FIELD_NAME, "a=b", NusStudentId.MESSAGE_NON_ALPHANUMERIC));
     }

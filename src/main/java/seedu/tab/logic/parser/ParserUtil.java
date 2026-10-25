@@ -127,12 +127,12 @@ public class ParserUtil {
      *
      * <p>An NUS Student ID that is not a valid one keeps the reason it was refused, so the
      * User is told which value was rejected and why. Oversized positive indices retain their
-     * bounded-index diagnostic. An index that is not a positive integer
-     * is reported through {@code usage} instead, because a target of that shape reads as a
-     * mistyped index rather than as a candidate ID.
+     * bounded-index diagnostic, and an index that is not a positive integer keeps the concise
+     * positive-integer reason rather than the full command usage. A target given as no value
+     * at all names no field to explain, so that one is reported through {@code usage}.
      *
      * @param target The one token the User gave as the target.
-     * @param usage What the calling command shows when the target reads as an unusable index.
+     * @param usage What the calling command shows when no target is given.
      * @throws ParseException if {@code target} is blank, opens with a letter without holding
      *     a valid NUS Student ID, or is otherwise not a positive integer.
      */
@@ -143,14 +143,7 @@ public class ParserUtil {
         if (trimmedTarget.isEmpty()) {
             throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage));
         }
-        try {
-            return parseNonBlankStudentTarget(trimmedTarget);
-        } catch (ParseException pe) {
-            if (!pe.getMessage().equals(MESSAGE_INVALID_INDEX)) {
-                throw pe;
-            }
-            throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage), pe);
-        }
+        return parseNonBlankStudentTarget(trimmedTarget);
     }
 
     /** Returns a non-blank target while retaining the field-specific validation reason. */
