@@ -23,10 +23,12 @@ public final class StudentTarget {
 
     private final Index index;
     private final NusStudentId nusStudentId;
+    private final String indexInput;
 
-    private StudentTarget(Index index, NusStudentId nusStudentId) {
+    private StudentTarget(Index index, NusStudentId nusStudentId, String indexInput) {
         this.index = index;
         this.nusStudentId = nusStudentId;
+        this.indexInput = indexInput;
     }
 
     /**
@@ -34,7 +36,14 @@ public final class StudentTarget {
      */
     public static StudentTarget byIndex(Index index) {
         requireNonNull(index);
-        return new StudentTarget(index, null);
+        return byIndex(index, String.valueOf(index.getOneBased()));
+    }
+
+    /** Returns an index target retaining its input spelling for diagnostics and ID recovery. */
+    public static StudentTarget byIndex(Index index, String input) {
+        requireNonNull(index);
+        requireNonNull(input);
+        return new StudentTarget(index, null, input);
     }
 
     /**
@@ -42,7 +51,7 @@ public final class StudentTarget {
      */
     public static StudentTarget byNusStudentId(NusStudentId nusStudentId) {
         requireNonNull(nusStudentId);
-        return new StudentTarget(null, nusStudentId);
+        return new StudentTarget(null, nusStudentId, null);
     }
 
     /**
@@ -53,8 +62,13 @@ public final class StudentTarget {
      * @throws CommandException if no student matches the target.
      */
     public Student resolve(Model model) throws CommandException {
+        return resolve(model, null);
+    }
+
+    /** Resolves a target, optionally naming a command that supports explicit ID targeting. */
+    public Student resolve(Model model, String idCommandWord) throws CommandException {
         if (index != null) {
-            return resolveIndex(model.getFilteredStudentList());
+            return resolveIndex(model, idCommandWord);
         }
         return resolveNusStudentId(model.getStudentBook().getStudentList());
     }
@@ -75,9 +89,17 @@ public final class StudentTarget {
      *
      * @throws CommandException if the position is past the end of the displayed list.
      */
-    private Student resolveIndex(List<Student> displayedStudents) throws CommandException {
+    private Student resolveIndex(Model model, String idCommandWord) throws CommandException {
+        List<Student> displayedStudents = model.getFilteredStudentList();
         if (index.getZeroBased() >= displayedStudents.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+            String message = Messages.getErrorMessageForInvalidIndex(indexInput, displayedStudents.size());
+            boolean isStoredId = idCommandWord != null && model.getStudentBook().getStudentList().stream()
+                    .anyMatch(student -> student.getNusStudentId()
+                            .filter(id -> id.value.equals(indexInput)).isPresent());
+            if (isStoredId) {
+                message += " " + Messages.getIdTargetHint(idCommandWord, indexInput);
+            }
+            throw new CommandException(message);
         }
         return displayedStudents.get(index.getZeroBased());
     }

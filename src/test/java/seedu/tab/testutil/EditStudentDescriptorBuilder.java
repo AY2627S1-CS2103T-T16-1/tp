@@ -39,6 +39,7 @@ public class EditStudentDescriptorBuilder {
         copyOptionalField(student.getEmail(), descriptor::setEmail, descriptor::clearEmail);
         copyOptionalField(student.getNusStudentId(), descriptor::setNusStudentId, descriptor::clearNusStudentId);
         descriptor.setTags(student.getTags());
+        descriptor.setFlagged(student.isFlagged());
     }
 
     /**

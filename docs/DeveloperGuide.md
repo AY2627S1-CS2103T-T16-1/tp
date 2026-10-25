@@ -113,6 +113,14 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
+`AddCommand` includes the new student in its `CommandResult`.
+`MainWindow` asks `StudentListPanel` to reveal that card only after `Logic.execute`
+returns successfully, so failed saves cannot scroll to an unsaved student.
+Scrolling leaves focus in the command box and uses the displayed list after
+the existing search-preservation rules have been applied. It locates the exact
+saved student object so an earlier record with identical details is not revealed
+instead, and skips a target that has left the displayed list before layout.
+
 The student card's `TagRow` creates a label for every tag, with its full text.
 Layout shows as many complete chips as fit and lists all hidden tags in the
 overflow chip's tooltip. There is no fixed chip count or label length cap.
@@ -158,6 +166,10 @@ preserving valid secondary-screen positions, including negative coordinates.
 With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
 nonpositive or nonfinite dimensions use the default size. The window minimum
 also yields to a smaller usable area so it cannot defeat the size correction.
+The normal minimum height is 400 logical pixels, leaving room for window
+decorations and desktop panels within the 480 logical pixels available at
+1280×720 with 150% scaling. The student list and help text scroll within the
+remaining space, keeping the summary total, help footer and status bar visible.
 A window spanning adjacent displays is fitted entirely onto the selected screen,
 even when it was visible across both. This keeps restoration predictable when
 displays have different usable heights or gaps between them.
@@ -168,7 +180,10 @@ displays have different usable heights or gaps between them.
 tags, but yields part of that allowance for a complete tag count. The name
 retains space for a character from each end. When no tag chip fits, `TagRow`
 uses the shorter `N tags` total instead of `N more…`, preserving a complete
-count beside the name. Its tooltip still lists every hidden tag.
+count beside the name. Its tooltip still lists every hidden tag. A partial
+chip requires room for four characters and an ellipsis, measured in its
+styled font with padding, so a two-letter fragment gives way to the total.
+A shorter tag can still appear in full.
 `TagRow.fittedWidth` reports the space its chosen chips or count actually use,
 so `CardHeadline` returns any unused allocation to the name before laying it
 out. The name requests its full natural width.
@@ -284,8 +299,10 @@ trade-off is deliberate and worth revisiting if the palette changes.
 
 #### Recalling session commands
 
-`CommandBox` records each submitted line in `CommandHistory` before execution,
-so rejected input can be recalled too. The helper stores submissions separately
+`CommandBox` records each submitted command in `CommandHistory` before execution,
+so rejected commands can be recalled too. While clear confirmation is pending,
+replies are excluded because they cannot be reused as standalone commands; the
+navigation position resets without recording the reply. The helper stores submissions separately
 from the draft captured when Up first leaves the newest position. Down past
 the newest submission restores that draft. Up skips the newest submission when
 it already matches the text in the box and an earlier entry exists. Blank
@@ -659,6 +676,14 @@ number as both an invalid index and an unknown option. A value following a valid
 index is reported separately by `parseRequiredIndex`. Tag syntax failures and
 a missing action option include guidance for both addition and removal.
 
+`ParserUtil.parseIndex` distinguishes malformed/non-positive input from a positive
+integer exceeding the supported index range. `StudentTarget` reports out-of-range
+positions with their original input spelling and the current displayed count,
+including zero. Retaining that spelling also lets delete suggest an exact `--id`
+command for a stored numeric ID without dropping leading zeroes. An in-range
+number remains an index even when another record holds the same numeric ID.
+The original spelling affects diagnostics only, not target equality or hashing.
+
 `TagCommand` stores a `StudentTarget`, as edit and delete do. It resolves an
 index against the displayed list and an ID across the entire book, so a
 roster ID remains usable while a search hides the student. It compares the
@@ -935,6 +960,11 @@ For a non-match, the command clears the filter and appends
 visible and the User knows to re-read indexes. A rejected addition leaves
 both the book and filter unchanged.
 
+`EditCommand` first compares the prospective record with the selected record using
+full equality. An unchanged edit returns an explicit no-change response before
+checking duplicates or replacing the student, preserving the filter and avoiding
+unnecessary list notifications. `LogicManager` continues to skip saving an unchanged book.
+
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
 ignore case; names already carry `normalizeFieldValue`'s whitespace
@@ -949,7 +979,9 @@ ordinary success message with a blank line. Matches are grouped by field into
 one prominently labelled `WARNING: Possible duplicate student` line. A line
 names at most two students and summarizes further matches as `N others`, so a
 shared placeholder does not fill the result box. The review advice appears
-once after every matching field.
+once after every matching field. Phone warnings omit the parenthetical value:
+matched records can store different formatting for the same digits, so no single
+formatted value represents all named students.
 
 `EditCommand` compares only name, phone, or email values that differ from the
 selected record. It excludes the selected `Student` instance but still uses
@@ -987,7 +1019,8 @@ The parser leaves the email untouched when `-e` is absent, calls `clearEmail`
 for a token that is empty after trimming, and sets a replacement only after
 validation succeeds. A rejected value is recorded as a parse problem without
 assigning a null email or requesting a clear. A bare option is still an error.
-Clearing counts as an edit even when the email is already absent. `EditCommand`
+A clear satisfies the parser's requirement for a provided field even when the email
+is already absent; execution then reports no changes if no other value changes. `EditCommand`
 passes the optional value directly into the `Student` constructor, including
 an empty optional when clearing. The saved record omits the `email` key and
 reloads through the existing optional-email storage contract.
@@ -1084,6 +1117,9 @@ mapped to its ASCII equivalent by numeric value. This lets
 `91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
 so copying a grouped number does not require manual reformatting. A query with
 a country code still requires those digits to occur in the stored phone.
+The allowed-character check uses a possessive quantifier to scan long phone terms
+without backtracking. Digit normalization separately checks that at least one digit
+remains, so punctuation-only terms cannot match every phone.
 The digit fallback requires at least one digit; annotations such as `"ext 21"`
 and punctuation-only terms retain literal matching. Unicode whitespace follows
 the same rule as field normalization. Normalizing both the phone digits and the
@@ -1345,7 +1381,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | view a student's remarks | recall important context such as special needs |
 | `*` | teaching assistant | add a remark to a student's record | note down requests or needs I should remember |
 | `*` | teaching assistant | redo an action I undid | restore a change I reverted by accident |
-| `*` | teaching assistant | be warned when a new student matches an existing record on phone, email or NUS Student ID | catch genuine duplicates even when the two names are spelled differently |
+| `*` | teaching assistant | be warned when a new student matches an existing record on name, phone or email | catch genuine duplicates even when the two names are spelled differently |
 | `*` | teaching assistant | merge two duplicate student records after seeing how they differ | combine the information from both without losing either |
 | `*` | teaching assistant | find students who have no tag | spot students not yet assigned to a group |
 | `*` | teaching assistant | sort my list by a detail I choose, such as name, NUS Student ID, or when the student was added | read the list in the order that suits the task in front of me |
@@ -1425,7 +1461,7 @@ These were raised during requirement gathering and left out of the product.
 * 1b. At least one detail is not in an acceptable form.
 
     * 1b1. TAB names every detail it rejected and the reason.
-    * 1b2. TAB leaves the original input in the command box.
+    * 1b2. TAB retains the submitted input for correction.
     * 1b3. User corrects the details and submits again.
 
       Steps 1b1-1b3 are repeated until every detail is acceptable.
@@ -1467,7 +1503,7 @@ These were raised during requirement gathering and left out of the product.
 * 1a. The search terms are not in an acceptable form.
 
     * 1a1. TAB reports the error.
-    * 1a2. TAB leaves the original input in the command box.
+    * 1a2. TAB retains the submitted input for correction.
     * 1a3. User corrects the search terms and submits again.
 
       Steps 1a1-1a3 are repeated until the search terms are acceptable.
@@ -1850,6 +1886,9 @@ These were raised during requirement gathering and left out of the product.
     components at screen resolutions of 1920×1080 and higher with display scaling at 100% and 125%, and
     remain functional and usable down to 1280×720 with display scaling up to 150%. This satisfies
     `Constraint-Screen-Resolution`.
+10. **Data locality and offline operation**: TAB must store all student data only in local files,
+    must not transmit student data to any network service, and must support all student management
+    operations without a network connection.
 
 ### Glossary
 
@@ -1949,6 +1988,17 @@ testers are expected to do more *exploratory* testing.
       absolute path to the original `data/tab.json`, and no data, preference,
       or log file is created in the terminal's working folder.
 
+1. Reading a long data path
+
+   1. Put the JAR in a folder with a long absolute path and launch it.
+      Narrow the window until the status bar path no longer fits.<br>
+      Expected: The path is shortened in the middle, keeping `tab.json`
+      visible. Hovering over the path shows the full absolute path.
+
+   1. Widen the window until the full path fits.<br>
+      Expected: The path is shown unchanged and has no tooltip. Narrowing
+      the window again restores the tooltip.
+
 1. Launching from a read-only folder
 
    1. Prerequisites: Copy the JAR into a new folder that the current user can
@@ -2023,6 +2073,18 @@ testers are expected to do more *exploratory* testing.
       Expected: Each reports `help takes no arguments. Unexpected input: ...`
       with the offending input quoted. No help page opens and student data stays
       unchanged. `help` with trailing spaces or tabs opens the pager normally.
+
+1. Using a compact window
+
+   1. Set the display to 1280×720 with 150% scaling. Launch TAB and resize
+      its bottom edge to fit above the taskbar.<br>
+      Expected: The entire window fits, including the command box, summary
+      total and data-file status bar.
+
+   1. With at least ten students listed, focus the list and press End.<br>
+      Expected: The last student's card is readable. Press F1 and then G:<br>
+      Expected: The help notice, `(END)` and both navigation hint lines remain
+      visible. Press Esc to return to the command box.
 
 1. Saving window preferences
 
@@ -2405,6 +2467,29 @@ testers are expected to do more *exploratory* testing.
       The status message shows `New student added: John Doe; Phone: 98765432`
       without placeholder labels for absent email or tags.
 
+1. Revealing a newly saved student in an overflowing list
+
+   1. Prerequisites: Use a book with at least 30 students so the list scrolls.
+      Scroll to the top and return focus to the command box.
+   1. Test case: `add Newly Added Student -p 91234567`.<br>
+      Expected: The new card is visible without manual scrolling. Type the next
+      command immediately; input remains in the command box.
+   1. Repeat with a search that matches many students, first adding a matching
+      student and then one that does not match.<br>
+      Expected: Each new card is revealed. The matching search stays active;
+      the non-matching addition clears it and reports that it did so.
+   1. Add a student with the same details as an earlier record without a NUS
+      Student ID.<br>
+      Expected: The newly appended card is revealed, rather than the earlier
+      matching record. The possible-duplicate warning is still shown.
+   1. Return to the top and try `add Missing Phone`, then an addition with a
+      duplicate NUS Student ID.<br>
+      Expected: No student is added and the list does not jump to the end.
+   1. Make the data path unwritable, attempt a valid addition, then restore
+      write access.<br>
+      Expected: The save error is shown, the student and active search are
+      restored, and the list does not reveal the unsaved student.
+
 1. Adding a student with tags and follow-up
 
    1. Test case: `add Jane Doe -p 91234567 -t urgent -t lab1 --follow-up`<br>
@@ -2565,6 +2650,16 @@ testers are expected to do more *exploratory* testing.
       Expected: Chips that fit appear in full; hidden tags are counted and
       listed on hover. A lone chip too wide for its allocation is shortened
       and shows its complete tag on hover. Widening restores complete tags.
+
+1. Reading tags beside a long name and follow-up marker
+
+   1. Add `add Siti Nur-Aisyah Binte Abdullah Rahman -p 91234567 -f`
+      `-t consultation-week-3 -t "Lab 3" -t "Tutorial Group 11"` as one command.
+   1. Resize the window through about 740 px, then narrow and widen it.<br>
+      Expected: The row shows a readable tag prefix and `2 more…`, or `3 tags`
+      when there is too little room for that prefix. It never shows only one
+      or two letters of the first tag. Hovering over the count lists hidden
+      tags; widening restores chips. The follow-up marker remains visible.
 
 ### Reading a clipped email address
 
@@ -2735,6 +2830,18 @@ testers are expected to do more *exploratory* testing.
       remains byte-for-byte unchanged. Restore the backup with TAB closed,
       then relaunch and check that the backed-up records load.
 
+1. Reporting unchanged edits
+
+   1. Prerequisites: Start from an empty book; run `add Amy Bee -p 91234567`,
+      then `find -n Amy`.
+   1. Test cases: `edit 1 -p 91234567`, `edit 1 -e ""`, `edit 1 -i ""`,
+      `edit 1 -t ""`, and `edit 1 -nf`.<br>
+      Expected: Each replies `Student already has the requested details. No changes made.`
+      The student, active search, displayed list and saved file remain unchanged.
+   1. Test case: `edit 1 -n "Amy Bee" -p 82223333`.<br>
+      Expected: `Edited student: Amy Bee; Phone: 82223333`. The new phone is saved,
+      Amy remains visible, and repeating the command reports no changes.
+
 1. Checking duplicate identity behavior
 
    1. Prerequisites: Start from an empty book.
@@ -2777,6 +2884,8 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add Bernice Yu -p "+65 (9123)-4567" -e bernice@example.com`<br>
       Expected: Bernice is saved. The result names Alex Yeoh and the matching
       `phone`, because the complete digit sequences match despite punctuation.
+      The warning says `Alex Yeoh has the same phone.` without a parenthetical
+      number; neither stored formatting is attributed to the other record.
       Exit and restart TAB; both phone numbers retain their entered formatting.
 
    1. Test case: `add Charlie Tan -p ６５９１２３４５６７`<br>
@@ -3079,7 +3188,10 @@ testers are expected to do more *exploratory* testing.
       empty reply. Press Up.<br>
       Expected: Clear is cancelled without changing any students. Up recalls
       `clear` immediately, without a blank entry. Repeat with spaces as the reply;
-      the result is the same.
+      the result is the same. Repeat with `n`, `no`, `y`, and `yes` (repopulate the
+      book after confirming); Up still recalls `clear`. Submit `list` during a
+      pending confirmation: TAB retains the invalid reply and keeps waiting.
+      Up recalls `clear`, and Down restores the retained `list` draft.
    1. Close and reopen TAB, type `draft`, and press Up.<br>
       Expected: `draft` stays unchanged; history does not survive a restart.
 
@@ -3285,6 +3397,25 @@ testers are expected to do more *exploratory* testing.
    close every TAB window before moving or renaming it. Records, the saved JSON,
    the active search and the folder contents remain unchanged.
 
+### Diagnosing student-target mistakes
+
+1. Start from an empty book and add `add Amy Bee -p 91234567 --id 001234` and
+   `add Other Student -p 82223333`. Run `find -n Amy`, then try `delete 3`,
+   `edit 3 -p 81112222`, and `tag 3 -a T1`.<br>
+   Expected: Each quotes index `3`, reports one displayed student, and suggests
+   `list`. No record, active filter or saved data changes. Repeat after
+   `find -n Missing`; the message reports zero displayed students.
+1. Try `edit 6591234567 -p 81112222`, `tag 6591234567 -a T1`, and
+   `delete 6591234567`.<br>
+   Expected: Each explains the upper index bound rather than calling the positive
+   integer non-positive. Delete also shows the explicit ID form. Nothing changes.
+1. With Amy hidden, try `delete 001234`.<br>
+   Expected: The error retains the leading zeroes and suggests `delete --id 001234`.
+   That explicit command deletes Amy even while the filter hides her.
+1. Open help and find the delete section.<br>
+   Expected: It lists index, plain NUS Student ID and explicit `--id` forms.
+   `delete 1ABC` shows usage including `delete --id 1ABC` as a recovery example.
+
 ### Locating students by digits in formatted phone numbers
 
 1. Full numbers, partial numbers, and unchanged saved formatting
@@ -3312,6 +3443,12 @@ testers are expected to do more *exploratory* testing.
    1. Test cases: `find -p 91234568` and `find -p 9123-4568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
+
+1. Long nonmatching phone terms
+
+   1. Test case: Paste `find -p ` followed by 50,000 digits and a final `!`.<br>
+      Expected: TAB promptly reports `Found 0 students.` and remains responsive.
+      Run `list` to restore all students; their details and saved data are unchanged.
 
 1. Equivalent Unicode digits and unchanged saved values
 

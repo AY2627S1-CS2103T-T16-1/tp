@@ -15,9 +15,9 @@ import seedu.tab.model.student.Student;
 /** Formats non-blocking warnings about student records with matching details. */
 final class LikelyDuplicateWarning {
     static final String MESSAGE_WARNING_SINGULAR =
-            "WARNING: Possible duplicate student: %1$s has the same %2$s (%3$s).";
+            "WARNING: Possible duplicate student: %1$s has the same %2$s%3$s.";
     static final String MESSAGE_WARNING_PLURAL =
-            "WARNING: Possible duplicate students: %1$s have the same %2$s (%3$s).";
+            "WARNING: Possible duplicate students: %1$s have the same %2$s%3$s.";
     static final String MESSAGE_ADVICE =
             "Review the records and delete duplicates only if they are the same person.";
 
@@ -105,8 +105,10 @@ final class LikelyDuplicateWarning {
             return;
         }
         String message = matchingStudents.size() == 1 ? MESSAGE_WARNING_SINGULAR : MESSAGE_WARNING_PLURAL;
+        // Matching phone digits can have different formatting in every named record.
+        String detail = fieldName.equals(Phone.FIELD_NAME) ? "" : " (" + value + ")";
         warnings.add(String.format(message, formatStudentNames(matchingStudents),
-                fieldName.toLowerCase(Locale.ROOT), value));
+                fieldName.toLowerCase(Locale.ROOT), detail));
     }
 
     private static String formatStudentNames(List<Student> matchingStudents) {
