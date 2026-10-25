@@ -2,6 +2,7 @@ package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Locale;
 import java.util.logging.Logger;
 
 import seedu.tab.commons.core.LogsCenter;
@@ -31,7 +32,8 @@ public class ClearCommand extends Command {
         requireNonNull(model);
         int studentCount = model.getStudentBook().getStudentList().size();
         return new CommandResult(studentCount == 0 ? MESSAGE_EMPTY
-                : String.format(MESSAGE_CONFIRMATION, studentCount, StringUtil.getPluralSuffix(studentCount)));
+                : String.format(Locale.ROOT, MESSAGE_CONFIRMATION, studentCount,
+                        StringUtil.getPluralSuffix(studentCount)));
     }
 
     /**

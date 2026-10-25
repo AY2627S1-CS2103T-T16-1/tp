@@ -2,6 +2,7 @@ package seedu.tab.storage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -69,7 +70,7 @@ class JsonSerializableStudentBook {
         for (int index = 0; index < students.size(); index++) {
             JsonAdaptedStudent jsonAdaptedStudent = students.get(index);
             if (jsonAdaptedStudent == null) {
-                throw new IllegalValueException(String.format("Student record %d is missing.", index + 1));
+                throw new IllegalValueException(String.format(Locale.ROOT, "Student record %d is missing.", index + 1));
             }
             String recordDescription = getRecordDescription(index, jsonAdaptedStudent);
             Student student;
@@ -82,7 +83,7 @@ class JsonSerializableStudentBook {
             if (duplicateIndex >= 0) {
                 Student duplicateStudent = studentBook.getStudentList().get(duplicateIndex);
                 throw new IllegalValueException(recordDescription + ": "
-                        + String.format(MESSAGE_DUPLICATE_STUDENT, student.getNusStudentId().orElseThrow(),
+                        + String.format(Locale.ROOT, MESSAGE_DUPLICATE_STUDENT, student.getNusStudentId().orElseThrow(),
                                 duplicateIndex + 1, duplicateStudent.getName()));
             }
             studentBook.addStudent(student);
@@ -93,9 +94,9 @@ class JsonSerializableStudentBook {
     private static String getRecordDescription(int index, JsonAdaptedStudent student) {
         String name = student.getNameForErrorMessage();
         if (name == null) {
-            return String.format("Student record %d", index + 1);
+            return String.format(Locale.ROOT, "Student record %d", index + 1);
         }
-        return String.format("Student record %d (\"%s\")", index + 1, name);
+        return String.format(Locale.ROOT, "Student record %d (\"%s\")", index + 1, name);
     }
 
     private static int findDuplicateIndex(StudentBook studentBook, Student student) {

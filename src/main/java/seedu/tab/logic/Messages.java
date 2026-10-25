@@ -28,6 +28,7 @@ public class Messages {
             "There is no student at index \"%1$s\" in the displayed list (%2$d student%3$s). "
                     + "Use list to show all students.";
     public static final String MESSAGE_NO_STUDENT_WITH_NUS_ID = "No student has NUS Student ID %1$s.";
+    // Keep this template free of numeric conversions: callers format it without an explicit locale.
     public static final String MESSAGE_DUPLICATE_STUDENT =
             "Another student already has NUS Student ID %1$s (%2$s).";
     public static final String MESSAGE_STUDENTS_FOUND_OVERVIEW = "Found %1$d student%2$s.";
@@ -139,7 +140,7 @@ public class Messages {
      * @return The formatted summary message.
      */
     public static String getStudentsFoundOverview(int count) {
-        return String.format(MESSAGE_STUDENTS_FOUND_OVERVIEW, count, StringUtil.getPluralSuffix(count));
+        return String.format(Locale.ROOT, MESSAGE_STUDENTS_FOUND_OVERVIEW, count, StringUtil.getPluralSuffix(count));
     }
 
     /**
