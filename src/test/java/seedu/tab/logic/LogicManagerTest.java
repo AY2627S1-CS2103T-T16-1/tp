@@ -73,26 +73,28 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_caseVariantCommandTags_keepsFirstSpellingAndPreservesLegacyRecords() throws Exception {
+    public void execute_caseVariantCommandTags_keepsFirstSpellingAfterLoadingLegacyRecords() throws Exception {
         Student legacy = new StudentBuilder().withName("Legacy Student").withPhone("82223333")
                 .withoutEmail().withTags("Lab", "LAB").build();
         model.addStudent(legacy);
         JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
         storage.saveStudentBook(model.getStudentBook());
+        model.setStudentBook(storage.readStudentBook().orElseThrow());
+        Student normalizedLegacy = model.getStudentBook().getStudentList().get(0);
         assertEquals("New student added: Casey Low; Phone: 91234567; Tags: [Lab][Σ]",
                 logic.execute("add Casey Low -p 91234567 -t Lab -t lab -t LAB -t Σ -t ς").getFeedbackToUser());
         assertEquals("Edited student: Casey Low; Phone: 91234567; Tags: [lab][ς]",
                 logic.execute("edit 2 -t lab -t LAB -t ς -t Σ").getFeedbackToUser());
         Student expected = new StudentBuilder().withName("Casey Low").withPhone("91234567")
                 .withoutEmail().withTags("lab", "ς").build();
-        assertEquals(List.of(legacy, expected), storage.readStudentBook().orElseThrow().getStudentList());
+        assertEquals(List.of(normalizedLegacy, expected), storage.readStudentBook().orElseThrow().getStudentList());
         String savedJson = Files.readString(storage.getStudentBookFilePath());
         assertThrows(CommandException.class, "This student already has tag [lab]. No changes made.", () ->
                 logic.execute("tag 2 -a LAB"));
         assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
         logic.execute("tag 2 -r LAB");
         expected = new StudentBuilder(expected).withTags("ς").build();
-        assertEquals(List.of(legacy, expected), storage.readStudentBook().orElseThrow().getStudentList());
+        assertEquals(List.of(normalizedLegacy, expected), storage.readStudentBook().orElseThrow().getStudentList());
     }
 
     @Test
@@ -250,6 +252,24 @@ public class LogicManagerTest {
         assertEquals(2, model.getStudentBook().getStudentList().size());
         assertEquals(model.getStudentBook().getStudentList(),
                 new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_hiddenControls_normalizesWarningsSearchAndSavedFields() throws Exception {
+        logic.execute("add Amy -p 123");
+        String control = Character.toString(1);
+        assertEquals("New student added: Amy; Phone: 789; Tags: [Lab]\n\n"
+                + "WARNING: Possible duplicate student: Amy has the same name (Amy).\n"
+                + "Review the records and delete duplicates only if they are the same person.",
+                logic.execute("ad" + control + "d Am" + control + "y -p 789 -t La" + control
+                        + "b -t Lab").getFeedbackToUser());
+        assertEquals(Messages.getStudentsFoundOverview(2), logic.execute("find -n Amy").getFeedbackToUser());
+        assertEquals(Messages.getStudentsFoundOverview(2),
+                logic.execute("find -n Am" + control + "y").getFeedbackToUser());
+        assertEquals(Messages.getStudentsFoundOverview(1), logic.execute("find -t Lab").getFeedbackToUser());
+        Path path = temporaryFolder.resolve("studentBook.json");
+        assertEquals(model.getStudentBook(), new JsonStudentBookStorage(path).readStudentBook().orElseThrow());
+        assertFalse(Files.readString(path).contains("\\u0001"));
     }
 
     @Test
