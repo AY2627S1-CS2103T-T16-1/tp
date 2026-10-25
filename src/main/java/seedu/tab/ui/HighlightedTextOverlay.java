@@ -147,7 +147,7 @@ public class HighlightedTextOverlay {
         double middle = lane.getHeight() / 2;
         showSelection(drawnFrom, middle);
         highlighted.relocate(drawnFrom, middle - highlighted.getHeight() / 2);
-        caret.relocate(inTheLine(drawnFrom + caretAt - caret.getWidth() / 2),
+        caret.relocate(clampToLine(drawnFrom + caretAt - caret.getWidth() / 2),
                 middle - caret.getHeight() / 2);
         caret.setVisible(field.isFocused());
     }
@@ -188,7 +188,7 @@ public class HighlightedTextOverlay {
      * command differs between JavaFX releases, so a caret there lands outside the line on
      * one of them and is never seen.
      */
-    private double inTheLine(double left) {
+    private double clampToLine(double left) {
         return Math.clamp(left, 0, Math.max(0, lane.getWidth() - caret.getWidth()));
     }
 
