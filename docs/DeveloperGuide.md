@@ -2514,18 +2514,19 @@ testers are expected to do more *exploratory* testing.
 1. Removing variants from a human-edited data file
 
    1. Prerequisites: Exit TAB. Back up the data file, then set Tag Test's
-      `tags` array to `["Lab 3", "  lab   3  ", "T1", "Needs follow-up"]`.
-      Keep `"flag": true` and restart TAB. Run `find -n "Tag Test"`.
+      `tags` array to `["Lab 3", "  lab   3  ", "T1"]`. Keep `"flag": true`
+      and restart TAB. Run `find -n "Tag Test"`.
 
    1. Test case: `tag 1 -r "LAB 3"`.<br>
-      Expected: The variants load as one `Lab 3` tag, which is removed.
-      `T1`, `Needs follow-up`, the
-      follow-up flag and all other fields remain after restart.
+      Expected: The variants load as one `Lab 3` tag, which is removed. `T1`,
+      the follow-up flag and all other fields remain after restart.
 
    1. Test case: Run `find -n "Tag Test"` again after restarting and confirm only
       that student is shown, then run `tag 1 -r "needs follow-up"`.<br>
-      Expected: Only the general tag disappears. `T1` and the follow-up flag
-      remain. Restore the backup when finished.
+      Expected: TAB reports that the student carries no such tag and adds that
+      the label beside the name is the follow-up flag rather than a tag,
+      pointing at `edit INDEX --no-follow-up`. `T1` and the flag remain.
+      Restore the backup when finished.
 
 ### Adding a student
 

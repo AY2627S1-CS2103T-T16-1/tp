@@ -729,9 +729,11 @@ Format: `tag TARGET -r TAG`
 * An invalid target or tag, an empty quoted tag, or a missing value is refused
   with a specific error and leaves records and the saved file unchanged.
 * Removing the last tag leaves a student with no general tags. A general tag
-  named `Needs follow-up` can no longer be added, though an older or
-  hand-edited data file may still hold one; removing it leaves the follow-up
-  flag unchanged, and `edit INDEX --no-follow-up` clears that flag.
+  named `Needs follow-up` can no longer be added, and a data file holding one
+  no longer loads: TAB names the record at startup and asks you to take the
+  entry out of `tags` and set `"flag": true` instead. Correct the file while
+  TAB is closed, as described in [Editing the data file](#editing-the-data-file).
+  The flag itself is cleared with `edit INDEX --no-follow-up`.
 * The current search stays active. If it matched only the removed tag, the
   student may disappear from the displayed list; use `list` to see them again.
 * A successful removal is saved at once and remains after restarting TAB.
