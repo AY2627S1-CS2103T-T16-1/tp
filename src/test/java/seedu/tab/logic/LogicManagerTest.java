@@ -253,6 +253,24 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_hiddenControls_normalizesWarningsSearchAndSavedFields() throws Exception {
+        logic.execute("add Amy -p 123");
+        String control = Character.toString(1);
+        assertEquals("New student added: Amy; Phone: 789; Tags: [Lab]\n\n"
+                + "WARNING: Possible duplicate student: Amy has the same name (Amy).\n"
+                + "Review the records and delete duplicates only if they are the same person.",
+                logic.execute("ad" + control + "d Am" + control + "y -p 789 -t La" + control
+                        + "b -t Lab").getFeedbackToUser());
+        assertEquals(Messages.getStudentsFoundOverview(2), logic.execute("find -n Amy").getFeedbackToUser());
+        assertEquals(Messages.getStudentsFoundOverview(2),
+                logic.execute("find -n Am" + control + "y").getFeedbackToUser());
+        assertEquals(Messages.getStudentsFoundOverview(1), logic.execute("find -t Lab").getFeedbackToUser());
+        Path path = temporaryFolder.resolve("studentBook.json");
+        assertEquals(model.getStudentBook(), new JsonStudentBookStorage(path).readStudentBook().orElseThrow());
+        assertFalse(Files.readString(path).contains("\\u0001"));
+    }
+
+    @Test
     public void execute_equivalentPhonePunctuation_warnsAndPersistsFormatting() throws Exception {
         logic.execute("add Alice Tan -p 9123-4567");
         String advice = "\nReview the records and delete duplicates only if they are the same person.";

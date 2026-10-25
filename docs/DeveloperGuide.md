@@ -754,8 +754,9 @@ and the JSON file.
 ### Invisible characters on the command line
 
 Before the command word is read, `StudentBookParser` strips the same Unicode
-format characters that `StringUtil.normalizeFieldValue` strips from a stored
-value, through `StringUtil.stripFormatCharacters`. A direction mark or a
+format and non-whitespace control characters that `StringUtil.normalizeFieldValue`
+strips from a stored value, through `StringUtil.stripFormatCharacters`. Whitespace controls such as tabs
+and line breaks remain separators rather than joining adjacent words. A direction mark or a
 zero-width space pasted before a command word or an index is otherwise a word
 that looks right but matches no command, or an index reported as not a positive
 integer. The zero-width joiner and non-joiner are kept, because a script such as
@@ -918,7 +919,8 @@ to the storage adapter, preserving the existing file format.
 
 `Name`, `Tag`, `Phone`, `Email` and `NusStudentId` each store the form returned by
 `StringUtil.normalizeFieldValue`: without invisible format characters such as
-direction marks, with each run of whitespace reduced to one ASCII space
+direction marks and non-whitespace controls, with each run of whitespace reduced
+to one ASCII space
 and leading and trailing whitespace removed, and with the result composed to
 Unicode NFC. Composing happens last, because an invisible character between a
 base letter and its combining mark blocks the two from composing.
@@ -3441,6 +3443,18 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Restart TAB and repeat the name searches.<br>
       Expected: Original spellings survive saving and reloading; normalized
       comparisons still find the students. Run `list` to restore the full list.
+
+### Normalizing hidden control characters in saved names and tags
+
+1. Prerequisites: Close TAB in a disposable data folder and back up the data file.
+1. Set one student's JSON name to `"Am\u0001y"` and tags to `["La\u007fb"]`.
+   Restart TAB.<br>
+   Expected: The card shows `Amy` and `Lab`. `find -n Amy` and `find -t Lab`
+   both find that student. Loading alone leaves the file unchanged.
+1. Run `add Amy -p 789` with a phone different from the saved student's.<br>
+   Expected: The add succeeds with a possible duplicate name warning. The saved
+   name and tag no longer contain the hidden controls. Restarting retains both
+   searchable students. Restore the backup with TAB closed.
 
 ### Keeping one spelling of repeated command tags
 
