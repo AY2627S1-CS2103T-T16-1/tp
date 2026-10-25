@@ -50,13 +50,35 @@ public class UiManagerTest {
     }
 
     @Test
-    public void start_dataLoadingError_showsErrorInsteadOfStartingMainWindow() {
-        UiManagerStub uiManager = new UiManagerStub("Student record 2 has an invalid Phone field.");
+    public void start_dataLoadingError_showsErrorInsteadOfStartingMainWindow() throws Exception {
+        String error = "Student record 2 has an invalid Phone field.";
 
-        uiManager.start(null);
+        StartOutcome outcome = FxToolkit.onFxThread(() -> {
+            Stage stage = new Stage();
+            UiManagerStub uiManager = new UiManagerStub(error);
+            try {
+                uiManager.start(stage);
+                // the main window takes the stage as its own root, so a stage that has been
+                // given neither a scene nor the application icon never reached a main window
+                return new StartOutcome(uiManager.wasDataLoadingErrorShown, uiManager.shownError,
+                        stage.getScene() != null, !stage.getIcons().isEmpty(), isAnyWindowShowing(stage));
+            } finally {
+                stage.hide();
+            }
+        });
 
-        assertTrue(uiManager.wasDataLoadingErrorShown);
-        assertEquals("Student record 2 has an invalid Phone field.", uiManager.shownError);
+        assertTrue(outcome.wasDataLoadingErrorShown);
+        assertEquals(error, outcome.shownError);
+        assertFalse(outcome.wasMainWindowBuilt, "the main window should not have been built");
+        assertFalse(outcome.wasIconSet, "start-up should have stopped before the main window was prepared");
+        assertFalse(outcome.isAnyWindowShowing, "no window of TAB's should have become visible");
+    }
+
+    /** Returns whether {@code stage}, or any stage owned by it, is showing. */
+    private static boolean isAnyWindowShowing(Stage stage) {
+        return Window.getWindows().stream()
+                .anyMatch(window -> window == stage
+                        || (window instanceof Stage owned && owned.getOwner() == stage));
     }
 
     @Test
@@ -281,6 +303,10 @@ public class UiManagerTest {
         assertTrue(details.hasGraphic);
     }
 
+    private record StartOutcome(boolean wasDataLoadingErrorShown, String shownError,
+                                boolean wasMainWindowBuilt, boolean wasIconSet,
+                                boolean isAnyWindowShowing) {}
+
     private record FatalErrorDetails(boolean wasAlertCreated, boolean isOwnedByPrimaryStage,
                                      boolean isAlertOwnerPrimaryStage, boolean wasAlertClosed,
                                      boolean wasShutDown, String headerText) {}
@@ -377,12 +403,17 @@ public class UiManagerTest {
         }
     }
 
+    /**
+     * A {@code UiManager} that records the data loading error it reports instead of putting a
+     * dialog on screen. Its {@code Logic} is one a main window could be built from, so that a
+     * main window the test does not expect would be built rather than fail on the way.
+     */
     private static class UiManagerStub extends UiManager {
         private boolean wasDataLoadingErrorShown;
         private String shownError;
 
         UiManagerStub(String error) {
-            super(null, DATA_FILE_PATH, Optional.of(error));
+            super(new LogicStub(), DATA_FILE_PATH, Optional.of(error));
         }
 
         @Override
