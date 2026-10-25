@@ -39,6 +39,7 @@ import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.ListCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
+import seedu.tab.logic.parser.CommandTokenizer;
 import seedu.tab.logic.parser.FindCommandParser;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.Model;
@@ -70,6 +71,30 @@ public class LogicManagerTest {
         JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"));
         StorageManager storage = new StorageManager(studentBookStorage, userPrefsStorage);
         logic = new LogicManager(model, storage);
+    }
+
+    @Test
+    public void execute_inputMethodQuotes_preservesValuesThroughCommandsAndReload() throws Exception {
+        assertEquals("New student added: Betsy Crowe; Phone: 1234567",
+                logic.execute("add “Betsy Crowe” -p 1234567").getFeedbackToUser());
+        logic.execute("tag 1 -a “组 1”");
+        logic.execute("tag 1 -a ＂Lab 3＂");
+        logic.execute("tag 1 -a “组1”");
+        logic.execute("edit 1 -n “Betsy Crower”");
+        Student expected = new StudentBuilder().withName("Betsy Crower").withPhone("1234567")
+                .withoutEmail().withTags("组 1", "Lab 3", "组1").build();
+        assertEquals(List.of(expected), model.getStudentBook().getStudentList());
+        for (String search : List.of("find -n “Betsy Crower”", "find -t ＂Lab 3＂")) {
+            assertEquals("Found 1 student.", logic.execute(search).getFeedbackToUser());
+            assertEquals(List.of(expected), model.getFilteredStudentList());
+        }
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        String savedJson = Files.readString(storage.getStudentBookFilePath());
+        assertThrows(ParseException.class, CommandTokenizer.MESSAGE_UNCLOSED_QUOTE, () ->
+                logic.execute("edit 1 -n “Unclosed"));
+        assertEquals(List.of(expected), model.getFilteredStudentList());
+        assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
+        assertEquals(List.of(expected), storage.readStudentBook().orElseThrow().getStudentList());
     }
 
     @Test

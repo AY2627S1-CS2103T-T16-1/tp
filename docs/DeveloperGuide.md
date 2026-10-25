@@ -600,7 +600,11 @@ an option is a whole token, so a name is read as a name however it is spelled.
 Parsing runs in two passes, the way a shell does it.
 
 `CommandTokenizer` splits the arguments on whitespace and lets double quotes
-group a value containing whitespace. A token records whether a quote took part in it,
+group a value containing whitespace. Straight, curly and full-width double quotes
+are interchangeable delimiters, including in mixed pairs, to accept input from
+input methods and pasted documents. `CommandTokenizer#isQuote` shares this rule
+with the syntax highlighter; all supported quotes can be escaped to retain them
+literally. A token records whether a quote took part in it,
 because that is the only thing separating the value `-Ahmad` from the option
 `-e`. A backslash escapes a quote or another backslash, so a value may hold
 either; a backslash before anything else stays in the value, so nothing the User
@@ -3579,6 +3583,22 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `find -p 91234568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
+
+### Quoting values with input-method punctuation
+
+1. Curly and full-width double quotes
+
+   1. Prerequisites: In a disposable copy of TAB, clear all students (`clear`, then `yes`).
+   1. Run `add “Betsy Crowe” -p 1234567`, `tag 1 -a “组 1”`,
+      `tag 1 -a ＂Lab 3＂` and `edit 1 -n “Betsy Crower”`.<br>
+      Expected: Each succeeds. The name is `Betsy Crower` and the tags are `组 1`
+      and `Lab 3`, without surrounding quotes. Quoted values appear green while typing.
+   1. Run `find -n “Betsy Crower”` and `find -t ＂Lab 3＂`.<br>
+      Expected: Each finds the student, with `Found 1 student.`.
+   1. Run `edit 1 -n “Unclosed`.<br>
+      Expected: The unclosed-quote error appears and the name stays `Betsy Crower`.
+   1. Restart TAB.<br>
+      Expected: The name and both tags remain unchanged, without surrounding quote marks.
 
 ### Locating students with quoted phrases and error handling
 

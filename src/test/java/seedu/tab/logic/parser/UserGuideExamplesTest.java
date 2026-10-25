@@ -76,6 +76,17 @@ public class UserGuideExamplesTest {
     }
 
     @Test
+    public void userGuide_inputMethodQuotes_parseLikeStraightQuotes() throws Exception {
+        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
+        for (String example : List.of("tag 2 -a “组 1”", "tag 1 -a ＂Lab 3＂")) {
+            assertTrue(guide.contains("`" + example + "`"));
+            String straightQuoted = example.replace('“', '"').replace('”', '"').replace('＂', '"');
+            assertEquals(new StudentBookParser().parseCommand(straightQuoted),
+                    new StudentBookParser().parseCommand(example));
+        }
+    }
+
+    @Test
     public void userGuide_commandWordInAnyCase_isWhatTheParserAccepts() throws Exception {
         String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
         assertTrue(guide.contains("A command word may be typed in any case"));
