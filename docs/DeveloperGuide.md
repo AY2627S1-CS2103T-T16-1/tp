@@ -708,7 +708,9 @@ addition and removal.
 `ParserUtil.parseIndex` distinguishes malformed/non-positive input from a positive
 integer exceeding the supported index range. `StudentTarget` reports out-of-range
 positions with their original input spelling and the current displayed count,
-including zero. Retaining that spelling also lets delete suggest an exact `--id`
+including zero. Invalid non-positive or non-integer edit targets retain the
+concise positive-integer reason from `parseIndex`, alongside any field errors.
+Retaining that spelling also lets delete suggest an exact `--id`
 command for a stored numeric ID without dropping leading zeroes. An in-range
 number remains an index even when another record holds the same numeric ID.
 The original spelling affects diagnostics only, not target equality or hashing.
@@ -3085,8 +3087,9 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Run `list` and note the list size.
 
    1. Test case: `edit 0 -p 12`<br>
-      Expected: No change. One message names both the index and the phone
-      number, rather than only the first fault found.
+      Expected: No change. The reply starts `Index must be a positive integer.`
+      and also reports the invalid phone, without the full edit usage block.
+      `edit 1.5 -p 91234567` reports only the positive-integer reason.
 
    1. Test cases: `edit` and `edit INDEX`<br>
       Expected: No change. The first names the missing index and says a field
