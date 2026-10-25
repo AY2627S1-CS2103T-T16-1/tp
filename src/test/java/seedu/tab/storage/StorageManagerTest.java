@@ -2,7 +2,6 @@ package seedu.tab.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import java.nio.file.Path;
@@ -54,7 +53,8 @@ public class StorageManagerTest {
         /*
          * Note: This is an integration test that verifies the StorageManager is properly wired to the
          * {@link JsonStudentBookStorage} class.
-         * More extensive testing of UserPref saving/reading is done in {@link JsonStudentBookStorageTest} class.
+         * More extensive testing of student book saving/reading is done in
+         * {@link JsonStudentBookStorageTest} class.
          */
         StudentBook original = getTypicalStudentBook();
         storageManager.saveStudentBook(original);
@@ -64,12 +64,12 @@ public class StorageManagerTest {
 
     @Test
     public void getStudentBookFilePath() {
-        assertNotNull(storageManager.getStudentBookFilePath());
+        assertEquals(getTempFilePath("ab"), storageManager.getStudentBookFilePath());
     }
 
     @Test
     public void getUserPrefsFilePath() {
-        assertNotNull(storageManager.getUserPrefsFilePath());
+        assertEquals(getTempFilePath("prefs"), storageManager.getUserPrefsFilePath());
     }
 
     @Test

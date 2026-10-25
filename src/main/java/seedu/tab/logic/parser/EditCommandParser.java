@@ -11,16 +11,14 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import seedu.tab.commons.util.StringUtil;
-import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.exceptions.ParseException;
-import seedu.tab.model.student.Email;
-import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -54,9 +52,7 @@ public class EditCommandParser implements Parser<EditCommand> {
                 FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
         arguments.verifyNoDuplicateFlagsFor(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
                 FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
-        if (arguments.getValue(FLAG_FOLLOW_UP).isPresent() && arguments.getValue(FLAG_NO_FOLLOW_UP).isPresent()) {
-            throw new ParseException(Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
-        }
+        Optional<Boolean> followUp = ParserUtil.parseFollowUpSelector(arguments);
 
         ParseProblems problems = new ParseProblems();
 
@@ -66,7 +62,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         if (!hasAnyField(arguments)) {
             problems.add(EditCommand.MESSAGE_NOT_EDITED);
         }
-        EditStudentDescriptor descriptor = describeEdit(problems, arguments);
+        EditStudentDescriptor descriptor = describeEdit(problems, arguments, followUp);
 
         problems.throwIfAny();
 
@@ -87,52 +83,34 @@ public class EditCommandParser implements Parser<EditCommand> {
     /**
      * Returns the fields the command asks to change, recording why for each value rejected.
      */
-    private static EditStudentDescriptor describeEdit(ParseProblems problems, FlagArgumentMap arguments) {
+    private static EditStudentDescriptor describeEdit(ParseProblems problems, FlagArgumentMap arguments,
+            Optional<Boolean> followUp) {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
 
         descriptor.setName(problems.collectIfPresent(arguments.getValue(FLAG_NAME), ParserUtil::parseName));
         descriptor.setPhone(problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone));
-        arguments.getValue(FLAG_EMAIL).ifPresent(value -> parseEmailForEdit(problems, value, descriptor));
+        arguments.getValue(FLAG_EMAIL).ifPresent(value -> parseClearableField(problems, value,
+                ParserUtil::parseEmail, descriptor::clearEmail, descriptor::setEmail));
         arguments.getValue(FLAG_NUS_STUDENT_ID)
-                .ifPresent(value -> parseNusStudentIdForEdit(problems, value, descriptor));
+                .ifPresent(value -> parseClearableField(problems, value, ParserUtil::parseNusStudentId,
+                        descriptor::clearNusStudentId, descriptor::setNusStudentId));
         parseTagsForEdit(problems, arguments.getAllValues(FLAG_TAG)).ifPresent(descriptor::setTags);
-        if (arguments.getValue(FLAG_FOLLOW_UP).isPresent()) {
-            descriptor.setFlagged(true);
-        } else if (arguments.getValue(FLAG_NO_FOLLOW_UP).isPresent()) {
-            descriptor.setFlagged(false);
-        }
+        followUp.ifPresent(descriptor::setFlagged);
 
         return descriptor;
     }
 
-    /**
-     * Describes an explicit email clear or a validated replacement, recording why a value is rejected.
-     */
-    private static void parseEmailForEdit(ParseProblems problems, String value, EditStudentDescriptor descriptor) {
+    /** Describes an explicit clear or a validated replacement, collecting any rejected value. */
+    private static <T> void parseClearableField(ParseProblems problems, String value,
+            ParseProblems.ValueParser<T> parser, Runnable clear, Consumer<T> set) {
         String trimmedValue = value.trim();
         if (trimmedValue.isEmpty()) {
-            descriptor.clearEmail();
+            clear.run();
             return;
         }
-        Email email = problems.collect(() -> ParserUtil.parseEmail(trimmedValue));
-        if (email != null) {
-            descriptor.setEmail(email);
-        }
-    }
-
-    /**
-     * Describes an explicit NUS Student ID clear or a validated replacement, recording why a value is rejected.
-     */
-    private static void parseNusStudentIdForEdit(ParseProblems problems, String value,
-            EditStudentDescriptor descriptor) {
-        String trimmedValue = value.trim();
-        if (trimmedValue.isEmpty()) {
-            descriptor.clearNusStudentId();
-            return;
-        }
-        NusStudentId nusStudentId = problems.collect(() -> ParserUtil.parseNusStudentId(trimmedValue));
-        if (nusStudentId != null) {
-            descriptor.setNusStudentId(nusStudentId);
+        T parsedValue = problems.collect(() -> parser.parse(trimmedValue));
+        if (parsedValue != null) {
+            set.accept(parsedValue);
         }
     }
 
@@ -153,7 +131,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         if (nonBlankTags.size() != normalizedTags.size()) {
             problems.add(MESSAGE_BLANK_TAG_WITH_OTHER_TAGS);
         }
-        return Optional.of(problems.collectEach(nonBlankTags, ParserUtil::parseTag));
+        return Optional.of(ParserUtil.parseTags(nonBlankTags, problems));
     }
 
 }

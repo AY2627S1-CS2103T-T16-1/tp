@@ -3,6 +3,8 @@ package seedu.tab.model.student;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.AppUtil.checkArgument;
 
+import seedu.tab.commons.util.StringUtil;
+
 /**
  * Represents a Student's email in the student book.
  * Guarantees: immutable; is valid as declared in {@link #isValidEmail(String)}
@@ -23,13 +25,13 @@ public class Email {
      */
     public static final int MAX_LENGTH = 254;
 
-    private static final String SPECIAL_CHARACTERS = "+_.-";
+    private static final String SPECIAL_CHARACTERS = "!#$%&'*+/=?^_`{|}~-";
 
     public static final String MESSAGE_CONSTRAINTS = "Emails should be of the format local-part@domain "
             + "and adhere to the following constraints:\n"
             + "1. The local-part should only contain alphanumeric characters and these special characters, excluding "
-            + "the parentheses, (" + SPECIAL_CHARACTERS + "). The local-part may not start or end with any special "
-            + "characters.\n"
+            + "the parentheses, (" + SPECIAL_CHARACTERS + "), and periods. Periods may not appear at the start "
+            + "or end, or consecutively.\n"
             + "2. The local-part is followed by an '@' and then a domain name. The domain name is made up of domain "
             + "labels separated by periods.\n"
             + "The domain name must:\n"
@@ -38,8 +40,10 @@ public class Email {
             + "    - have each domain label consist of alphanumeric characters, separated only by hyphens, if any.";
     // alphanumeric and special characters
     private static final String ALPHANUMERIC_NO_UNDERSCORE = "[^\\W_]+"; // alphanumeric characters except underscore
-    private static final String LOCAL_PART_REGEX = "^" + ALPHANUMERIC_NO_UNDERSCORE + "([" + SPECIAL_CHARACTERS + "]"
-            + ALPHANUMERIC_NO_UNDERSCORE + ")*";
+    // Implements the dot-atom syntax in RFC 5322 section 3.2.3:
+    // https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3
+    private static final String LOCAL_ATOM_REGEX = "[a-zA-Z0-9" + SPECIAL_CHARACTERS + "]+";
+    private static final String LOCAL_PART_REGEX = "^" + LOCAL_ATOM_REGEX + "(\\." + LOCAL_ATOM_REGEX + ")*";
     private static final String DOMAIN_PART_REGEX = ALPHANUMERIC_NO_UNDERSCORE
             + "(-" + ALPHANUMERIC_NO_UNDERSCORE + ")*";
     private static final int MINIMUM_LAST_LABEL_LENGTH = 2;
@@ -51,14 +55,15 @@ public class Email {
     public final String value;
 
     /**
-     * Constructs an {@code Email}.
+     * Constructs an {@code Email}, storing the form described by
+     * {@link StringUtil#normalizeFieldValue(String)}.
      *
      * @param email A valid email address.
      */
     public Email(String email) {
         requireNonNull(email);
         checkArgument(isValidEmail(email), MESSAGE_CONSTRAINTS);
-        value = email;
+        value = StringUtil.normalizeFieldValue(email);
     }
 
     /**
@@ -69,7 +74,8 @@ public class Email {
      * whole, which exhausts the stack on a long enough address.
      */
     public static boolean isValidEmail(String test) {
-        return test.matches(VALIDATION_REGEX);
+        requireNonNull(test);
+        return StringUtil.normalizeFieldValue(test).matches(VALIDATION_REGEX);
     }
 
     /**
@@ -78,7 +84,7 @@ public class Email {
      */
     public static boolean isWithinLengthLimit(String test) {
         requireNonNull(test);
-        return test.length() <= MAX_LENGTH;
+        return StringUtil.normalizeFieldValue(test).length() <= MAX_LENGTH;
     }
 
     /**
@@ -87,30 +93,31 @@ public class Email {
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);
+        String normalizedTest = StringUtil.normalizeFieldValue(test);
 
         // before anything that matches part of the address, for the reason given on MAX_LENGTH
-        if (test.length() > MAX_LENGTH) {
+        if (normalizedTest.length() > MAX_LENGTH) {
             return "an email may hold at most " + MAX_LENGTH + " characters, and this one holds "
-                    + test.length();
+                    + normalizedTest.length();
         }
 
-        int at = test.indexOf('@');
+        int at = normalizedTest.indexOf('@');
         if (at < 0) {
             return "an email needs an @ between the local part and the domain";
         }
-        if (test.indexOf('@', at + 1) >= 0) {
+        if (normalizedTest.indexOf('@', at + 1) >= 0) {
             return "an email may hold only one @";
         }
 
-        String localPart = test.substring(0, at);
-        String domain = test.substring(at + 1);
+        String localPart = normalizedTest.substring(0, at);
+        String domain = normalizedTest.substring(at + 1);
 
         if (localPart.isEmpty()) {
             return "there is nothing before the @";
         }
         if (!localPart.matches(LOCAL_PART_REGEX)) {
-            return "the part before the @ may hold letters and digits, joined by any of "
-                    + SPECIAL_CHARACTERS;
+            return "the part before the @ may hold letters, digits and " + SPECIAL_CHARACTERS
+                    + ", with dots allowed only between non-empty groups";
         }
         if (domain.isEmpty()) {
             return "there is nothing after the @";

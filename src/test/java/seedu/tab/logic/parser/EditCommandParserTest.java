@@ -59,6 +59,13 @@ public class EditCommandParserTest {
     private EditCommandParser parser = new EditCommandParser();
 
     @Test
+    public void parse_caseVariantTags_keepsFirstSpelling() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withTags("lab", "ς", "T1").build();
+        assertParseSuccess(parser, " 1 -t lab --tag Lab -t LAB -t ς -t Σ -t T1",
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+    }
+
+    @Test
     public void parse_allFieldsSpecified_success() {
         Index targetIndex = INDEX_SECOND_STUDENT;
         String userInput = targetIndex.getOneBased() + PHONE_BOB + TAG_HUSBAND
@@ -313,6 +320,17 @@ public class EditCommandParserTest {
                 new EditCommand(INDEX_FIRST_STUDENT, clearAndPhone));
         assertParseSuccess(parser, "1 -nf" + PHONE_BOB,
                 new EditCommand(INDEX_FIRST_STUDENT, clearAndPhone));
+    }
+
+    @Test
+    public void parse_multipleErrors_keepsShapeErrorsAheadOfFieldErrors() {
+        assertParseFailure(parser, "0 -p invalid -f -nf", Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
+        assertParseFailure(parser, "0 -p invalid -f --follow-up -nf",
+                Messages.getErrorMessageForDuplicateFlags("-f"));
+        assertParseFailure(parser, "0 -p invalid --phone invalid -f -nf",
+                Messages.getErrorMessageForDuplicateFlags("-p"));
+        assertParseFailure(parser, "0 -p invalid --phone invalid -f --follow-up -nf",
+                Messages.getErrorMessageForDuplicateFlags("-p", "-f"));
     }
 
     @Test

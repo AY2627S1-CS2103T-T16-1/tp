@@ -1,7 +1,6 @@
 package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -68,7 +67,7 @@ public class SummaryPanelTest {
         boolean[] state = onFxThread(() -> {
             SummaryPanel panel = new SummaryPanel(students);
             Region root = (Region) panel.getRoot();
-            assertNotNull(styledScene(root, 160, SHORT_WINDOW));
+            styledScene(root, 160, SHORT_WINDOW);
 
             Label total = (Label) root.lookup("#total");
             Bounds inPanel = total.localToScene(total.getBoundsInLocal());
@@ -313,7 +312,7 @@ public class SummaryPanelTest {
         String[] shown = onFxThread(() -> {
             SummaryPanel panel = new SummaryPanel(students);
             Region root = (Region) panel.getRoot();
-            assertNotNull(styledScene(root, 150, 400));
+            styledScene(root, 150, 400);
             assertEquals(150, root.getWidth());
 
             ScrollPane scroll = (ScrollPane) root.lookup("#tagScroll");
@@ -339,6 +338,33 @@ public class SummaryPanelTest {
     }
 
     @Test
+    public void rows_aWrappedTagName_centresItsCountAgainstTheWholeName() throws Exception {
+        ObservableList<Student> students = FXCollections.observableArrayList(
+                tagged("Ann Lee", false, "consultation-week-14"));
+
+        double[] centres = onFxThread(() -> {
+            SummaryPanel panel = new SummaryPanel(students);
+            Region root = (Region) panel.getRoot();
+            styledScene(root, 150, 400);
+            ScrollPane scroll = (ScrollPane) root.lookup("#tagScroll");
+            VBox rows = (VBox) scroll.getContent();
+            HBox row = (HBox) rows.getChildren().getFirst();
+            Label name = (Label) row.getChildren().getFirst();
+            Label count = (Label) row.getChildren().getLast();
+            assertTrue(name.getHeight() > count.getHeight() + 2,
+                    "the tag name should wrap onto more than one line for this check to mean anything");
+            return new double[] {
+                name.getBoundsInParent().getMinY() + name.getHeight() / 2,
+                count.getBoundsInParent().getMinY() + count.getHeight() / 2,
+            };
+        });
+
+        // a count level with the first line reads as belonging to that line rather than the tag
+        assertEquals(centres[0], centres[1], 0.5,
+                "the count should sit against the middle of the whole wrapped name");
+    }
+
+    @Test
     public void rows_tagsWithSharedPrefixes_drawWholeNamesWithoutOverlap() throws Exception {
         List<String> tags = List.of("consultation-week-3", "consultation-week-4",
                 "CS2103T Tutorial W09", "CS2103T Tutorial W10", "LongUnbrokenTag".repeat(10),
@@ -347,7 +373,7 @@ public class SummaryPanelTest {
             SummaryPanel panel = new SummaryPanel(FXCollections.observableArrayList(
                     tagged("Alice", false, tags.toArray(String[]::new))));
             Region root = (Region) panel.getRoot();
-            assertNotNull(styledScene(root, 150, 600));
+            styledScene(root, 150, 600);
             ScrollPane scroll = (ScrollPane) root.lookup("#tagScroll");
             VBox rows = (VBox) scroll.getContent();
             assertEquals(tags.size(), rows.getChildren().size());

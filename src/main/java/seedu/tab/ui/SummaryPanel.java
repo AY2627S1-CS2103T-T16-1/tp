@@ -3,6 +3,7 @@ package seedu.tab.ui;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -11,6 +12,7 @@ import java.util.function.BinaryOperator;
 
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -121,7 +123,7 @@ public class SummaryPanel extends UiPart<Region> {
     }
 
     /**
-     * Returns how many of {@code students} are waiting on a reply.
+     * Returns how many of {@code students} need follow-up.
      */
     public static long countFlagged(List<Student> students) {
         return students.stream().filter(Student::isFlagged).count();
@@ -131,7 +133,7 @@ public class SummaryPanel extends UiPart<Region> {
      * Returns {@code count} with the word for it, so that one student is not "1 students".
      */
     public static String describeTotal(int count) {
-        return String.format(count == 1 ? SINGULAR : PLURAL, count);
+        return String.format(Locale.ROOT, count == 1 ? SINGULAR : PLURAL, count);
     }
 
     private void summarise(List<Student> students) {
@@ -146,7 +148,8 @@ public class SummaryPanel extends UiPart<Region> {
      * Returns a row naming {@code tag} with its count pushed to the far edge.
      *
      * <p>Long names wrap so that tags with a shared prefix remain distinguishable.
-     * The count keeps its full width beside the name.
+     * The count keeps its full width beside the name, and sits against the middle of it, so
+     * that a name taking two lines does not leave its count level with the first of them.
      */
     private static HBox rowFor(String tag, int count) {
         Label name = new Label(tag);
@@ -162,6 +165,7 @@ public class SummaryPanel extends UiPart<Region> {
         number.setMinWidth(Region.USE_PREF_SIZE);
 
         HBox row = new HBox(TAG_ROW_SPACING, name, spacer, number);
+        row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("summary-row");
         return row;
     }

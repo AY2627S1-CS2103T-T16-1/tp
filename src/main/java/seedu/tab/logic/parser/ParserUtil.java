@@ -1,6 +1,15 @@
 package seedu.tab.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
+
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.StringUtil;
@@ -18,12 +27,32 @@ import seedu.tab.model.tag.Tag;
  */
 public class ParserUtil {
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+    public static final String MESSAGE_INDEX_TOO_LARGE = "Index \"%s\" exceeds the largest supported index ("
+            + Integer.MAX_VALUE + "). Use an index from the displayed list.";
     public static final String MESSAGE_VALUE_AFTER_INDEX =
             "Unexpected value after %1$s: \"%2$s\". Put field values after an option.";
     public static final String MESSAGE_VALUE_AFTER_INDEX_ONLY =
             "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index and nothing else.";
 
     private ParserUtil() {} // this class only holds helpers
+
+    /**
+     * Returns the optional follow-up selector, rejecting repeated or conflicting options.
+     *
+     * @throws ParseException if a selector is repeated or both states are requested.
+     */
+    public static Optional<Boolean> parseFollowUpSelector(FlagArgumentMap arguments) throws ParseException {
+        arguments.verifyNoDuplicateFlagsFor(FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
+        boolean hasFollowUp = arguments.getValue(FLAG_FOLLOW_UP).isPresent();
+        boolean hasNoFollowUp = arguments.getValue(FLAG_NO_FOLLOW_UP).isPresent();
+        if (hasFollowUp && hasNoFollowUp) {
+            throw new ParseException(Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
+        }
+        if (hasFollowUp) {
+            return Optional.of(true);
+        }
+        return hasNoFollowUp ? Optional.of(false) : Optional.empty();
+    }
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
@@ -33,6 +62,11 @@ public class ParserUtil {
     public static Index parseIndex(String oneBasedIndex) throws ParseException {
         String trimmedIndex = oneBasedIndex.trim();
         if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex)) {
+            boolean hasOnlyDigits = trimmedIndex.chars().allMatch(Character::isDigit);
+            boolean hasNonZeroDigit = trimmedIndex.chars().anyMatch(digit -> Character.digit(digit, 10) > 0);
+            if (hasOnlyDigits && hasNonZeroDigit) {
+                throw new ParseException(String.format(MESSAGE_INDEX_TOO_LARGE, Messages.shorten(trimmedIndex)));
+            }
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
         return Index.fromOneBased(Integer.parseInt(trimmedIndex));
@@ -89,7 +123,8 @@ public class ParserUtil {
      * the exception, and is addressed by index.
      *
      * <p>An NUS Student ID that is not a valid one keeps the reason it was refused, so the
-     * User is told which value was rejected and why. An index that is not a positive integer
+     * User is told which value was rejected and why. Oversized positive indices retain their
+     * bounded-index diagnostic. An index that is not a positive integer
      * is reported through {@code usage} instead, because a target of that shape reads as a
      * mistyped index rather than as a candidate ID.
      *
@@ -109,8 +144,11 @@ public class ParserUtil {
             return StudentTarget.byNusStudentId(parseNusStudentId(trimmedTarget));
         }
         try {
-            return StudentTarget.byIndex(parseIndex(trimmedTarget));
+            return StudentTarget.byIndex(parseIndex(trimmedTarget), trimmedTarget);
         } catch (ParseException pe) {
+            if (!pe.getMessage().equals(MESSAGE_INVALID_INDEX)) {
+                throw pe;
+            }
             throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage), pe);
         }
     }
@@ -148,37 +186,48 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a {@code String email} into an {@code Email}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Parses a {@code String email} into an {@code Email}, after normalizing it as described by
+     * {@link StringUtil#normalizeFieldValue(String)}.
      *
      * @throws ParseException if the given {@code email} is invalid.
      */
     public static Email parseEmail(String email) throws ParseException {
         requireNonNull(email);
-        String trimmedEmail = email.trim();
+        String normalizedEmail = StringUtil.normalizeFieldValue(email);
         // the length is examined first, because Email.isValidEmail exhausts the stack on a long
         // enough address: an address the User typed has to clear the limit before being matched
-        if (!Email.isWithinLengthLimit(trimmedEmail) || !Email.isValidEmail(trimmedEmail)) {
+        if (!Email.isWithinLengthLimit(normalizedEmail) || !Email.isValidEmail(normalizedEmail)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(
-                    Email.FIELD_NAME, trimmedEmail, Email.getFailureReason(trimmedEmail)));
+                    Email.FIELD_NAME, normalizedEmail, Email.getFailureReason(normalizedEmail)));
         }
-        return new Email(trimmedEmail);
+        return new Email(normalizedEmail);
     }
 
     /**
-     * Parses a {@code String nusStudentId} into a {@code NusStudentId}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Parses a {@code String nusStudentId} into a {@code NusStudentId}, after normalizing it as
+     * described by {@link StringUtil#normalizeFieldValue(String)}.
      *
      * @throws ParseException if the given {@code nusStudentId} is invalid.
      */
     public static NusStudentId parseNusStudentId(String nusStudentId) throws ParseException {
         requireNonNull(nusStudentId);
-        String trimmedNusStudentId = nusStudentId.trim();
-        if (!NusStudentId.isValidNusStudentId(trimmedNusStudentId)) {
+        String normalizedNusStudentId = StringUtil.normalizeFieldValue(nusStudentId);
+        if (!NusStudentId.isValidNusStudentId(normalizedNusStudentId)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(
-                    NusStudentId.FIELD_NAME, trimmedNusStudentId, NusStudentId.getFailureReason(trimmedNusStudentId)));
+                    NusStudentId.FIELD_NAME, normalizedNusStudentId,
+                    NusStudentId.getFailureReason(normalizedNusStudentId)));
         }
-        return new NusStudentId(trimmedNusStudentId);
+        return new NusStudentId(normalizedNusStudentId);
+    }
+
+    /**
+     * Parses tags while recording every invalid value, keeping the first spelling of
+     * case-insensitive duplicates consistently with the tag command and summary.
+     */
+    public static Set<Tag> parseTags(Collection<String> values, ParseProblems problems) {
+        Set<Tag> tags = new TreeSet<>(Comparator.comparing(tag -> tag.tagName, String.CASE_INSENSITIVE_ORDER));
+        tags.addAll(problems.collectEach(values, ParserUtil::parseTag));
+        return new HashSet<>(tags);
     }
 
     /**

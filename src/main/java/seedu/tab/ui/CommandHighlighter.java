@@ -1,6 +1,10 @@
 package seedu.tab.ui;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.tab.logic.parser.CommandTokenizer.ESCAPE;
+import static seedu.tab.logic.parser.CommandTokenizer.OPTION_MARKER;
+import static seedu.tab.logic.parser.CommandTokenizer.QUOTE;
+import static seedu.tab.logic.parser.CommandTokenizer.VALUE_SEPARATOR;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,11 +45,7 @@ public class CommandHighlighter {
      */
     public record Span(String text, Kind kind) {}
 
-    private static final char QUOTE = '"';
-    private static final char ESCAPE = '\\';
-    private static final char VALUE_SEPARATOR = '=';
 
-    private static final String OPTION_MARKER = "-";
     private static final int NOT_FOUND = -1;
 
     private CommandHighlighter() {} // this class only colours commands

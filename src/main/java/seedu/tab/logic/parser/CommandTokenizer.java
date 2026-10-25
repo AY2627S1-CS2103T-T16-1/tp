@@ -22,8 +22,15 @@ public class CommandTokenizer {
     public static final String MESSAGE_UNCLOSED_QUOTE =
             "A quoted value is never closed. Add the closing \" or remove the opening one.";
 
-    private static final char QUOTE = '"';
-    private static final char ESCAPE = '\\';
+    /** Quote grouping an argument value. */
+    public static final char QUOTE = '"';
+    /** Escape for a quote or another escape character. */
+    public static final char ESCAPE = '\\';
+
+    /** Prefix identifying an unquoted option. */
+    public static final String OPTION_MARKER = "-";
+    /** Separator attaching an option value to its marker. */
+    public static final char VALUE_SEPARATOR = '=';
 
     private CommandTokenizer() {} // this class only splits arguments
 

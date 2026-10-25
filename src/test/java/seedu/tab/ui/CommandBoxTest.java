@@ -154,7 +154,7 @@ public class CommandBoxTest {
             CommandBox box = new CommandBox(unused -> null);
             setTextOf(box, "add John -p 123");
             Region root = box.getRoot();
-            assertNotNull(styledScene(root, 600, 60));
+            styledScene(root, 600, 60);
 
             TextField field = (TextField) root.lookup("#commandTextField");
             TextFlow flow = (TextFlow) root.lookup("#highlighted");
@@ -173,7 +173,7 @@ public class CommandBoxTest {
             CommandBox box = new CommandBox(unused -> null);
             setTextOf(box, "add John");
             Region root = box.getRoot();
-            assertNotNull(styledScene(root, 600, 60));
+            styledScene(root, 600, 60);
 
             TextField field = (TextField) root.lookup("#commandTextField");
             Region caret = (Region) root.lookup("#caret");
@@ -196,7 +196,7 @@ public class CommandBoxTest {
         double[] offsets = onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
             Region root = box.getRoot();
-            assertNotNull(styledScene(root, 600, 60));
+            styledScene(root, 600, 60);
 
             TextField field = (TextField) root.lookup("#commandTextField");
             Region ownCaret = (Region) root.lookup("#caret");
@@ -229,7 +229,7 @@ public class CommandBoxTest {
         Object[] state = onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
             Region root = box.getRoot();
-            assertNotNull(styledScene(root, 300, 60));
+            styledScene(root, 300, 60);
 
             TextField field = (TextField) root.lookup("#commandTextField");
             TextFlow flow = (TextFlow) root.lookup("#highlighted");
@@ -260,7 +260,7 @@ public class CommandBoxTest {
         double[] heights = onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
             Region root = box.getRoot();
-            assertNotNull(styledScene(root, 300, 60));
+            styledScene(root, 300, 60);
 
             TextField field = (TextField) root.lookup("#commandTextField");
             Region ownCaret = (Region) root.lookup("#caret");
@@ -283,7 +283,7 @@ public class CommandBoxTest {
         double[] band = onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
             Region root = box.getRoot();
-            assertNotNull(styledScene(root, 400, 60));
+            styledScene(root, 400, 60);
 
             TextField field = (TextField) root.lookup("#commandTextField");
             javafx.scene.shape.Path selection = (javafx.scene.shape.Path) root.lookup("#selection");
@@ -601,13 +601,14 @@ public class CommandBoxTest {
     }
 
     @Test
-    public void history_blankClearReply_recallsClearWithoutBlankEntry() throws Exception {
-        for (String reply : List.of("", "  ", "\u00a0")) {
+    public void history_clearReplies_recallsClearWithoutReplyEntries() throws Exception {
+        for (String reply : List.of("", "  ", "\u00a0", "y", "YES", " n ", "No", "list")) {
+            Path caseFolder = Files.createTempDirectory(temporaryFolder, "clear-reply-");
             ModelManager model = new ModelManager();
             model.addStudent(new StudentBuilder().build());
             StorageManager storage = new StorageManager(
-                    new JsonStudentBookStorage(temporaryFolder.resolve("students.json")),
-                    new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json")));
+                    new JsonStudentBookStorage(caseFolder.resolve("students.json")),
+                    new JsonUserPrefsStorage(caseFolder.resolve("prefs.json")));
             LogicManager logic = new LogicManager(model, storage);
             List<String> feedback = new ArrayList<>();
             CommandBox box = onFxThread(() -> new CommandBox(command -> {
@@ -621,12 +622,19 @@ public class CommandBoxTest {
             onFxThread(() -> setTextOf(box, reply));
             pressEnter(box);
 
-            assertFalse(logic.isAwaitingConfirmation());
-            assertEquals(ClearCommand.MESSAGE_CANCELLED, feedback.getLast());
-            assertEquals(List.of(new StudentBuilder().build()), model.getStudentBook().getStudentList());
-            assertFalse(Files.exists(temporaryFolder.resolve("students.json")));
+            boolean isInvalid = reply.equals("list");
+            boolean isConfirmed = reply.equals("y") || reply.equals("YES");
+            assertEquals(isInvalid, logic.isAwaitingConfirmation());
+            if (!isInvalid) {
+                assertEquals(isConfirmed ? ClearCommand.MESSAGE_SUCCESS : ClearCommand.MESSAGE_CANCELLED,
+                        feedback.getLast());
+            }
+            assertEquals(isConfirmed ? List.of() : List.of(new StudentBuilder().build()),
+                    model.getStudentBook().getStudentList());
+            assertEquals(isConfirmed, Files.exists(caseFolder.resolve("students.json")));
+            assertEquals(isInvalid, styleClassesOf(box, "#commandTextField").contains(CommandBox.ERROR_STYLE_CLASS));
             assertHistoryKey(box, KeyCode.UP, "clear");
-            assertHistoryKey(box, KeyCode.DOWN, "");
+            assertHistoryKey(box, KeyCode.DOWN, isInvalid ? reply : "");
         }
     }
 
@@ -740,7 +748,7 @@ public class CommandBoxTest {
         CommandBox box = boxShowing("find Siti");
         onFxThread(() -> {
             Region root = (Region) box.getRoot();
-            assertNotNull(styledScene(root, 400, 60));
+            styledScene(root, 400, 60);
             root.lookup("#commandTextField").requestFocus();
             root.layout();
             return null;
@@ -753,7 +761,7 @@ public class CommandBoxTest {
     public void typing_aCharacterAtATime_keepsTheColoursWithTheText() throws Exception {
         CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
         TextField field = onFxThread(() -> (TextField) box.getRoot().lookup("#commandTextField"));
-        assertNotNull(onFxThread(() -> styledScene((Region) box.getRoot(), 400, 60)));
+        onFxThread(() -> styledScene((Region) box.getRoot(), 400, 60));
 
         // typing moves the caret before it reports the new text, which the colouring has to
         // sit out rather than measure the command before it against the text after it
@@ -771,7 +779,7 @@ public class CommandBoxTest {
     public void caretMoved_beforeTheCopyCaughtUp_leavesTheCopyAlone() throws Exception {
         CommandBox box = boxShowing("find Siti");
         Region root = (Region) box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 400, 60)));
+        onFxThread(() -> styledScene(root, 400, 60));
         TextFlow copy = (TextFlow) root.lookup("#highlighted");
         TextField field = (TextField) root.lookup("#commandTextField");
 
@@ -794,7 +802,7 @@ public class CommandBoxTest {
     public void laidOut_fromTheStart_leavesTheLineSomethingToDrawIn() throws Exception {
         CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
         Region root = box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
+        onFxThread(() -> styledScene(root, 300, 60));
 
         double[] clip = onFxThread(() -> {
             Region lane = (Region) root.lookup("#lane");
@@ -814,7 +822,7 @@ public class CommandBoxTest {
     public void typedText_onAFreshLine_isVisible() throws Exception {
         CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
         Region root = box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
+        onFxThread(() -> styledScene(root, 300, 60));
 
         boolean drawn = onFxThread(() -> {
             setTextOf(box, "list");
@@ -857,7 +865,7 @@ public class CommandBoxTest {
     public void selection_againstTheLineBehindIt_isVisible() throws Exception {
         CommandBox box = boxShowing("find Siti");
         Region root = box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 400, 60)));
+        onFxThread(() -> styledScene(root, 400, 60));
 
         double contrast = onFxThread(() -> {
             TextField field = (TextField) root.lookup("#commandTextField");
@@ -894,7 +902,7 @@ public class CommandBoxTest {
     private static List<String> faintTokensOf(boolean refused) throws Exception {
         CommandBox box = boxShowing("add \"Siti Nur-Aisyah\" -p 98765432 -t T1");
         Region root = box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 500, 60)));
+        onFxThread(() -> styledScene(root, 500, 60));
 
         return onFxThread(() -> {
             TextField field = (TextField) root.lookup("#commandTextField");
@@ -934,7 +942,7 @@ public class CommandBoxTest {
         // a field by different rules
         CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
         Region root = box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 320, 60)));
+        onFxThread(() -> styledScene(root, 320, 60));
         String command = "find Siti Nur-Aisyah Binte Abdullah Rahman and some more besides";
 
         List<String> adrift = new ArrayList<>();
@@ -1011,7 +1019,7 @@ public class CommandBoxTest {
         return onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
             Region root = box.getRoot();
-            assertNotNull(styledScene(root, WIDE_LINE, LINE_HEIGHT));
+            styledScene(root, WIDE_LINE, LINE_HEIGHT);
             TextField field = (TextField) root.lookup("#commandTextField");
             TextFieldSkin skin = (TextFieldSkin) field.getSkin();
             assertNotNull(skin, "an edit can only be driven through a skin the field has");
@@ -1126,7 +1134,7 @@ public class CommandBoxTest {
         double[] measured = onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
             Region root = box.getRoot();
-            assertNotNull(styledScene(root, NARROW_LINE, LINE_HEIGHT));
+            styledScene(root, NARROW_LINE, LINE_HEIGHT);
             TextField field = (TextField) root.lookup("#commandTextField");
             TextFlow copy = (TextFlow) root.lookup("#highlighted");
             Region mark = (Region) root.lookup("#caret");
@@ -1157,7 +1165,7 @@ public class CommandBoxTest {
         double[] drawnFrom = onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
             Region root = box.getRoot();
-            assertNotNull(styledScene(root, NARROW_LINE, LINE_HEIGHT));
+            styledScene(root, NARROW_LINE, LINE_HEIGHT);
             TextField field = (TextField) root.lookup("#commandTextField");
             TextFlow copy = (TextFlow) root.lookup("#highlighted");
             TextFieldSkin skin = (TextFieldSkin) field.getSkin();
@@ -1195,7 +1203,7 @@ public class CommandBoxTest {
         double[] measured = onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
             Region root = box.getRoot();
-            assertNotNull(styledScene(root, TIGHT_LINE, LINE_HEIGHT));
+            styledScene(root, TIGHT_LINE, LINE_HEIGHT);
             TextField field = (TextField) root.lookup("#commandTextField");
             TextFlow copy = (TextFlow) root.lookup("#highlighted");
 
@@ -1228,7 +1236,7 @@ public class CommandBoxTest {
         // the copy must not take that for the command's text
         CommandBox box = onFxThread(() -> new CommandBox(unused -> null));
         Region root = box.getRoot();
-        assertNotNull(onFxThread(() -> styledScene(root, 300, 60)));
+        onFxThread(() -> styledScene(root, 300, 60));
 
         double drawnFrom = onFxThread(() -> {
             TextField field = (TextField) root.lookup("#commandTextField");

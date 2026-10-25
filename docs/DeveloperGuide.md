@@ -13,8 +13,17 @@
 
 ## **Acknowledgements**
 
+* Email local-part validation follows the dot-atom grammar in
+  [RFC 5322 section 3.2.3](https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3).
+  The character set and dot-placement rules are used in `Email`; no code was copied.
+
 * This project is based on the AddressBook-Level3 project created by the
   [SE-EDU initiative](https://se-education.org).
+* [JavaFX](https://openjfx.io/) is used for the GUI. TAB uses JavaFX controls,
+  FXML loading and related utilities to build and display its interface.
+* [Jackson](https://github.com/FasterXML/jackson) is used for JSON serialization
+  and deserialization of storage data (via `JacksonUtil`).
+* [JUnit 5](https://junit.org/junit5/) is used for automated testing.
 * `StringUtil.editDistance` implements the published
   [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance),
   a known algorithm whose recurrence we wrote out ourselves. No code was
@@ -104,9 +113,22 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
+`AddCommand` includes the new student in its `CommandResult`.
+`MainWindow` asks `StudentListPanel` to reveal that card only after `Logic.execute`
+returns successfully, so failed saves cannot scroll to an unsaved student.
+Scrolling leaves focus in the command box and uses the displayed list after
+the existing search-preservation rules have been applied. It locates the exact
+saved student object so an earlier record with identical details is not revealed
+instead, and skips a target that has left the displayed list before layout.
+
 The student card's `TagRow` creates a label for every tag, with its full text.
 Layout shows as many complete chips as fit and lists all hidden tags in the
 overflow chip's tooltip. There is no fixed chip count or label length cap.
+
+English numeric feedback and data-load diagnostics format with `Locale.ROOT`,
+and command highlight style names use the same locale when lowercasing. This
+keeps digits and CSS selectors consistent without changing the JVM locale or
+student data.
 
 `SummaryPanel` wraps complete tag names within the fixed 150 px sidebar.
 Each count retains its preferred width, while the tag list scrolls vertically
@@ -140,6 +162,17 @@ The empty typed event emitted by macOS F1 is also consumed so it
 cannot overwrite the opening notice.
 No student data is changed.
 
+Parser and highlighter syntax characters are defined by `CommandTokenizer`,
+so quoting, escaping and attached option markers stay consistent. Each keeps
+its own scanning loop because highlighting must also accept unfinished input.
+`ParserUtil.parseFollowUpSelector` decodes the optional follow-up state for
+both find and edit. Edit performs its full duplicate-option check first, then
+checks the selector before collecting field errors, preserving error priority.
+Email and ID edits share clear-or-parse handling; each retains its own validator
+and descriptor setter. Add and edit share
+`StudentIdValidation.requireNoDuplicate`, with edit permitting the replaced
+record to retain its ID.
+
 #### Restoring window geometry
 
 `MainWindow` supplies each screen's visual bounds to `WindowBounds`, with the
@@ -149,6 +182,10 @@ preserving valid secondary-screen positions, including negative coordinates.
 With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
 nonpositive or nonfinite dimensions use the default size. The window minimum
 also yields to a smaller usable area so it cannot defeat the size correction.
+The normal minimum height is 400 logical pixels, leaving room for window
+decorations and desktop panels within the 480 logical pixels available at
+1280×720 with 150% scaling. The student list and help text scroll within the
+remaining space, keeping the summary total, help footer and status bar visible.
 A window spanning adjacent displays is fitted entirely onto the selected screen,
 even when it was visible across both. This keeps restoration predictable when
 displays have different usable heights or gaps between them.
@@ -159,7 +196,10 @@ displays have different usable heights or gaps between them.
 tags, but yields part of that allowance for a complete tag count. The name
 retains space for a character from each end. When no tag chip fits, `TagRow`
 uses the shorter `N tags` total instead of `N more…`, preserving a complete
-count beside the name. Its tooltip still lists every hidden tag.
+count beside the name. Its tooltip still lists every hidden tag. A partial
+chip requires room for four characters and an ellipsis, measured in its
+styled font with padding, so a two-letter fragment gives way to the total.
+A shorter tag can still appear in full.
 `TagRow.fittedWidth` reports the space its chosen chips or count actually use,
 so `CardHeadline` returns any unused allocation to the name before laying it
 out. The name requests its full natural width.
@@ -275,8 +315,10 @@ trade-off is deliberate and worth revisiting if the palette changes.
 
 #### Recalling session commands
 
-`CommandBox` records each submitted line in `CommandHistory` before execution,
-so rejected input can be recalled too. The helper stores submissions separately
+`CommandBox` records each submitted command in `CommandHistory` before execution,
+so rejected commands can be recalled too. While clear confirmation is pending,
+replies are excluded because they cannot be reused as standalone commands; the
+navigation position resets without recording the reply. The helper stores submissions separately
 from the draft captured when Up first leaves the newest position. Down past
 the newest submission restores that draft. Up skips the newest submission when
 it already matches the text in the box and an earlier entry exists. Blank
@@ -429,13 +471,25 @@ without a reason are described as permission denied.
 
 `FileUtil.writeToFile` protects an existing JSON file from a partial save. It
 resolves an existing symbolic link to its destination, so replacing the saved
-data leaves the link in place. It also refuses a destination that is not
+data leaves the link in place. An unresolvable link is rejected without
+replacing it or creating its missing target. It also refuses a destination that is not
 writable and copies an existing file's POSIX permissions to its replacement.
 The new contents are written and forced to a temporary file beside the real
 destination before an atomic move replaces it. Keeping both files in one
 folder makes the atomic move possible, but also means that the folder must
 allow temporary-file creation. If writing or moving fails, the previous file
 remains unchanged and TAB removes the temporary file where possible.
+`FileUtil` creates only missing parent directories before writing the temporary
+file; it never pre-creates an empty destination. This applies to student-book
+and preference writes. A failed first save preserves the absence of a book and
+allows normal sample-data startup. On POSIX filesystems, a new file retains the
+temporary file's owner-only permissions; existing files retain their permissions.
+
+`JsonStudentBookStorage` reports data-folder/file collisions and save-lock failures
+at the operation boundary, where the failing path and its purpose are known.
+It preserves permission exceptions for the existing permission-specific feedback
+and never removes an obstructing file or folder. Logic rolls back records and the
+filter after these failures just as it does for other save errors.
 
 `StorageManager` logs read/write attempts and successful saves at `FINE`,
 including preference-file operations. Entries identify the file path without
@@ -581,6 +635,11 @@ option names its marker without echoing an attached value, while a value-taking
 option left without a value and a token belonging to no option are each
 reported for what they are, rather than as one generic complaint.
 
+`add` keeps its name before the options so names containing spaces need no
+quotes. If the tokenizer refuses `-n` or `--name`, `AddCommandParser` adds a
+placement hint to the existing error. A missing name gets the same hint,
+so users familiar with the name options in `edit` can recover immediately.
+
 `Flag` also lets a value-taking option carry aliases. NUS Student ID uses
 `--id` as its canonical option and the unused `-i` as its typing-friendly
 alias. Both spellings map to the same `FLAG_NUS_STUDENT_ID`, so giving
@@ -640,6 +699,14 @@ valid index; for edit and letter-leading tag targets,
 Tag syntax failures and a missing action option include guidance for both
 addition and removal.
 
+`ParserUtil.parseIndex` distinguishes malformed/non-positive input from a positive
+integer exceeding the supported index range. `StudentTarget` reports out-of-range
+positions with their original input spelling and the current displayed count,
+including zero. Retaining that spelling also lets delete suggest an exact `--id`
+command for a stored numeric ID without dropping leading zeroes. An in-range
+number remains an index even when another record holds the same numeric ID.
+The original spelling affects diagnostics only, not target equality or hashing.
+
 `TagCommand` stores a `StudentTarget`, as edit and delete do. It resolves an
 index against the displayed list and an ID across the entire book, so a
 roster ID remains usable while a search hides the student. It compares the
@@ -649,6 +716,11 @@ search filter stays active; removing a tag used by that filter may hide the
 student from the displayed list. `TagCommand.Action` selects addition or
 removal while sharing target resolution, matching, student replacement and
 feedback.
+`ParserUtil.parseTags` folds case variants in `add` and replacement tags in `edit`
+using `String.CASE_INSENSITIVE_ORDER`, matching the tag command and summary.
+`ParseProblems` retains input order so the first normalized spelling wins while
+still collecting every invalid tag's diagnostic. Existing hand-edited case variants
+remain intact until the user explicitly replaces or removes those tags.
 Tag equality and storage remain unchanged. Addition preserves existing case
 variants; removal removes every matching variant of the requested group while
 retaining unrelated tags. A general tag named `Needs follow-up` remains separate
@@ -840,7 +912,7 @@ data. There are no overloads accepting nullable email or ID values, and no
 optionals directly into this contract. Nullable JSON strings remain confined
 to the storage adapter, preserving the existing file format.
 
-`Name`, `Tag` and `Phone` each store the form returned by
+`Name`, `Tag`, `Phone`, `Email` and `NusStudentId` each store the form returned by
 `StringUtil.normalizeFieldValue`: without invisible format characters such as
 direction marks, with each run of whitespace reduced to one ASCII space
 and leading and trailing whitespace removed, and with the result composed to
@@ -854,8 +926,10 @@ They normalize for different reasons, and the rule each one enforces differs.
 | `Name` | it is displayed and searched as text, so visually identical names should have the same stored form | at least one letter or number |
 | `Tag` | it is a key in the set of a student's tags, so two that look alike must not both be stored | at least one letter or number |
 | `Phone` | it is displayed beside the others and gains nothing from being stored differently | at least 3 digits |
+| `Email` | it is displayed and searched as text, so visually identical addresses should have the same stored form | RFC 5321 address format, max 254 chars |
+| `NusStudentId` | it is the sole identity key, so visually identical IDs must have the same stored form | 1-32 ASCII letters/digits, stored uppercase |
 
-Nothing else is rejected in any of the three. A phone number may hold `+`,
+Nothing else is rejected in `Name`, `Tag` or `Phone`. A phone number may hold `+`,
 whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
 script. None of those characters can hinder TAB, because none of these
 fields is parsed, dialled, or used to build a file path.
@@ -919,6 +993,11 @@ For a non-match, the command clears the filter and appends
 visible and the User knows to re-read indexes. A rejected addition leaves
 both the book and filter unchanged.
 
+`EditCommand` first compares the prospective record with the selected record using
+full equality. An unchanged edit returns an explicit no-change response before
+checking duplicates or replacing the student, preserving the filter and avoiding
+unnecessary list notifications. `LogicManager` continues to skip saving an unchanged book.
+
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
 ignore case; names already carry `normalizeFieldValue`'s whitespace
@@ -933,12 +1012,18 @@ ordinary success message with a blank line. Matches are grouped by field into
 one prominently labelled `WARNING: Possible duplicate student` line. A line
 names at most two students and summarizes further matches as `N others`, so a
 shared placeholder does not fill the result box. The review advice appears
-once after every matching field.
+once after every matching field. Phone warnings omit the parenthetical value:
+matched records can store different formatting for the same digits, so no single
+formatted value represents all named students.
 
 `EditCommand` compares only name, phone, or email values that differ from the
 selected record. It excludes the selected `Student` instance but still uses
 the complete unfiltered student book, so a filtered list cannot hide a match
 and unrelated tag or follow-up edits do not repeat an acknowledged warning.
+Name comparisons share `StringUtil.normalizeNameForComparison` with name
+searches: Latin accents and straight/curly apostrophe differences are ignored,
+so copied roster names can be found or flagged using ordinary keyboard input.
+
 These comparisons are advisory only: they never feed `isSameStudent` or the
 storage duplicate check, and therefore cannot reject or discard a legitimate
 shared detail.
@@ -969,10 +1054,19 @@ The parser leaves the email untouched when `-e` is absent, calls `clearEmail`
 for a token that is empty after trimming, and sets a replacement only after
 validation succeeds. A rejected value is recorded as a parse problem without
 assigning a null email or requesting a clear. A bare option is still an error.
-Clearing counts as an edit even when the email is already absent. `EditCommand`
+A clear satisfies the parser's requirement for a provided field even when the email
+is already absent; execution then reports no changes if no other value changes. `EditCommand`
 passes the optional value directly into the `Student` constructor, including
 an empty optional when clearing. The saved record omits the `email` key and
 reloads through the existing optional-email storage contract.
+
+`Email` accepts the RFC 5322 unquoted dot-atom local part so that legitimate
+student addresses with apostrophes, repeated symbols or trailing underscores
+can be recorded. Only dots require non-empty groups on both sides; other
+permitted symbols can repeat and appear at either end. Commands and saved
+records share this validator and preserve the address's spelling. Quoted
+local parts and domain literals remain unsupported; domain validation is
+unchanged.
 
 `Email.MAX_LENGTH` caps at 254 characters the address a **command** may enter.
 `ParserUtil.parseEmail` checks `Email.isWithinLengthLimit` before
@@ -981,7 +1075,8 @@ matches the local part on its own.
 
 The limit is not there to simplify validation, which the guidance on arbitrary
 limits rules out. `VALIDATION_REGEX` nests one quantifier inside another,
-`([+_.-][^\W_]+)*`, and Java matches a repeated group by recursion, one frame
+a repeated dot followed by a non-empty local-part atom, and Java matches a
+repeated group by recursion, one frame
 per repetition, so an address with enough `.`-separated groups exhausts the
 stack. `StackOverflowError` is an `Error` that no parser catches, and
 `CommandBox` catches only `CommandException` and `ParseException`, so the User
@@ -1041,6 +1136,15 @@ requires its absence. A status-only search is valid, and combinations require
 both the status and every field term. The parser rejects conflicting or
 repeated status options before execution, matching the existing edit rules.
 
+Case comparison folds each Unicode code point independently using
+`Character.toLowerCase(Character.toUpperCase(...))`, avoiding context-sensitive
+whole-word lowercasing of Greek final sigma. Tag searches therefore agree with
+the case comparison used by `TagCommand`. Name comparison additionally applies
+canonical decomposition and removes marks attached to Latin letters, then maps
+curly apostrophes to straight ones. Marks in other scripts remain significant,
+so vowels needed to distinguish names are retained. This is a comparison key,
+not transliteration; model values and JSON retain their existing spelling.
+
 For phone terms containing only Unicode decimal digits, or those digits with
 grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), matching
 also compares the digits with non-digit characters removed and each decimal digit
@@ -1048,6 +1152,9 @@ mapped to its ASCII equivalent by numeric value. This lets
 `91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
 so copying a grouped number does not require manual reformatting. A query with
 a country code still requires those digits to occur in the stored phone.
+The allowed-character check uses a possessive quantifier to scan long phone terms
+without backtracking. Digit normalization separately checks that at least one digit
+remains, so punctuation-only terms cannot match every phone.
 The digit fallback requires at least one digit; annotations such as `"ext 21"`
 and punctuation-only terms retain literal matching. Unicode whitespace follows
 the same rule as field normalization. Normalizing both the phone digits and the
@@ -1223,98 +1330,9 @@ submits an empty Enter only during confirmation; otherwise an empty Enter
 keeps its existing no-op behavior. Each `Logic` implementation must supply
 this state explicitly so a default cannot silently suppress cancellation.
 
-### \[Proposed\] Undo/redo feature
-
-#### Proposed Implementation
-
-The proposed undo/redo mechanism is facilitated by `VersionedStudentBook`. It extends `StudentBook` with an undo/redo history, stored internally as a `studentBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
-
-* `VersionedStudentBook#commit()` -- Saves the current state of the student book in its history.
-* `VersionedStudentBook#undo()` -- Restores the previous state of the student book from its history.
-* `VersionedStudentBook#redo()` -- Restores a previously undone state of the student book from its history.
-
-These operations would be exposed in the `Model` interface as `Model#commitStudentBook()`, `Model#undoStudentBook()` and `Model#redoStudentBook()` respectively.
-
-Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
-
-Step 1. The User launches TAB for the first time. The `VersionedStudentBook` will be initialized with the initial state of the student book, and the `currentStatePointer` pointing to that single state.
-
-<puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
-
-Step 2. The User executes `delete 5` command to delete the 5th student in the student book. The `delete` command calls `Model#commitStudentBook()`, causing the modified state of the student book after the `delete 5` command executes to be saved in the `studentBookStateList`, and the `currentStatePointer` is shifted to the newly inserted state.
-
-<puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
-
-Step 3. The User executes `add David …​` to add a new student. The `add` command also calls `Model#commitStudentBook()`, causing another modified state of the student book to be saved into the `studentBookStateList`.
-
-<puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
-
-<box type="info" seamless>
-
-**Note:** If a command fails its execution, it will not call `Model#commitStudentBook()`, so the state of the student book will not be saved into the `studentBookStateList`.
-</box>
-
-Step 4. The User now decides that adding the student was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoStudentBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous state, and restores the student book to that state.
-
-<puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
-
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial `StudentBook` state, then there are no previous `StudentBook` states to restore. The `undo` command uses `Model#canUndoStudentBook()` to check if this is the case. If so, it will return an error to the User rather
-than attempting to perform the undo.
-</box>
-
-The following sequence diagram shows how an undo operation goes through the `Logic` component:
-
-<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="UndoSequenceDiagram-Logic" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</box>
-
-Similarly, how an undo operation goes through the `Model` component is shown below:
-
-<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
-
-The `redo` command does the opposite — it calls `Model#redoStudentBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the student book to that state.
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index `studentBookStateList.size() - 1`, pointing to the latest `StudentBook` state, then there are no undone `StudentBook` states to restore. The `redo` command uses `Model#canRedoStudentBook()` to check if this is the case. If so, it will return an error to the User rather than attempting to perform the redo.
-</box>
-
-Step 5. The User then decides to execute the command `list`. Commands that do not modify the student book, such as `list`, will usually not call `Model#commitStudentBook()`, `Model#undoStudentBook()` or `Model#redoStudentBook()`. Thus, the `studentBookStateList` remains unchanged.
-
-<puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
-
-Step 6. The User executes `clear`, which calls `Model#commitStudentBook()`. Since the `currentStatePointer` is not pointing at the end of the `studentBookStateList`, all states of the student book after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add David …` command. This is the behavior that most modern desktop applications follow.
-
-<puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
-
-The following activity diagram summarizes what happens when the User executes a new command:
-
-<puml src="diagrams/CommitActivityDiagram.puml" width="250" />
-
-#### Design considerations:
-
-**Aspect: How undo & redo execute:**
-
-* **Alternative 1 (current choice):** Saves the entire student book.
-  * Pros: Easy to implement.
-  * Cons: May have performance issues in terms of memory usage.
-
-* **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the student being deleted).
-  * Cons: We must ensure that the implementation of each individual command is correct.
-
-_{more aspects and alternatives to be added}_
-
 ### \[Proposed\] Data archiving
 
-_{Explain here how the data archiving feature will be implemented}_
+This feature is proposed but not yet designed. No implementation plan is specified.
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -1393,7 +1411,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*` | teaching assistant | view a student's remarks | recall important context such as special needs |
 | `*` | teaching assistant | add a remark to a student's record | note down requests or needs I should remember |
 | `*` | teaching assistant | redo an action I undid | restore a change I reverted by accident |
-| `*` | teaching assistant | be warned when a new student matches an existing record on phone, email or NUS Student ID | catch genuine duplicates even when the two names are spelled differently |
+| `*` | teaching assistant | be warned when a new student matches an existing record on name, phone or email | catch genuine duplicates even when the two names are spelled differently |
 | `*` | teaching assistant | merge two duplicate student records after seeing how they differ | combine the information from both without losing either |
 | `*` | teaching assistant | find students who have no tag | spot students not yet assigned to a group |
 | `*` | teaching assistant | sort my list by a detail I choose, such as name, NUS Student ID, or when the student was added | read the list in the order that suits the task in front of me |
@@ -1441,11 +1459,11 @@ These were raised during requirement gathering and left out of the product.
 * [UC01 - Add a student](#uc01-add-a-student)
 * [UC02 - Find a student and act on the right one](#uc02-find-a-student-and-act-on-the-right-one)
 * [UC03 - Flag and clear a follow-up](#uc03-flag-and-clear-a-follow-up)
-* [UC04 - Import a roster](#uc04-import-a-roster)
+* [UC04 - Import a roster (proposed)](#uc04-import-a-roster)
 * [UC05 - Recover from an unreadable data file](#uc05-recover-from-an-unreadable-data-file)
-* [UC06 - Delete a class no longer taught](#uc06-delete-a-class-no-longer-taught)
-* [UC07 - Archive last semester's students](#uc07-archive-last-semester-s-students)
-* [UC08 - Semester close-out](#uc08-semester-close-out)
+* [UC06 - Delete a class no longer taught (proposed)](#uc06-delete-a-class-no-longer-taught)
+* [UC07 - Archive last semester's students (proposed)](#uc07-archive-last-semester-s-students)
+* [UC08 - Semester close-out (proposed)](#uc08-semester-close-out)
 * [UC09 - Edit a student's details](#uc09-edit-a-student-s-details)
 * [UC10 - Add/remove a tag from a student](#uc10-add-remove-a-tag-from-a-student)
 
@@ -1473,7 +1491,7 @@ These were raised during requirement gathering and left out of the product.
 * 1b. At least one detail is not in an acceptable form.
 
     * 1b1. TAB names every detail it rejected and the reason.
-    * 1b2. TAB leaves the original input in the command box.
+    * 1b2. TAB retains the submitted input for correction.
     * 1b3. User corrects the details and submits again.
 
       Steps 1b1-1b3 are repeated until every detail is acceptable.
@@ -1515,7 +1533,7 @@ These were raised during requirement gathering and left out of the product.
 * 1a. The search terms are not in an acceptable form.
 
     * 1a1. TAB reports the error.
-    * 1a2. TAB leaves the original input in the command box.
+    * 1a2. TAB retains the submitted input for correction.
     * 1a3. User corrects the search terms and submits again.
 
       Steps 1a1-1a3 are repeated until the search terms are acceptable.
@@ -1582,7 +1600,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-#### UC04 - Import a roster
+#### UC04 - Import a roster (proposed)
 
 **MSS**
 
@@ -1665,7 +1683,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case resumes at step 6.
 
-#### UC06 - Delete a class no longer taught
+#### UC06 - Delete a class no longer taught (proposed)
 
 **MSS**
 
@@ -1699,7 +1717,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-#### UC07 - Archive last semester's students
+#### UC07 - Archive last semester's students (proposed)
 
 **MSS**
 
@@ -1732,7 +1750,7 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-#### UC08 - Semester close-out
+#### UC08 - Semester close-out (proposed)
 
 **MSS**
 
@@ -1869,8 +1887,6 @@ These were raised during requirement gathering and left out of the product.
 
       Use case ends.
 
-*{More to be added}*
-
 
 ### Non-Functional Requirements
 
@@ -1900,6 +1916,9 @@ These were raised during requirement gathering and left out of the product.
     components at screen resolutions of 1920×1080 and higher with display scaling at 100% and 125%, and
     remain functional and usable down to 1280×720 with display scaling up to 150%. This satisfies
     `Constraint-Screen-Resolution`.
+10. **Data locality and offline operation**: TAB must store all student data only in local files,
+    must not transmit student data to any network service, and must support all student management
+    operations without a network connection.
 
 ### Glossary
 
@@ -1947,7 +1966,8 @@ These were raised during requirement gathering and left out of the product.
 * **Prefix**: See **Command prefix**.
 * **Roster**: A list of students belonging to a course, tutorial group, or lab group, particularly one prepared for
   import into TAB.
-* **Semester close-out**: The end-of-semester workflow (UC08) where active student records are archived
+* **Semester close-out (proposed)**: The end-of-semester workflow (UC08) where active student records
+are archived
   and the active list is reset in preparation for a new academic term, optionally retaining records with
   pending follow-ups.
 * **Student book**: The collection of student records managed by TAB.
@@ -1998,6 +2018,17 @@ testers are expected to do more *exploratory* testing.
       Expected: The recognizable student is present. The status bar shows the
       absolute path to the original `data/tab.json`, and no data, preference,
       or log file is created in the terminal's working folder.
+
+1. Reading a long data path
+
+   1. Put the JAR in a folder with a long absolute path and launch it.
+      Narrow the window until the status bar path no longer fits.<br>
+      Expected: The path is shortened in the middle, keeping `tab.json`
+      visible. Hovering over the path shows the full absolute path.
+
+   1. Widen the window until the full path fits.<br>
+      Expected: The path is shown unchanged and has no tooltip. Narrowing
+      the window again restores the tooltip.
 
 1. Launching from a read-only folder
 
@@ -2073,6 +2104,18 @@ testers are expected to do more *exploratory* testing.
       Expected: Each reports `help takes no arguments. Unexpected input: ...`
       with the offending input quoted. No help page opens and student data stays
       unchanged. `help` with trailing spaces or tabs opens the pager normally.
+
+1. Using a compact window
+
+   1. Set the display to 1280×720 with 150% scaling. Launch TAB and resize
+      its bottom edge to fit above the taskbar.<br>
+      Expected: The entire window fits, including the command box, summary
+      total and data-file status bar.
+
+   1. With at least ten students listed, focus the list and press End.<br>
+      Expected: The last student's card is readable. Press F1 and then G:<br>
+      Expected: The help notice, `(END)` and both navigation hint lines remain
+      visible. Press Esc to return to the command box.
 
 1. Saving window preferences
 
@@ -2153,6 +2196,24 @@ testers are expected to do more *exploratory* testing.
       `exit` with trailing whitespace closes TAB. Run plain `clear` with
       trailing whitespace only when the test data can be removed; it follows
       the documented clear flow.
+
+### Regional settings
+
+1. Consistent English output
+
+   1. Launch TAB with `java -Duser.language=tr -Duser.country=TR -jar tab.jar`,
+      then repeat with `az` / `AZ`. Type `add Priya -p 91234567 --follow-up`.<br>
+      Expected: Both options are mauve; the command executes as usual.
+
+   1. Relaunch with `fa` / `IR`, `ar` / `EG`, then `bn` / `BD`. Run `list`,
+      `find -n Priya`, and `clear`, cancelling with `n`.<br>
+      Expected: Reply and summary counts use digits 0–9. No data changes on
+      cancellation. Repeat under `en` / `SG` for comparison.
+
+   1. Close TAB and make an invalid edit in a **copy** of its data file, such
+      as deleting a comma between records, then open that copy.<br>
+      Expected: The load error's line, column and excerpt numbers use 0–9.
+      An invalid field instead identifies its student record with 0–9.
 
 ### Typing a command word in another case
 
@@ -2455,12 +2516,48 @@ testers are expected to do more *exploratory* testing.
       The status message shows `New student added: John Doe; Phone: 98765432`
       without placeholder labels for absent email or tags.
 
+1. Revealing a newly saved student in an overflowing list
+
+   1. Prerequisites: Use a book with at least 30 students so the list scrolls.
+      Scroll to the top and return focus to the command box.
+   1. Test case: `add Newly Added Student -p 91234567`.<br>
+      Expected: The new card is visible without manual scrolling. Type the next
+      command immediately; input remains in the command box.
+   1. Repeat with a search that matches many students, first adding a matching
+      student and then one that does not match.<br>
+      Expected: Each new card is revealed. The matching search stays active;
+      the non-matching addition clears it and reports that it did so.
+   1. Add a student with the same details as an earlier record without a NUS
+      Student ID.<br>
+      Expected: The newly appended card is revealed, rather than the earlier
+      matching record. The possible-duplicate warning is still shown.
+   1. Return to the top and try `add Missing Phone`, then an addition with a
+      duplicate NUS Student ID.<br>
+      Expected: No student is added and the list does not jump to the end.
+   1. Make the data path unwritable, attempt a valid addition, then restore
+      write access.<br>
+      Expected: The save error is shown, the student and active search are
+      restored, and the list does not reveal the unsaved student.
+
 1. Adding a student with tags and follow-up
 
    1. Test case: `add Jane Doe -p 91234567 -t urgent -t lab1 --follow-up`<br>
       Expected: Jane Doe is added with tags and follow-up flag. The status message
       shows `New student added: Jane Doe; Phone: 91234567; Tags: [lab1][urgent]; Needs follow-up`
       with tags sorted alphabetically ignoring case.
+
+1. Recovering from a name option or a missing name
+
+   1. Test cases: `add --name "Betsy Crowe" --phone 1234567`,
+      `add -n "Betsy Crowe" -p 1234567`, and
+      `add --phone 1234567 --name="Betsy Crowe"`.<br>
+      Expected: No student is added. The error names the unsupported option,
+      followed by `In the add command, the name comes first, without an option: add NAME -p PHONE ...`.
+   1. Test case: `add -p 1234567`.<br>
+      Expected: `Missing required field(s): NAME`, followed by the same placement
+      hint. The student list is unchanged.
+   1. Test case: `add Betsy Crowe --phone 1234567`.<br>
+      Expected: Betsy Crowe is added. Exit and reopen TAB; the student remains saved.
 
 1. Adding a duplicate NUS Student ID
 
@@ -2602,6 +2699,16 @@ testers are expected to do more *exploratory* testing.
       Expected: Chips that fit appear in full; hidden tags are counted and
       listed on hover. A lone chip too wide for its allocation is shortened
       and shows its complete tag on hover. Widening restores complete tags.
+
+1. Reading tags beside a long name and follow-up marker
+
+   1. Add `add Siti Nur-Aisyah Binte Abdullah Rahman -p 91234567 -f`
+      `-t consultation-week-3 -t "Lab 3" -t "Tutorial Group 11"` as one command.
+   1. Resize the window through about 740 px, then narrow and widen it.<br>
+      Expected: The row shows a readable tag prefix and `2 more…`, or `3 tags`
+      when there is too little room for that prefix. It never shows only one
+      or two letters of the first tag. Hovering over the count lists hidden
+      tags; widening restores chips. The follow-up marker remains visible.
 
 ### Reading a clipped email address
 
@@ -2772,6 +2879,18 @@ testers are expected to do more *exploratory* testing.
       remains byte-for-byte unchanged. Restore the backup with TAB closed,
       then relaunch and check that the backed-up records load.
 
+1. Reporting unchanged edits
+
+   1. Prerequisites: Start from an empty book; run `add Amy Bee -p 91234567`,
+      then `find -n Amy`.
+   1. Test cases: `edit 1 -p 91234567`, `edit 1 -e ""`, `edit 1 -i ""`,
+      `edit 1 -t ""`, and `edit 1 -nf`.<br>
+      Expected: Each replies `Student already has the requested details. No changes made.`
+      The student, active search, displayed list and saved file remain unchanged.
+   1. Test case: `edit 1 -n "Amy Bee" -p 82223333`.<br>
+      Expected: `Edited student: Amy Bee; Phone: 82223333`. The new phone is saved,
+      Amy remains visible, and repeating the command reports no changes.
+
 1. Checking duplicate identity behavior
 
    1. Prerequisites: Start from an empty book.
@@ -2814,6 +2933,8 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add Bernice Yu -p "+65 (9123)-4567" -e bernice@example.com`<br>
       Expected: Bernice is saved. The result names Alex Yeoh and the matching
       `phone`, because the complete digit sequences match despite punctuation.
+      The warning says `Alex Yeoh has the same phone.` without a parenthetical
+      number; neither stored formatting is attributed to the other record.
       Exit and restart TAB; both phone numbers retain their entered formatting.
 
    1. Test case: `add Charlie Tan -p ６５９１２３４５６７`<br>
@@ -3002,6 +3123,25 @@ testers are expected to do more *exploratory* testing.
       nor the JSON file changes. Restore an email with
       `edit INDEX -e alice@example.com` and check that it is displayed again.
 
+### Recording email addresses with symbols
+
+1. Test case: `add Mei Tan -p 91234567 -e mei__tan@hotmail.com`.<br>
+   Expected: The student is added with both underscores in the email.
+1. Test case: `add Sean O'Brien -p 82345678 -e sean.o'brien@example.com`.<br>
+   Expected: The student is added with the apostrophe in the name and email.
+1. Find Mei's displayed index and run `edit INDEX -e mei_@example.com`.<br>
+   Expected: The edit succeeds and preserves the trailing underscore. Exit and
+   restart TAB; both addresses remain exactly as recorded in the saved file.
+1. Test case: `edit INDEX -e mei..tan@example.com` using Mei's index.<br>
+   Expected: An Email error explains that dots must separate non-empty groups.
+   The record and saved file remain unchanged. Repeat with a leading or
+   trailing dot, a space inside the address, and an underscore in the domain.
+1. With TAB closed and the data file backed up, change Mei's email to
+   `mei__tan@hotmail.com` by hand, then restart.<br>
+   Expected: The file loads and preserves both underscores. Repeat with
+   `sean.o'brien@example.com`. Changing it to `mei..tan@example.com` instead
+   produces a data-file error identifying Email; restore the backup afterward.
+
 ### Rejecting an over-long email
 
 1. Refusing an address longer than the limit
@@ -3073,7 +3213,7 @@ testers are expected to do more *exploratory* testing.
       `delete` takes no field values. None of them deletes a student, and the student book
       is unchanged.
 
-1. _{ more test cases … }_
+1. More test cases to be added.
 
 ### The command line
 
@@ -3097,7 +3237,10 @@ testers are expected to do more *exploratory* testing.
       empty reply. Press Up.<br>
       Expected: Clear is cancelled without changing any students. Up recalls
       `clear` immediately, without a blank entry. Repeat with spaces as the reply;
-      the result is the same.
+      the result is the same. Repeat with `n`, `no`, `y`, and `yes` (repopulate the
+      book after confirming); Up still recalls `clear`. Submit `list` during a
+      pending confirmation: TAB retains the invalid reply and keeps waiting.
+      Up recalls `clear`, and Down restores the retained `list` draft.
    1. Close and reopen TAB, type `draft`, and press Up.<br>
       Expected: `draft` stays unchanged; history does not survive a restart.
 
@@ -3264,6 +3407,76 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `delete 1`, then `list`<br>
       Expected: Feedback reports `Listed 1 student.`.
 
+### Locating equivalent name spellings and Unicode case variants
+
+1. Searching copied roster names without changing their stored spelling
+
+   1. Prerequisites: In a disposable data folder, add `add Sean O’Brien -p 87654321`,
+      `add Nguyễn Văn An -p 81234567`, `add José Rivera -p 81234568`, and
+      `add ΝΙΚΟΣ -p 91234567 -t ΟΣ`.
+
+   1. Test cases: `find -n O'Brien`, `find -n nguyen`, and `find -n jose`.<br>
+      Expected: Each finds its respective student. Curly apostrophes and accents
+      remain on the cards. `find -n missing` returns `Found 0 students.`.
+
+   1. Test cases: `find -n Σ`, `find -n σ`, `find -n ς`, and `find -t οσ`.<br>
+      Expected: Each finds ΝΙΚΟΣ. `tag 1 -a οσ` reports
+      `This student already has tag [ΟΣ]. No changes made.`.
+      `tag 1 -r οσ` removes the tag; `find -t ος` no longer finds it.
+
+   1. Test case: `add Sean O'Brien -p 83334444`.<br>
+      Expected: The add succeeds with a possible duplicate **name** warning for
+      Sean O’Brien. Likewise, adding `JOSE RIVERA` or `νικοσ` with a distinct
+      phone warns about the respective existing name. These remain hints, not
+      grounds to reject a student.
+
+   1. Test case: Restart TAB and repeat the name searches.<br>
+      Expected: Original spellings survive saving and reloading; normalized
+      comparisons still find the students. Run `list` to restore the full list.
+
+### Keeping one spelling of repeated command tags
+
+1. Start from an empty book and run
+   `add Casey Low -p 91234567 -t Lab -t lab -t LAB -t Σ -t ς`.<br>
+   Expected: Casey has only `Lab` and `Σ`, including after restarting TAB.
+1. Run `edit 1 -t lab -t LAB -t ς -t Σ`.<br>
+   Expected: The replacement tags are `lab` and `ς`; the first spelling of each
+   case-insensitive group is saved. Other student details remain unchanged.
+1. Run `tag 1 -a LAB`, then `tag 1 -r LAB`.<br>
+   Expected: Addition reports the tag is already present without changing the
+   file; removal removes `lab` and retains `ς`.
+
+### Recovering from save-path collisions
+
+1. In a disposable copy of TAB, put an unrelated regular file named `data` beside
+   the JAR, launch TAB, search for a sample student, then edit their phone.<br>
+   Expected: TAB names the occupied data-folder path and asks you to close TAB and
+   move or rename the file. The student, active search and unrelated file remain unchanged.
+1. With a valid saved book and TAB closed, replace the empty `data/.tab.json.lock`
+   file with a folder containing a disposable text file. Relaunch and edit a student.<br>
+   Expected: TAB names the lock path, explains that it is a folder and asks you to
+   close every TAB window before moving or renaming it. Records, the saved JSON,
+   the active search and the folder contents remain unchanged.
+
+### Diagnosing student-target mistakes
+
+1. Start from an empty book and add `add Amy Bee -p 91234567 --id 001234` and
+   `add Other Student -p 82223333`. Run `find -n Amy`, then try `delete 3`,
+   `edit 3 -p 81112222`, and `tag 3 -a T1`.<br>
+   Expected: Each quotes index `3`, reports one displayed student, and suggests
+   `list`. No record, active filter or saved data changes. Repeat after
+   `find -n Missing`; the message reports zero displayed students.
+1. Try `edit 6591234567 -p 81112222`, `tag 6591234567 -a T1`, and
+   `delete 6591234567`.<br>
+   Expected: Each explains the upper index bound rather than calling the positive
+   integer non-positive. Delete also shows the explicit ID form. Nothing changes.
+1. With Amy hidden, try `delete 001234`.<br>
+   Expected: The error retains the leading zeroes and suggests `delete --id 001234`.
+   That explicit command deletes Amy even while the filter hides her.
+1. Open help and find the delete section.<br>
+   Expected: It lists index, plain NUS Student ID and explicit `--id` forms.
+   `delete 1ABC` shows usage including `delete --id 1ABC` as a recovery example.
+
 ### Locating students by digits in formatted phone numbers
 
 1. Full numbers, partial numbers, and unchanged saved formatting
@@ -3291,6 +3504,12 @@ testers are expected to do more *exploratory* testing.
    1. Test cases: `find -p 91234568` and `find -p 9123-4568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
+
+1. Long nonmatching phone terms
+
+   1. Test case: Paste `find -p ` followed by 50,000 digits and a final `!`.<br>
+      Expected: TAB promptly reports `Found 0 students.` and remains responsive.
+      Run `list` to restore all students; their details and saved data are unchanged.
 
 1. Equivalent Unicode digits and unchanged saved values
 
@@ -3517,6 +3736,35 @@ testers are expected to do more *exploratory* testing.
       present. Bob remains absent because the failed `add` was undone in memory
       and never replaced the last valid data file.
 
+1. Recovering from a failed first save
+
+   1. Prerequisites (Linux): Use a disposable TAB home folder with the packaged
+      JAR. In a private mount namespace (for example, start a shell with
+      `unshare --user --map-root-user --mount`), enter that folder and run
+      `mkdir data`, then `mount -t tmpfs -o size=4096 tmpfs data`.
+      This limits only the throwaway data folder; do not fill the real drive.
+      Keep TAB and the following commands inside that namespace.
+
+   1. Launch `java -jar tab.jar` and confirm the sample students appear.
+      Fill the private filesystem with
+      `dd if=/dev/zero of=data/filler bs=4096 count=1`.
+      Verify `touch data/probe` succeeds while
+      `printf x > data/probe` fails with `No space left on device`, then
+      remove only `data/probe`. The directory must remain writable: removing
+      directory write access would fail before the old code creates its target
+      and would not reproduce this bug.
+
+   1. Test case: Enter `add Mei Tan -p 91234567`.<br>
+      Expected: A save error reports `No space left on device` and that no
+      changes were made. The sample students remain visible, Mei is absent,
+      and `data/tab.json` does not exist, even as an empty file.
+
+   1. Test case: Exit TAB, run `rm data/filler` to free space, and relaunch
+      `java -jar tab.jar` inside the same namespace.<br>
+      Expected: TAB opens with sample students without file repair. Repeat the
+      add, exit, and relaunch; Mei is now saved and present. Exit TAB, run
+      `umount data`, and exit the private namespace.
+
 1. Dealing with missing/corrupted data files
 
    1. Prerequisites: Launch TAB, add a recognizable student, exit, and keep a
@@ -3664,4 +3912,4 @@ testers are expected to do more *exploratory* testing.
       UTF-8 without BOM, and relaunch.<br>
       Expected: Both students load with their names intact.
 
-1. _{ more test cases … }_
+1. More test cases to be added.

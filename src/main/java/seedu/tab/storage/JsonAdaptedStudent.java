@@ -3,6 +3,7 @@ package seedu.tab.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.Messages;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
@@ -128,7 +130,7 @@ class JsonAdaptedStudent {
         // A non-blank value follows the same trimming behavior as command input before validation.
         final String normalizedEmail = normalizeOptionalEmail(email);
         if (normalizedEmail != null && !Email.isWithinLengthLimit(normalizedEmail)) {
-            throw new IllegalValueException(String.format(
+            throw new IllegalValueException(String.format(Locale.ROOT,
                     "%s field is too long to read safely: it holds %d characters, but saved emails may hold at most %d",
                     Email.FIELD_NAME, normalizedEmail.length(), Email.MAX_LENGTH));
         }
@@ -140,10 +142,13 @@ class JsonAdaptedStudent {
 
         // A missing or null key represents an ID that has not been recorded. A malformed
         // value is rejected rather than being silently discarded from the student record.
-        if (nusStudentId != null && !NusStudentId.isValidNusStudentId(nusStudentId)) {
+        final String normalizedNusStudentId =
+                nusStudentId == null ? null : StringUtil.normalizeFieldValue(nusStudentId);
+        if (normalizedNusStudentId != null && !NusStudentId.isValidNusStudentId(normalizedNusStudentId)) {
             throw new IllegalValueException(NusStudentId.MESSAGE_CONSTRAINTS);
         }
-        final Optional<NusStudentId> modelNusStudentId = Optional.ofNullable(nusStudentId).map(NusStudentId::new);
+        final Optional<NusStudentId> modelNusStudentId = Optional.ofNullable(normalizedNusStudentId)
+                .map(NusStudentId::new);
 
         final Set<Tag> modelTags = new HashSet<>(studentTags);
         return new Student(modelName, modelPhone, modelEmail, modelNusStudentId, modelTags, Boolean.TRUE.equals(flag));
@@ -153,8 +158,8 @@ class JsonAdaptedStudent {
         if (rawEmail == null) {
             return null;
         }
-        String trimmedEmail = rawEmail.trim();
-        return trimmedEmail.isEmpty() ? null : trimmedEmail;
+        String normalizedEmail = StringUtil.normalizeFieldValue(rawEmail);
+        return normalizedEmail.isEmpty() ? null : normalizedEmail;
     }
 
     String getNameForErrorMessage() {
