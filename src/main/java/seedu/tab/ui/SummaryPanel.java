@@ -12,8 +12,10 @@ import java.util.function.BinaryOperator;
 
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -36,7 +38,11 @@ public class SummaryPanel extends UiPart<Region> {
     private static final String PLURAL = "%d students";
 
     @FXML
+    private HBox flaggedRow;
+    @FXML
     private Label flaggedCount;
+    @FXML
+    private ScrollPane tagScroll;
     @FXML
     private VBox tagRows;
     @FXML
@@ -49,7 +55,22 @@ public class SummaryPanel extends UiPart<Region> {
     public SummaryPanel(ObservableList<Student> students) {
         super(FXML);
         students.addListener((javafx.collections.ListChangeListener<Student>) change -> summarise(students));
+        tagScroll.viewportBoundsProperty().addListener((unused, previous, viewport) ->
+                reserveScrollBarWidth(viewport.getWidth()));
         summarise(students);
+    }
+
+    /**
+     * Keeps the flagged count in the same column as the tag counts.
+     *
+     * <p>The tag list scrolls inside its own pane, so once there are more tags than fit, the
+     * scroll bar takes its width out of the rows within it while the flagged row above is left
+     * where it was. Reserving the same width beside the flagged count means the panel keeps one
+     * column of numbers rather than splitting into two.
+     */
+    private void reserveScrollBarWidth(double viewportWidth) {
+        double reserved = Math.max(0, tagScroll.getWidth() - viewportWidth);
+        flaggedRow.setPadding(new Insets(0, reserved, 0, 0));
     }
 
     /**
