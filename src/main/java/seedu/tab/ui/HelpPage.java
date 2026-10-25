@@ -112,10 +112,9 @@ public class HelpPage extends UiPart<Region> {
 
     private double lineHeight() {
         Text line = new Text("Ag");
-        // the spans all carry one monospaced font, so any of them measures a line of the block
-        if (helpText.getChildren().getFirst() instanceof Text span) {
-            line.setFont(span.getFont());
-        }
+        // the reference is spans of Text and nothing else, and they carry one monospaced font,
+        // so the first of them measures a line of the block
+        line.setFont(((Text) helpText.getChildren().getFirst()).getFont());
         return line.getLayoutBounds().getHeight();
     }
 
