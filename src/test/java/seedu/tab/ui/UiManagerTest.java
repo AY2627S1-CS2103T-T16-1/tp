@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -188,6 +189,40 @@ public class UiManagerTest {
         assertEquals(1, severe.size(), "the failure should be reported to the log once");
         assertTrue(severe.get(0).getMessage().contains(UiManager.FATAL_ERROR_TITLE));
         assertTrue(severe.get(0).getMessage().contains(BROKEN_WINDOW_MESSAGE));
+    }
+
+    @Test
+    public void createDataLoadingErrorAlert_boxedContent_startsItsTextAtOneOffset() throws Exception {
+        String error = "TAB does not have permission to read this file or the folder holding it.";
+        UiManager uiManager = new UiManager(null, DATA_FILE_PATH, Optional.of(error));
+
+        double[] textStarts = FxToolkit.onFxThread(() -> {
+            Alert alert = uiManager.createDataLoadingErrorAlert(error);
+            DialogPane dialogPane = alert.getDialogPane();
+            try {
+                alert.show();
+                dialogPane.applyCss();
+                dialogPane.layout();
+                return new double[] {
+                    renderedTextStart(dialogPane, "#dataLoadingErrorFile"),
+                    renderedTextStart(dialogPane, "#dataLoadingErrorDetail"),
+                };
+            } finally {
+                alert.close();
+            }
+        });
+
+        // measured where the glyphs land, not where the padding says they should: the path box
+        // also draws a one-pixel border, which padding alone does not account for
+        assertEquals(textStarts[0], textStarts[1], 0.5,
+                "both boxes should start their text at the same offset");
+    }
+
+    /** Returns the scene x at which the control's drawn text begins. */
+    private static double renderedTextStart(DialogPane dialogPane, String id) {
+        Node control = dialogPane.lookup(id);
+        Node text = control.lookup(".text");
+        return text.localToScene(text.getBoundsInLocal()).getMinX();
     }
 
     @Test

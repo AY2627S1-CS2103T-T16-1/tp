@@ -301,10 +301,9 @@ public class FlagTokenizerTest {
     }
 
     @Test
-    public void verifyNoDuplicateFlagsFor_repeatedTagFlag_doesNotThrow() throws Exception {
+    public void tokenize_repeatedTagFlag_keepsEveryValue() throws Exception {
         FlagArgumentMap parsed = parse("John -t T1 --tag T2");
 
-        parsed.verifyNoDuplicateFlagsFor(FLAG_PHONE, FLAG_EMAIL);
         assertEquals(List.of("T1", "T2"), parsed.getAllValues(FLAG_TAG));
     }
 

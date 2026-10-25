@@ -112,6 +112,12 @@ text remains one command; inspect it before pressing Enter.
   `Options given more than once: -f. Give each listed option only once.`
   This also covers mixed short and long spellings, such as `-f` and `--follow-up`.
 
+* An `INDEX` refers to a positive position in the **displayed** student list.
+  If it exceeds that list, TAB quotes the index and reports the number of students
+  currently shown; `list` restores all students before you choose an index again.
+  Indices up to 2147483647 can be read; a larger positive integer gets a specific
+  upper-bound message instead of being described as non-positive.
+
 * Commands that take no parameters (`help`, `list`, `exit`, and `clear`)
   reject unexpected input and report it without executing the command.<br>
   For example, `help 123` reports `help takes no arguments. Unexpected input:
@@ -160,7 +166,9 @@ were typing before pressing `Up`. The caret moves to the end of recalled text,
 and its colours follow the command shown. Press Enter to submit it again.
 
 Rejected commands are included so you can correct a typo. Consecutive identical
-submissions appear once; blank and whitespace-only replies are omitted. If the
+submissions appear once; blank input and all replies to a pending `clear`
+confirmation are omitted, including invalid replies. The `clear` command itself
+remains available for recall. If the
 box already shows the newest submission (for example after a rejection), the
 first `Up` skips to the preceding entry when there is one. `Down` still returns
 the rejected text. At the oldest entry, `Up` keeps the text unchanged;
@@ -266,7 +274,8 @@ Format: `help`
 
 ### Adding a student: `add`
 
-Adds a student to the student book.
+Adds a student to the student book. After a successful save, TAB scrolls the new
+student's card into view and keeps focus in the command box.
 
 If the new student matches the active search, the search stays active and the
 student appears at the end of its results. Otherwise, TAB shows all students
@@ -338,7 +347,8 @@ names is insignificant. Phone numbers match when their complete digit sequences
 match, ignoring spaces and other non-digit characters; equivalent Unicode
 decimal digits also match. For example, `9123-4567`, `91234567`, and
 `９１２３４５６７` prompt the same phone warning. Entered phone formatting is
-preserved. The review advice appears once after all matching fields.
+preserved. Phone warnings omit the number because the matching records may
+format it differently. The review advice appears once after all matching fields.
 
 The warning is only a hint. It does not prove that two records describe the
 same person, and it does not find misspelled names, email aliases, or phone
@@ -435,6 +445,8 @@ as many complete tag chips as fit. At narrow widths, the name keeps both ends
 while tags give way to a count of those hidden. When no chip fits, the count reads `N tags`; otherwise
 it reads `N more…`. Unused count space returns to the name. A tag chip too
 wide for its allocation is shortened; hover over it to read the full tag.
+With several tags, if there is too little room for a complete short tag or at
+least four characters of a longer tag, the row shows `N tags` instead.
 Hover over the count to read the hidden tag names.
 
 When a student is added, the command result displays the new record
@@ -528,11 +540,14 @@ done to it beyond the quotes any value with spaces takes:
   are reported as unexpected values. Put a name change after `-n` rather than
   immediately after the target.
 * At least one of the optional fields must be provided.
-* Existing values will be updated to the input values.
+* Existing values will be updated to the input values. If every requested value
+  already matches the record, TAB replies `Student already has the requested details. No changes made.`
+  The displayed list, search and saved file stay unchanged.
 * `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it and is
   available only with `edit`. New students are unflagged by default when added.
   Both options take no value, so forms such as `--follow-up=true` are refused.
-  Repeating either request succeeds and keeps the requested state.
+  Repeating either request keeps the requested state and reports no changes
+  unless another field changes.
   Leaving both out preserves the student's follow-up status.
 * Choose at most one follow-up option. Combining `--follow-up` or `-f` with
   `--no-follow-up` or `-nf` is rejected without changing any student details.
@@ -794,6 +809,9 @@ Format: `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID
   the book — even while a search is hiding them. The match ignores case.
 * `--id NUS_STUDENT_ID` names the value as an ID, which an ID starting with a digit
   needs — the plain form would read it as an index. `-i` works in place of `--id`.
+* If an out-of-range numeric target is also a stored NUS Student ID, TAB suggests
+  the exact `delete --id VALUE` command. Leading zeroes in an ID are preserved.
+  A bare number that is a valid displayed position still deletes by that position.
 * The command result identifies the removed record (`Deleted student: NAME; Phone: PHONE...`)
   so you can verify exactly which student was deleted from the book.
 * `delete` takes no field values, so a value found after the target is refused with
@@ -845,6 +863,9 @@ Format: `exit`
 
 ### Saving the data
 
+The status bar shows the absolute path to your student data file. If the path
+does not fit, it is shortened in the middle; hover over it to read the full path.
+
 TAB automatically saves changes to student records. You do not need to save manually.
 If TAB cannot save a change, it reports the error and leaves the student records as
 they were before the command. Commands that do not change student records, including
@@ -866,7 +887,9 @@ Window size and position are saved separately in `preferences.json` in TAB's
 home folder. On launch, TAB keeps the saved size and position when they fit
 an available screen. If a screen was disconnected, TAB moves the window onto
 an available screen; oversized windows shrink to its usable area. This also
-applies after a resolution or display-scaling change.
+applies after a resolution or display-scaling change. You can also resize the
+window to fit a 1280×720 display at 150% scaling; the student list and help text
+scroll while the summary total, help footer and status bar remain visible.
 If the file contains only `null`, `guiSettings` is `null`, or the
 file cannot be parsed, TAB opens with default window settings and rewrites the
 preferences file when it can. This recovery does not change saved student records in `data/tab.json`.

@@ -6,7 +6,7 @@ import seedu.tab.model.student.Student;
 /**
  * A utility class to help with building StudentBook objects.
  * Example usage: <br>
- *     {@code StudentBook ab = new StudentBookBuilder().withStudent("John", "Doe").build();}
+ *     {@code StudentBook book = new StudentBookBuilder().withStudent(new StudentBuilder().build()).build();}
  */
 public class StudentBookBuilder {
 

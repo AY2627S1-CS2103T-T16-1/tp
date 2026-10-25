@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.testutil.StudentBuilder;
+
 public class CommandResultTest {
     @Test
     public void equals() {
@@ -47,11 +49,25 @@ public class CommandResultTest {
     }
 
     @Test
+    public void studentToReveal_presentOnlyForTargetedResults() {
+        var student = new StudentBuilder().build();
+        CommandResult result = new CommandResult("feedback", student);
+        CommandResult copy = new CommandResult("feedback", new StudentBuilder().build());
+
+        assertEquals(student, result.getStudentToReveal().orElseThrow());
+        assertEquals(result, copy);
+        assertEquals(result.hashCode(), copy.hashCode());
+        assertFalse(result.equals(new CommandResult("feedback")));
+        assertFalse(result.equals(new CommandResult("feedback", new StudentBuilder().withName("Other").build())));
+        assertTrue(new CommandResult("feedback").getStudentToReveal().isEmpty());
+    }
+
+    @Test
     public void toStringMethod() {
         CommandResult commandResult = new CommandResult("feedback");
         String expected = CommandResult.class.getCanonicalName() + "{feedbackToUser="
                 + commandResult.getFeedbackToUser() + ", showHelp=" + commandResult.isShowHelp()
-                + ", exit=" + commandResult.isExit() + "}";
+                + ", exit=" + commandResult.isExit() + ", studentToReveal=null}";
         assertEquals(expected, commandResult.toString());
     }
 }
