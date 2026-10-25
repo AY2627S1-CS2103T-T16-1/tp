@@ -580,11 +580,18 @@ as its application directory, preserving the development workflow.
 
 `add` and `edit` mark their fields with options,
 `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
-`edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`,
-where AB3 marked them with prefixes such as `p/`. The `edit` target may also
-be an NUS Student ID that starts with a letter instead of a displayed index;
-IDs starting with a digit must be addressed by index. The `--id` option sets
-the ID field rather than selecting the target.
+`edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`,
+where AB3 marked them with prefixes such as `p/`. The `edit` target is a
+shown index, a letter-leading NUS Student ID, or `--target-id NUS_STUDENT_ID`.
+A dedicated target option keeps selection unambiguous when `--id` sets or
+clears the ID field, and permits digit-leading IDs without changing how bare
+numbers select displayed indices. `EditCommandParser` reuses
+`ParserUtil.parseRequiredStudentTarget` for preamble targets and
+`ParserUtil.parseNusStudentId` for explicit targets, building a `StudentTarget`
+in either case. Duplicate target options and mixed preamble/option targets
+are rejected before execution. Selecting a target alone does not count as a
+field edit. ID targets resolve across the whole book, preserving the search
+predicate after editing and using the existing persistence path.
 The value options have descriptive long aliases: `--name`, `--phone`,
 `--email`, and `--tag` correspond to `-n`, `-p`, `-e`, and `-t` respectively.
 `add` takes its name in the preamble. `edit` accepts `-n`/`--name` to change a
@@ -743,9 +750,9 @@ from the follow-up flag, though the parsers no longer let one be added. Duplicat
 stored tag's spelling. If several case variants match, the reply chooses the
 first in the card's tag display order.
 
-For a hidden flagged student, the absent-tag hint asks the User to run `list`
-and use that student's displayed index to clear follow-up. It never suggests
-an unavailable index or an edit target that could identify someone else.
+For a hidden flagged student, the absent-tag hint supplies
+`edit --target-id NUS_STUDENT_ID --no-follow-up` with the student's stored ID.
+This addresses even digit-leading IDs without changing the active search.
 
 Invalid indexes or absent IDs, existing tags on addition and absent tags
 on removal throw `CommandException` before mutation; invalid syntax or values throw
@@ -4005,3 +4012,30 @@ testers are expected to do more *exploratory* testing.
       Expected: Both students load with their names intact.
 
 1. More test cases to be added.
+
+### Editing students using an explicit ID target
+
+1. Add `add Numeric Student -p 81234567 --id 001234 -f` and
+   `add Other Student -p 82345678 --id A436`, then run `find -n Other`.
+   1. Run `tag --id 001234 -r "Needs follow-up"`.<br>
+      Expected: No mutation. The reply suggests
+      `edit --target-id 001234 --no-follow-up`.
+   1. Run the suggested command.<br>
+      Expected: Numeric Student's flag clears, Other Student remains displayed,
+      and the active search stays unchanged.
+   1. Run `edit --target-id=001234 --id 1ABC`.<br>
+      Expected: Only Numeric Student's ID changes. Restart TAB and verify the
+      new ID and cleared flag persist. `edit --target-id 1abc --id ""` then
+      clears the ID, leaving other details intact.
+1. With the two students restored to their initial IDs, run `find -n Other`.
+   1. Test cases: `edit 1 --target-id 001234 -nf`,
+      `edit A436 --target-id 001234 -nf`, and
+      `edit --target-id 001234 --target-id 001234 -nf`.<br>
+      Expected: Mixed or repeated targets are rejected; both records, displayed
+      list, search and saved data remain unchanged.
+   1. Test cases: `edit --target-id 001234`, `edit --target-id "" -nf`,
+      `edit --target-id -nf`, and `edit --target-id Missing436 -nf`.<br>
+      Expected: Respectively, a missing edit field, invalid empty ID, missing
+      target value and nonexistent student are reported without mutation.
+   1. Run `edit 001234 -nf`.<br>
+      Expected: An out-of-range index error; bare numbers still denote indices.
