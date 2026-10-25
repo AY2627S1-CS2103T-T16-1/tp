@@ -264,8 +264,10 @@ public class StringUtil {
     }
 
     /**
-     * Returns true if {@code value} still holds something once normalized: the rule a stored
-     * field value has to meet, shared so that two fields asking it cannot drift apart.
+     * Returns true if {@code value} contains at least one letter or number once normalized:
+     * the rule a stored field value has to meet, shared so that two fields asking it cannot
+     * drift apart. A value of punctuation alone, such as "!!!", survives normalization and is
+     * turned down all the same.
      */
     public static boolean holdsLetterOrNumber(String value) {
         requireNonNull(value);
