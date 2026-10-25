@@ -126,8 +126,9 @@ text remains one command; inspect it before pressing Enter.
   including `""`, are still arguments.
 
 * Invisible format characters and non-whitespace control characters are ignored
-  in commands and stored field values, including names and tags. A pasted hidden
-  control cannot make an identical-looking name or tag differ in search or
+  in commands and stored field values, including names, tags, phone numbers,
+  emails and NUS Student IDs. A pasted hidden control cannot make an
+  identical-looking name or tag differ in search or
   duplicate warnings. Tabs and line breaks still separate values or become spaces
   inside a field. The joiners some scripts need for shaping are kept.
 
