@@ -469,6 +469,12 @@ and preference writes. A failed first save preserves the absence of a book and
 allows normal sample-data startup. On POSIX filesystems, a new file retains the
 temporary file's owner-only permissions; existing files retain their permissions.
 
+`JsonStudentBookStorage` reports data-folder/file collisions and save-lock failures
+at the operation boundary, where the failing path and its purpose are known.
+It preserves permission exceptions for the existing permission-specific feedback
+and never removes an obstructing file or folder. Logic rolls back records and the
+filter after these failures just as it does for other save errors.
+
 `StorageManager` logs read/write attempts and successful saves at `FINE`,
 including preference-file operations. Entries identify the file path without
 copying student or preference contents. Save completion is logged only after
@@ -3378,6 +3384,18 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Restart TAB and repeat the name searches.<br>
       Expected: Original spellings survive saving and reloading; normalized
       comparisons still find the students. Run `list` to restore the full list.
+
+### Recovering from save-path collisions
+
+1. In a disposable copy of TAB, put an unrelated regular file named `data` beside
+   the JAR, launch TAB, search for a sample student, then edit their phone.<br>
+   Expected: TAB names the occupied data-folder path and asks you to close TAB and
+   move or rename the file. The student, active search and unrelated file remain unchanged.
+1. With a valid saved book and TAB closed, replace the empty `data/.tab.json.lock`
+   file with a folder containing a disposable text file. Relaunch and edit a student.<br>
+   Expected: TAB names the lock path, explains that it is a folder and asks you to
+   close every TAB window before moving or renaming it. Records, the saved JSON,
+   the active search and the folder contents remain unchanged.
 
 ### Diagnosing student-target mistakes
 
