@@ -110,7 +110,7 @@ public class EditCommand extends Command {
             return new CommandResult(MESSAGE_UNCHANGED);
         }
 
-        requireNoDuplicate(model, editedStudent, studentToEdit);
+        StudentIdValidation.requireNoDuplicate(model, editedStudent, studentToEdit);
 
         String feedback = LikelyDuplicateWarning.appendChangedFieldsTo(
                 String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)),

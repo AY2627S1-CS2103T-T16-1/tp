@@ -164,8 +164,9 @@ its own scanning loop because highlighting must also accept unfinished input.
 both find and edit. Edit performs its full duplicate-option check first, then
 checks the selector before collecting field errors, preserving error priority.
 Email and ID edits share clear-or-parse handling; each retains its own validator
-and descriptor setter. Add and edit share `Command.requireNoDuplicate`, with
-edit permitting the replaced record to retain its ID.
+and descriptor setter. Add and edit share
+`StudentIdValidation.requireNoDuplicate`, with edit permitting the replaced
+record to retain its ID.
 
 #### Restoring window geometry
 

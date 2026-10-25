@@ -71,7 +71,7 @@ public class AddCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
 
-        requireNoDuplicate(model, toAdd, null);
+        StudentIdValidation.requireNoDuplicate(model, toAdd, null);
 
         String feedback = LikelyDuplicateWarning.appendTo(
                 String.format(MESSAGE_SUCCESS, Messages.format(toAdd)),
