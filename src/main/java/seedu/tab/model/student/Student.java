@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import seedu.tab.commons.util.ToStringBuilder;
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -27,7 +27,7 @@ public class Student {
 
     // Data fields
     private final Set<Tag> tags = new HashSet<>();
-    private final Optional<Flag> flag;
+    private final Optional<FollowUpFlag> flag;
 
     /**
      * Constructs an unflagged student. Every argument must be non-null;
@@ -50,7 +50,7 @@ public class Student {
         this.email = email;
         this.nusStudentId = nusStudentId;
         this.tags.addAll(tags);
-        this.flag = isFlagged ? Optional.of(new Flag()) : Optional.empty();
+        this.flag = isFlagged ? Optional.of(new FollowUpFlag()) : Optional.empty();
     }
 
     public Name getName() {
@@ -82,7 +82,7 @@ public class Student {
     }
 
     /** Returns the follow-up flag, when this student needs follow-up. */
-    public Optional<Flag> getFlag() {
+    public Optional<FollowUpFlag> getFlag() {
         return flag;
     }
 

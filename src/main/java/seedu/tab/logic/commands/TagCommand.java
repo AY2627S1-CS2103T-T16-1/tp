@@ -21,7 +21,7 @@ import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.model.Model;
 import seedu.tab.model.student.Student;
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -126,7 +126,7 @@ public class TagCommand extends Command {
      */
     private String absentTagMessage(Student student, List<Student> displayedStudents) {
         String absent = String.format(MESSAGE_NOT_PRESENT, Messages.shorten(tag.tagName));
-        if (!student.isFlagged() || !Flag.isFollowUpName(tag.tagName)) {
+        if (!student.isFlagged() || !FollowUpFlag.isFollowUpName(tag.tagName)) {
             return absent;
         }
         for (int index = 0; index < displayedStudents.size(); index++) {
