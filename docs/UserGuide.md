@@ -125,10 +125,12 @@ text remains one command; inspect it before pressing Enter.
   "123".` Whitespace after the command is accepted, but quoted values,
   including `""`, are still arguments.
 
-* Invisible format characters are ignored wherever they appear, so a command
-  word or an index copied from a web page with a direction mark or a zero-width
-  space still runs as the command it looks like. The joiners some scripts need
-  for shaping are the exception and are kept.
+* Invisible format characters and non-whitespace control characters are ignored
+  in commands and stored field values, including names, tags, phone numbers,
+  emails and NUS Student IDs. A pasted hidden control cannot make an
+  identical-looking name or tag differ in search or
+  duplicate warnings. Tabs and line breaks still separate values or become spaces
+  inside a field. The joiners some scripts need for shaping are kept.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -141,7 +143,7 @@ numbers use digits 0–9 regardless of your computer’s regional settings.
 The command line marks the parts of a command as you type, so a mistake is
 visible before you press Enter:
 
-* the command word is in the line's accent colour and bold, and ends at the
+* the command word is in the line's accent color and bold, and ends at the
   first space, so a quote typed against it is part of the word
 * an option such as `-p` is in mauve, as is the `--tag=` of an option written
   with its value attached
@@ -157,8 +159,8 @@ text’s displayed order.
 
 <box type="tip" seamless>
 
-**Tip:** The colours break a command where the parser breaks it, so if a value
-you meant to quote is not coloured as a quoted value, the parser will not read
+**Tip:** The colors break a command where the parser breaks it, so if a value
+you meant to quote is not colored as a quoted value, the parser will not read
 it as one either.
 </box>
 
@@ -167,7 +169,7 @@ it as one either.
 In the command box, press `Up` to recall the previous submitted command and
 `Down` to move forward. Moving past the newest command restores the draft you
 were typing before pressing `Up`. The caret moves to the end of recalled text,
-and its colours follow the command shown. Press Enter to submit it again.
+and its colors follow the command shown. Press Enter to submit it again.
 
 Rejected commands are included so you can correct a typo. Consecutive identical
 submissions appear once; blank input and all replies to a pending `clear`
@@ -204,7 +206,7 @@ letter out may differ in it, so `felete` still reaches `delete`.
 
 The comparison ignores case, so `Delte 3` is answered in the same way. A word
 that reaches nothing, such as `dlt`, is answered with the pointer to `help`.
-A word spelt correctly is no mistyping whatever case it is in: `List` and
+A word spelled correctly is no mistyping whatever case it is in: `List` and
 `LIST` run `list` rather than being suggested back to you.
 
 <box type="warning" seamless>
@@ -216,7 +218,7 @@ box, so you can correct the word rather than type the command again.
 
 ### Reading the summary beside the list
 
-The panel on the left of the window summarises the students the list is
+The panel on the left of the window summarizes the students the list is
 showing, so you can see the shape of your cohort without running a command.
 
 * **Flagged** counts the students marked as needing a follow-up.
@@ -931,9 +933,9 @@ TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.jso
 Advanced users can edit this file directly:
 
 1. Close every TAB window using this file, then make a backup of `data/tab.json`.
-2. Edit the file, preserve its JSON structure, and follow the encoding guidance
+1. Edit the file, preserve its JSON structure, and follow the encoding guidance
    below when saving.
-3. Restart TAB to load the edited records and check the changes.
+1. Restart TAB to load the edited records and check the changes.
 
 TAB reads student data only at startup. Edits made while TAB is open do not
 appear in that session. TAB refuses a later save if the student records in the

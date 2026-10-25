@@ -40,7 +40,7 @@ public class Name {
      */
     public static boolean isValidName(String test) {
         requireNonNull(test);
-        return StringUtil.hasLetterOrNumber(StringUtil.normalizeFieldValue(test));
+        return StringUtil.holdsLetterOrNumber(test);
     }
 
     /**
@@ -49,7 +49,7 @@ public class Name {
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);
-        return "it holds no letter or number";
+        return StringUtil.REASON_NO_LETTER_OR_NUMBER;
     }
 
     @Override

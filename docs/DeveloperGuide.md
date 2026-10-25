@@ -229,7 +229,7 @@ content width and the card's maximum width, matching the width used by its
 skin during layout. Measuring at the wider cell width would miss a wrapped
 contact row near a wrap threshold and squeeze the headline.
 
-#### Colouring the command line
+#### Coloring the command line
 
 `CommandTextField` converts separators to spaces in text replacement before
 JavaFX filters control characters. It asks `StringUtil#isWhitespace` the
@@ -242,24 +242,24 @@ line, including when a paste replaces selected text. CRLF is treated as one
 separator.
 
 `CommandHighlighter` breaks a command where the parser breaks it, which the
-User Guide invites the User to rely on. That means two splits the colouring
+User Guide invites the User to rely on. That means two splits the coloring
 cannot make with the rule it uses for values. `StudentBookParser` ends the
 command word at the first separator whatever the quotes, so `add"Ravi s/o
 Kumaran"` is the command word `add"Ravi` and two words after it; reading that
 word with the value rule would draw one bold quoted word and then report an
-unknown command the colours never showed. `FlagTokenizer` reads `--tag="Lab
-3"` as an option and a value, so the marker and the equals sign are coloured
+unknown command the colors never showed. `FlagTokenizer` reads `--tag="Lab
+3"` as an option and a value, so the marker and the equals sign are colored
 as the option and the rest as its value. A marker holding a quote or a
 backslash is left whole instead, because either moves the equals sign the
 parser counts to, and a word split in the wrong place would be the same bug
 again.
 
-A `TextField` cannot colour its own content, so `CommandBox` keeps the field
-for input and draws a coloured copy of the command behind it, with the field's
+A `TextField` cannot color its own content, so `CommandBox` keeps the field
+for input and draws a colored copy of the command behind it, with the field's
 own text transparent. The field still takes every keystroke and still decides
 which character a click lands on, which keeps editing exactly as it was.
 
-`CommandHighlighter` decides the colours. It returns spans covering every
+`CommandHighlighter` decides the colors. It returns spans covering every
 character of the command. It walks the command itself, rather than calling
 `CommandTokenizer`, because it has to keep the text exactly as typed, quotes
 and all, where the tokenizer removes them and may refuse an unclosed quote
@@ -270,7 +270,7 @@ awkward commands and compares how many tokens each found. That catches one of
 them splitting a command into a different number of pieces; it does not
 compare where each piece begins and ends, so a boundary that moves without
 changing the count slips through. It never rejects anything: a
-command is coloured while it is still half-typed.
+command is colored while it is still half-typed.
 
 The copy measures its natural width from the whole shaped `TextFlow`, rounded
 up to avoid wrapping at a fractional pixel boundary. Ordinary value words and
@@ -288,12 +288,12 @@ but interacts with the field:
   the field hit-tests another, and clicks land in the wrong place. Reading
   that node once is not enough, because the field's skin re-scrolls it after a
   delete, a replace or a change of width, which is after the caret and the
-  text the colouring was told about have both settled. The copy therefore
+  text the coloring was told about have both settled. The copy therefore
   follows the node's own position. The node is the one the field is drawing
   in, since an empty line shows the prompt in a node of the same kind which
   the field hides rather than throws away, and a command reading as the
   prompt would otherwise be taken for the hidden one.
-* **the caret.** The field's caret is drawn in its text colour, which is
+* **the caret.** The field's caret is drawn in its text color, which is
   transparent, so the line carries one of its own, sized from a run of the text
   so it sits where the text does. Its horizontal position follows the primary
   caret shape of the field’s text node, including its leading/trailing bias at
@@ -305,12 +305,12 @@ but interacts with the field:
   separate bands.
 
 `CommandBoxTest` checks the contrast of the selection band against the line,
-and of every colour the line uses against that band, including the one a
+and of every color the line uses against that band, including the one a
 refused command is written in, so that selecting a command cannot hide half of
 it. The bar it holds them to is 3:1 rather than the 4.5:1 WCAG asks of text
 this size: on a window this dark, a band light enough to be seen against the
 line (2.2:1) lightens the background enough that 4.5:1 would need every token
-colour moved towards white, which is not the palette the mockup sets. The
+color moved towards white, which is not the palette the mockup sets. The
 trade-off is deliberate and worth revisiting if the palette changes.
 
 #### Recalling session commands
@@ -325,18 +325,18 @@ it already matches the text in the box and an earlier entry exists. Blank
 submissions and consecutive identical submissions are skipped; editing a recalled entry does not alter stored text.
 
 The command box consumes unmodified Up/Down key presses before the text field
-handles them. Recalled text uses the existing text listener for colouring, and
+handles them. Recalled text uses the existing text listener for coloring, and
 the caret moves to its end. This UI state is session-only and never enters the
 student model or persisted data.
 
-#### Summarising the list
+#### Summarizing the list
 
 `SummaryPanel` shows the flagged count, a count per tag and the total, beside
 the list. It counts `Logic#getFilteredStudentList()`, which is the only list
-`Logic` exposes, so it summarises **what the list is showing** rather than the
+`Logic` exposes, so it summarizes **what the list is showing** rather than the
 whole student book: after `find -n Alex` it counts the matches. That is the
 reading the User Guide documents, and it keeps the panel answering the same
-question as the list it sits beside. Summarising the whole book instead would
+question as the list it sits beside. Summarizing the whole book instead would
 need `Logic` to expose it.
 
 The list is an `ObservableList`, so a listener keeps the counts current
@@ -763,8 +763,9 @@ and the JSON file.
 ### Invisible characters on the command line
 
 Before the command word is read, `StudentBookParser` strips the same Unicode
-format characters that `StringUtil.normalizeFieldValue` strips from a stored
-value, through `StringUtil.stripFormatCharacters`. A direction mark or a
+format and non-whitespace control characters that `StringUtil.normalizeFieldValue`
+strips from a stored value, through `StringUtil.stripFormatCharacters`. Whitespace controls such as tabs
+and line breaks remain separators rather than joining adjacent words. A direction mark or a
 zero-width space pasted before a command word or an index is otherwise a word
 that looks right but matches no command, or an index reported as not a positive
 integer. The zero-width joiner and non-joiner are kept, because a script such as
@@ -775,7 +776,7 @@ different word rather than the same word with a character removed.
 
 `StudentBookParser` folds the first word of the input to lower case before it
 dispatches, so `List`, `LIST` and `list` all reach `ListCommand`. No two
-command words differ only in case, so a capitalised word can only mean the one
+command words differ only in case, so a capitalized word can only mean the one
 command, and refusing it over a Caps Lock left on or a Shift held a moment too
 long costs the User a retyping for nothing.
 
@@ -811,7 +812,7 @@ which says more about what was meant than the distance to some other word
 does. Only a word that opens nothing is measured for edits at all.
 
 The measure is `StringUtil.editDistance`: how many insertions, deletions,
-substitutions and swaps of neighbouring characters turn one word into the
+substitutions and swaps of neighboring characters turn one word into the
 other. A swap counts as one edit because a fast typist makes them as readily
 as the other three, and `lsit` would otherwise sit two edits from `list`, as
 far away as a wilder guess.
@@ -845,10 +846,10 @@ sharing a first letter, so at most two are ever named at once, and the limit
 is there for the command words it may gain.
 
 The comparison folds case with the `CommandWords.foldCase` the parser
-dispatches with, so `Delte` is read as an attempt at `delete`; a word spelt
+dispatches with, so `Delte` is read as an attempt at `delete`; a word spelled
 correctly in any case is dispatched before it reaches here. The message quotes
 the word as it was typed, because a User who typed capitals needs to see them
-to recognise what they did. The quoted word is shortened the
+to recognize what they did. The quoted word is shortened the
 way a rejected field value is, so that a pasted line cannot push the rest of
 the message out of sight. Lengths are compared before any distance is, which
 also settles such a line against every command word without measuring it.
@@ -871,7 +872,7 @@ against the list rather than leaving that to be noticed.
 behavior. Its fixed name is `Needs follow-up`. A general tag with those words
 remains a distinct value: tag equality requires the same concrete class as
 well as the same normalized name. `ParserUtil.parseTagToAdd` and
-`JsonAdaptedTag.toModelType` both refuse that name however it is spelt, so that
+`JsonAdaptedTag.toModelType` both refuse that name however it is spelled, so that
 a card cannot show the same label as a tag and as the marker whether the value
 arrives from a command or from a hand-edited file. A file written before the
 rule stops loading, with an error naming the record and the field to correct.
@@ -929,7 +930,8 @@ to the storage adapter, preserving the existing file format.
 
 `Name`, `Tag`, `Phone`, `Email` and `NusStudentId` each store the form returned by
 `StringUtil.normalizeFieldValue`: without invisible format characters such as
-direction marks, with each run of whitespace reduced to one ASCII space
+direction marks and non-whitespace controls, with each run of whitespace reduced
+to one ASCII space
 and leading and trailing whitespace removed, and with the result composed to
 Unicode NFC. Composing happens last, because an invisible character between a
 base letter and its combining mark blocks the two from composing.
@@ -1024,7 +1026,7 @@ stored number retains its formatting. Absent emails do not match.
 
 The commands collect the warnings before mutation and separate them from the
 ordinary success message with a blank line. Matches are grouped by field into
-one prominently labelled `WARNING: Possible duplicate student` line. A line
+one prominently labeled `WARNING: Possible duplicate student` line. A line
 names at most two students and summarizes further matches as `N others`, so a
 shared placeholder does not fill the result box. The review advice appears
 once after every matching field. Phone warnings omit the parenthetical value:
@@ -1456,7 +1458,7 @@ These were raised during requirement gathering and left out of the product.
 
 | As a ... | I wanted to ... | Why it was dropped |
 |--------|---------------|--------------------|
-| teaching assistant | view a student's address | Cancelled, no need for address |
+| teaching assistant | view a student's address | Canceled, no need for address |
 | teaching assistant | send an email to a student | Not in the scope of TAB, it is not a messaging app |
 | teaching assistant | send a Telegram message to a student | Not in the scope of TAB, it is not a messaging app |
 | teaching assistant | send an SMS to a student | Not in the scope of TAB, it is not a messaging app |
@@ -1474,11 +1476,11 @@ These were raised during requirement gathering and left out of the product.
 * [UC01 - Add a student](#uc01-add-a-student)
 * [UC02 - Find a student and act on the right one](#uc02-find-a-student-and-act-on-the-right-one)
 * [UC03 - Flag and clear a follow-up](#uc03-flag-and-clear-a-follow-up)
-* [UC04 - Import a roster (proposed)](#uc04-import-a-roster)
+* [UC04 - Import a roster (proposed)](#uc04-import-a-roster-proposed)
 * [UC05 - Recover from an unreadable data file](#uc05-recover-from-an-unreadable-data-file)
-* [UC06 - Delete a class no longer taught (proposed)](#uc06-delete-a-class-no-longer-taught)
-* [UC07 - Archive last semester's students (proposed)](#uc07-archive-last-semester-s-students)
-* [UC08 - Semester close-out (proposed)](#uc08-semester-close-out)
+* [UC06 - Delete a class no longer taught (proposed)](#uc06-delete-a-class-no-longer-taught-proposed)
+* [UC07 - Archive last semester's students (proposed)](#uc07-archive-last-semester-s-students-proposed)
+* [UC08 - Semester close-out (proposed)](#uc08-semester-close-out-proposed)
 * [UC09 - Edit a student's details](#uc09-edit-a-student-s-details)
 * [UC10 - Add/remove a tag from a student](#uc10-add-remove-a-tag-from-a-student)
 
@@ -1908,30 +1910,30 @@ These were raised during requirement gathering and left out of the product.
 1.  **Operating environment**: Should work on any _mainstream OS_ as long as it has Java `25` (64-bit)
     installed without requiring platform-specific installation or OS-dependent libraries. This
     satisfies `Constraint-Platform-Independent` and `Constraint-Java-Version`.
-2.  **Portability**: Should be packaged as a single executable JAR file of at most 100 MB that runs
+1.  **Portability**: Should be packaged as a single executable JAR file of at most 100 MB that runs
     directly without requiring an installer or system administrator privileges. This satisfies
     `Constraint-Portable`, `Constraint-Single-File`, and `Constraint-File-Size`.
-3.  **Single-user operation**: Should be designed for a single user operating locally at any given time,
+1.  **Single-user operation**: Should be designed for a single user operating locally at any given time,
     without requiring or supporting concurrent multi-user write access to the data file. This
     satisfies `Constraint-Single-User`.
-4.  **CLI-first accessibility**: All student management operations must be executable entirely via
+1.  **CLI-first accessibility**: All student management operations must be executable entirely via
     keyboard commands without requiring a mouse, trackpad, or other pointing device. This
     satisfies `Constraint-Typing-Preferred`.
-5.  **Typing efficiency**: A user with above-average typing speed for regular English text should be able
+1.  **Typing efficiency**: A user with above-average typing speed for regular English text should be able
     to accomplish regular student management tasks faster using CLI commands than using a traditional
     mouse-driven graphical user interface. This satisfies `Constraint-Typing-Preferred`.
-6.  **Capacity**: Should comfortably store and manage up to 1,000 student records (sufficient for multiple
+1.  **Capacity**: Should comfortably store and manage up to 1,000 student records (sufficient for multiple
     semesters of active and archived tutorial and lab slots) without noticeable degradation in performance.
-7.  **Responsiveness**: Should execute typical commands (such as adding, editing, deleting, tagging, listing,
+1.  **Responsiveness**: Should execute typical commands (such as adding, editing, deleting, tagging, listing,
     and filtering across up to 1,000 student records) and update the GUI within 100 milliseconds on
     standard modern desktop hardware.
-8.  **Startup time**: Should launch and display the GUI, ready for user command input, within 2 seconds
+1.  **Startup time**: Should launch and display the GUI, ready for user command input, within 2 seconds
     on standard modern desktop hardware with an existing data file containing up to 1,000 student records.
-9.  **Screen resolution and scaling**: The GUI should render cleanly without visual clipping or overlapping
+1.  **Screen resolution and scaling**: The GUI should render cleanly without visual clipping or overlapping
     components at screen resolutions of 1920×1080 and higher with display scaling at 100% and 125%, and
     remain functional and usable down to 1280×720 with display scaling up to 150%. This satisfies
     `Constraint-Screen-Resolution`.
-10. **Data locality and offline operation**: TAB must store all student data only in local files,
+1.  **Data locality and offline operation**: TAB must store all student data only in local files,
     must not transmit student data to any network service, and must support all student management
     operations without a network connection.
 
@@ -2232,7 +2234,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Typing a command word in another case
 
-1. A correctly spelt command word in capitals
+1. A correctly spelled command word in capitals
 
    1. Prerequisites: at least one student listed.
 
@@ -3247,7 +3249,7 @@ testers are expected to do more *exploratory* testing.
       then type `add draft` without submitting it.
    1. Press Up twice, then Up again.<br>
       Expected: The line recalls the find command, then `list`, then stays at
-      `list`. Each recalled line has matching colours and its caret at the end.
+      `list`. Each recalled line has matching colors and its caret at the end.
    1. Press Down twice.<br>
       Expected: The find command reappears, then the unsent `add draft` returns.
    1. Submit `addd` twice and press Up without changing the rejected text.<br>
@@ -3257,7 +3259,7 @@ testers are expected to do more *exploratory* testing.
       Expected: The rejected `addd` is recalled once, followed by the find command.
    1. Run `clear` with at least one student present, then press Enter on the
       empty reply. Press Up.<br>
-      Expected: Clear is cancelled without changing any students. Up recalls
+      Expected: Clear is canceled without changing any students. Up recalls
       `clear` immediately, without a blank entry. Repeat with spaces as the reply;
       the result is the same. Repeat with `n`, `no`, `y`, and `yes` (repopulate the
       book after confirming); Up still recalls `clear`. Submit `list` during a
@@ -3271,7 +3273,7 @@ testers are expected to do more *exploratory* testing.
    1. Copy two adjacent spreadsheet cells containing `Wei Ming` and `Tan`.
    1. Type `add `, paste the cells, then type ` -p 91234567`.<br>
       Expected: `Wei Ming` and `Tan` remain separate words, with matching
-      command colours. A trailing line break copied by the spreadsheet can
+      command colors. A trailing line break copied by the spreadsheet can
       leave an extra space before `-p`; this does not change the command.
    1. Press Enter.<br>
       Expected: One student named `Wei Ming Tan` is added.
@@ -3297,11 +3299,11 @@ testers are expected to do more *exploratory* testing.
       Expected: Each reads as a space in the box, and the name saved matches
       what the box shows.
 
-1. Checking what the colours say
+1. Checking what the colors say
 
    1. Test case: type `add "Siti Nur-Aisyah" -p 98765432 -t T1` without
       pressing Enter.<br>
-      Expected: `add` is bold and in the accent colour, `"Siti Nur-Aisyah"` is
+      Expected: `add` is bold and in the accent color, `"Siti Nur-Aisyah"` is
       green, `-p` and `-t` are mauve, and the remaining values are in ordinary
       text.
    1. Test case: type `addd` and press Enter.<br>
@@ -3313,7 +3315,7 @@ testers are expected to do more *exploratory* testing.
       Expected: The bold command word ends at `add"Ravi`, and `s/o` is an
       ordinary word after it rather than part of the bold word. The reply
       reports the unknown command `add"Ravi`, splitting the line where the
-      colours already did.
+      colors already did.
    1. Test case: type `add Mei Tan --phone=91234567 --tag="Lab 3" -t "Lab 4"`
       without pressing Enter.<br>
       Expected: `--phone=` and `--tag=` are mauve like `-t`, `91234567` is
@@ -3326,7 +3328,7 @@ testers are expected to do more *exploratory* testing.
       edge, then press `Home`, then `End`.<br>
       Expected: The line scrolls so the caret stays in view at both ends, the
       caret is visible at the end rather than cut off by the edge, and the
-      colours stay with the text.
+      colors stay with the text.
    1. Test case: with that command still typed, press `Ctrl`+`A`.<br>
       Expected: A band is drawn behind the whole command, and every part of
       the command is still readable on top of it.
@@ -3455,6 +3457,18 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Restart TAB and repeat the name searches.<br>
       Expected: Original spellings survive saving and reloading; normalized
       comparisons still find the students. Run `list` to restore the full list.
+
+### Normalizing hidden control characters in saved names and tags
+
+1. Prerequisites: Close TAB in a disposable data folder and back up the data file.
+1. Set one student's JSON name to `"Am\u0001y"` and tags to `["La\u007fb"]`.
+   Restart TAB.<br>
+   Expected: The card shows `Amy` and `Lab`. `find -n Amy` and `find -t Lab`
+   both find that student. Loading alone leaves the file unchanged.
+1. Run `add Amy -p 789` with a phone different from the saved student's.<br>
+   Expected: The add succeeds with a possible duplicate name warning. The saved
+   name and tag no longer contain the hidden controls. Restarting retains both
+   searchable students. Restore the backup with TAB closed.
 
 ### Keeping one spelling of repeated command tags
 
