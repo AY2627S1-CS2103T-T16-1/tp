@@ -144,9 +144,6 @@ public class ParserUtil {
         if (trimmedTarget.isEmpty()) {
             throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage));
         }
-        if (Character.isLetter(trimmedTarget.charAt(0))) {
-            return parseNonBlankStudentTarget(trimmedTarget);
-        }
         try {
             return parseNonBlankStudentTarget(trimmedTarget);
         } catch (ParseException pe) {
