@@ -1913,9 +1913,12 @@ These were raised during requirement gathering and left out of the product.
 
 ### Non-Functional Requirements
 
-1.  **Operating environment**: Should work on any _mainstream OS_ as long as it has Java `25` (64-bit)
-    installed without requiring platform-specific installation or OS-dependent libraries. This
-    satisfies `Constraint-Platform-Independent` and `Constraint-Java-Version`.
+1.  **Operating environment**: Should work on any _mainstream OS_ with Java `25` (64-bit)
+    installed, without requiring platform-specific installation or OS-dependent libraries. The
+    JAR carries JavaFX `17.0.7`, whose macOS natives are x86_64, so an Apple Silicon Mac needs
+    either the Azul `25.0.3` JDK+FX distribution the course installs, which supplies JavaFX
+    itself, or an x64 JDK under Rosetta, as the Quick start explains. This satisfies
+    `Constraint-Platform-Independent` and `Constraint-Java-Version`.
 1.  **Portability**: Should be packaged as a single executable JAR file of at most 100 MB that runs
     directly without requiring an installer or system administrator privileges. This satisfies
     `Constraint-Portable`, `Constraint-Single-File`, and `Constraint-File-Size`.
