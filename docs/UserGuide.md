@@ -143,7 +143,7 @@ numbers use digits 0–9 regardless of your computer’s regional settings.
 The command line marks the parts of a command as you type, so a mistake is
 visible before you press Enter:
 
-* the command word is in the line's accent colour and bold, and ends at the
+* the command word is in the line's accent color and bold, and ends at the
   first space, so a quote typed against it is part of the word
 * an option such as `-p` is in mauve, as is the `--tag=` of an option written
   with its value attached
@@ -159,8 +159,8 @@ text’s displayed order.
 
 <box type="tip" seamless>
 
-**Tip:** The colours break a command where the parser breaks it, so if a value
-you meant to quote is not coloured as a quoted value, the parser will not read
+**Tip:** The colors break a command where the parser breaks it, so if a value
+you meant to quote is not colored as a quoted value, the parser will not read
 it as one either.
 </box>
 
@@ -169,7 +169,7 @@ it as one either.
 In the command box, press `Up` to recall the previous submitted command and
 `Down` to move forward. Moving past the newest command restores the draft you
 were typing before pressing `Up`. The caret moves to the end of recalled text,
-and its colours follow the command shown. Press Enter to submit it again.
+and its colors follow the command shown. Press Enter to submit it again.
 
 Rejected commands are included so you can correct a typo. Consecutive identical
 submissions appear once; blank input and all replies to a pending `clear`
@@ -206,7 +206,7 @@ letter out may differ in it, so `felete` still reaches `delete`.
 
 The comparison ignores case, so `Delte 3` is answered in the same way. A word
 that reaches nothing, such as `dlt`, is answered with the pointer to `help`.
-A word spelt correctly is no mistyping whatever case it is in: `List` and
+A word spelled correctly is no mistyping whatever case it is in: `List` and
 `LIST` run `list` rather than being suggested back to you.
 
 <box type="warning" seamless>
@@ -218,7 +218,7 @@ box, so you can correct the word rather than type the command again.
 
 ### Reading the summary beside the list
 
-The panel on the left of the window summarises the students the list is
+The panel on the left of the window summarizes the students the list is
 showing, so you can see the shape of your cohort without running a command.
 
 * **Flagged** counts the students marked as needing a follow-up.
@@ -249,6 +249,11 @@ run `list` to see the whole cohort again.
 Opens a help page inside TAB, replacing the student list and command box until
 you leave help. It shows every supported command, its purpose and concise syntax,
 option aliases, quoting rules and a shortcut to copy the User Guide address.
+
+The reference is coloured the way the command box colours what you type, so a
+command word, an option such as `-p` and a value you fill in such as `NAME` keep
+the same colour in both places. Section headings stand out from the body, and the
+brackets marking an optional field stay in the body colour.
 
 Use these pager keys immediately, without clicking or pressing Enter after a letter:
 
@@ -734,9 +739,11 @@ Format: `tag TARGET -r TAG`
 * An invalid target or tag, an empty quoted tag, or a missing value is refused
   with a specific error and leaves records and the saved file unchanged.
 * Removing the last tag leaves a student with no general tags. A general tag
-  named `Needs follow-up` can no longer be added, though an older or
-  hand-edited data file may still hold one; removing it leaves the follow-up
-  flag unchanged, and `edit INDEX --no-follow-up` clears that flag.
+  named `Needs follow-up` can no longer be added, and a data file holding one
+  no longer loads: TAB names the record at startup and asks you to take the
+  entry out of `tags` and set `"flag": true` instead. Correct the file while
+  TAB is closed, as described in [Editing the data file](#editing-the-data-file).
+  The flag itself is cleared with `edit INDEX --no-follow-up`.
 * The current search stays active. If it matched only the removed tag, the
   student may disappear from the displayed list; use `list` to see them again.
 * A successful removal is saved at once and remains after restarting TAB.
@@ -933,9 +940,9 @@ TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.jso
 Advanced users can edit this file directly:
 
 1. Close every TAB window using this file, then make a backup of `data/tab.json`.
-2. Edit the file, preserve its JSON structure, and follow the encoding guidance
+1. Edit the file, preserve its JSON structure, and follow the encoding guidance
    below when saving.
-3. Restart TAB to load the edited records and check the changes.
+1. Restart TAB to load the edited records and check the changes.
 
 TAB reads student data only at startup. Edits made while TAB is open do not
 appear in that session. TAB refuses a later save if the student records in the
@@ -989,6 +996,14 @@ Use actual JSON Boolean values, without quotation marks. Numbers such as
 `0`, `1` or `2`, strings such as `"true"`, and other value types are rejected
 with an error naming the student record and `flag`. TAB leaves the file
 unchanged so that you can correct the value and restart.
+
+`Needs follow-up` is the label TAB shows on a flagged student's card, so it
+names no tag. A record whose `tags` list holds it, in any letter case or
+surrounding spacing, stops loading with an error naming the student record and
+the field to correct. Remove the entry from `tags` and set `"flag": true`
+instead. A file written before this rule needs that one edit before it loads. A
+name built around the label, such as `Needs follow-up soon`, stays an ordinary
+tag.
 
 A student with an NUS Student ID has a `"nusStudentId"` string such as
 `"A01234567X"` in their JSON record. The key is optional: a missing key or

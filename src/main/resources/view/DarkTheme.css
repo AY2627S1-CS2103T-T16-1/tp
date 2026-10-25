@@ -758,6 +758,35 @@
     -fx-opacity: 1;
 }
 
+/* the reference is coloured the way the command box colours the same syntax, so that a
+   marker the User reads about here is the colour they then see themselves typing */
+.help-token {
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 13px;
+}
+
+.help-plain {
+    -fx-fill: -tab-text;
+}
+
+.help-heading {
+    -fx-fill: -tab-text-muted;
+    -fx-font-weight: bold;
+}
+
+.help-command-word {
+    -fx-fill: -tab-accent;
+    -fx-font-weight: bold;
+}
+
+.help-option {
+    -fx-fill: -tab-option;
+}
+
+.help-placeholder {
+    -fx-fill: -tab-value;
+}
+
 .help-footer {
     -fx-border-color: -tab-border transparent transparent transparent;
     -fx-border-width: 1 0 0 0;

@@ -14,6 +14,9 @@ import java.util.regex.Pattern;
  */
 public class StringUtil {
 
+    /** Why {@link #holdsLetterOrNumber(String)} turned a value down, phrased for the user. */
+    public static final String REASON_NO_LETTER_OR_NUMBER = "it holds no letter or number";
+
     // almost every Unicode format character (category Cf), except the joiner and non-joiner a
     // script needs to shape a word. A few of them do draw something — the Arabic end-of-ayah
     // sign and the characters that tag a Scotland flag — but none is likely in a class list,
@@ -260,6 +263,17 @@ public class StringUtil {
     public static boolean hasLetterOrNumber(String s) {
         requireNonNull(s);
         return HAS_LETTER_OR_NUMBER.matcher(s).find();
+    }
+
+    /**
+     * Returns true if {@code value} contains at least one letter or number once normalized:
+     * the rule a stored field value has to meet, shared so that two fields asking it cannot
+     * drift apart. A value of punctuation alone, such as "!!!", survives normalization and is
+     * turned down all the same.
+     */
+    public static boolean holdsLetterOrNumber(String value) {
+        requireNonNull(value);
+        return hasLetterOrNumber(normalizeFieldValue(value));
     }
 
     /**

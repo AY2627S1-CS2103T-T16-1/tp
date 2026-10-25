@@ -71,10 +71,6 @@ public class Flag {
         this.takesValue = true;
     }
 
-    public String getFlag() {
-        return flag;
-    }
-
     /**
      * Returns every marker that identifies this flag, with the primary marker first.
      */

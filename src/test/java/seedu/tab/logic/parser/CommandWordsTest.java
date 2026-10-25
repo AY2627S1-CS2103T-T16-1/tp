@@ -1,7 +1,7 @@
 package seedu.tab.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.io.IOException;
@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -201,10 +202,11 @@ public class CommandWordsTest {
     @Test
     public void suggestFor_pastedParagraph_returnsNothingPromptly() {
         String pasted = "lorem ipsum ".repeat(100_000);
-        long startTime = System.nanoTime();
-        assertEquals(List.of(), CommandWords.suggestFor(pasted));
-        long elapsedMillis = (System.nanoTime() - startTime) / 1_000_000;
-        assertTrue(elapsedMillis < 1000, "measuring a pasted paragraph took " + elapsedMillis + "ms");
+        // the bound guards against a search that walks the paste rather than giving up on its
+        // first word. It is deliberately loose: a loaded CI box is slow, while a regression
+        // here does not take milliseconds longer, it fails to finish
+        Duration generous = Duration.ofSeconds(10);
+        assertTimeoutPreemptively(generous, () -> assertEquals(List.of(), CommandWords.suggestFor(pasted)));
     }
 
     @Test

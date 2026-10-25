@@ -20,6 +20,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.model.student.Student;
 
 /**
@@ -34,8 +35,7 @@ public class SummaryPanel extends UiPart<Region> {
     private static final double TAG_ROW_SPACING = 4;
 
     private static final String FXML = "SummaryPanel.fxml";
-    private static final String SINGULAR = "%d student";
-    private static final String PLURAL = "%d students";
+    private static final String TOTAL_FORMAT = "%d student%s";
 
     @FXML
     private HBox flaggedRow;
@@ -154,7 +154,7 @@ public class SummaryPanel extends UiPart<Region> {
      * Returns {@code count} with the word for it, so that one student is not "1 students".
      */
     public static String describeTotal(int count) {
-        return String.format(Locale.ROOT, count == 1 ? SINGULAR : PLURAL, count);
+        return String.format(Locale.ROOT, TOTAL_FORMAT, count, StringUtil.getPluralSuffix(count));
     }
 
     private void summarise(List<Student> students) {

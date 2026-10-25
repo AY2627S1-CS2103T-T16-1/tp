@@ -17,6 +17,13 @@ import javafx.scene.text.Font;
 
 public class UiFontsTest {
 
+    /**
+     * The families the window is meant to prefer, in order. Held here rather than read back
+     * from {@code UiFonts}, so that the test states what the list should be instead of
+     * agreeing with whatever it happens to be.
+     */
+    private static final List<String> PREFERRED =
+            List.of("Inter", "Segoe UI", "Helvetica Neue", "Cantarell", "Noto Sans");
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -58,7 +65,7 @@ public class UiFontsTest {
     public void bodyFamily_aMachineWithAPreferredFamily_usesTheFirstOfThem() throws Exception {
         List<String> installedPreferred = onFxThread(() -> {
             List<String> installed = Font.getFamilies();
-            return UiFonts.preferredFamilies().stream().filter(installed::contains).toList();
+            return PREFERRED.stream().filter(installed::contains).toList();
         });
         // the families a machine carries are its own affair, so this one is reported skipped
         // rather than passed where there is nothing to choose
