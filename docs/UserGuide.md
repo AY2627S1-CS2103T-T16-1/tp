@@ -533,6 +533,8 @@ done to it beyond the quotes any value with spaces takes:
   starting with a digit reads as an index, so `edit` can only name a student by an ID
   that opens with a letter; to edit a student whose ID starts with a digit, use their
   index. Here `--id` always sets the student's ID rather than choosing who to edit.
+  A zero or non-integer index reports `Index must be a positive integer.`
+  without the full usage block; any invalid field values are reported alongside it.
   The current search stays active after editing, so the index keeps referring to
   the same student when you repeat a command, as long as that student still
   matches the search. An edit that removes a matching detail, such as renaming

@@ -97,22 +97,22 @@ public class ParserUtil {
      * Parses a required student target, reporting an empty preamble as the missing
      * {@code missingField}. The first word is read the way {@link #parseStudentTarget} reads
      * it, as a displayed index or an NUS Student ID, and any word after it is refused,
-     * because a target is one word before the command's options.
+     * because a target is one word before the command's options. Invalid indices keep
+     * their concise validation reason rather than the full command usage.
      *
      * @param missingField How a missing target is named, so the caller can show every target form.
      * @throws ParseException if the target is missing, holds extra words, or names no student.
      */
-    public static StudentTarget parseRequiredStudentTarget(String preamble, String missingField, String fieldName,
-            String usage) throws ParseException {
+    public static StudentTarget parseRequiredStudentTarget(String preamble, String missingField, String fieldName)
+            throws ParseException {
         requireNonNull(missingField);
         requireNonNull(fieldName);
-        requireNonNull(usage);
         String trimmedPreamble = preamble.trim();
         if (trimmedPreamble.isEmpty()) {
             throw new ParseException(Messages.getErrorMessageForMissingFields(missingField));
         }
         String[] values = trimmedPreamble.split("(?U)\\s+", 2);
-        StudentTarget target = parseStudentTarget(values[0], usage);
+        StudentTarget target = parseNonBlankStudentTarget(values[0]);
         if (values.length > 1) {
             throw new ParseException(String.format(MESSAGE_VALUE_AFTER_INDEX, fieldName, Messages.shorten(values[1])));
         }
@@ -145,16 +145,24 @@ public class ParserUtil {
             throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage));
         }
         if (Character.isLetter(trimmedTarget.charAt(0))) {
-            return StudentTarget.byNusStudentId(parseNusStudentId(trimmedTarget));
+            return parseNonBlankStudentTarget(trimmedTarget);
         }
         try {
-            return StudentTarget.byIndex(parseIndex(trimmedTarget), trimmedTarget);
+            return parseNonBlankStudentTarget(trimmedTarget);
         } catch (ParseException pe) {
             if (!pe.getMessage().equals(MESSAGE_INVALID_INDEX)) {
                 throw pe;
             }
             throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage), pe);
         }
+    }
+
+    /** Returns a non-blank target while retaining the field-specific validation reason. */
+    private static StudentTarget parseNonBlankStudentTarget(String target) throws ParseException {
+        if (Character.isLetter(target.charAt(0))) {
+            return StudentTarget.byNusStudentId(parseNusStudentId(target));
+        }
+        return StudentTarget.byIndex(parseIndex(target), target);
     }
 
     /**

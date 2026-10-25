@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.ParserUtil;
@@ -208,6 +209,16 @@ public class TagCommandIntegrationTest {
         for (Map.Entry<String, String> error : errors.entrySet()) {
             assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());
         }
+    }
+
+    @Test
+    public void execute_invalidEditIndex_reportsReasonWithoutMutation() throws Exception {
+        for (String target : List.of("0", "1.5", "+1", "\"-1\"")) {
+            assertFailureWithoutMutation("edit " + target + " -p 91234567", ParseException.class,
+                    ParserUtil.MESSAGE_INVALID_INDEX);
+        }
+        assertFailureWithoutMutation("edit 0", ParseException.class,
+                ParserUtil.MESSAGE_INVALID_INDEX + "\n" + EditCommand.MESSAGE_NOT_EDITED);
     }
 
     @Test
