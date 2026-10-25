@@ -3228,15 +3228,20 @@ testers are expected to do more *exploratory* testing.
       Expected: Each command succeeds with no other change, even though the
       number is already absent.
 
-   1. Test case: `find -p 9123`, then `edit INDEX -p "+65 9123 4567"` and
-      `find -p 9123` again.<br>
+   1. Test case: `find -p 9123`, then `list`, note Alice's displayed `INDEX`
+      again, and run `edit INDEX -p "+65 9123 4567"` followed by
+      `find -p 9123`.<br>
       Expected: The first search does not list Alice, because she holds no
-      number. After the edit her card shows `+65 9123 4567` as entered, and the
-      second search lists her.
+      number, so `list` is needed before the edit can name her by position.
+      After the edit her card shows `+65 9123 4567` as entered, and the second
+      search lists her.
 
-   1. Test cases: `edit INDEX -p` and `edit INDEX -p 12`.<br>
+   1. Test cases: `list`, note Alice's displayed `INDEX` once more, then
+      `edit INDEX -p` and `edit INDEX -p 12`.<br>
       Expected: Specific feedback for the missing value and for the malformed
-      number respectively. Neither the student nor the JSON file changes.
+      number respectively. Neither the student nor the JSON file changes. The
+      preceding search leaves its own list on screen, so `list` restores the
+      positions these commands count.
 
 ### Recording email addresses with symbols
 
