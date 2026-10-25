@@ -6,6 +6,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_OVER_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.FLAG_NAME_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.FOLLOW_UP;
+import static seedu.tab.logic.commands.CommandTestUtil.FOLLOW_UP_AS_TAG;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_EMAIL;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_FLAG_NAME;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NUS_STUDENT_ID;
@@ -57,6 +58,13 @@ import seedu.tab.testutil.EditStudentDescriptorBuilder;
 public class EditCommandParserTest {
 
     private EditCommandParser parser = new EditCommandParser();
+
+    @Test
+    public void parse_caseVariantTags_keepsFirstSpelling() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withTags("lab", "ς", "T1").build();
+        assertParseSuccess(parser, " 1 -t lab --tag Lab -t LAB -t ς -t Σ -t T1",
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+    }
 
     @Test
     public void parse_allFieldsSpecified_success() {
@@ -316,6 +324,17 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_multipleErrors_keepsShapeErrorsAheadOfFieldErrors() {
+        assertParseFailure(parser, "0 -p invalid -f -nf", Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
+        assertParseFailure(parser, "0 -p invalid -f --follow-up -nf",
+                Messages.getErrorMessageForDuplicateFlags("-f"));
+        assertParseFailure(parser, "0 -p invalid --phone invalid -f -nf",
+                Messages.getErrorMessageForDuplicateFlags("-p"));
+        assertParseFailure(parser, "0 -p invalid --phone invalid -f --follow-up -nf",
+                Messages.getErrorMessageForDuplicateFlags("-p", "-f"));
+    }
+
+    @Test
     public void parse_contradictoryFollowUpOptions_failure() {
         for (String options : new String[] {"--follow-up --no-follow-up", "--no-follow-up --follow-up",
             "-f --no-follow-up", "--no-follow-up -f -p 81112222", "--follow-up -nf", "-nf --follow-up",
@@ -423,6 +442,7 @@ public class EditCommandParserTest {
                         Email.getFailureReason("bob!yahoo")));
         assertParseFailure(parser, "1" + INVALID_TAG,
                 Messages.getErrorMessageForInvalidValue("Tag", "---", Tag.getFailureReason("---")));
+        assertParseFailure(parser, "1" + FOLLOW_UP_AS_TAG, ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
         assertParseFailure(parser, "1" + INVALID_NUS_STUDENT_ID,
                 Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
                         NusStudentId.getFailureReason("A0123-456")));

@@ -47,6 +47,7 @@ public class AddCommandTest {
 
         assertEquals(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(validStudent)),
                 commandResult.getFeedbackToUser());
+        assertEquals(validStudent, commandResult.getStudentToReveal().orElseThrow());
         assertEquals(List.of(validStudent), modelStub.studentsAdded);
     }
 
@@ -86,6 +87,7 @@ public class AddCommandTest {
         // same values -> returns true
         AddCommand addAliceCommandCopy = new AddCommand(alice);
         assertTrue(addAliceCommand.equals(addAliceCommandCopy));
+        assertEquals(addAliceCommand.hashCode(), addAliceCommandCopy.hashCode());
 
         // different types -> returns false
         assertFalse(addAliceCommand.equals(1));

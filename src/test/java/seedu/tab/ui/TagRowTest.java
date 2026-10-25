@@ -140,12 +140,22 @@ public class TagRowTest {
 
     @Test
     public void setTags_replacingManyTags_replacesLabelsAndOverflow() throws Exception {
-        TagRow row = rowOf(1000, List.of("alpha", "bravo", "charlie", "delta", "echo"));
+        List<String> originalTags = List.of("alpha", "bravo", "charlie", "delta", "echo");
+        TagRow row = rowOf(1000, originalTags);
+        onFxThread(() -> {
+            row.resize(60, row.getHeight());
+            row.layout();
+            return null;
+        });
+        Label originalOverflow = (Label) row.getChildrenUnmodifiable().getLast();
+        assertTrue(originalOverflow.isVisible(), "the replacement must start with populated overflow");
+        assertEquals(String.join(", ", originalTags), originalOverflow.getTooltip().getText());
         for (List<String> names : List.of(List.of("Lab 3"), List.<String>of(),
                 List.of("T1", "T2", "T3", "T4"))) {
             onFxThread(() -> {
                 row.setTags(names);
                 row.getParent().applyCss();
+                row.getParent().requestLayout();
                 row.getParent().layout();
                 return null;
             });
@@ -154,8 +164,8 @@ public class TagRowTest {
             List<String> expected = names;
             assertEquals(expected, chipsOf(row));
             Label overflow = (Label) row.getChildrenUnmodifiable().getLast();
-            assertEquals(String.join(", ", List.<String>of()),
-                    overflow.getTooltip().getText());
+            assertFalse(overflow.isVisible(), "replacement tags fit, so the previous overflow must disappear");
+            assertEquals("", overflow.getTooltip().getText());
         }
     }
 

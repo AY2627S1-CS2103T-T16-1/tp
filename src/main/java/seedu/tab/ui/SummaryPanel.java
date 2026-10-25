@@ -3,6 +3,7 @@ package seedu.tab.ui;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -11,7 +12,10 @@ import java.util.function.BinaryOperator;
 
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -34,7 +38,11 @@ public class SummaryPanel extends UiPart<Region> {
     private static final String PLURAL = "%d students";
 
     @FXML
+    private HBox flaggedRow;
+    @FXML
     private Label flaggedCount;
+    @FXML
+    private ScrollPane tagScroll;
     @FXML
     private VBox tagRows;
     @FXML
@@ -47,7 +55,22 @@ public class SummaryPanel extends UiPart<Region> {
     public SummaryPanel(ObservableList<Student> students) {
         super(FXML);
         students.addListener((javafx.collections.ListChangeListener<Student>) change -> summarise(students));
+        tagScroll.viewportBoundsProperty().addListener((unused, previous, viewport) ->
+                reserveScrollBarWidth(viewport.getWidth()));
         summarise(students);
+    }
+
+    /**
+     * Keeps the flagged count in the same column as the tag counts.
+     *
+     * <p>The tag list scrolls inside its own pane, so once there are more tags than fit, the
+     * scroll bar takes its width out of the rows within it while the flagged row above is left
+     * where it was. Reserving the same width beside the flagged count means the panel keeps one
+     * column of numbers rather than splitting into two.
+     */
+    private void reserveScrollBarWidth(double viewportWidth) {
+        double reserved = Math.max(0, tagScroll.getWidth() - viewportWidth);
+        flaggedRow.setPadding(new Insets(0, reserved, 0, 0));
     }
 
     /**
@@ -121,7 +144,7 @@ public class SummaryPanel extends UiPart<Region> {
     }
 
     /**
-     * Returns how many of {@code students} are waiting on a reply.
+     * Returns how many of {@code students} need follow-up.
      */
     public static long countFlagged(List<Student> students) {
         return students.stream().filter(Student::isFlagged).count();
@@ -131,7 +154,7 @@ public class SummaryPanel extends UiPart<Region> {
      * Returns {@code count} with the word for it, so that one student is not "1 students".
      */
     public static String describeTotal(int count) {
-        return String.format(count == 1 ? SINGULAR : PLURAL, count);
+        return String.format(Locale.ROOT, count == 1 ? SINGULAR : PLURAL, count);
     }
 
     private void summarise(List<Student> students) {
@@ -146,7 +169,8 @@ public class SummaryPanel extends UiPart<Region> {
      * Returns a row naming {@code tag} with its count pushed to the far edge.
      *
      * <p>Long names wrap so that tags with a shared prefix remain distinguishable.
-     * The count keeps its full width beside the name.
+     * The count keeps its full width beside the name, and sits against the middle of it, so
+     * that a name taking two lines does not leave its count level with the first of them.
      */
     private static HBox rowFor(String tag, int count) {
         Label name = new Label(tag);
@@ -162,6 +186,7 @@ public class SummaryPanel extends UiPart<Region> {
         number.setMinWidth(Region.USE_PREF_SIZE);
 
         HBox row = new HBox(TAG_ROW_SPACING, name, spacer, number);
+        row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("summary-row");
         return row;
     }

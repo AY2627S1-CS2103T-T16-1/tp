@@ -8,6 +8,7 @@ import static seedu.tab.testutil.TypicalIndexes.INDEX_SECOND_STUDENT;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.commons.core.index.Index;
 import seedu.tab.model.student.NusStudentId;
 
 /**
@@ -54,7 +55,7 @@ public class StudentTargetTest {
     public void hashCode_equalTargets_sameHashCode() {
         // targets that name the same address must agree on their hash, or a collection that
         // holds them cannot find one by looking for the other
-        assertEquals(FIRST_BY_INDEX.hashCode(), StudentTarget.byIndex(INDEX_FIRST_STUDENT).hashCode());
+        assertEquals(FIRST_BY_INDEX.hashCode(), StudentTarget.byIndex(Index.fromOneBased(1)).hashCode());
         assertEquals(FIRST_BY_ID.hashCode(),
                 StudentTarget.byNusStudentId(new NusStudentId("a12345678c")).hashCode());
     }

@@ -20,6 +20,7 @@ import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
+import seedu.tab.model.tag.Flag;
 import seedu.tab.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -48,7 +49,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseRequiredIndex_invalidInput_throwsParseException() {
-        for (String index : List.of(" ", "0", "-1", "abc", "2147483648")) {
+        for (String index : List.of(" ", "0", "-1", "abc")) {
             assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
                     ParserUtil.parseRequiredIndex(index, "STUDENT_INDEX"));
         }
@@ -73,7 +74,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseIndex_invalidInput_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseIndex("10 a"));
+        assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () -> ParserUtil.parseIndex("10 a"));
     }
 
     @Test
@@ -81,8 +82,12 @@ public class ParserUtilTest {
         // the first index that does not fit in an int, one more than the largest one that
         // does. It is written out rather than added up, because an int addition would wrap
         // around and produce a negative index instead
-        assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
-                ParserUtil.parseIndex("2147483648"));
+        for (String index : List.of("2147483648", "6591234567", "9".repeat(1_000))) {
+            String expected = String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, Messages.shorten(index));
+            assertThrows(ParseException.class, expected, () -> ParserUtil.parseIndex(index));
+            assertThrows(ParseException.class, expected, () -> ParserUtil.parseRequiredIndex(index, "INDEX"));
+            assertThrows(ParseException.class, expected, () -> ParserUtil.parseStudentTarget(index, USAGE));
+        }
     }
 
     @Test
@@ -135,7 +140,7 @@ public class ParserUtilTest {
     public void parseStudentTarget_unusableIndexTarget_throwsUsageMessage() {
         // a target of this shape reads as a mistyped index rather than as a candidate
         // NUS Student ID, so the usage message carries the refusal
-        for (String target : List.of("0", "-1", "!@#", "1a", "2147483648")) {
+        for (String target : List.of("0", "-1", "!@#", "1a")) {
             assertThrows(ParseException.class,
                     String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, USAGE), () ->
                     ParserUtil.parseStudentTarget(target, USAGE));
@@ -193,7 +198,9 @@ public class ParserUtilTest {
 
     @Test
     public void parseName_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseName(INVALID_NAME));
+        assertThrows(ParseException.class, Messages.getErrorMessageForInvalidValue(
+                Name.FIELD_NAME, INVALID_NAME, Name.getFailureReason(INVALID_NAME)), () ->
+                ParserUtil.parseName(INVALID_NAME));
     }
 
     @Test
@@ -216,7 +223,9 @@ public class ParserUtilTest {
 
     @Test
     public void parsePhone_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parsePhone(INVALID_PHONE));
+        assertThrows(ParseException.class, Messages.getErrorMessageForInvalidValue(
+                Phone.FIELD_NAME, INVALID_PHONE, Phone.getFailureReason(INVALID_PHONE)), () ->
+                ParserUtil.parsePhone(INVALID_PHONE));
     }
 
     @Test
@@ -239,7 +248,9 @@ public class ParserUtilTest {
 
     @Test
     public void parseEmail_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseEmail(INVALID_EMAIL));
+        assertThrows(ParseException.class, Messages.getErrorMessageForInvalidValue(
+                Email.FIELD_NAME, INVALID_EMAIL, Email.getFailureReason(INVALID_EMAIL)), () ->
+                ParserUtil.parseEmail(INVALID_EMAIL));
     }
 
     @Test
@@ -253,6 +264,13 @@ public class ParserUtilTest {
         String emailWithWhitespace = WHITESPACE + VALID_EMAIL + WHITESPACE;
         Email expectedEmail = new Email(VALID_EMAIL);
         assertEquals(expectedEmail, ParserUtil.parseEmail(emailWithWhitespace));
+    }
+
+    @Test
+    public void parseEmail_valueWithInvisibleMark_returnsNormalizedEmail() throws Exception {
+        // a pasted address keeps a format character that the message cannot show, so the value
+        // is normalized before it is judged rather than quoted back with the mark hidden
+        assertEquals(new Email(VALID_EMAIL), ParserUtil.parseEmail("\u200E" + VALID_EMAIL));
     }
 
     @Test
@@ -296,13 +314,21 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseNusStudentId_valueWithInvisibleMark_returnsNormalizedNusStudentId() throws Exception {
+        String withMark = "\u200E" + VALID_NUS_STUDENT_ID.toLowerCase();
+        assertEquals(new NusStudentId(VALID_NUS_STUDENT_ID), ParserUtil.parseNusStudentId(withMark));
+    }
+
+    @Test
     public void parseTag_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> ParserUtil.parseTag(null));
     }
 
     @Test
     public void parseTag_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseTag(INVALID_TAG));
+        assertThrows(ParseException.class, Messages.getErrorMessageForInvalidValue(
+                Tag.FIELD_NAME, INVALID_TAG, Tag.getFailureReason(INVALID_TAG)), () ->
+                ParserUtil.parseTag(INVALID_TAG));
     }
 
     @Test
@@ -316,5 +342,34 @@ public class ParserUtilTest {
         String tagWithWhitespace = WHITESPACE + VALID_TAG_1 + WHITESPACE;
         Tag expectedTag = new Tag(VALID_TAG_1);
         assertEquals(expectedTag, ParserUtil.parseTag(tagWithWhitespace));
+    }
+
+    @Test
+    public void parseTag_followUpLabel_returnsTag() throws Exception {
+        // removing it is still read as a tag, so that TagCommand can explain the marker
+        assertEquals(new Tag(Flag.FOLLOW_UP_NAME), ParserUtil.parseTag(Flag.FOLLOW_UP_NAME));
+    }
+
+    @Test
+    public void parseTagToAdd_followUpLabelHoweverSpelt_throwsParseException() {
+        List<String> spellings = List.of(Flag.FOLLOW_UP_NAME, "needs follow-up", "NEEDS FOLLOW-UP",
+                WHITESPACE + "nEEds" + WHITESPACE + "follow-up" + WHITESPACE);
+        for (String spelling : spellings) {
+            assertThrows(ParseException.class, ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG, () ->
+                    ParserUtil.parseTagToAdd(spelling));
+        }
+    }
+
+    @Test
+    public void parseTagToAdd_ordinaryTag_returnsTrimmedTag() throws Exception {
+        assertEquals(new Tag(VALID_TAG_1), ParserUtil.parseTagToAdd(WHITESPACE + VALID_TAG_1 + WHITESPACE));
+    }
+
+    @Test
+    public void parseTagToAdd_tagSpeltAroundTheLabel_returnsTag() throws Exception {
+        // the label itself is reserved rather than every tag that reads like it
+        for (String tag : List.of("Needs follow-up soon", "Follow-up", "Needs follow up")) {
+            assertEquals(new Tag(tag), ParserUtil.parseTagToAdd(tag));
+        }
     }
 }

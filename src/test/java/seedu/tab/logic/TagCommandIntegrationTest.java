@@ -17,6 +17,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
+import seedu.tab.logic.parser.ParserUtil;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
@@ -107,7 +108,7 @@ public class TagCommandIntegrationTest {
         model.updateFilteredStudentList(shown -> false);
 
         assertFailureWithoutMutation("tag 1234 -a T2", CommandException.class,
-                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+                Messages.getErrorMessageForInvalidIndex("1234", 0));
         logic.execute("tag -i 1234 -a T2");
         Student expected = new StudentBuilder(numericIdStudent).withTags("T1", "Lab 3", "T2").build();
         assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
@@ -150,10 +151,10 @@ public class TagCommandIntegrationTest {
     }
 
     @Test
-    public void execute_minimalStudent_preservesAbsentFieldsAndDoesNotSetFollowUp() throws Exception {
+    public void execute_minimalStudent_preservesAbsentFields() throws Exception {
         model.updateFilteredStudentList(shown -> shown.getName().equals(otherStudent.getName()));
-        logic.execute("tag 1 -a \"Needs follow-up\"");
-        Student expected = new StudentBuilder(otherStudent).withTags("Needs follow-up").build();
+        logic.execute("tag 1 -a \"T2\"");
+        Student expected = new StudentBuilder(otherStudent).withTags("T2").build();
         assertEquals(List.of(expected, student), storage.readStudentBook().orElseThrow().getStudentList());
         assertEquals(List.of(expected), model.getFilteredStudentList());
     }
@@ -174,20 +175,22 @@ public class TagCommandIntegrationTest {
                 "tag 1 -t T2", "There is no -t option.\n" + TagCommand.MESSAGE_ACTION_GUIDANCE,
                 "tag 1 --tag T2", "There is no --tag option.\n" + TagCommand.MESSAGE_ACTION_GUIDANCE,
                 "tag 0 -a T2", "Index must be a positive integer.",
-                "tag 2147483648 -a T2", "Index must be a positive integer.",
+                "tag 2147483648 -a T2", String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, "2147483648"),
                 "tag 1 -a \"\"", "Tag \"\" is not valid: it holds no letter or number",
                 "tag 1 -a \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
-                "tag 1 -a T2 --add T3", "Options given more than once: -a. Give each listed option only once.");
+                "tag 1 -a T2 --add T3", "Options given more than once: -a. Give each listed option only once.",
+                "tag 1 -a \"Needs follow-up\"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG,
+                "tag 1 -a \"  nEEds   follow-up \"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
         for (Map.Entry<String, String> error : errors.entrySet()) {
             assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());
         }
         for (String index : List.of("2", "2147483647")) {
             assertFailureWithoutMutation("tag " + index + " -a T2", CommandException.class,
-                    Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+                    Messages.getErrorMessageForInvalidIndex(index, 1));
         }
         model.updateFilteredStudentList(shown -> false);
         assertFailureWithoutMutation("tag 1 -a T2", CommandException.class,
-                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+                Messages.getErrorMessageForInvalidIndex("1", 0));
     }
 
     @Test
@@ -208,8 +211,8 @@ public class TagCommandIntegrationTest {
     }
 
     @Test
-    public void execute_humanEditedLegacyTags_normalizesWithoutDiscardingExistingVariants() throws Exception {
-        // Legacy/edit records may contain two case variants. Tagging must retain both.
+    public void execute_humanEditedLegacyTags_mergesVariantsBeforeTagging() throws Exception {
+        // Loading merges legacy variants before the command handles the student.
         model.updateFilteredStudentList(shown -> shown.getName().equals(student.getName()));
         Student legacy = new StudentBuilder(student).withTags("Lab 3", "lab 3", "Café").build();
         model.setStudent(student, legacy);
@@ -223,7 +226,7 @@ public class TagCommandIntegrationTest {
         assertFailureWithoutMutation("tag 1 -a \"LAB 3\"", CommandException.class,
                 "This student already has tag [Lab 3]. No changes made.");
         logic.execute("tag 1 -a T2");
-        Student expected = new StudentBuilder(legacy).withTags("Lab 3", "lab 3", "Café", "T2").build();
+        Student expected = new StudentBuilder(legacy).withTags("Lab 3", "Café", "T2").build();
         assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
     }
 
@@ -274,7 +277,7 @@ public class TagCommandIntegrationTest {
         Map<String, String> errors = Map.of(
                 "tag 0 -r T1", "Index must be a positive integer.",
                 "tag -1 -r T1", "Index must be a positive integer.\nThere is no -1 option." + hint,
-                "tag 2147483648 --remove T1", "Index must be a positive integer.",
+                "tag 2147483648 --remove T1", String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, "2147483648"),
                 "tag 1 -r \"\"", "Tag \"\" is not valid: it holds no letter or number",
                 "tag 1 -r \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
                 "tag 1 -r", "-r TAG needs a value after it. "
@@ -286,11 +289,11 @@ public class TagCommandIntegrationTest {
         }
         for (String index : List.of("2", "2147483647")) {
             assertFailureWithoutMutation("tag " + index + " -r T1", CommandException.class,
-                    Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+                    Messages.getErrorMessageForInvalidIndex(index, 1));
         }
         model.updateFilteredStudentList(shown -> false);
         assertFailureWithoutMutation("tag 1 -r T1", CommandException.class,
-                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+                Messages.getErrorMessageForInvalidIndex("1", 0));
     }
 
     @Test

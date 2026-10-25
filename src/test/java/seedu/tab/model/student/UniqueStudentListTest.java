@@ -232,6 +232,8 @@ public class UniqueStudentListTest {
 
     @Test
     public void toStringMethod() {
-        assertEquals(uniqueStudentList.asUnmodifiableObservableList().toString(), uniqueStudentList.toString());
+        assertEquals("[]", uniqueStudentList.toString());
+        uniqueStudentList.add(ALICE);
+        assertEquals("[" + ALICE + "]", uniqueStudentList.toString());
     }
 }

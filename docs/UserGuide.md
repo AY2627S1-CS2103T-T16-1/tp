@@ -36,7 +36,8 @@ TAB is a **desktop application for teaching assistants to manage student records
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar tab.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.
-   The picture shows TAB in use, so a fresh launch has an empty command box and no reply above the list.<br>
+   The picture was taken just after adding one student, so a fresh launch shows the six sample students, no
+   reply above the list, and nobody marked as needing a follow-up.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to show the command summary in the main window.<br>
@@ -44,7 +45,7 @@ TAB is a **desktop application for teaching assistants to manage student records
 
    * `list` : Lists all students.
 
-   * `add John Doe -p 98765432 -e johnd@example.com --id A01234567X` : Adds a student named `John Doe` with an NUS Student ID.
+   * `add John Doe -p 98765432 -e johnd@example.com --id A05678901K` : Adds a student named `John Doe` with an NUS Student ID.
 
    * `delete 3` : Deletes the 3rd student shown in the current list. `delete A01234567X` deletes by NUS Student ID instead.
 
@@ -94,7 +95,8 @@ text remains one command; inspect it before pressing Enter.
   `-e EMAIL -p PHONE` is also acceptable. A parameter given before any
   option, such as the name in `add`, keeps its place at the front.
 
-* Every command marks its fields with options such as `-p`. Value options also
+* Commands use options such as `-p` for fields, except positional parameters
+  such as the leading name in `add` or the target in `edit`. Value options also
   have descriptive long aliases such as `--phone`; the command-specific
   sections list them. Separate a value from its option with a space, as in
   `--phone 91234567`, or join it with an equals sign, as in
@@ -111,6 +113,12 @@ text remains one command; inspect it before pressing Enter.
   `Options given more than once: -f. Give each listed option only once.`
   This also covers mixed short and long spellings, such as `-f` and `--follow-up`.
 
+* An `INDEX` refers to a positive position in the **displayed** student list.
+  If it exceeds that list, TAB quotes the index and reports the number of students
+  currently shown; `list` restores all students before you choose an index again.
+  Indices up to 2147483647 can be read; a larger positive integer gets a specific
+  upper-bound message instead of being described as non-positive.
+
 * Commands that take no parameters (`help`, `list`, `exit`, and `clear`)
   reject unexpected input and report it without executing the command.<br>
   For example, `help 123` reports `help takes no arguments. Unexpected input:
@@ -126,6 +134,9 @@ text remains one command; inspect it before pressing Enter.
 </box>
 
 ### Typing a command
+
+TAB uses an English interface. Counts, displayed indices and data-file line
+numbers use digits 0–9 regardless of your computer’s regional settings.
 
 The command line marks the parts of a command as you type, so a mistake is
 visible before you press Enter:
@@ -159,7 +170,9 @@ were typing before pressing `Up`. The caret moves to the end of recalled text,
 and its colours follow the command shown. Press Enter to submit it again.
 
 Rejected commands are included so you can correct a typo. Consecutive identical
-submissions appear once; blank and whitespace-only replies are omitted. If the
+submissions appear once; blank input and all replies to a pending `clear`
+confirmation are omitted, including invalid replies. The `clear` command itself
+remains available for recall. If the
 box already shows the newest submission (for example after a rejection), the
 first `Up` skips to the preceding entry when there is one. `Down` still returns
 the rejected text. At the oldest entry, `Up` keeps the text unchanged;
@@ -265,7 +278,8 @@ Format: `help`
 
 ### Adding a student: `add`
 
-Adds a student to the student book.
+Adds a student to the student book. After a successful save, TAB scrolls the new
+student's card into view and keeps focus in the command box.
 
 If the new student matches the active search, the search stays active and the
 student appears at the end of its results. Otherwise, TAB shows all students
@@ -279,6 +293,8 @@ The value options accept these equivalent spellings: `-p` and `--phone`,
 be mixed in one command, but giving a single-valued field (phone, email or NUS
 Student ID) twice is an error even when the two spellings differ. Tags are
 repeatable: use `-t` or `--tag` once for each tag, mixing the spellings if you wish.
+Tags differing only in case or normalized whitespace become one tag; the first
+spelling in the command is kept. For example, `-t Lab -t lab -t LAB` keeps `Lab`.
 
 <box type="tip" seamless>
 
@@ -286,11 +302,20 @@ repeatable: use `-t` or `--tag` once for each tag, mixing the spellings if you w
 for, rather than inventing an address to satisfy the command. To remove an
 email entered by mistake, use `edit INDEX -e ""`.
 
-An address may run to 254 characters, the longest an email address is allowed
-to be, so no real address is turned away. A longer value is refused and TAB
+An address may run to 254 characters. A longer value is refused and TAB
 tells you how long it was — useful when a copy-and-paste has picked up more
 than you meant.
 </box>
+
+The email's part before `@` accepts ASCII letters, digits and the symbols
+<code>!#$%&amp;'*+/=?^_&#96;{|}~-</code>, including repeated symbols and symbols
+at either end. Dots may separate non-empty groups; leading, trailing and
+consecutive dots are refused. For example, `mei__tan@hotmail.com` and
+`sean.o'brien@example.com` are accepted and stored as entered. Addresses that
+require a quoted local part (such as one containing spaces) are unsupported.
+The domain uses letters and digits with internal hyphens, separated by dots;
+its final label must have at least two characters. If an address starts with
+`-`, wrap the whole address in double quotes so it is read as a value.
 
 <box type="tip" seamless>
 
@@ -319,13 +344,15 @@ WARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.
 Review the records and delete duplicates only if they are the same person.
 ```
 
-Names and emails are compared without regard to letter case. Repeated,
-leading, and trailing whitespace in names is insignificant. Phone numbers
-match when their complete digit sequences match, ignoring spaces and other
-non-digit characters; equivalent Unicode decimal digits also match.
-For example, `9123-4567`, `91234567`, and `９１２３４５６７` prompt the same
-phone warning. Entered phone formatting is preserved. The review advice
-appears once after all matching fields.
+Names and emails are compared without regard to letter case. Names also ignore
+Latin accents and straight/curly apostrophe differences: `José` matches `Jose`,
+and `O’Brien` matches `O'Brien`. Repeated, leading, and trailing whitespace in
+names is insignificant. Phone numbers match when their complete digit sequences
+match, ignoring spaces and other non-digit characters; equivalent Unicode
+decimal digits also match. For example, `9123-4567`, `91234567`, and
+`９１２３４５６７` prompt the same phone warning. Entered phone formatting is
+preserved. Phone warnings omit the number because the matching records may
+format it differently. The review advice appears once after all matching fields.
 
 The warning is only a hint. It does not prove that two records describe the
 same person, and it does not find misspelled names, email aliases, or phone
@@ -339,7 +366,9 @@ still refuses the command, as described above.
 
 **Tip:** A student can have any number of tags, including zero. A tag may hold
 spaces, hyphens and any script, so `Lab 3`, `needs-followup` and
-`AY2627 Sem 1 CS2103T T16` are all valid.
+`AY2627 Sem 1 CS2103T T16` are all valid. The one name a tag cannot take is
+`Needs follow-up`, which labels the follow-up marker; use `--follow-up` for
+that. Names built around it, such as `Needs follow-up soon`, are ordinary tags.
 </box>
 
 <box type="tip" seamless>
@@ -365,9 +394,22 @@ least one letter or number, in any writing system.
 
 <box type="tip" seamless>
 
-**Tip:** The name comes first and may hold spaces as it is, so
+**Tip:** The name comes first, without `-n` or `--name`, and may hold spaces as it is, so
 `add Ravi s/o Kumaran -p 91234567` needs no quotes at all. Slashes, hyphens and
 apostrophes are ordinary characters here.
+
+If you use a name option from `edit`, TAB explains where to put the name:
+
+```text
+add --name "Betsy Crowe" --phone 1234567
+```
+
+```text
+There is no --name option.
+In the add command, the name comes first, without an option: add NAME -p PHONE ...
+```
+
+The same placement hint appears for `-n` and when the name is missing.
 
 Use double quotes for an option value holding spaces, and for any value opening
 with a hyphen, so that TAB does not read it as an option:
@@ -379,8 +421,10 @@ To put a double quote or a backslash inside a value, write `\"` or `\\`:
 
 Examples:
 * `add John Doe -p 98765432 -e johnd@example.com`
+* `add Mei Tan -p 91234567 -e mei__tan@hotmail.com`
+* `add Sean O'Brien -p 82345678 -e sean.o'brien@example.com`
 * `add Alice Tan --phone=91234567 --email=alice@example.com --tag="Lab 3"`
-* `add "Betsy Crowe" --tag friend --email betsycrowe@example.com --phone 1234567 --id A01234567X -t criminal`
+*  `add "Betsy Crowe" --tag T1 --email betsycrowe@example.com --phone 1234567 --id A06789012L -t Lab3`
 * `add "Ravi s/o Kumaran" -p 91234567 -e e0923841@u.nus.edu`
 * `add Siti Nur-Aisyah -p 84420917 -e e1147203@u.nus.edu -i a11472030k -t T1 -t "Lab 3"`
 * `add Priya Nair -p 91234567 -e priya@example.com --follow-up`
@@ -396,7 +440,9 @@ keeps both the start and the end of the name to help distinguish similar names.
 Hover over any name the card cannot show in full,
 whether it was shortened this way or left narrow by a crowded row, to see the
 whole of it. NUS Student ID, phone and email share a line when they fit. Details
-wrap onto another line when needed, so a long phone cannot hide the email.
+use the full width below the name, including beneath the follow-up marker.
+Cards grow as details wrap onto another line, so a long phone cannot hide
+the email or overlap the name.
 A value wider than a whole line ends with an ellipsis; hover over it to see
 its full value. Widening the window shows more text and brings details back
 onto one line without changing the stored record.
@@ -405,6 +451,8 @@ as many complete tag chips as fit. At narrow widths, the name keeps both ends
 while tags give way to a count of those hidden. When no chip fits, the count reads `N tags`; otherwise
 it reads `N more…`. Unused count space returns to the name. A tag chip too
 wide for its allocation is shortened; hover over it to read the full tag.
+With several tags, if there is too little room for a complete short tag or at
+least four characters of a longer tag, the row shows `N tags` instead.
 Hover over the count to read the hidden tag names.
 
 When a student is added, the command result displays the new record
@@ -458,17 +506,18 @@ Edits an existing student in the student book.
 
 Format: `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`
 
-The target may also be an NUS Student ID instead of an index: `edit A0123456X -p 91234567`
+The target may also be an NUS Student ID instead of an index: `edit A01234567X -p 91234567`
 edits the student holding that ID, found among all students even while a search is hiding
 them, and matching ignores case. `--id` still sets or clears the student's NUS Student ID,
-so `edit A0123456X --id A7654321Y` changes the ID of the student found by the old one.
+so `edit A01234567X --id A05678901K` changes the ID of the student found by the old one.
 
 The value options accept these equivalent spellings: `-n` and `--name`, `-p`
 and `--phone`, `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`.
 The spellings may be mixed in one command, but giving a single-valued field
 (name, phone, email or NUS Student ID) twice is an error even when the two
 spellings differ. Tags are repeatable: use `-t` or `--tag` once for each
-replacement tag, mixing the spellings if you wish.
+replacement tag, mixing the spellings if you wish. Case and normalized whitespace
+variants become one tag, retaining the first spelling supplied in the command.
 
 <box type="tip" seamless>
 
@@ -497,11 +546,15 @@ done to it beyond the quotes any value with spaces takes:
   are reported as unexpected values. Put a name change after `-n` rather than
   immediately after the target.
 * At least one of the optional fields must be provided.
-* Existing values will be updated to the input values.
-* `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it and is
-  available only with `edit`. New students are unflagged by default when added.
+* Existing values will be updated to the input values. If every requested value
+  already matches the record, TAB replies `Student already has the requested details. No changes made.`
+  The displayed list, search and saved file stay unchanged.
+* `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it.
+  Both options are also available with `find` to filter by follow-up status.
+  New students are unflagged by default when added.
   Both options take no value, so forms such as `--follow-up=true` are refused.
-  Repeating either request succeeds and keeps the requested state.
+  Repeating either request keeps the requested state and reports no changes
+  unless another field changes.
   Leaving both out preserves the student's follow-up status.
 * Choose at most one follow-up option. Combining `--follow-up` or `-f` with
   `--no-follow-up` or `-nf` is rejected without changing any student details.
@@ -509,6 +562,8 @@ done to it beyond the quotes any value with spaces takes:
   containing only spaces also removes it. Leaving out `-e` keeps the email
   unchanged; a bare `-e` or `--email=` is an error. Clearing an already absent
   email succeeds.
+* Email syntax follows the rules in [Adding a student](#adding-a-student-add),
+  including repeated underscores and apostrophes.
 * A new email may run to 254 characters, the same limit `add` applies. A longer
   value is refused, TAB tells you how long it was, and the student's details
   stay as they were.
@@ -524,6 +579,8 @@ done to it beyond the quotes any value with spaces takes:
   only when a name, phone number, or email changed by that command matches
   another student. Unchanged fields are not reported again, and the edited
   student is not compared with its own earlier record.
+* `Needs follow-up` names the follow-up marker rather than a tag, so `-t` refuses
+  it whatever its case or spacing and points you to `--follow-up`.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
 * To remove all of a student's tags, give `-t` an empty value: `-t ""` or
@@ -540,9 +597,10 @@ done to it beyond the quotes any value with spaces takes:
 
 Examples:
 *  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 1 -e mei__tan@hotmail.com` Records the address with both underscores.
 *  `edit 1 --email ""` Removes the 1st student's email while keeping all other details.
 *  `edit 2 --name "Betsy Crower" --tag ""` Edits the name of the 2nd student to be `Betsy Crower` and clears all existing tags.
-*  `edit 1 --id A01234567X` Records or replaces the 1st student's NUS Student ID.
+*  `edit 1 --id A08901234N` Records or replaces the 1st student's NUS Student ID.
 *  `edit 1 -i ""` Removes the 1st student's NUS Student ID while keeping all other details.
 *  `edit 1 -n "Ravi s/o Kumaran"` Edits the name of the 1st student to be `Ravi s/o Kumaran`.
 *  `edit 3 -p "+65 9123 4567" -t T1 -t "Lab 3"` Replaces the phone number and both tags of the 3rd student.
@@ -551,10 +609,10 @@ Examples:
 *  `edit 1 --no-follow-up` Clears the flag. Repeating it keeps the flag cleared.
 *  `edit 1 -nf` Also clears follow-up, even if the student is already unflagged.
 *  `edit 2 -p 91234567 --follow-up` Updates the phone number and sets follow-up in one command.
-*  `edit A0123456X --phone 91234567` Edits the phone number of the student holding the NUS
-   Student ID `A0123456X`, even while a search hides that student.
-*  `edit a0123456x -n "Betsy Crower"` Edits the same student, because matching an ID ignores case.
-*  `edit A0123456X --id A7654321Y` Changes that student's NUS Student ID from `A0123456X` to
+*  `edit A02345678G --phone 91234567` Edits the phone number of the student holding the NUS
+   Student ID `A02345678G`, even while a search hides that student.
+*  `edit a02345678g -n "Betsy Crower"` Edits the same student, because matching an ID ignores case.
+*  `edit A02345678G --id A7654321Y` Changes that student's NUS Student ID from `A02345678G` to
    `A7654321Y`, keeping all other details.
 
 A cleared email or NUS Student ID, a cleared tag set, and an explicitly set or cleared follow-up status are
@@ -584,16 +642,18 @@ Format: `tag TARGET -a TAG`
   Symbols are allowed alongside them. Put a tag containing spaces or starting
   with a hyphen in double quotes. Escape a literal quote as `\"` and a
   backslash as `\\` inside a quoted value.
+* `Needs follow-up` is the label of the follow-up marker rather than a tag, so
+  it is refused whatever its case or spacing, with a reply pointing to
+  `--follow-up`. A card would otherwise show the same label twice, once as a
+  tag and once as the marker.
 * Leading and trailing whitespace is removed and runs of whitespace become
   one space. Tags retain their letter case. When checking whether the student
   already has the tag, case and insignificant whitespace are ignored, so
   `Lab 3` and `lab  3` count as the same tag for this command.
 * An existing tag reports `This student already has tag [TAG]. No changes made.`
   The reply uses the stored spelling: if the tag is `Lab 3`, entering `lab  3`
-  reports `[Lab 3]`. Existing case variants entered through `add`,
-  `edit` or a data file are kept; this command does not merge them.
-  When several stored spellings match, the reply uses the first in the tag
-  display order.
+  reports `[Lab 3]`. Case variants are merged when tags are entered or loaded
+  from a data file, keeping the first normalized spelling.
 * An invalid target or tag, a missing value, or a repeated add option is refused
   without changing any student details or writing the data file. An empty
   quoted tag is invalid; it does not clear tags.
@@ -648,10 +708,8 @@ Format: `tag TARGET -r TAG`
   [same rules as adding one tag](#adding-one-tag-tag). Option names are
   case-sensitive; tag matching ignores case and insignificant whitespace.
 * If the tag is present, feedback starts with `Removed tag [TAG]:` using its
-  stored spelling, followed by the updated student details. If records from
-  `add`, `edit` or a hand-edited file hold several case variants of the same
-  tag, all matching variants are removed. Feedback uses the first matching
-  spelling in tag display order. Unrelated tags keep their spelling.
+  stored spelling, followed by the updated student details. Case variants from a hand-edited file merge when loaded, so removing a tag
+  removes that group. Unrelated tags keep their spelling.
 * If the tag is absent, TAB reports
   `This student does not have tag [TAG]. No changes made.` using your
   normalized input. The record, displayed list and saved file stay unchanged.
@@ -662,9 +720,10 @@ Format: `tag TARGET -r TAG`
   search, the hint first asks you to run `list` and use their displayed index.
 * An invalid target or tag, an empty quoted tag, or a missing value is refused
   with a specific error and leaves records and the saved file unchanged.
-* Removing the last tag leaves a student with no general tags. Removing a
-  general tag named `Needs follow-up` leaves the follow-up flag unchanged;
-  use `edit INDEX --no-follow-up` to clear that flag.
+* Removing the last tag leaves a student with no general tags. A general tag
+  named `Needs follow-up` can no longer be added, though an older or
+  hand-edited data file may still hold one; removing it leaves the follow-up
+  flag unchanged, and `edit INDEX --no-follow-up` clears that flag.
 * The current search stays active. If it matched only the removed tag, the
   student may disappear from the displayed list; use `list` to see them again.
 * A successful removal is saved at once and remains after restarting TAB.
@@ -709,8 +768,13 @@ Provide at least one field term or one follow-up status option. Every search ter
 * Enclose a multi-word term in double quotes: `find -n "Jason Tan"` requires that whole
   phrase in the name. `find -t "lab tutorial"` requires the phrase within one tag;
   separate tags are never joined. Repeated spaces inside a phrase are collapsed to one space.
-* Apostrophes are literal characters, so `find -n O'Brien` searches for `O'Brien`.
-  Single quotation marks do not group words; use double quotes for phrases.
+* Name searches ignore Latin accents and straight/curly apostrophe differences:
+  `find -n nguyen` matches `Nguyễn Văn An`, `find -n jose` matches `José Rivera`,
+  and `find -n O'Brien` matches `Sean O’Brien`. The stored spelling stays unchanged.
+* Unicode case variants match in names and tags: `find -n σ` matches `ΝΙΚΟΣ`,
+  and `find -t οσ` matches tag `ΟΣ`, consistent with adding/removing that tag.
+  Accents and apostrophes remain significant in tags and other fields.
+* Single quotation marks do not group words; use double quotes for phrases.
 * Bare terms are refused, including a name given before any option. Use a field option
   for every term. An extra word after an option is also refused; repeat the option or quote a phrase.
   This replaces the earlier unqualified cross-field search syntax and OR matching.
@@ -755,6 +819,9 @@ Format: `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID
   the book — even while a search is hiding them. The match ignores case.
 * `--id NUS_STUDENT_ID` names the value as an ID, which an ID starting with a digit
   needs — the plain form would read it as an index. `-i` works in place of `--id`.
+* If an out-of-range numeric target is also a stored NUS Student ID, TAB suggests
+  the exact `delete --id VALUE` command. Leading zeroes in an ID are preserved.
+  A bare number that is a valid displayed position still deletes by that position.
 * The command result identifies the removed record (`Deleted student: NAME; Phone: PHONE...`)
   so you can verify exactly which student was deleted from the book.
 * `delete` takes no field values, so a value found after the target is refused with
@@ -806,11 +873,16 @@ Format: `exit`
 
 ### Saving the data
 
+The status bar shows the absolute path to your student data file. If the path
+does not fit, it is shortened in the middle; hover over it to read the full path.
+
 TAB automatically saves changes to student records. You do not need to save manually.
 If TAB cannot save a change, it reports the error and leaves the student records as
 they were before the command. Commands that do not change student records, including
 `list`, `find`, `help`, and `exit`, do not write to the data file. Clear prompts,
 cancellation, and invalid replies also leave the saved file unchanged.
+A failed first save leaves no data file behind. After freeing disk space or
+restoring write access, retry the command, or restart with the sample students.
 
 If another TAB window has saved different student records since this window
 loaded them, TAB refuses this window's change and preserves both the saved file
@@ -825,13 +897,23 @@ Window size and position are saved separately in `preferences.json` in TAB's
 home folder. On launch, TAB keeps the saved size and position when they fit
 an available screen. If a screen was disconnected, TAB moves the window onto
 an available screen; oversized windows shrink to its usable area. This also
-applies after a resolution or display-scaling change.
+applies after a resolution or display-scaling change. You can also resize the
+window to fit a 1280×720 display at 150% scaling; the student list and help text
+scroll while the summary total, help footer and status bar remain visible.
 If the file contains only `null`, `guiSettings` is `null`, or the
 file cannot be parsed, TAB opens with default window settings and rewrites the
 preferences file when it can. This recovery does not change saved student records in `data/tab.json`.
 If preferences cannot be saved, TAB prints a concise warning naming the path
 and reason. It uses the loaded or default settings for that session. A warning
 on exit means the window settings could not be saved; TAB still closes normally.
+
+If saving reports that the required data folder is occupied by a file, close TAB
+and move or rename that unrelated file before restarting. TAB preserves it.
+A folder occupying the save-lock path (normally `data/.tab.json.lock`) also blocks
+saving. Close every TAB window before moving or renaming that folder. Keep any
+contents you need; TAB does not remove it automatically. The lock path must be a
+writable file, and both the data file and its folder need write permission.
+A failed save restores the previous student records and active search.
 
 ### Editing the data file
 
@@ -865,6 +947,9 @@ accepted and ignored for compatibility with older files. Other keys, such as
 `nusStudentID`, `Email` or `tag`, stop loading with an error naming the unknown
 key, student record number (counting from 1), and name when present, rather
 than silently losing that value on the next save.
+Within a student's `tags` array, case and whitespace variants merge on loading,
+keeping the first normalized spelling (for example, `[" t1 ", "T1"]` becomes
+one `t1` tag). The next successful save writes the merged tags.
 The top-level object accepts `students` and an optional `_comment` description.
 Correct the spelling or remove the unsupported field, then restart TAB; the
 rejected file stays unchanged.
@@ -876,6 +961,13 @@ top-level `students` lists. The error identifies the location and, for a
 repeated key, its name. Move extra records into the `students` array or keep
 only the intended value for the repeated key, then restart TAB. The rejected
 file stays unchanged.
+
+The `tags` field holds a JSON array of strings, such as `"tags": ["Lab 3", "组 1"]`.
+An absent key, `null`, or `[]` means no tags. A single string without array
+brackets, or an array entry that is a number, Boolean, object, array or `null`,
+is rejected with an error naming `tags` and the student record. For an invalid
+entry, the error also gives its position, counting from 1. Correct the value
+and restart; TAB leaves the rejected file unchanged.
 
 A student who needs follow-up has `"flag": true` in their JSON record. An
 unflagged student normally has no `flag` key; absence, `false`, and `null` all
@@ -947,11 +1039,11 @@ No known issues are listed at this time.
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | Keeps the search if the new student matches; otherwise shows all students with a notice. <br> `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> e.g., `add James Ho --phone=22224444 -i=A01234567X --tag=friend -t colleague --follow-up`
+**Add**    | Keeps the search if the new student matches; otherwise shows all students with a notice. <br> `add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> e.g., `add James Ho --phone=22224444 -i=A07890123M --tag=T1 -t Lab3 --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`<br> The ID option, spelled `-i`/`--id` or `--id=VALUE`, is what an ID starting with a digit needs<br> e.g., `delete 3`, `delete A01234567X`, `delete --id 1A2B3C`
-**Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> The target may be an NUS Student ID instead of an index <br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A01234567X`, `edit A0123456X -p 91234567`
-**Tag**    | `tag TARGET -a TAG` or `tag TARGET -r TAG` <br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--id NUS_STUDENT_ID` (alias `-i`) <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`, `tag --id 1234 --add T2`
+**Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> The target may be an NUS Student ID instead of an index <br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A08901234N`, `edit A01234567X -p 91234567`
+**Tag**    | `tag TARGET -a TAG` or `tag TARGET -r TAG` <br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--id NUS_STUDENT_ID` (alias `-i`) <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`, `tag --id A02345678G --add T2`
 **Find**   | `find [FIELD_OPTION TERM]... [-f \| -nf]`<br> e.g., `find -n Jason -t lab -t tutorial` (all terms required)
 **List**   | `list`
 **Exit**   | `exit`

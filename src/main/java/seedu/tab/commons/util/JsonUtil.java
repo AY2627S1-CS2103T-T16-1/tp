@@ -7,6 +7,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -124,7 +125,7 @@ public class JsonUtil {
             return "";
         }
         if (location.getColumnNr() < 1) {
-            return String.format(" at line %d", location.getLineNr());
+            return String.format(Locale.ROOT, " at line %d", location.getLineNr());
         }
 
         if (jsonSource != null) {
@@ -136,10 +137,10 @@ public class JsonUtil {
                 return " at the end of the file";
             }
             if (location.getColumnNr() > sourceLines[lineIndex].length() + 1) {
-                return String.format(" at line %d", location.getLineNr());
+                return String.format(Locale.ROOT, " at line %d", location.getLineNr());
             }
         }
-        return String.format(" at line %d, column %d", location.getLineNr(), location.getColumnNr());
+        return String.format(Locale.ROOT, " at line %d, column %d", location.getLineNr(), location.getColumnNr());
     }
 
     private static String getConciseJsonErrorMessage(JsonProcessingException exception) {
@@ -176,8 +177,8 @@ public class JsonUtil {
 
         int column = Integer.parseInt(matcher.group(2));
         String safeLocation = column < 1
-                ? String.format("line %s", matcher.group(1))
-                : String.format("line %s, column %d", matcher.group(1), column);
+                ? String.format(Locale.ROOT, "line %s", matcher.group(1))
+                : String.format(Locale.ROOT, "line %s, column %d", matcher.group(1), column);
         return Optional.of(originalMessage.substring(0, sourceMarkerIndex)
                 + safeLocation + originalMessage.substring(matcher.end()));
     }
@@ -234,7 +235,7 @@ public class JsonUtil {
             boolean isAffectedLine = lineIndex == affectedLineIndex;
             String marker = isAffectedLine ? ">" : " ";
             String line = truncateJsonSourceLine(sourceLines[lineIndex], affectedColumn, isAffectedLine);
-            excerpt.append(String.format("%s %" + lineNumberWidth + "d | %s",
+            excerpt.append(String.format(Locale.ROOT, "%s %" + lineNumberWidth + "d | %s",
                     marker, lineIndex + 1, line));
         }
         return excerpt.toString();

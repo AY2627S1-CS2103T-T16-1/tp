@@ -51,9 +51,35 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_handEditedEmailSymbols_preservesAddress() throws Exception {
+        for (String address : List.of("mei__tan@hotmail.com", "sean.o'brien@example.com", "mei_@example.com")) {
+            JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, address, VALID_TAGS, false);
+            assertEquals(address, student.toModelType().getEmail().orElseThrow().value);
+        }
+    }
+
+    @Test
+    public void toModelType_consecutiveEmailDots_throwsIllegalValueException() {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, "mei..tan@example.com", VALID_TAGS, false);
+        String expectedMessage = "Email \"mei..tan@example.com\" is not valid: "
+                + "the part before the @ may hold letters, digits and !#$%&'*+/=?^_`{|}~-"
+                + ", with dots allowed only between non-empty groups";
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
     public void toModelType_validEmailWithSurroundingWhitespace_buildsStudentHoldingTrimmedEmail() throws Exception {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, "  " + VALID_EMAIL + "\t", VALID_TAGS, false);
+
+        assertEquals(Optional.of(new Email(VALID_EMAIL)), student.toModelType().getEmail());
+    }
+
+    @Test
+    public void toModelType_validEmailWithInvisibleMark_buildsStudentHoldingNormalizedEmail() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, "\u200E" + VALID_EMAIL, VALID_TAGS, false);
 
         assertEquals(Optional.of(new Email(VALID_EMAIL)), student.toModelType().getEmail());
     }
@@ -183,6 +209,17 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_nusStudentIdWithWhitespaceAndInvisibleMark_buildsStudentHoldingNormalizedId()
+            throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, " \u200E" + VALID_NUS_STUDENT_ID.toLowerCase() + " ",
+                VALID_TAGS, false);
+
+        assertEquals(Optional.of(new NusStudentId(VALID_NUS_STUDENT_ID)),
+                student.toModelType().getNusStudentId());
+    }
+
+    @Test
     public void toModelType_nullNusStudentId_buildsStudentWithoutOne() throws Exception {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, null, VALID_TAGS, false);
@@ -213,6 +250,19 @@ public class JsonAdaptedStudentTest {
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, invalidTags, false);
         assertThrows(IllegalValueException.class,
                 "Tag \"---\" is not valid: it holds no letter or number", student::toModelType);
+    }
+
+    @Test
+    public void toModelType_storedFollowUpLabelAsTag_stillLoads() {
+        // refusing the label as a command argument must not make an existing file unreadable
+        List<JsonAdaptedTag> tags = new ArrayList<>(VALID_TAGS);
+        tags.add(new JsonAdaptedTag(Flag.FOLLOW_UP_NAME));
+        JsonAdaptedStudent student =
+                new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, tags, true);
+
+        var loaded = assertDoesNotThrow(student::toModelType);
+        assertTrue(loaded.getTags().stream().anyMatch(tag -> Flag.isFollowUpName(tag.tagName)),
+                "the tag the file holds should survive the load");
     }
 
     @Test

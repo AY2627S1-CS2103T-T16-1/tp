@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -22,12 +23,13 @@ import seedu.tab.commons.util.ToStringBuilder;
  * Unicode decimal digits compared by their numeric values.
  */
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
-    /** A keyword of digits, grouping whitespace and phone punctuation, holding at least one digit. */
-    private static final Pattern PHONE_KEYWORD = Pattern.compile("(?U)[\\p{Nd}\\s+().-]*\\p{Nd}[\\p{Nd}\\s+().-]*");
+    /** Characters permitted in a phone keyword; digit presence is checked after normalization. */
+    private static final Pattern PHONE_KEYWORD = Pattern.compile("(?U)[\\p{Nd}\\s+().-]++");
 
     /** The student field in which a search term must occur. */
     public enum Field {
-        NAME((student, keyword) -> StringUtil.containsIgnoreCase(student.getName().fullName, keyword)),
+        NAME((student, keyword) -> StringUtil.normalizeNameForComparison(student.getName().fullName)
+                .contains(StringUtil.normalizeNameForComparison(keyword))),
         NUS_STUDENT_ID((student, keyword) -> StringUtil.containsIgnoreCase(
                 student.getNusStudentId().map(NusStudentId::toString).orElse(""), keyword)),
         PHONE((student, keyword) -> matchesPhone(student.getPhone(), keyword)),
@@ -95,7 +97,8 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
         if (!PHONE_KEYWORD.matcher(keyword).matches()) {
             return false;
         }
-        return phone.getDigits().contains(Phone.normalizeDigits(keyword));
+        String digits = Phone.normalizeDigits(keyword);
+        return !digits.isEmpty() && phone.getDigits().contains(digits);
     }
 
     private static boolean matchesAnyTag(Student student, String keyword) {
@@ -114,6 +117,11 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
         }
 
         return keywordsByField.equals(otherPredicate.keywordsByField) && followUp.equals(otherPredicate.followUp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(keywordsByField, followUp);
     }
 
     @Override

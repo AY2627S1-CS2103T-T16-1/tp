@@ -3,6 +3,8 @@ package seedu.tab.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
+import static seedu.tab.logic.parser.CommandTokenizer.OPTION_MARKER;
+import static seedu.tab.logic.parser.CommandTokenizer.VALUE_SEPARATOR;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,14 +14,13 @@ import seedu.tab.logic.commands.DeleteCommand;
 import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.CommandTokenizer.Token;
 import seedu.tab.logic.parser.exceptions.ParseException;
+import seedu.tab.model.student.NusStudentId;
 
 /**
  * Parses input arguments and creates a new DeleteCommand object
  */
 public class DeleteCommandParser implements Parser<DeleteCommand> {
 
-    private static final char VALUE_SEPARATOR = '=';
-    private static final String OPTION_MARKER = "-";
 
     /**
      * Parses the given {@code String} of arguments in the context of the DeleteCommand
@@ -71,7 +72,16 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
         if (attachedId.isPresent()) {
             return readNusStudentIdTarget(attachedId.get());
         }
-        return ParserUtil.parseStudentTarget(token.value(), DeleteCommand.MESSAGE_USAGE);
+        try {
+            return ParserUtil.parseStudentTarget(token.value(), DeleteCommand.MESSAGE_USAGE);
+        } catch (ParseException e) {
+            if (NusStudentId.isValidNusStudentId(token.value())
+                    && token.value().chars().allMatch(Character::isDigit)) {
+                throw new ParseException(e.getMessage() + " "
+                        + Messages.getIdTargetHint(DeleteCommand.COMMAND_WORD, token.value()), e);
+            }
+            throw e;
+        }
     }
 
     /**

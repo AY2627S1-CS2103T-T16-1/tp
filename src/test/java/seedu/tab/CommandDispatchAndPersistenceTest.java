@@ -30,7 +30,7 @@ import seedu.tab.storage.JsonUserPrefsStorage;
 import seedu.tab.storage.StorageManager;
 
 /**
- * Integration tests for command dispatch and local file persistence.
+ * Integration tests for command dispatch and saving changes between sessions.
  */
 public class CommandDispatchAndPersistenceTest {
 
@@ -140,23 +140,18 @@ public class CommandDispatchAndPersistenceTest {
     }
 
     @Test
-    public void execute_addThenDelete_savesChangesToLocalFile() throws Exception {
-        // Execute add locally
+    public void execute_addThenDelete_persistsBothChanges() throws Exception {
         logic.execute(AddCommand.COMMAND_WORD + " \"Bob Choo\" -p 88889999 -e bob@example.com");
 
-        // Verify data was written to local file
-        Path localDataFile = storage.getStudentBookFilePath();
-        assertTrue(localDataFile.toFile().exists());
+        Path dataFile = storage.getStudentBookFilePath();
+        assertTrue(dataFile.toFile().exists());
 
-        // Read back from local storage
         ReadOnlyStudentBook readBook = storage.readStudentBook().get();
         assertEquals(1, readBook.getStudentList().size());
         assertEquals("Bob Choo", readBook.getStudentList().get(0).getName().fullName);
 
-        // Execute delete locally
         logic.execute(DeleteCommand.COMMAND_WORD + " 1");
 
-        // Verify local file reflects deletion immediately
         ReadOnlyStudentBook updatedBook = storage.readStudentBook().get();
         assertEquals(0, updatedBook.getStudentList().size());
         assertFalse(updatedBook.getStudentList().stream()

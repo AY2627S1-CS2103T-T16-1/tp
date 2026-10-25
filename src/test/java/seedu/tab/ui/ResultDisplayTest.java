@@ -149,7 +149,7 @@ public class ResultDisplayTest {
     private static ResultDisplay displayAt(double width) throws Exception {
         return onFxThread(() -> {
             ResultDisplay display = new ResultDisplay();
-            assertNotNull(styledScene(display.getRoot(), width, 300));
+            styledScene(display.getRoot(), width, 300);
             return display;
         });
     }

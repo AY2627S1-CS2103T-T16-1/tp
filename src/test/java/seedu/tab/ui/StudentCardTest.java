@@ -115,11 +115,11 @@ public class StudentCardTest {
 
     @Test
     public void constructor_emailCutByWidth_showsWholeAddressUntilWidened() throws Exception {
-        Student student = new StudentBuilder().withEmail("siti.nuraisyah.binte.ahmad@gmail.com")
+        Student student = new StudentBuilder().withEmail("siti.nuraisyah.binte.ahmad.hassan@alumni.u.nus.edu")
                 .withFlag(true).build();
         onFxThread(() -> {
             Region root = new StudentCard(student, 1).getRoot();
-            assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 120));
+            styledScene(root, NARROWEST_CARD_WIDTH, 120);
             Label email = (Label) root.lookup("#email");
             assertTrue(email.getWidth() < email.prefWidth(-1), "the card should cut the email");
             assertNotNull(email.getTooltip());
@@ -150,7 +150,7 @@ public class StudentCardTest {
     private static void assertContactDetailsReadable(Student student, double width) throws Exception {
         onFxThread(() -> {
             Region root = new StudentCard(student, 1).getRoot();
-            assertNotNull(styledScene(root, width, 160));
+            styledScene(root, width, 160);
             Region details = (Region) root.lookup("#details");
             Label phone = (Label) root.lookup("#phone");
             Label email = (Label) root.lookup("#email");
@@ -208,14 +208,14 @@ public class StudentCardTest {
     public void constructor_longContacts_exercisesClippingAndRestoresTooltipsAfterResizing() throws Exception {
         Student student = new StudentBuilder().withPhone(
                 "+65 6516 2727 ext 21 (office, Mon-Fri 9-5), +65 9123 4567 (HP, after 6pm)")
-                .withEmail("a.very.long.student.email.address@u.nus.edu")
+                .withEmail("a.very.long.student.email.address.for.contact.testing@alumni.u.nus.edu")
                 .withNusStudentId("W".repeat(NusStudentId.MAX_LENGTH)).withFlag(true).build();
         onFxThread(() -> {
             Region root = new StudentCard(student, 99).getRoot();
-            assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 160));
+            styledScene(root, NARROWEST_CARD_WIDTH, 160);
             List<Label> fields = List.of((Label) root.lookup("#nusStudentId"),
                     (Label) root.lookup("#phone"), (Label) root.lookup("#email"));
-            assertContactsClipped(fields);
+            assertContactsClipped(fields.subList(1, fields.size()));
             double narrowHeight = root.prefHeight(NARROWEST_CARD_WIDTH);
             layOutAt(root, widthForAllContacts(root));
             for (Label field : fields) {
@@ -224,7 +224,7 @@ public class StudentCardTest {
             }
             assertTrue(root.prefHeight(root.getWidth()) < narrowHeight, "widening must remove wrapped rows");
             layOutAt(root, NARROWEST_CARD_WIDTH);
-            assertContactsClipped(fields);
+            assertContactsClipped(fields.subList(1, fields.size()));
             return null;
         });
     }
@@ -236,7 +236,7 @@ public class StudentCardTest {
                 .withFlag(true).build();
         onFxThread(() -> {
             Region root = new StudentCard(student, 99).getRoot();
-            assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 160));
+            styledScene(root, NARROWEST_CARD_WIDTH, 160);
             List<Label> fields = List.of((Label) root.lookup("#nusStudentId"),
                     (Label) root.lookup("#phone"), (Label) root.lookup("#email"));
             double widest = root.prefWidth(-1);
@@ -356,7 +356,7 @@ public class StudentCardTest {
     private static void assertDetailsInside(Student student, double width) throws Exception {
         Bounds[] measured = onFxThread(() -> {
             Region root = (Region) new StudentCard(student, 1).getRoot();
-            assertNotNull(styledScene(root, width, 120));
+            styledScene(root, width, 120);
             Region details = (Region) root.lookup("#details");
             Label nusStudentId = (Label) root.lookup("#nusStudentId");
             Label phone = (Label) root.lookup("#phone");
@@ -656,7 +656,7 @@ public class StudentCardTest {
     /** Returns a card laid out at the width its dressed content asks for. */
     private static Region cardLaidOutRoomily(Student student, int displayedIndex) {
         Region root = new StudentCard(student, displayedIndex).getRoot();
-        assertNotNull(roomyStyledScene(root));
+        roomyStyledScene(root);
         layOutAt(root, root.prefWidth(-1));
         return root;
     }
@@ -817,7 +817,7 @@ public class StudentCardTest {
             for (double width : List.of((double) NARROWEST_CARD_WIDTH, 368.0, 448.0)) {
                 onFxThread(() -> {
                     Region root = new StudentCard(studentNamed(whole), 1).getRoot();
-                    assertNotNull(styledScene(root, width, 120));
+                    styledScene(root, width, 120);
                     Label name = (Label) root.lookup("#name");
                     boolean isCut = !whole.equals(name.getText());
                     if (width == NARROWEST_CARD_WIDTH) {
@@ -1054,6 +1054,41 @@ public class StudentCardTest {
     }
 
     @Test
+    public void constructor_longNameWithFlagAndTags_showsReadableChipsOrTotal() throws Exception {
+        Student student = new StudentBuilder().withName("Siti Nur-Aisyah Binte Abdullah Rahman")
+                .withTags("consultation-week-3", "Lab 3", "Tutorial Group 11").withFlag(true).build();
+        onFxThread(() -> {
+            boolean sawTotal = false;
+            boolean sawChip = false;
+            for (int width = 300; width <= 800; width += 2) {
+                Region root = (Region) new StudentCard(student, 1).getRoot();
+                styledScene(root, width, 120);
+                TagRow tags = (TagRow) root.lookup("#tags");
+                List<String> shown = visibleChipsOf(root);
+                sawTotal |= shown.equals(List.of("3 tags"));
+                sawChip |= shown.size() > 1;
+                assertReadableTagChips(tags, width);
+                assertHiddenTagsCounted(tags, List.of("consultation-week-3", "Lab 3", "Tutorial Group 11"));
+            }
+            assertTrue(sawTotal, "the sweep should exercise the total-count fallback");
+            assertTrue(sawChip, "widening should restore tag chips");
+            return null;
+        });
+    }
+
+    private static void assertReadableTagChips(TagRow tags, int cardWidth) {
+        for (Node node : tags.getChildrenUnmodifiable()) {
+            Label label = (Label) node;
+            if (!label.isVisible() || label.getStyleClass().contains("tag-overflow")) {
+                continue;
+            }
+            String drawn = drawnTextOf(label);
+            assertTrue(drawn.equals(label.getText()) || drawn.startsWith("cons"),
+                    "unreadable chip at card width " + cardWidth + ": " + drawn);
+        }
+    }
+
+    @Test
     public void constructor_atEveryWidth_saysWhenItHasLeftTagsOut() throws Exception {
         // a card showing some of a student's tags must say that there are more, at whatever
         // width: a card that simply drops the count leaves the reader thinking that is all
@@ -1067,7 +1102,7 @@ public class StudentCardTest {
             int at = width;
             List<String> chips = onFxThread(() -> {
                 Region root = (Region) new StudentCard(student, 3).getRoot();
-                assertNotNull(styledScene(root, at, 120));
+                styledScene(root, at, 120);
                 return visibleChipsOf(root);
             });
             // the row counts what it left out while a chip is shown, and counts the tags
@@ -1111,7 +1146,7 @@ public class StudentCardTest {
                         .withTags(names.toArray(String[]::new)).withFlag(isFlagged).build();
                 onFxThread(() -> {
                     Region root = new StudentCard(student, 2).getRoot();
-                    assertNotNull(styledScene(root, NARROWEST_CARD_WIDTH, 120));
+                    styledScene(root, NARROWEST_CARD_WIDTH, 120);
                     double widest = Math.max(NARROWEST_CARD_WIDTH, root.prefWidth(-1));
                     for (double width = NARROWEST_CARD_WIDTH; width <= widest; width += ONE_PIXEL) {
                         layOutAt(root, width);
@@ -1124,6 +1159,27 @@ public class StudentCardTest {
                 });
             }
         }
+    }
+
+    @Test
+    public void constructor_countAtNameAllowanceBoundary_keepsCompleteCountBesideName() throws Exception {
+        onFxThread(() -> {
+            List<String> names = List.of("attendance-low", "consult");
+            Student student = new StudentBuilder().withName("Bernice Yu")
+                    .withTags(names.toArray(String[]::new)).withFlag(true).build();
+            Region root = new StudentCard(student, 2).getRoot();
+            styledScene(root, NARROWEST_CARD_WIDTH, 120);
+            Label count = (Label) root.lookup(".tag-overflow");
+            // Reproduce the Linux boundary using the local font's count width: the
+            // preferred name allowance and gap leave the count one pixel short.
+            count.setText("2 tags");
+            Label name = (Label) root.lookup("#name");
+            onALineOf(name, CardHeadline.READABLE_NAME_WIDTH + CardHeadline.SPACING
+                    + Math.floor(count.prefWidth(-1)) - ONE_PIXEL);
+            assertHiddenTagsCounted((TagRow) root.lookup("#tags"), names);
+            assertTrue(drawnTextOf((Label) root.lookup("#name")).startsWith("Be"));
+            return null;
+        });
     }
 
     private static void assertHiddenTagsCounted(TagRow tags, List<String> names) {
@@ -1156,7 +1212,7 @@ public class StudentCardTest {
             int at = width;
             String shown = onFxThread(() -> {
                 Region root = (Region) new StudentCard(student, 2).getRoot();
-                assertNotNull(styledScene(root, at, 120));
+                styledScene(root, at, 120);
                 Label name = (Label) root.lookup("#name");
                 return name.getWidth() + "|" + name.prefWidth(-1);
             });

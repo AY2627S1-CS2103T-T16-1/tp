@@ -10,6 +10,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_REMOVE_TAG;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -125,12 +126,12 @@ public class TagCommand extends Command {
      */
     private String absentTagMessage(Student student, List<Student> displayedStudents) {
         String absent = String.format(MESSAGE_NOT_PRESENT, Messages.shorten(tag.tagName));
-        if (!student.isFlagged() || !Flag.FOLLOW_UP_NAME.equalsIgnoreCase(tag.tagName)) {
+        if (!student.isFlagged() || !Flag.isFollowUpName(tag.tagName)) {
             return absent;
         }
         for (int index = 0; index < displayedStudents.size(); index++) {
             if (displayedStudents.get(index) == student) {
-                return absent + "\n" + String.format(MESSAGE_FOLLOW_UP_FLAG_HINT, index + 1);
+                return absent + "\n" + String.format(Locale.ROOT, MESSAGE_FOLLOW_UP_FLAG_HINT, index + 1);
             }
         }
         return absent + "\n" + MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT;

@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import seedu.tab.commons.util.StringUtil;
 
 /**
@@ -25,11 +26,8 @@ public class TagRow extends Region {
 
     /** The gap between one chip and the next, matching the spacing the card uses. */
     private static final double SPACING = 6;
-    /**
-     * Enough of a chip for the first few letters of a tag, which is what the row keeps when
-     * the alternative is saying nothing about how many tags were left out.
-     */
-    private static final double RECOGNISABLE_CHIP_WIDTH = 44;
+    /** A truncated chip should retain at least four letters rather than an ambiguous pair. */
+    private static final int RECOGNISABLE_CHARACTERS = 4;
     private final List<Label> chips = new ArrayList<>();
     private final Label overflow = new Label();
     private final Rectangle clip = new Rectangle();
@@ -79,10 +77,23 @@ public class TagRow extends Region {
             return widthOf(shown);
         }
         if (tagNames.size() > 1
-                && available - widthOfTheRest(1) - SPACING < RECOGNISABLE_CHIP_WIDTH) {
+                && available - widthOfTheRest(1) - SPACING < recognisableChipWidth()) {
             return Math.min(available, widthOfTheRest(0));
         }
         return available;
+    }
+
+    /** Returns room for a useful prefix and ellipsis, including the chip's styled padding. */
+    private double recognisableChipWidth() {
+        Label chip = chips.getFirst();
+        // The skin clips at glyph hit-test boundaries; reserve the next character too
+        // so a boundary inside it still leaves the useful prefix intact.
+        Text prefix = new Text(StringUtil.firstCharacters(chip.getText(), RECOGNISABLE_CHARACTERS + 1)
+                + chip.getEllipsisString());
+        prefix.setFont(chip.getFont());
+        double width = Math.ceil(prefix.getLayoutBounds().getWidth())
+                + Math.ceil(chip.getInsets().getLeft()) + Math.ceil(chip.getInsets().getRight());
+        return Math.min(drawnWidthOf(chip), width);
     }
 
     @Override
@@ -93,7 +104,12 @@ public class TagRow extends Region {
         // enough for the start of one tag and a count of the others, since a row showing
         // one chip and no count says nothing about the tags it left out
         double forACount = tagNames.size() > 1 ? widthOfTheRest(1) + SPACING : 0;
-        return Math.min(computePrefWidth(height), RECOGNISABLE_CHIP_WIDTH + forACount);
+        return Math.min(computePrefWidth(height), recognisableChipWidth() + forACount);
+    }
+
+    /** Returns the width needed to show the total count when every tag is hidden. */
+    double getCountWidth() {
+        return tagNames.size() > 1 ? snapSizeX(widthOfTheRest(0)) : 0;
     }
 
     @Override
@@ -148,7 +164,7 @@ public class TagRow extends Region {
 
         double countWidth = widthOfTheRest(1);
         double forTheChip = getWidth() - countWidth - SPACING;
-        if (forTheChip < RECOGNISABLE_CHIP_WIDTH) {
+        if (forTheChip < recognisableChipWidth()) {
             // what is left of the chip would be an ellipsis and little else, which names no
             // tag, so the row says how many there are instead
             describeTheRest(0);

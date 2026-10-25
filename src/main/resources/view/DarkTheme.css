@@ -242,6 +242,20 @@
     -fx-opacity: 0.9;
 }
 
+.menu-bar .menu-button:hover,
+.menu-bar .menu-button:focused,
+.menu-bar .menu-button:showing,
+.context-menu .menu-item:focused {
+    -fx-background-color: -tab-accent;
+}
+
+.menu-bar .menu-button:hover .label,
+.menu-bar .menu-button:focused .label,
+.menu-bar .menu-button:showing .label,
+.context-menu .menu-item:focused .label {
+    -fx-text-fill: -tab-bg;
+}
+
 .menu .left-container {
     -fx-background-color: -tab-bg;
 }
@@ -378,7 +392,9 @@
     -fx-border-width: 1;
     -fx-font-family: "Monospaced";
     -fx-font-size: 12px;
-    -fx-padding: 9 12 9 12;
+    /* thirteen plus the one-pixel border above matches the fourteen the message box below
+       insets its text by, so the two read as one column */
+    -fx-padding: 9 13 9 13;
     -fx-text-fill: -tab-accent;
 }
 
@@ -387,7 +403,8 @@
     -fx-background-insets: 0, 0 0 0 3;
     -fx-background-radius: 6, 6;
     -fx-font-size: 13px;
-    -fx-padding: 12 14 12 17;
+    /* the accent bar sits in the left inset rather than pushing the text past it */
+    -fx-padding: 12 14 12 14;
     -fx-text-fill: -tab-text;
 }
 

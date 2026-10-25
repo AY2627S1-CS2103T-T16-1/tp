@@ -23,6 +23,7 @@ import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
+import seedu.tab.model.tag.Flag;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 
 /**
@@ -78,6 +79,8 @@ public class CommandTestUtil {
                     + " characters, and this one holds " + INVALID_EMAIL_OVER_MAX_LENGTH.length();
     public static final String INVALID_NUS_STUDENT_ID = " " + FLAG_NUS_STUDENT_ID + " A0123-456";
     public static final String INVALID_TAG = " " + FLAG_TAG + " \"---\""; // no letter or number
+    /** The follow-up marker's label offered as a tag, which names no tag of its own. */
+    public static final String FOLLOW_UP_AS_TAG = " " + FLAG_TAG + " \"" + Flag.FOLLOW_UP_NAME + "\"";
 
     public static final String PREAMBLE_WHITESPACE = "\t  \r  \n";
     public static final String PREAMBLE_NON_EMPTY = "NonEmptyPreamble";
@@ -126,7 +129,7 @@ public class CommandTestUtil {
      * Executes the given {@code command}, confirms that <br>
      * - a {@code CommandException} is thrown <br>
      * - the CommandException message matches {@code expectedMessage} <br>
-     * - the student book, filtered student list and selected student in {@code actualModel} remain unchanged
+     * - the student book and filtered student list in {@code actualModel} remain unchanged
      */
     public static void assertCommandFailure(Command command, Model actualModel, String expectedMessage) {
         // we are unable to defensively copy the model for comparison later, so we can

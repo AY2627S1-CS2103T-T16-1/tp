@@ -17,8 +17,11 @@
      list beside it has a minimum of its own, so below 490 the list is squeezed past that
      and what is in it is cut off at the edge. MainWindowTest checks the window's minimum
      against its content, so if the content changes the check says so. -->
+<!-- 400 logical pixels leave room for window decorations and desktop panels on a
+     1280x720 display at 150% scaling (480 logical pixels high). The list and help
+     text scroll while their footers stay visible. -->
 <fx:root type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-         title="TAB" minWidth="490" minHeight="600" onCloseRequest="#handleExit">
+         title="TAB" minWidth="490" minHeight="400" onCloseRequest="#handleExit">
   <icons>
     <Image url="@/images/address_book_32.png" />
   </icons>

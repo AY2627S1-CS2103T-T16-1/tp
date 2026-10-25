@@ -5,6 +5,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,8 +24,11 @@ public class Messages {
     public static final String MESSAGE_UNEXPECTED_ARGUMENTS =
             "%1$s takes no arguments. Unexpected input: \"%2$s\".";
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
-    public static final String MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX = "The student index provided is invalid.";
+    public static final String MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX =
+            "There is no student at index \"%1$s\" in the displayed list (%2$d student%3$s). "
+                    + "Use list to show all students.";
     public static final String MESSAGE_NO_STUDENT_WITH_NUS_ID = "No student has NUS Student ID %1$s.";
+    // Keep this template free of numeric conversions: callers format it without an explicit locale.
     public static final String MESSAGE_DUPLICATE_STUDENT =
             "Another student already has NUS Student ID %1$s (%2$s).";
     public static final String MESSAGE_STUDENTS_FOUND_OVERVIEW = "Found %1$d student%2$s.";
@@ -46,6 +50,17 @@ public class Messages {
             + " and " + FLAG_NO_FOLLOW_UP.getMarkerWithAliases() + " cannot be used together. Choose one.";
 
     private Messages() {} // this class only holds the messages
+
+    /** Returns the rejected index and the size of the list it addresses. */
+    public static String getErrorMessageForInvalidIndex(String index, int displayedCount) {
+        return String.format(Locale.ROOT, MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, shorten(index),
+                displayedCount, StringUtil.getPluralSuffix(displayedCount));
+    }
+
+    /** Returns the explicit ID form when a numeric target may have been intended as an ID. */
+    public static String getIdTargetHint(String commandWord, String value) {
+        return "If \"" + value + "\" is an NUS Student ID, use " + commandWord + " --id " + value + ".";
+    }
 
     /**
      * Returns an error message indicating the flags that were given more than once.
@@ -125,7 +140,7 @@ public class Messages {
      * @return The formatted summary message.
      */
     public static String getStudentsFoundOverview(int count) {
-        return String.format(MESSAGE_STUDENTS_FOUND_OVERVIEW, count, StringUtil.getPluralSuffix(count));
+        return String.format(Locale.ROOT, MESSAGE_STUDENTS_FOUND_OVERVIEW, count, StringUtil.getPluralSuffix(count));
     }
 
     /**

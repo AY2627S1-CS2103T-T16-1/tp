@@ -31,7 +31,11 @@ public class TagCommandParser implements Parser<TagCommand> {
                     FLAG_ADD_TAG.getLabel() + " or " + FLAG_REMOVE_TAG.getLabel())
                     + "\n" + TagCommand.MESSAGE_ACTION_GUIDANCE);
         }
-        Tag tag = problems.collectIfPresent(arguments.getValue(actionFlag), ParserUtil::parseTag);
+        // removing it stays a tag, so that TagCommand can explain the marker to the user
+        ParseProblems.ValueParser<Tag> readTag = actionFlag.equals(FLAG_REMOVE_TAG)
+                ? ParserUtil::parseTag
+                : ParserUtil::parseTagToAdd;
+        Tag tag = problems.collectIfPresent(arguments.getValue(actionFlag), readTag);
         problems.throwIfAny();
         return new TagCommand(target, tag, actionFlag.equals(FLAG_REMOVE_TAG) ? Action.REMOVE : Action.ADD);
     }
@@ -53,7 +57,7 @@ public class TagCommandParser implements Parser<TagCommand> {
             return ParserUtil.parseRequiredStudentTarget(preamble, TagCommand.FIELD_TARGET,
                     TagCommand.FIELD_INDEX, TagCommand.MESSAGE_USAGE);
         }
-        return StudentTarget.byIndex(ParserUtil.parseRequiredIndex(preamble, TagCommand.FIELD_INDEX));
+        return StudentTarget.byIndex(ParserUtil.parseRequiredIndex(preamble, TagCommand.FIELD_INDEX), preamble);
     }
 
     /** Adds command-specific guidance when the arguments cannot be read as options. */

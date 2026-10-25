@@ -1,9 +1,12 @@
 package seedu.tab.ui;
 
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.layout.Region;
 import seedu.tab.model.student.Student;
 
@@ -28,6 +31,42 @@ public class StudentListPanel extends UiPart<Region> {
     }
 
     /**
+     * Scrolls the student's card into view without moving keyboard focus.
+     */
+    public void scrollTo(Student student) {
+        Scene scene = studentListView.getScene();
+        Runnable reveal = new Runnable() {
+            private boolean hasScrolled;
+
+            @Override
+            public void run() {
+                if (hasScrolled) {
+                    scene.removePostLayoutPulseListener(this);
+                }
+                int index = indexOfReference(student);
+                if (index >= 0) {
+                    VirtualFlow<?> flow = (VirtualFlow<?>) studentListView.lookup(".virtual-flow");
+                    flow.scrollTo(index);
+                }
+                hasScrolled = true;
+                Platform.requestNextPulse();
+            }
+        };
+        // The first scroll materializes cards; the next pulse corrects their measured heights.
+        scene.addPostLayoutPulseListener(reveal);
+        Platform.requestNextPulse();
+    }
+
+    private int indexOfReference(Student student) {
+        for (int index = 0; index < studentListView.getItems().size(); index++) {
+            if (studentListView.getItems().get(index) == student) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    /**
      * Returns the card for {@code student}, held to the width the list has.
      *
      * <p>A card is bounded rather than starved. Asking the cell for no width at all does stop
@@ -46,6 +85,18 @@ public class StudentListPanel extends UiPart<Region> {
      * Custom {@code ListCell} that displays the graphics of a {@code Student} using a {@code StudentCard}.
      */
     class StudentListViewCell extends ListCell<Student> {
+        @Override
+        protected double computePrefHeight(double width) {
+            if (!(getGraphic() instanceof Region card) || width < 0) {
+                return super.computePrefHeight(width);
+            }
+            // The skin caps the graphic at its maximum width during layout. Measure at
+            // that same width so a wrapped contact row receives all the height it needs.
+            double contentWidth = Math.max(0, width - snappedLeftInset() - snappedRightInset());
+            double cardWidth = Math.max(0, Math.min(contentWidth, card.maxWidth(-1)));
+            return snappedTopInset() + card.prefHeight(cardWidth) + snappedBottomInset();
+        }
+
         @Override
         protected void updateItem(Student student, boolean empty) {
             super.updateItem(student, empty);

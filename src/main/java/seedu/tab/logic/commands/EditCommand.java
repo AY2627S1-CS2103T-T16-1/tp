@@ -73,6 +73,7 @@ public class EditCommand extends Command {
             + FLAG_PHONE + " 91234567";
 
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
+    public static final String MESSAGE_UNCHANGED = "Student already has the requested details. No changes made.";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
 
     private final Logger logger = LogsCenter.getLogger(EditCommand.class);
@@ -105,14 +106,11 @@ public class EditCommand extends Command {
         requireNonNull(model);
         Student studentToEdit = target.resolve(model);
         Student editedStudent = createEditedStudent(studentToEdit, editStudentDescriptor);
-
-        Optional<Student> duplicateStudent = studentToEdit.isSameStudent(editedStudent)
-                ? Optional.empty()
-                : model.findSameStudent(editedStudent);
-        if (duplicateStudent.isPresent()) {
-            throw new CommandException(String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
-                    editedStudent.getNusStudentId().orElseThrow(), duplicateStudent.orElseThrow().getName()));
+        if (studentToEdit.equals(editedStudent)) {
+            return new CommandResult(MESSAGE_UNCHANGED);
         }
+
+        StudentIdValidation.requireNoDuplicate(model, editedStudent, studentToEdit);
 
         String feedback = LikelyDuplicateWarning.appendChangedFieldsTo(
                 String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)),
@@ -158,6 +156,11 @@ public class EditCommand extends Command {
 
         return target.equals(otherEditCommand.target)
                 && editStudentDescriptor.equals(otherEditCommand.editStudentDescriptor);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(target, editStudentDescriptor);
     }
 
     @Override
@@ -319,6 +322,12 @@ public class EditCommand extends Command {
                     && nusStudentIdEdit.hasSameStateAs(otherEditStudentDescriptor.nusStudentIdEdit)
                     && Objects.equals(tags, otherEditStudentDescriptor.tags)
                     && Objects.equals(isFlagged, otherEditStudentDescriptor.isFlagged);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, phone, emailEdit.isEdited(), emailEdit.getValue(),
+                    nusStudentIdEdit.isEdited(), nusStudentIdEdit.getValue(), tags, isFlagged);
         }
 
         @Override

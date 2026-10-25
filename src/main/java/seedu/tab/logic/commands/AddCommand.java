@@ -8,7 +8,6 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.model.Model.PREDICATE_SHOW_ALL_STUDENTS;
 
-import java.util.Optional;
 import java.util.logging.Logger;
 
 import seedu.tab.commons.core.LogsCenter;
@@ -27,6 +26,9 @@ public class AddCommand extends Command {
 
     /** The name is given before any option rather than marked by one. */
     public static final String FIELD_NAME = "NAME";
+
+    public static final String MESSAGE_NAME_GUIDANCE = "In the add command, the name comes first, without an option: "
+            + COMMAND_WORD + " " + FIELD_NAME + " " + FLAG_PHONE.getLabel() + " ...";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a student to the student book. "
             + "Parameters: " + FIELD_NAME + " "
@@ -69,11 +71,7 @@ public class AddCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
 
-        Optional<Student> duplicateStudent = model.findSameStudent(toAdd);
-        if (duplicateStudent.isPresent()) {
-            throw new CommandException(String.format(Messages.MESSAGE_DUPLICATE_STUDENT,
-                    toAdd.getNusStudentId().orElseThrow(), duplicateStudent.orElseThrow().getName()));
-        }
+        StudentIdValidation.requireNoDuplicate(model, toAdd, null);
 
         String feedback = LikelyDuplicateWarning.appendTo(
                 String.format(MESSAGE_SUCCESS, Messages.format(toAdd)),
@@ -85,7 +83,7 @@ public class AddCommand extends Command {
         }
         logger.info("Added a student; the book now holds "
                 + model.getStudentBook().getStudentList().size());
-        return new CommandResult(feedback);
+        return new CommandResult(feedback, toAdd);
     }
 
     @Override
@@ -100,6 +98,11 @@ public class AddCommand extends Command {
         }
 
         return toAdd.equals(otherAddCommand.toAdd);
+    }
+
+    @Override
+    public int hashCode() {
+        return toAdd.hashCode();
     }
 
     @Override
