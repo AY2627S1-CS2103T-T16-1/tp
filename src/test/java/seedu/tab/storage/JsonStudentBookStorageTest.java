@@ -143,6 +143,27 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_tagVariants_keepsFirstNormalizedSpellingAcrossSaveAndReload() throws Exception {
+        Path path = testFolder.resolve("tag-variants.json");
+        String json = """
+                {"students":[{"name":"Casey Tan","phone":"91110000",
+                "tags":[" t1 ","T1","Lab  3","lab 3","组 1","组\u00a01","Café","Café","İ","i"]}]}
+                """;
+        Files.writeString(path, json);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        ReadOnlyStudentBook loaded = storage.readStudentBook().orElseThrow();
+        Student expected = new StudentBuilder().withName("Casey Tan").withPhone("91110000").withoutEmail()
+                .withTags("t1", "Lab 3", "组 1", "Café", "İ").build();
+
+        assertEquals(List.of(expected), loaded.getStudentList());
+        assertEquals(json, Files.readString(path));
+        storage.saveStudentBook(loaded);
+        assertEquals(loaded, new JsonStudentBookStorage(path).readStudentBook().orElseThrow());
+        assertFalse(Files.readString(path).contains("\"T1\""));
+        assertFalse(Files.readString(path).contains("\"lab 3\""));
+    }
+
+    @Test
     public void readStudentBook_nonBooleanFlag_reportsRecordAndPreservesBytes() throws Exception {
         for (String value : List.of("0", "1", "2", "-1", "1.5", "1e3", "999999999999999999999999",
                 "\"true\"", "\"false\"", "\"\"", "[]", "{}")) {

@@ -719,10 +719,11 @@ feedback.
 `ParserUtil.parseTags` folds case variants in `add` and replacement tags in `edit`
 using `String.CASE_INSENSITIVE_ORDER`, matching the tag command and summary.
 `ParseProblems` retains input order so the first normalized spelling wins while
-still collecting every invalid tag's diagnostic. Existing hand-edited case variants
-remain intact until the user explicitly replaces or removes those tags.
-Tag equality and storage remain unchanged. Addition preserves existing case
-variants; removal removes every matching variant of the requested group while
+still collecting every invalid tag's diagnostic. `JsonAdaptedStudent` uses the same
+case-insensitive ordering after validating and normalizing stored tags, keeping
+the first spelling in the JSON array. This makes loaded cards and tag summaries
+agree; the next successful save writes one tag per group. Tag equality remains
+unchanged. Removal removes every matching variant of the requested group while
 retaining unrelated tags. A general tag named `Needs follow-up` remains separate
 from the follow-up flag, though the parsers no longer let one be added. Duplicate and successful removal feedback use a matching
 stored tag's spelling. If several case variants match, the reply chooses the
@@ -2507,7 +2508,8 @@ testers are expected to do more *exploratory* testing.
       Keep `"flag": true` and restart TAB. Run `find -n "Tag Test"`.
 
    1. Test case: `tag 1 -r "LAB 3"`.<br>
-      Expected: Both case variants disappear. `T1`, `Needs follow-up`, the
+      Expected: The variants load as one `Lab 3` tag, which is removed.
+      `T1`, `Needs follow-up`, the
       follow-up flag and all other fields remain after restart.
 
    1. Test case: Run `find -n "Tag Test"` again after restarting and confirm only
@@ -3723,6 +3725,16 @@ testers are expected to do more *exploratory* testing.
       Expected: The student shows the edited phone. Run `list`, close TAB,
       and restart again; the hand-edited value remains. Restore the backup
       with TAB closed when finished.
+
+1. Merging duplicate tags from a hand-edited file
+
+   1. Prerequisites: Close TAB and back up `data/tab.json`.
+   1. Test case: Set one student's `tags` to `[" t1 ", "T1", "Lab  3", "lab 3"]`
+      and restart TAB.<br>
+      Expected: Their card shows only `t1` and `Lab 3`, matching the summary.
+      Run `edit 1 -p 999` for that student at index 1, then restart. The saved
+      tags retain those first normalized spellings with no duplicates.
+      Restore the backup with TAB closed.
 
 1. Preserving existing data when a save fails
 
