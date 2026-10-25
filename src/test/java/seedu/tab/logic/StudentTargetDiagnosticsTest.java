@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.tab.logic.commands.exceptions.CommandException;
+import seedu.tab.logic.parser.ParserUtil;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.StudentBook;
@@ -66,6 +67,15 @@ public class StudentTargetDiagnosticsTest {
         assertRejectedWithoutMutation("tag 6591234567 -a T1", ParseException.class, expected);
         assertRejectedWithoutMutation("delete 6591234567", ParseException.class, expected
                 + " If \"6591234567\" is an NUS Student ID, use delete --id 6591234567.");
+    }
+
+    @Test
+    public void execute_unusableIndex_explainsReasonWithoutUsageOrMutation() throws Exception {
+        for (String command : List.of("edit 1.5 -p 81112222", "tag 1.5 -a T1", "delete 1.5")) {
+            assertRejectedWithoutMutation(command, ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX);
+        }
+        assertRejectedWithoutMutation("delete 0", ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX
+                + " If \"0\" is an NUS Student ID, use delete --id 0.");
     }
 
     @Test

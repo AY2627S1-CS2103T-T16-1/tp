@@ -715,8 +715,10 @@ addition and removal.
 `ParserUtil.parseIndex` distinguishes malformed/non-positive input from a positive
 integer exceeding the supported index range. `StudentTarget` reports out-of-range
 positions with their original input spelling and the current displayed count,
-including zero. Invalid non-positive or non-integer edit targets retain the
-concise positive-integer reason from `parseIndex`, alongside any field errors.
+including zero. Invalid non-positive or non-integer targets of edit, tag and
+delete retain the concise positive-integer reason from `parseIndex`, alongside
+any field errors; delete adds the explicit `--id` form whenever the refused
+target reads as a valid NUS Student ID.
 Retaining that spelling also lets delete suggest an exact `--id`
 command for a stored numeric ID without dropping leading zeroes. An in-range
 number remains an index even when another record holds the same numeric ID.
@@ -3222,8 +3224,10 @@ testers are expected to do more *exploratory* testing.
       the removed student and shows their details (`Deleted student: NAME; Phone: PHONE...`).
 
    1. Test case: `delete 0`<br>
-      Expected: No student is deleted. The status message shows error details, and the student book
-      remains unchanged.
+      Expected: No student is deleted. The reply is `Index must be a positive integer.`
+      followed by the `delete --id 0` recovery, rather than the whole usage block,
+      and the student book remains unchanged. `delete -1` and `delete 1.5` report
+      the same reason on its own.
 
    1. Test case: `delete A02345678G`<br>
       Expected: Charlotte Oliveiro is deleted from the book wherever she appears, and the status
@@ -3231,8 +3235,8 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `add "Digit Ida" -p 91234567 --id 1ABC`, then `delete --id 1ABC`<br>
       Expected: The student holding `1ABC` is deleted, and the status message identifies them.
-      `delete 1ABC` is refused with the command's format, because a target starting with a digit
-      reads as an index.
+      `delete 1ABC` is refused as an unusable index, because a target starting with a digit
+      reads as an index, and the reply names `delete --id 1ABC` instead.
 
    1. Test case: `find -n Alex` followed by `delete A02345678G`, where the search hides
       Charlotte Oliveiro<br>
@@ -3532,7 +3536,8 @@ testers are expected to do more *exploratory* testing.
    That explicit command deletes Amy even while the filter hides her.
 1. Open help and find the delete section.<br>
    Expected: It lists index, plain NUS Student ID and explicit `--id` forms.
-   `delete 1ABC` shows usage including `delete --id 1ABC` as a recovery example.
+   `delete 1ABC` answers `Index must be a positive integer.` and names
+   `delete --id 1ABC` as the recovery.
 
 ### Locating students by digits in formatted phone numbers
 
