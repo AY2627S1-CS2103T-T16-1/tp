@@ -652,10 +652,8 @@ Format: `tag TARGET -a TAG`
   `Lab 3` and `lab  3` count as the same tag for this command.
 * An existing tag reports `This student already has tag [TAG]. No changes made.`
   The reply uses the stored spelling: if the tag is `Lab 3`, entering `lab  3`
-  reports `[Lab 3]`. Existing case variants entered through `add`,
-  `edit` or a data file are kept; this command does not merge them.
-  When several stored spellings match, the reply uses the first in the tag
-  display order.
+  reports `[Lab 3]`. Case variants are merged when tags are entered or loaded
+  from a data file, keeping the first normalized spelling.
 * An invalid target or tag, a missing value, or a repeated add option is refused
   without changing any student details or writing the data file. An empty
   quoted tag is invalid; it does not clear tags.
@@ -710,10 +708,8 @@ Format: `tag TARGET -r TAG`
   [same rules as adding one tag](#adding-one-tag-tag). Option names are
   case-sensitive; tag matching ignores case and insignificant whitespace.
 * If the tag is present, feedback starts with `Removed tag [TAG]:` using its
-  stored spelling, followed by the updated student details. If records from
-  `add`, `edit` or a hand-edited file hold several case variants of the same
-  tag, all matching variants are removed. Feedback uses the first matching
-  spelling in tag display order. Unrelated tags keep their spelling.
+  stored spelling, followed by the updated student details. Case variants from a hand-edited file merge when loaded, so removing a tag
+  removes that group. Unrelated tags keep their spelling.
 * If the tag is absent, TAB reports
   `This student does not have tag [TAG]. No changes made.` using your
   normalized input. The record, displayed list and saved file stay unchanged.
@@ -951,6 +947,9 @@ accepted and ignored for compatibility with older files. Other keys, such as
 `nusStudentID`, `Email` or `tag`, stop loading with an error naming the unknown
 key, student record number (counting from 1), and name when present, rather
 than silently losing that value on the next save.
+Within a student's `tags` array, case and whitespace variants merge on loading,
+keeping the first normalized spelling (for example, `[" t1 ", "T1"]` becomes
+one `t1` tag). The next successful save writes the merged tags.
 The top-level object accepts `students` and an optional `_comment` description.
 Correct the spelling or remove the unsupported field, then restart TAB; the
 rejected file stays unchanged.
