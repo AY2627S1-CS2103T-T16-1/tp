@@ -55,7 +55,7 @@ public class TagCommandParser implements Parser<TagCommand> {
         }
         if (Character.isLetter(preamble.charAt(0))) {
             return ParserUtil.parseRequiredStudentTarget(preamble, TagCommand.FIELD_TARGET,
-                    TagCommand.FIELD_INDEX, TagCommand.MESSAGE_USAGE);
+                    TagCommand.FIELD_INDEX);
         }
         return StudentTarget.byIndex(ParserUtil.parseRequiredIndex(preamble, TagCommand.FIELD_INDEX), preamble);
     }
