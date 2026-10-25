@@ -243,22 +243,30 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readStudentBook_unknownStudentKeys_reportsRecordAndPreservesFile() throws Exception {
+        // the key is rejected by its name, before its value is looked at, so the two
+        // dimensions are walked separately rather than multiplied: every unknown key against
+        // one value, then every value type against one key
         for (String field : List.of("nusStudentID", "Email", "tag", "Flag", "notes", "Address")) {
-            for (String value : List.of("\"A0999999Z\"", "null", "{}", "[]")) {
-                // Put the unknown field before the name to cover property-order independence.
-                String json = "{\"students\":[{\"name\":\"Alex\",\"phone\":\"87438807\"},"
-                        + "{\"" + field + "\":" + value + ",\"name\":\"Bernice Yu\",\"phone\":\"99272758\"}]}";
-                Path path = testFolder.resolve("unknown.json");
-                Files.writeString(path, json);
-                DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
-                        DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
-                assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
-                assertTrue(exception.getMessage().contains("Unknown field \"" + field + "\" in student \"Bernice Yu\""),
-                        exception.getMessage());
-                assertTrue(exception.getMessage().contains("Expected: name, phone, email, nusStudentId, tags, flag."));
-                assertEquals(json, Files.readString(path));
-            }
+            assertUnknownFieldIsReported(field, "\"A0999999Z\"");
         }
+        for (String value : List.of("null", "{}", "[]")) {
+            assertUnknownFieldIsReported("notes", value);
+        }
+    }
+
+    private void assertUnknownFieldIsReported(String field, String value) throws Exception {
+        // Put the unknown field before the name to cover property-order independence.
+        String json = "{\"students\":[{\"name\":\"Alex\",\"phone\":\"87438807\"},"
+                + "{\"" + field + "\":" + value + ",\"name\":\"Bernice Yu\",\"phone\":\"99272758\"}]}";
+        Path path = testFolder.resolve("unknown.json");
+        Files.writeString(path, json);
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+        assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
+        assertTrue(exception.getMessage().contains("Unknown field \"" + field + "\" in student \"Bernice Yu\""),
+                exception.getMessage());
+        assertTrue(exception.getMessage().contains("Expected: name, phone, email, nusStudentId, tags, flag."));
+        assertEquals(json, Files.readString(path));
     }
 
     @Test
