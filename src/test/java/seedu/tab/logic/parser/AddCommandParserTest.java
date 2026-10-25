@@ -5,6 +5,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_AT_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_OVER_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.FOLLOW_UP;
+import static seedu.tab.logic.commands.CommandTestUtil.FOLLOW_UP_AS_TAG;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_EMAIL;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NAME;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NUS_STUDENT_ID;
@@ -188,6 +189,10 @@ public class AddCommandParserTest {
         // invalid tag
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + EMAIL_BOB + INVALID_TAG + TAG_FRIEND,
                 Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, "---", Tag.getFailureReason("---")));
+
+        // the follow-up marker's label, which names no tag
+        assertParseFailure(parser, NAME_BOB + PHONE_BOB + EMAIL_BOB + FOLLOW_UP_AS_TAG,
+                ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
 
         // invalid NUS Student ID
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + INVALID_NUS_STUDENT_ID,

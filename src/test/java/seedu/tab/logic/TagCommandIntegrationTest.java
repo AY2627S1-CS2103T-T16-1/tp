@@ -151,10 +151,10 @@ public class TagCommandIntegrationTest {
     }
 
     @Test
-    public void execute_minimalStudent_preservesAbsentFieldsAndDoesNotSetFollowUp() throws Exception {
+    public void execute_minimalStudent_preservesAbsentFields() throws Exception {
         model.updateFilteredStudentList(shown -> shown.getName().equals(otherStudent.getName()));
-        logic.execute("tag 1 -a \"Needs follow-up\"");
-        Student expected = new StudentBuilder(otherStudent).withTags("Needs follow-up").build();
+        logic.execute("tag 1 -a \"T2\"");
+        Student expected = new StudentBuilder(otherStudent).withTags("T2").build();
         assertEquals(List.of(expected, student), storage.readStudentBook().orElseThrow().getStudentList());
         assertEquals(List.of(expected), model.getFilteredStudentList());
     }
@@ -178,7 +178,9 @@ public class TagCommandIntegrationTest {
                 "tag 2147483648 -a T2", String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, "2147483648"),
                 "tag 1 -a \"\"", "Tag \"\" is not valid: it holds no letter or number",
                 "tag 1 -a \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
-                "tag 1 -a T2 --add T3", "Options given more than once: -a. Give each listed option only once.");
+                "tag 1 -a T2 --add T3", "Options given more than once: -a. Give each listed option only once.",
+                "tag 1 -a \"Needs follow-up\"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG,
+                "tag 1 -a \"  nEEds   follow-up \"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
         for (Map.Entry<String, String> error : errors.entrySet()) {
             assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());
         }

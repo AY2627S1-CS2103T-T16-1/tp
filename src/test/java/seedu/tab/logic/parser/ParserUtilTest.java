@@ -20,6 +20,7 @@ import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
+import seedu.tab.model.tag.Flag;
 import seedu.tab.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -341,5 +342,34 @@ public class ParserUtilTest {
         String tagWithWhitespace = WHITESPACE + VALID_TAG_1 + WHITESPACE;
         Tag expectedTag = new Tag(VALID_TAG_1);
         assertEquals(expectedTag, ParserUtil.parseTag(tagWithWhitespace));
+    }
+
+    @Test
+    public void parseTag_followUpLabel_returnsTag() throws Exception {
+        // removing it is still read as a tag, so that TagCommand can explain the marker
+        assertEquals(new Tag(Flag.FOLLOW_UP_NAME), ParserUtil.parseTag(Flag.FOLLOW_UP_NAME));
+    }
+
+    @Test
+    public void parseTagToAdd_followUpLabelHoweverSpelt_throwsParseException() {
+        List<String> spellings = List.of(Flag.FOLLOW_UP_NAME, "needs follow-up", "NEEDS FOLLOW-UP",
+                WHITESPACE + "nEEds" + WHITESPACE + "follow-up" + WHITESPACE);
+        for (String spelling : spellings) {
+            assertThrows(ParseException.class, ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG, () ->
+                    ParserUtil.parseTagToAdd(spelling));
+        }
+    }
+
+    @Test
+    public void parseTagToAdd_ordinaryTag_returnsTrimmedTag() throws Exception {
+        assertEquals(new Tag(VALID_TAG_1), ParserUtil.parseTagToAdd(WHITESPACE + VALID_TAG_1 + WHITESPACE));
+    }
+
+    @Test
+    public void parseTagToAdd_tagSpeltAroundTheLabel_returnsTag() throws Exception {
+        // the label itself is reserved rather than every tag that reads like it
+        for (String tag : List.of("Needs follow-up soon", "Follow-up", "Needs follow up")) {
+            assertEquals(new Tag(tag), ParserUtil.parseTagToAdd(tag));
+        }
     }
 }

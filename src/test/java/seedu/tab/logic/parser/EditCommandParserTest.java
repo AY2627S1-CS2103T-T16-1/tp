@@ -6,6 +6,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_BOB;
 import static seedu.tab.logic.commands.CommandTestUtil.EMAIL_OVER_MAX_LENGTH;
 import static seedu.tab.logic.commands.CommandTestUtil.FLAG_NAME_AMY;
 import static seedu.tab.logic.commands.CommandTestUtil.FOLLOW_UP;
+import static seedu.tab.logic.commands.CommandTestUtil.FOLLOW_UP_AS_TAG;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_EMAIL;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_FLAG_NAME;
 import static seedu.tab.logic.commands.CommandTestUtil.INVALID_NUS_STUDENT_ID;
@@ -441,6 +442,7 @@ public class EditCommandParserTest {
                         Email.getFailureReason("bob!yahoo")));
         assertParseFailure(parser, "1" + INVALID_TAG,
                 Messages.getErrorMessageForInvalidValue("Tag", "---", Tag.getFailureReason("---")));
+        assertParseFailure(parser, "1" + FOLLOW_UP_AS_TAG, ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
         assertParseFailure(parser, "1" + INVALID_NUS_STUDENT_ID,
                 Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
                         NusStudentId.getFailureReason("A0123-456")));

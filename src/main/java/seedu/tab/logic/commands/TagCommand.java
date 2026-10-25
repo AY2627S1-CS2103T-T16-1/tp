@@ -126,7 +126,7 @@ public class TagCommand extends Command {
      */
     private String absentTagMessage(Student student, List<Student> displayedStudents) {
         String absent = String.format(MESSAGE_NOT_PRESENT, Messages.shorten(tag.tagName));
-        if (!student.isFlagged() || !Flag.FOLLOW_UP_NAME.equalsIgnoreCase(tag.tagName)) {
+        if (!student.isFlagged() || !Flag.isFollowUpName(tag.tagName)) {
             return absent;
         }
         for (int index = 0; index < displayedStudents.size(); index++) {

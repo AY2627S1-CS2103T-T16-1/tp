@@ -20,6 +20,7 @@ import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
+import seedu.tab.model.tag.Flag;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -33,6 +34,9 @@ public class ParserUtil {
             "Unexpected value after %1$s: \"%2$s\". Put field values after an option.";
     public static final String MESSAGE_VALUE_AFTER_INDEX_ONLY =
             "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index and nothing else.";
+    public static final String MESSAGE_FOLLOW_UP_IS_NOT_A_TAG =
+            "\"" + Flag.FOLLOW_UP_NAME + "\" marks a student for follow-up rather than naming a tag, "
+            + "so a card would show it twice. Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
 
     private ParserUtil() {} // this class only holds helpers
 
@@ -226,7 +230,7 @@ public class ParserUtil {
      */
     public static Set<Tag> parseTags(Collection<String> values, ParseProblems problems) {
         Set<Tag> tags = new TreeSet<>(Comparator.comparing(tag -> tag.tagName, String.CASE_INSENSITIVE_ORDER));
-        tags.addAll(problems.collectEach(values, ParserUtil::parseTag));
+        tags.addAll(problems.collectEach(values, ParserUtil::parseTagToAdd));
         return new HashSet<>(tags);
     }
 
@@ -244,5 +248,24 @@ public class ParserUtil {
                     Tag.FIELD_NAME, trimmedTag, Tag.getFailureReason(trimmedTag)));
         }
         return new Tag(trimmedTag);
+    }
+
+    /**
+     * Parses a {@code String tag} into a {@code Tag} a student can be given.
+     *
+     * <p>The follow-up label names no tag, so a command that would put it on a student is
+     * refused: a flagged student would otherwise carry it as a tag beside the marker that
+     * already says the same thing, and the summary would count it as a tag of its own.
+     * Taking it off is still read as a tag, so that {@code tag -r} can explain that the
+     * marker is what the student carries.
+     *
+     * @throws ParseException if the given {@code tag} is invalid or names the follow-up flag.
+     */
+    public static Tag parseTagToAdd(String tag) throws ParseException {
+        Tag parsed = parseTag(tag);
+        if (Flag.isFollowUpName(parsed.tagName)) {
+            throw new ParseException(MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
+        }
+        return parsed;
     }
 }

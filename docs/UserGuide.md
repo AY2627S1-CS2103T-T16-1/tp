@@ -365,7 +365,9 @@ still refuses the command, as described above.
 
 **Tip:** A student can have any number of tags, including zero. A tag may hold
 spaces, hyphens and any script, so `Lab 3`, `needs-followup` and
-`AY2627 Sem 1 CS2103T T16` are all valid.
+`AY2627 Sem 1 CS2103T T16` are all valid. The one name a tag cannot take is
+`Needs follow-up`, which labels the follow-up marker; use `--follow-up` for
+that. Names built around it, such as `Needs follow-up soon`, are ordinary tags.
 </box>
 
 <box type="tip" seamless>
@@ -575,6 +577,8 @@ done to it beyond the quotes any value with spaces takes:
   only when a name, phone number, or email changed by that command matches
   another student. Unchanged fields are not reported again, and the edited
   student is not compared with its own earlier record.
+* `Needs follow-up` names the follow-up marker rather than a tag, so `-t` refuses
+  it whatever its case or spacing and points you to `--follow-up`.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
 * To remove all of a student's tags, give `-t` an empty value: `-t ""` or
@@ -636,6 +640,10 @@ Format: `tag TARGET -a TAG`
   Symbols are allowed alongside them. Put a tag containing spaces or starting
   with a hyphen in double quotes. Escape a literal quote as `\"` and a
   backslash as `\\` inside a quoted value.
+* `Needs follow-up` is the label of the follow-up marker rather than a tag, so
+  it is refused whatever its case or spacing, with a reply pointing to
+  `--follow-up`. A card would otherwise show the same label twice, once as a
+  tag and once as the marker.
 * Leading and trailing whitespace is removed and runs of whitespace become
   one space. Tags retain their letter case. When checking whether the student
   already has the tag, case and insignificant whitespace are ignored, so
@@ -714,9 +722,10 @@ Format: `tag TARGET -r TAG`
   search, the hint first asks you to run `list` and use their displayed index.
 * An invalid target or tag, an empty quoted tag, or a missing value is refused
   with a specific error and leaves records and the saved file unchanged.
-* Removing the last tag leaves a student with no general tags. Removing a
-  general tag named `Needs follow-up` leaves the follow-up flag unchanged;
-  use `edit INDEX --no-follow-up` to clear that flag.
+* Removing the last tag leaves a student with no general tags. A general tag
+  named `Needs follow-up` can no longer be added, though an older or
+  hand-edited data file may still hold one; removing it leaves the follow-up
+  flag unchanged, and `edit INDEX --no-follow-up` clears that flag.
 * The current search stays active. If it matched only the removed tag, the
   student may disappear from the displayed list; use `list` to see them again.
 * A successful removal is saved at once and remains after restarting TAB.

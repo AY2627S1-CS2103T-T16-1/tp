@@ -717,7 +717,7 @@ remain intact until the user explicitly replaces or removes those tags.
 Tag equality and storage remain unchanged. Addition preserves existing case
 variants; removal removes every matching variant of the requested group while
 retaining unrelated tags. A general tag named `Needs follow-up` remains separate
-from the follow-up flag. Duplicate and successful removal feedback use a matching
+from the follow-up flag, though the parsers no longer let one be added. Duplicate and successful removal feedback use a matching
 stored tag's spelling. If several case variants match, the reply chooses the
 first in the card's tag display order.
 
@@ -854,7 +854,11 @@ against the list rather than leaving that to be noticed.
 `Flag` extends `Tag` and uses its validation, normalization, and display
 behavior. Its fixed name is `Needs follow-up`. A general tag with those words
 remains a distinct value: tag equality requires the same concrete class as
-well as the same normalized name. `Student` holds an optional `Flag` and
+well as the same normalized name. `ParserUtil.parseTagToAdd` refuses that name
+however it is spelt, so that a card cannot show the same label as a tag and as
+the marker, while `Tag` and `JsonAdaptedTag` still accept it and a file written
+before the rule still loads. Removal reads it as an ordinary tag, so `TagCommand`
+keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `Flag` and
 exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
 interface for commands and the UI. Full equality and hashing include the flag,
 but `isSameStudent` does not: changing whether a student needs a reply does not
@@ -2415,6 +2419,10 @@ testers are expected to do more *exploratory* testing.
       Expected: `This student already has tag [Lab 3]. No changes made.` The
       existing `Lab 3` spelling, all other details, displayed list and saved
       file stay unchanged.
+
+   1. Test cases: `tag 1 -a "Needs follow-up"` and `tag 1 -a "  nEEds   FOLLOW-UP "`.<br>
+      Expected: Both are refused, naming `--follow-up` as the way to mark the
+      student instead. No student, displayed list or saved file changes.
 
    1. Test cases: `tag 0 -a T2`, `tag 2 -a T2`, `tag 2147483648 -a T2`,
       `tag 1 -a ""`, `tag 1 -a "---"`, `tag 1 -a`, and `tag 1 -a T2 --add T3`.<br>
