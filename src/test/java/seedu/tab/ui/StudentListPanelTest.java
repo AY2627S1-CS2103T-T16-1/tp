@@ -48,7 +48,7 @@ public class StudentListPanelTest {
             Student student = new StudentBuilder().withEmail("e0923841@u.nus.edu").build();
             StudentListPanel panel = new StudentListPanel(FXCollections.observableArrayList(student));
             StudentListPanel.StudentListViewCell cell = panel.new StudentListViewCell();
-            assertNotNull(new Scene(cell));
+            new Scene(cell);
             cell.applyCss();
             cell.updateItem(student, false);
             // JavaFX also queries preferred size before it assigns a concrete width.
@@ -141,8 +141,7 @@ public class StudentListPanelTest {
         boolean fits = onFxThread(() -> {
             StudentListPanel panel = new StudentListPanel(students);
             Region root = panel.getRoot();
-            Scene scene = new Scene(root, LIST_WIDTH, 400);
-            assertNotNull(scene);
+            new Scene(root, LIST_WIDTH, 400);
             root.applyCss();
             root.layout();
 

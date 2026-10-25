@@ -70,4 +70,14 @@ public class TagTest {
         assertTrue(tag.equals(tag));
         assertFalse(tag.equals(null));
     }
+    @Test
+    public void equals_differentValuesAndTypes_returnsFalse() {
+        Tag tag = new Tag("Lab 3");
+
+        assertFalse(tag.equals(new Tag("Lab 4")));
+        assertFalse(tag.equals("Lab 3"));
+        assertFalse(tag.equals(new Tag("lab 3")));
+        assertEquals(tag, new Tag("Lab 3"));
+    }
+
 }
