@@ -2,8 +2,10 @@ package seedu.tab.model.student;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +26,20 @@ public class DetailsContainsKeywordsPredicateTest {
         assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Obrien"))).test(student));
         Student otherScript = new StudentBuilder().withName("किरण").build();
         assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("करण"))).test(otherScript));
+    }
+
+    @Test
+    public void test_longPhoneTerms_returnsPromptlyWithoutBroadeningMatches() {
+        Student student = new StudentBuilder().withPhone("9123-4567").build();
+        List<String> keywords = List.of("9".repeat(50_000) + "!", "９".repeat(50_000) + "!",
+                "9".repeat(50_000), "-".repeat(50_000));
+        assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
+            for (String keyword : keywords) {
+                assertFalse(
+                        new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student));
+            }
+        });
+        assertEquals("9123-4567", student.getPhone().value);
     }
 
     @Test
