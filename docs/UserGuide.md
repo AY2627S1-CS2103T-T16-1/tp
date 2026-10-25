@@ -125,10 +125,12 @@ text remains one command; inspect it before pressing Enter.
   "123".` Whitespace after the command is accepted, but quoted values,
   including `""`, are still arguments.
 
-* Invisible format characters are ignored wherever they appear, so a command
-  word or an index copied from a web page with a direction mark or a zero-width
-  space still runs as the command it looks like. The joiners some scripts need
-  for shaping are the exception and are kept.
+* Invisible format characters and non-whitespace control characters are ignored
+  in commands and stored field values, including names, tags, phone numbers,
+  emails and NUS Student IDs. A pasted hidden control cannot make an
+  identical-looking name or tag differ in search or
+  duplicate warnings. Tabs and line breaks still separate values or become spaces
+  inside a field. The joiners some scripts need for shaping are kept.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -141,7 +143,7 @@ numbers use digits 0–9 regardless of your computer’s regional settings.
 The command line marks the parts of a command as you type, so a mistake is
 visible before you press Enter:
 
-* the command word is in the line's accent colour and bold, and ends at the
+* the command word is in the line's accent color and bold, and ends at the
   first space, so a quote typed against it is part of the word
 * an option such as `-p` is in mauve, as is the `--tag=` of an option written
   with its value attached
@@ -157,8 +159,8 @@ text’s displayed order.
 
 <box type="tip" seamless>
 
-**Tip:** The colours break a command where the parser breaks it, so if a value
-you meant to quote is not coloured as a quoted value, the parser will not read
+**Tip:** The colors break a command where the parser breaks it, so if a value
+you meant to quote is not colored as a quoted value, the parser will not read
 it as one either.
 </box>
 
@@ -167,7 +169,7 @@ it as one either.
 In the command box, press `Up` to recall the previous submitted command and
 `Down` to move forward. Moving past the newest command restores the draft you
 were typing before pressing `Up`. The caret moves to the end of recalled text,
-and its colours follow the command shown. Press Enter to submit it again.
+and its colors follow the command shown. Press Enter to submit it again.
 
 Rejected commands are included so you can correct a typo. Consecutive identical
 submissions appear once; blank input and all replies to a pending `clear`
@@ -204,7 +206,7 @@ letter out may differ in it, so `felete` still reaches `delete`.
 
 The comparison ignores case, so `Delte 3` is answered in the same way. A word
 that reaches nothing, such as `dlt`, is answered with the pointer to `help`.
-A word spelt correctly is no mistyping whatever case it is in: `List` and
+A word spelled correctly is no mistyping whatever case it is in: `List` and
 `LIST` run `list` rather than being suggested back to you.
 
 <box type="warning" seamless>
@@ -216,7 +218,7 @@ box, so you can correct the word rather than type the command again.
 
 ### Reading the summary beside the list
 
-The panel on the left of the window summarises the students the list is
+The panel on the left of the window summarizes the students the list is
 showing, so you can see the shape of your cohort without running a command.
 
 * **Flagged** counts the students marked as needing a follow-up.
@@ -228,6 +230,12 @@ showing, so you can see the shape of your cohort without running a command.
   multiple lines so you can read their endings beside the count. Scroll the
   tag list to see any rows below the visible area.
 * The foot of the panel gives the total.
+
+![Summary counts beside student cards with a shortened name, hidden tag count and follow-up marker](images/cardSummary.png)
+
+In this example, three students are listed and one needs follow-up. `Lab3` and
+`T1` each belong to two students. The first card keeps both ends of its long
+name, shows one tag chip and counts the other two as `2 more…`.
 
 <box type="tip" seamless>
 
@@ -458,7 +466,9 @@ it reads `N more…`. Unused count space returns to the name. A tag chip too
 wide for its allocation is shortened; hover over it to read the full tag.
 With several tags, if there is too little room for a complete short tag or at
 least four characters of a longer tag, the row shows `N tags` instead.
-Hover over the count to read the hidden tag names.
+Hover over the count to read the hidden tag names. The
+[summary illustration](#reading-the-summary-beside-the-list) shows this
+shortened name, hidden tag count and follow-up marker together.
 
 When a student is added, the command result displays the new record
 (`New student added: NAME; Phone: PHONE...`) so you can confirm the details
@@ -538,6 +548,8 @@ done to it beyond the quotes any value with spaces takes:
   starting with a digit reads as an index, so `edit` can only name a student by an ID
   that opens with a letter; to edit a student whose ID starts with a digit, use their
   index. Here `--id` always sets the student's ID rather than choosing who to edit.
+  A zero or non-integer index reports `Index must be a positive integer.`
+  without the full usage block; any invalid field values are reported alongside it.
   The current search stays active after editing, so the index keeps referring to
   the same student when you repeat a command, as long as that student still
   matches the search. An edit that removes a matching detail, such as renaming
@@ -610,9 +622,7 @@ Examples:
 *  `edit 1 -n "Ravi s/o Kumaran"` Edits the name of the 1st student to be `Ravi s/o Kumaran`.
 *  `edit 3 -p "+65 9123 4567" -t T1 -t "Lab 3"` Replaces the phone number and both tags of the 3rd student.
 *  `edit 1 --follow-up` Flags the 1st student for follow-up. Repeating it keeps the flag set.
-*  `edit 1 -f` Also sets follow-up, even if the student is already flagged.
 *  `edit 1 --no-follow-up` Clears the flag. Repeating it keeps the flag cleared.
-*  `edit 1 -nf` Also clears follow-up, even if the student is already unflagged.
 *  `edit 2 -p 91234567 --follow-up` Updates the phone number and sets follow-up in one command.
 *  `edit A02345678G --phone 91234567` Edits the phone number of the student holding the NUS
    Student ID `A02345678G`, even while a search hides that student.
@@ -657,10 +667,8 @@ Format: `tag TARGET -a TAG`
   `Lab 3` and `lab  3` count as the same tag for this command.
 * An existing tag reports `This student already has tag [TAG]. No changes made.`
   The reply uses the stored spelling: if the tag is `Lab 3`, entering `lab  3`
-  reports `[Lab 3]`. Existing case variants entered through `add`,
-  `edit` or a data file are kept; this command does not merge them.
-  When several stored spellings match, the reply uses the first in the tag
-  display order.
+  reports `[Lab 3]`. Case variants are merged when tags are entered or loaded
+  from a data file, keeping the first normalized spelling.
 * An invalid target or tag, a missing value, or a repeated add option is refused
   without changing any student details or writing the data file. An empty
   quoted tag is invalid; it does not clear tags.
@@ -715,10 +723,8 @@ Format: `tag TARGET -r TAG`
   [same rules as adding one tag](#adding-one-tag-tag). Option names are
   case-sensitive; tag matching ignores case and insignificant whitespace.
 * If the tag is present, feedback starts with `Removed tag [TAG]:` using its
-  stored spelling, followed by the updated student details. If records from
-  `add`, `edit` or a hand-edited file hold several case variants of the same
-  tag, all matching variants are removed. Feedback uses the first matching
-  spelling in tag display order. Unrelated tags keep their spelling.
+  stored spelling, followed by the updated student details. Case variants from a hand-edited file merge when loaded, so removing a tag
+  removes that group. Unrelated tags keep their spelling.
 * If the tag is absent, TAB reports
   `This student does not have tag [TAG]. No changes made.` using your
   normalized input. The record, displayed list and saved file stay unchanged.
@@ -730,9 +736,11 @@ Format: `tag TARGET -r TAG`
 * An invalid target or tag, an empty quoted tag, or a missing value is refused
   with a specific error and leaves records and the saved file unchanged.
 * Removing the last tag leaves a student with no general tags. A general tag
-  named `Needs follow-up` can no longer be added, though an older or
-  hand-edited data file may still hold one; removing it leaves the follow-up
-  flag unchanged, and `edit INDEX --no-follow-up` clears that flag.
+  named `Needs follow-up` can no longer be added, and a data file holding one
+  no longer loads: TAB names the record at startup and asks you to take the
+  entry out of `tags` and set `"flag": true` instead. Correct the file while
+  TAB is closed, as described in [Editing the data file](#editing-the-data-file).
+  The flag itself is cleared with `edit INDEX --no-follow-up`.
 * The current search stays active. If it matched only the removed tag, the
   student may disappear from the displayed list; use `list` to see them again.
 * A successful removal is saved at once and remains after restarting TAB.
@@ -930,9 +938,9 @@ TAB data is saved automatically as a JSON file `[JAR file location]/data/tab.jso
 Advanced users can edit this file directly:
 
 1. Close every TAB window using this file, then make a backup of `data/tab.json`.
-2. Edit the file, preserve its JSON structure, and follow the encoding guidance
+1. Edit the file, preserve its JSON structure, and follow the encoding guidance
    below when saving.
-3. Restart TAB to load the edited records and check the changes.
+1. Restart TAB to load the edited records and check the changes.
 
 TAB reads student data only at startup. Edits made while TAB is open do not
 appear in that session. TAB refuses a later save if the student records in the
@@ -956,6 +964,9 @@ accepted and ignored for compatibility with older files. Other keys, such as
 `nusStudentID`, `Email` or `tag`, stop loading with an error naming the unknown
 key, student record number (counting from 1), and name when present, rather
 than silently losing that value on the next save.
+Within a student's `tags` array, case and whitespace variants merge on loading,
+keeping the first normalized spelling (for example, `[" t1 ", "T1"]` becomes
+one `t1` tag). The next successful save writes the merged tags.
 The top-level object accepts `students` and an optional `_comment` description.
 Correct the spelling or remove the unsupported field, then restart TAB; the
 rejected file stays unchanged.
@@ -968,6 +979,13 @@ repeated key, its name. Move extra records into the `students` array or keep
 only the intended value for the repeated key, then restart TAB. The rejected
 file stays unchanged.
 
+The `tags` field holds a JSON array of strings, such as `"tags": ["Lab 3", "组 1"]`.
+An absent key, `null`, or `[]` means no tags. A single string without array
+brackets, or an array entry that is a number, Boolean, object, array or `null`,
+is rejected with an error naming `tags` and the student record. For an invalid
+entry, the error also gives its position, counting from 1. Correct the value
+and restart; TAB leaves the rejected file unchanged.
+
 A student who needs follow-up has `"flag": true` in their JSON record. An
 unflagged student normally has no `flag` key; absence, `false`, and `null` all
 mean that no follow-up is needed. Data files created before this field existed
@@ -976,6 +994,14 @@ Use actual JSON Boolean values, without quotation marks. Numbers such as
 `0`, `1` or `2`, strings such as `"true"`, and other value types are rejected
 with an error naming the student record and `flag`. TAB leaves the file
 unchanged so that you can correct the value and restart.
+
+`Needs follow-up` is the label TAB shows on a flagged student's card, so it
+names no tag. A record whose `tags` list holds it, in any letter case or
+surrounding spacing, stops loading with an error naming the student record and
+the field to correct. Remove the entry from `tags` and set `"flag": true`
+instead. A file written before this rule needs that one edit before it loads. A
+name built around the label, such as `Needs follow-up soon`, stays an ordinary
+tag.
 
 A student with an NUS Student ID has a `"nusStudentId"` string such as
 `"A01234567X"` in their JSON record. The key is optional: a missing key or

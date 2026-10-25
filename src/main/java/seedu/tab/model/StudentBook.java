@@ -49,14 +49,6 @@ public class StudentBook implements ReadOnlyStudentBook {
     //// student-level operations
 
     /**
-     * Returns true if a student with the same identity as {@code student} exists in the student book.
-     */
-    public boolean hasStudent(Student student) {
-        requireNonNull(student);
-        return students.contains(student);
-    }
-
-    /**
      * Adds a student to the student book.
      * The student must not already exist in the student book.
      */

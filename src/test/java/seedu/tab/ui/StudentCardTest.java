@@ -1060,10 +1060,13 @@ public class StudentCardTest {
         onFxThread(() -> {
             boolean sawTotal = false;
             boolean sawChip = false;
+            // one card laid out again at each width, as the contact-row sweep does: building
+            // a card per width measures JavaFX construction rather than the layout under test
+            Region root = (Region) new StudentCard(student, 1).getRoot();
+            styledScene(root, 300, 120);
+            TagRow tags = (TagRow) root.lookup("#tags");
             for (int width = 300; width <= 800; width += 2) {
-                Region root = (Region) new StudentCard(student, 1).getRoot();
-                styledScene(root, width, 120);
-                TagRow tags = (TagRow) root.lookup("#tags");
+                layOutAt(root, width);
                 List<String> shown = visibleChipsOf(root);
                 sawTotal |= shown.equals(List.of("3 tags"));
                 sawChip |= shown.size() > 1;

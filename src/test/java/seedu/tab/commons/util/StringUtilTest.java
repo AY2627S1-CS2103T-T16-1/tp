@@ -214,6 +214,22 @@ public class StringUtilTest {
     }
 
     @Test
+    public void normalizeFieldValue_controlCharacters_removesHiddenControlsAndPreservesSeparators() {
+        for (int codePoint = 0; codePoint <= 0x9f; codePoint++) {
+            if (Character.getType(codePoint) != Character.CONTROL) {
+                continue;
+            }
+            String control = Character.toString(codePoint);
+            boolean isSeparator = StringUtil.isWhitespace((char) codePoint);
+            assertEquals(isSeparator ? "a b" : "ab", StringUtil.normalizeFieldValue("a" + control + "b"));
+            assertEquals(isSeparator ? "a" + control + "b" : "ab",
+                    StringUtil.stripFormatCharacters("a" + control + "b"));
+        }
+        assertEquals("é", StringUtil.normalizeFieldValue("e" + Character.toString(1) + "\u0301"));
+        assertEquals("", StringUtil.normalizeFieldValue(Character.toString(1)));
+    }
+
+    @Test
     public void normalizeFieldValue_composesToNfc() {
         assertEquals(StringUtil.normalizeFieldValue("Nguy\u1EC5n"),
                 StringUtil.normalizeFieldValue("Nguye\u0302\u0303n"));
