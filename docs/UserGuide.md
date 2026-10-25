@@ -548,8 +548,9 @@ done to it beyond the quotes any value with spaces takes:
 * Existing values will be updated to the input values. If every requested value
   already matches the record, TAB replies `Student already has the requested details. No changes made.`
   The displayed list, search and saved file stay unchanged.
-* `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it and is
-  available only with `edit`. New students are unflagged by default when added.
+* `--follow-up` (alias `-f`) sets follow-up; `--no-follow-up` (alias `-nf`) clears it.
+  Both options are also available with `find` to filter by follow-up status.
+  New students are unflagged by default when added.
   Both options take no value, so forms such as `--follow-up=true` are refused.
   Repeating either request keeps the requested state and reports no changes
   unless another field changes.
