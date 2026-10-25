@@ -1290,15 +1290,17 @@ explanation and recovery guidance through the same `DataLoadingException`
 boundary; startup preserves the original bytes and blocks the normal UI.
 
 `JsonUtil` turns malformed JSON or an incompatible JSON shape into a
-`DataLoadingException`. For a syntax error, it uses the deepest parser
-exception with a usable location so that the displayed line and column
-identify the offending token rather than the last successfully mapped
-value. It pairs the concise parser explanation with the affected line
-and at most one line on either side. Each source line is limited to 160
-characters; an affected long line is cropped around the reported column
-so that minified JSON remains useful without filling the dialog. If the
-parser supplies no usable location, `JsonUtil` omits the source instead
-of falling back to Jackson's source-bearing message.
+`DataLoadingException`, and `JsonParseErrorFormatter` words the
+explanation it carries. For a syntax error, the formatter uses the
+deepest parser exception with a usable location so that the displayed
+line and column identify the offending token rather than the last
+successfully mapped value. It pairs the concise parser explanation with
+the affected line and at most one line on either side. Each source line
+is limited to 160 characters; an affected long line is cropped around
+the reported column so that minified JSON remains useful without
+filling the dialog. If the parser supplies no usable location, the
+formatter omits the source instead of falling back to Jackson's
+source-bearing message.
 During model conversion, `JsonAdaptedStudent` identifies the invalid field and
 `JsonSerializableStudentBook` adds the one-based record number and its name
 when available. `JsonStudentBookStorage` carries that explanation through the
