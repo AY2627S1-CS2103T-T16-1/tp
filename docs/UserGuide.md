@@ -857,6 +857,10 @@ Format: `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID
   the book — even while a search is hiding them. The match ignores case.
 * `--id NUS_STUDENT_ID` names the value as an ID, which an ID starting with a digit
   needs — the plain form would read it as an index. `-i` works in place of `--id`.
+* A target that is not a positive integer, such as `0`, `-1` or `1.5`, reports
+  `Index must be a positive integer.` without the full usage block. A refused
+  target that reads as an NUS Student ID, such as `1ABC`, also names the
+  `delete --id 1ABC` command that addresses it.
 * If an out-of-range numeric target is also a stored NUS Student ID, TAB suggests
   the exact `delete --id VALUE` command. Leading zeroes in an ID are preserved.
   A bare number that is a valid displayed position still deletes by that position.
