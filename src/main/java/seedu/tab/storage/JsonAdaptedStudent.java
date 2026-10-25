@@ -102,6 +102,7 @@ class JsonAdaptedStudent {
      * @throws IllegalValueException if there were any data constraints violated in the adapted student.
      */
     public Student toModelType() throws IllegalValueException {
+        // Unlike Tag.equals, this groups case variants; retaining the first entry keeps its JSON spelling.
         final Set<Tag> studentTags = new TreeSet<>(
                 Comparator.comparing(tag -> tag.tagName, String.CASE_INSENSITIVE_ORDER));
         for (JsonAdaptedTag tag : tags) {
