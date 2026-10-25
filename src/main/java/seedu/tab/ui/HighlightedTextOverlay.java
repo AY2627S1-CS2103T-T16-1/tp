@@ -1,0 +1,336 @@
+package seedu.tab.ui;
+
+import java.util.Locale;
+
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.beans.value.ChangeListener;
+import javafx.geometry.Bounds;
+import javafx.scene.Node;
+import javafx.scene.control.IndexRange;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
+import javafx.scene.shape.MoveTo;
+import javafx.scene.shape.Path;
+import javafx.scene.shape.PathElement;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
+import javafx.util.Duration;
+
+/**
+ * Draws a text field's content in colour, behind a field whose own text is transparent.
+ *
+ * <p>A {@code TextField} cannot colour its own content, so the colours are painted as a
+ * separate copy of the line, and the field is left to do everything else: it keeps every key
+ * the User presses, it decides where a click lands, and it scrolls a command longer than the
+ * line by rules of its own. The copy, the caret and the selection are all drawn wherever the
+ * field has put its own text, which is the one thing they have to agree with.
+ *
+ * <p>This is measurement rather than behaviour: it changes when a JavaFX skin draws something
+ * somewhere new, not when a command does something new.
+ */
+public class HighlightedTextOverlay {
+
+    private static final int BLINK_MILLIS = 530;
+
+    private final TextField field;
+    private final TextFlow highlighted;
+    private final Region caret;
+    private final Pane lane;
+    private final Path selection;
+    private final ChangeListener<Number> theFieldScrolled = (unused, old, now) -> refresh();
+
+    /** The node the field draws its own text in, once the copy is following it. */
+    private Text followed;
+
+    /**
+     * Creates an overlay that paints {@code field}'s text in the nodes it is handed.
+     *
+     * @param field the field whose text is painted, and whose own text is transparent
+     * @param highlighted the coloured copy of the line
+     * @param caret the bar drawn where the field puts its own caret
+     * @param lane the clipped line the copy, the caret and the selection are drawn in
+     * @param selection the shape drawn behind the selected characters
+     */
+    public HighlightedTextOverlay(TextField field, TextFlow highlighted, Region caret, Pane lane,
+            Path selection) {
+        this.field = field;
+        this.highlighted = highlighted;
+        this.caret = caret;
+        this.lane = lane;
+        this.selection = selection;
+
+        // where the copy sits follows the caret, the selection, and how much of the line the
+        // field has to show it in, so each of them asks for the same decision again. The last
+        // of them covers the line narrowing with the window, which can take a command that
+        // fitted and make it scroll.
+        ChangeListener<Object> refresh = (unused, old, now) -> refresh();
+        field.caretPositionProperty().addListener(refresh);
+        field.focusedProperty().addListener(refresh);
+        field.selectionProperty().addListener(refresh);
+        field.widthProperty().addListener(refresh);
+        clipTheLane();
+        lane.widthProperty().addListener((unused, old, width) -> refresh());
+        blink();
+    }
+
+    /**
+     * Repaints the coloured text behind the field so that it reads as what was typed.
+     *
+     * <p>The field keeps every key the User presses and decides where a click lands; only its
+     * own text is transparent, so what is read is the coloured copy underneath, and the caret
+     * and the selection are drawn here to go with it. A command longer than the line scrolls
+     * the copy the way the field scrolls its own text, so the colours hold however long the
+     * command is.
+     */
+    public void recolour(String typed) {
+        highlighted.getChildren().clear();
+        // Keep ordinary words and spaces together so bidi shaping agrees with the field.
+        Text value = null;
+        for (CommandHighlighter.Span span : CommandHighlighter.highlight(typed)) {
+            if (value != null && (span.kind() == CommandHighlighter.Kind.VALUE
+                    || span.kind() == CommandHighlighter.Kind.SPACE)) {
+                value.setText(value.getText() + span.text());
+                continue;
+            }
+            Text text = new Text(span.text());
+            text.getStyleClass().addAll("command-token", styleClassFor(span.kind()));
+            highlighted.getChildren().add(text);
+            value = span.kind() == CommandHighlighter.Kind.VALUE ? text : null;
+        }
+
+        // a Text added just now has not had the stylesheet applied to it, so asking for its
+        // font would give the default proportional one. The line must be measured in the
+        // fonts it will actually be drawn in.
+        highlighted.applyCss();
+        refresh();
+    }
+
+    /**
+     * Lays the coloured copy out on one line, where the field is drawing its own text.
+     *
+     * <p>A TextFlow wraps at the width it is given, which would turn a long command into
+     * several lines and grow the box. It is sized to its content instead and the lane around
+     * it is clipped, so the copy runs off the edge the way the field's own text does. Which
+     * part of a long command is in view is the field's to decide, and the copy is drawn
+     * wherever the field has decided rather than scrolled by any rule of its own.
+     */
+    public void refresh() {
+        followTheFieldsText();
+        // JavaFX moves the caret before it reports the new text, so this runs once against
+        // the copy of the previous command. The recolour that follows puts it right.
+        if (!copyMatchesField()) {
+            return;
+        }
+
+        // Measure the shaped line as a whole: separate RTL runs can round differently.
+        highlighted.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        double content = Math.ceil(highlighted.prefWidth(-1));
+        // the copy is sized to the command rather than to the lane holding it, because a
+        // TextFlow wraps at the width it is given: sized to the lane, a long command came
+        // out on several lines and made the box grow down the window.
+        highlighted.setPrefWidth(content);
+        highlighted.autosize();
+        highlighted.layout();
+        caret.autosize();
+
+        double caretAt = caretOnTheCopy();
+        matchCaretToTheLine();
+
+        // where the field is drawing its own text, which is the one thing the copy has to
+        // agree with: the field decides which character a click lands on, and it scrolls by
+        // rules of its own that differ between typing, deleting, cutting and undoing. Every
+        // attempt to work them out again here has been wrong in some case or other.
+        double drawnFrom = whereTheFieldDrawsItsText();
+        double middle = lane.getHeight() / 2;
+        showSelection(drawnFrom, middle);
+        highlighted.relocate(drawnFrom, middle - highlighted.getHeight() / 2);
+        caret.relocate(inTheLine(drawnFrom + caretAt - caret.getWidth() / 2),
+                middle - caret.getHeight() / 2);
+        caret.setVisible(field.isFocused());
+    }
+
+    /**
+     * Returns true if the coloured copy is of the text the field now holds.
+     */
+    private boolean copyMatchesField() {
+        StringBuilder painted = new StringBuilder();
+        for (Node node : highlighted.getChildren()) {
+            painted.append(((Text) node).getText());
+        }
+        return painted.toString().equals(field.getText());
+    }
+
+    /**
+     * Returns where the field draws its own text, in the lane's own terms.
+     *
+     * <p>The field and the lane sit on each other, so the copy belongs wherever the field's
+     * text is. Asking the field means the two can never drift: it insets its text by half a
+     * caret and it re-scrolls on rules of its own, which differ between typing, deleting and
+     * cutting and between JavaFX releases, and none of that has to be worked out again here.
+     *
+     * <p>Before the field has a skin there is nothing to ask, so the copy falls back to the
+     * inset the field will use.
+     */
+    private double whereTheFieldDrawsItsText() {
+        Text drawn = fieldText();
+        return drawn == null ? halfACaret() : drawn.getLayoutX() + drawn.getTranslateX();
+    }
+
+    /**
+     * Returns where a caret wanting to be drawn from {@code left} is drawn instead.
+     *
+     * <p>The caret is centred on the point it marks, as the field's own caret is, except at
+     * either edge of the line, where half of it would fall outside and the lane's clip would
+     * take that half away. How far in from the right edge a field scrolls the end of a
+     * command differs between JavaFX releases, so a caret there lands outside the line on
+     * one of them and is never seen.
+     */
+    private double inTheLine(double left) {
+        return Math.clamp(left, 0, Math.max(0, lane.getWidth() - caret.getWidth()));
+    }
+
+    /**
+     * Follows the node the field draws its own text in, from the moment it has one.
+     *
+     * <p>The field's skin moves that node on its own account, after a delete, a replace or a
+     * change of width, and long after the caret and the text it was told about have settled.
+     * Nothing else says that it has, so the copy would be left where the command used to be
+     * drawn and a click would land on the character the command used to have there.
+     *
+     * <p>The node arrives with the skin rather than with the box, which is why it is looked
+     * for on each pass rather than once in the constructor. A field draws in the one node
+     * for as long as it keeps that skin, so there is never a second one to move to.
+     */
+    private void followTheFieldsText() {
+        Text drawn = fieldText();
+        if (drawn == null || drawn == followed) {
+            return;
+        }
+        followed = drawn;
+        drawn.layoutXProperty().addListener(theFieldScrolled);
+        drawn.translateXProperty().addListener(theFieldScrolled);
+        drawn.caretShapeProperty().addListener((unused, old, now) -> refresh());
+    }
+
+    /**
+     * Returns the node the field draws its own text in, or null before it has a skin.
+     *
+     * <p>An empty line shows the prompt, which the field draws in a node of the same kind
+     * and then hides rather than throws away, so the one carrying the command is the one
+     * the field is drawing in whose text is the command. A command that reads as the prompt
+     * matches the hidden node as well, and the field never scrolls that one.
+     */
+    private Text fieldText() {
+        return field.lookupAll(".text").stream()
+                .filter(Text.class::isInstance)
+                .map(Text.class::cast)
+                .filter(Node::isVisible)
+                .filter(text -> text.getText().equals(field.getText()))
+                .findFirst()
+                .orElse(null);
+    }
+
+
+    /**
+     * Returns the inset the field draws its own text at, which the copy has to match.
+     *
+     * <p>A text field leaves half a caret's width at each edge, so that a caret at either
+     * end of the command is drawn rather than cut in half by the edge. The copy is drawn
+     * behind the field's own text, so it is drawn at the same inset.
+     */
+    private double halfACaret() {
+        return Math.max(caret.getWidth(), caret.prefWidth(-1)) / 2;
+    }
+
+    /**
+     * Keeps the lane's clip the size of the lane, so a command longer than the line is cut off
+     * at its edge rather than spilling over the rest of the window.
+     *
+     * <p>The clip follows both sides of the lane rather than being cut to the size the lane
+     * has at the time. A region is given its width before its height, so a clip made when the
+     * width arrives is as tall as the lane was then, which is nothing: the line came up blank
+     * and stayed blank however much was typed into it.
+     */
+    private void clipTheLane() {
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(lane.widthProperty());
+        clip.heightProperty().bind(lane.heightProperty());
+        lane.setClip(clip);
+    }
+
+    /** Draws every visual segment of the selection, including disjoint bidirectional ranges. */
+    private void showSelection(double drawnFrom, double middle) {
+        IndexRange range = field.getSelection();
+        selection.setVisible(range.getLength() > 0);
+        selection.getElements().setAll(highlighted.rangeShape(range.getStart(), range.getEnd()));
+        // Path coordinates already include the selected characters' offsets within the flow.
+        selection.setLayoutX(drawnFrom);
+        selection.setLayoutY(middle - highlighted.getHeight() / 2);
+    }
+
+    /**
+     * Gives the caret the height of the text beside it.
+     *
+     * <p>A bar of a fixed height centred in the line does not sit where the text does: a
+     * font's ink is not centred in its line box, so the two are out by a point or so. Taking
+     * the height from a run of the text itself keeps them together whatever the font, and an
+     * empty line falls back to one line of the field's own font rather than keeping the
+     * height the command before it needed.
+     */
+    private void matchCaretToTheLine() {
+        if (highlighted.getChildren().isEmpty()) {
+            // nothing is painted, so the caret takes the height of one line of the field's
+            // own font. Returning early instead left it at whatever the last command needed,
+            // and a command that had wrapped left a caret several lines tall on an empty line.
+            Text ruler = new Text("X");
+            ruler.setFont(field.getFont());
+            caret.setPrefHeight(ruler.getLayoutBounds().getHeight());
+            caret.autosize();
+            return;
+        }
+        Text run = (Text) highlighted.getChildren().get(0);
+        Bounds ink = run.getLayoutBounds();
+        caret.setPrefHeight(ink.getHeight());
+        caret.autosize();
+    }
+
+    /**
+     * Returns the primary caret's visual position from the field's shaped text.
+     *
+     * <p>The skin keeps the character index and leading/trailing bias on its text node.
+     * Both matter at script boundaries, where one insertion index has two visual positions.
+     * A logical prefix width cannot locate a caret inside a right-to-left word.
+     */
+    private double caretOnTheCopy() {
+        Text drawn = fieldText();
+        PathElement[] shape = drawn == null
+                ? highlighted.caretShape(field.getCaretPosition(), true) : drawn.getCaretShape();
+        if (shape.length == 0) {
+            return 0;
+        }
+        // JavaFX starts both ordinary and split caret shapes with the primary MoveTo.
+        return ((MoveTo) shape[0]).getX();
+    }
+
+    /**
+     * Blinks the caret, which the field would otherwise do for a caret of its own.
+     */
+    private void blink() {
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO, event -> caret.setOpacity(1)),
+                new KeyFrame(Duration.millis(BLINK_MILLIS), event -> caret.setOpacity(0)),
+                new KeyFrame(Duration.millis(BLINK_MILLIS * 2)));
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
+    }
+
+    /**
+     * Returns the style class that colours {@code kind}.
+     */
+    private static String styleClassFor(CommandHighlighter.Kind kind) {
+        return "command-" + kind.name().toLowerCase(Locale.ROOT).replace('_', '-');
+    }
+}

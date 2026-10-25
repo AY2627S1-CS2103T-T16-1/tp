@@ -102,7 +102,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentListPanel`, `SummaryPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-`CommandBox` owns its `CommandHistory` and `CommandTextField`, and calls the static `CommandHighlighter.highlight` method to color the input. The card controls extend JavaFX classes directly: `CardHeadline` extends `Pane`, `CardName` extends `Label`, `TagRow` extends `Region`, and `ContactRow` extends `FlowPane`. These controls are composed in `StudentListCard.fxml`.
+`CommandBox` owns its `CommandHistory`, `CommandTextField` and `HighlightedTextOverlay`. The overlay is what calls the static `CommandHighlighter.highlight` method to color the input, leaving `CommandBox` with running the command, recalling earlier ones and marking a failure. The card controls extend JavaFX classes directly: `CardHeadline` extends `Pane`, `CardName` extends `Label`, `TagRow` extends `Region`, and `ContactRow` extends `FlowPane`. These controls are composed in `StudentListCard.fxml`.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/MainWindow.java).
 
@@ -261,8 +261,9 @@ parser counts to, and a word split in the wrong place would be the same bug
 again.
 
 A `TextField` cannot color its own content, so `CommandBox` keeps the field
-for input and draws a colored copy of the command behind it, with the field's
-own text transparent. The field still takes every keystroke and still decides
+for input and hands `HighlightedTextOverlay` the nodes that draw a colored
+copy of the command behind it, with the field's own text transparent. The
+overlay owns that copy, the caret and the selection band. The field still takes every keystroke and still decides
 which character a click lands on, which keeps editing exactly as it was.
 
 `CommandHighlighter` decides the colors. It returns spans covering every
