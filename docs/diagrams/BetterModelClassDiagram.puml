@@ -21,5 +21,8 @@ Student *--> "0..1" Email
 Student *--> "0..1" NusStudentId
 Student *--> "0..1" FollowUpFlag
 FollowUpFlag --|> Tag
+' NusStudentId sits on a rank of its own, so its multiplicity is not drawn
+' on the horizontal run the other field associations share.
+Name -[hidden]down- NusStudentId
 @enduml
 
