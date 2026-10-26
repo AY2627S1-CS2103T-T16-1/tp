@@ -170,6 +170,32 @@ you meant to quote is not colored as a quoted value, the parser will not read
 it as one either.
 </box>
 
+### Moving around with the keyboard
+
+From the command box, press `Tab` to focus the student list. An accent outline
+shows when the list has focus. Use `Up`/`Down`
+to move between students, `Page Up`/`Page Down` to move a page at a time, and
+`Home`/`End` to reach the first/last student. The list scrolls to keep the
+selected student visible. Press `Shift`+`Tab` to return to the command box.
+
+Press `Tab` again from the student list to focus the summary's tag list.
+An accent outline shows when the tag list has focus. Use the same keys to
+scroll it: `Up`/`Down`, `Page Up`/`Page Down`, and `Home`/`End`.
+From the tag list, press `Shift`+`Tab` twice to return to the command box.
+
+`Tab` cycles through the command box, student list, tag list, and command
+reply (when a reply is showing), then back to the command box. `Shift`+`Tab`
+cycles in reverse. The reply remains selectable for copying; arrow and page
+keys let you read a reply that is too long to fit. Empty student and tag lists
+remain in the cycle, so returning to command entry works the same way.
+Navigation does not change student records or run commands.
+
+<box type="tip" seamless>
+
+**Tip:** `Up`/`Down` recall recent commands when the command box has focus.
+Press `Tab` first when you want to move through students instead.
+</box>
+
 ### Reusing recent commands
 
 In the command box, press `Up` to recall the previous submitted command and
@@ -233,8 +259,10 @@ showing, so you can see the shape of your cohort without running a command.
   so `T1` and `t1` count as one tag; the row is named with the spelling most
   of those students carry. Tags used by the same number of
   students are listed alphabetically, ignoring case. Long tag names wrap onto
-  multiple lines so you can read their endings beside the count. Scroll the
-  tag list to see any rows below the visible area.
+  multiple lines so you can read their endings beside the count. From the
+  command box, press `Tab` twice to focus the tag list, then use `Up`/`Down`,
+  `Page Up`/`Page Down`, or `Home`/`End` to scroll to rows outside the visible
+  area. Press `Shift`+`Tab` twice to return to the command box.
 * The foot of the panel gives the total.
 
 ![Summary counts beside student cards with a shortened name, hidden tag count and follow-up marker](images/cardSummary.png)
@@ -1100,12 +1128,6 @@ closed, since TAB rewrites it from its own copy at the next change.
 
 The linked reports track these limitations and their fixes:
 
-* **Keyboard access to summary tags:** The summary's tag list cannot receive
-  keyboard focus. Use a mouse or trackpad to scroll it, or narrow the displayed
-  students with `find` to reduce the summary. The student list can receive focus
-  with Tab and scroll with arrow keys, Page Up/Page Down and Home/End; use
-  Shift+Tab to move back. See
-  [#418](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/418).
 * **Read-only save lock:** A read-only `data/.tab.json.lock` can block saving
   while the error names `data/tab.json` instead. Close all TAB windows and
   restore write access to the lock file before restarting. See
