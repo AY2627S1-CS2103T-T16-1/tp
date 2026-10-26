@@ -22,6 +22,7 @@ public class Phone {
     private static final Pattern DIGIT = Pattern.compile("\\p{Nd}");
     private static final Pattern NON_DIGIT = Pattern.compile("\\P{Nd}");
     private static final int MINIMUM_DIGITS = 3;
+    private static final int DECIMAL_RADIX = 10;
     public final String value;
 
     /**
@@ -60,14 +61,15 @@ public class Phone {
     public static String normalizeDigits(String value) {
         requireNonNull(value);
         return NON_DIGIT.matcher(value).replaceAll("").codePoints()
-                .map(digit -> Character.digit(digit, 10) + '0')
+                .map(codePoint -> Character.digit(codePoint, DECIMAL_RADIX) + '0')
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
     }
 
     /**
      * Returns why {@code test} does not hold a phone number. The answer is only meaningful
-     * when {@link #isValidPhone(String)} rejects it.
+     * when {@link #isValidPhone(String)} rejects it. The reason is constant because
+     * every invalid phone number has fewer than the minimum required digits.
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);

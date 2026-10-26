@@ -82,7 +82,7 @@ public class EditCommand extends Command {
             "Give one student target: an index, a letter-leading NUS Student ID, or --target-id NUS_STUDENT_ID.";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
 
-    private final Logger logger = LogsCenter.getLogger(EditCommand.class);
+    private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
 
     private final StudentTarget target;
     private final EditStudentDescriptor editStudentDescriptor;

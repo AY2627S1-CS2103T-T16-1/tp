@@ -157,8 +157,16 @@ public class TagCommand extends Command {
 
     @Override
     public boolean equals(Object other) {
-        return other == this || other instanceof TagCommand otherCommand
-                && target.equals(otherCommand.target)
+        if (other == this) {
+            return true;
+        }
+
+        // instanceof handles nulls
+        if (!(other instanceof TagCommand otherCommand)) {
+            return false;
+        }
+
+        return target.equals(otherCommand.target)
                 && tag.equals(otherCommand.tag)
                 && action == otherCommand.action;
     }

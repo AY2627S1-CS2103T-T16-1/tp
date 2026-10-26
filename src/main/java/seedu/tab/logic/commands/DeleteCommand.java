@@ -34,7 +34,7 @@ public class DeleteCommand extends Command {
 
     public static final String MESSAGE_DELETE_STUDENT_SUCCESS = "Deleted student: %1$s";
 
-    private final Logger logger = LogsCenter.getLogger(DeleteCommand.class);
+    private static final Logger logger = LogsCenter.getLogger(DeleteCommand.class);
 
     private final StudentTarget target;
 

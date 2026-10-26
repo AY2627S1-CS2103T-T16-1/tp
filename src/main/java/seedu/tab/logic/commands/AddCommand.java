@@ -56,7 +56,7 @@ public class AddCommand extends Command {
 
     public static final String MESSAGE_SEARCH_CLEARED = "Search cleared to show the new student.";
 
-    private final Logger logger = LogsCenter.getLogger(AddCommand.class);
+    private static final Logger logger = LogsCenter.getLogger(AddCommand.class);
 
     private final Student toAdd;
 
