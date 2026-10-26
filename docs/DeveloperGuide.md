@@ -113,274 +113,6 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
-`AddCommand` includes the new student in its `CommandResult`.
-`MainWindow` asks `StudentListPanel` to reveal that card only after `Logic.execute`
-returns successfully, so failed saves cannot scroll to an unsaved student.
-Scrolling leaves focus in the command box and uses the displayed list after
-the existing search-preservation rules have been applied. It locates the exact
-saved student object so an earlier record with identical details is not revealed
-instead, and skips a target that has left the displayed list before layout.
-
-The student card's `TagRow` creates a label for every tag, with its full text.
-Layout shows as many complete chips as fit and lists all hidden tags in the
-overflow chip's tooltip. There is no fixed chip count or label length cap.
-
-English numeric feedback and data-load diagnostics format with `Locale.ROOT`,
-and command highlight style names use the same locale when lowercasing. This
-keeps digits and CSS selectors consistent without changing the JVM locale or
-student data.
-
-`SummaryPanel` wraps complete tag names within the fixed 150 px sidebar.
-Each count retains its preferred width, while the tag list scrolls vertically
-as wrapped rows grow. Names are not shortened, so tags differing only at the
-end remain distinguishable without hovering.
-
-`MainWindow` handles plain Tab and Shift+Tab on the student page to keep a
-stable focus cycle: command box, student list, summary tag list, then the
-reply when visible. The student list stays one Tab from command entry even
-after a reply appears; Shift+Tab returns directly. Empty lists stay reachable.
-`SummaryPanel.fxml` makes the tag `ScrollPane` focus-traversable, and the theme
-marks its focus with an accent outline without changing its layout size.
-JavaFX supplies arrow and Home/End navigation for both lists, plus paging for
-the student list. `SummaryPanel` handles Page Up/Down using the tag viewport's
-height and content overflow: JavaFX's default `ScrollPane` page keys otherwise
-use the same increment as its arrow keys. The command box retains its separate
-Up/Down history behavior. Help uses its own pager and restores command focus
-when closed.
-
-`HelpCommand` returns a command summary and the existing `showHelp` signal.
-`MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
-the entire student page (command box, result, summary sidebar and student list).
-The hidden student page remains intact so closing help restores its filter,
-previous result and any unfinished command. When returning focus, `CommandBox`
-moves the caret to the end and clears JavaFX's automatic selection so the next
-keystroke continues editing the draft. The summary uses command words and
-flag labels from the command/parser definitions.
-
-`HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
-context, Enter/j and k move a line, d/u move half a screenful, g/G go to either end,
-and q/Esc return to commands. PgUp/PgDn, arrows and Home/End are also accepted.
-The reference is drawn as spans of `Text` in a wrapped `TextFlow` inside a
-scrollbar-free viewport, which takes the remaining window height. `HelpText` gives
-each span the class its token asks for — heading, command word, option, placeholder
-or plain — reusing the command box's own colours, so a marker reads the same where
-it is described as where it is typed. A command word carrying punctuation stays
-plain, since it is being named in a sentence rather than shown as syntax, and a
-two-letter capital such as `ID` is prose rather than a field.
-Page movement uses the current viewport and the font those spans share, so resizing
-and different fonts do not skip text. A persistent footer shows progress and navigation keys.
-The c key copies `HelpCommand.USER_GUIDE_URL` to the system clipboard and confirms
-it in the footer. Unused typed keys show a reminder to quit help before entering
-a command. The reference keeps explicit lines short enough for minimum width;
-the long User Guide address is available through c instead of wrapping in the label.
-Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
-command box so quitting cannot insert a stray character. Enter navigates on
-`KEY_PRESSED`; its typed newline is consumed without changing the notice or scrolling
-again, including when focus moves into help after submitting `help`.
-The empty typed event emitted by macOS F1 is also consumed so it
-cannot overwrite the opening notice.
-No student data is changed.
-
-Parser and highlighter syntax characters are defined by `CommandTokenizer`,
-so quoting, escaping and attached option markers stay consistent. Each keeps
-its own scanning loop because highlighting must also accept unfinished input.
-`ParserUtil.parseFollowUpSelector` decodes the optional follow-up state for
-both find and edit. Edit performs its full duplicate-option check first, then
-checks the selector before collecting field errors, preserving error priority.
-Email and ID edits share clear-or-parse handling; each retains its own validator
-and descriptor setter. Add and edit share
-`StudentIdValidation.requireNoDuplicate`, with edit permitting the replaced
-record to retain its ID.
-
-#### Restoring window geometry
-
-`MainWindow` supplies each screen's visual bounds to `WindowBounds`, with the
-primary screen first. Equal overlap therefore favors the primary screen.
-Restoration chooses the screen with the greatest overlap with the saved window,
-preserving valid secondary-screen positions, including negative coordinates.
-With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
-nonpositive or nonfinite dimensions use the default size. The window minimum
-also yields to a smaller usable area so it cannot defeat the size correction.
-The normal minimum height is 400 logical pixels, leaving room for window
-decorations and desktop panels within the 480 logical pixels available at
-1280×720 with 150% scaling. The student list and help text scroll within the
-remaining space, keeping the summary total, help footer and status bar visible.
-A window spanning adjacent displays is fitted entirely onto the selected screen,
-even when it was visible across both. This keeps restoration predictable when
-displays have different usable heights or gaps between them.
-
-#### Fitting names and tags on a card
-
-`CardHeadline` prefers a readable start of the name when allocating room to
-tags, but yields part of that allowance for a complete tag count. The name
-retains space for a character from each end. When no tag chip fits, `TagRow`
-uses the shorter `N tags` total instead of `N more…`, preserving a complete
-count beside the name. Its tooltip still lists every hidden tag. A partial
-chip requires room for four characters and an ellipsis, measured in its
-styled font with padding, so a two-letter fragment gives way to the total.
-A shorter tag can still appear in full.
-`TagRow.fittedWidth` reports the space its chosen chips or count actually use,
-so `CardHeadline` returns any unused allocation to the name before laying it
-out. The name requests its full natural width.
-
-#### Keeping contact details readable
-
-`StudentListCard.fxml` puts NUS Student ID, phone and email in `ContactRow`,
-a `FlowPane` that reports the natural width of one unwrapped row. This lets
-the containing boxes measure height at the allocated width on both JavaFX
-17 and 25, rather than reserving rows based on a fixed preferred wrap length.
-Labels keep their preferred widths and share a line when they fit; a label
-that does not fit the remaining space moves to the next line. Each label's
-maximum width follows the pane's width, so a value longer than an entire
-line shrinks with an ellipsis instead of overflowing the card.
-
-This keeps ordinary cards compact while allowing crowded cards to grow by
-only the rows they need. `UiText.showToFit` gives all three fields their full
-values on hover when clipped, and removes the tooltip when widening makes
-it unnecessary. Absent optional fields remain unmanaged, reserving no space.
-The follow-up pill shares an `HBox` with `CardHeadline` inside the details
-container, so it reserves width only on the headline. Contact rows use the
-same width with or without a flag. The details clip prevents drawing outside
-the card.
-
-`StudentListViewCell` measures preferred height at the smaller of the cell's
-content width and the card's maximum width, matching the width used by its
-skin during layout. Measuring at the wider cell width would miss a wrapped
-contact row near a wrap threshold and squeeze the headline.
-
-#### Coloring the command line
-
-`CommandTextField` converts separators to spaces in text replacement before
-JavaFX filters control characters. It asks `StringUtil#isWhitespace` the
-question the tokenizer asks of each character, so the box cannot hide a
-boundary the parser reads: JavaFX deletes a vertical tab or a form feed along
-with the other control characters, and draws a line, paragraph or next-line
-separator with no width, each of which joins the words around it on screen.
-The field preserves pasted word boundaries while keeping the command on one
-line, including when a paste replaces selected text. CRLF is treated as one
-separator.
-
-`CommandHighlighter` breaks a command where the parser breaks it, which the
-User Guide invites the User to rely on. That means two splits the coloring
-cannot make with the rule it uses for values. `StudentBookParser` ends the
-command word at the first separator whatever the quotes, so `add"Ravi s/o
-Kumaran"` is the command word `add"Ravi` and two words after it; reading that
-word with the value rule would draw one bold quoted word and then report an
-unknown command the colors never showed. `FlagTokenizer` reads `--tag="Lab
-3"` as an option and a value, so the marker and the equals sign are colored
-as the option and the rest as its value. A marker holding a quote or a
-backslash is left whole instead, because either moves the equals sign the
-parser counts to, and a word split in the wrong place would be the same bug
-again.
-
-A `TextField` cannot color its own content, so `CommandBox` keeps the field
-for input and hands `HighlightedTextOverlay` the nodes that draw a colored
-copy of the command behind it, with the field's own text transparent. The
-overlay owns that copy, the caret and the selection band. The field still takes every keystroke and still decides
-which character a click lands on, which keeps editing exactly as it was.
-
-`CommandHighlighter` decides the colors. It returns spans covering every
-character of the command. It walks the command itself, rather than calling
-`CommandTokenizer`, because it has to keep the text exactly as typed, quotes
-and all, where the tokenizer removes them and may refuse an unclosed quote
-that is merely half-typed. It asks the tokenizer the questions the two must
-agree on — `CommandTokenizer#isEscapable`, and `StringUtil#isWhitespace` for
-where a token ends — and `CommandHighlighterTest` runs both over a list of
-awkward commands and compares how many tokens each found. That catches one of
-them splitting a command into a different number of pieces; it does not
-compare where each piece begins and ends, so a boundary that moves without
-changing the count slips through. It never rejects anything: a
-command is colored while it is still half-typed.
-
-The copy measures its natural width from the whole shaped `TextFlow`, rounded
-up to avoid wrapping at a fractional pixel boundary. Ordinary value words and
-spaces share a text node so that splitting an unquoted right-to-left name does
-not change shaping or click positions.
-
-Three things then have to agree with the field, because the User reads our copy
-but interacts with the field:
-
-* **the scroll offset.** The copy is drawn wherever the field is drawing its
-  own text, read from the field's text node rather than worked out again here.
-  A field scrolls by rules that differ between typing, deleting, cutting and
-  undoing, and every attempt to reproduce them was right for some of those and
-  wrong for others; a copy even a pixel out of step shows one character where
-  the field hit-tests another, and clicks land in the wrong place. Reading
-  that node once is not enough, because the field's skin re-scrolls it after a
-  delete, a replace or a change of width, which is after the caret and the
-  text the coloring was told about have both settled. The copy therefore
-  follows the node's own position. The node is the one the field is drawing
-  in, since an empty line shows the prompt in a node of the same kind which
-  the field hides rather than throws away, and a command reading as the
-  prompt would otherwise be taken for the hidden one.
-* **the caret.** The field's caret is drawn in its text color, which is
-  transparent, so the line carries one of its own, sized from a run of the text
-  so it sits where the text does. Its horizontal position follows the primary
-  caret shape of the field’s text node, including its leading/trailing bias at
-  script boundaries. Logical prefix widths cannot locate RTL insertion points.
-* **the selection.** The field draws its highlight at its own offset, which
-  broke into fragments behind the copy, so it is turned off in the stylesheet
-  and drawn here instead. A path from `TextFlow.rangeShape` covers each visual
-  segment, including selections that cross RTL/LTR boundaries and appear as
-  separate bands.
-
-`CommandBoxTest` checks the contrast of the selection band against the line,
-and of every color the line uses against that band, including the one a
-refused command is written in, so that selecting a command cannot hide half of
-it. The bar it holds them to is 3:1 rather than the 4.5:1 WCAG asks of text
-this size: on a window this dark, a band light enough to be seen against the
-line (2.2:1) lightens the background enough that 4.5:1 would need every token
-color moved towards white, which is not the palette the mockup sets. The
-trade-off is deliberate and worth revisiting if the palette changes.
-
-#### Recalling session commands
-
-`CommandBox` records each submitted command in `CommandHistory` before execution,
-so rejected commands can be recalled too. While clear confirmation is pending,
-replies are excluded because they cannot be reused as standalone commands; the
-navigation position resets without recording the reply. The helper stores submissions separately
-from the draft captured when Up first leaves the newest position. Down past
-the newest submission restores that draft. Up skips the newest submission when
-it already matches the text in the box and an earlier entry exists. Blank
-submissions and consecutive identical submissions are skipped; editing a recalled entry does not alter stored text.
-
-The command box consumes unmodified Up/Down key presses before the text field
-handles them. Recalled text uses the existing text listener for coloring, and
-the caret moves to its end. This UI state is session-only and never enters the
-student model or persisted data.
-
-#### Summarizing the list
-
-`SummaryPanel` shows the flagged count, a count per tag and the total, beside
-the list. It counts `Logic#getFilteredStudentList()`, which is the only list
-`Logic` exposes, so it summarizes **what the list is showing** rather than the
-whole student book: after `find -n Alex` it counts the matches. That is the
-reading the User Guide documents, and it keeps the panel answering the same
-question as the list it sits beside. Summarizing the whole book instead would
-need `Logic` to expose it.
-
-The list is an `ObservableList`, so a listener keeps the counts current
-without the panel being told when a command changes anything. The counting
-itself is static and takes a plain `List<Student>`, so it is tested without a
-toolkit; only the rendering needs one.
-
-Tags counted the same are listed alphabetically ignoring case, because a
-reader does not read `Zoo` as coming before `apple`.
-
-Case variants of one tag are counted as one tag, because that is what `tag`
-makes of them when it refuses a tag a student already carries: a reader
-looking for the size of tutorial group `T1` would otherwise have to add up a
-row per spelling. The row is named with the spelling most of its students
-carry, which is settled by the counts rather than by the order of the list,
-so narrowing the list does not read as a second tag appearing.
-
-The panel groups two spellings with `String.CASE_INSENSITIVE_ORDER`, which
-calls them equal exactly when `String#equalsIgnoreCase` does, and so exactly
-when `TagCommand` refuses the second of them. Folding case by lowercasing
-would answer a different question and split a group `tag` has already joined:
-a Greek capital sigma lowercases to a medial sigma, while the final sigma a
-student may carry the same tag under lowercases to itself.
-
 ### Logic component
 
 **API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java)
@@ -407,12 +139,10 @@ How the `Logic` component works:
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
-`LogicManager` compares a snapshot of the full student book before execution
-with the records afterwards and saves only if they differ. Filter changes and
-commands such as `list`, `find`, `help`, and `exit` therefore need no write
-permission. Confirming `clear` still saves the emptied book. If a save fails,
-`LogicManager` restores the snapshot and active filter before reporting the
-error, so a failed command does not remain applied in memory.
+`LogicManager` writes to storage only when a command changes the student
+records, and puts them back if that write fails.
+[Rolling back model changes when saving fails](#rolling-back-model-changes-when-saving-fails)
+covers how.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a command entered by the User:
 
@@ -457,81 +187,7 @@ The `Storage` component,
 * can save both the student book's data and the User's preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonStudentBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
-
-`JsonUtil.readJsonFile` reports a file as missing only when its absence is
-established, with `Files.notExists`. `Files.exists` answers false both for a
-file that is not there and for one whose folder cannot be opened, and
-`MainApp.initModelManager` reads a missing file as a first run, so a folder
-TAB merely cannot open would open the window on sample students in place of
-records it was never able to read. A file whose existence cannot be determined
-is therefore read, and the access failure reported like any other.
-
-The records themselves are already safe from that mistake. The baseline
-`JsonStudentBookStorage` records for an unreadable folder is `Optional.empty()`,
-so once access is restored `saveIfUnchanged` finds a book on disk that the
-window never loaded and refuses the save. What is left without this check is a
-window opened on sample data that then refuses every save as stale, telling a
-User who changed nothing to close it and restart. Reporting the access failure
-at startup replaces both with the reason.
-
-`JsonUtil.readJsonFile` rejects a whole-file `null` with a
-`DataLoadingException`, so both preference and student data loading use their
-existing error handling instead of crashing. Invalid student data is preserved
-for repair. `JsonUserPrefsStorage` also rejects an explicit `null` for
-`guiSettings` with a `DataLoadingException`; a missing setting retains the
-`UserPrefs` defaults.
-`MainApp.initPrefs` handles invalid preferences by restoring and saving
-defaults before constructing the model. Student data is stored separately
-and is unchanged by preference recovery.
-Recoverable preference writes in `MainApp.initPrefs` and `MainApp.stop` log
-one `WARNING` naming the preferences path and I/O reason, without a stack
-trace. Startup retains the loaded or default preferences for the session;
-shutdown explains that window preferences were not saved. Permission errors
-without a reason are described as permission denied.
-
-`FileUtil.writeToFile` protects an existing JSON file from a partial save. It
-resolves an existing symbolic link to its destination, so replacing the saved
-data leaves the link in place. An unresolvable link is rejected without
-replacing it or creating its missing target. It also refuses a destination that is not
-writable and copies an existing file's POSIX permissions to its replacement.
-The new contents are written and forced to a temporary file beside the real
-destination before an atomic move replaces it. Keeping both files in one
-folder makes the atomic move possible, but also means that the folder must
-allow temporary-file creation. If writing or moving fails, the previous file
-remains unchanged and TAB removes the temporary file where possible.
-`FileUtil` creates only missing parent directories before writing the temporary
-file; it never pre-creates an empty destination. This applies to student-book
-and preference writes. A failed first save preserves the absence of a book and
-allows normal sample-data startup. On POSIX filesystems, a new file retains the
-temporary file's owner-only permissions; existing files retain their permissions.
-
-`JsonStudentBookStorage` reports data-folder/file collisions and save-lock failures
-at the operation boundary, where the failing path and its purpose are known.
-It preserves permission exceptions for the existing permission-specific feedback
-and never removes an obstructing file or folder. Logic rolls back records and the
-filter after these failures just as it does for other save errors.
-
-`StorageManager` logs read/write attempts and successful saves at `FINE`,
-including preference-file operations. Entries identify the file path without
-copying student or preference contents. Save completion is logged only after
-the storage delegate returns successfully.
-
-`JsonAdaptedStudent` and `JsonSerializableStudentBook` use Jackson's
-`@JsonAnySetter` callbacks to reject unknown keys while the data is being read.
-The student callback includes the record name and allowed field names in its
-error, and permits the removed `address` key as a compatibility exception.
-`JsonStudentBookStorage` adds the one-based student record number from Jackson's
-mapping path, so even unnamed records or students sharing a name can be located.
-The book also accepts the existing `_comment` metadata key.
-This prevents hand-edited values from disappearing during a later unrelated
-save. The shared JSON mapper keeps its existing behavior for preferences;
-startup follows the existing loading-error path and leaves rejected data intact.
-
-`JsonTagsDeserializer` checks the array and string types before adapting tags,
-so malformed `tags` values report the field and entry position rather than
-Jackson class names. Missing or null arrays still mean no tags; tag text
-continues through the existing model validation. Mapping errors retain their
-source location and student record number, and do not rewrite the file.
+* never leaves a half-written file behind, and never loads part of one it cannot read. The Implementation chapter covers [replacing a data file](#replacing-a-data-file-without-losing-it), [saves from stale windows](#protecting-saves-from-stale-windows), [an unreadable data file](#handling-an-unreadable-data-file), [unknown keys and malformed tags](#rejecting-unknown-keys-and-malformed-tags) and [bad preferences](#recovering-from-bad-preferences).
 
 ### Common classes
 
@@ -542,6 +198,282 @@ Classes used by multiple components are in the `seedu.tab.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Revealing a newly added student
+
+`AddCommand` includes the new student in its `CommandResult`, and `MainWindow`
+asks `StudentListPanel` to reveal that card only after `Logic.execute` returns
+successfully, so a failed save cannot scroll to an unsaved student. Scrolling
+leaves focus in the command box and reads the displayed list after the
+search-preservation rules have run. It locates the exact saved object, so an
+earlier record with identical details is not revealed instead, and skips a
+target that has left the displayed list before layout.
+
+English numeric feedback and data-load diagnostics format with `Locale.ROOT`,
+and highlight style names lowercase with it, keeping digits and CSS selectors
+consistent without touching the JVM locale or student data.
+
+### Keyboard focus order
+
+`MainWindow` handles plain Tab and Shift+Tab on the student page to keep one
+cycle: command box, student list, summary tag list, then the reply when it is
+visible. The student list stays one Tab from command entry even after a reply
+appears, Shift+Tab returns directly, and empty lists stay reachable.
+`SummaryPanel.fxml` makes the tag `ScrollPane` focus-traversable and the theme
+outlines its focus without changing its layout size. JavaFX supplies arrow and
+Home/End navigation for both lists and paging for the student list;
+`SummaryPanel` handles Page Up/Down from the tag viewport's height and overflow,
+because JavaFX's default `ScrollPane` pages by its arrow-key increment. The
+command box keeps its own Up/Down history, and help uses its own pager.
+
+### The help pager
+
+`HelpCommand` returns a command summary and the existing `showHelp` signal.
+`MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which
+replaces the whole student page. The hidden page stays intact, so closing help
+restores its filter, previous result and any unfinished command; `CommandBox`
+then moves the caret to the end and clears JavaFX's automatic selection so the
+next keystroke continues the draft. The summary draws its command words and
+flag labels from the command and parser definitions. No student data changes.
+
+`HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
+context, Enter/j and k a line, d/u half a screenful, g/G either end, and q/Esc
+back to commands, with PgUp/PgDn, arrows and Home/End also accepted. The
+reference is drawn as spans of `Text` in a wrapped `TextFlow` inside a
+scrollbar-free viewport that takes the remaining window height. `HelpText` gives
+each span the class its token asks for — heading, command word, option,
+placeholder or plain — reusing the command box's own colors, so a marker reads
+the same where it is described as where it is typed. A command word carrying
+punctuation stays plain, being named in a sentence rather than shown as syntax,
+and a two-letter capital such as `ID` is prose rather than a field. Page
+movement uses the current viewport and the font those spans share, so resizing
+and different fonts do not skip text.
+
+A persistent footer shows progress and the navigation keys. `c` copies
+`HelpCommand.USER_GUIDE_URL` and confirms it there, which is how the long
+address is offered rather than wrapped into the reference; the reference keeps
+its explicit lines short enough for the minimum width. An unused typed key
+shows a reminder to quit help first. Letter commands are handled on
+`KEY_TYPED`, consuming `q` before focus returns so quitting cannot insert a
+stray character; Enter navigates on `KEY_PRESSED` and its typed newline is
+consumed without changing the notice or scrolling again, as is the empty typed
+event macOS sends for F1.
+
+### Shared parsing helpers
+
+`CommandTokenizer` defines the syntax characters for both the parser and the
+highlighter, so quoting, escaping and attached option markers stay consistent;
+each keeps its own scanning loop because highlighting must also accept
+unfinished input. `ParserUtil.parseFollowUpSelector` decodes the optional
+follow-up state for find and edit alike. Edit runs its duplicate-option check
+first, then the selector, then field errors, preserving that priority. Email
+and ID edits share clear-or-parse handling while keeping their own validator
+and descriptor setter, and add and edit share
+`StudentIdValidation.requireNoDuplicate`, with edit letting the replaced record
+keep its ID.
+
+### Restoring window geometry
+
+`MainWindow` supplies each screen's visual bounds to `WindowBounds`, with the
+primary screen first. Equal overlap therefore favors the primary screen.
+Restoration chooses the screen with the greatest overlap with the saved window,
+preserving valid secondary-screen positions, including negative coordinates.
+With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
+nonpositive or nonfinite dimensions use the default size. The window minimum
+also yields to a smaller usable area so it cannot defeat the size correction.
+The normal minimum height is 400 logical pixels, leaving room for window
+decorations and desktop panels within the 480 logical pixels available at
+1280×720 with 150% scaling. The student list and help text scroll within the
+remaining space, keeping the summary total, help footer and status bar visible.
+A window spanning adjacent displays is fitted entirely onto the selected screen,
+even when it was visible across both. This keeps restoration predictable when
+displays have different usable heights or gaps between them.
+
+### Fitting names and tags on a card
+
+`CardHeadline` prefers a readable start of the name when allocating room to
+tags, but yields part of that allowance for a complete tag count. The name
+retains space for a character from each end. When no tag chip fits, `TagRow`
+uses the shorter `N tags` total instead of `N more…`, preserving a complete
+count beside the name. Its tooltip still lists every hidden tag. A partial
+chip requires room for four characters and an ellipsis, measured in its
+styled font with padding, so a two-letter fragment gives way to the total.
+A shorter tag can still appear in full.
+`TagRow.fittedWidth` reports the space its chosen chips or count actually use,
+so `CardHeadline` returns any unused allocation to the name before laying it
+out. The name requests its full natural width.
+
+### Keeping contact details readable
+
+`StudentListCard.fxml` puts NUS Student ID, phone and email in `ContactRow`,
+a `FlowPane` that reports the natural width of one unwrapped row. This lets
+the containing boxes measure height at the allocated width on both JavaFX
+17 and 25, rather than reserving rows based on a fixed preferred wrap length.
+Labels keep their preferred widths and share a line when they fit; a label
+that does not fit the remaining space moves to the next line. Each label's
+maximum width follows the pane's width, so a value longer than an entire
+line shrinks with an ellipsis instead of overflowing the card.
+
+This keeps ordinary cards compact while allowing crowded cards to grow by
+only the rows they need. `UiText.showToFit` gives all three fields their full
+values on hover when clipped, and removes the tooltip when widening makes
+it unnecessary. Absent optional fields remain unmanaged, reserving no space.
+The follow-up pill shares an `HBox` with `CardHeadline` inside the details
+container, so it reserves width only on the headline. Contact rows use the
+same width with or without a flag. The details clip prevents drawing outside
+the card.
+
+`StudentListViewCell` measures preferred height at the smaller of the cell's
+content width and the card's maximum width, matching the width used by its
+skin during layout. Measuring at the wider cell width would miss a wrapped
+contact row near a wrap threshold and squeeze the headline.
+
+### Coloring the command line
+
+`CommandTextField` converts separators to spaces during text replacement,
+before JavaFX filters control characters, asking `StringUtil#isWhitespace` the
+question the tokenizer asks of each character. Otherwise the box could hide a
+boundary the parser reads: JavaFX deletes a vertical tab or form feed with the
+other control characters, and draws a line, paragraph or next-line separator
+with no width, each joining the words around it on screen. Pasted word
+boundaries survive while the command stays on one line, including when a paste
+replaces a selection, and CRLF counts as one separator.
+
+`CommandHighlighter` breaks a command where the parser breaks it, which the
+User Guide invites the User to rely on. Two splits therefore cannot follow the
+value rule. `StudentBookParser` ends the command word at the first separator
+whatever the quotes, so `add"Ravi s/o Kumaran"` is the command word
+`add"Ravi` and two words after it; the value rule would draw one bold quoted
+word and then report an unknown command the colors never showed.
+`FlagTokenizer` reads `--tag="Lab 3"` as an option and a value, so the marker
+and equals sign take the option color and the rest its value color. A marker
+holding a quote or backslash is left whole, because either moves the equals
+sign the parser counts to.
+
+A `TextField` cannot color its own content, so `CommandBox` keeps the field for
+input and hands `HighlightedTextOverlay` the nodes that draw a colored copy
+behind it, with the field's own text transparent. The overlay owns that copy,
+the caret and the selection band. The field still takes every keystroke and
+still decides which character a click lands on, so editing is unchanged.
+
+`CommandHighlighter` returns spans covering every character. It walks the
+command itself rather than calling `CommandTokenizer`, which removes quotes and
+may refuse an unclosed one that is merely half-typed, but asks the tokenizer
+the questions the two must agree on — `CommandTokenizer#isEscapable` and
+`StringUtil#isWhitespace` for where a token ends. It rejects nothing: a command
+is colored while still half-typed. The copy measures its width from the whole
+shaped `TextFlow`, rounded up so it cannot wrap at a fractional pixel, and
+ordinary value words share a text node with their spaces so splitting an
+unquoted right-to-left name does not change shaping or click positions.
+
+Three things must then agree with the field, because the User reads the copy
+but interacts with the field.
+
+* **Scroll offset.** The copy is drawn wherever the field draws its own text,
+  read from the field's text node rather than recomputed. A field scrolls by
+  rules that differ between typing, deleting, cutting and undoing, and a copy
+  even a pixel out of step shows one character where the field hit-tests
+  another. Reading the node once is not enough, because the skin re-scrolls
+  after a delete, a replace or a width change, which is after the caret and the
+  text have settled; the copy follows the node's own position. It is the node
+  the field is drawing in, since an empty line shows the prompt in a node of
+  the same kind that the field hides rather than discards.
+* **Caret.** The field's caret is drawn in its transparent text color, so the
+  line carries one of its own, sized from a run of the text. Its position
+  follows the primary caret shape of the field's text node, including the
+  leading/trailing bias at script boundaries, because logical prefix widths
+  cannot locate RTL insertion points.
+* **Selection.** The field's own highlight broke into fragments behind the
+  copy, so it is disabled in the stylesheet and drawn here from a
+  `TextFlow.rangeShape` path, which covers each visual segment including
+  selections that cross RTL/LTR boundaries.
+
+Every color the line uses is held to 3:1 against the selection band, so
+selecting a command cannot hide half of it. That is below the 4.5:1 WCAG asks
+of text this size, deliberately: on a window this dark, a band light enough to
+be seen against the line sits at 2.2:1, and reaching 4.5:1 against it would
+mean moving every token color towards white, away from the palette the mockup
+sets. Worth revisiting if the palette changes.
+
+### Recalling session commands
+
+`CommandBox` records each submitted command in `CommandHistory` before execution,
+so rejected commands can be recalled too. While clear confirmation is pending,
+replies are excluded because they cannot be reused as standalone commands; the
+navigation position resets without recording the reply. The helper stores submissions separately
+from the draft captured when Up first leaves the newest position. Down past
+the newest submission restores that draft. Up skips the newest submission when
+it already matches the text in the box and an earlier entry exists. Blank
+submissions and consecutive identical submissions are skipped; editing a recalled entry does not alter stored text.
+
+The command box consumes unmodified Up/Down key presses before the text field
+handles them. Recalled text uses the existing text listener for coloring, and
+the caret moves to its end. This UI state is session-only and never enters the
+student model or persisted data.
+
+### Summarizing the list
+
+`SummaryPanel` shows the flagged count, a count per tag and the total, beside
+the list. It counts `Logic#getFilteredStudentList()`, which is the only list
+`Logic` exposes, so it summarizes **what the list is showing** rather than the
+whole student book: after `find -n Alex` it counts the matches. That is the
+reading the User Guide documents, and it keeps the panel answering the same
+question as the list it sits beside. Summarizing the whole book instead would
+need `Logic` to expose it.
+
+The list is an `ObservableList`, so a listener keeps the counts current
+without the panel being told when a command changes anything. The counting
+itself is static and takes a plain `List<Student>`, so it is tested without a
+toolkit; only the rendering needs one.
+
+Tags counted the same are listed alphabetically ignoring case, because a
+reader does not read `Zoo` as coming before `apple`.
+
+Case variants of one tag are counted as one tag, because that is what `tag`
+makes of them when it refuses a tag a student already carries: a reader
+looking for the size of tutorial group `T1` would otherwise have to add up a
+row per spelling. The row is named with the spelling most of its students
+carry, which is settled by the counts rather than by the order of the list,
+so narrowing the list does not read as a second tag appearing.
+
+The panel groups two spellings with `String.CASE_INSENSITIVE_ORDER`, which
+calls them equal exactly when `String#equalsIgnoreCase` does, and so exactly
+when `TagCommand` refuses the second of them. Folding case by lowercasing
+would answer a different question and split a group `tag` has already joined:
+a Greek capital sigma lowercases to a medial sigma, while the final sigma a
+student may carry the same tag under lowercases to itself.
+
+
+### Replacing a data file without losing it
+
+`FileUtil.writeToFile` protects an existing JSON file from a partial save. It
+resolves an existing symbolic link to its destination, so replacing the saved
+data leaves the link in place, and rejects an unresolvable link without
+replacing it or creating its missing target. It also refuses a destination that
+is not writable, and copies an existing file's POSIX permissions to its
+replacement. The new contents are written and forced to a temporary file beside
+the real destination before an atomic move replaces it. Keeping both files in
+one folder is what makes the atomic move possible, and also means the folder
+must allow temporary-file creation. If writing or moving fails, the previous
+file remains unchanged and TAB removes the temporary file where it can.
+`FileUtil` creates only missing parent directories before writing the temporary
+file and never pre-creates an empty destination, so a failed first save
+preserves the absence of a book and allows normal sample-data startup. This
+applies to student-book and preference writes alike. On POSIX filesystems a new
+file keeps the temporary file's owner-only permissions, and an existing file
+keeps its own.
+
+`JsonStudentBookStorage` reports a data-folder or file collision and a
+save-lock failure at the operation boundary, where the failing path and its
+purpose are known. It preserves permission exceptions for the existing
+permission-specific feedback and never removes an obstructing file or folder.
+Logic rolls back records and the filter after these failures just as it does
+for other save errors.
+
+`StorageManager` logs read and write attempts and successful saves at `FINE`,
+preference-file operations included. An entry identifies the file path without
+copying student or preference contents, and a save is logged as complete only
+after the storage delegate returns successfully.
 
 ### Protecting saves from stale windows
 
@@ -592,108 +524,103 @@ as its application directory, preserving the development workflow.
 
 ### How commands read their arguments
 
-`add` and `edit` mark their fields with options,
-`add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
-`edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`,
-where AB3 marked them with prefixes such as `p/`. The `edit` target is a
-shown index, a letter-leading NUS Student ID, or `--target-id NUS_STUDENT_ID`.
-A dedicated target option keeps selection unambiguous when `--id` sets or
-clears the ID field, and permits digit-leading IDs without changing how bare
-numbers select displayed indices. `EditCommandParser` reuses
-`ParserUtil.parseRequiredStudentTarget` for preamble targets and
-`ParserUtil.parseNusStudentId` for explicit targets, building a `StudentTarget`
-in either case. Duplicate target options and mixed preamble/option targets
-are rejected before execution. Selecting a target alone does not count as a
-field edit. ID targets resolve across the whole book, preserving the search
-predicate after editing and using the existing persistence path.
-The value options have descriptive long aliases: `--name`, `--phone`,
-`--email`, and `--tag` correspond to `-n`, `-p`, `-e`, and `-t` respectively.
-`add` takes its name in the preamble. `edit` accepts `-n`/`--name` to change a
-name, and `find` accepts the same option to search names.
+A command marks each field with an option rather than a prefix attached to the
+value:
 
-A prefix has to be a sequence a value never contains, and no such sequence
-exists for a name. `s/o`, `d/o`, `a/l` and `a/p` are ordinary parts of
-Singaporean and Malaysian names, and `a/l` was in fact unreadable for as long
-as an address field was marked `a/`. Widening the prefixes would only move the
-collision somewhere else. Options move the problem out of the value entirely:
-an option is a whole token, so a name is read as a name however it is spelled.
+```
+add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]
+edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]
+```
+
+**Aspect: how a command tells one field from the next**
+
+* **Alternative 1 (current choice):** an option, a whole token of its own, such
+  as `-p` or `--phone`.
+  * Pros: a value is read as a value whatever it contains, so a name may hold
+    any character.
+  * Cons: a value with spaces has to be quoted, and the User types a space
+    between the option and its value.
+* **Alternative 2:** a prefix joined to the value, as AB3 uses, such as
+  `p/91234567`.
+  * Pros: shorter to type, with no quoting.
+  * Cons: a prefix has to be a sequence no value ever contains, and no such
+    sequence exists for a name. `s/o`, `d/o`, `a/l` and `a/p` are ordinary
+    parts of Singaporean and Malaysian names, and `a/l` was unreadable for as
+    long as an address field was marked `a/`. Widening the prefixes moves the
+    collision rather than removing it.
+
+Each value option has a long alias: `--name`, `--phone`, `--email` and `--tag`
+answer to `-n`, `-p`, `-e` and `-t`. `add` takes its name in the preamble;
+`edit` and `find` both read `-n`/`--name`.
+
+`edit` names its target in the preamble or with `--target-id
+NUS_STUDENT_ID`; a target option of its own keeps selection unambiguous while
+`--id` sets or clears the ID field. [Selecting a
+student](#selecting-a-student) covers the targets `edit`, `tag` and `delete`
+share.
 
 Parsing runs in two passes, the way a shell does it.
 
-`CommandTokenizer` splits the arguments on whitespace and lets double quotes
-group a value containing whitespace. Straight, curly and full-width double quotes
-are interchangeable delimiters, including in mixed pairs, to accept input from
-input methods and pasted documents. `CommandTokenizer#isQuote` shares this rule
-with the syntax highlighter; all supported quotes can be escaped to retain them
-literally. A token records whether a quote took part in it,
-because that is the only thing separating the value `-Ahmad` from the option
-`-e`. A backslash escapes a quote or another backslash, so a value may hold
-either; a backslash before anything else stays in the value, so nothing the User
-typed disappears without being asked for.
+**`CommandTokenizer` splits the arguments.** Whitespace separates tokens and
+double quotes group a value that contains it. Straight, curly and full-width
+quotes are interchangeable delimiters, including in mixed pairs, so input
+methods and pasted documents are accepted; `CommandTokenizer#isQuote` shares
+that rule with the highlighter, and every supported quote can be escaped to
+keep it literally. A backslash escapes a quote or another backslash, and
+before anything else stays in the value, so nothing the User typed disappears
+unasked. Each token records whether a quote took part in it, which is the only
+thing separating the value `-Ahmad` from the option `-e`.
 
-An option appearing where a value is expected is read as the option before it
-having been left empty, rather than as a value. `add John -p 123 -t -e` reports
-that `-t` needs a value instead of storing `-e` as a tag. A value that really
-does open with a hyphen is given in quotes.
+An option where a value was expected is read as the option before it having
+been left empty: `add John -p 123 -t -e` reports that `-t` needs a value rather
+than storing `-e` as a tag. A value that really opens with a hyphen is quoted.
 
-`FlagTokenizer` reads the tokens. Those before the first option are the
-*preamble*, joined with single ASCII spaces, which each command reads as
-whatever it takes in that position: the name for `add`, so a name of several
-words needs no quotes unless it would otherwise be misread, and the index for
-`edit`. Each command names its own, in `AddCommand.FIELD_NAME` and
-`EditCommand.FIELD_INDEX`, rather than the shared `CliFlags` doing it for
-them. Each short and long marker resolves to the same `CliFlag`, so mixed aliases
-for a single-valued field are duplicates rather than independent fields.
-Value-taking options take the token after them, and `-t` or `--tag` repeats
-for `add` and `edit`. The `tag` command takes exactly one tag through `-a`/`--add`
-for addition or `-r`/`--remove` for removal.
-They also accept a value joined to any short or long marker by an equals sign.
-`FlagTokenizer` splits only on the first equals sign, so later ones remain in
-the value. An attached value is unambiguously part of its option when it opens
-with a hyphen. An empty attached value must be quoted as in `--tag=""`, so an
-accidental `--tag=` cannot clear data. `CommandTokenizer` records whether a
-token began with a quote so a fully quoted `"--tag=T1"` remains a value, while
-the quote around the value in `--tag="Lab 3"` does not hide the option marker.
+**`FlagTokenizer` sorts the tokens into options.** Tokens before the first
+option are the *preamble*, joined with single ASCII spaces, and each command
+reads it as whatever it takes there — the name for `add`, so a multi-word name
+needs no quotes, and the index for `edit`. Each command names its own through
+`AddCommand.FIELD_NAME` and `EditCommand.FIELD_INDEX` rather than leaving it to
+the shared `CliFlags`.
 
-For `edit`, tag values use `StringUtil.normalizeFieldValue` before validation.
-A single normalized blank value clears all tags, including when the input holds
-Unicode spaces. A blank beside other tag values is rejected with an explanation
-that clearing requires the blank to be given on its own. Nonblank values are
-still validated so every problem can be reported without silently discarding tags.
+| Kind | Behavior |
+| --- | --- |
+| Value-taking (`-n`, `-p`, `-e`, `--id`, `-t`) | takes the token after it, or a value joined by `=`. `-t`/`--tag` repeats for `add` and `edit`; `tag` takes exactly one through `-a`/`--add` or `-r`/`--remove`. |
+| Presence-only (`--follow-up`/`-f`, `--no-follow-up`/`-nf`) | records an empty value and consumes no token, which lets `FlagArgumentMap` tell an absent option from a present marker without a second representation. `add` accepts only `--follow-up`, `edit` both to set or clear, `find` both to filter. An attached value on one is refused specifically. |
 
-The presence-only `--follow-up` option (alias `-f`) and
-`--no-follow-up` option (alias `-nf`) instead record an empty value and consume
-no following token. `add` accepts only `--follow-up`; `edit` accepts both to set
-or clear the status, and `find` accepts both to filter by that status. This lets
-`FlagArgumentMap` distinguish an
-absent option from a present marker without a separate representation. An
-attached value on a presence-only option is refused specifically. An unknown
-option names its marker without echoing an attached value, while a value-taking
-option left without a value and a token belonging to no option are each
-reported for what they are, rather than as one generic complaint.
+Each short and long marker resolves to the same `CliFlag`, so mixed aliases for
+a single-valued field are duplicates rather than independent fields. NUS
+Student ID uses `--id` as its canonical option with the otherwise unused `-i`
+as a typing-friendly alias; giving both is rejected as a repeated field rather
+than letting one silently override the other, and usage labels and messages use
+the canonical spelling. Duplicate-option feedback names the repeated markers
+rather than values, since presence-only options have none, and
+`FlagArgumentMap` keeps the first spelling supplied.
 
-`add` keeps its name before the options so names containing spaces need no
-quotes. If the tokenizer refuses `-n` or `--name`, `AddCommandParser` adds a
-placement hint to the existing error. A missing name gets the same hint,
-so users familiar with the name options in `edit` can recover immediately.
+An attached value splits on the first `=` only, so later ones stay in the
+value, and it is unambiguously part of its option when it opens with a hyphen.
+An empty attached value must be quoted, as `--tag=""`, so an accidental
+`--tag=` cannot clear data. Because `CommandTokenizer` records whether a token
+began with a quote, a fully quoted `"--tag=T1"` stays a value while the quote
+in `--tag="Lab 3"` does not hide the marker.
 
-`CliFlag` also lets a value-taking option carry aliases. NUS Student ID uses
-`--id` as its canonical option and the unused `-i` as its typing-friendly
-alias. Both spellings map to the same `FLAG_NUS_STUDENT_ID`, so giving
-both is rejected as a repeated single-valued field rather than letting one
-silently override the other. Usage labels and error messages use the canonical
-`--id NUS_STUDENT_ID` spelling.
+For `edit`, tag values are normalized before validation. One normalized blank
+clears every tag, including when the input holds Unicode spaces; a blank beside
+other tag values is refused with an explanation that clearing needs the blank
+on its own; and non-blank values are still validated, so every problem is
+reported without tags being discarded silently.
 
-Duplicate-option feedback names repeated option markers rather than values,
-because presence-only options such as `--follow-up` do not take values.
-`FlagArgumentMap` retains the first spelling supplied for each repeated option;
-the shared message lists those options and asks for each listed option only once.
+`add` keeps its name before the options. If the tokenizer refuses `-n` or
+`--name`, `AddCommandParser` adds a placement hint to the error, and a missing
+name gets the same hint, so a User who knows `edit`'s name option recovers at
+once.
 
 The shape of the command is settled before any field is read. An unclosed
-quote, an unknown option, or a single-valued option given twice, including
-once under each alias, all leave it
-unclear which field a value belongs to, so each is refused on its own instead
-of being collected with the field errors.
+quote, an unknown option, or a single-valued option given twice — including
+once under each alias — each leave it unclear which field a value belongs to,
+so each is refused on its own rather than collected with the field errors. An
+unknown option names its marker without echoing an attached value, and a
+missing value and a token belonging to no option are each reported for what
+they are.
 
 The following sequence diagram shows how a command's arguments are parsed
 in two passes:
@@ -719,62 +646,69 @@ The `-nf` alias makes clearing quick to type without making opposite actions
 differ only in case, as `-f` and `-F` would. Both clear spellings map to the
 same option, so mixing them is also detected as a duplicate.
 
+### Selecting a student
+
+`edit`, `tag` and `delete` each take a target: a displayed index, a
+letter-leading NUS Student ID, or an explicit option. That option is
+`--target-id` for `edit`, whose `--id` sets the ID field instead, and `--id`
+(alias `-i`) for `tag` and `delete`. Either form builds a `StudentTarget`,
+through `ParserUtil.parseRequiredStudentTarget` for a preamble target or
+`ParserUtil.parseNusStudentId` for an explicit one; `tag` keeps
+`ParserUtil.parseRequiredIndex` for a numeric preamble.
+
+The explicit option admits a digit-leading ID without changing how a bare
+number selects a displayed position, so an in-range number stays an index even
+when another record holds the same numeric ID. Repeating the option, or giving
+a preamble target and an explicit one together, is refused rather than guessed
+at, and selecting a target does not count as a field edit.
+
+An index resolves against the displayed list and an ID across the whole book.
+A roster ID therefore reaches a student a search has hidden, and a search
+predicate survives an edit.
+
+Diagnostics keep the spelling the User typed. `ParserUtil.parseIndex` separates
+malformed or non-positive input from a positive integer beyond the supported
+range, and `StudentTarget` reports an out-of-range position with that spelling
+and the current displayed count, zero included. A non-positive or non-integer
+target keeps the concise positive-integer reason alongside any field errors,
+and `delete` adds the explicit `--id` form whenever the refused target reads as
+a valid NUS Student ID — spelling intact, so a stored numeric ID keeps its
+leading zeroes. `edit` and `tag` share `FlagTokenizer.tokenizeWithIndex`, which
+reports an unquoted negative number as both an invalid index and an unknown
+option, and each reports a value following an otherwise valid target. The
+retained spelling affects diagnostics only, not target equality or hashing.
+
 ### Adding or removing one tag
 
 `TagCommandParser` reads `tag TARGET -a TAG` (alias `--add`) or
-`tag TARGET -r TAG` (alias `--remove`) with the existing
-`FlagTokenizer` and `ParserUtil`. The option names the action: both spellings
-map to `FLAG_ADD_TAG` or `FLAG_REMOVE_TAG`, respectively. Exactly one action
-option is accepted; conflicting actions and repeated options, including mixed
-aliases, are rejected. Missing fields and invalid field values are collected
-before a command is created.
-`TagCommandParser` retains `ParserUtil.parseRequiredIndex` for numeric targets
-and shares `parseRequiredStudentTarget` with edit for letter-leading IDs.
-`--id`/`-i` explicitly selects any valid ID, including one starting with a
-digit. Mixing the explicit ID option with a preamble or repeating it is
-rejected rather than guessing which student to change. `ParseProblems`
-collects target and tag validation errors before constructing the command.
-Tag and edit both use `FlagTokenizer.tokenizeWithIndex`, which reports an
-unquoted negative number as both an invalid index and an unknown option.
-For numeric tag targets, `parseRequiredIndex` reports a value following a
-valid index; for edit and letter-leading tag targets,
-`parseRequiredStudentTarget` reports a value following a valid target.
-Tag syntax failures and a missing action option include guidance for both
-addition and removal.
+`tag TARGET -r TAG` (alias `--remove`) with the existing `FlagTokenizer` and
+`ParserUtil`. The option names the action: both spellings of each map to
+`FLAG_ADD_TAG` or `FLAG_REMOVE_TAG`. Exactly one action option is accepted, so
+a conflicting pair and a repeated option are both refused, and `ParseProblems`
+collects every target and tag error before a command is built. A tag syntax
+failure and a missing action option each carry guidance for addition and for
+removal.
 
-`ParserUtil.parseIndex` distinguishes malformed/non-positive input from a positive
-integer exceeding the supported index range. `StudentTarget` reports out-of-range
-positions with their original input spelling and the current displayed count,
-including zero. Invalid non-positive or non-integer targets of edit, tag and
-delete retain the concise positive-integer reason from `parseIndex`, alongside
-any field errors; delete adds the explicit `--id` form whenever the refused
-target reads as a valid NUS Student ID.
-Retaining that spelling also lets delete suggest an exact `--id`
-command for a stored numeric ID without dropping leading zeroes. An in-range
-number remains an index even when another record holds the same numeric ID.
-The original spelling affects diagnostics only, not target equality or hashing.
+`TagCommand` compares normalized tag names ignoring case, then copies the
+existing tag set and constructs a replacement student with every other field
+preserved. `TagCommand.Action` selects addition or removal while sharing target
+resolution, matching, student replacement and feedback. The search filter stays
+active, so removing a tag that filter uses may hide the student from the
+displayed list.
 
-`TagCommand` stores a `StudentTarget`, as edit and delete do. It resolves an
-index against the displayed list and an ID across the entire book, so a
-roster ID remains usable while a search hides the student. It compares the
-normalized tag names ignoring case before copying the existing tag set and
-constructing a replacement student with every other field preserved. The
-search filter stays active; removing a tag used by that filter may hide the
-student from the displayed list. `TagCommand.Action` selects addition or
-removal while sharing target resolution, matching, student replacement and
-feedback.
-`ParserUtil.parseTags` folds case variants in `add` and replacement tags in `edit`
-using `String.CASE_INSENSITIVE_ORDER`, matching the tag command and summary.
-`ParseProblems` retains input order so the first normalized spelling wins while
-still collecting every invalid tag's diagnostic. `JsonAdaptedStudent` uses the same
-case-insensitive ordering after validating and normalizing stored tags, keeping
-the first spelling in the JSON array. This makes loaded cards and tag summaries
-agree; the next successful save writes one tag per group. Tag equality remains
-unchanged. Removal removes every matching variant of the requested group while
-retaining unrelated tags. A general tag named `Needs follow-up` remains separate
-from the follow-up flag, though the parsers no longer let one be added. Duplicate and successful removal feedback use a matching
-stored tag's spelling. If several case variants match, the reply chooses the
-first in the card's tag display order.
+Case variants of one tag name fold together. `ParserUtil.parseTags` folds them
+in `add` and in `edit`'s replacement tags using `String.CASE_INSENSITIVE_ORDER`,
+matching the tag command and the summary, while `ParseProblems` retains input
+order so the first spelling wins and every invalid tag still gets a diagnostic.
+`JsonAdaptedStudent` applies the same ordering after validating and normalizing
+stored tags, keeping the first spelling in the JSON array, so loaded cards and
+tag summaries agree and the next successful save writes one tag per group. Tag
+equality itself is unchanged. Removal takes every matching variant of the
+requested group and leaves unrelated tags alone. Duplicate and successful
+removal feedback quote a matching stored tag's spelling — the first in the
+card's tag display order when several variants match. A general tag named
+`Needs follow-up` stays separate from the follow-up flag, though the parsers no
+longer let one be added.
 
 For a hidden flagged student, the absent-tag hint supplies
 `edit --target-id NUS_STUDENT_ID --no-follow-up` with the student's stored ID.
@@ -786,11 +720,10 @@ The following sequence diagram shows how a `tag` command adds or removes a tag:
 
 Invalid indexes, existing tags on addition and absent tags on removal throw
 `CommandException` before mutation; invalid syntax or values throw
-`ParseException`. These paths never reach
-`LogicManager`'s save. Successful additions and removals use the normal JSON
-save path without changing the schema. Integration tests exercise reloads,
-human-edited case and whitespace variants, absent optional fields and unchanged
-saved bytes on failure.
+`ParseException`. Neither path reaches `LogicManager`'s save. A successful
+addition or removal uses the normal JSON save path without changing the schema.
+Integration tests exercise reloads, human-edited case and whitespace variants,
+absent optional fields and unchanged saved bytes on failure.
 
 ### Commands with no arguments
 
@@ -843,71 +776,53 @@ reports that `list` takes no arguments.
 
 ### Suggesting a command word
 
-A command word TAB does not dispatch on is answered with the word the User
-typed and the command words it is a likely attempt at. `CommandWords` works
-out which those are in two steps: what the typed word opens, and, failing
-that, what it is near.
+A word TAB does not dispatch on is answered with the word as typed and the
+command words it is a likely attempt at. `CommandWords` asks two questions in
+order.
 
-A word that opens a command word is read as that command word being typed.
-`del` stands for `delete`, although `help` is the nearer of the two by edits
-alone, at two against three. A part-typed word is right as far as it goes,
-which says more about what was meant than the distance to some other word
-does. Only a word that opens nothing is measured for edits at all.
+**What does the word open?** A part-typed word is right as far as it goes, so
+`del` stands for `delete` even though `help` is nearer by edits, at two
+against three. Only a word that opens nothing is measured at all.
 
-The measure is `StringUtil.editDistance`: how many insertions, deletions,
-substitutions and swaps of neighboring characters turn one word into the
-other. A swap counts as one edit because a fast typist makes them as readily
-as the other three, and `lsit` would otherwise sit two edits from `list`, as
-far away as a wilder guess.
+**What is it near?** `StringUtil.editDistance` counts insertions, deletions,
+substitutions and swaps of neighboring characters. A swap costs one edit
+because a fast typist makes them as readily as the rest; otherwise `lsit`
+would sit two edits from `list`, as far as a wilder guess. The budget is two
+edits for every command word whatever its length, which is what the user story
+asks for and what reaches the slips a teaching assistant makes: `ls` is two
+insertions short of `list`, `dlte` two deletions from `delete`.
 
-Two edits is the budget for every command word, whatever its length. That is
-what the user story asks for, and it is what reaches the words a teaching
-assistant types: `ls` opens nothing and is two insertions short of `list`,
-and `dlte` is two deletions from `delete`.
+Two edits also reach past a short command word's first letter, which is how
+`dlt` came to be answered with `edit`. A measured word must therefore open
+with the character the command word opens with, unless the single edit between
+them is that character — which keeps `felete`, `edlete` and `elete` reading as
+`delete`. The first letter is the one a typist is least likely to get wrong.
 
-Two edits also reach past the first letter of a short command word, which is
-how `dlt` came to be answered with `edit`. A word measured for edits
-therefore has to open with the character the command word opens with, unless
-the single edit between the two is that character. The first letter is the
-one a typist is least likely to get wrong, so a word two edits out that
-disagrees on it as well has little to do with the command it happens to sit
-near; where one edit is the whole difference, that edit may fall on the first
-letter and the rest of the word already agrees, which keeps `felete`,
-`edlete` and `elete` reading as `delete`.
+Every equally likely word is named, in the alphabetical order of
+`COMMAND_WORDS`: `eit` is a letter short of both `edit` and `exit`, and
+answering with one alone would read as knowledge TAB does not have. Past three
+the reply falls back to the pointer to `help`, since a list that long says only
+that TAB cannot tell. No typed word reaches that today, `edit` and `exit` being
+the only pair sharing a first letter; the limit is there for command words TAB
+may gain.
 
-Every command word equally likely is named. `eit` is a letter short of both
-`edit` and `exit`, and answering with `edit` alone would read as knowledge TAB
-does not have, with the other ruled out. Choosing between equally likely words
-dresses a guess up as help, while naming them all says exactly what is known.
-They are named in the alphabetical order of `COMMAND_WORDS`, so one typo
-always draws one reply.
+Comparison folds case with the `CommandWords.foldCase` the parser dispatches
+with, so `Delte` reads as `delete`, while a correctly spelled word in any case
+is dispatched before reaching here. The reply quotes the word as typed, so a
+User who typed capitals can recognize what they did, shortened the way a
+rejected field value is. Lengths are compared before distances, which settles a
+pasted line against every command word without measuring it.
 
-Past three equally likely words the reply falls back to the pointer to `help`,
-because a list that long says only that TAB cannot tell. No typed word reaches
-that with the command words TAB has: `edit` and `exit` are the only two
-sharing a first letter, so at most two are ever named at once, and the limit
-is there for the command words it may gain.
-
-The comparison folds case with the `CommandWords.foldCase` the parser
-dispatches with, so `Delte` is read as an attempt at `delete`; a word spelled
-correctly in any case is dispatched before it reaches here. The message quotes
-the word as it was typed, because a User who typed capitals needs to see them
-to recognize what they did. The quoted word is shortened the
-way a rejected field value is, so that a pasted line cannot push the rest of
-the message out of sight. Lengths are compared before any distance is, which
-also settles such a line against every command word without measuring it.
-
-A suggestion is never run. Dispatching `delete` for `dlte` would act on a word
-the User did not type, and a wrong guess there costs a student record, where a
+A suggestion is never run: dispatching `delete` for `dlte` would act on a word
+the User did not type, and a wrong guess there costs a student record where a
 wrong suggestion costs a line of text. `StudentBookParser` raises the same
-`ParseException` as it does for any unknown word, which leaves the model, the
-saved file and the typed text in the command box as they were.
+`ParseException` as for any unknown word, leaving the model, the saved file and
+the typed text as they were.
 
-The parser dispatches with a `switch` rather than from
-`CommandWords.COMMAND_WORDS`, so the two can disagree: a word missing from the
-list would work when typed while being suggested to nobody. `CommandWordsTest`
-resolves the command words out of the parser's own cases and compares them
-against the list rather than leaving that to be noticed.
+The parser dispatches from a `switch` rather than from `COMMAND_WORDS`, so the
+two could disagree and a word missing from the list would work while being
+suggested to nobody. `CommandWordsTest` resolves the command words out of the
+parser's own cases and compares them against the list.
 
 ### Follow-up flag
 
@@ -962,22 +877,25 @@ ignoring case, avoiding placeholder labels or empty tag markers.
 
 ### Field values
 
-`Student` stores phone, email and NUS Student ID as `Optional<Phone>`,
-`Optional<Email>` and `Optional<NusStudentId>`. Both constructors require non-null arguments;
-`Optional.empty()` explicitly represents an unknown detail. One constructor
-accepts the follow-up boolean, and the other defaults to unflagged for sample
-data. There are no overloads accepting nullable email or ID values, and no
-`Student` field is null. Add, edit, storage conversion, and test builders pass
-optionals directly into this contract. Nullable JSON strings remain confined
-to the storage adapter, preserving the existing file format.
+Two decisions shape every field a student carries.
 
-`Name`, `Tag`, `Phone`, `Email` and `NusStudentId` each store the form returned by
-`StringUtil.normalizeFieldValue`: without invisible format characters such as
-direction marks and non-whitespace controls, with each run of whitespace reduced
-to one ASCII space
-and leading and trailing whitespace removed, and with the result composed to
-Unicode NFC. Composing happens last, because an invisible character between a
-base letter and its combining mark blocks the two from composing.
+**A detail TAB does not know is absent, not blank.** `Student` holds phone,
+email and NUS Student ID as `Optional<Phone>`, `Optional<Email>` and
+`Optional<NusStudentId>`, and no `Student` field is ever null. Both
+constructors require non-null arguments, one taking the follow-up boolean and
+the other defaulting to unflagged for sample data. Add, edit, storage
+conversion and the test builders all pass optionals into that contract, so
+nullable strings stay inside the storage adapter and the file format is
+unchanged.
+
+**Two values that look the same are stored the same.** `Name`, `Tag`, `Phone`,
+`Email` and `NusStudentId` each keep the form `StringUtil.normalizeFieldValue`
+returns. That strips characters the reader cannot see, such as direction marks
+left by a copy and paste; collapses each run of spaces to one and trims the
+ends; and finally composes the result, so that a letter typed as a base plus a
+separate accent is stored as the single character it looks like. Composing
+comes last because an invisible character between the two blocks them from
+joining. The composed form is Unicode NFC.
 
 The following activity diagram shows the normalization pipeline:
 
@@ -998,45 +916,144 @@ whitespace, brackets and an extension; a tag may hold whitespace, hyphens and an
 script. None of those characters can hinder TAB, because none of these
 fields is parsed, dialled, or used to build a file path.
 
-**Phone text intentionally has no maximum length.** Teaching assistants may
-record several numbers, extensions and contact annotations in one field. A fixed
-cap could reject useful contact details or prevent an existing saved record from
-loading. The minimum of three Unicode decimal digits still applies. Acceptance
-of a 400-digit value alone does not establish a usability, performance or
-persistence problem that justifies a cap. Email's separate length restriction
-addresses its validation and storage concerns; it is not a reason to restrict
-phone text. Reconsider this decision if a concrete problem is demonstrated,
-with a migration plan for existing data and a limit justified by contact use
-cases. Long phone presentation uses ellipses and complete-value tooltips rather
-than truncating the stored text.
+**Aspect: how long a phone value may be**
 
-**The NUS Student ID may be absent.** `NusStudentId` accepts between 1 and 32
-ASCII letters and digits. Input letters are case-insensitive and the value is
-stored in uppercase, so `e0123456` and `E0123456` are the same value. This
-accommodates variations in the identifiers issued to different groups of
-students while preventing an accidentally pasted value from hiding the other
-details on a student's card. `Student` stores and exposes the value as
-`Optional<NusStudentId>`, using an empty optional rather than a sentinel value.
-`NusStudentId.getFailureReason` performs the single validation scan, and
-`isValidNusStudentId` delegates to it. This keeps the accepted format and the
-specific user-facing error synchronized without maintaining a separate regex.
+* **Alternative 1 (current choice):** no maximum, with the minimum of three
+  Unicode decimal digits still applying.
+  * Pros: a teaching assistant can record several numbers, extensions and
+    contact annotations in one field, and no saved record becomes unloadable.
+  * Cons: a 400-digit value is accepted. A long value is shown with an ellipsis
+    and its full text on hover, rather than the stored text being cut.
+* **Alternative 2:** a fixed cap, as `Email` has at 254 characters.
+  * Pros: bounds what the card and the file have to hold.
+  * Cons: rejects useful contact details, and a cap below an existing value
+    stops that record loading. Email's limit answers its own validation and
+    storage concerns and does not transfer.
 
-The add and edit parsers read either `--id` or `-i` through the same flag
-and validate with `ParserUtil.parseNusStudentId`. Add leaves the field absent when no
-option is given. For edit, `EditStudentDescriptor.OptionalFieldEdit` encapsulates
-the value and edit intent as one three-state concept: an absent option preserves
-the old value, a present non-empty option replaces it, and `--id ""` clears it.
-The edit parser trims the supplied value before this check, so a quoted value
-containing only spaces also clears the field.
-Descriptor copies and equality operate on this encapsulated state, rather than
-repeating knowledge of its internal representation.
+Worth revisiting if a concrete problem appears, with a migration plan for
+existing data and a limit justified by contact use cases.
 
-`JsonAdaptedStudent` represents the storage property as a nullable string.
-Jackson omits it on save when no ID is present; both a missing `nusStudentId` key and
-JSON `null` load as absent, preserving files written before the field existed.
-A malformed non-null value rejects the data file instead of being silently
-dropped. The student card and command feedback show a present ID and omit the
-label entirely when absent.
+**The three optional details share one contract.** Phone, email and NUS
+Student ID are each an `Optional` on `Student`, and behave alike at every
+layer bar one storage detail:
+
+| Layer | Behavior |
+| --- | --- |
+| `add` | leaves the field absent when its option is not given |
+| `edit` | `EditStudentDescriptor` holds an `OptionalFieldEdit<T>` carrying value and intent as one three-state concept: no option keeps the old value, a value replaces it, and an empty value clears it. The parser trims first, so a quoted run of spaces clears too; a bare option is still an error, and a rejected value is a parse problem rather than a clear. Copies and equality work on that state rather than on its representation. |
+| Storage | `JsonAdaptedStudent` keeps a nullable string. Jackson omits the key when the detail is absent, and for all three a missing key or JSON `null` loads as absent while a malformed non-null value refuses the file rather than being dropped silently. Phone and email also pass through `normalizeOptionalValue`, so a string that normalizes to nothing loads as absent; NUS Student ID does not, so `"nusStudentId": ""` — and whitespace-only or invisible-mark-only text with it — refuses the file with the non-empty-ID reason. Files written before a field became optional still load. |
+| Display | the card leaves the label unmanaged and `Messages.format` omits it, so the remaining details close up with no blank line |
+| `find` | a student without the detail matches no term for it |
+
+What differs is the rule each field enforces, and why it may be missing.
+
+**NUS Student ID.** Between 1 and 32 ASCII letters and digits, stored
+uppercase, so `e0123456` and `E0123456` are one value. The range covers the
+identifiers issued to different groups of students while stopping an
+accidentally pasted value from hiding the rest of a card.
+`NusStudentId.getFailureReason` performs the single validation scan and
+`isValidNusStudentId` delegates to it, keeping the accepted format and the
+user-facing error in step without a second regex.
+
+**Email.** `Email` accepts the RFC 5322 unquoted dot-atom local part, so
+addresses with apostrophes, repeated symbols or trailing underscores can be
+recorded; only dots require non-empty groups on both sides. Quoted local parts
+and domain literals stay unsupported. A student is recorded before an address
+is known rather than one being invented.
+
+`Email.MAX_LENGTH` caps an entered address at 254 characters, and both
+`ParserUtil` and `JsonAdaptedStudent` check it before calling the matcher.
+The bound is not there to simplify validation. `VALIDATION_REGEX` nests a
+quantifier inside another, and Java matches a repeated group by recursion, one
+frame per repetition, so an address with enough `.`-separated groups exhausts
+the stack. `StackOverflowError` is an `Error` no parser catches and
+`CommandBox` catches only `CommandException` and `ParseException`, so the User
+saw nothing at all. 254 is the limit RFC 5321 section 4.5.3.1 puts on a forward
+path, so the bound comes from the domain; it is also the longest measured to be
+safe on every stack size tried, where a 513-character address overflows a
+256 KB stack. `isValidEmail` itself keeps no length limit, so each input
+boundary reports length and format failures separately, and a saved address up
+to 254 characters loads while a longer one raises `IllegalValueException` with
+its actual and allowed lengths.
+
+**Phone.** A class roster can give a name, an ID and a university email without
+a personal mobile number. `Phone` is neither an identity field nor a key: two
+students may hold the same number or none, and `isSameStudent` reads neither
+case. It is normalized only so that a number typed with unusual whitespace, or
+wrapped in the invisible marks a chat app puts around a copied one, is stored
+consistently.
+
+`Messages.getErrorMessageForInvalidValue` shortens a rejected value past
+`MAX_QUOTED_VALUE_LENGTH` characters so a very long one cannot push the reason
+out of view. It counts characters through `StringUtil.firstCharacters`, as a
+reader counts them, separating neither an emoji nor a letter from its accent;
+a student card cuts a name or tag with the same helper. Command parsing and
+storage share that message, so both report an invalid value the same way.
+
+#### Student names
+
+A name is displayed and searched as text but is not an identity field, so
+several students may hold the same normalized name. `Name` keeps the
+normalized form described above, with one exception: the zero-width joiner and
+non-joiner survive, because scripts such as Sinhala and Arabic need them to
+shape correctly. Two names differing only by a joiner are therefore two
+students.
+
+**A name is valid** when something remains after normalizing: at least one
+letter or number, judged by Unicode category rather than by ASCII.
+
+| Accepted | Example |
+| --- | --- |
+| Slashes | `Ravi s/o Kumaran`, `Anita d/o Rajan` |
+| Hyphens and apostrophes | `Siti Nur-Aisyah`, `Ma Ying-jeou`, `Sean O'Brien` |
+| Other punctuation | `J. R. R. Tolkien`, `James&`, `-Ahmad` |
+| Ligatures and Roman numerals | `X Æ A-Xii`, `X Æ A-Ⅻ` |
+| Any script | Chinese, Japanese, Korean, Arabic, Tamil, Hebrew, Mongolian, Vietnamese |
+| Characters outside the basic plane | `𠮷田`, Adlam, Cuneiform |
+| Digits only | `12345` |
+
+| Rejected | Why |
+| --- | --- |
+| Empty, or whitespace only | nothing remains after normalizing |
+| Punctuation only, such as `---` | no letter or number |
+| An emoji, or a zero-width space, on its own | no letter or number |
+
+**A name may hold anything, including a sequence that looks like an option.**
+`a/l` and `a/p`, ordinary components of a Malaysian name, are stored and shown
+as typed, because a field is marked by an option of its own rather than by a
+marker joined to the value. `Name` enforces no restriction beyond holding at
+least one letter or number.
+
+**Showing a long name.** A card gives the name one line, shared with the tags
+and follow-up marker. `StudentCard` passes the complete name to
+`UiText.showToFit` and `CardName` measures it in the displayed font, so a name
+appears in full whenever its width permits and widening the card restores what
+a cut hid. There is no character limit.
+
+When space runs out, `CardName` shortens from the middle through
+`UiText.middleShortened`, keeping up to nine characters at the end and
+spending the rest of the budget on the opening.
+`StringUtil.firstCharacters` and `lastCharacters` keep characters whole,
+combining accents and emoji included. Two names can still coincide once their
+distinguishing text is hidden, so a shortened name carries a tooltip with the
+whole of it, which goes when the name fits again.
+
+The cut happens during layout, after `CardHeadline` knows the actual width.
+Leaving middle shortening to JavaFX can split a surrogate pair: a character
+such as `𠮷` may then be drawn as a broken glyph.
+
+`DarkTheme.css` therefore tells `.card-name` to clip, so that a cut `CardName`
+gets a pixel wrong shows a glyph against the edge rather than a broken one.
+That belongs in the stylesheet rather than beside the cut: an author
+stylesheet overrides what code sets on a styleable property, so a
+`setTextOverrun` call on the label would be dropped without a word.
+
+`CardName` asks for the room the whole name needs however little of it is
+drawn. The row shares its width out from what the name asks for, so a name
+that asked only for what it is drawn at would be handed less room on every
+pass, and the name and the tags beside it would chase each other down.
+
+### Detecting duplicate students
 
 NUS Student ID is the sole **identity key**. `Student.isSameStudent` returns
 true only when both records hold equal NUS Student IDs. Because construction
@@ -1055,9 +1072,9 @@ ID. This keeps hand-edited files diagnosable while allowing common names in a
 class.
 
 The activity diagram below follows `AddCommand.execute` after parsing. The
-identity check scans the complete student book. A matching NUS Student ID stops
-the command before it changes the model; other matching details can warn the
-User while still allowing the record to be added.
+identity check scans the complete student book: a matching NUS Student ID stops
+the command before it changes the model, while other matching details only warn
+the User.
 
 <puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Add command duplicate check" width="500" />
 
@@ -1069,10 +1086,10 @@ For a non-match, the command clears the filter and appends
 visible and the User knows to re-read indexes. A rejected addition leaves
 both the book and filter unchanged.
 
-`EditCommand` first compares the prospective record with the selected record using
+`EditCommand` first compares the prospective record with the selected one by
 full equality. An unchanged edit returns an explicit no-change response before
-checking duplicates or replacing the student, preserving the filter and avoiding
-unnecessary list notifications. `LogicManager` continues to skip saving an unchanged book.
+any duplicate check or replacement, so the filter survives and the list is not
+notified for nothing; `LogicManager` still skips saving an unchanged book.
 
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
@@ -1085,14 +1102,14 @@ stored number retains its formatting. Absent phones and absent emails do not
 match: two records that both lack the detail share no value, so neither is
 offered as evidence of a duplicate.
 
-The commands collect the warnings before mutation and separate them from the
-ordinary success message with a blank line. Matches are grouped by field into
-one prominently labeled `WARNING: Possible duplicate student` line. A line
-names at most two students and summarizes further matches as `N others`, so a
-shared placeholder does not fill the result box. The review advice appears
-once after every matching field. Phone warnings omit the parenthetical value:
-matched records can store different formatting for the same digits, so no single
-formatted value represents all named students.
+The commands collect the warnings before mutation and set them off from the
+success message with a blank line. Matches group by field under one labeled
+`WARNING: Possible duplicate student` line, each naming at most two students and
+summarizing the rest as `N others`, so a shared placeholder cannot fill the
+result box. The review advice appears once, after every matching field. A phone
+warning omits the parenthetical value, because matched records can store the
+same digits with different formatting and no one spelling would represent them
+all.
 
 `EditCommand` compares only name, phone, or email values that differ from the
 selected record. It excludes the selected `Student` instance but still uses
@@ -1102,117 +1119,11 @@ Name comparisons share `StringUtil.normalizeNameForComparison` with name
 searches: Latin accents and straight/curly apostrophe differences are ignored,
 so copied roster names can be found or flagged using ordinary keyboard input.
 
-These comparisons are advisory only: they never feed `isSameStudent` or the
-storage duplicate check, and therefore cannot reject or discard a legitimate
-shared detail.
+All of this is advisory: these comparisons never feed `isSameStudent` or the
+storage duplicate check, so they cannot reject or discard a legitimate shared
+detail.
 
-**The email may be absent.** A student is recorded before an email address is
-known rather than one being invented. `Student` accepts, stores, and exposes
-`Optional<Email>` so callers handle absence explicitly. `JsonAdaptedStudent`
-writes the email as a string when present; the optional wrapper is not written
-to JSON.
-
-The data file normally carries no `email` key. A missing key, JSON `null`, and
-a string that is empty after trimming all represent an absent email. A
-non-empty string is trimmed before validation, matching command input; a
-malformed address is still refused rather than being quietly dropped.
-
-`edit INDEX -e ""` clears an email without removing the student or changing
-other fields. `EditStudentDescriptor` stores an `OptionalFieldEdit<Email>`
-that encapsulates the value and edit intent; `isEmailEdited()` is derived from
-that state. An unedited field leaves the existing value alone, an edited field
-with an empty optional clears it, and an edited field with an address replaces
-it. `setEmail` requires an address and `clearEmail` explicitly requests removal.
-Both mark the email as edited, so callers cannot toggle the intent independently
-of the replacement value. The `OptionalFieldEdit` copy constructor preserves
-all three states. The descriptor is not persisted, so its state does not affect
-JSON.
-
-The parser leaves the email untouched when `-e` is absent, calls `clearEmail`
-for a token that is empty after trimming, and sets a replacement only after
-validation succeeds. A rejected value is recorded as a parse problem without
-assigning a null email or requesting a clear. A bare option is still an error.
-A clear satisfies the parser's requirement for a provided field even when the email
-is already absent; execution then reports no changes if no other value changes. `EditCommand`
-passes the optional value directly into the `Student` constructor, including
-an empty optional when clearing. The saved record omits the `email` key and
-reloads through the existing optional-email storage contract.
-
-`Email` accepts the RFC 5322 unquoted dot-atom local part so that legitimate
-student addresses with apostrophes, repeated symbols or trailing underscores
-can be recorded. Only dots require non-empty groups on both sides; other
-permitted symbols can repeat and appear at either end. Commands and saved
-records share this validator and preserve the address's spelling. Quoted
-local parts and domain literals remain unsupported; domain validation is
-unchanged.
-
-`Email.MAX_LENGTH` caps at 254 characters the address a **command** may enter.
-`ParserUtil.parseEmail` checks `Email.isWithinLengthLimit` before
-`Email.isValidEmail`, and `getFailureReason` carries the same guard because it
-matches the local part on its own.
-
-The limit is not there to simplify validation, which the guidance on arbitrary
-limits rules out. `VALIDATION_REGEX` nests one quantifier inside another,
-a repeated dot followed by a non-empty local-part atom, and Java matches a
-repeated group by recursion, one frame
-per repetition, so an address with enough `.`-separated groups exhausts the
-stack. `StackOverflowError` is an `Error` that no parser catches, and
-`CommandBox` catches only `CommandException` and `ParseException`, so the User
-saw no feedback at all. 254 is the limit RFC 5321 section 4.5.3.1 puts on a
-forward path, so the bound comes from the domain rather than from the parser.
-It is not the product's only bound: a `NusStudentId` holds at most 32
-characters, while `Name`, `Phone` and `Tag` are checked for the content they
-hold rather than for their length, and take a value of any size. What is
-particular to this bound is its purpose, which is to keep `VALIDATION_REGEX`
-from walking an address long enough to exhaust the stack, and 254 is the
-longest measured to be safe on every stack size tried: on a 256 KB stack even
-a 513-character address overflows.
-
-`isValidEmail` deliberately keeps **no** length limit, so each input boundary
-can report length and format failures separately. Both `ParserUtil` and
-`JsonAdaptedStudent` check `Email.MAX_LENGTH` before calling the matcher. A
-saved address of up to 254 characters therefore loads, while a longer one
-raises `IllegalValueException` with its actual and allowed lengths before its
-shape can exhaust the stack. The storage tests cover both sides of that
-boundary.
-
-`Messages.getErrorMessageForInvalidValue` shortens a rejected value past
-`MAX_QUOTED_VALUE_LENGTH` characters, so that a very long value cannot push the
-reason out of view. It counts characters through `StringUtil.firstCharacters`,
-as a reader counts them, so it separates neither an emoji nor a letter from the
-accent that belongs to it; a student card cuts a name or a tag with the same
-helper. Command parsing and storage share that message, so both paths report
-the same invalid value consistently.
-
-`Phone` is **not** an identity field and **not** a key: two students may hold the
-same number, hold none at all, and `isSameStudent` reads neither case. It is
-normalized only so that a number typed with unusual whitespace, or wrapped in the
-invisible marks a chat app puts around a copied number, is stored consistently.
-
-**The phone number may be absent.** A class roster can give a name, an NUS
-Student ID and a university email without giving a personal mobile number, so a
-student is recorded before a number is known rather than one being invented.
-This follows the optional email in every layer, so that one pattern covers both
-details. `Student` accepts, stores and exposes `Optional<Phone>`.
-
-`AddCommandParser` wraps the parsed value in an optional and no longer reports a
-missing `-p`; the name is the only field it still requires. `EditStudentDescriptor`
-holds an `OptionalFieldEdit<Phone>`, so `edit INDEX -p ""` clears the number and a
-value replaces it, exactly as `-e ""` clears an email. A number that is supplied
-is still validated, and a rejected one is recorded as a parse problem rather than
-clearing the field.
-
-`JsonAdaptedStudent` shares `normalizeOptionalValue` with the email: a missing
-`phone` key, JSON `null`, and a string that is empty after normalization all load
-as absent, while a malformed non-null number rejects the data file instead of
-being silently dropped. Jackson omits the key on save when no number is present,
-so files written before the phone became optional continue to load and a saved
-record stays editable by hand.
-
-`StudentCard` leaves the phone label unmanaged when the number is absent, so the
-remaining contact details close up rather than keeping a blank line, and
-`Messages.format` omits the `Phone:` label. The `PHONE` search field returns false
-for a student without a number, consistent with every other absent optional field.
+### Finding students
 
 `FindCommandParser` uses `FlagTokenizer` and the existing `CliFlags` aliases for
 name, NUS Student ID, phone, email and tag. Every search term must have a field
@@ -1248,105 +1159,27 @@ curly apostrophes to straight ones. Marks in other scripts remain significant,
 so vowels needed to distinguish names are retained. This is a comparison key,
 not transliteration; model values and JSON retain their existing spelling.
 
-For phone terms containing only Unicode decimal digits, or those digits with
-grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), matching
-also compares the digits with non-digit characters removed and each decimal digit
-mapped to its ASCII equivalent by numeric value. This lets
-`91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
-so copying a grouped number does not require manual reformatting. A query with
-a country code still requires those digits to occur in the stored phone.
-The allowed-character check uses a possessive quantifier to scan long phone terms
-without backtracking. Digit normalization separately checks that at least one digit
-remains, so punctuation-only terms cannot match every phone.
-The digit fallback requires at least one digit; annotations such as `"ext 21"`
-and punctuation-only terms retain literal matching. Unicode whitespace follows
-the same rule as field normalization. Normalizing both the phone digits and the
-search digits lets ASCII, full-width and other Unicode decimal digits match each
-other, including digits represented by supplementary code points. For example,
-`"９１２３ ４５６７"` matches `91234567`. Stored student details and saved data do not change.
+A phone term made only of Unicode decimal digits, or of those digits with
+grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), is also
+compared with non-digit characters removed and each decimal digit mapped to its
+ASCII equivalent by numeric value. So `91234567`, `9123-4567` and
+`"9123 4567"` all match `+65 9123 4567` or `91234567`, and a copied grouped
+number needs no reformatting; a query carrying a country code still requires
+those digits in the stored phone. Normalizing both sides lets ASCII, full-width
+and other Unicode decimal digits match each other, including digits written as
+supplementary code points, so `"９１２３ ４５６７"` matches `91234567`. The
+fallback applies only when a digit survives normalization, which keeps a
+punctuation-only term from matching every phone and leaves an annotation such
+as `"ext 21"` matching literally. Unicode whitespace follows the same rule as
+field normalization, and the allowed-character check uses a possessive
+quantifier so a long term scans without backtracking. Stored student details and
+saved data do not change.
 
-`FindCommand` and `ListCommand` report the count of displayed students in
-their execution feedback. `FindCommand` counts only the matching students
-(`Messages.getStudentsFoundOverview`), distinguishing zero (`Found 0 students.`),
-singular (`Found 1 student.`), and plural (`Found <n> students.`) results.
-`ListCommand` reports the number of students displayed after resetting the filter
-(`Listed 0 students.`, `Listed 1 student.`, or `Listed <n> students.`).
-
-#### Student names
-
-A name is displayed and searched as text, but is not an identity field.
-`Name` stores a normalized field value rather than the raw input so that two
-names which look identical are displayed and searched consistently. Multiple
-students may hold the same normalized name.
-
-**Normalizing.** On construction a name is
-
-* composed to Unicode form NFC, so that `Nguyễn` written as one code point and
-  as `e` plus two combining marks become the same string
-* stripped of Unicode format characters such as direction marks and zero-width
-  spaces, apart from the joiners described below
-* reduced to single ASCII spaces, with leading and trailing whitespace removed,
-  so that a non-breaking space cannot hide a word from the search
-
-The zero-width joiner and non-joiner are deliberately kept, because scripts
-such as Sinhala and Arabic need them to shape correctly. Two names that differ
-only by a joiner are therefore still two students.
-
-**A name is valid** when something remains after normalizing: at least one
-letter or number, judged by Unicode category rather than by ASCII.
-
-| Accepted | Example |
-| --- | --- |
-| Slashes | `Ravi s/o Kumaran`, `Anita d/o Rajan` |
-| Hyphens and apostrophes | `Siti Nur-Aisyah`, `Ma Ying-jeou`, `Sean O'Brien` |
-| Other punctuation | `J. R. R. Tolkien`, `James&`, `-Ahmad` |
-| Ligatures and Roman numerals | `X Æ A-Xii`, `X Æ A-Ⅻ` |
-| Any script | Chinese, Japanese, Korean, Arabic, Tamil, Hebrew, Mongolian, Vietnamese |
-| Characters outside the basic plane | `𠮷田`, Adlam, Cuneiform |
-| Digits only | `12345` |
-
-| Rejected | Why |
-| --- | --- |
-| Empty, or whitespace only | nothing remains after normalizing |
-| Punctuation only, such as `---` | no letter or number |
-| An emoji, or a zero-width space, on its own | no letter or number |
-
-**A name that holds a command prefix parses.** AB3 marked its fields with the
-prefixes `n/`, `p/`, `e/` and `t/`, so a name holding any of them after an
-ASCII space was read as the start of another field. `a/l` and `a/p`, ordinary
-components of a Malaysian name, failed this way until the address field was
-removed and the `a/` prefix with it, and the rest failed until `add` and `edit`
-took positional arguments and command options instead. `Name` itself never
-needed changing.
-
-**Showing a long name.** A card gives the name one line, shared with the tags
-and follow-up marker. `StudentCard` supplies the complete name through
-`UiText.showToFit`, and `CardName` measures it in the displayed font. Names
-appear in full whenever their allocated width permits; there is no fixed
-character limit. Widening the card restores text previously hidden by a cut.
-
-When space runs out, `CardName` shortens from the middle through
-`UiText.middleShortened`. It keeps both ends, retaining up to nine characters
-at the end and using the remaining character budget for the opening.
-`StringUtil.firstCharacters` and `StringUtil.lastCharacters` preserve complete
-characters, including combining accents and emoji. Names can still coincide
-when their distinguishing text is hidden, so a tooltip shows the complete
-name whenever it is shortened and disappears when the name fits again.
-
-The cut happens during layout, after `CardHeadline` knows the actual width.
-Leaving middle shortening to JavaFX can split a surrogate pair: a character
-such as `𠮷` may then be drawn as a broken glyph.
-
-`DarkTheme.css` therefore tells `.card-name` to clip, so that a cut `CardName`
-gets a pixel wrong shows a glyph against the edge rather than a broken one.
-That belongs in the stylesheet rather than beside the cut: an author
-stylesheet overrides what code sets on a styleable property, so a
-`setTextOverrun` call on the label would be dropped without a word.
-
-`CardName` asks for the room the whole name needs however little of it is
-drawn. The row shares its width out from what the name asks for, so a name
-that asked only for what it is drawn at would be handed less room on every
-pass, and the name and the tags beside it would chase each other down.
+Both `FindCommand` and `ListCommand` report how many students are displayed.
+`FindCommand` counts the matches through `Messages.getStudentsFoundOverview`,
+which distinguishes `Found 0 students.`, `Found 1 student.` and
+`Found <n> students.`; `ListCommand` counts after resetting the filter, giving
+`Listed 0 students.`, `Listed 1 student.` or `Listed <n> students.`.
 
 ### Handling an unreadable data file
 
@@ -1355,6 +1188,22 @@ missing `data/tab.json` is a first launch and receives the sample student book.
 An existing file is first parsed as JSON and then every student record and
 field is converted to its model type. Both stages finish before the normal UI
 can accept a command.
+
+`JsonUtil.readJsonFile` therefore reports a file as missing only once its
+absence is established, using `Files.notExists`. `Files.exists` answers false
+both for a file that is not there and for one whose folder cannot be opened,
+and `MainApp.initModelManager` reads a missing file as a first run, so a folder
+TAB merely cannot open would open the window on sample students in place of
+records it was never able to read. A file whose existence cannot be determined
+is read instead, and the access failure reported like any other.
+
+The records themselves are already safe from that mistake. The baseline
+`JsonStudentBookStorage` records for an unreadable folder is `Optional.empty()`,
+so once access is restored `saveIfUnchanged` finds a book on disk that the
+window never loaded and refuses the save. What is left without this check is a
+window opened on sample data that then refuses every save as stale, telling a
+User who changed nothing to close it and restart. Reporting the access failure
+at startup replaces both with the reason.
 
 `JsonUtil` enables Jackson's strict duplicate-key detection and checks for
 another token after reading the root value. A repeated key or trailing value
@@ -1370,34 +1219,69 @@ explanation and recovery guidance through the same `DataLoadingException`
 boundary; startup preserves the original bytes and blocks the normal UI.
 
 `JsonUtil` turns malformed JSON or an incompatible JSON shape into a
-`DataLoadingException`, and `JsonParseErrorFormatter` words the
-explanation it carries. For a syntax error, the formatter uses the
-deepest parser exception with a usable location so that the displayed
-line and column identify the offending token rather than the last
-successfully mapped value. It pairs the concise parser explanation with
-the affected line and at most one line on either side. Each source line
-is limited to 160 characters; an affected long line is cropped around
-the reported column so that minified JSON remains useful without
-filling the dialog. If the parser supplies no usable location, the
-formatter omits the source instead of falling back to Jackson's
-source-bearing message.
-During model conversion, `JsonAdaptedStudent` identifies the invalid field and
-`JsonSerializableStudentBook` adds the one-based record number and its name
-when available. `JsonStudentBookStorage` carries that explanation through the
+`DataLoadingException`, and `JsonParseErrorFormatter` words the explanation it
+carries. For a syntax error the formatter takes the deepest parser exception
+that has a usable location, so the reported line and column point at the
+offending token rather than the last value mapped successfully, and it pairs
+that concise explanation with the affected line and at most one line on either
+side. Source lines are capped at 160 characters, an affected long line cropped
+around the reported column, which keeps minified JSON useful without filling the
+dialog. Without a usable location the formatter omits the source rather than
+falling back to Jackson's source-bearing message. During model conversion,
+`JsonAdaptedStudent` identifies the invalid field and
+`JsonSerializableStudentBook` adds the one-based record number and, where it
+has one, the name. `JsonStudentBookStorage` carries that explanation through the
 same `DataLoadingException` boundary.
 
-`MainApp` records a student-book loading error and creates an empty model only
-as an internal placeholder so that application shutdown remains safe. It gives
-the error to `UiManager`. Before constructing `MainWindow`, `UiManager` checks
-for that error. If one is present, it shows an error dialog containing the
-data-file path, the specific reason, and recovery guidance. Closing the dialog
-closes TAB because the normal window was never opened. No command, including
-`exit`, can therefore save the placeholder over the unreadable file.
+`MainApp` records the loading error and creates an empty model only as an
+internal placeholder, so shutdown stays safe, then hands the error to
+`UiManager`. `UiManager` checks for it before constructing `MainWindow`, and on
+finding one shows an error dialog with the data-file path, the specific reason
+and recovery guidance. Closing that dialog closes TAB, because the normal window
+never opened, so no command — `exit` included — can save the placeholder over
+the unreadable file.
 
-Failing closed was chosen over displaying a partial or read-only student book.
-It keeps recovery small and unambiguous: the User repairs or replaces the file
-and restarts TAB. Loading readable records separately and reloading without a
-restart remain separate future features.
+Failing closed was chosen over displaying a partial or read-only student book,
+because it keeps recovery small and unambiguous: the User repairs or replaces
+the file and restarts TAB. Loading the readable records separately, and
+reloading without a restart, remain future features.
+
+### Rejecting unknown keys and malformed tags
+
+`JsonAdaptedStudent` and `JsonSerializableStudentBook` use Jackson's
+`@JsonAnySetter` callbacks to reject unknown keys while the data is being read,
+which keeps a hand-edited value from disappearing during a later unrelated
+save. The student callback names the record and the allowed field names in its
+error, and permits the removed `address` key as a compatibility exception;
+the book also accepts the existing `_comment` metadata key.
+`JsonStudentBookStorage` adds the one-based record number from Jackson's
+mapping path, so even an unnamed record or two students sharing a name can be
+located. The shared JSON mapper keeps its existing behavior for preferences,
+and startup follows the existing loading-error path, leaving rejected data
+intact.
+
+`JsonTagsDeserializer` checks the array and string types before adapting tags,
+so a malformed `tags` value reports the field and entry position rather than
+Jackson class names. A missing or null array still means no tags, and tag text
+continues through the existing model validation. Mapping errors retain their
+source location and student record number, and do not rewrite the file.
+
+### Recovering from bad preferences
+
+`JsonUtil.readJsonFile` rejects a whole-file `null` with a
+`DataLoadingException`, so both preference and student data loading use their
+existing error handling instead of crashing, and invalid student data is
+preserved for repair. `JsonUserPrefsStorage` likewise rejects an explicit
+`null` for `guiSettings`, while a missing setting retains the `UserPrefs`
+defaults. `MainApp.initPrefs` answers invalid preferences by restoring and
+saving the defaults before the model is constructed; student data is stored
+separately and a preference recovery does not touch it.
+
+A recoverable preference write in `MainApp.initPrefs` or `MainApp.stop` logs
+one `WARNING` naming the preferences path and the I/O reason, without a stack
+trace. Startup keeps the loaded or default preferences for the session, and
+shutdown explains that window preferences were not saved. A permission error
+that carries no reason is described as permission denied.
 
 ### Confirming a clear
 
@@ -1409,31 +1293,30 @@ The following state/activity diagram shows the pending-clear confirmation flow:
 including students hidden by the current filter. It does not mutate the
 model. An empty book instead returns a no-op message without a prompt.
 `LogicManager.requestClearConfirmation` keeps a non-empty book's request in
-`pendingClearCommand`, an `Optional<ClearCommand>`, and returns before the
-usual storage write. `Optional.empty()` represents no pending request.
-While the request is pending, it reads the
-next input as a reply to the concise `[y/N]` prompt. It first applies
-`StringUtil.stripFormatCharacters`, sharing the command parser's treatment of
-copied invisible marks while preserving shaping joiners. It then trims only
-surrounding Unicode whitespace; internal spaces and visible characters are
-kept so extra words cannot become a confirmation. Replies ignore case.
-Trimming scans from both ends with `StringUtil.isWhitespace`, retaining the
-command parser's Unicode whitespace rules. This takes linear time at worst;
-an internal whitespace run is never searched for a trailing match.
+`pendingClearCommand`, an `Optional<ClearCommand>` whose `Optional.empty()`
+means nothing is pending, and returns before the usual storage write. While a
+request is pending, the next input is read as a reply to the concise `[y/N]`
+prompt. `StringUtil.stripFormatCharacters` runs first, sharing the command
+parser's treatment of copied invisible marks while preserving shaping joiners.
+Only surrounding Unicode whitespace is then trimmed — internal spaces and
+visible characters stay, so extra words cannot become a confirmation — and
+replies ignore case. Trimming scans from both ends with
+`StringUtil.isWhitespace`, keeping the command parser's Unicode whitespace
+rules, and takes linear time at worst, since an internal whitespace run is
+never searched for a trailing match.
 
-An empty reply, `n`, or `no` drops the request without executing or saving
-anything. Only the exact replies `y` and `yes` invoke
-`ClearCommand.executeConfirmed` and save the empty book. Words merely starting
-with either letter, such as `yellow` or `nope`, are invalid. Other input raises
-a `ParseException` with feedback and the prompt repeated and keeps the request
-pending; it is never executed as another command.
-If the reply handler unexpectedly has no request, it raises a
-`CommandException` asking the user to enter `clear`, rather than letting an
-unchecked exception escape. The normal presence guard prevents this case.
-The pending request is cleared before saving so that a storage error cannot
-leave a stale confirmation active. It lives only in memory, so closing and
-restarting TAB cannot confirm a previous request. The existing result area
-and command field provide the prompt and replies without a mouse or dialog.
+An empty reply, `n` or `no` drops the request without executing or saving
+anything. Only `y` and `yes` exactly invoke `ClearCommand.executeConfirmed` and
+save the empty book; a word merely starting with either letter, such as
+`yellow` or `nope`, is invalid. Any other input raises a `ParseException` that
+repeats the prompt with its feedback and keeps the request pending, and is never
+executed as another command. Should the reply handler find no request at all —
+the presence guard means it should not — it raises a `CommandException` asking
+the User to enter `clear` rather than letting an unchecked exception escape.
+The pending request is cleared before saving, so a storage error cannot leave a
+stale confirmation active, and it lives only in memory, so restarting TAB cannot
+confirm a previous request. The prompt and the replies both travel through the
+existing result area and command field, with no mouse or dialog.
 `MainWindow` supplies `Logic.isAwaitingConfirmation` to `CommandBox`, which
 submits an empty Enter only during confirmation; otherwise an empty Enter
 keeps its existing no-op behavior. Each `Logic` implementation must supply
