@@ -2388,11 +2388,13 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: From an empty book add `add Alice Tan -p 91110001 -t T1`,
       `add Bob Lim -p 91110002 -t T2` and `add Carl Ong -p 91110003 -t T1`.
    1. Test case: `find -t T1`, then `add Eve Ng -p 91110005 -t T1`, then
-      `add Dan Koh -p 91110004 -t T2`.<br>
+      `delete 2`.<br>
       Expected: Eve joins the filtered list with no search-cleared notice, so
-      `delete 2` removes Carl and leaves Bob untouched. Dan does not match, so
-      the reply ends `Search cleared to show the new student.` and indexes need
-      re-reading before the next index command.
+      index 2 is still Carl and deleting it leaves Bob untouched.
+   1. Test case: `add Dan Koh -p 91110004 -t T2`.<br>
+      Expected: Dan does not match, so the reply ends `Search cleared to show
+      the new student.` The list now holds everyone, so indexes must be read
+      again before the next index command.
 ### Long contact details on a card
 
 1. Retaining long phone text
@@ -2598,12 +2600,15 @@ testers are expected to do more *exploratory* testing.
 
    1. Prerequisites: Note a student's ID, such as Charlotte Oliveiro's
       `A02345678G` in the sample data.
-   1. Test case: `edit A02345678G -p 81112222`, then the same ID in lowercase,
-      then `find -n Alex` followed by the same command while the search hides
-      her.<br>
-      Expected: Each changes her phone and names her, matching an ID ignoring
-      case and reaching her even when she is not displayed. An `edit 1` in that
-      state would edit Alex instead, index 1 being the first student shown.
+   1. Test case: `edit A02345678G -p 81112222`, then
+      `edit a02345678g -p 81112333`, then `find -n Alex` followed by
+      `edit A02345678G -p 81112444` while the search hides her.<br>
+      Expected: Each reports `Edited student: Charlotte Oliveiro` with the new
+      number, so an ID matches whatever its case and reaches her even when she
+      is not displayed. Each command needs its own value: repeating one already
+      stored replies `Student already has the requested details. No changes
+      made.` An `edit 1` in that state would edit Alex instead, index 1 being
+      the first student shown.
    1. Test case: `edit A01234567X --id A03456789H`, where another student holds
       the second ID, then `edit A99999999Z -p 81112222` and
       `edit A0123-456 -p 81112222`.<br>
@@ -2648,9 +2653,11 @@ testers are expected to do more *exploratory* testing.
       `edit INDEX -t "   "`.<br>
       Expected: Each detail disappears from the card and the feedback, the
       remaining ones closing up with no blank line, and every other field and
-      the follow-up status stay as they were. The saved record loses the
-      matching key, and the details stay absent after a restart. A
-      whitespace-only value is trimmed and clears the field the same way.
+      the follow-up status stay as they were. The saved record drops its
+      `phone` and `email` keys, while cleared tags are written as an empty
+      `"tags": []` rather than removed. The details stay absent after a
+      restart, and a whitespace-only value is trimmed and clears the field the
+      same way.
    1. Test case: Repeat any of those commands once the field is already
       absent.<br>
       Expected: Each succeeds with nothing else changed.
@@ -2723,11 +2730,13 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `delete 1`<br>
       Expected: The first record goes and the reply identifies the removed
       student with their details.
-   1. Test case: `delete A02345678G`, then the same ID in lowercase.<br>
-      Expected: Charlotte is deleted wherever she appears and the reply
-      identifies her; matching an ID ignores case. Running
-      `find -n Alex` first and deleting her by ID still works while the search
-      hides her.
+   1. Test cases, each a separate run from the same starting data:
+      `delete A02345678G`; `delete a02345678g`; and `find -n Alex` followed by
+      `delete A02345678G` while the search hides her.<br>
+      Expected: Each run deletes Charlotte and the reply identifies her, so an
+      ID matches whatever its case and reaches her even when she is not
+      displayed. They are separate runs because the first deletion leaves no
+      student for the next to find.
    1. Test case: `add "Digit Ida" -p 91234567 --id 1ABC`, then `delete 1ABC`,
       then `delete --id 1ABC`.<br>
       Expected: The bare form is refused as an unusable index, because a target
