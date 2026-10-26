@@ -7,8 +7,6 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -44,26 +42,24 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         ParseProblems problems = new ParseProblems();
 
-        String[] missingFields = findMissingFields(arguments);
-        if (missingFields.length > 0) {
-            problems.add(Messages.getErrorMessageForMissingFields(missingFields));
-            if (arguments.getPreamble().isEmpty()) {
-                problems.add(AddCommand.MESSAGE_NAME_GUIDANCE);
-            }
+        if (arguments.getPreamble().isEmpty()) {
+            problems.add(Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME));
+            problems.add(AddCommand.MESSAGE_NAME_GUIDANCE);
         }
 
         Name name = parseName(problems, arguments.getPreamble());
-        Phone phone = problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone);
+        Optional<Phone> phone = Optional.ofNullable(
+                problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone));
         Optional<Email> email = Optional.ofNullable(
                 problems.collectIfPresent(arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail));
         Optional<NusStudentId> nusStudentId = Optional.ofNullable(
                 problems.collectIfPresent(arguments.getValue(FLAG_NUS_STUDENT_ID), ParserUtil::parseNusStudentId));
-        Set<Tag> tagList = ParserUtil.parseTags(arguments.getAllValues(FLAG_TAG), problems);
+        Set<Tag> tags = ParserUtil.parseTags(arguments.getAllValues(FLAG_TAG), problems);
 
         problems.throwIfAny();
 
         boolean isFlagged = arguments.getValue(FLAG_FOLLOW_UP).isPresent();
-        Student student = new Student(name, phone, email, nusStudentId, tagList, isFlagged);
+        Student student = new Student(name, phone, email, nusStudentId, tags, isFlagged);
 
         return new AddCommand(student);
     }
@@ -81,21 +77,6 @@ public class AddCommandParser implements Parser<AddCommand> {
             }
             throw e;
         }
-    }
-
-    /**
-     * Returns the required fields the command left out, in the order they are written in the
-     * format, so that a user who omitted several is told about all of them at once.
-     */
-    private static String[] findMissingFields(FlagArgumentMap arguments) {
-        List<String> missing = new ArrayList<>();
-        if (arguments.getPreamble().isEmpty()) {
-            missing.add(AddCommand.FIELD_NAME);
-        }
-        if (arguments.getValue(FLAG_PHONE).isEmpty()) {
-            missing.add(FLAG_PHONE.getLabel());
-        }
-        return missing.toArray(String[]::new);
     }
 
     /**

@@ -22,6 +22,7 @@ Class CommandHistory {
     ~next(text : String) : String
 }
 Class CommandTextField
+Class HighlightedTextOverlay
 Class CommandHighlighter
 Class CardHeadline
 Class CardName
@@ -53,7 +54,8 @@ UiManager -down-> "1" MainWindow
 MainWindow *-down->  "1" CommandBox
 CommandBox *-down-> "1" CommandHistory
 CommandBox *-down-> "1" CommandTextField
-CommandBox ..> CommandHighlighter
+CommandBox *-down-> "1" HighlightedTextOverlay
+HighlightedTextOverlay ..> CommandHighlighter
 MainWindow *-down-> "1" ResultDisplay
 MainWindow *-down-> "1" HelpPage
 MainWindow *-down-> "1" StudentListPanel

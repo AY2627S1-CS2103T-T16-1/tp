@@ -22,7 +22,7 @@ public class StudentBuilder {
     public static final String DEFAULT_EMAIL = "amy@gmail.com";
 
     private Name name;
-    private Phone phone;
+    private Optional<Phone> phone;
     private Optional<Email> email;
     private Optional<NusStudentId> nusStudentId;
     private Set<Tag> tags;
@@ -33,7 +33,7 @@ public class StudentBuilder {
      */
     public StudentBuilder() {
         name = new Name(DEFAULT_NAME);
-        phone = new Phone(DEFAULT_PHONE);
+        phone = Optional.of(new Phone(DEFAULT_PHONE));
         email = Optional.of(new Email(DEFAULT_EMAIL));
         nusStudentId = Optional.empty();
         tags = new HashSet<>();
@@ -72,7 +72,15 @@ public class StudentBuilder {
      * Sets the {@code Phone} of the {@code Student} that we are building.
      */
     public StudentBuilder withPhone(String phone) {
-        this.phone = new Phone(phone);
+        this.phone = Optional.of(new Phone(phone));
+        return this;
+    }
+
+    /**
+     * Leaves the {@code Student} that we are building without a phone number.
+     */
+    public StudentBuilder withoutPhone() {
+        this.phone = Optional.empty();
         return this;
     }
 

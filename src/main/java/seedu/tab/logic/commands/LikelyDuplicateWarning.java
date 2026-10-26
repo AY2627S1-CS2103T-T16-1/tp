@@ -67,7 +67,7 @@ final class LikelyDuplicateWarning {
             matchingNames.add(existingStudent);
         }
         if (isChanged(changedStudent.getPhone(), originalStudent == null ? null : originalStudent.getPhone())
-                && changedStudent.getPhone().getDigits().equals(existingStudent.getPhone().getDigits())) {
+                && phonesMatch(changedStudent, existingStudent)) {
             matchingPhones.add(existingStudent);
         }
         if (isChanged(changedStudent.getEmail(), originalStudent == null ? null : originalStudent.getEmail())
@@ -80,7 +80,8 @@ final class LikelyDuplicateWarning {
             List<Student> matchingPhones, List<Student> matchingEmails) {
         List<String> warnings = new ArrayList<>();
         addWarning(warnings, matchingNames, Name.FIELD_NAME, changedStudent.getName().fullName);
-        addWarning(warnings, matchingPhones, Phone.FIELD_NAME, changedStudent.getPhone().value);
+        changedStudent.getPhone().ifPresent(phone ->
+                addWarning(warnings, matchingPhones, Phone.FIELD_NAME, phone.value));
         changedStudent.getEmail().ifPresent(email ->
                 addWarning(warnings, matchingEmails, Email.FIELD_NAME, email.value));
         return warnings;
@@ -88,6 +89,11 @@ final class LikelyDuplicateWarning {
 
     private static boolean isChanged(Object changedValue, Object originalValue) {
         return originalValue == null || !changedValue.equals(originalValue);
+    }
+
+    private static boolean phonesMatch(Student first, Student second) {
+        return first.getPhone().flatMap(phone -> second.getPhone()
+                .filter(otherPhone -> phone.getDigits().equals(otherPhone.getDigits()))).isPresent();
     }
 
     private static boolean emailsMatch(Student first, Student second) {

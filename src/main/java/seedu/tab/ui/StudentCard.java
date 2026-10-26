@@ -10,6 +10,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import seedu.tab.model.student.NusStudentId;
+import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 
 /**
@@ -58,7 +59,7 @@ public class StudentCard extends UiPart<Region> {
         this.student = student;
         id.setText(String.valueOf(displayedIndex));
         UiText.showToFit(name, student.getName().fullName);
-        UiText.showToFit(phone, student.getPhone().value);
+        show(phone, student.getPhone().map(Phone::toString).orElse(null));
         if (student.getEmail().isPresent()) {
             UiText.showToFit(email, student.getEmail().orElseThrow().toString());
         } else {
