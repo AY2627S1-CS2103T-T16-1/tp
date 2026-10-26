@@ -11,21 +11,16 @@ package "Parser classes"{
 Class "<<interface>>\nParser" as Parser
 Class StudentBookParser
 Class XYZCommandParser
-Class CliFlags
-Class ParserUtil
 Class FlagArgumentMap
 Class FlagTokenizer
 Class CommandTokenizer
 Class CliFlag
-Class CommandWords
-Class ParseProblems
 }
 
 Class HiddenOutside #FFFFFF
 HiddenOutside ..> StudentBookParser
 
 StudentBookParser .down.> XYZCommandParser: <<create>>
-StudentBookParser ..> CommandWords : <<use>>
 
 XYZCommandParser ..> XYZCommand : <<create>>
 StudentBookParser ..> Command : <<use>>
@@ -34,10 +29,6 @@ XYZCommandParser ..> FlagArgumentMap
 XYZCommandParser ..> FlagTokenizer
 FlagTokenizer .left.> FlagArgumentMap
 FlagTokenizer ..> CommandTokenizer
-XYZCommandParser ..> CliFlags
-CliFlags --> CliFlag
-XYZCommandParser ..> ParserUtil
-XYZCommandParser ..> ParseProblems
 FlagArgumentMap -down-> CliFlag
 FlagTokenizer .down.> CliFlag
 XYZCommand -up-|> Command
