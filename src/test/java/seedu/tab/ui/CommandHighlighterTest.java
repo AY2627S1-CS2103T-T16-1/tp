@@ -66,6 +66,21 @@ public class CommandHighlighterTest {
     }
 
     @Test
+    public void highlight_supportedQuotePairs_matchParserAndPreserveText() throws Exception {
+        for (String opening : List.of("\"", "“", "”", "＂")) {
+            for (String closing : List.of("\"", "“", "”", "＂")) {
+                String command = "edit 1 --tag=" + opening + "-组 1" + closing + " -f";
+                assertEquals(List.of(COMMAND_WORD, VALUE, OPTION, QUOTED_VALUE, OPTION), kindsOf(command));
+                assertEquals(command, rejoined(command));
+                assertEquals(CommandTokenizer.tokenize(command.substring(4)).size(), argumentTokensOf(command));
+            }
+            assertEquals(List.of(COMMAND_WORD, VALUE, OPTION), kindsOf("add a\\" + opening + "b -f"));
+            assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("add " + opening + "Unclosed value"));
+            assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("add --ta" + opening + "g=x"));
+        }
+    }
+
+    @Test
     public void highlight_escapedQuote_doesNotOpenAQuotedValue() {
         assertEquals(List.of(COMMAND_WORD, VALUE, VALUE, VALUE, VALUE, OPTION, VALUE),
                 kindsOf("add Dwayne \\\"The Rock\\\" Johnson -p 91234567"));

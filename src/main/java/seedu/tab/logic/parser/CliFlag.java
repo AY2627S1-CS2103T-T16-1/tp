@@ -9,7 +9,7 @@ import java.util.stream.Stream;
  * A flag that marks the field a token belongs to, such as {@code -e} in
  * {@code add John -e john@example.com}.
  */
-public class Flag {
+public class CliFlag {
     private final String flag;
     private final List<String> aliases;
     private final String fieldName;
@@ -20,7 +20,7 @@ public class Flag {
      *
      * @param flag The characters that mark the option, such as {@code -f}.
      */
-    public Flag(String flag) {
+    public CliFlag(String flag) {
         requireNonNull(flag);
         this.flag = flag;
         this.aliases = List.of();
@@ -34,7 +34,7 @@ public class Flag {
      * @param flag The primary characters that mark the option.
      * @param aliases Alternative characters that mark the same option.
      */
-    public Flag(String flag, List<String> aliases) {
+    public CliFlag(String flag, List<String> aliases) {
         requireNonNull(flag);
         requireNonNull(aliases);
         this.flag = flag;
@@ -50,7 +50,7 @@ public class Flag {
      * @param flag The characters that mark the field, such as {@code -e}.
      * @param fieldName The name of the field, such as {@code EMAIL}.
      */
-    public Flag(String flag, String fieldName) {
+    public CliFlag(String flag, String fieldName) {
         this(flag, List.of(), fieldName);
     }
 
@@ -61,7 +61,7 @@ public class Flag {
      * @param aliases Alternative characters that mark the same field.
      * @param fieldName The name of the field, such as {@code EMAIL}.
      */
-    public Flag(String flag, List<String> aliases, String fieldName) {
+    public CliFlag(String flag, List<String> aliases, String fieldName) {
         requireNonNull(flag);
         requireNonNull(aliases);
         requireNonNull(fieldName);
@@ -136,7 +136,7 @@ public class Flag {
         }
 
         // instanceof handles nulls
-        if (!(other instanceof Flag otherFlag)) {
+        if (!(other instanceof CliFlag otherFlag)) {
             return false;
         }
 

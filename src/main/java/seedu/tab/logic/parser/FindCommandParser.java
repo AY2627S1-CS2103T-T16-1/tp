@@ -34,7 +34,7 @@ public class FindCommandParser implements Parser<FindCommand> {
             "Every search term needs a field option. For example: find -n Jason -t Lab -n Tan. "
             + "Put a multi-word term in double quotes, for example: find -n \"Jason Tan\".";
 
-    private static final Map<Flag, Field> SEARCH_FIELDS = Map.of(
+    private static final Map<CliFlag, Field> SEARCH_FIELDS = Map.of(
             FLAG_NAME, Field.NAME, FLAG_NUS_STUDENT_ID, Field.NUS_STUDENT_ID,
             FLAG_PHONE, Field.PHONE, FLAG_EMAIL, Field.EMAIL, FLAG_TAG, Field.TAG);
 
@@ -62,7 +62,7 @@ public class FindCommandParser implements Parser<FindCommand> {
     /** Reads all required terms for each selected field. */
     private static Map<Field, List<String>> parseFieldKeywords(FlagArgumentMap arguments) throws ParseException {
         Map<Field, List<String>> keywordsByField = new EnumMap<>(Field.class);
-        for (Map.Entry<Flag, Field> entry : SEARCH_FIELDS.entrySet()) {
+        for (Map.Entry<CliFlag, Field> entry : SEARCH_FIELDS.entrySet()) {
             List<String> values = arguments.getAllValues(entry.getKey());
             if (!values.isEmpty()) {
                 keywordsByField.put(entry.getValue(), normalizeKeywords(values));

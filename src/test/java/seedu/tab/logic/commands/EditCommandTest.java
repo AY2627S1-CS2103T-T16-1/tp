@@ -39,6 +39,7 @@ import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.NusStudentId;
+import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 import seedu.tab.testutil.StudentBuilder;
@@ -158,6 +159,43 @@ public class EditCommandTest {
         assertCommandSuccess(command, model,
                 String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
         assertCommandSuccess(command, model, EditCommand.MESSAGE_UNCHANGED, expectedModel);
+    }
+
+    @Test
+    public void execute_studentWithoutPhone_takesOneGivenLater() {
+        Student first = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student withoutPhone = new StudentBuilder(first).withoutPhone().build();
+        model.setStudent(first, withoutPhone);
+
+        Student editedStudent = new StudentBuilder(withoutPhone).withPhone(VALID_PHONE_BOB).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build());
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS,
+                Messages.format(editedStudent));
+
+        Model expectedModel = new ModelManager(new StudentBook(model.getStudentBook()), new UserPrefs());
+        expectedModel.setStudent(withoutPhone, editedStudent);
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertEquals(Optional.of(new Phone(VALID_PHONE_BOB)),
+                model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased()).getPhone());
+    }
+
+    @Test
+    public void execute_clearPhone_preservesOtherDetails() {
+        Student first = model.getFilteredStudentList().get(0);
+        Student edited = new StudentBuilder(first).withoutPhone().build();
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(first, edited);
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withoutPhone().build());
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
+        assertCommandSuccess(command, model, EditCommand.MESSAGE_UNCHANGED, expectedModel);
+        assertEquals(Optional.empty(),
+                model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased()).getPhone());
     }
 
     @Test

@@ -32,7 +32,8 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
                 .contains(StringUtil.normalizeNameForComparison(keyword))),
         NUS_STUDENT_ID((student, keyword) -> StringUtil.containsIgnoreCase(
                 student.getNusStudentId().map(NusStudentId::toString).orElse(""), keyword)),
-        PHONE((student, keyword) -> matchesPhone(student.getPhone(), keyword)),
+        PHONE((student, keyword) -> student.getPhone()
+                .map(phone -> matchesPhone(phone, keyword)).orElse(false)),
         EMAIL((student, keyword) -> StringUtil.containsIgnoreCase(
                 student.getEmail().map(Email::toString).orElse(""), keyword)),
         TAG(DetailsContainsKeywordsPredicate::matchesAnyTag);

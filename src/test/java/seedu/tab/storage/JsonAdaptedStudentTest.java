@@ -21,7 +21,7 @@ import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpFlag;
 
 public class JsonAdaptedStudentTest {
     private static final String INVALID_NAME = "---"; // no letter or number
@@ -31,7 +31,7 @@ public class JsonAdaptedStudentTest {
     private static final String INVALID_TAG = "---"; // no letter or number
 
     private static final String VALID_NAME = BENSON.getName().toString();
-    private static final String VALID_PHONE = BENSON.getPhone().toString();
+    private static final String VALID_PHONE = BENSON.getPhone().orElseThrow().toString();
     private static final String VALID_EMAIL = BENSON.getEmail().orElseThrow().toString();
     private static final String VALID_NUS_STUDENT_ID = "A01234567X";
     private static final List<JsonAdaptedTag> VALID_TAGS = BENSON.getTags().stream()
@@ -119,10 +119,43 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
-    public void toModelType_nullPhone_throwsIllegalValueException() {
+    public void toModelType_validPhone_buildsStudentHoldingIt() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
+        assertEquals(Optional.of(new Phone(VALID_PHONE)), student.toModelType().getPhone());
+    }
+
+    @Test
+    public void toModelType_annotatedPhone_preservesItsFormatting() throws Exception {
+        String annotated = "+65 9123 4567 (HP) ext 21";
+        JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, annotated, VALID_EMAIL, VALID_TAGS, false);
+
+        assertEquals(annotated, student.toModelType().getPhone().orElseThrow().value);
+    }
+
+    @Test
+    public void toModelType_validPhoneWithSurroundingWhitespace_buildsStudentHoldingTrimmedPhone() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, "  " + VALID_PHONE + "\t", VALID_EMAIL, VALID_TAGS, false);
+
+        assertEquals(Optional.of(new Phone(VALID_PHONE)), student.toModelType().getPhone());
+    }
+
+    @Test
+    public void toModelType_nullPhone_buildsStudentWithoutOne() throws Exception {
         JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, null, VALID_EMAIL, VALID_TAGS, false);
-        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName());
-        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+        assertEquals(Optional.empty(), student.toModelType().getPhone());
+    }
+
+    @Test
+    public void toModelType_emptyPhone_buildsStudentWithoutOne() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, "", VALID_EMAIL, VALID_TAGS, false);
+        assertEquals(Optional.empty(), student.toModelType().getPhone());
+    }
+
+    @Test
+    public void toModelType_whitespaceOnlyPhone_buildsStudentWithoutOne() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, "  \t", VALID_EMAIL, VALID_TAGS, false);
+        assertEquals(Optional.empty(), student.toModelType().getPhone());
     }
 
     @Test
@@ -256,7 +289,7 @@ public class JsonAdaptedStudentTest {
     public void toModelType_storedFollowUpLabelAsTag_throwsIllegalValueException() {
         // the label names no tag wherever it is read, so a card can never show it twice
         List<JsonAdaptedTag> tags = new ArrayList<>(VALID_TAGS);
-        tags.add(new JsonAdaptedTag(Flag.FOLLOW_UP_NAME));
+        tags.add(new JsonAdaptedTag(FollowUpFlag.FOLLOW_UP_NAME));
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, tags, true);
 
@@ -310,7 +343,7 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_TAGS, true);
         assertTrue(student.toModelType().isFlagged());
-        assertEquals(new Flag(), student.toModelType().getFlag().orElseThrow());
+        assertEquals(new FollowUpFlag(), student.toModelType().getFlag().orElseThrow());
     }
 
     @Test

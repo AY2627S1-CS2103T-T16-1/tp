@@ -39,6 +39,23 @@ public class MessagesTest {
     }
 
     @Test
+    public void format_studentWithoutPhone_omitsThePhoneField() {
+        // spelled out rather than compared against format itself, so that "Phone: null" or a
+        // stray separator is caught
+        Student student = new StudentBuilder().withName("Email Only").withoutPhone()
+                .withEmail("e1234567@u.nus.edu").withNusStudentId("E1234567").withTags().build();
+        assertEquals("Email Only; NUS Student ID: E1234567; Email: e1234567@u.nus.edu",
+                Messages.format(student));
+    }
+
+    @Test
+    public void format_studentWithNameOnly_holdsJustTheName() {
+        Student student = new StudentBuilder().withName("Alice Pauline").withoutPhone()
+                .withoutEmail().withTags().build();
+        assertEquals("Alice Pauline", Messages.format(student));
+    }
+
+    @Test
     public void format_studentWithMultipleTags_sortsTagsAlphabetically() {
         Student student = new StudentBuilder().withName("Alice Pauline").withPhone("94351253")
                 .withoutEmail().withTags("urgent", "friends", "colleague").build();
