@@ -704,6 +704,27 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readAndSaveStudentBook_longPhoneText_preservesCompleteValues() throws Exception {
+        String digits = "1234567890".repeat(40);
+        String annotated = "+65 9123 4567 (HP), 6516-2727 ext 21 (Office); " + "contact note ".repeat(40).strip();
+        StudentBook original = new StudentBook();
+        original.addStudent(new StudentBuilder().withName("Long Phone").withPhone(digits).build());
+        original.addStudent(new StudentBuilder().withName("Annotated Phone").withPhone(annotated).build());
+        Path filePath = testFolder.resolve("LongPhones.json");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        storage.saveStudentBook(original);
+
+        String saved = Files.readString(filePath);
+        assertTrue(saved.contains(digits));
+        assertTrue(saved.contains(annotated));
+        ReadOnlyStudentBook loaded = new JsonStudentBookStorage(filePath).readStudentBook().orElseThrow();
+        assertEquals(original, new StudentBook(loaded));
+        assertEquals(digits, loaded.getStudentList().get(0).getPhone().value);
+        assertEquals(annotated, loaded.getStudentList().get(1).getPhone().value);
+    }
+
+    @Test
     public void readAndSaveStudentBook_widenedPhoneAndTag_roundTrips() throws Exception {
         // A phone number with a country code and a tag with a space are newly accepted.
         // Saving is only half the claim; they have to come back unchanged.
