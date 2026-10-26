@@ -2094,119 +2094,89 @@ testers are expected to do more *exploratory* testing.
 
 ### Launch and shutdown
 
-1. Initial launch
+1. Initial launch and where TAB keeps its files
 
-   1. Download the JAR file, copy it into an empty folder, and double-click
-      it.<br>
-      Expected: The GUI opens with a set of sample student records. The window
-      size may not be optimal.
-
-1. Keeping application files with the JAR
-
-   1. Test case: Launch the JAR from its folder, add a recognizable student and
-      exit. Then open a terminal in a different folder and launch the same JAR
-      by its absolute path.<br>
-      Expected: The folder beside the JAR holds `data/tab.json`,
-      `preferences.json` and `tab.log.0`. The recognizable student is present,
-      the status bar shows the absolute path to that same file, and nothing is
-      written in the terminal's own folder.
+   1. Test case: Copy the JAR into an empty folder, double-click it, add a
+      recognizable student and exit. Then launch the same JAR by its absolute
+      path from a terminal in a different folder.<br>
+      Expected: The GUI first opens with sample records, the window size
+      possibly not optimal. The folder beside the JAR then holds
+      `data/tab.json`, `preferences.json` and `tab.log.0`, the student is
+      present, the status bar shows the absolute path to that same file, and
+      nothing is written in the terminal's own folder.
 
 1. Reading a long data path
 
    1. Test case: Launch from a folder with a long absolute path and narrow the
-      window until the status bar path no longer fits.<br>
+      window until the status bar path no longer fits, then widen it.<br>
       Expected: The path is shortened in the middle, keeping `tab.json`
-      visible, and hovering shows it in full. Widening until it fits removes
-      the tooltip.
+      visible, with the whole path on hover; the tooltip goes once it fits.
 
 1. Launching from a read-only folder
 
    1. Prerequisites: Copy the JAR into a folder the account can read but not
-      write: `chmod 555 FOLDER` on Linux or macOS, or remove write permission
-      for the test account on Windows.
-   1. Test case: Run `java -jar tab.jar` from that folder, then
-      `add Read Only Test -p 91234567`, then `list` and `exit`.<br>
+      write, with `chmod 555 FOLDER`.
+   1. Test case: Run `java -jar tab.jar` there, then
+      `add Read Only Test -p 91234567`, then `exit`.<br>
       Expected: The GUI opens with sample records. The terminal warns that it
-      cannot write `tab.log` and names `preferences.json`, each warning without
-      a stack trace or `SEVERE` label, and with no
-      `ExceptionInInitializerError`. The add reports a save error and TAB stays
-      open with the record absent, since the failed change is rolled back.
-      `exit` closes TAB with one preferences warning.
+      cannot write `tab.log` and names `preferences.json`, each without a stack
+      trace or `SEVERE` label. The add reports a save error and TAB stays open
+      with the record absent, the failed change being rolled back.
 
 1. Full-page help pager
 
-   1. Test case: Enter `help`, then press Space, b, j, k, g and G.<br>
-      Expected: Help replaces the student list, sidebar, command box and result
-      area, opening no window or browser. The notice reads `Help mode: press q
-      or Esc to return to commands.`. Each key moves as documented, G reaches
-      the last hint and the footer says `(END)`, and paging past either end
-      stays there. Repeat at minimum window size: all text stays reachable
-      without scrollbars.
-   1. Test case: Read the first screenful, quit with q, and type
+   1. Test case: Enter `help`, press Space, b, j, k, g and G, then q.<br>
+      Expected: Help replaces the list, sidebar, command box and result area,
+      opening no window or browser, and the notice reads `Help mode: press q or
+      Esc to return to commands.`. Each key moves as documented, G reaches the
+      last hint with `(END)` in the footer, and paging past either end stays
+      there. At minimum window size all text stays reachable without
+      scrollbars.
+   1. Test case: Read the first screenful, quit, and type
       `add NAME -p PHONE`.<br>
-      Expected: `COMMANDS` and the other margin headings stand out from the
-      body. In both places `add` is bold in the accent colour, `-p` carries the
-      option colour and `NAME`/`PHONE` the value colour. In help the brackets
-      around an optional field stay in the body colour, and prose lines such as
-      `help, list, clear and exit take no arguments.` carry no colour of their
-      own.
+      Expected: The margin headings stand out from the body, and in both places
+      `add` is bold in the accent colour, `-p` carries the option colour and
+      `NAME`/`PHONE` the value colour. In help the brackets around an optional
+      field and the prose lines carry no colour of their own.
    1. Test case: Type `find -n Alex` without submitting it, press F1, then q.
-      Press c while help is open.<br>
+      Then enter `help oops`.<br>
       Expected: The unfinished command returns unselected with the caret at the
-      end, so typing ` Tan` leaves `find -n Alex Tan`. No q is inserted. c
-      copies the User Guide address and the footer confirms it.
-   1. Test case: Enter `help oops`.<br>
-      Expected: `help takes no arguments. Unexpected input: ...` quotes the
-      offending input, no page opens, and student data is unchanged. `help`
-      with trailing spaces still opens the pager.
+      end and no `q` inserted, so typing ` Tan` leaves `find -n Alex Tan`. The
+      second quotes the offending input and opens no page.
 
 1. Keyboard navigation through students, tags and replies
 
-   1. Prerequisites: In a disposable copy, add enough students with distinct
-      tags that both the student list and the tag list overflow, for example
-      `add Navigation 01 -p 90000001 -t tutorial-group-01` through
-      `Navigation 30`.
-   1. Test case: From the command box press Tab, then Down, Page Down, End and
-      Home; press Tab again for the tag list and repeat.<br>
-      Expected: Each list takes an accent outline when focused. Arrows move or
-      scroll by one, page keys by a screenful, and End and Home reach the last
-      and first entries. Repeating past either end stays there. Shift+Tab
-      returns towards the command box and student records are unchanged.
+   1. Prerequisites: Add enough students with distinct tags that both the
+      student list and the tag list overflow.
    1. Test case: Submit `list`, type `find -n Navigation` without submitting,
-      and press Tab repeatedly, then Shift+Tab.<br>
+      then press Tab repeatedly and Shift+Tab back, trying Down, Page Down, End
+      and Home in each list.<br>
       Expected: The cycle is command box → student list → tag list → reply →
-      command box, reversed by Shift+Tab, with the student list still one Tab
-      from the command box once the reply appears. The draft is unchanged and
-      there is no focus trap.
+      command box and reverses, each list taking an accent outline when
+      focused. Arrows move by one and page keys by a screenful, End and Home
+      reach either end, and repeating past an end stays there. The draft is
+      unchanged and there is no focus trap.
 
 1. Saving window preferences
 
    1. Test case: Resize and move the window, close it, and relaunch.<br>
-      Expected: The size and position return when they fit the display's usable
-      area.
-   1. Test case: With TAB closed, set `windowWidth` and `windowHeight` in
-      `preferences.json` to `1.0E9` and `windowCoordinates` to
-      `{"x":99999,"y":99999}`, then relaunch.<br>
-      Expected: The window fits the primary display, with its title bar,
-      command box and status bar reachable. Closing and relaunching keeps the
-      corrected bounds and leaves student data unchanged.
-   1. Test case: With TAB closed, replace `preferences.json` with
-      `{"guiSettings": null}`, launch, then close and launch again.<br>
-      Expected: The first launch opens with default window settings, shows the
-      saved student, reports that preferences could not be loaded followed by
-      `GUI settings must not be null.`, and rewrites a valid file. The second
-      launch opens normally and the data file is untouched. Replacing the whole
-      file with `null` behaves the same way, reporting
-      `The JSON document must not be null.`
+      Expected: The size and position return when they fit the display.
+   1. Test case: With TAB closed, set `windowWidth` and `windowHeight` to
+      `1.0E9` and `windowCoordinates` to `{"x":99999,"y":99999}`; on a later
+      run replace the file with `{"guiSettings": null}`.<br>
+      Expected: The oversized bounds are corrected so the title bar, command
+      box and status bar stay reachable, and the correction persists. The null
+      settings open with defaults, report `GUI settings must not be null.`, and
+      rewrite a valid file. Student data is untouched either way.
 
 1. Narrow student cards
 
-   1. Test case: Add
-      `add Narrow Card -p "+65 9123 4567" -e a.very.long.address.indeed@u.nus.edu --id AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`,
-      resize the window to its minimum width, then widen it slowly.<br>
+   1. Test case: Add `add Narrow Card -p "+65 9123 4567"
+      -e a.very.long.address.indeed@u.nus.edu --id AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`,
+      resize to the minimum width, then widen slowly.<br>
       Expected: The ID and email shorten as needed, the phone stays readable,
       and the email stays inside the card's details area. Worth checking on
-      Windows as well, since font widths differ.
+      Windows too, since font widths differ.
 ### Rejecting unexpected command arguments
 
 1. Commands that take no parameters
@@ -2236,50 +2206,41 @@ testers are expected to do more *exploratory* testing.
       and `clear`, cancelling with `n`.<br>
       Expected: Replies and summary counts use the digits 0–9 rather than the
       locale's own, and cancelling changes no data.
-### Typing a command word in another case
+### Typing or mistyping a command word
 
 1. A correctly spelled command word in capitals
 
-   1. Test cases: `List`, `LIST` and `Help`.<br>
-      Expected: Each runs the command of that name, so the students are listed
-      and help opens. No reply names a word TAB does not know.
-   1. Test case: `ADD McDonald Tan -p 91234567`.<br>
-      Expected: A student named `McDonald Tan` is added with the capitals as
-      typed, on the card and in the file, the fold reaching the command word
-      alone.
-   1. Test case: `LIST oops`.<br>
-      Expected: `list takes no arguments. Unexpected input: "oops".`, naming
-      the command rather than the capitals typed, and nothing changes.
-### Mistyping a command word
+   1. Test cases: `List`, `Help`, then `ADD McDonald Tan -p 91234567`, then
+      `LIST oops`.<br>
+      Expected: Each named command runs, no reply calling the word unknown, and
+      the student is added with the capitals as typed on the card and in the
+      file, the fold reaching the command word alone. The last reads `list
+      takes no arguments. Unexpected input: "oops".`, naming the command rather
+      than the capitals typed.
 
 1. A command word one slip away from a real one
 
    1. Prerequisites: At least one student listed, and a copy of `data/tab.json`.
-   1. Test case: `delte 1`, then `Delte 1`.<br>
-      Expected: Each reply quotes the word as it was typed and suggests
-      `delete`. Nothing is deleted, the file matches the copy, and the text
-      stays in the command box with the line red, so the missing letter can be
-      typed in rather than the command retyped.
-   1. Test cases: `lsit`, `hepl`, `ls` and `felete 1`.<br>
-      Expected: `list`, `help`, `list` and `delete` are suggested; two letters
-      out is still near enough, and a wrong first letter does not prevent a
-      suggestion. None of them runs.
-   1. Test cases: `del 3` and `cle`.<br>
-      Expected: A word stopped partway still suggests `delete` and `clear`,
-      and nothing is deleted or cleared.
+   1. Test cases: `delte 1`, `Delte 1`, `lsit`, `ls`, `felete 1`, `del 3` and
+      `cle`.<br>
+      Expected: Each quotes the word as typed and suggests the command meant —
+      `delete`, `list`, `delete`, `clear` and so on. Two letters out is still
+      near enough, a wrong first letter does not prevent a suggestion, and a
+      word stopped partway still matches. None runs, the file matching the
+      copy, and the text stays in the box with the line red so the slip can be
+      corrected rather than retyped.
    1. Test case: `e`.<br>
       Expected: Both `edit` and `exit` are named, in that order every time.
 
 1. A command word resembling nothing TAB knows
 
-   1. Test cases: `qwerty`, `dlt 1` and `日本語`.<br>
+   1. Test cases: `qwerty`, `dlt 1` and `日本語`, then paste a line of at least
+      80 characters with no spaces.<br>
       Expected: Each quotes the word and points to `help` with no suggestion.
       `dlt` is two letters from `edit` but opens with a letter that command
-      does not, so TAB offers nothing rather than guessing.
-   1. Test case: Paste a line of at least 80 characters with no spaces.<br>
-      Expected: The reply quotes the opening 60 characters followed by an
-      ellipsis and still ends with the pointer to `help`, rather than running
-      off the result display.
+      does not, so TAB offers nothing rather than guessing. The long paste is
+      quoted to its opening 60 characters followed by an ellipsis, rather than
+      running off the result display.
 ### Follow-up status
 
 1. Adding students with and without follow-up
@@ -2322,123 +2283,89 @@ testers are expected to do more *exploratory* testing.
       relaunch.<br>
       Expected: The error identifies that record and its invalid `flag` value,
       the main window does not open, and the file is left unchanged.
-### Adding one tag
+### Adding and removing a tag
 
-1. Preserving the student's other details and saving the new tag
+1. Preserving the student's other details and persisting the change
 
    1. Prerequisites: Add `add Tag Test -p 91234567 -e tag@example.com
       --id A01234567X -t T1 --follow-up` as one line, then `find -n "Tag Test"`.
-   1. Test case: `tag 1 --add "Lab 3"`.<br>
-      Expected: The reply starts `Added tag [Lab 3]:`. The student holds both
-      `T1` and `Lab 3`, every other detail and the follow-up status are
-      unchanged, and the search stays active. Restarting TAB keeps all of it.
+   1. Test case: `tag 1 --add "Lab 3"`, then `tag 1 --remove "  LAB   3  "`.<br>
+      Expected: The replies start `Added tag [Lab 3]:` and `Removed tag
+      [Lab 3]:`. Only that tag comes and goes, `T1`, the contact details and
+      the follow-up status staying put, the search staying active, and a
+      restart keeping the result. Removal matches whatever case and spacing it
+      is typed in.
 
-1. Tagging by stable student ID
+1. Addressing a student by stable ID
 
    1. Prerequisites: Add `add ID Tag Test -p 92345678 --id E7654321 -t T1` and
       `add Numeric Tag Test -p 93456789 --id 1234`, then run
       `find -n NoMatchingStudent` so both are hidden.
-   1. Test case: `tag e7654321 --add="Lab 3"`, then `tag -i 1234 -a T2`.<br>
-      Expected: Each addresses the right student although neither is displayed,
-      preserving the active search and every unrelated field. A bare
-      `tag 1234 -a T2` stays an index request and fails while fewer than 1234
-      students are shown.
-   1. Test case: `tag 1 --id E7654321 -a T2`.<br>
-      Expected: The reply asks for one target, and nothing changes.
+   1. Test case: `tag e7654321 --add="Lab 3"`, then `tag -i 1234 -a T2`, then
+      `tag 1 --id E7654321 -a T2`.<br>
+      Expected: The first two reach the right student although neither is
+      displayed, preserving the search. A bare `tag 1234 -a T2` stays an index
+      request. The third asks for one target and changes nothing.
 
-1. Rejecting duplicates and invalid input without mutation
+1. Reporting duplicate and absent tags
 
-   1. Prerequisites: Return to Tag Test with `find -n "Tag Test"` and keep a
-      copy of `data/tab.json` to compare after each refusal.
-   1. Test case: `tag 1 -a "  lab   3  "`.<br>
-      Expected: `This student already has tag [Lab 3]. No changes made.`, with
-      the existing spelling, the displayed list and the file untouched.
-   1. Test case: `tag 1 -a "Needs follow-up"`, then the same in another case
-      and spacing.<br>
-      Expected: Both are refused, naming `--follow-up` as the way to mark the
-      student instead.
-   1. Test cases: `tag 0 -a T2`, `tag 1 -a ""`, `tag 1 -a` and
-      `tag 1 -a T2 --add T3`.<br>
+   1. Prerequisites: Return to Tag Test with `find -n "Tag Test"`.
+   1. Test case: `tag 1 -a T1`, then `tag 1 -r "Lab 3"` once it is gone.<br>
+      Expected: `This student already has tag [T1]. No changes made.` and
+      `This student does not have tag [Lab 3]. No changes made.`, with nothing
+      written either time.
+   1. Test case: `tag 1 -a "Needs follow-up"`, then `tag 1 -r "Needs follow-up"`
+      on this flagged student.<br>
+      Expected: Adding is refused, naming `--follow-up` as the way to mark the
+      student. Removing adds a second line, `This student is flagged for
+      follow-up, which is not a tag. To clear the flag, use edit 1
+      --no-follow-up.`, the label staying until that `edit` runs.
+
+1. Rejecting invalid input without mutation
+
+   1. Test cases: `tag 0 -a T2`, `tag 1 -a ""`, `tag 1 -a`,
+      `tag 1 -a T2 -r T1`, `tag 1 -t T2` and `tag 1 lab4`.<br>
       Expected: Each gives the matching index, invalid-tag, missing-value or
-      duplicate-option error, leaving the student, the list and the file as
-      they were.
-   1. Test cases: `tag 1 -t T2` and `tag 1 lab4`.<br>
-      Expected: Both show the `-a`/`--add` and `-r`/`--remove` guidance with
-      examples, the first naming the unknown `-t` option and the second naming
-      `lab4` as an unexpected value after the index.
-### Removing one tag
-
-1. Preserving other details and persisting removal
-
-   1. Prerequisites: Continue from the tag-addition tests, with Tag Test
-      holding `T1` and `Lab 3` and needing follow-up.
-   1. Test case: `tag 1 --remove "  LAB   3  "`.<br>
-      Expected: The reply starts `Removed tag [Lab 3]:`. Only that tag goes;
-      `T1`, the contact details and the follow-up status remain, and the search
-      stays active. Restarting TAB keeps the result.
-
-1. Reporting absent tags and invalid input without saving
-
-   1. Test case: `tag 1 -r "Lab 3"` again, now that it is gone.<br>
-      Expected: `This student does not have tag [Lab 3]. No changes made.`, and
-      nothing is written.
-   1. Test case: `tag 1 -r "Needs follow-up"` on this flagged student.<br>
-      Expected: A second line reads `This student is flagged for follow-up,
-      which is not a tag. To clear the flag, use edit 1 --no-follow-up.` The
-      label stays until that `edit` runs. On an unflagged student only the
-      first line appears.
-   1. Test cases: `tag 0 -r T1`, `tag 1 -r ""`, `tag 1 -r` and
-      `tag 1 -a T2 -r T1`.<br>
-      Expected: Index, invalid-tag, missing-value and conflicting-action errors
-      respectively, with no record, list or file change.
+      conflicting-action error, leaving the student, the list and the file as
+      they were. Wherever the action is left unclear the reply also carries the
+      `-a`/`--add` and `-r`/`--remove` guidance, naming the unknown `-t` option
+      and the unexpected value `lab4`.
 
 1. Removing a tag that supplies the search match
 
    1. Test case: `tag 1 -a "Lab 3"`, `find -t "Lab 3"`, then `tag 1 -r "Lab 3"`.<br>
-      Expected: The student leaves the filtered list. `list` shows them again,
-      without `Lab 3`.
+      Expected: The student leaves the filtered list, and `list` shows them
+      again without that tag.
 
-1. Removing variants from a human-edited data file
+1. Reading repeated spellings from a hand-edited file
 
-   1. Prerequisites: With TAB closed, set Tag Test's `tags` to
+   1. Test case: With TAB closed set Tag Test's `tags` to
       `["Lab 3", "  lab   3  ", "T1"]`, keep `"flag": true`, restart, and run
-      `find -n "Tag Test"`.
-   1. Test case: `tag 1 -r "LAB 3"`.<br>
+      `find -n "Tag Test"` then `tag 1 -r "LAB 3"`.<br>
       Expected: The variants load as the single tag `Lab 3`, which is removed,
-      leaving `T1`, the flag and every other field in place after a restart.
+      leaving `T1`, the flag and every other field after a restart.
 ### Adding a student
 
-1. Adding a student with minimal fields
+1. Adding a student with the details that are known
 
-   1. Test case: `add John Doe -p 98765432`<br>
-      Expected: John Doe appears in the list and the reply reads
-      `New student added: John Doe; Phone: 98765432`, with no placeholder
-      labels for the absent email or tags.
-   1. Test case: `add Email Only --email=e1234567@u.nus.edu --id=E1234567`,
-      then `add Name Only`.<br>
-      Expected: Both are added, the name being the one required detail. The
-      first reply carries no `Phone:` label and the card leaves no gap where a
-      number would be; reopening TAB keeps it that way. Only a malformed value
-      is refused, as `-p 12` is with
-      `Phone "12" is not valid: a phone number needs at least 3 digits`.
-
-1. Adding a student with tags and follow-up
-
-   1. Test case: `add Jane Doe -p 91234567 -t urgent -t lab1 --follow-up`<br>
-      Expected: The reply reads `New student added: Jane Doe; Phone: 91234567;
-      Tags: [lab1][urgent]; Needs follow-up`, the tags sorted alphabetically
-      ignoring case.
+   1. Test case: `add John Doe -p 98765432`, then
+      `add Email Only --email=e1234567@u.nus.edu --id=E1234567`, then
+      `add Name Only`, then `add Jane Doe -p 91234567 -t urgent -t lab1
+      --follow-up`.<br>
+      Expected: All four are added, the name being the one required detail. The
+      replies carry no placeholder labels for absent fields, the phone-less
+      card leaves no gap where a number would be, and Jane's tags are listed
+      `[lab1][urgent]`, sorted alphabetically ignoring case. Only a malformed
+      value is refused, as `-p 12` is.
 
 1. Revealing a newly saved student in an overflowing list
 
-   1. Prerequisites: Use a book with at least 30 students, scrolled to the top,
-      with focus in the command box.
-   1. Test case: `add Newly Added Student -p 91234567`.<br>
-      Expected: The new card is visible without scrolling by hand, and the next
-      command can be typed straight away.
-   1. Test case: Return to the top, then try `add -p 91234567` and an addition
-      with a duplicate NUS Student ID.<br>
-      Expected: Neither adds a student and the list does not jump to the end.
+   1. Prerequisites: A book of at least 30 students, scrolled to the top.
+   1. Test case: `add Newly Added Student -p 91234567`, then return to the top
+      and try `add -p 91234567`.<br>
+      Expected: The new card is visible without scrolling by hand and the next
+      command can be typed straight away. The refused add leaves the list where
+      it is rather than jumping to the end.
 
 1. Recovering from a name option or a missing name
 
@@ -2447,27 +2374,25 @@ testers are expected to do more *exploratory* testing.
       Expected: The first names the unsupported option, followed by `In the add
       command, the name comes first, without an option: add NAME -p PHONE ...`.
       The second reads `Missing required field(s): NAME` with the same hint.
-      The third adds Betsy, and she survives a restart.
+      The third adds her, and she survives a restart.
 
 1. Adding a duplicate NUS Student ID
 
-   1. Prerequisites: `add John Doe -p 91234567 -i A05678901K`.
-   1. Test case: `add Jane Doe -p 98765432 -i a05678901k`<br>
-      Expected: Nobody is added. The reply names NUS Student ID `A05678901K`
-      and `John Doe`, and no record is changed.
+   1. Test case: `add John Doe -p 91234567 -i A05678901K`, then
+      `add Jane Doe -p 98765432 -i a05678901k`.<br>
+      Expected: The second is refused, naming the ID and `John Doe`, and no
+      record changes.
 
 1. Adding during a search
 
-   1. Prerequisites: In an empty book add `add Alice Tan -p 91110001 -t T1`,
+   1. Prerequisites: From an empty book add `add Alice Tan -p 91110001 -t T1`,
       `add Bob Lim -p 91110002 -t T2` and `add Carl Ong -p 91110003 -t T1`.
-   1. Test case: `find -t T1`, then `add Eve Ng -p 91110005 -t T1`.<br>
-      Expected: Alice, Carl and Eve appear in that order, with no
-      search-cleared notice. `delete 2` then removes Carl, leaving Bob
-      untouched.
-   1. Test case: `add Dan Koh -p 91110004 -t T2`.<br>
-      Expected: All four remaining students appear and the reply ends
-      `Search cleared to show the new student.`, so indexes need re-reading
-      before the next index command.
+   1. Test case: `find -t T1`, then `add Eve Ng -p 91110005 -t T1`, then
+      `add Dan Koh -p 91110004 -t T2`.<br>
+      Expected: Eve joins the filtered list with no search-cleared notice, so
+      `delete 2` removes Carl and leaves Bob untouched. Dan does not match, so
+      the reply ends `Search cleared to show the new student.` and indexes need
+      re-reading before the next index command.
 ### Long contact details on a card
 
 1. Retaining long phone text
@@ -2510,48 +2435,36 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add Mohamed Abdul Rahman bin Ismail -p 91234567`, then
       `add Mohamed Abdul Rahman bin Ahmad -p 92345678`. Widen the window, then
       narrow it to its smallest width.<br>
-      Expected: Both names appear in full when there is room, with no tooltip.
-      As the cards shrink each keeps its start and its end around the ellipsis,
-      so the two stay distinguishable rather than collapsing to the same text,
-      and hovering shows the whole name.
+      Expected: Both appear in full when there is room, with no tooltip. As the
+      cards shrink each keeps its start and its end around the ellipsis, so the
+      two stay distinguishable rather than collapsing to the same text, and
+      hovering shows the whole name.
 
-1. Keeping names readable beside tags and a follow-up marker
+1. Sharing a row between a name, tags and a follow-up marker
 
    1. Test case: Add `add Bernice Xu -p 81234567 -t attendance-low -t consult
-      -t follow-up -t lab -t midterm -t tutorial -f`, narrow the window to its
-      minimum, then widen it slowly.<br>
-      Expected: The name keeps its opening letters. At the minimum width the
+      -t follow-up -t lab -t midterm -t tutorial -f` and
+      `add Tan Ah Kow -p 94445555 -t attendance-low -t consult
+      -t "Project A/B" --follow-up`. Narrow to the minimum, widen slowly, then
+      clear one marker with `edit INDEX -nf`.<br>
+      Expected: Each name keeps its opening letters. At the minimum width the
       count-only chip reads `6 tags`; once chips appear the count reads
-      `N more…` for the hidden ones, and hovering lists them.
-
-1. Returning unused count space to a short name
-
-   1. Test case: Add `add Tan Ah Kow -p 94445555 -t attendance-low -t consult
-      -t "Project A/B" --follow-up` and narrow the window to about 520 px.
-      Then clear the marker with `edit INDEX -nf` and resize again.<br>
-      Expected: Where the tags collapse to `3 tags` and the name plus count
-      fit, `Tan Ah Kow` shows in full rather than being shortened beside a
-      blank gap. The name takes the room the marker releases.
+      `N more…` for the hidden ones, listed on hover. Where the tags collapse
+      and the short name plus count fit, `Tan Ah Kow` shows in full rather than
+      being shortened beside a blank gap, and the name takes the room the
+      cleared marker releases.
 
 1. Reading every tag that fits
 
    1. Test case: Add `add Alex Yeoh -p 87438807 -t T01 -t "Lab 3" -t W5
-      -t consult` and widen the window to about 1400 px. Then add
+      -t consult`, widen to about 1400 px, then add
       `add Irfan Ibrahim -p 92492021 -t "CS2103T Tutorial W09"
       -t "CS2103T Tutorial W10"` and narrow and widen repeatedly.<br>
       Expected: All four chips appear alphabetically with no count when there
       is room. Chips that fit appear in full, hidden ones are counted and
       listed on hover, and a lone chip too wide for its allocation is shortened
-      with its complete tag on hover. Widening restores them.
-
-1. Reading tags beside a long name and follow-up marker
-
-   1. Test case: Add `add Siti Nur-Aisyah Binte Abdullah Rahman -p 91234567 -f
-      -t consultation-week-3 -t "Lab 3" -t "Tutorial Group 11"` as one command,
-      then resize through about 740 px.<br>
-      Expected: The row shows a readable tag prefix with `2 more…`, or `3 tags`
-      where that prefix will not fit. It never shows only one or two letters of
-      the first tag, and the follow-up marker stays visible.
+      with its complete tag on hover. It never shows only one or two letters of
+      a tag, and the follow-up marker stays visible.
 ### Long value-option names
 
 1. Adding and editing with long aliases
@@ -2559,206 +2472,171 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Launch, run `clear`, and reply `yes`.
    1. Test case: `add Alice Tan --phone 91234567 --email alice@example.com
       --tag T1 -t "Lab 3"` as one line, then `edit 1 --name "Alice Lim"
-      -p 81112222 --tag T2`.<br>
+      -p 81112222 --tag T2`, then `edit 1 --tag ""`.<br>
       Expected: Alice is added with both tags, the quoted one keeping its
-      space, so the short and long spellings work together. The edit changes
-      each named field and drops `T1` and `Lab 3`, an edit replacing the tag
-      set rather than adding to it.
-   1. Test case: `edit 1 --email ""`, then `edit 1 --tag ""`.<br>
-      Expected: The first removes her email and the second every tag, with no
-      other field touched.
+      space, so short and long spellings work together. The edit changes each
+      named field and drops the earlier tags, an edit replacing the tag set.
+      The empty value then removes every tag.
 
 1. Treating aliases as one logical field
 
    1. Test case: `edit 1 -p 81112222 --phone 82223333`, then
       `edit 1 -t T1 --tag "Lab 3"`.<br>
       Expected: The first changes nothing and reports the phone as given more
-      than once, although the two values use different aliases. The second
-      succeeds with both tags, a tag option being allowed to repeat.
+      than once although the aliases differ. The second succeeds with both
+      tags, a tag option being allowed to repeat.
 
 1. Rejecting malformed long options without changing data
 
-   1. Test cases: `add Bob Lim --phone`, `add Bob Lim --unknown value` and
-      `edit 1 --phone`.<br>
-      Expected: Nothing is saved. A missing value names `--phone PHONE`; an
-      unknown option names `--unknown`. Alice's details and the file are
-      unchanged.
+   1. Test cases: `add Bob Lim --phone`, then `add Bob Lim --unknown value`,
+      then `edit 1 --phon=1`.<br>
+      Expected: Nothing is saved. A missing value names `--phone PHONE`, an
+      unknown option names `--unknown`, and the mistyped marker is named
+      without its value.
 
 1. Joining option values with an equals sign
 
-   1. Test case: `edit 1 --name="Alice Tan" -p=81112222
-      --email=alice@example.com --id=a01234567x --tag="Lab 3"` as one line,
-      then `tag 1 --add=needs=review`.<br>
-      Expected: Every field changes, the name and tag keeping their spaces and
+   1. Test case: `edit 1 --name="Alice Tan" --id=a01234567x --tag="Lab 3"` as
+      one line, then `tag 1 --add=needs=review`.<br>
+      Expected: Each field changes, the name and tag keeping their spaces and
       the ID stored as `A01234567X`. The tag `needs=review` is added, only the
-      first equals sign separating the option from its value.
-   1. Test case: `edit 1 --email=`, then `edit 1 --email="" --id="" --tag=""`.<br>
-      Expected: The bare form changes nothing and reports that the option needs
-      a value, since an unquoted empty value may be an accidental omission. The
-      quoted form clears the email, the ID and every tag, quoting making each
-      omission deliberate.
-   1. Test cases: `edit 1 --phon=1` and `edit 1 --follow-up=yes`.<br>
-      Expected: Neither changes a field. The first reports that there is no
-      `--phon` option, naming the marker without its value; the second reports
-      that the option takes no value.
+      first equals sign separating option from value.
+   1. Test case: `edit 1 --email=`, then `edit 1 --email="" --id=""`, then
+      `edit 1 --follow-up=yes`.<br>
+      Expected: The bare form reports that the option needs a value, an
+      unquoted empty value possibly being an accidental omission. The quoted
+      form clears both fields, quoting making the omission deliberate. The last
+      reports that the option takes no value.
 ### NUS Student IDs
 
-1. Adding optional NUS Student IDs with either option spelling
+1. Adding and clearing an optional NUS Student ID
 
    1. Prerequisites: Launch from an empty folder, then `clear` and reply `yes`.
    1. Test case: `add Alice Tan -p 91234567 --id a01234567x`, then
-      `add Bob Lim -p 92345678 -i A12345678Y`.<br>
-      Expected: Both are added. Alice's card and the result show `A01234567X`,
-      the lowercase input normalized to uppercase, and her saved record holds
-      that form. `-i` behaves exactly as `--id`.
-   1. Test case: `add Cara Ng -p 93456789`<br>
-      Expected: Cara is added with no blank placeholder on her card, and her
-      saved record has no `nusStudentId` key.
+      `add Bob Lim -p 92345678 -i A12345678Y`, then `add Cara Ng -p 93456789`.<br>
+      Expected: All three are added. Alice's card shows `A01234567X`, the
+      lowercase input normalized, and `-i` behaves as `--id`. Cara's card shows
+      no placeholder and her record has no `nusStudentId` key.
+   1. Test case: `edit 1 -i A76543210Y`, then `edit 1 --id ""`, then
+      `edit 1 -i A01234567X` and `edit 1 --id "   "`.<br>
+      Expected: The ID changes, then clears from card, feedback and record with
+      no other detail touched, and a whitespace-only value clears it the same
+      way.
 
 1. Rejecting invalid, missing and repeated values
 
-   1. Test cases: try adding a differently named student with each of
-      `--id ""`, `--id A0123-456X` and
+   1. Test cases: adding with `--id ""`, `--id A0123-456X` and
       `--id ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567`.<br>
-      Expected: No student is added. Each message identifies the NUS Student ID
-      and says whether it is empty, longer than 32 characters, or holds a
-      character other than an ASCII letter or digit. The saved file is
-      unchanged.
+      Expected: Nobody is added. Each message names the NUS Student ID and says
+      whether it is empty, too long, or holds a character other than an ASCII
+      letter or digit.
    1. Test cases: `edit 1 --id` and `edit 1 --id A11111111A -i A22222222B`.<br>
-      Expected: Alice is unchanged. The first says `--id NUS_STUDENT_ID` needs
-      a value; the second reports the field as repeated, because the two
-      spellings are aliases.
-
-1. Replacing and clearing an NUS Student ID
-
-   1. Test case: `edit 1 -p 81112222`, then `edit 1 -i A76543210Y`.<br>
-      Expected: The phone change leaves her ID at `A01234567X`; the second
-      command changes only the ID.
-   1. Test case: `edit 1 --id ""`, then `edit 1 -i A01234567X` followed by
-      `edit 1 --id "   "`.<br>
-      Expected: The ID disappears from her card, feedback and saved record,
-      with no other detail touched. A whitespace-only value is trimmed and
-      clears it the same way.
+      Expected: Alice is unchanged. The first says the option needs a value,
+      the second reports the field as repeated, the two spellings being
+      aliases.
 
 1. Finding and persisting NUS Student IDs
 
-   1. Test case: Restore the ID, restart TAB, then run `find --id a0123` and
-      `find --id 23456`.<br>
-      Expected: Each shows Alice, so matching is partial and ignores case, and
+   1. Test case: Restore the ID, restart TAB, then `find --id a0123`.<br>
+      Expected: Alice is found, matching being partial and ignoring case, and
       the ID survived the restart.
    1. Test case: With TAB closed, change one `nusStudentId` to `A0123-456X`
       and relaunch.<br>
-      Expected: A startup error names the file, the student record and the
-      invalid ID. The main window does not open and the file is left unchanged.
+      Expected: A startup error names the file, the record and the invalid ID,
+      and the main window does not open.
 
 1. Reporting unchanged edits
 
-   1. Prerequisites: From an empty book, `add Amy Bee -p 91234567`, then
-      `find -n Amy`.
-   1. Test cases: `edit 1 -p 91234567` and `edit 1 -i ""`.<br>
-      Expected: Each replies `Student already has the requested details. No
-      changes made.`, leaving the student, the active search and the saved file
-      as they were.
-   1. Test case: `edit 1 -n "Amy Bee" -p 82223333`.<br>
-      Expected: `Edited student: Amy Bee; Phone: 82223333`. Amy stays visible
-      and repeating the command reports no changes.
+   1. Test case: From an empty book `add Amy Bee -p 91234567`, run
+      `find -n Amy`, then `edit 1 -p 91234567`, then
+      `edit 1 -n "Amy Bee" -p 82223333`.<br>
+      Expected: The first edit replies `Student already has the requested
+      details. No changes made.`, leaving the search and file as they were. The
+      second reports the new phone, Amy staying visible.
 
 1. Checking duplicate identity behavior
 
-   1. Prerequisites: Start from an empty book.
-   1. Test case: `add Alice Tan -p 91234567 -i A01234567X`, then
-      `add Alice Tan -p 92345678 -i A76543210Y`, then
-      `add Alice Tan -p 93456789`.<br>
-      Expected: All three are added, because a shared name is not an identity
-      key while the IDs differ or are absent. The later additions warn that
-      other students share the name, the third grouping both records into one
-      warning.
+   1. Test case: From an empty book, `add Alice Tan -p 91234567 -i A01234567X`,
+      `add Alice Tan -p 92345678 -i A76543210Y`, then `add Alice Tan -p 93456789`.<br>
+      Expected: All three are added, a shared name not being an identity key
+      while the IDs differ or are absent, and the later additions warn that
+      others share the name.
    1. Test case: `add Bob Lim -p 94567891 -i a01234567x`, then `list`, note the
       third Alice's index and run `edit INDEX -i A01234567X`.<br>
-      Expected: Both are rejected, each naming NUS Student ID `A01234567X` and
-      student `Alice Tan`, and no existing record changes.
+      Expected: Both are rejected, each naming the ID and `Alice Tan`, and no
+      record changes.
 
 1. Warning about likely duplicate students
 
-   1. Prerequisites: From an empty book, add
-      `add Alex Yeoh -p "+65 9123 4567" -e Alex@Example.com -i A01234567X`.<br>
-      Expected: No warning, since no other student is present.
-   1. Test case: `add "  aLeX   yEoH  " -p 81112222 -e other@example.com`<br>
-      Expected: The record is saved and the result names Alex Yeoh and the
-      matching `name`; case and repeated spaces do not prevent the match.
-   1. Test case: `add Bernice Yu -p "+65 (9123)-4567" -e bernice@example.com`<br>
-      Expected: Bernice is saved and the result names the matching `phone`,
-      because the digit sequences match despite punctuation. The warning reads
-      `Alex Yeoh has the same phone.` without quoting either number. Restart
-      TAB; both numbers keep the formatting they were entered with.
+   1. Test case: From an empty book add
+      `add Alex Yeoh -p "+65 9123 4567" -e Alex@Example.com -i A01234567X`,
+      then `add "  aLeX   yEoH  " -p 81112222 -e other@example.com`, then
+      `add Bernice Yu -p "+65 (9123)-4567" -e bernice@example.com`.<br>
+      Expected: The first warns about nothing. The second is saved and names
+      the matching `name`, case and repeated spaces not preventing the match.
+      The third names the matching `phone`, the digit sequences matching
+      despite punctuation, and reads `Alex Yeoh has the same phone.` without
+      quoting either number. Restarting keeps both numbers as entered.
    1. Test case: Clear the book, add four students named `Student One` through
       `Student Four` each with phone `000`, then `add Student Five -p 000`.<br>
-      Expected: Student Five is saved. One phone warning names two of them and
-      says that two others match, with the review advice appearing once rather
-      than per student.
+      Expected: Student Five is saved, one warning naming two of them and
+      saying two others match, with the review advice appearing once.
 ### Editing a student
 
 1. Editing a name that AB3's prefixes made impossible to type
 
-   1. Prerequisites: Run `add Ravi Kumaran -p 91234567`, then `list`, and note
-      the new student's index.
+   1. Prerequisites: `add Ravi Kumaran -p 91234567`, then `list` and note the
+      index.
    1. Test case: `edit INDEX -n "Ravi s/o Kumaran"`, then the same without the
       quotation marks.<br>
       Expected: The quoted form stores the name in full, the slash being an
       ordinary character where `n/John p/ Smith` once stored `Smith` as the
       phone. The unquoted form changes nothing and reports that `s/o` belongs
-      to no option, since a name marked by an option takes one token.
+      to no option.
 
 1. Editing by NUS Student ID
 
-   1. Prerequisites: Run `list` and note a student's NUS Student ID, such as
-      Charlotte Oliveiro's `A02345678G` in the sample data.
-   1. Test case: `edit A02345678G -p 81112222`, then the same with the ID in
-      lowercase.<br>
-      Expected: Both change the phone of the student holding that ID and name
-      them in the reply, because matching an ID ignores case.
-   1. Test case: `find -n Alex`, then `edit A02345678G -p 81112222` while the
-      search hides Charlotte.<br>
-      Expected: Her phone changes even though she is not displayed. An
-      `edit 1 -p 81112222` in the same state would edit Alex instead, index 1
-      being the first student the search shows.
+   1. Prerequisites: Note a student's ID, such as Charlotte Oliveiro's
+      `A02345678G` in the sample data.
+   1. Test case: `edit A02345678G -p 81112222`, then the same ID in lowercase,
+      then `find -n Alex` followed by the same command while the search hides
+      her.<br>
+      Expected: Each changes her phone and names her, matching an ID ignoring
+      case and reaching her even when she is not displayed. An `edit 1` in that
+      state would edit Alex instead, index 1 being the first student shown.
    1. Test case: `edit A01234567X --id A03456789H`, where another student holds
       the second ID, then `edit A99999999Z -p 81112222` and
       `edit A0123-456 -p 81112222`.<br>
-      Expected: None changes anything. The first refuses an ID another student
-      holds; the second reads `No student has NUS Student ID A99999999Z.`; the
-      third names the hyphen as the reason the target is not a valid ID.
+      Expected: None changes anything: the first refuses an ID another student
+      holds, the second reads `No student has NUS Student ID A99999999Z.`, and
+      the third names the hyphen.
 
 1. Clearing the tags
 
-   1. Prerequisites: Give the student two tags with `edit INDEX -t T1 -t "Lab 3"`.
-   1. Test case: `edit INDEX -t ""`, then `edit INDEX -t` and
-      `edit INDEX -t T1 -t ""`.<br>
-      Expected: The first clears both tags and touches nothing else. The second
-      names `-t TAG` as needing a value rather than clearing. The third is
-      refused, because an empty value clears the tags only on its own.
+   1. Test case: Give the student two tags, then `edit INDEX -t ""`, then
+      `edit INDEX -t` and `edit INDEX -t T1 -t ""`.<br>
+      Expected: The first clears both tags and touches nothing else; the second
+      names `-t TAG` as needing a value; the third is refused, an empty value
+      clearing the tags only on its own.
 
 1. Repeating an edit after a search
 
-   1. Prerequisites: Add `add Alex Yeoh -p 87438807` and
-      `add John Doe -p 98765432`, then run `find -n john`.
-   1. Test case: Run `edit 1 --follow-up` twice.<br>
-      Expected: Both flag John Doe, the only student listed. The search stays
-      active, so index 1 keeps pointing at him and Alex stays unflagged.
-   1. Test case: Add `add John Smith -p 91112222`, run `find -n john`, then
-      `edit 1 -n Jack` followed by `edit 1 -p 91112233`.<br>
-      Expected: Renaming John Doe to Jack takes him off the filtered list and
-      John Smith shifts up to index 1, so the second command changes John
-      Smith's phone rather than Jack's. The User Guide warns that an edit
-      removing a match shifts the remaining indices.
+   1. Prerequisites: Add `add Alex Yeoh -p 87438807`, `add John Doe -p 98765432`
+      and `add John Smith -p 91112222`, then run `find -n john`.
+   1. Test case: Run `edit 1 --follow-up` twice, then `edit 1 -n Jack` followed
+      by `edit 1 -p 91112233`.<br>
+      Expected: Both flags go to John Doe, the search staying active so index 1
+      keeps pointing at him. Renaming him to Jack then takes him off the
+      filtered list and John Smith shifts up, so the last command changes John
+      Smith's phone rather than Jack's — the shift the User Guide warns about.
 
 1. Reporting several mistakes at once
 
    1. Test case: `edit 0 -p 12`, then `edit` and `edit INDEX`.<br>
-      Expected: Nothing changes. The first reply opens
-      `Index must be a positive integer.` and also reports the invalid phone,
-      without the usage block. The second names the missing index and says a
-      field is needed; the third asks only for a field.
+      Expected: Nothing changes. The first opens `Index must be a positive
+      integer.` and also reports the invalid phone, without the usage block.
+      The second names the missing index and says a field is needed; the third
+      asks only for a field.
 ### Clearing a student's optional details
 
 1. Removing an optional detail without removing the record
@@ -2879,71 +2757,59 @@ testers are expected to do more *exploratory* testing.
 
 1. Recalling commands and restoring a draft
 
-   1. In a fresh session, type `draft` and press Up and Down.<br>
-      Expected: The text stays `draft`, no command having been submitted.
-   1. Submit `list`, then `find -n "Siti Nur-Aisyah"`, then type `add draft`
-      without submitting it. Press Up twice, then once more, then Down
+   1. Test case: Submit `list`, then `find -n "Siti Nur-Aisyah"`, type
+      `add draft` without submitting it, press Up three times, then Down
       twice.<br>
       Expected: Up recalls the find command, then `list`, then stays at `list`,
-      each recalled line keeping its colors with the caret at the end. Down
-      walks back and restores the unsent `add draft`.
-   1. Submit `addd`, then run `clear` and press Enter on the empty reply.
-      Press Up.<br>
-      Expected: The rejected `addd` is recalled like any other line, and
-      correcting or recalling it does not run it. Clear is canceled without
-      changing any students and Up recalls `clear` with no blank entry between.
-      Restarting TAB clears the history.
+      each recalled line keeping its colours with the caret at the end. Down
+      walks back and restores the unsent draft. In a fresh session, before
+      anything is submitted, Up and Down leave the text alone.
+   1. Test case: Submit `addd`, run `clear` and press Enter on the empty reply,
+      then press Up.<br>
+      Expected: The rejected `addd` is recalled like any other line and
+      recalling it does not run it. Clear is cancelled without changing any
+      students and Up recalls `clear` with no blank entry between. Restarting
+      TAB clears the history.
 
 1. Pasting multi-line text
 
    1. Test case: Copy two adjacent spreadsheet cells holding `Wei Ming` and
-      `Tan`. Type `add `, paste, type ` -p 91234567`, and press Enter.<br>
-      Expected: The two stay separate words with matching colors, and one
-      student named `Wei Ming Tan` is added. A trailing line break from the
-      spreadsheet may leave an extra space before `-p` without changing the
-      command.
-   1. Test case: Paste text holding a soft line break rather than a newline —
-      on Linux, `printf 'Siew Ling\vGoh' | xclip -selection clipboard` — into
-      `add `, add ` -p 91234563`, and press Enter.<br>
-      Expected: The box reads `add Siew Ling Goh -p 91234563` with the words
-      apart, and the student is saved under that name. Pasting into a selection
-      replaces it and leaves the caret after the inserted text.
+      `Tan`; type `add `, paste, add ` -p 91234567` and press Enter. Repeat
+      with a soft line break rather than a newline, as
+      `printf 'Siew Ling\vGoh' | xclip -selection clipboard` produces.<br>
+      Expected: Each pasted break reads as a space, so the words stay apart
+      with matching colours and one student is added under the joined name.
+      Pasting into a selection replaces it and leaves the caret after the
+      inserted text.
 
-1. Checking what the colors say
+1. Checking what the colours say
 
    1. Test case: Type `add "Siti Nur-Aisyah" -p 98765432 -t T1` without
-      pressing Enter.<br>
-      Expected: `add` is bold in the accent color, `"Siti Nur-Aisyah"` green,
-      `-p` and `-t` mauve, and the remaining values ordinary text.
-   1. Test case: Type `addd` and press Enter, then type another character.<br>
-      Expected: The whole line turns red and the reply quotes `addd` and
-      suggests `add`, adding nobody. The next character takes the red off.
+      pressing Enter, then submit `addd`, then type another character.<br>
+      Expected: `add` is bold in the accent colour, the quoted name green, the
+      markers mauve and the values ordinary text. The rejected word turns the
+      whole line red, the reply quoting `addd` and suggesting `add`, and the
+      next character takes the red off.
    1. Test case: Type `add"Ravi s/o Kumaran" -p 91234567` with no space after
       `add`, then press Enter.<br>
       Expected: The bold command word ends at `add"Ravi`, with `s/o` an
-      ordinary word after it, and the reply reports that unknown command —
-      splitting the line where the colors already did.
+      ordinary word after it, and the reply reports that unknown command,
+      splitting the line where the colours already did.
 
-1. Checking a command longer than the line
+1. Checking a long or bidirectional command
 
    1. Test case: Type a `find` command long enough to run past the right-hand
       edge, press Home then End, then Ctrl+A, then click in the middle.<br>
       Expected: The line scrolls so the caret stays in view at both ends rather
-      than being cut off by the edge, a band is drawn behind the whole command
-      with every part still readable on top of it, and the caret lands on the
-      character clicked rather than one or two away. Narrowing the window and
-      clicking again behaves the same.
-
-1. Checking right-to-left and mixed-script commands
-
-   1. Test case: Type `add محمد علي حسن -p 91234567`, then
-      `add Ali محمد דוד Tan -p 91234567`, with `add José Tan -p 91234567` as a
-      control. Click between letters of an RTL word, type a character, then
-      select across the Latin and RTL words with Shift+Left and Shift+Right.<br>
-      Expected: Each command stays on one readable line and scrolls
-      horizontally when it outgrows the width. The caret marks the insertion
-      point after a click, and only the selected characters are highlighted,
-      even where the selection falls into separate visual segments.
+      than being cut off, a band is drawn behind the whole command with every
+      part readable on top of it, and the caret lands on the character clicked.
+      Narrowing the window and clicking again behaves the same.
+   1. Test case: Type `add Ali محمد דוד Tan -p 91234567`, click between letters
+      of an RTL word, type a character, then select across the Latin and RTL
+      words.<br>
+      Expected: The command stays on one readable line, the caret marks the
+      insertion point after a click, and only the selected characters are
+      highlighted even where the selection falls into separate visual segments.
 ### The summary beside the list
 
 1. Checking that the summary follows the list
@@ -3209,122 +3075,81 @@ testers are expected to do more *exploratory* testing.
       student is still present and nothing is pending.
 ### Saving data
 
-1. Loading a correctly hand-edited data file
+1. Loading a hand-edited data file
 
    1. Prerequisites: Add a recognizable student, close every TAB window using
-      this data file, and back up `data/tab.json`.
-   1. Test case: Change that student's phone to `81234567`, preserving valid
-      JSON, save as UTF-8, and restart TAB.<br>
-      Expected: The student shows the edited phone. Close TAB and restart
-      again; the hand-edited value remains.
+      the file, and back up `data/tab.json`.
+   1. Test case: Change that student's phone to `81234567`, remove another's
+      `phone` key entirely and set a third's to `null`, then restart.<br>
+      Expected: The edited value is shown and the two records without a number
+      load with no blank line on their cards. Restarting again keeps all three,
+      and `edit 1 -p 91234567` adds a number to one without giving the others
+      a `phone` key.
 
-1. Loading a record whose optional details are absent
+1. Reading values TAB cannot accept
 
-   1. Test case: With TAB closed, remove one student's `phone` key entirely
-      and set another's to `null`, then restart.<br>
-      Expected: Both records load with no number and no blank line on their
-      cards. Run `edit 1 -p 91234567` for one of them and restart; that number
-      is saved while the other record still has no `phone` key.
-
-1. Reporting a saved value TAB cannot read
-
-   1. Test case: With TAB closed, set a student's `phone` to `"12"` and
-      restart.<br>
-      Expected: Startup refuses the file with `Phone "12" is not valid: a phone
-      number needs at least 3 digits`, naming the student record. The file is
-      left unchanged, so the value is reported rather than dropped.
-   1. Test case: Set a student's `tags` to `"friends"` rather than a list, and
-      restart.<br>
-      Expected: The error names the student record and `tags`, and asks for a
-      JSON array of strings.
-
-1. Reading repeated and reserved tags from a file
-
-   1. Test case: Set one student's `tags` to `[" t1 ", "T1", "Lab  3", "lab 3"]`
-      and restart.<br>
-      Expected: Their card shows only `t1` and `Lab 3`, matching the summary.
-      Edit that student and restart; the saved tags keep those first spellings
-      with no duplicates.
-   1. Test case: Add `"Needs follow-up"` to any record's `tags` and restart.<br>
-      Expected: The main window does not open. TAB names the record and
-      explains that the label marks a student for follow-up rather than naming
-      a tag, pointing at `"flag"`. `"Needs follow-up soon"` is accepted, since
-      only the label itself is reserved.
+   1. Test case: With TAB closed, set a student's `phone` to `"12"`, then on a
+      later run set another's `tags` to `"friends"` rather than a list.<br>
+      Expected: Each refuses the file at startup, naming the student record and
+      the field — the first `Phone "12" is not valid: a phone number needs at
+      least 3 digits`, the second asking for a JSON array of strings. The file
+      is left unchanged, so the value is reported rather than dropped.
+   1. Test case: Set one student's `tags` to `[" t1 ", "T1", "Lab  3", "lab 3"]`,
+      then on a later run add `"Needs follow-up"` to any record's `tags`.<br>
+      Expected: The repeated spellings load as the two tags `t1` and `Lab 3`,
+      keeping the first spelling of each. The reserved label refuses the file,
+      pointing at `"flag"`; `"Needs follow-up soon"` is accepted, only the
+      label itself being reserved.
 
 1. Refusing a stale second window's save
 
    1. Prerequisites: Open two TAB windows from the same disposable folder
       before making any changes.
-   1. Test case: In window A, enter `add Alice Probe -p 81230001 --id A1111111X`.
-      In window B, enter `add Bob Probe -p 81230002 --id A2222222X`.<br>
-      Expected: A succeeds. B reports that the data file changed, asks you to
-      close this window and restart, and says no changes were made. B keeps its
-      previous records and filter, and A's saved file is untouched. Closing and
-      restarting B shows Alice, after which adding Bob succeeds.
+   1. Test case: In window A enter `add Alice Probe -p 81230001 --id A1111111X`,
+      then in window B `add Bob Probe -p 81230002 --id A2222222X`.<br>
+      Expected: A succeeds. B reports that the file changed, asks you to close
+      it and restart, and changes nothing, keeping its own records and filter
+      while A's file stays untouched. Restarting B shows Alice, after which
+      adding Bob succeeds.
 
 1. Preserving existing data when a save fails
 
-   1. Prerequisites: Add a recognizable student, exit, and keep a copy of
-      `data/tab.json`. Make the `data` folder non-writable: `chmod 555 data` on
-      Linux or macOS, or remove write permission for the test account on
-      Windows.
-   1. Test case: Launch TAB and enter `add Bob Tan -p 91234567`.<br>
-      Expected: TAB reports that it could not save to `data/tab.json` for want
-      of permission. Bob does not appear, because the failed add is undone in
-      memory, and the file still matches the copy.
-   1. Test case: Enter `list`, `find -n Amy` and `help`, press q, then
-      `exit`.<br>
-      Expected: Each command works, including the help page, and the file is
-      still unchanged. Restore write permission before continuing.
+   1. Prerequisites: Add a recognizable student, exit, keep a copy of the file,
+      and make the `data` folder non-writable with `chmod 555 data`.
+   1. Test case: Launch TAB, enter `add Bob Tan -p 91234567`, then `list` and
+      `help`.<br>
+      Expected: The add reports that TAB could not save for want of permission
+      and Bob does not appear, the failed change being undone in memory. The
+      other commands still work and the file matches the copy. Restore write
+      permission afterwards.
 
 1. Dealing with a missing or corrupted data file
 
    1. Prerequisites: Keep a copy of a valid multi-student `data/tab.json`.
-   1. Test case: Replace the contents with `not json format!` and launch
-      TAB.<br>
-      Expected: An error dialog names `data/tab.json`, reports malformed JSON
-      with its line and column, shows the affected line numbered, and asks the
-      User to repair or replace it. The main window does not open and the file
-      is left as it is.
-   1. Test case: Restore the copy, remove the comma after one student's
-      `"name"` value, and launch TAB.<br>
-      Expected: The dialog marks the next line as affected and shows at most
-      one numbered line on either side, without listing unrelated records.
-   1. Test case: Replace the contents with `{}` and launch TAB.<br>
-      Expected: The dialog reports that the student list is missing.
-   1. Test case: Move `data/tab.json` elsewhere and relaunch.<br>
-      Expected: TAB treats the missing file as a first launch and opens with
-      sample students rather than an error.
-   1. Test case: Restore the file and make the folder unreadable with
-      `chmod 000 data`, then relaunch.<br>
-      Expected: The dialog says TAB does not have permission to read the file
-      or its folder, and no sample students are shown. Restore with
-      `chmod 755 data` and confirm every student returns.
-
-1. Detecting misspelled data-file keys
-
-   1. Prerequisites: Back up a valid multi-student `data/tab.json`.
-   1. Test case: Change the second student's `nusStudentId` to `nusStudentID`,
-      keeping the value, and launch TAB.<br>
-      Expected: The startup error names the file, the unknown key, student
-      record 2 and that student's name, and lists the supported fields. The
-      main window does not open and no value is erased.
-   1. Test case: Correct the spelling, relaunch, change a student through TAB,
-      and relaunch again.<br>
-      Expected: Every supported value survives. A legacy `address` key is
-      ignored rather than refused, so files written before it was removed still
-      load.
+   1. Test case: Replace the contents with `not json format!`, then on a later
+      run restore the copy and remove the comma after one student's `"name"`.<br>
+      Expected: Each refuses to open the main window, naming the file,
+      reporting the line and column, and showing the affected line numbered
+      with at most one line on either side. The file is left as it is.
+   1. Test case: Change the second student's `nusStudentId` key to
+      `nusStudentID`, keeping its value.<br>
+      Expected: The error names the unknown key, the record and that student,
+      and lists the supported fields, erasing no value. Correcting the spelling
+      lets it load; a legacy `address` key is ignored rather than refused.
+   1. Test case: Move `data/tab.json` elsewhere, then restore it and make the
+      folder unreadable with `chmod 000 data`.<br>
+      Expected: A missing file is treated as a first launch and opens with
+      sample students, while an unreadable folder gives a dialog saying so and
+      shows no sample students. Restore with `chmod 755 data`.
 
 1. Loading files saved with different encodings
 
-   1. Prerequisites: Exit TAB and back up a `data/tab.json` holding a student
-      named `José Tan`.
-   1. Test case: Save the file as Windows-1252 (ANSI) and launch TAB.<br>
-      Expected: The dialog says the file is not valid UTF-8 and explains how to
-      resave it. The main window never opens and the file is unchanged.
-   1. Test case: Reopen it as Windows-1252, save as UTF-8, and relaunch.<br>
-      Expected: Both students load with the accent intact. Saving as UTF-8 with
-      a byte order mark also loads.
+   1. Test case: With a student named `José Tan` saved, save the file as
+      Windows-1252 (ANSI) and launch TAB, then reopen it as Windows-1252, save
+      as UTF-8 and relaunch.<br>
+      Expected: The first says the file is not valid UTF-8 and explains how to
+      resave it, leaving it unchanged. The second loads with the accent intact,
+      as does UTF-8 with a byte order mark.
 
 1. More test cases to be added.
 ### Editing students using an explicit ID target
