@@ -6,12 +6,6 @@ skinparam ArrowFontSize 12
 start
 :Find a student with the same
 NUS Student ID;
-note right
-  Student.isSameStudent matches only
-  two present, equal NUS Student IDs.
-  Stored IDs use uppercase letters.
-end note
-
 if (A student with that NUS Student ID exists?) then ([yes])
     :Reject the addition, naming the ID
     and existing student;

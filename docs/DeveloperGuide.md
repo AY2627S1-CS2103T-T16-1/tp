@@ -102,7 +102,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentListPanel`, `SummaryPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-`CommandBox` owns its `CommandHistory`, `CommandTextField` and `HighlightedTextOverlay`. The overlay is what calls the static `CommandHighlighter.highlight` method to color the input, leaving `CommandBox` with running the command, recalling earlier ones and marking a failure. The card controls extend JavaFX classes directly: `CardHeadline` extends `Pane`, `CardName` extends `Label`, `TagRow` extends `Region`, and `ContactRow` extends `FlowPane`. These controls are composed in `StudentListCard.fxml`.
+Two of those parts are built from controls of their own, which the Implementation chapter draws beside the behavior they support: [the command box's](#coloring-the-command-line) and [the student card's](#fitting-names-and-tags-on-a-card).
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/MainWindow.java).
 
@@ -291,6 +291,13 @@ displays have different usable heights or gaps between them.
 
 ### Fitting names and tags on a card
 
+A card is a `StudentCard` holding a `CardHeadline` and a `ContactRow`, and the
+headline in turn holds a `CardName` and a `TagRow`. These four controls extend
+JavaFX classes directly rather than `UiPart`, and `StudentListCard.fxml`
+composes them.
+
+<puml src="diagrams/StudentCardClasses.puml" alt="Student card controls" width="330" />
+
 `CardHeadline` prefers a readable start of the name when allocating room to
 tags, but yields part of that allowance for a complete tag count. The name
 retains space for a character from each end. When no tag chip fits, `TagRow`
@@ -329,6 +336,14 @@ skin during layout. Measuring at the wider cell width would miss a wrapped
 contact row near a wrap threshold and squeeze the headline.
 
 ### Coloring the command line
+
+`CommandBox` owns a `CommandHistory`, a `CommandTextField` and a
+`HighlightedTextOverlay`. The overlay is what calls the static
+`CommandHighlighter.highlight` method to color the input, which leaves
+`CommandBox` with running the command, [recalling earlier
+ones](#recalling-session-commands) and marking a failure.
+
+<puml src="diagrams/CommandBoxClasses.puml" alt="Command box controls" width="500" />
 
 `CommandTextField` converts separators to spaces during text replacement,
 before JavaFX filters control characters, asking `StringUtil#isWhitespace` the
@@ -397,7 +412,7 @@ sets. Worth revisiting if the palette changes.
 
 ### Recalling session commands
 
-`CommandBox` records each submitted command in `CommandHistory` before execution,
+`CommandBox` records each submitted command in the `CommandHistory` it owns, before execution,
 so rejected commands can be recalled too. While clear confirmation is pending,
 replies are excluded because they cannot be reused as standalone commands; the
 navigation position resets without recording the reply. The helper stores submissions separately
