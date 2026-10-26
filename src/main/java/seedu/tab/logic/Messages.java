@@ -163,8 +163,7 @@ public class Messages {
         final StringBuilder builder = new StringBuilder();
         builder.append(student.getName());
         student.getNusStudentId().ifPresent(nusStudentId -> builder.append("; NUS Student ID: ").append(nusStudentId));
-        builder.append("; Phone: ")
-                .append(student.getPhone());
+        student.getPhone().ifPresent(phone -> builder.append("; Phone: ").append(phone));
         student.getEmail().ifPresent(email -> builder.append("; Email: ").append(email));
         if (!student.getTags().isEmpty()) {
             builder.append("; Tags: ");

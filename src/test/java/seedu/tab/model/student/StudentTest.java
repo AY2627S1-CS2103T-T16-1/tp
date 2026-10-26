@@ -17,7 +17,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.testutil.StudentBuilder;
 
 public class StudentTest {
@@ -33,7 +33,7 @@ public class StudentTest {
     @Test
     public void constructor_withFlag_exposesTypedFlag() {
         Student student = new StudentBuilder(ALICE).withFlag(true).build();
-        assertEquals(new Flag(), student.getFlag().orElseThrow());
+        assertEquals(new FollowUpFlag(), student.getFlag().orElseThrow());
         assertTrue(student.isFlagged());
     }
 
@@ -173,6 +173,27 @@ public class StudentTest {
 
         // neither holds an email -> returns true
         assertTrue(withoutEmail.equals(new StudentBuilder(ALICE).withoutEmail().build()));
+
+        // a phone against none -> returns false, in either direction
+        Student withoutPhone = new StudentBuilder(ALICE).withoutPhone().build();
+        assertFalse(ALICE.equals(withoutPhone));
+        assertFalse(withoutPhone.equals(ALICE));
+
+        // neither holds a phone -> returns true
+        assertTrue(withoutPhone.equals(new StudentBuilder(ALICE).withoutPhone().build()));
+    }
+
+    @Test
+    public void hashCode_studentsWithoutAPhone_matchWhenTheyAreEqual() {
+        Student withoutPhone = new StudentBuilder(ALICE).withoutPhone().build();
+        assertEquals(withoutPhone.hashCode(), new StudentBuilder(ALICE).withoutPhone().build().hashCode());
+    }
+
+    @Test
+    public void isSameStudent_oneHoldsNoPhone_stillTheSameStudent() {
+        // the phone is not an identity either, so a roster entry without one is not a second record
+        Student withoutPhone = new StudentBuilder(ALICE).withoutPhone().build();
+        assertTrue(ALICE.isSameStudent(withoutPhone));
     }
 
     @Test
@@ -238,7 +259,8 @@ public class StudentTest {
 
     @Test
     public void toStringMethod() {
-        String expected = Student.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
+        String expected = Student.class.getCanonicalName() + "{name=" + ALICE.getName()
+                + ", phone=" + ALICE.getPhone().orElse(null)
                 + ", email=" + ALICE.getEmail().orElse(null) + ", nusStudentId=" + ALICE.getNusStudentId().orElse(null)
                 + ", tags=" + ALICE.getTags()
                 + ", isFlagged=" + ALICE.isFlagged() + "}";

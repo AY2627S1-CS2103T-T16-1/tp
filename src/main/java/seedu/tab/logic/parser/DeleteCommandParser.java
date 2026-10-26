@@ -65,6 +65,11 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
      * {@code --id=A0123456X}, or else a position in the displayed list or an NUS Student ID,
      * as {@link ParserUtil#parseStudentTarget} reads it.
      *
+     * <p>A target that is not a usable index keeps the concise reason it was refused, as
+     * {@code edit} and {@code tag} report theirs. A value that reads as a valid NUS Student
+     * ID names the {@code --id} command that addresses it, because such a value plausibly
+     * was meant as an ID rather than as an index.
+     *
      * @throws ParseException if {@code token} does not name a student.
      */
     private static StudentTarget readTarget(Token token) throws ParseException {
@@ -72,11 +77,13 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
         if (attachedId.isPresent()) {
             return readNusStudentIdTarget(attachedId.get());
         }
+        if (looksLikeOption(token)) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+        }
         try {
             return ParserUtil.parseStudentTarget(token.value(), DeleteCommand.MESSAGE_USAGE);
         } catch (ParseException e) {
-            if (NusStudentId.isValidNusStudentId(token.value())
-                    && token.value().chars().allMatch(Character::isDigit)) {
+            if (NusStudentId.isValidNusStudentId(token.value())) {
                 throw new ParseException(e.getMessage() + " "
                         + Messages.getIdTargetHint(DeleteCommand.COMMAND_WORD, token.value()), e);
             }
@@ -105,9 +112,17 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
      * grouped it. {@code delete} reads an option as one of its own forms rather than as the
      * value a second token would be, so the usage message, not the reply naming the value
      * after the index, is the one that helps.
+     *
+     * <p>A marker followed by a digit, as in {@code -1}, is a negative number rather than an
+     * option, and reads as a mistyped index: the reason that index is unusable helps more
+     * than the forms of a command the user already spelled correctly.
      */
     private static boolean looksLikeOption(Token token) {
-        return token.value().startsWith(OPTION_MARKER) && token.value().length() > OPTION_MARKER.length();
+        String value = token.value();
+        if (!value.startsWith(OPTION_MARKER) || value.length() <= OPTION_MARKER.length()) {
+            return false;
+        }
+        return !Character.isDigit(value.charAt(OPTION_MARKER.length()));
     }
 
     /**

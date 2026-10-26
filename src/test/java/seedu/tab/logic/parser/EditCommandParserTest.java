@@ -60,6 +60,46 @@ public class EditCommandParserTest {
     private EditCommandParser parser = new EditCommandParser();
 
     @Test
+    public void parse_explicitIdTarget_acceptsAnyValidIdAndOptionOrder() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withFlag(false).build();
+        for (String id : List.of("a01234567x", "1abc", "001234", "0", "9".repeat(32))) {
+            EditCommand expected = new EditCommand(StudentTarget.byNusStudentId(new NusStudentId(id)), descriptor);
+            assertParseSuccess(parser, "--target-id " + id + " --no-follow-up", expected);
+            assertParseSuccess(parser, "-nf --target-id=\"  " + id + "\"", expected);
+            assertParseSuccess(parser, "\u00a0--target-id \"\u00a0" + id + "\u3000\" -nf", expected);
+        }
+        EditStudentDescriptor changedId = new EditStudentDescriptorBuilder().withNusStudentId("A1234").build();
+        assertParseSuccess(parser, "--target-id 001234 --id A1234",
+                new EditCommand(StudentTarget.byNusStudentId(new NusStudentId("001234")), changedId));
+    }
+
+    @Test
+    public void parse_invalidExplicitIdTarget_reportsValueAndReason() {
+        for (String id : List.of("", " ", "A-1", "王", "a".repeat(33))) {
+            assertParseFailure(parser, "--target-id \"" + id + "\" -nf",
+                    Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, id.trim(),
+                            NusStudentId.getFailureReason(id.trim())));
+        }
+        for (String input : List.of("--target-id", "--target-id=", "--target-id -nf")) {
+            assertParseFailure(parser, input, String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE,
+                    "--target-id NUS_STUDENT_ID"));
+        }
+        assertParseFailure(parser, "--target-id \"1234 -nf", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
+        assertParseFailure(parser, "--TARGET-ID 1234 -nf",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--TARGET-ID"));
+    }
+
+    @Test
+    public void parse_multipleTargetsOrNoEdit_rejected() {
+        for (String target : List.of("1", "A1234")) {
+            assertParseFailure(parser, target + " --target-id 1234 -nf", EditCommand.MESSAGE_MULTIPLE_TARGETS);
+        }
+        assertParseFailure(parser, "--target-id 1234 --target-id=1234 -nf",
+                Messages.getErrorMessageForDuplicateFlags("--target-id"));
+        assertParseFailure(parser, "--target-id 1234", EditCommand.MESSAGE_NOT_EDITED);
+    }
+
+    @Test
     public void parse_caseVariantTags_keepsFirstSpelling() {
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withTags("lab", "ς", "T1").build();
         assertParseSuccess(parser, " 1 -t lab --tag Lab -t LAB -t ς -t Σ -t T1",
@@ -183,9 +223,9 @@ public class EditCommandParserTest {
     @Test
     public void parse_quotedEmptyValuesJoinedByEquals_clearOptionalFieldsAndTags() {
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder()
-                .withoutEmail().withoutNusStudentId().withTags().build();
+                .withoutPhone().withoutEmail().withoutNusStudentId().withTags().build();
 
-        assertParseSuccess(parser, "1 --email=\"\" -i=\"\" --tag=\"\"",
+        assertParseSuccess(parser, "1 --phone=\"\" --email=\"\" -i=\"\" --tag=\"\"",
                 new EditCommand(INDEX_FIRST_STUDENT, descriptor));
     }
 
@@ -267,8 +307,31 @@ public class EditCommandParserTest {
                 Messages.getErrorMessageForDuplicateFlags("-e"));
         assertParseFailure(parser, "1 -n \"\" -e \"\"",
                 Messages.getErrorMessageForInvalidValue("Name", "", Name.getFailureReason("")));
-        assertParseFailure(parser, "1 -p \"\" -e \"\"",
-                Messages.getErrorMessageForInvalidValue("Phone", "", Phone.getFailureReason("")));
+    }
+
+    @Test
+    public void parse_clearPhoneAloneOrWithOtherFields_success() {
+        EditStudentDescriptor cleared = new EditStudentDescriptorBuilder().withoutPhone().build();
+        assertParseSuccess(parser, "1 -p \"\"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
+        assertParseSuccess(parser, "1 --phone \"\"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
+        assertParseSuccess(parser, "1 -p \"   \"", new EditCommand(INDEX_FIRST_STUDENT, cleared));
+
+        EditStudentDescriptor combined = new EditStudentDescriptorBuilder().withoutPhone()
+                .withEmail(VALID_EMAIL_AMY).withTags().withFlag(true).build();
+        assertParseSuccess(parser, "1 -p \"\" -e " + VALID_EMAIL_AMY + " -t \"\" -f",
+                new EditCommand(INDEX_FIRST_STUDENT, combined));
+    }
+
+    @Test
+    public void parse_mistypedPhoneClear_reportsSpecificProblem() {
+        for (String input : List.of("1 -p", "1 -p ", "1 -p\u00A0", "1 -p -e a@b.com")) {
+            assertParseFailure(parser, input,
+                    String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_PHONE.getLabel()));
+        }
+        assertParseFailure(parser, "1 -p \"\" -p 91234567",
+                Messages.getErrorMessageForDuplicateFlags("-p"));
+        assertParseFailure(parser, "1 -n \"\" -p \"\"",
+                Messages.getErrorMessageForInvalidValue("Name", "", Name.getFailureReason("")));
     }
 
     @Test
@@ -409,7 +472,7 @@ public class EditCommandParserTest {
                 Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
                         NusStudentId.getFailureReason("A0123-456")));
 
-        // a digit-leading ID cannot be a target: the plain form reads as an index, and
+        // a bare digit-leading ID reads as an index, and
         // --id names the field to set rather than the student to edit
         assertParseFailure(parser, "1A2B3C" + FLAG_NAME_AMY,
                 ParserUtil.MESSAGE_INVALID_INDEX);

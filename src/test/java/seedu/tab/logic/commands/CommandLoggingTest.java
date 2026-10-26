@@ -203,7 +203,7 @@ public class CommandLoggingTest {
     private static Set<String> fieldsOf(Student student) {
         Set<String> fields = new HashSet<>();
         fields.add(student.getName().fullName);
-        fields.add(student.getPhone().value);
+        fields.add(student.getPhone().orElseThrow().value);
         student.getEmail().ifPresent(email -> fields.add(email.value));
         student.getNusStudentId().ifPresent(id -> fields.add(id.value));
         student.getTags().forEach(tag -> fields.add(tag.tagName));

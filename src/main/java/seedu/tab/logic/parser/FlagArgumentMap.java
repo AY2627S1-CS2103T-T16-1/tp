@@ -19,7 +19,7 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  */
 public class FlagArgumentMap {
 
-    private final Map<Flag, List<FlagValue>> values = new HashMap<>();
+    private final Map<CliFlag, List<FlagValue>> values = new HashMap<>();
     private String preamble = "";
 
     private record FlagValue(String marker, String value) {}
@@ -28,7 +28,7 @@ public class FlagArgumentMap {
      * Associates {@code value} with the spelling of {@code flag} that introduced it, after
      * any value already given for that flag.
      */
-    public void put(Flag flag, String marker, String value) {
+    public void put(CliFlag flag, String marker, String value) {
         requireNonNull(flag);
         requireNonNull(marker);
         requireNonNull(value);
@@ -49,7 +49,7 @@ public class FlagArgumentMap {
     /**
      * Returns the last value given for {@code flag}.
      */
-    public Optional<String> getValue(Flag flag) {
+    public Optional<String> getValue(CliFlag flag) {
         List<String> flagValues = getAllValues(flag);
         return flagValues.isEmpty() ? Optional.empty() : Optional.of(flagValues.getLast());
     }
@@ -58,7 +58,7 @@ public class FlagArgumentMap {
      * Returns every value given for {@code flag}, or an empty list when it was not given.
      * The returned list is the caller's own.
      */
-    public List<String> getAllValues(Flag flag) {
+    public List<String> getAllValues(CliFlag flag) {
         if (!values.containsKey(flag)) {
             return new ArrayList<>();
         }
@@ -70,7 +70,7 @@ public class FlagArgumentMap {
     /**
      * Throws a {@code ParseException} if any flag in {@code flags} was given more than once.
      */
-    public void verifyNoDuplicateFlagsFor(Flag... flags) throws ParseException {
+    public void verifyNoDuplicateFlagsFor(CliFlag... flags) throws ParseException {
         String[] duplicated = Stream.of(flags).distinct()
                 .filter(flag -> getAllValues(flag).size() > 1)
                 .map(flag -> values.get(flag).getFirst().marker())
