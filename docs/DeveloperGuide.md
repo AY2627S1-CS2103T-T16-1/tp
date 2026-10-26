@@ -512,6 +512,10 @@ exit. This prevents stale TAB windows from overwriting each other's records;
 it does not add concurrent multi-user editing. External editors do not honor
 this lock and must be used with all TAB windows closed.
 
+The activity diagram below follows one save attempt:
+
+<puml src="diagrams/StaleWindowSave.puml" alt="Stale window save check" width="420" />
+
 ### Rolling back model changes when saving fails
 
 `LogicManager` takes a copy of the student book and its active display filter
@@ -528,6 +532,10 @@ in-memory effect, and retrying it cannot apply the same change twice. A
 confirmed `clear` follows the same save-and-restore path; its pending
 confirmation is still removed before the save attempt so that a failure does
 not leave a stale reply active.
+
+The following sequence diagram shows a command whose save fails:
+
+<puml src="diagrams/SaveRollbackSequenceDiagram.puml" alt="SaveRollbackSequenceDiagram" />
 
 ### Resolving application file locations
 
@@ -838,6 +846,10 @@ The parser dispatches from a `switch` rather than from `COMMAND_WORDS`, so the
 two could disagree and a word missing from the list would work while being
 suggested to nobody. `CommandWordsTest` resolves the command words out of the
 parser's own cases and compares them against the list.
+
+The activity diagram below follows one typed word:
+
+<puml src="diagrams/CommandWordSuggestion.puml" alt="Command word suggestion" width="470" />
 
 ### Follow-up flag
 

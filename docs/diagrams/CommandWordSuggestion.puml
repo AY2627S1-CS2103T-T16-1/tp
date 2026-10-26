@@ -1,0 +1,31 @@
+@startuml
+!include style.puml
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+
+start
+:Fold the typed word to lower case;
+
+if (Any command word opens with it?) then ([yes])
+    :Take every command word it opens;
+else ([no])
+    :Keep the command words within
+    an edit of a differing first letter,
+    or two of a matching one;
+    if (Any kept?) then ([no])
+        :Suggest nothing;
+        stop
+    else ([yes])
+        :Take those at the smallest
+        edit distance;
+    endif
+endif
+
+if (More than three taken?) then ([yes])
+    :Suggest nothing;
+    stop
+else ([no])
+    :Name them in alphabetical order;
+    stop
+endif
+@enduml
