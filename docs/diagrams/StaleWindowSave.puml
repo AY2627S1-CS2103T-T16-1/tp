@@ -1,0 +1,40 @@
+@startuml
+!include style.puml
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+
+start
+:Take the lock on
+.tab.json.lock;
+note right
+  The sidecar sits beside the real
+  destination, so windows that reach
+  it through a symbolic link share
+  one lock.
+end note
+
+if (Lock already held?) then ([yes])
+    :Refuse the save,
+    with retry guidance;
+    stop
+else ([no])
+endif
+
+:Reread the records on disk;
+
+if (Reread failed?) then ([yes])
+    :Refuse the save;
+    stop
+else ([no])
+endif
+
+if (Records match this window's snapshot?) then ([no])
+    :Refuse the save, asking for
+    a restart before retrying;
+    stop
+else ([yes])
+    :Write the file;
+    :Advance the snapshot;
+    stop
+endif
+@enduml
