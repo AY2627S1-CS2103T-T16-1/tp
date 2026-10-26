@@ -74,6 +74,63 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_explicitEditTarget_editsHiddenStudentAndPersistsNewId() throws Exception {
+        logic.execute("add Amy Bee -p 91234567 --id 001234 -f");
+        logic.execute("add Other Student -p 82223333 --id A1234");
+        logic.execute("find -n Other");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        Predicate<? super Student> filter = model.getFilteredStudentPredicate();
+        Student expected = new StudentBuilder(students.getFirst()).withNusStudentId("1ABC").withFlag(false).build();
+        assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(expected)),
+                logic.execute("edit --target-id 001234 --id 1ABC -nf").getFeedbackToUser());
+        assertSame(filter, model.getFilteredStudentPredicate());
+        assertEquals(List.of(students.get(1)), model.getFilteredStudentList());
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        model = new ModelManager(new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow(), new UserPrefs());
+        setUp();
+        assertEquals(List.of(expected, students.get(1)), model.getStudentBook().getStudentList());
+        Student clearedId = new StudentBuilder(expected).withoutNusStudentId().build();
+        assertEquals(String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(clearedId)),
+                logic.execute("edit --target-id=1abc -i \"\"").getFeedbackToUser());
+        assertEquals(List.of(clearedId, students.get(1)),
+                new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_explicitEditTargetFailures_preservesRecordsFilterAndSavedFile() throws Exception {
+        logic.execute("add Amy Bee -p 91234567 --id 001234 -f");
+        logic.execute("add Other Student -p 82223333 --id A1234");
+        logic.execute("find -n Other");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        Predicate<? super Student> filter = model.getFilteredStudentPredicate();
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        String savedJson = Files.readString(dataPath);
+        Map<String, String> parseFailures = Map.of(
+                "edit 1 --target-id 001234 -nf", EditCommand.MESSAGE_MULTIPLE_TARGETS,
+                "edit A1234 --target-id 001234 -nf", EditCommand.MESSAGE_MULTIPLE_TARGETS,
+                "edit --target-id 001234 --target-id 001234 -nf",
+                Messages.getErrorMessageForDuplicateFlags("--target-id"),
+                "edit --target-id 001234", EditCommand.MESSAGE_NOT_EDITED);
+        for (var entry : parseFailures.entrySet()) {
+            assertThrows(ParseException.class, entry.getValue(), () -> logic.execute(entry.getKey()));
+            assertEquals(students, model.getStudentBook().getStudentList());
+            assertEquals(List.of(students.get(1)), model.getFilteredStudentList());
+            assertSame(filter, model.getFilteredStudentPredicate());
+            assertEquals(savedJson, Files.readString(dataPath));
+        }
+        String missingIdMessage = String.format(Messages.MESSAGE_NO_STUDENT_WITH_NUS_ID, "9999");
+        assertThrows(CommandException.class, missingIdMessage, () -> logic.execute("edit --target-id 9999 -nf"));
+        String invalidIndexMessage = Messages.getErrorMessageForInvalidIndex("001234", 1);
+        assertThrows(CommandException.class, invalidIndexMessage, () -> logic.execute("edit 001234 -nf"));
+        String duplicateMessage = String.format(Messages.MESSAGE_DUPLICATE_STUDENT, "A1234", "Other Student");
+        assertThrows(CommandException.class, duplicateMessage, () -> logic.execute("edit --target-id 001234 -i A1234"));
+        assertEquals(students, model.getStudentBook().getStudentList());
+        assertEquals(List.of(students.get(1)), model.getFilteredStudentList());
+        assertSame(filter, model.getFilteredStudentPredicate());
+        assertEquals(savedJson, Files.readString(dataPath));
+    }
+
+    @Test
     public void execute_caseVariantCommandTags_keepsFirstSpellingAfterLoadingLegacyRecords() throws Exception {
         Student legacy = new StudentBuilder().withName("Legacy Student").withPhone("82223333")
                 .withoutEmail().withTags("Lab", "LAB").build();

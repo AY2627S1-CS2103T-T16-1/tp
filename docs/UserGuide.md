@@ -535,12 +535,15 @@ TAB reports the number of displayed students: `Listed 0 students.` when the list
 
 Edits an existing student in the student book.
 
-Format: `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`
+Format: `edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`
 
-The target may also be an NUS Student ID instead of an index: `edit A01234567X -p 91234567`
+`TARGET` is a displayed index, a letter-leading NUS Student ID, or `--target-id NUS_STUDENT_ID`.
+For example, `edit A01234567X -p 91234567`
 edits the student holding that ID, found among all students even while a search is hiding
 them, and matching ignores case. `--id` still sets or clears the student's NUS Student ID,
 so `edit A01234567X --id A05678901K` changes the ID of the student found by the old one.
+Use `edit --target-id 1234 --no-follow-up` to clear follow-up for the student whose ID is
+`1234`, even when a search hides them. `--target-id` also accepts `--target-id=VALUE`.
 
 The value options accept these equivalent spellings: `-n` and `--name`, `-p`
 and `--phone`, `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`.
@@ -561,9 +564,8 @@ done to it beyond the quotes any value with spaces takes:
   `NUS_STUDENT_ID`. An index refers to the index number shown in the displayed student list and
   **must be a positive integer** 1, 2, 3, ... An NUS Student ID names its holder wherever they
   are in the book, even while a search hides them, and the match ignores case. A target
-  starting with a digit reads as an index, so `edit` can only name a student by an ID
-  that opens with a letter; to edit a student whose ID starts with a digit, use their
-  index. Here `--id` always sets the student's ID rather than choosing who to edit.
+  starting with a digit reads as an index; use `--target-id NUS_STUDENT_ID` to select
+  such an ID explicitly. Here `--id` always sets the student's ID rather than choosing who to edit.
   A zero or non-integer index reports `Index must be a positive integer.`
   without the full usage block; any invalid field values are reported alongside it.
   The current search stays active after editing, so the index keeps referring to
@@ -573,7 +575,8 @@ done to it beyond the quotes any value with spaces takes:
   shifts the remaining indices up. Check the displayed list before repeating a
   command after such an edit. An ID target does not shift, so it stays reliable
   through edits that change the displayed list.
-* The target comes first, before any option.
+* A target without an option comes first. `--target-id` may appear among the other options.
+  Give exactly one target: do not combine it with a preamble target or repeat `--target-id`.
   An unquoted negative target reports both that an index must be positive and
   that the negative number is not an option. Extra words after a valid target
   are reported as unexpected values. Put a name change after `-n` rather than
@@ -633,6 +636,8 @@ done to it beyond the quotes any value with spaces takes:
   a valid ID, such as `A0123-456`, is refused with the field-level reason.
 
 Examples:
+
+*  `edit --target-id 1234 --id A0123456X` Changes the ID of the student holding `1234` to `A0123456X`.
 *  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 1 -e mei__tan@hotmail.com` Records the address with both underscores.
 *  `edit 1 --email ""` Removes the 1st student's email while keeping all other details.
@@ -753,7 +758,7 @@ Format: `tag TARGET -r TAG`
   adds `This student is flagged for follow-up, which is not a tag. To clear
   the flag, use edit INDEX --no-follow-up.`, because the label beside the
   name is that flag rather than a tag. If the student is hidden by the current
-  search, the hint first asks you to run `list` and use their displayed index.
+  search, the hint gives `edit --target-id NUS_STUDENT_ID --no-follow-up` with their ID.
 * An invalid target or tag, an empty quoted tag, or a missing value is refused
   with a specific error and leaves records and the saved file unchanged.
 * Removing the last tag leaves a student with no general tags. A general tag
@@ -1109,7 +1114,7 @@ Action     | Format, Examples
 **Add**    | Keeps the search if the new student matches; otherwise shows all students with a notice. <br> `add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> e.g., `add James Ho --phone=22224444 -i=A07890123M --tag=T1 -t Lab3 --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
 **Delete** | `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`<br> The ID option, spelled `-i`/`--id` or `--id=VALUE`, is what an ID starting with a digit needs<br> e.g., `delete 3`, `delete A01234567X`, `delete --id 1A2B3C`
-**Edit**   | `edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> The target may be an NUS Student ID instead of an index <br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A08901234N`, `edit A01234567X -p 91234567`
+**Edit**   | `edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--target-id NUS_STUDENT_ID`; `--id` sets the ID field <br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A08901234N`, `edit A01234567X -p 91234567`
 **Tag**    | `tag TARGET -a TAG` or `tag TARGET -r TAG` <br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--id NUS_STUDENT_ID` (alias `-i`) <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`, `tag --id A02345678G --add T2`
 **Find**   | `find [FIELD_OPTION TERM]... [-f \| -nf]`<br> e.g., `find -n Jason -t lab -t tutorial` (all terms required)
 **List**   | `list`

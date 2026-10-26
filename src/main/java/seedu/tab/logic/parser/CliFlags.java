@@ -12,6 +12,7 @@ public class CliFlags {
     public static final CliFlag FLAG_PHONE = new CliFlag("-p", List.of("--phone"), "PHONE");
     public static final CliFlag FLAG_EMAIL = new CliFlag("-e", List.of("--email"), "EMAIL");
     public static final CliFlag FLAG_NUS_STUDENT_ID = new CliFlag("--id", List.of("-i"), "NUS_STUDENT_ID");
+    public static final CliFlag FLAG_TARGET_ID = new CliFlag("--target-id", "NUS_STUDENT_ID");
     public static final CliFlag FLAG_TAG = new CliFlag("-t", List.of("--tag"), "TAG");
     public static final CliFlag FLAG_ADD_TAG = new CliFlag("-a", List.of("--add"), "TAG");
     public static final CliFlag FLAG_REMOVE_TAG = new CliFlag("-r", List.of("--remove"), "TAG");
