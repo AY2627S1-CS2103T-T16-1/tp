@@ -1,0 +1,39 @@
+@startuml
+!include style.puml
+skinparam linetype ortho
+skinparam nodesep 20
+skinparam arrowThickness 1.1
+skinparam arrowColor UI_COLOR_T4
+skinparam classBackgroundColor UI_COLOR
+
+package UI <<Rectangle>>{
+Class "{abstract}\nUiPart" as UiPart
+Class StudentCard
+Class CardHeadline
+Class CardName
+Class TagRow
+Class ContactRow
+}
+
+package JavaFX <<Rectangle>> {
+Class Pane
+Class Label
+Class Region
+Class FlowPane
+}
+
+StudentCard -up-|> UiPart
+StudentCard *-down-> "\n1" CardHeadline
+StudentCard *-down-> "\n1" ContactRow
+CardHeadline *-down-> "\n1" CardName
+CardHeadline *-down-> "\n1" TagRow
+
+CardHeadline --|> Pane
+CardName --|> Label
+TagRow --|> Region
+ContactRow --|> FlowPane
+' TagRow and ContactRow sit on ranks of their own, so no multiplicity is
+' drawn on the run its neighbour's association takes.
+TagRow -[hidden]down- ContactRow
+TagRow -[hidden]down- CardHeadline
+@enduml
