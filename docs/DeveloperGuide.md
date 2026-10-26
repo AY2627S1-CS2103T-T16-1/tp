@@ -113,274 +113,6 @@ The `UI` component,
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on some classes in the `Model` component because it displays `Student` objects from the model.
 
-`AddCommand` includes the new student in its `CommandResult`.
-`MainWindow` asks `StudentListPanel` to reveal that card only after `Logic.execute`
-returns successfully, so failed saves cannot scroll to an unsaved student.
-Scrolling leaves focus in the command box and uses the displayed list after
-the existing search-preservation rules have been applied. It locates the exact
-saved student object so an earlier record with identical details is not revealed
-instead, and skips a target that has left the displayed list before layout.
-
-The student card's `TagRow` creates a label for every tag, with its full text.
-Layout shows as many complete chips as fit and lists all hidden tags in the
-overflow chip's tooltip. There is no fixed chip count or label length cap.
-
-English numeric feedback and data-load diagnostics format with `Locale.ROOT`,
-and command highlight style names use the same locale when lowercasing. This
-keeps digits and CSS selectors consistent without changing the JVM locale or
-student data.
-
-`SummaryPanel` wraps complete tag names within the fixed 150 px sidebar.
-Each count retains its preferred width, while the tag list scrolls vertically
-as wrapped rows grow. Names are not shortened, so tags differing only at the
-end remain distinguishable without hovering.
-
-`MainWindow` handles plain Tab and Shift+Tab on the student page to keep a
-stable focus cycle: command box, student list, summary tag list, then the
-reply when visible. The student list stays one Tab from command entry even
-after a reply appears; Shift+Tab returns directly. Empty lists stay reachable.
-`SummaryPanel.fxml` makes the tag `ScrollPane` focus-traversable, and the theme
-marks its focus with an accent outline without changing its layout size.
-JavaFX supplies arrow and Home/End navigation for both lists, plus paging for
-the student list. `SummaryPanel` handles Page Up/Down using the tag viewport's
-height and content overflow: JavaFX's default `ScrollPane` page keys otherwise
-use the same increment as its arrow keys. The command box retains its separate
-Up/Down history behavior. Help uses its own pager and restores command focus
-when closed.
-
-`HelpCommand` returns a command summary and the existing `showHelp` signal.
-`MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
-the entire student page (command box, result, summary sidebar and student list).
-The hidden student page remains intact so closing help restores its filter,
-previous result and any unfinished command. When returning focus, `CommandBox`
-moves the caret to the end and clears JavaFX's automatic selection so the next
-keystroke continues editing the draft. The summary uses command words and
-flag labels from the command/parser definitions.
-
-`HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
-context, Enter/j and k move a line, d/u move half a screenful, g/G go to either end,
-and q/Esc return to commands. PgUp/PgDn, arrows and Home/End are also accepted.
-The reference is drawn as spans of `Text` in a wrapped `TextFlow` inside a
-scrollbar-free viewport, which takes the remaining window height. `HelpText` gives
-each span the class its token asks for — heading, command word, option, placeholder
-or plain — reusing the command box's own colours, so a marker reads the same where
-it is described as where it is typed. A command word carrying punctuation stays
-plain, since it is being named in a sentence rather than shown as syntax, and a
-two-letter capital such as `ID` is prose rather than a field.
-Page movement uses the current viewport and the font those spans share, so resizing
-and different fonts do not skip text. A persistent footer shows progress and navigation keys.
-The c key copies `HelpCommand.USER_GUIDE_URL` to the system clipboard and confirms
-it in the footer. Unused typed keys show a reminder to quit help before entering
-a command. The reference keeps explicit lines short enough for minimum width;
-the long User Guide address is available through c instead of wrapping in the label.
-Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
-command box so quitting cannot insert a stray character. Enter navigates on
-`KEY_PRESSED`; its typed newline is consumed without changing the notice or scrolling
-again, including when focus moves into help after submitting `help`.
-The empty typed event emitted by macOS F1 is also consumed so it
-cannot overwrite the opening notice.
-No student data is changed.
-
-Parser and highlighter syntax characters are defined by `CommandTokenizer`,
-so quoting, escaping and attached option markers stay consistent. Each keeps
-its own scanning loop because highlighting must also accept unfinished input.
-`ParserUtil.parseFollowUpSelector` decodes the optional follow-up state for
-both find and edit. Edit performs its full duplicate-option check first, then
-checks the selector before collecting field errors, preserving error priority.
-Email and ID edits share clear-or-parse handling; each retains its own validator
-and descriptor setter. Add and edit share
-`StudentIdValidation.requireNoDuplicate`, with edit permitting the replaced
-record to retain its ID.
-
-#### Restoring window geometry
-
-`MainWindow` supplies each screen's visual bounds to `WindowBounds`, with the
-primary screen first. Equal overlap therefore favors the primary screen.
-Restoration chooses the screen with the greatest overlap with the saved window,
-preserving valid secondary-screen positions, including negative coordinates.
-With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
-nonpositive or nonfinite dimensions use the default size. The window minimum
-also yields to a smaller usable area so it cannot defeat the size correction.
-The normal minimum height is 400 logical pixels, leaving room for window
-decorations and desktop panels within the 480 logical pixels available at
-1280×720 with 150% scaling. The student list and help text scroll within the
-remaining space, keeping the summary total, help footer and status bar visible.
-A window spanning adjacent displays is fitted entirely onto the selected screen,
-even when it was visible across both. This keeps restoration predictable when
-displays have different usable heights or gaps between them.
-
-#### Fitting names and tags on a card
-
-`CardHeadline` prefers a readable start of the name when allocating room to
-tags, but yields part of that allowance for a complete tag count. The name
-retains space for a character from each end. When no tag chip fits, `TagRow`
-uses the shorter `N tags` total instead of `N more…`, preserving a complete
-count beside the name. Its tooltip still lists every hidden tag. A partial
-chip requires room for four characters and an ellipsis, measured in its
-styled font with padding, so a two-letter fragment gives way to the total.
-A shorter tag can still appear in full.
-`TagRow.fittedWidth` reports the space its chosen chips or count actually use,
-so `CardHeadline` returns any unused allocation to the name before laying it
-out. The name requests its full natural width.
-
-#### Keeping contact details readable
-
-`StudentListCard.fxml` puts NUS Student ID, phone and email in `ContactRow`,
-a `FlowPane` that reports the natural width of one unwrapped row. This lets
-the containing boxes measure height at the allocated width on both JavaFX
-17 and 25, rather than reserving rows based on a fixed preferred wrap length.
-Labels keep their preferred widths and share a line when they fit; a label
-that does not fit the remaining space moves to the next line. Each label's
-maximum width follows the pane's width, so a value longer than an entire
-line shrinks with an ellipsis instead of overflowing the card.
-
-This keeps ordinary cards compact while allowing crowded cards to grow by
-only the rows they need. `UiText.showToFit` gives all three fields their full
-values on hover when clipped, and removes the tooltip when widening makes
-it unnecessary. Absent optional fields remain unmanaged, reserving no space.
-The follow-up pill shares an `HBox` with `CardHeadline` inside the details
-container, so it reserves width only on the headline. Contact rows use the
-same width with or without a flag. The details clip prevents drawing outside
-the card.
-
-`StudentListViewCell` measures preferred height at the smaller of the cell's
-content width and the card's maximum width, matching the width used by its
-skin during layout. Measuring at the wider cell width would miss a wrapped
-contact row near a wrap threshold and squeeze the headline.
-
-#### Coloring the command line
-
-`CommandTextField` converts separators to spaces in text replacement before
-JavaFX filters control characters. It asks `StringUtil#isWhitespace` the
-question the tokenizer asks of each character, so the box cannot hide a
-boundary the parser reads: JavaFX deletes a vertical tab or a form feed along
-with the other control characters, and draws a line, paragraph or next-line
-separator with no width, each of which joins the words around it on screen.
-The field preserves pasted word boundaries while keeping the command on one
-line, including when a paste replaces selected text. CRLF is treated as one
-separator.
-
-`CommandHighlighter` breaks a command where the parser breaks it, which the
-User Guide invites the User to rely on. That means two splits the coloring
-cannot make with the rule it uses for values. `StudentBookParser` ends the
-command word at the first separator whatever the quotes, so `add"Ravi s/o
-Kumaran"` is the command word `add"Ravi` and two words after it; reading that
-word with the value rule would draw one bold quoted word and then report an
-unknown command the colors never showed. `FlagTokenizer` reads `--tag="Lab
-3"` as an option and a value, so the marker and the equals sign are colored
-as the option and the rest as its value. A marker holding a quote or a
-backslash is left whole instead, because either moves the equals sign the
-parser counts to, and a word split in the wrong place would be the same bug
-again.
-
-A `TextField` cannot color its own content, so `CommandBox` keeps the field
-for input and hands `HighlightedTextOverlay` the nodes that draw a colored
-copy of the command behind it, with the field's own text transparent. The
-overlay owns that copy, the caret and the selection band. The field still takes every keystroke and still decides
-which character a click lands on, which keeps editing exactly as it was.
-
-`CommandHighlighter` decides the colors. It returns spans covering every
-character of the command. It walks the command itself, rather than calling
-`CommandTokenizer`, because it has to keep the text exactly as typed, quotes
-and all, where the tokenizer removes them and may refuse an unclosed quote
-that is merely half-typed. It asks the tokenizer the questions the two must
-agree on — `CommandTokenizer#isEscapable`, and `StringUtil#isWhitespace` for
-where a token ends — and `CommandHighlighterTest` runs both over a list of
-awkward commands and compares how many tokens each found. That catches one of
-them splitting a command into a different number of pieces; it does not
-compare where each piece begins and ends, so a boundary that moves without
-changing the count slips through. It never rejects anything: a
-command is colored while it is still half-typed.
-
-The copy measures its natural width from the whole shaped `TextFlow`, rounded
-up to avoid wrapping at a fractional pixel boundary. Ordinary value words and
-spaces share a text node so that splitting an unquoted right-to-left name does
-not change shaping or click positions.
-
-Three things then have to agree with the field, because the User reads our copy
-but interacts with the field:
-
-* **the scroll offset.** The copy is drawn wherever the field is drawing its
-  own text, read from the field's text node rather than worked out again here.
-  A field scrolls by rules that differ between typing, deleting, cutting and
-  undoing, and every attempt to reproduce them was right for some of those and
-  wrong for others; a copy even a pixel out of step shows one character where
-  the field hit-tests another, and clicks land in the wrong place. Reading
-  that node once is not enough, because the field's skin re-scrolls it after a
-  delete, a replace or a change of width, which is after the caret and the
-  text the coloring was told about have both settled. The copy therefore
-  follows the node's own position. The node is the one the field is drawing
-  in, since an empty line shows the prompt in a node of the same kind which
-  the field hides rather than throws away, and a command reading as the
-  prompt would otherwise be taken for the hidden one.
-* **the caret.** The field's caret is drawn in its text color, which is
-  transparent, so the line carries one of its own, sized from a run of the text
-  so it sits where the text does. Its horizontal position follows the primary
-  caret shape of the field’s text node, including its leading/trailing bias at
-  script boundaries. Logical prefix widths cannot locate RTL insertion points.
-* **the selection.** The field draws its highlight at its own offset, which
-  broke into fragments behind the copy, so it is turned off in the stylesheet
-  and drawn here instead. A path from `TextFlow.rangeShape` covers each visual
-  segment, including selections that cross RTL/LTR boundaries and appear as
-  separate bands.
-
-`CommandBoxTest` checks the contrast of the selection band against the line,
-and of every color the line uses against that band, including the one a
-refused command is written in, so that selecting a command cannot hide half of
-it. The bar it holds them to is 3:1 rather than the 4.5:1 WCAG asks of text
-this size: on a window this dark, a band light enough to be seen against the
-line (2.2:1) lightens the background enough that 4.5:1 would need every token
-color moved towards white, which is not the palette the mockup sets. The
-trade-off is deliberate and worth revisiting if the palette changes.
-
-#### Recalling session commands
-
-`CommandBox` records each submitted command in `CommandHistory` before execution,
-so rejected commands can be recalled too. While clear confirmation is pending,
-replies are excluded because they cannot be reused as standalone commands; the
-navigation position resets without recording the reply. The helper stores submissions separately
-from the draft captured when Up first leaves the newest position. Down past
-the newest submission restores that draft. Up skips the newest submission when
-it already matches the text in the box and an earlier entry exists. Blank
-submissions and consecutive identical submissions are skipped; editing a recalled entry does not alter stored text.
-
-The command box consumes unmodified Up/Down key presses before the text field
-handles them. Recalled text uses the existing text listener for coloring, and
-the caret moves to its end. This UI state is session-only and never enters the
-student model or persisted data.
-
-#### Summarizing the list
-
-`SummaryPanel` shows the flagged count, a count per tag and the total, beside
-the list. It counts `Logic#getFilteredStudentList()`, which is the only list
-`Logic` exposes, so it summarizes **what the list is showing** rather than the
-whole student book: after `find -n Alex` it counts the matches. That is the
-reading the User Guide documents, and it keeps the panel answering the same
-question as the list it sits beside. Summarizing the whole book instead would
-need `Logic` to expose it.
-
-The list is an `ObservableList`, so a listener keeps the counts current
-without the panel being told when a command changes anything. The counting
-itself is static and takes a plain `List<Student>`, so it is tested without a
-toolkit; only the rendering needs one.
-
-Tags counted the same are listed alphabetically ignoring case, because a
-reader does not read `Zoo` as coming before `apple`.
-
-Case variants of one tag are counted as one tag, because that is what `tag`
-makes of them when it refuses a tag a student already carries: a reader
-looking for the size of tutorial group `T1` would otherwise have to add up a
-row per spelling. The row is named with the spelling most of its students
-carry, which is settled by the counts rather than by the order of the list,
-so narrowing the list does not read as a second tag appearing.
-
-The panel groups two spellings with `String.CASE_INSENSITIVE_ORDER`, which
-calls them equal exactly when `String#equalsIgnoreCase` does, and so exactly
-when `TagCommand` refuses the second of them. Folding case by lowercasing
-would answer a different question and split a group `tag` has already joined:
-a Greek capital sigma lowercases to a medial sigma, while the final sigma a
-student may carry the same tag under lowercases to itself.
-
 ### Logic component
 
 **API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java)
@@ -407,12 +139,10 @@ How the `Logic` component works:
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
-`LogicManager` compares a snapshot of the full student book before execution
-with the records afterwards and saves only if they differ. Filter changes and
-commands such as `list`, `find`, `help`, and `exit` therefore need no write
-permission. Confirming `clear` still saves the emptied book. If a save fails,
-`LogicManager` restores the snapshot and active filter before reporting the
-error, so a failed command does not remain applied in memory.
+`LogicManager` writes to storage only when a command changes the student
+records, and puts them back if that write fails.
+[Rolling back model changes when saving fails](#rolling-back-model-changes-when-saving-fails)
+covers how.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a command entered by the User:
 
@@ -543,6 +273,272 @@ Classes used by multiple components are in the `seedu.tab.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Showing commands and their results
+
+`AddCommand` includes the new student in its `CommandResult`.
+`MainWindow` asks `StudentListPanel` to reveal that card only after `Logic.execute`
+returns successfully, so failed saves cannot scroll to an unsaved student.
+Scrolling leaves focus in the command box and uses the displayed list after
+the existing search-preservation rules have been applied. It locates the exact
+saved student object so an earlier record with identical details is not revealed
+instead, and skips a target that has left the displayed list before layout.
+
+The student card's `TagRow` creates a label for every tag, with its full text.
+Layout shows as many complete chips as fit and lists all hidden tags in the
+overflow chip's tooltip. There is no fixed chip count or label length cap.
+
+English numeric feedback and data-load diagnostics format with `Locale.ROOT`,
+and command highlight style names use the same locale when lowercasing. This
+keeps digits and CSS selectors consistent without changing the JVM locale or
+student data.
+
+`SummaryPanel` wraps complete tag names within the fixed 150 px sidebar.
+Each count retains its preferred width, while the tag list scrolls vertically
+as wrapped rows grow. Names are not shortened, so tags differing only at the
+end remain distinguishable without hovering.
+
+`MainWindow` handles plain Tab and Shift+Tab on the student page to keep a
+stable focus cycle: command box, student list, summary tag list, then the
+reply when visible. The student list stays one Tab from command entry even
+after a reply appears; Shift+Tab returns directly. Empty lists stay reachable.
+`SummaryPanel.fxml` makes the tag `ScrollPane` focus-traversable, and the theme
+marks its focus with an accent outline without changing its layout size.
+JavaFX supplies arrow and Home/End navigation for both lists, plus paging for
+the student list. `SummaryPanel` handles Page Up/Down using the tag viewport's
+height and content overflow: JavaFX's default `ScrollPane` page keys otherwise
+use the same increment as its arrow keys. The command box retains its separate
+Up/Down history behavior. Help uses its own pager and restores command focus
+when closed.
+
+`HelpCommand` returns a command summary and the existing `showHelp` signal.
+`MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
+the entire student page (command box, result, summary sidebar and student list).
+The hidden student page remains intact so closing help restores its filter,
+previous result and any unfinished command. When returning focus, `CommandBox`
+moves the caret to the end and clears JavaFX's automatic selection so the next
+keystroke continues editing the draft. The summary uses command words and
+flag labels from the command/parser definitions.
+
+`HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
+context, Enter/j and k move a line, d/u move half a screenful, g/G go to either end,
+and q/Esc return to commands. PgUp/PgDn, arrows and Home/End are also accepted.
+The reference is drawn as spans of `Text` in a wrapped `TextFlow` inside a
+scrollbar-free viewport, which takes the remaining window height. `HelpText` gives
+each span the class its token asks for — heading, command word, option, placeholder
+or plain — reusing the command box's own colours, so a marker reads the same where
+it is described as where it is typed. A command word carrying punctuation stays
+plain, since it is being named in a sentence rather than shown as syntax, and a
+two-letter capital such as `ID` is prose rather than a field.
+Page movement uses the current viewport and the font those spans share, so resizing
+and different fonts do not skip text. A persistent footer shows progress and navigation keys.
+The c key copies `HelpCommand.USER_GUIDE_URL` to the system clipboard and confirms
+it in the footer. Unused typed keys show a reminder to quit help before entering
+a command. The reference keeps explicit lines short enough for minimum width;
+the long User Guide address is available through c instead of wrapping in the label.
+Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
+command box so quitting cannot insert a stray character. Enter navigates on
+`KEY_PRESSED`; its typed newline is consumed without changing the notice or scrolling
+again, including when focus moves into help after submitting `help`.
+The empty typed event emitted by macOS F1 is also consumed so it
+cannot overwrite the opening notice.
+No student data is changed.
+
+Parser and highlighter syntax characters are defined by `CommandTokenizer`,
+so quoting, escaping and attached option markers stay consistent. Each keeps
+its own scanning loop because highlighting must also accept unfinished input.
+`ParserUtil.parseFollowUpSelector` decodes the optional follow-up state for
+both find and edit. Edit performs its full duplicate-option check first, then
+checks the selector before collecting field errors, preserving error priority.
+Email and ID edits share clear-or-parse handling; each retains its own validator
+and descriptor setter. Add and edit share
+`StudentIdValidation.requireNoDuplicate`, with edit permitting the replaced
+record to retain its ID.
+
+### Restoring window geometry
+
+`MainWindow` supplies each screen's visual bounds to `WindowBounds`, with the
+primary screen first. Equal overlap therefore favors the primary screen.
+Restoration chooses the screen with the greatest overlap with the saved window,
+preserving valid secondary-screen positions, including negative coordinates.
+With no overlap or no saved position, it centers on the primary screen. It clamps size and position to that screen's usable area;
+nonpositive or nonfinite dimensions use the default size. The window minimum
+also yields to a smaller usable area so it cannot defeat the size correction.
+The normal minimum height is 400 logical pixels, leaving room for window
+decorations and desktop panels within the 480 logical pixels available at
+1280×720 with 150% scaling. The student list and help text scroll within the
+remaining space, keeping the summary total, help footer and status bar visible.
+A window spanning adjacent displays is fitted entirely onto the selected screen,
+even when it was visible across both. This keeps restoration predictable when
+displays have different usable heights or gaps between them.
+
+### Fitting names and tags on a card
+
+`CardHeadline` prefers a readable start of the name when allocating room to
+tags, but yields part of that allowance for a complete tag count. The name
+retains space for a character from each end. When no tag chip fits, `TagRow`
+uses the shorter `N tags` total instead of `N more…`, preserving a complete
+count beside the name. Its tooltip still lists every hidden tag. A partial
+chip requires room for four characters and an ellipsis, measured in its
+styled font with padding, so a two-letter fragment gives way to the total.
+A shorter tag can still appear in full.
+`TagRow.fittedWidth` reports the space its chosen chips or count actually use,
+so `CardHeadline` returns any unused allocation to the name before laying it
+out. The name requests its full natural width.
+
+### Keeping contact details readable
+
+`StudentListCard.fxml` puts NUS Student ID, phone and email in `ContactRow`,
+a `FlowPane` that reports the natural width of one unwrapped row. This lets
+the containing boxes measure height at the allocated width on both JavaFX
+17 and 25, rather than reserving rows based on a fixed preferred wrap length.
+Labels keep their preferred widths and share a line when they fit; a label
+that does not fit the remaining space moves to the next line. Each label's
+maximum width follows the pane's width, so a value longer than an entire
+line shrinks with an ellipsis instead of overflowing the card.
+
+This keeps ordinary cards compact while allowing crowded cards to grow by
+only the rows they need. `UiText.showToFit` gives all three fields their full
+values on hover when clipped, and removes the tooltip when widening makes
+it unnecessary. Absent optional fields remain unmanaged, reserving no space.
+The follow-up pill shares an `HBox` with `CardHeadline` inside the details
+container, so it reserves width only on the headline. Contact rows use the
+same width with or without a flag. The details clip prevents drawing outside
+the card.
+
+`StudentListViewCell` measures preferred height at the smaller of the cell's
+content width and the card's maximum width, matching the width used by its
+skin during layout. Measuring at the wider cell width would miss a wrapped
+contact row near a wrap threshold and squeeze the headline.
+
+### Coloring the command line
+
+`CommandTextField` converts separators to spaces in text replacement before
+JavaFX filters control characters. It asks `StringUtil#isWhitespace` the
+question the tokenizer asks of each character, so the box cannot hide a
+boundary the parser reads: JavaFX deletes a vertical tab or a form feed along
+with the other control characters, and draws a line, paragraph or next-line
+separator with no width, each of which joins the words around it on screen.
+The field preserves pasted word boundaries while keeping the command on one
+line, including when a paste replaces selected text. CRLF is treated as one
+separator.
+
+`CommandHighlighter` breaks a command where the parser breaks it, which the
+User Guide invites the User to rely on. That means two splits the coloring
+cannot make with the rule it uses for values. `StudentBookParser` ends the
+command word at the first separator whatever the quotes, so `add"Ravi s/o
+Kumaran"` is the command word `add"Ravi` and two words after it; reading that
+word with the value rule would draw one bold quoted word and then report an
+unknown command the colors never showed. `FlagTokenizer` reads `--tag="Lab
+3"` as an option and a value, so the marker and the equals sign are colored
+as the option and the rest as its value. A marker holding a quote or a
+backslash is left whole instead, because either moves the equals sign the
+parser counts to, and a word split in the wrong place would be the same bug
+again.
+
+A `TextField` cannot color its own content, so `CommandBox` keeps the field
+for input and hands `HighlightedTextOverlay` the nodes that draw a colored
+copy of the command behind it, with the field's own text transparent. The
+overlay owns that copy, the caret and the selection band. The field still takes every keystroke and still decides
+which character a click lands on, which keeps editing exactly as it was.
+
+`CommandHighlighter` decides the colors. It returns spans covering every
+character of the command. It walks the command itself, rather than calling
+`CommandTokenizer`, because it has to keep the text exactly as typed, quotes
+and all, where the tokenizer removes them and may refuse an unclosed quote
+that is merely half-typed. It asks the tokenizer the questions the two must
+agree on — `CommandTokenizer#isEscapable`, and `StringUtil#isWhitespace` for
+where a token ends — so the colors cannot split a command where the parser
+would not. It never rejects anything: a command is colored while it is still
+half-typed.
+
+The copy measures its natural width from the whole shaped `TextFlow`, rounded
+up to avoid wrapping at a fractional pixel boundary. Ordinary value words and
+spaces share a text node so that splitting an unquoted right-to-left name does
+not change shaping or click positions.
+
+Three things then have to agree with the field, because the User reads our copy
+but interacts with the field:
+
+* **the scroll offset.** The copy is drawn wherever the field is drawing its
+  own text, read from the field's text node rather than worked out again here.
+  A field scrolls by rules that differ between typing, deleting, cutting and
+  undoing, and every attempt to reproduce them was right for some of those and
+  wrong for others; a copy even a pixel out of step shows one character where
+  the field hit-tests another, and clicks land in the wrong place. Reading
+  that node once is not enough, because the field's skin re-scrolls it after a
+  delete, a replace or a change of width, which is after the caret and the
+  text the coloring was told about have both settled. The copy therefore
+  follows the node's own position. The node is the one the field is drawing
+  in, since an empty line shows the prompt in a node of the same kind which
+  the field hides rather than throws away, and a command reading as the
+  prompt would otherwise be taken for the hidden one.
+* **the caret.** The field's caret is drawn in its text color, which is
+  transparent, so the line carries one of its own, sized from a run of the text
+  so it sits where the text does. Its horizontal position follows the primary
+  caret shape of the field’s text node, including its leading/trailing bias at
+  script boundaries. Logical prefix widths cannot locate RTL insertion points.
+* **the selection.** The field draws its highlight at its own offset, which
+  broke into fragments behind the copy, so it is turned off in the stylesheet
+  and drawn here instead. A path from `TextFlow.rangeShape` covers each visual
+  segment, including selections that cross RTL/LTR boundaries and appear as
+  separate bands.
+
+Every color the line uses is held to 3:1 against the selection band, so
+selecting a command cannot hide half of it. That is below the 4.5:1 WCAG asks
+of text this size, deliberately: on a window this dark, a band light enough to
+be seen against the line sits at 2.2:1, and reaching 4.5:1 against it would
+mean moving every token color towards white, away from the palette the mockup
+sets. Worth revisiting if the palette changes.
+
+### Recalling session commands
+
+`CommandBox` records each submitted command in `CommandHistory` before execution,
+so rejected commands can be recalled too. While clear confirmation is pending,
+replies are excluded because they cannot be reused as standalone commands; the
+navigation position resets without recording the reply. The helper stores submissions separately
+from the draft captured when Up first leaves the newest position. Down past
+the newest submission restores that draft. Up skips the newest submission when
+it already matches the text in the box and an earlier entry exists. Blank
+submissions and consecutive identical submissions are skipped; editing a recalled entry does not alter stored text.
+
+The command box consumes unmodified Up/Down key presses before the text field
+handles them. Recalled text uses the existing text listener for coloring, and
+the caret moves to its end. This UI state is session-only and never enters the
+student model or persisted data.
+
+### Summarizing the list
+
+`SummaryPanel` shows the flagged count, a count per tag and the total, beside
+the list. It counts `Logic#getFilteredStudentList()`, which is the only list
+`Logic` exposes, so it summarizes **what the list is showing** rather than the
+whole student book: after `find -n Alex` it counts the matches. That is the
+reading the User Guide documents, and it keeps the panel answering the same
+question as the list it sits beside. Summarizing the whole book instead would
+need `Logic` to expose it.
+
+The list is an `ObservableList`, so a listener keeps the counts current
+without the panel being told when a command changes anything. The counting
+itself is static and takes a plain `List<Student>`, so it is tested without a
+toolkit; only the rendering needs one.
+
+Tags counted the same are listed alphabetically ignoring case, because a
+reader does not read `Zoo` as coming before `apple`.
+
+Case variants of one tag are counted as one tag, because that is what `tag`
+makes of them when it refuses a tag a student already carries: a reader
+looking for the size of tutorial group `T1` would otherwise have to add up a
+row per spelling. The row is named with the spelling most of its students
+carry, which is settled by the counts rather than by the order of the list,
+so narrowing the list does not read as a second tag appearing.
+
+The panel groups two spellings with `String.CASE_INSENSITIVE_ORDER`, which
+calls them equal exactly when `String#equalsIgnoreCase` does, and so exactly
+when `TagCommand` refuses the second of them. Folding case by lowercasing
+would answer a different question and split a group `tag` has already joined:
+a Greek capital sigma lowercases to a medial sigma, while the final sigma a
+student may carry the same tag under lowercases to itself.
+
+
 ### Protecting saves from stale windows
 
 `JsonStudentBookStorage` retains a separate copy of the student book loaded or
@@ -592,31 +588,45 @@ as its application directory, preserving the development workflow.
 
 ### How commands read their arguments
 
-`add` and `edit` mark their fields with options,
-`add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
-`edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`,
-where AB3 marked them with prefixes such as `p/`. The `edit` target is a
-shown index, a letter-leading NUS Student ID, or `--target-id NUS_STUDENT_ID`.
-A dedicated target option keeps selection unambiguous when `--id` sets or
-clears the ID field, and permits digit-leading IDs without changing how bare
-numbers select displayed indices. `EditCommandParser` reuses
-`ParserUtil.parseRequiredStudentTarget` for preamble targets and
-`ParserUtil.parseNusStudentId` for explicit targets, building a `StudentTarget`
-in either case. Duplicate target options and mixed preamble/option targets
-are rejected before execution. Selecting a target alone does not count as a
-field edit. ID targets resolve across the whole book, preserving the search
-predicate after editing and using the existing persistence path.
-The value options have descriptive long aliases: `--name`, `--phone`,
-`--email`, and `--tag` correspond to `-n`, `-p`, `-e`, and `-t` respectively.
-`add` takes its name in the preamble. `edit` accepts `-n`/`--name` to change a
-name, and `find` accepts the same option to search names.
+A command marks each field with an option rather than a prefix attached to the
+value:
 
-A prefix has to be a sequence a value never contains, and no such sequence
-exists for a name. `s/o`, `d/o`, `a/l` and `a/p` are ordinary parts of
-Singaporean and Malaysian names, and `a/l` was in fact unreadable for as long
-as an address field was marked `a/`. Widening the prefixes would only move the
-collision somewhere else. Options move the problem out of the value entirely:
-an option is a whole token, so a name is read as a name however it is spelled.
+```
+add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]
+edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]
+```
+
+**Aspect: how a command tells one field from the next**
+
+* **Alternative 1 (current choice):** an option, a whole token of its own, such
+  as `-p` or `--phone`.
+  * Pros: a value is read as a value whatever it contains, so a name may hold
+    any character.
+  * Cons: a value with spaces has to be quoted, and the User types a space
+    between the option and its value.
+* **Alternative 2:** a prefix joined to the value, as AB3 uses, such as
+  `p/91234567`.
+  * Pros: shorter to type, with no quoting.
+  * Cons: a prefix has to be a sequence no value ever contains, and no such
+    sequence exists for a name. `s/o`, `d/o`, `a/l` and `a/p` are ordinary
+    parts of Singaporean and Malaysian names, and `a/l` was unreadable for as
+    long as an address field was marked `a/`. Widening the prefixes moves the
+    collision rather than removing it.
+
+Each value option has a long alias: `--name`, `--phone`, `--email` and `--tag`
+answer to `-n`, `-p`, `-e` and `-t`. `add` takes its name in the preamble;
+`edit` and `find` both read `-n`/`--name`.
+
+The `edit` target is a displayed index, a letter-leading NUS Student ID, or
+`--target-id NUS_STUDENT_ID`. A target option of its own keeps selection
+unambiguous while `--id` sets or clears the ID field, and admits digit-leading
+IDs without changing how a bare number selects a displayed position.
+`EditCommandParser` builds a `StudentTarget` either way, through
+`ParserUtil.parseRequiredStudentTarget` for a preamble target or
+`ParserUtil.parseNusStudentId` for an explicit one. It rejects duplicate target
+options and a mixed preamble/option target before execution, does not count
+selecting a target as a field edit, and resolves an ID target across the whole
+book so the search predicate survives the edit.
 
 Parsing runs in two passes, the way a shell does it.
 
@@ -962,22 +972,25 @@ ignoring case, avoiding placeholder labels or empty tag markers.
 
 ### Field values
 
-`Student` stores phone, email and NUS Student ID as `Optional<Phone>`,
-`Optional<Email>` and `Optional<NusStudentId>`. Both constructors require non-null arguments;
-`Optional.empty()` explicitly represents an unknown detail. One constructor
-accepts the follow-up boolean, and the other defaults to unflagged for sample
-data. There are no overloads accepting nullable email or ID values, and no
-`Student` field is null. Add, edit, storage conversion, and test builders pass
-optionals directly into this contract. Nullable JSON strings remain confined
-to the storage adapter, preserving the existing file format.
+Two decisions shape every field a student carries.
 
-`Name`, `Tag`, `Phone`, `Email` and `NusStudentId` each store the form returned by
-`StringUtil.normalizeFieldValue`: without invisible format characters such as
-direction marks and non-whitespace controls, with each run of whitespace reduced
-to one ASCII space
-and leading and trailing whitespace removed, and with the result composed to
-Unicode NFC. Composing happens last, because an invisible character between a
-base letter and its combining mark blocks the two from composing.
+**A detail TAB does not know is absent, not blank.** `Student` holds phone,
+email and NUS Student ID as `Optional<Phone>`, `Optional<Email>` and
+`Optional<NusStudentId>`, and no `Student` field is ever null. Both
+constructors require non-null arguments, one taking the follow-up boolean and
+the other defaulting to unflagged for sample data. Add, edit, storage
+conversion and the test builders all pass optionals into that contract, so
+nullable strings stay inside the storage adapter and the file format is
+unchanged.
+
+**Two values that look the same are stored the same.** `Name`, `Tag`, `Phone`,
+`Email` and `NusStudentId` each keep the form `StringUtil.normalizeFieldValue`
+returns. That strips characters the reader cannot see, such as direction marks
+left by a copy and paste; collapses each run of spaces to one and trims the
+ends; and finally composes the result, so that a letter typed as a base plus a
+separate accent is stored as the single character it looks like. Composing
+comes last because an invisible character between the two blocks them from
+joining. The composed form is Unicode NFC.
 
 The following activity diagram shows the normalization pipeline:
 
@@ -998,17 +1011,22 @@ whitespace, brackets and an extension; a tag may hold whitespace, hyphens and an
 script. None of those characters can hinder TAB, because none of these
 fields is parsed, dialled, or used to build a file path.
 
-**Phone text intentionally has no maximum length.** Teaching assistants may
-record several numbers, extensions and contact annotations in one field. A fixed
-cap could reject useful contact details or prevent an existing saved record from
-loading. The minimum of three Unicode decimal digits still applies. Acceptance
-of a 400-digit value alone does not establish a usability, performance or
-persistence problem that justifies a cap. Email's separate length restriction
-addresses its validation and storage concerns; it is not a reason to restrict
-phone text. Reconsider this decision if a concrete problem is demonstrated,
-with a migration plan for existing data and a limit justified by contact use
-cases. Long phone presentation uses ellipses and complete-value tooltips rather
-than truncating the stored text.
+**Aspect: how long a phone value may be**
+
+* **Alternative 1 (current choice):** no maximum, with the minimum of three
+  Unicode decimal digits still applying.
+  * Pros: a teaching assistant can record several numbers, extensions and
+    contact annotations in one field, and no saved record becomes unloadable.
+  * Cons: a 400-digit value is accepted. A long value is shown with an ellipsis
+    and its full text on hover, rather than the stored text being cut.
+* **Alternative 2:** a fixed cap, as `Email` has at 254 characters.
+  * Pros: bounds what the card and the file have to hold.
+  * Cons: rejects useful contact details, and a cap below an existing value
+    stops that record loading. Email's limit answers its own validation and
+    storage concerns and does not transfer.
+
+Worth revisiting if a concrete problem appears, with a migration plan for
+existing data and a limit justified by contact use cases.
 
 **The NUS Student ID may be absent.** `NusStudentId` accepts between 1 and 32
 ASCII letters and digits. Input letters are case-insensitive and the value is
@@ -1311,13 +1329,11 @@ letter or number, judged by Unicode category rather than by ASCII.
 | Punctuation only, such as `---` | no letter or number |
 | An emoji, or a zero-width space, on its own | no letter or number |
 
-**A name that holds a command prefix parses.** AB3 marked its fields with the
-prefixes `n/`, `p/`, `e/` and `t/`, so a name holding any of them after an
-ASCII space was read as the start of another field. `a/l` and `a/p`, ordinary
-components of a Malaysian name, failed this way until the address field was
-removed and the `a/` prefix with it, and the rest failed until `add` and `edit`
-took positional arguments and command options instead. `Name` itself never
-needed changing.
+**A name may hold anything, including a sequence that looks like an option.**
+`a/l` and `a/p`, ordinary components of a Malaysian name, are stored and shown
+as typed, because a field is marked by an option of its own rather than by a
+marker joined to the value. `Name` enforces no restriction beyond holding at
+least one letter or number.
 
 **Showing a long name.** A card gives the name one line, shared with the tags
 and follow-up marker. `StudentCard` supplies the complete name through
