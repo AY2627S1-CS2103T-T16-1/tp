@@ -1,0 +1,48 @@
+@startuml
+!include style.puml
+
+[*] --> IDLE : Launch
+
+state IDLE {
+    [*] --> NO_PENDING
+}
+
+state NO_PENDING {
+    NO_PENDING : pendingClearCommand = empty
+}
+
+state PENDING : pendingClearCommand present
+PENDING : awaiting user reply
+
+state "Processing reply" as REPLY {
+    [*] --> STRIP
+    STRIP : stripFormatCharacters(reply)
+    STRIP --> TRIM
+    TRIM : trim Unicode whitespace
+    TRIM --> CHECK
+    CHECK : isEmpty || equals("n") || equals("no") ?
+    CHECK --> DROP : [yes]
+    CHECK --> IS_YES : [no]
+    IS_YES : equals("y") || equals("yes") ?
+    IS_YES --> CONFIRM : [yes]
+    IS_YES --> INVALID : [no]
+}
+
+DROP : pendingClearCommand = empty
+DROP --> NO_PENDING : no-op / message
+
+CONFIRM : pendingClearCommand = empty
+CONFIRM --> NO_PENDING : executeConfirmed() then clear
+
+INVALID : ParseException with feedback
+INVALID --> PENDING : prompt repeated
+
+NO_PENDING --> PENDING : clear (non-empty book)
+PENDING --> REPLY : user replies
+REPLY --> DROP : cancel / decline
+REPLY --> CONFIRM : confirm
+REPLY --> INVALID : invalid input
+
+NO_PENDING --> [*] : exit
+@enduml
+

@@ -34,3 +34,4 @@ JsonSerializableStudentBook --> "*" JsonAdaptedStudent
 JsonAdaptedStudent --> "*" JsonAdaptedTag
 
 @enduml
+

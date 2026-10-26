@@ -695,6 +695,11 @@ once under each alias, all leave it
 unclear which field a value belongs to, so each is refused on its own instead
 of being collected with the field errors.
 
+The following sequence diagram shows how a command's arguments are parsed
+in two passes:
+
+<puml src="diagrams/CommandArgumentParsing.puml" alt="CommandArgumentParsing" />
+
 `edit` clears a field with an explicitly empty value rather than with a bare
 option. `-p ""` removes the phone number, `-e ""` removes the email,
 `--id ""` removes the NUS Student ID, and
@@ -775,8 +780,12 @@ For a hidden flagged student, the absent-tag hint supplies
 `edit --target-id NUS_STUDENT_ID --no-follow-up` with the student's stored ID.
 This addresses even digit-leading IDs without changing the active search.
 
-Invalid indexes or absent IDs, existing tags on addition and absent tags
-on removal throw `CommandException` before mutation; invalid syntax or values throw
+The following sequence diagram shows how a `tag` command adds or removes a tag:
+
+<puml src="diagrams/TagCommandSequence.puml" alt="TagCommandSequence" />
+
+Invalid indexes, existing tags on addition and absent tags on removal throw
+`CommandException` before mutation; invalid syntax or values throw
 `ParseException`. These paths never reach
 `LogicManager`'s save. Successful additions and removals use the normal JSON
 save path without changing the schema. Integration tests exercise reloads,
@@ -969,6 +978,10 @@ to one ASCII space
 and leading and trailing whitespace removed, and with the result composed to
 Unicode NFC. Composing happens last, because an invisible character between a
 base letter and its combining mark blocks the two from composing.
+
+The following activity diagram shows the normalization pipeline:
+
+<puml src="diagrams/NormalizeFieldValue.puml" alt="NormalizeFieldValue" />
 
 They normalize for different reasons, and the rule each one enforces differs.
 
@@ -1387,6 +1400,10 @@ and restarts TAB. Loading readable records separately and reloading without a
 restart remain separate future features.
 
 ### Confirming a clear
+
+The following state/activity diagram shows the pending-clear confirmation flow:
+
+<puml src="diagrams/ClearConfirmation.puml" alt="ClearConfirmation" />
 
 `ClearCommand.execute` returns a prompt containing the whole-book count,
 including students hidden by the current filter. It does not mutate the
