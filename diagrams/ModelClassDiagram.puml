@@ -1,5 +1,10 @@
 @startuml
 !include style.puml
+' Orthogonal routing keeps each association on its own vertical, and the leading
+' newline in every multiplicity lifts the text clear of the line it labels.
+skinparam linetype ortho
+skinparam nodesep 20
+skinparam ranksep 30
 skinparam arrowThickness 1.1
 skinparam arrowColor MODEL_COLOR
 skinparam classBackgroundColor MODEL_COLOR
@@ -36,14 +41,14 @@ ModelManager -left-> "1" StudentBook
 ModelManager -right-> "1" UserPrefs
 UserPrefs .up.|> ReadOnlyUserPrefs
 
-StudentBook *--> "1" UniqueStudentList
-UniqueStudentList --> "~* all" Student
+StudentBook *--> "\n1" UniqueStudentList
+UniqueStudentList --> "\n~* all" Student
 Student *--> Name
-Student *--> Phone
-Student *--> "0..1" Email
-Student *--> "0..1" NusStudentId
-Student *--> "*" Tag
-Student *--> "0..1" FollowUpFlag
+Student *--> "\n0..1" Phone
+Student *--> "\n0..1" Email
+Student *--> "\n0..1" NusStudentId
+Student *--> "\n*" Tag
+Student *--> "\n0..1" FollowUpFlag
 FollowUpFlag --|> Tag
 
 note right of Student
@@ -59,6 +64,6 @@ Name -[hidden]right-> Phone
 Phone -[hidden]right-> Email
 Email -[hidden]right-> NusStudentId
 
-ModelManager --> "~* filtered" Student
+ModelManager --> "\n~* filtered" Student
 @enduml
 
