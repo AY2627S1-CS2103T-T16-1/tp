@@ -8,6 +8,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
+import static seedu.tab.logic.parser.CliFlags.FLAG_TARGET_ID;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -45,24 +46,26 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the student identified "
             + "by the index number used in the displayed student list, or by the NUS Student ID "
-            + "they hold anywhere in the book. A target ID opens with a letter; a digit-leading ID "
-            + "is edited by index, because " + FLAG_NUS_STUDENT_ID + " sets the ID rather than naming it. "
+            + "they hold anywhere in the book. Use " + FLAG_TARGET_ID.getLabel()
+            + " for an ID starting with a digit; " + FLAG_NUS_STUDENT_ID + " sets the ID field. "
             + "Existing values will be overwritten by the input values, while "
             + FLAG_FOLLOW_UP.getMarkerSummary() + " sets follow-up and "
             + FLAG_NO_FOLLOW_UP.getMarkerSummary() + " clears it.\n"
-            + "Parameters: " + FIELD_INDEX + " (must be a positive integer) or NUS_STUDENT_ID "
+            + "Parameters: " + FIELD_INDEX + " (must be a positive integer), NUS_STUDENT_ID, or "
+            + FLAG_TARGET_ID.getLabel() + " "
             + "[" + FLAG_NAME.getLabel() + "] "
             + "[" + FLAG_PHONE.getLabel() + "] "
             + "[" + FLAG_EMAIL.getLabel() + "] "
             + "[" + FLAG_NUS_STUDENT_ID.getLabel() + "] "
             + "[" + FLAG_TAG.getLabel() + "]... "
             + "[" + FLAG_FOLLOW_UP.getLabel() + " | " + FLAG_NO_FOLLOW_UP.getLabel() + "]\n"
-            + "The target comes first. Any option value holding spaces, and any value opening with "
+            + "A target without an option comes first. Any option value holding spaces, and any value opening with "
             + "a hyphen, goes in double quotes. The value options accept either spelling: "
             + FLAG_NAME.getMarkerSummary() + ", " + FLAG_PHONE.getMarkerSummary() + ", "
             + FLAG_EMAIL.getMarkerSummary() + ", " + FLAG_NUS_STUDENT_ID.getMarkerSummary() + " and "
             + FLAG_TAG.getMarkerSummary() + ". "
             + FLAG_TAG + " \"\" clears every tag; "
+            + FLAG_PHONE + " \"\" clears the phone number; "
             + FLAG_EMAIL + " \"\" clears the email; "
             + FLAG_NUS_STUDENT_ID + " \"\" clears it.\n"
             + "Example: " + COMMAND_WORD + " 1 "
@@ -70,10 +73,13 @@ public class EditCommand extends Command {
             + FLAG_EMAIL + " johndoe@example.com "
             + FLAG_NUS_STUDENT_ID + " A01234567X\n"
             + "Example: " + COMMAND_WORD + " A0123456X "
-            + FLAG_PHONE + " 91234567";
+            + FLAG_PHONE + " 91234567\n"
+            + "Example: " + COMMAND_WORD + " " + FLAG_TARGET_ID + " 1234 " + FLAG_NO_FOLLOW_UP;
 
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_UNCHANGED = "Student already has the requested details. No changes made.";
+    public static final String MESSAGE_MULTIPLE_TARGETS =
+            "Give one student target: an index, a letter-leading NUS Student ID, or --target-id NUS_STUDENT_ID.";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
 
     private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
@@ -129,7 +135,9 @@ public class EditCommand extends Command {
         assert studentToEdit != null;
 
         Name updatedName = editStudentDescriptor.getName().orElse(studentToEdit.getName());
-        Phone updatedPhone = editStudentDescriptor.getPhone().orElse(studentToEdit.getPhone());
+        Optional<Phone> updatedPhone = editStudentDescriptor.isPhoneEdited()
+                ? editStudentDescriptor.getPhone()
+                : studentToEdit.getPhone();
         Optional<Email> updatedEmail = editStudentDescriptor.isEmailEdited()
                 ? editStudentDescriptor.getEmail()
                 : studentToEdit.getEmail();
@@ -177,7 +185,7 @@ public class EditCommand extends Command {
      */
     public static class EditStudentDescriptor {
         private Name name;
-        private Phone phone;
+        private final OptionalFieldEdit<Phone> phoneEdit;
         private final OptionalFieldEdit<Email> emailEdit;
         private final OptionalFieldEdit<NusStudentId> nusStudentIdEdit;
         private Set<Tag> tags;
@@ -187,6 +195,7 @@ public class EditCommand extends Command {
          * Constructs an empty descriptor whose optional fields have not been edited.
          */
         public EditStudentDescriptor() {
+            phoneEdit = new OptionalFieldEdit<>();
             emailEdit = new OptionalFieldEdit<>();
             nusStudentIdEdit = new OptionalFieldEdit<>();
         }
@@ -197,10 +206,10 @@ public class EditCommand extends Command {
          */
         public EditStudentDescriptor(EditStudentDescriptor toCopy) {
             requireNonNull(toCopy);
+            phoneEdit = new OptionalFieldEdit<>(toCopy.phoneEdit);
             emailEdit = new OptionalFieldEdit<>(toCopy.emailEdit);
             nusStudentIdEdit = new OptionalFieldEdit<>(toCopy.nusStudentIdEdit);
             setName(toCopy.name);
-            setPhone(toCopy.phone);
             setTags(toCopy.tags);
             isFlagged = toCopy.isFlagged;
         }
@@ -209,8 +218,8 @@ public class EditCommand extends Command {
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, tags, isFlagged)
-                    || emailEdit.isEdited() || nusStudentIdEdit.isEdited();
+            return CollectionUtil.isAnyNonNull(name, tags, isFlagged)
+                    || phoneEdit.isEdited() || emailEdit.isEdited() || nusStudentIdEdit.isEdited();
         }
 
         public void setName(Name name) {
@@ -221,12 +230,28 @@ public class EditCommand extends Command {
             return Optional.ofNullable(name);
         }
 
+        /**
+         * Sets a replacement phone number and marks the phone as edited.
+         *
+         * @throws NullPointerException if {@code phone} is null.
+         */
         public void setPhone(Phone phone) {
-            this.phone = phone;
+            phoneEdit.set(requireNonNull(phone));
+        }
+
+        /**
+         * Marks the phone number for removal without changing any other field.
+         */
+        public void clearPhone() {
+            phoneEdit.clear();
+        }
+
+        public boolean isPhoneEdited() {
+            return phoneEdit.isEdited();
         }
 
         public Optional<Phone> getPhone() {
-            return Optional.ofNullable(phone);
+            return phoneEdit.getValue();
         }
 
         /**
@@ -317,7 +342,7 @@ public class EditCommand extends Command {
             }
 
             return Objects.equals(name, otherEditStudentDescriptor.name)
-                    && Objects.equals(phone, otherEditStudentDescriptor.phone)
+                    && phoneEdit.hasSameStateAs(otherEditStudentDescriptor.phoneEdit)
                     && emailEdit.hasSameStateAs(otherEditStudentDescriptor.emailEdit)
                     && nusStudentIdEdit.hasSameStateAs(otherEditStudentDescriptor.nusStudentIdEdit)
                     && Objects.equals(tags, otherEditStudentDescriptor.tags)
@@ -326,7 +351,8 @@ public class EditCommand extends Command {
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, phone, emailEdit.isEdited(), emailEdit.getValue(),
+            return Objects.hash(name, phoneEdit.isEdited(), phoneEdit.getValue(),
+                    emailEdit.isEdited(), emailEdit.getValue(),
                     nusStudentIdEdit.isEdited(), nusStudentIdEdit.getValue(), tags, isFlagged);
         }
 
@@ -334,7 +360,8 @@ public class EditCommand extends Command {
         public String toString() {
             return new ToStringBuilder(this)
                     .add("name", name)
-                    .add("phone", phone)
+                    .add("phone", phoneEdit.getValue())
+                    .add("isPhoneEdited", phoneEdit.isEdited())
                     .add("email", emailEdit.getValue())
                     .add("isEmailEdited", emailEdit.isEdited())
                     .add("nusStudentId", nusStudentIdEdit.getValue())

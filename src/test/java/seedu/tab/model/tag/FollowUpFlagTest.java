@@ -9,22 +9,22 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-public class FollowUpTagTest {
+public class FollowUpFlagTest {
 
     @Test
     public void constructor_inheritsTagBehavior() {
-        Tag flag = new FollowUpTag();
-        assertEquals(FollowUpTag.FOLLOW_UP_NAME, flag.tagName);
+        Tag flag = new FollowUpFlag();
+        assertEquals(FollowUpFlag.FOLLOW_UP_NAME, flag.tagName);
         assertEquals("[Needs follow-up]", flag.toString());
         assertTrue(Tag.isValidTagName(flag.tagName));
     }
 
     @Test
     public void equals_sameStatusButDifferentTagType_remainsDistinct() {
-        Tag flag = new FollowUpTag();
-        Tag tag = new Tag(FollowUpTag.FOLLOW_UP_NAME);
-        assertEquals(new FollowUpTag(), flag);
-        assertEquals(flag.hashCode(), new FollowUpTag().hashCode());
+        Tag flag = new FollowUpFlag();
+        Tag tag = new Tag(FollowUpFlag.FOLLOW_UP_NAME);
+        assertEquals(new FollowUpFlag(), flag);
+        assertEquals(flag.hashCode(), new FollowUpFlag().hashCode());
         assertNotEquals(tag, flag);
         assertNotEquals(flag, tag);
 

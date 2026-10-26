@@ -78,7 +78,7 @@ public class FlagTokenizerTest {
 
     @Test
     public void tokenize_valuesJoinedByEquals_readsEveryValueTakingOptionAndAlias() throws Exception {
-        for (Flag flag : List.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
+        for (CliFlag flag : List.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
                 FLAG_TAG, FLAG_ADD_TAG, FLAG_REMOVE_TAG)) {
             for (String marker : flag.getMarkers()) {
                 FlagArgumentMap parsed = FlagTokenizer.tokenize(marker + "=value", flag);
@@ -96,7 +96,7 @@ public class FlagTokenizerTest {
 
     @Test
     public void tokenize_unquotedEmptyValueAfterEquals_saysFlagNeedsValue() {
-        for (Flag flag : List.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
+        for (CliFlag flag : List.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
                 FLAG_TAG, FLAG_ADD_TAG, FLAG_REMOVE_TAG)) {
             for (String marker : flag.getMarkers()) {
                 assertThrows(ParseException.class,
@@ -108,7 +108,7 @@ public class FlagTokenizerTest {
 
     @Test
     public void tokenize_quotedEmptyValueAfterEquals_reachesTheFlag() throws Exception {
-        for (Flag flag : List.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
+        for (CliFlag flag : List.of(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
                 FLAG_TAG, FLAG_ADD_TAG, FLAG_REMOVE_TAG)) {
             for (String marker : flag.getMarkers()) {
                 assertEquals(Optional.of(""),
@@ -184,7 +184,7 @@ public class FlagTokenizerTest {
     public void tokenize_sameMarkerNamedTwice_readsItAsOneFlag() throws Exception {
         // a caller listing a marker twice means one field, and must not break the collector
         FlagArgumentMap parsed = FlagTokenizer.tokenize(" John -e a@b.com",
-                FLAG_EMAIL, new Flag("-e", "MAIL"));
+                FLAG_EMAIL, new CliFlag("-e", "MAIL"));
         assertEquals(Optional.of("a@b.com"), parsed.getValue(FLAG_EMAIL));
     }
 
@@ -338,7 +338,7 @@ public class FlagTokenizerTest {
 
     @Test
     public void tokenize_attachedValueAfterMarkerOnlyFlag_saysFlagTakesNoValue() {
-        for (Flag flag : List.of(FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP)) {
+        for (CliFlag flag : List.of(FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP)) {
             for (String marker : flag.getMarkers()) {
                 for (String suffix : List.of("=true", "=")) {
                     assertThrows(ParseException.class,

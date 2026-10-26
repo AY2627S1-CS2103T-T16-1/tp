@@ -7,7 +7,7 @@ import seedu.tab.commons.util.StringUtil;
 /**
  * A tag with follow-up meaning, distinct from a user-defined tag with the same name.
  */
-public class FollowUpTag extends Tag {
+public class FollowUpFlag extends Tag {
     public static final String FOLLOW_UP_NAME = "Needs follow-up";
 
     /**
@@ -19,7 +19,7 @@ public class FollowUpTag extends Tag {
             + "so a card would show it twice.";
 
     /** Constructs the follow-up flag. */
-    public FollowUpTag() {
+    public FollowUpFlag() {
         super(FOLLOW_UP_NAME);
     }
 

@@ -19,7 +19,7 @@ Class Name
 Class NusStudentId
 Class Phone
 Class Tag
-Class FollowUpTag
+Class FollowUpFlag
 
 Class I #FFFFFF
 }
@@ -43,8 +43,8 @@ Student *--> Phone
 Student *--> "0..1" Email
 Student *--> "0..1" NusStudentId
 Student *--> "*" Tag
-Student *--> "0..1" FollowUpTag
-FollowUpTag --|> Tag
+Student *--> "0..1" FollowUpFlag
+FollowUpFlag --|> Tag
 
 note right of Student
   isSameStudent compares records by

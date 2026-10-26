@@ -34,7 +34,8 @@ public class StudentUtil {
     public static String getStudentDetails(Student student) {
         StringBuilder sb = new StringBuilder();
         sb.append(quoted(student.getName().fullName)).append(" ");
-        sb.append(FLAG_PHONE).append(" ").append(quoted(student.getPhone().value)).append(" ");
+        student.getPhone().ifPresent(phone ->
+                sb.append(FLAG_PHONE).append(" ").append(quoted(phone.value)).append(" "));
         student.getEmail().ifPresent(email ->
                 sb.append(FLAG_EMAIL).append(" ").append(quoted(email.value)).append(" "));
         student.getNusStudentId().ifPresent(nusStudentId ->
@@ -60,8 +61,10 @@ public class StudentUtil {
         StringBuilder sb = new StringBuilder();
         descriptor.getName().ifPresent(name ->
                 sb.append(FLAG_NAME).append(" ").append(quoted(name.fullName)).append(" "));
-        descriptor.getPhone().ifPresent(phone ->
-                sb.append(FLAG_PHONE).append(" ").append(quoted(phone.value)).append(" "));
+        if (descriptor.isPhoneEdited()) {
+            String phone = descriptor.getPhone().map(value -> value.value).orElse("");
+            sb.append(FLAG_PHONE).append(" ").append(quoted(phone)).append(" ");
+        }
         if (descriptor.isEmailEdited()) {
             String email = descriptor.getEmail().map(value -> value.value).orElse("");
             sb.append(FLAG_EMAIL).append(" ").append(quoted(email)).append(" ");

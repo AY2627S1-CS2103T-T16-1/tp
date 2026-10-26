@@ -21,7 +21,7 @@ import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.model.Model;
 import seedu.tab.model.student.Student;
-import seedu.tab.model.tag.FollowUpTag;
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -56,8 +56,8 @@ public class TagCommand extends Command {
             "This student is flagged for follow-up, which is not a tag. To clear the flag, use "
                     + EditCommand.COMMAND_WORD + " %1$d " + FLAG_NO_FOLLOW_UP + ".";
     public static final String MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT =
-            "This student is flagged for follow-up, which is not a tag. Use list to show the student,"
-                    + " then edit INDEX " + FLAG_NO_FOLLOW_UP + " with their displayed index.";
+            "This student is flagged for follow-up, which is not a tag. To clear the flag, use "
+                    + EditCommand.COMMAND_WORD + " --target-id %1$s " + FLAG_NO_FOLLOW_UP + ".";
     public static final String MESSAGE_MULTIPLE_TARGETS =
             "Give one student target: an index, a letter-leading NUS Student ID, or --id NUS_STUDENT_ID.";
     public static final String MESSAGE_CONFLICTING_ACTIONS = "Options " + FLAG_ADD_TAG.getMarkerSummary()
@@ -126,7 +126,7 @@ public class TagCommand extends Command {
      */
     private String absentTagMessage(Student student, List<Student> displayedStudents) {
         String absent = String.format(MESSAGE_NOT_PRESENT, Messages.shorten(tag.tagName));
-        if (!student.isFlagged() || !FollowUpTag.isFollowUpName(tag.tagName)) {
+        if (!student.isFlagged() || !FollowUpFlag.isFollowUpName(tag.tagName)) {
             return absent;
         }
         for (int index = 0; index < displayedStudents.size(); index++) {
@@ -134,7 +134,8 @@ public class TagCommand extends Command {
                 return absent + "\n" + String.format(Locale.ROOT, MESSAGE_FOLLOW_UP_FLAG_HINT, index + 1);
             }
         }
-        return absent + "\n" + MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT;
+        return absent + "\n" + String.format(MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT,
+                student.getNusStudentId().orElseThrow().value);
     }
 
     /** Returns whether a stored tag denotes the requested tag, ignoring case. */

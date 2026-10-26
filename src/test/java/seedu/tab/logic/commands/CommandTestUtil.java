@@ -23,7 +23,7 @@ import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Student;
-import seedu.tab.model.tag.FollowUpTag;
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.testutil.EditStudentDescriptorBuilder;
 
 /**
@@ -80,7 +80,7 @@ public class CommandTestUtil {
     public static final String INVALID_NUS_STUDENT_ID = " " + FLAG_NUS_STUDENT_ID + " A0123-456";
     public static final String INVALID_TAG = " " + FLAG_TAG + " \"---\""; // no letter or number
     /** The follow-up marker's label offered as a tag, which names no tag of its own. */
-    public static final String FOLLOW_UP_AS_TAG = " " + FLAG_TAG + " \"" + FollowUpTag.FOLLOW_UP_NAME + "\"";
+    public static final String FOLLOW_UP_AS_TAG = " " + FLAG_TAG + " \"" + FollowUpFlag.FOLLOW_UP_NAME + "\"";
 
     public static final String PREAMBLE_WHITESPACE = "\t  \r  \n";
     public static final String PREAMBLE_NON_EMPTY = "NonEmptyPreamble";

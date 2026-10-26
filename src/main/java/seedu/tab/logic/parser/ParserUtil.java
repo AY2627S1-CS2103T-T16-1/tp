@@ -20,7 +20,7 @@ import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
-import seedu.tab.model.tag.FollowUpTag;
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -35,7 +35,7 @@ public class ParserUtil {
     public static final String MESSAGE_VALUE_AFTER_INDEX_ONLY =
             "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index and nothing else.";
     public static final String MESSAGE_FOLLOW_UP_IS_NOT_A_TAG =
-            FollowUpTag.MESSAGE_RESERVED + " Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
+            FollowUpFlag.MESSAGE_RESERVED + " Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
 
     private ParserUtil() {} // this class only holds helpers
 
@@ -127,12 +127,12 @@ public class ParserUtil {
      *
      * <p>An NUS Student ID that is not a valid one keeps the reason it was refused, so the
      * User is told which value was rejected and why. Oversized positive indices retain their
-     * bounded-index diagnostic. An index that is not a positive integer
-     * is reported through {@code usage} instead, because a target of that shape reads as a
-     * mistyped index rather than as a candidate ID.
+     * bounded-index diagnostic, and an index that is not a positive integer keeps the concise
+     * positive-integer reason rather than the full command usage. A target given as no value
+     * at all names no field to explain, so that one is reported through {@code usage}.
      *
      * @param target The one token the User gave as the target.
-     * @param usage What the calling command shows when the target reads as an unusable index.
+     * @param usage What the calling command shows when no target is given.
      * @throws ParseException if {@code target} is blank, opens with a letter without holding
      *     a valid NUS Student ID, or is otherwise not a positive integer.
      */
@@ -143,14 +143,7 @@ public class ParserUtil {
         if (trimmedTarget.isEmpty()) {
             throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage));
         }
-        try {
-            return parseNonBlankStudentTarget(trimmedTarget);
-        } catch (ParseException pe) {
-            if (!pe.getMessage().equals(MESSAGE_INVALID_INDEX)) {
-                throw pe;
-            }
-            throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage), pe);
-        }
+        return parseNonBlankStudentTarget(trimmedTarget);
     }
 
     /** Returns a non-blank target while retaining the field-specific validation reason. */
@@ -267,7 +260,7 @@ public class ParserUtil {
      */
     public static Tag parseTagToAdd(String tag) throws ParseException {
         Tag parsed = parseTag(tag);
-        if (FollowUpTag.isFollowUpName(parsed.tagName)) {
+        if (FollowUpFlag.isFollowUpName(parsed.tagName)) {
             throw new ParseException(MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
         }
         return parsed;

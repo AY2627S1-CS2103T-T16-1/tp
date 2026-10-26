@@ -9,7 +9,7 @@ import java.util.stream.Stream;
  * A flag that marks the field a token belongs to, such as {@code -e} in
  * {@code add John -e john@example.com}.
  */
-public class Flag {
+public class CliFlag {
     private final String primaryMarker;
     private final List<String> aliases;
     private final String fieldName;
@@ -20,7 +20,7 @@ public class Flag {
      *
      * @param primaryMarker The characters that mark the option, such as {@code -f}.
      */
-    public Flag(String primaryMarker) {
+    public CliFlag(String primaryMarker) {
         requireNonNull(primaryMarker);
         this.primaryMarker = primaryMarker;
         this.aliases = List.of();
@@ -34,7 +34,7 @@ public class Flag {
      * @param primaryMarker The primary characters that mark the option.
      * @param aliases Alternative characters that mark the same option.
      */
-    public Flag(String primaryMarker, List<String> aliases) {
+    public CliFlag(String primaryMarker, List<String> aliases) {
         requireNonNull(primaryMarker);
         requireNonNull(aliases);
         this.primaryMarker = primaryMarker;
@@ -50,7 +50,7 @@ public class Flag {
      * @param primaryMarker The characters that mark the field, such as {@code -e}.
      * @param fieldName The name of the field, such as {@code EMAIL}.
      */
-    public Flag(String primaryMarker, String fieldName) {
+    public CliFlag(String primaryMarker, String fieldName) {
         this(primaryMarker, List.of(), fieldName);
     }
 
@@ -61,7 +61,7 @@ public class Flag {
      * @param aliases Alternative characters that mark the same field.
      * @param fieldName The name of the field, such as {@code EMAIL}.
      */
-    public Flag(String primaryMarker, List<String> aliases, String fieldName) {
+    public CliFlag(String primaryMarker, List<String> aliases, String fieldName) {
         requireNonNull(primaryMarker);
         requireNonNull(aliases);
         requireNonNull(fieldName);
@@ -136,7 +136,7 @@ public class Flag {
         }
 
         // instanceof handles nulls
-        if (!(other instanceof Flag otherFlag)) {
+        if (!(other instanceof CliFlag otherFlag)) {
             return false;
         }
 

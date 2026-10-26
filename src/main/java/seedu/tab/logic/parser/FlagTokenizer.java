@@ -37,7 +37,7 @@ public class FlagTokenizer {
      *
      * @throws ParseException if a quote is left open, or a token belongs to no known flag.
      */
-    public static FlagArgumentMap tokenize(String arguments, Flag... knownFlags) throws ParseException {
+    public static FlagArgumentMap tokenize(String arguments, CliFlag... knownFlags) throws ParseException {
         requireNonNull(arguments);
 
         return readTokens(CommandTokenizer.tokenize(arguments), knownFlags);
@@ -49,7 +49,7 @@ public class FlagTokenizer {
      *
      * @throws ParseException if the index looks like an invalid option or tokenization fails.
      */
-    public static FlagArgumentMap tokenizeWithIndex(String arguments, Flag... knownFlags) throws ParseException {
+    public static FlagArgumentMap tokenizeWithIndex(String arguments, CliFlag... knownFlags) throws ParseException {
         List<Token> tokens = CommandTokenizer.tokenize(arguments);
         if (!tokens.isEmpty()) {
             Token first = tokens.getFirst();
@@ -62,9 +62,9 @@ public class FlagTokenizer {
     }
 
     /** Reads already split tokens, sharing flag handling between index and name preambles. */
-    private static FlagArgumentMap readTokens(List<Token> tokens, Flag... knownFlags) throws ParseException {
+    private static FlagArgumentMap readTokens(List<Token> tokens, CliFlag... knownFlags) throws ParseException {
         // a caller that names the same marker twice means one flag, not a broken collector
-        Map<String, Flag> flagsByMarker = Stream.of(knownFlags)
+        Map<String, CliFlag> flagsByMarker = Stream.of(knownFlags)
                 .flatMap(flag -> flag.getMarkers().stream().map(marker -> Map.entry(marker, flag)))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first));
 
@@ -92,7 +92,7 @@ public class FlagTokenizer {
     /**
      * Reads each flag from {@code index} onwards, together with its value when it takes one.
      */
-    private static void readFlags(List<Token> tokens, int index, Map<String, Flag> flagsByMarker,
+    private static void readFlags(List<Token> tokens, int index, Map<String, CliFlag> flagsByMarker,
             FlagArgumentMap parsed) throws ParseException {
         while (index < tokens.size()) {
             index = readFlag(tokens, index, flagsByMarker, parsed);
@@ -100,12 +100,12 @@ public class FlagTokenizer {
     }
 
     /** Reads the flag at {@code index} and returns the index after its optional value. */
-    private static int readFlag(List<Token> tokens, int index, Map<String, Flag> flagsByMarker,
+    private static int readFlag(List<Token> tokens, int index, Map<String, CliFlag> flagsByMarker,
             FlagArgumentMap parsed) throws ParseException {
         Token token = tokens.get(index);
         AttachedOption attached = getAttachedOption(token);
         if (attached != null) {
-            Flag flag = getAttachedFlag(attached, flagsByMarker);
+            CliFlag flag = getAttachedFlag(attached, flagsByMarker);
             if (!flag.takesValue()) {
                 throw new ParseException(String.format(
                         Messages.MESSAGE_FLAG_TAKES_NO_VALUE, attached.marker()));
@@ -118,7 +118,7 @@ public class FlagTokenizer {
             return index + 1;
         }
 
-        Flag flag = getFlag(token, flagsByMarker);
+        CliFlag flag = getFlag(token, flagsByMarker);
         if (!flag.takesValue()) {
             parsed.put(flag, token.value(), "");
             return index + 1;
@@ -135,12 +135,12 @@ public class FlagTokenizer {
     }
 
     /** Returns the known flag named by {@code token}. */
-    private static Flag getFlag(Token token, Map<String, Flag> flagsByMarker) throws ParseException {
+    private static CliFlag getFlag(Token token, Map<String, CliFlag> flagsByMarker) throws ParseException {
         if (!isOption(token)) {
             throw new ParseException(String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, token.value()));
         }
 
-        Flag flag = flagsByMarker.get(token.value());
+        CliFlag flag = flagsByMarker.get(token.value());
         if (flag == null) {
             throw new ParseException(String.format(Messages.MESSAGE_UNKNOWN_FLAG, token.value()));
         }
@@ -182,9 +182,9 @@ public class FlagTokenizer {
     }
 
     /** Returns the known flag named by an attached option. */
-    private static Flag getAttachedFlag(AttachedOption option, Map<String, Flag> flagsByMarker)
+    private static CliFlag getAttachedFlag(AttachedOption option, Map<String, CliFlag> flagsByMarker)
             throws ParseException {
-        Flag flag = flagsByMarker.get(option.marker());
+        CliFlag flag = flagsByMarker.get(option.marker());
         if (flag == null) {
             throw new ParseException(String.format(Messages.MESSAGE_UNKNOWN_FLAG, option.marker()));
         }
