@@ -1,6 +1,7 @@
 @startuml
 !include style.puml
-skinparam nodesep 40
+skinparam linetype ortho
+skinparam nodesep 20
 skinparam arrowThickness 1.1
 skinparam arrowColor MODEL_COLOR
 skinparam classBackgroundColor MODEL_COLOR
