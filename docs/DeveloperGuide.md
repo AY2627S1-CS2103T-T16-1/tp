@@ -596,16 +596,11 @@ Each value option has a long alias: `--name`, `--phone`, `--email` and `--tag`
 answer to `-n`, `-p`, `-e` and `-t`. `add` takes its name in the preamble;
 `edit` and `find` both read `-n`/`--name`.
 
-The `edit` target is a displayed index, a letter-leading NUS Student ID, or
-`--target-id NUS_STUDENT_ID`. A target option of its own keeps selection
-unambiguous while `--id` sets or clears the ID field, and admits digit-leading
-IDs without changing how a bare number selects a displayed position.
-`EditCommandParser` builds a `StudentTarget` either way, through
-`ParserUtil.parseRequiredStudentTarget` for a preamble target or
-`ParserUtil.parseNusStudentId` for an explicit one. It rejects duplicate target
-options and a mixed preamble/option target before execution, does not count
-selecting a target as a field edit, and resolves an ID target across the whole
-book so the search predicate survives the edit.
+`edit` names its target in the preamble or with `--target-id
+NUS_STUDENT_ID`; a target option of its own keeps selection unambiguous while
+`--id` sets or clears the ID field. [Selecting a
+student](#selecting-a-student) covers the targets `edit`, `tag` and `delete`
+share.
 
 Parsing runs in two passes, the way a shell does it.
 
@@ -694,62 +689,69 @@ The `-nf` alias makes clearing quick to type without making opposite actions
 differ only in case, as `-f` and `-F` would. Both clear spellings map to the
 same option, so mixing them is also detected as a duplicate.
 
+### Selecting a student
+
+`edit`, `tag` and `delete` each take a target: a displayed index, a
+letter-leading NUS Student ID, or an explicit option. That option is
+`--target-id` for `edit`, whose `--id` sets the ID field instead, and `--id`
+(alias `-i`) for `tag` and `delete`. Either form builds a `StudentTarget`,
+through `ParserUtil.parseRequiredStudentTarget` for a preamble target or
+`ParserUtil.parseNusStudentId` for an explicit one; `tag` keeps
+`ParserUtil.parseRequiredIndex` for a numeric preamble.
+
+The explicit option admits a digit-leading ID without changing how a bare
+number selects a displayed position, so an in-range number stays an index even
+when another record holds the same numeric ID. Repeating the option, or giving
+a preamble target and an explicit one together, is refused rather than guessed
+at, and selecting a target does not count as a field edit.
+
+An index resolves against the displayed list and an ID across the whole book.
+A roster ID therefore reaches a student a search has hidden, and a search
+predicate survives an edit.
+
+Diagnostics keep the spelling the User typed. `ParserUtil.parseIndex` separates
+malformed or non-positive input from a positive integer beyond the supported
+range, and `StudentTarget` reports an out-of-range position with that spelling
+and the current displayed count, zero included. A non-positive or non-integer
+target keeps the concise positive-integer reason alongside any field errors,
+and `delete` adds the explicit `--id` form whenever the refused target reads as
+a valid NUS Student ID — spelling intact, so a stored numeric ID keeps its
+leading zeroes. `edit` and `tag` share `FlagTokenizer.tokenizeWithIndex`, which
+reports an unquoted negative number as both an invalid index and an unknown
+option, and each reports a value following an otherwise valid target. The
+retained spelling affects diagnostics only, not target equality or hashing.
+
 ### Adding or removing one tag
 
 `TagCommandParser` reads `tag TARGET -a TAG` (alias `--add`) or
-`tag TARGET -r TAG` (alias `--remove`) with the existing
-`FlagTokenizer` and `ParserUtil`. The option names the action: both spellings
-map to `FLAG_ADD_TAG` or `FLAG_REMOVE_TAG`, respectively. Exactly one action
-option is accepted; conflicting actions and repeated options, including mixed
-aliases, are rejected. Missing fields and invalid field values are collected
-before a command is created.
-`TagCommandParser` retains `ParserUtil.parseRequiredIndex` for numeric targets
-and shares `parseRequiredStudentTarget` with edit for letter-leading IDs.
-`--id`/`-i` explicitly selects any valid ID, including one starting with a
-digit. Mixing the explicit ID option with a preamble or repeating it is
-rejected rather than guessing which student to change. `ParseProblems`
-collects target and tag validation errors before constructing the command.
-Tag and edit both use `FlagTokenizer.tokenizeWithIndex`, which reports an
-unquoted negative number as both an invalid index and an unknown option.
-For numeric tag targets, `parseRequiredIndex` reports a value following a
-valid index; for edit and letter-leading tag targets,
-`parseRequiredStudentTarget` reports a value following a valid target.
-Tag syntax failures and a missing action option include guidance for both
-addition and removal.
+`tag TARGET -r TAG` (alias `--remove`) with the existing `FlagTokenizer` and
+`ParserUtil`. The option names the action: both spellings of each map to
+`FLAG_ADD_TAG` or `FLAG_REMOVE_TAG`. Exactly one action option is accepted, so
+a conflicting pair and a repeated option are both refused, and `ParseProblems`
+collects every target and tag error before a command is built. A tag syntax
+failure and a missing action option each carry guidance for addition and for
+removal.
 
-`ParserUtil.parseIndex` distinguishes malformed/non-positive input from a positive
-integer exceeding the supported index range. `StudentTarget` reports out-of-range
-positions with their original input spelling and the current displayed count,
-including zero. Invalid non-positive or non-integer targets of edit, tag and
-delete retain the concise positive-integer reason from `parseIndex`, alongside
-any field errors; delete adds the explicit `--id` form whenever the refused
-target reads as a valid NUS Student ID.
-Retaining that spelling also lets delete suggest an exact `--id`
-command for a stored numeric ID without dropping leading zeroes. An in-range
-number remains an index even when another record holds the same numeric ID.
-The original spelling affects diagnostics only, not target equality or hashing.
+`TagCommand` compares normalized tag names ignoring case, then copies the
+existing tag set and constructs a replacement student with every other field
+preserved. `TagCommand.Action` selects addition or removal while sharing target
+resolution, matching, student replacement and feedback. The search filter stays
+active, so removing a tag that filter uses may hide the student from the
+displayed list.
 
-`TagCommand` stores a `StudentTarget`, as edit and delete do. It resolves an
-index against the displayed list and an ID across the entire book, so a
-roster ID remains usable while a search hides the student. It compares the
-normalized tag names ignoring case before copying the existing tag set and
-constructing a replacement student with every other field preserved. The
-search filter stays active; removing a tag used by that filter may hide the
-student from the displayed list. `TagCommand.Action` selects addition or
-removal while sharing target resolution, matching, student replacement and
-feedback.
-`ParserUtil.parseTags` folds case variants in `add` and replacement tags in `edit`
-using `String.CASE_INSENSITIVE_ORDER`, matching the tag command and summary.
-`ParseProblems` retains input order so the first normalized spelling wins while
-still collecting every invalid tag's diagnostic. `JsonAdaptedStudent` uses the same
-case-insensitive ordering after validating and normalizing stored tags, keeping
-the first spelling in the JSON array. This makes loaded cards and tag summaries
-agree; the next successful save writes one tag per group. Tag equality remains
-unchanged. Removal removes every matching variant of the requested group while
-retaining unrelated tags. A general tag named `Needs follow-up` remains separate
-from the follow-up flag, though the parsers no longer let one be added. Duplicate and successful removal feedback use a matching
-stored tag's spelling. If several case variants match, the reply chooses the
-first in the card's tag display order.
+Case variants of one tag name fold together. `ParserUtil.parseTags` folds them
+in `add` and in `edit`'s replacement tags using `String.CASE_INSENSITIVE_ORDER`,
+matching the tag command and the summary, while `ParseProblems` retains input
+order so the first spelling wins and every invalid tag still gets a diagnostic.
+`JsonAdaptedStudent` applies the same ordering after validating and normalizing
+stored tags, keeping the first spelling in the JSON array, so loaded cards and
+tag summaries agree and the next successful save writes one tag per group. Tag
+equality itself is unchanged. Removal takes every matching variant of the
+requested group and leaves unrelated tags alone. Duplicate and successful
+removal feedback quote a matching stored tag's spelling — the first in the
+card's tag display order when several variants match. A general tag named
+`Needs follow-up` stays separate from the follow-up flag, though the parsers no
+longer let one be added.
 
 For a hidden flagged student, the absent-tag hint supplies
 `edit --target-id NUS_STUDENT_ID --no-follow-up` with the student's stored ID.
@@ -761,11 +763,10 @@ The following sequence diagram shows how a `tag` command adds or removes a tag:
 
 Invalid indexes, existing tags on addition and absent tags on removal throw
 `CommandException` before mutation; invalid syntax or values throw
-`ParseException`. These paths never reach
-`LogicManager`'s save. Successful additions and removals use the normal JSON
-save path without changing the schema. Integration tests exercise reloads,
-human-edited case and whitespace variants, absent optional fields and unchanged
-saved bytes on failure.
+`ParseException`. Neither path reaches `LogicManager`'s save. A successful
+addition or removal uses the normal JSON save path without changing the schema.
+Integration tests exercise reloads, human-edited case and whitespace variants,
+absent optional fields and unchanged saved bytes on failure.
 
 ### Commands with no arguments
 
@@ -1114,9 +1115,9 @@ ID. This keeps hand-edited files diagnosable while allowing common names in a
 class.
 
 The activity diagram below follows `AddCommand.execute` after parsing. The
-identity check scans the complete student book. A matching NUS Student ID stops
-the command before it changes the model; other matching details can warn the
-User while still allowing the record to be added.
+identity check scans the complete student book: a matching NUS Student ID stops
+the command before it changes the model, while other matching details only warn
+the User.
 
 <puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Add command duplicate check" width="500" />
 
@@ -1128,10 +1129,10 @@ For a non-match, the command clears the filter and appends
 visible and the User knows to re-read indexes. A rejected addition leaves
 both the book and filter unchanged.
 
-`EditCommand` first compares the prospective record with the selected record using
+`EditCommand` first compares the prospective record with the selected one by
 full equality. An unchanged edit returns an explicit no-change response before
-checking duplicates or replacing the student, preserving the filter and avoiding
-unnecessary list notifications. `LogicManager` continues to skip saving an unchanged book.
+any duplicate check or replacement, so the filter survives and the list is not
+notified for nothing; `LogicManager` still skips saving an unchanged book.
 
 After the identity check succeeds, `LikelyDuplicateWarning` compares the
 prospective record with every existing student. Name and email comparisons
@@ -1144,14 +1145,14 @@ stored number retains its formatting. Absent phones and absent emails do not
 match: two records that both lack the detail share no value, so neither is
 offered as evidence of a duplicate.
 
-The commands collect the warnings before mutation and separate them from the
-ordinary success message with a blank line. Matches are grouped by field into
-one prominently labeled `WARNING: Possible duplicate student` line. A line
-names at most two students and summarizes further matches as `N others`, so a
-shared placeholder does not fill the result box. The review advice appears
-once after every matching field. Phone warnings omit the parenthetical value:
-matched records can store different formatting for the same digits, so no single
-formatted value represents all named students.
+The commands collect the warnings before mutation and set them off from the
+success message with a blank line. Matches group by field under one labeled
+`WARNING: Possible duplicate student` line, each naming at most two students and
+summarizing the rest as `N others`, so a shared placeholder cannot fill the
+result box. The review advice appears once, after every matching field. A phone
+warning omits the parenthetical value, because matched records can store the
+same digits with different formatting and no one spelling would represent them
+all.
 
 `EditCommand` compares only name, phone, or email values that differ from the
 selected record. It excludes the selected `Student` instance but still uses
@@ -1161,9 +1162,9 @@ Name comparisons share `StringUtil.normalizeNameForComparison` with name
 searches: Latin accents and straight/curly apostrophe differences are ignored,
 so copied roster names can be found or flagged using ordinary keyboard input.
 
-These comparisons are advisory only: they never feed `isSameStudent` or the
-storage duplicate check, and therefore cannot reject or discard a legitimate
-shared detail.
+All of this is advisory: these comparisons never feed `isSameStudent` or the
+storage duplicate check, so they cannot reject or discard a legitimate shared
+detail.
 
 ### Finding students
 
@@ -1201,29 +1202,27 @@ curly apostrophes to straight ones. Marks in other scripts remain significant,
 so vowels needed to distinguish names are retained. This is a comparison key,
 not transliteration; model values and JSON retain their existing spelling.
 
-For phone terms containing only Unicode decimal digits, or those digits with
-grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), matching
-also compares the digits with non-digit characters removed and each decimal digit
-mapped to its ASCII equivalent by numeric value. This lets
-`91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
-so copying a grouped number does not require manual reformatting. A query with
-a country code still requires those digits to occur in the stored phone.
-The allowed-character check uses a possessive quantifier to scan long phone terms
-without backtracking. Digit normalization separately checks that at least one digit
-remains, so punctuation-only terms cannot match every phone.
-The digit fallback requires at least one digit; annotations such as `"ext 21"`
-and punctuation-only terms retain literal matching. Unicode whitespace follows
-the same rule as field normalization. Normalizing both the phone digits and the
-search digits lets ASCII, full-width and other Unicode decimal digits match each
-other, including digits represented by supplementary code points. For example,
-`"９１２３ ４５６７"` matches `91234567`. Stored student details and saved data do not change.
+A phone term made only of Unicode decimal digits, or of those digits with
+grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), is also
+compared with non-digit characters removed and each decimal digit mapped to its
+ASCII equivalent by numeric value. So `91234567`, `9123-4567` and
+`"9123 4567"` all match `+65 9123 4567` or `91234567`, and a copied grouped
+number needs no reformatting; a query carrying a country code still requires
+those digits in the stored phone. Normalizing both sides lets ASCII, full-width
+and other Unicode decimal digits match each other, including digits written as
+supplementary code points, so `"９１２３ ４５６７"` matches `91234567`. The
+fallback applies only when a digit survives normalization, which keeps a
+punctuation-only term from matching every phone and leaves an annotation such
+as `"ext 21"` matching literally. Unicode whitespace follows the same rule as
+field normalization, and the allowed-character check uses a possessive
+quantifier so a long term scans without backtracking. Stored student details and
+saved data do not change.
 
-`FindCommand` and `ListCommand` report the count of displayed students in
-their execution feedback. `FindCommand` counts only the matching students
-(`Messages.getStudentsFoundOverview`), distinguishing zero (`Found 0 students.`),
-singular (`Found 1 student.`), and plural (`Found <n> students.`) results.
-`ListCommand` reports the number of students displayed after resetting the filter
-(`Listed 0 students.`, `Listed 1 student.`, or `Listed <n> students.`).
+Both `FindCommand` and `ListCommand` report how many students are displayed.
+`FindCommand` counts the matches through `Messages.getStudentsFoundOverview`,
+which distinguishes `Found 0 students.`, `Found 1 student.` and
+`Found <n> students.`; `ListCommand` counts after resetting the filter, giving
+`Listed 0 students.`, `Listed 1 student.` or `Listed <n> students.`.
 
 ### Handling an unreadable data file
 
@@ -1247,34 +1246,32 @@ explanation and recovery guidance through the same `DataLoadingException`
 boundary; startup preserves the original bytes and blocks the normal UI.
 
 `JsonUtil` turns malformed JSON or an incompatible JSON shape into a
-`DataLoadingException`, and `JsonParseErrorFormatter` words the
-explanation it carries. For a syntax error, the formatter uses the
-deepest parser exception with a usable location so that the displayed
-line and column identify the offending token rather than the last
-successfully mapped value. It pairs the concise parser explanation with
-the affected line and at most one line on either side. Each source line
-is limited to 160 characters; an affected long line is cropped around
-the reported column so that minified JSON remains useful without
-filling the dialog. If the parser supplies no usable location, the
-formatter omits the source instead of falling back to Jackson's
-source-bearing message.
-During model conversion, `JsonAdaptedStudent` identifies the invalid field and
-`JsonSerializableStudentBook` adds the one-based record number and its name
-when available. `JsonStudentBookStorage` carries that explanation through the
+`DataLoadingException`, and `JsonParseErrorFormatter` words the explanation it
+carries. For a syntax error the formatter takes the deepest parser exception
+that has a usable location, so the reported line and column point at the
+offending token rather than the last value mapped successfully, and it pairs
+that concise explanation with the affected line and at most one line on either
+side. Source lines are capped at 160 characters, an affected long line cropped
+around the reported column, which keeps minified JSON useful without filling the
+dialog. Without a usable location the formatter omits the source rather than
+falling back to Jackson's source-bearing message. During model conversion,
+`JsonAdaptedStudent` identifies the invalid field and
+`JsonSerializableStudentBook` adds the one-based record number and, where it
+has one, the name. `JsonStudentBookStorage` carries that explanation through the
 same `DataLoadingException` boundary.
 
-`MainApp` records a student-book loading error and creates an empty model only
-as an internal placeholder so that application shutdown remains safe. It gives
-the error to `UiManager`. Before constructing `MainWindow`, `UiManager` checks
-for that error. If one is present, it shows an error dialog containing the
-data-file path, the specific reason, and recovery guidance. Closing the dialog
-closes TAB because the normal window was never opened. No command, including
-`exit`, can therefore save the placeholder over the unreadable file.
+`MainApp` records the loading error and creates an empty model only as an
+internal placeholder, so shutdown stays safe, then hands the error to
+`UiManager`. `UiManager` checks for it before constructing `MainWindow`, and on
+finding one shows an error dialog with the data-file path, the specific reason
+and recovery guidance. Closing that dialog closes TAB, because the normal window
+never opened, so no command — `exit` included — can save the placeholder over
+the unreadable file.
 
-Failing closed was chosen over displaying a partial or read-only student book.
-It keeps recovery small and unambiguous: the User repairs or replaces the file
-and restarts TAB. Loading readable records separately and reloading without a
-restart remain separate future features.
+Failing closed was chosen over displaying a partial or read-only student book,
+because it keeps recovery small and unambiguous: the User repairs or replaces
+the file and restarts TAB. Loading the readable records separately, and
+reloading without a restart, remain future features.
 
 ### Confirming a clear
 
@@ -1286,31 +1283,30 @@ The following state/activity diagram shows the pending-clear confirmation flow:
 including students hidden by the current filter. It does not mutate the
 model. An empty book instead returns a no-op message without a prompt.
 `LogicManager.requestClearConfirmation` keeps a non-empty book's request in
-`pendingClearCommand`, an `Optional<ClearCommand>`, and returns before the
-usual storage write. `Optional.empty()` represents no pending request.
-While the request is pending, it reads the
-next input as a reply to the concise `[y/N]` prompt. It first applies
-`StringUtil.stripFormatCharacters`, sharing the command parser's treatment of
-copied invisible marks while preserving shaping joiners. It then trims only
-surrounding Unicode whitespace; internal spaces and visible characters are
-kept so extra words cannot become a confirmation. Replies ignore case.
-Trimming scans from both ends with `StringUtil.isWhitespace`, retaining the
-command parser's Unicode whitespace rules. This takes linear time at worst;
-an internal whitespace run is never searched for a trailing match.
+`pendingClearCommand`, an `Optional<ClearCommand>` whose `Optional.empty()`
+means nothing is pending, and returns before the usual storage write. While a
+request is pending, the next input is read as a reply to the concise `[y/N]`
+prompt. `StringUtil.stripFormatCharacters` runs first, sharing the command
+parser's treatment of copied invisible marks while preserving shaping joiners.
+Only surrounding Unicode whitespace is then trimmed — internal spaces and
+visible characters stay, so extra words cannot become a confirmation — and
+replies ignore case. Trimming scans from both ends with
+`StringUtil.isWhitespace`, keeping the command parser's Unicode whitespace
+rules, and takes linear time at worst, since an internal whitespace run is
+never searched for a trailing match.
 
-An empty reply, `n`, or `no` drops the request without executing or saving
-anything. Only the exact replies `y` and `yes` invoke
-`ClearCommand.executeConfirmed` and save the empty book. Words merely starting
-with either letter, such as `yellow` or `nope`, are invalid. Other input raises
-a `ParseException` with feedback and the prompt repeated and keeps the request
-pending; it is never executed as another command.
-If the reply handler unexpectedly has no request, it raises a
-`CommandException` asking the user to enter `clear`, rather than letting an
-unchecked exception escape. The normal presence guard prevents this case.
-The pending request is cleared before saving so that a storage error cannot
-leave a stale confirmation active. It lives only in memory, so closing and
-restarting TAB cannot confirm a previous request. The existing result area
-and command field provide the prompt and replies without a mouse or dialog.
+An empty reply, `n` or `no` drops the request without executing or saving
+anything. Only `y` and `yes` exactly invoke `ClearCommand.executeConfirmed` and
+save the empty book; a word merely starting with either letter, such as
+`yellow` or `nope`, is invalid. Any other input raises a `ParseException` that
+repeats the prompt with its feedback and keeps the request pending, and is never
+executed as another command. Should the reply handler find no request at all —
+the presence guard means it should not — it raises a `CommandException` asking
+the User to enter `clear` rather than letting an unchecked exception escape.
+The pending request is cleared before saving, so a storage error cannot leave a
+stale confirmation active, and it lives only in memory, so restarting TAB cannot
+confirm a previous request. The prompt and the replies both travel through the
+existing result area and command field, with no mouse or dialog.
 `MainWindow` supplies `Logic.isAwaitingConfirmation` to `CommandBox`, which
 submits an empty Enter only during confirmation; otherwise an empty Enter
 keeps its existing no-op behavior. Each `Logic` implementation must supply
