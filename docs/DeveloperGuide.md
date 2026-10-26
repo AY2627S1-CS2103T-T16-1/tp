@@ -935,13 +935,13 @@ existing data and a limit justified by contact use cases.
 
 **The three optional details share one contract.** Phone, email and NUS
 Student ID are each an `Optional` on `Student`, and behave alike at every
-layer:
+layer bar one storage detail:
 
 | Layer | Behavior |
 | --- | --- |
 | `add` | leaves the field absent when its option is not given |
 | `edit` | `EditStudentDescriptor` holds an `OptionalFieldEdit<T>` carrying value and intent as one three-state concept: no option keeps the old value, a value replaces it, and an empty value clears it. The parser trims first, so a quoted run of spaces clears too; a bare option is still an error, and a rejected value is a parse problem rather than a clear. Copies and equality work on that state rather than on its representation. |
-| Storage | `JsonAdaptedStudent` keeps a nullable string and shares `normalizeOptionalValue`. Jackson omits the key when the detail is absent; a missing key, JSON `null` and a string that normalizes to nothing all load as absent; a malformed non-null value refuses the file rather than dropping the value silently. Files written before a field became optional still load. |
+| Storage | `JsonAdaptedStudent` keeps a nullable string. Jackson omits the key when the detail is absent, and for all three a missing key or JSON `null` loads as absent while a malformed non-null value refuses the file rather than being dropped silently. Phone and email also pass through `normalizeOptionalValue`, so a string that normalizes to nothing loads as absent; NUS Student ID does not, so `"nusStudentId": ""` — and whitespace-only or invisible-mark-only text with it — refuses the file with the non-empty-ID reason. Files written before a field became optional still load. |
 | Display | the card leaves the label unmanaged and `Messages.format` omits it, so the remaining details close up with no blank line |
 | `find` | a student without the detail matches no term for it |
 
