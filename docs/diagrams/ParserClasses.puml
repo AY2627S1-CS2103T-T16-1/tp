@@ -16,7 +16,7 @@ Class ParserUtil
 Class FlagArgumentMap
 Class FlagTokenizer
 Class CommandTokenizer
-Class Flag
+Class CliFlag
 Class CommandWords
 Class ParseProblems
 }
@@ -35,10 +35,10 @@ XYZCommandParser ..> FlagTokenizer
 FlagTokenizer .left.> FlagArgumentMap
 FlagTokenizer ..> CommandTokenizer
 XYZCommandParser ..> CliFlags
-CliFlags --> Flag
+CliFlags --> CliFlag
 XYZCommandParser ..> ParserUtil
 XYZCommandParser ..> ParseProblems
-FlagArgumentMap -down-> Flag
-FlagTokenizer .down.> Flag
+FlagArgumentMap -down-> CliFlag
+FlagTokenizer .down.> CliFlag
 XYZCommand -up-|> Command
 @enduml

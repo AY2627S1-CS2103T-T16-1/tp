@@ -20,7 +20,7 @@ import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -35,7 +35,7 @@ public class ParserUtil {
     public static final String MESSAGE_VALUE_AFTER_INDEX_ONLY =
             "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index and nothing else.";
     public static final String MESSAGE_FOLLOW_UP_IS_NOT_A_TAG =
-            Flag.MESSAGE_RESERVED + " Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
+            FollowUpFlag.MESSAGE_RESERVED + " Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
 
     private ParserUtil() {} // this class only holds helpers
 
@@ -260,7 +260,7 @@ public class ParserUtil {
      */
     public static Tag parseTagToAdd(String tag) throws ParseException {
         Tag parsed = parseTag(tag);
-        if (Flag.isFollowUpName(parsed.tagName)) {
+        if (FollowUpFlag.isFollowUpName(parsed.tagName)) {
             throw new ParseException(MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
         }
         return parsed;

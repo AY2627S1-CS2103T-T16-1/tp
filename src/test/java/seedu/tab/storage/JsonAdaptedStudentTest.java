@@ -21,7 +21,7 @@ import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpFlag;
 
 public class JsonAdaptedStudentTest {
     private static final String INVALID_NAME = "---"; // no letter or number
@@ -289,7 +289,7 @@ public class JsonAdaptedStudentTest {
     public void toModelType_storedFollowUpLabelAsTag_throwsIllegalValueException() {
         // the label names no tag wherever it is read, so a card can never show it twice
         List<JsonAdaptedTag> tags = new ArrayList<>(VALID_TAGS);
-        tags.add(new JsonAdaptedTag(Flag.FOLLOW_UP_NAME));
+        tags.add(new JsonAdaptedTag(FollowUpFlag.FOLLOW_UP_NAME));
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, tags, true);
 
@@ -343,7 +343,7 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_TAGS, true);
         assertTrue(student.toModelType().isFlagged());
-        assertEquals(new Flag(), student.toModelType().getFlag().orElseThrow());
+        assertEquals(new FollowUpFlag(), student.toModelType().getFlag().orElseThrow());
     }
 
     @Test

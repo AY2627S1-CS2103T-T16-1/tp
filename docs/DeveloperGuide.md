@@ -408,7 +408,7 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 How the parsing works:
 * When called upon to parse a command entered by the User, the `StudentBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the command and create an `XYZCommand` object (e.g., `AddCommand`). The `StudentBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
-* A command's arguments are read in two passes: `CommandTokenizer` splits them into tokens, then `FlagTokenizer` sorts those tokens into the `Flag` each belongs to and hands back a `FlagArgumentMap`. [How commands read their arguments](#how-commands-read-their-arguments) covers why.
+* A command's arguments are read in two passes: `CommandTokenizer` splits them into tokens, then `FlagTokenizer` sorts those tokens into the `CliFlag` each belongs to and hands back a `FlagArgumentMap`. [How commands read their arguments](#how-commands-read-their-arguments) covers why.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/model/Model.java)
@@ -618,7 +618,7 @@ whatever it takes in that position: the name for `add`, so a name of several
 words needs no quotes unless it would otherwise be misread, and the index for
 `edit`. Each command names its own, in `AddCommand.FIELD_NAME` and
 `EditCommand.FIELD_INDEX`, rather than the shared `CliFlags` doing it for
-them. Each short and long marker resolves to the same `Flag`, so mixed aliases
+them. Each short and long marker resolves to the same `CliFlag`, so mixed aliases
 for a single-valued field are duplicates rather than independent fields.
 Value-taking options take the token after them, and `-t` or `--tag` repeats
 for `add` and `edit`. The `tag` command takes exactly one tag through `-a`/`--add`
@@ -653,7 +653,7 @@ quotes. If the tokenizer refuses `-n` or `--name`, `AddCommandParser` adds a
 placement hint to the existing error. A missing name gets the same hint,
 so users familiar with the name options in `edit` can recover immediately.
 
-`Flag` also lets a value-taking option carry aliases. NUS Student ID uses
+`CliFlag` also lets a value-taking option carry aliases. NUS Student ID uses
 `--id` as its canonical option and the unused `-i` as its typing-friendly
 alias. Both spellings map to the same `FLAG_NUS_STUDENT_ID`, so giving
 both is rejected as a repeated single-valued field rather than letting one
@@ -878,7 +878,7 @@ against the list rather than leaving that to be noticed.
 
 ### Follow-up flag
 
-`Flag` extends `Tag` and uses its validation, normalization, and display
+`FollowUpFlag` extends `Tag` and uses its validation, normalization, and display
 behavior. Its fixed name is `Needs follow-up`. A general tag with those words
 remains a distinct value: tag equality requires the same concrete class as
 well as the same normalized name. `ParserUtil.parseTagToAdd` and
@@ -887,11 +887,11 @@ a card cannot show the same label as a tag and as the marker whether the value
 arrives from a command or from a hand-edited file. A file written before the
 rule stops loading, with an error naming the record and the field to correct.
 `Tag` itself still accepts the name, so removal reads it as an ordinary tag and
-`TagCommand` keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `Flag` and
+`TagCommand` keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `FollowUpFlag` and
 exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
 interface for commands and the UI. Full equality and hashing include the flag,
 but `isSameStudent` does not: changing whether a student needs a reply does not
-change their identity. The flag is stored as `Optional<Flag>`; the constructor
+change their identity. The flag is stored as `Optional<FollowUpFlag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
 Tag searches match ordinary tags as parts of their inherited `tagName` values,
@@ -909,7 +909,7 @@ This makes either request safe to repeat while preserving follow-up during
 unrelated edits. Descriptor copies and equality retain all three states.
 
 `JsonAdaptedStudent` uses a nullable `Boolean flag` at the storage boundary.
-Only `Boolean.TRUE` creates a `Flag` in the model; a missing key, JSON `null`, and
+Only `Boolean.TRUE` creates a `FollowUpFlag` in the model; a missing key, JSON `null`, and
 `false` all map to no flag. When saving, a present flag is written
 as `"flag": true`, while an absent flag is represented as null and omitted by
 Jackson's `NON_NULL` policy. Files created before the field existed therefore

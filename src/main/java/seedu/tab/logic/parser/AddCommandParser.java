@@ -54,12 +54,12 @@ public class AddCommandParser implements Parser<AddCommand> {
                 problems.collectIfPresent(arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail));
         Optional<NusStudentId> nusStudentId = Optional.ofNullable(
                 problems.collectIfPresent(arguments.getValue(FLAG_NUS_STUDENT_ID), ParserUtil::parseNusStudentId));
-        Set<Tag> tagList = ParserUtil.parseTags(arguments.getAllValues(FLAG_TAG), problems);
+        Set<Tag> tags = ParserUtil.parseTags(arguments.getAllValues(FLAG_TAG), problems);
 
         problems.throwIfAny();
 
         boolean isFlagged = arguments.getValue(FLAG_FOLLOW_UP).isPresent();
-        Student student = new Student(name, phone, email, nusStudentId, tagList, isFlagged);
+        Student student = new Student(name, phone, email, nusStudentId, tags, isFlagged);
 
         return new AddCommand(student);
     }
