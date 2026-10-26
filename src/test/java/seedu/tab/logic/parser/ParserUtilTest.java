@@ -20,7 +20,7 @@ import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -38,7 +38,7 @@ public class ParserUtilTest {
 
     private static final String WHITESPACE = " \t\r\n";
 
-    /** What a calling command hands parseStudentTarget to report a mistyped index through. */
+    /** What a calling command hands parseStudentTarget to report a missing target through. */
     private static final String USAGE = "delete: deletes a student by index or NUS Student ID.";
 
     @Test
@@ -137,12 +137,11 @@ public class ParserUtilTest {
     }
 
     @Test
-    public void parseStudentTarget_unusableIndexTarget_throwsUsageMessage() {
+    public void parseStudentTarget_unusableIndexTarget_reportsPositiveIntegerReason() {
         // a target of this shape reads as a mistyped index rather than as a candidate
-        // NUS Student ID, so the usage message carries the refusal
-        for (String target : List.of("0", "-1", "!@#", "1a")) {
-            assertThrows(ParseException.class,
-                    String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, USAGE), () ->
+        // NUS Student ID, and keeps the concise reason rather than the command usage
+        for (String target : List.of("0", "-1", "1.5", "+1", "!@#", "1a")) {
+            assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
                     ParserUtil.parseStudentTarget(target, USAGE));
         }
     }
@@ -160,28 +159,36 @@ public class ParserUtilTest {
     @Test
     public void parseRequiredStudentTarget_missingInput_namesSuppliedField() {
         assertThrows(ParseException.class, "Missing required field(s): INDEX or NUS_STUDENT_ID", () ->
-                ParserUtil.parseRequiredStudentTarget("", "INDEX or NUS_STUDENT_ID", "STUDENT_TARGET", USAGE));
+                ParserUtil.parseRequiredStudentTarget("", "INDEX or NUS_STUDENT_ID", "STUDENT_TARGET"));
         assertThrows(ParseException.class, "Missing required field(s): INDEX or NUS_STUDENT_ID", () ->
-                ParserUtil.parseRequiredStudentTarget("   ", "INDEX or NUS_STUDENT_ID", "STUDENT_TARGET", USAGE));
+                ParserUtil.parseRequiredStudentTarget("   ", "INDEX or NUS_STUDENT_ID", "STUDENT_TARGET"));
+    }
+
+    @Test
+    public void parseRequiredStudentTarget_invalidIndex_reportsPositiveIntegerReason() {
+        for (String target : List.of("0", "-1", "1.5", "+1", "!@#", "1a")) {
+            assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
+                    ParserUtil.parseRequiredStudentTarget(target, "STUDENT_TARGET", "STUDENT_TARGET"));
+        }
     }
 
     @Test
     public void parseRequiredStudentTarget_indexOrId_returnsTarget() throws Exception {
         assertEquals(StudentTarget.byIndex(INDEX_FIRST_STUDENT),
-                ParserUtil.parseRequiredStudentTarget("1", "STUDENT_TARGET", "STUDENT_TARGET", USAGE));
+                ParserUtil.parseRequiredStudentTarget("1", "STUDENT_TARGET", "STUDENT_TARGET"));
         assertEquals(StudentTarget.byNusStudentId(new NusStudentId(VALID_NUS_STUDENT_ID)),
-                ParserUtil.parseRequiredStudentTarget(VALID_NUS_STUDENT_ID, "STUDENT_TARGET", "STUDENT_TARGET", USAGE));
+                ParserUtil.parseRequiredStudentTarget(VALID_NUS_STUDENT_ID, "STUDENT_TARGET", "STUDENT_TARGET"));
     }
 
     @Test
     public void parseRequiredStudentTarget_extraValue_reportsValueAfterTarget() {
         assertThrows(ParseException.class,
                 "Unexpected value after STUDENT_TARGET: \"Alex\". Put field values after an option.", () ->
-                ParserUtil.parseRequiredStudentTarget("1 Alex", "STUDENT_TARGET", "STUDENT_TARGET", USAGE));
+                ParserUtil.parseRequiredStudentTarget("1 Alex", "STUDENT_TARGET", "STUDENT_TARGET"));
         assertThrows(ParseException.class,
                 "Unexpected value after STUDENT_TARGET: \"Alex\". Put field values after an option.", () ->
                 ParserUtil.parseRequiredStudentTarget(VALID_NUS_STUDENT_ID + " Alex", "STUDENT_TARGET",
-                        "STUDENT_TARGET", USAGE));
+                        "STUDENT_TARGET"));
     }
 
     @Test
@@ -347,12 +354,12 @@ public class ParserUtilTest {
     @Test
     public void parseTag_followUpLabel_returnsTag() throws Exception {
         // removing it is still read as a tag, so that TagCommand can explain the marker
-        assertEquals(new Tag(Flag.FOLLOW_UP_NAME), ParserUtil.parseTag(Flag.FOLLOW_UP_NAME));
+        assertEquals(new Tag(FollowUpFlag.FOLLOW_UP_NAME), ParserUtil.parseTag(FollowUpFlag.FOLLOW_UP_NAME));
     }
 
     @Test
     public void parseTagToAdd_followUpLabelHoweverSpelt_throwsParseException() {
-        List<String> spellings = List.of(Flag.FOLLOW_UP_NAME, "needs follow-up", "NEEDS FOLLOW-UP",
+        List<String> spellings = List.of(FollowUpFlag.FOLLOW_UP_NAME, "needs follow-up", "NEEDS FOLLOW-UP",
                 WHITESPACE + "nEEds" + WHITESPACE + "follow-up" + WHITESPACE);
         for (String spelling : spellings) {
             assertThrows(ParseException.class, ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG, () ->

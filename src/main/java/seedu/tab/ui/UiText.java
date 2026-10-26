@@ -22,20 +22,6 @@ final class UiText {
 
     private UiText() {} // this class only holds helpers
 
-    /**
-     * Puts {@code value} on {@code label} and names the whole of it on hover whenever the
-     * label is drawn narrower than the value needs.
-     *
-     * <p>Cutting by a count of characters catches only one of the two ways a value is cut.
-     * A value under the count is still cut by the width the label is given, and a tag such
-     * as "attendance-low" beside a long name reads as "attendan\u2026", and a tag the panel
-     * lists as "CS2103T-TUTORI\u2026", with nothing in either to say what it was.
-     */
-    static void showShortenedToFit(Label label, String value, int limit) {
-        showShortened(label, value, limit);
-        nameWhatIsCutAsItIsDrawn(label, value);
-    }
-
     /** Shows {@code value} in full, with a tooltip whenever the available width cuts it. */
     static void showToFit(Label label, String value) {
         label.setText(value);
@@ -61,37 +47,6 @@ final class UiText {
     }
 
     /**
-     * Puts {@code value} on {@code label}, cut to {@code limit} characters with an ellipsis if
-     * it runs longer. What was cut is still readable: the label carries the whole value as its
-     * tooltip, so a card summarises without the record becoming unreachable.
-     */
-    static void showShortened(Label label, String value, int limit) {
-        String shown = StringUtil.firstCharacters(value, limit);
-        if (shown.equals(value)) {
-            label.setText(value);
-            return;
-        }
-        // the ellipsis reads as part of the word it follows, so it does not sit off
-        // behind a space the cut happened to land on
-        label.setText(shown.stripTrailing() + ELLIPSIS);
-        label.setTooltip(new Tooltip(value));
-    }
-
-    /**
-     * Puts {@code value} on {@code label}, cut from its middle to {@code limit} characters with
-     * an ellipsis stood in for what was taken, if it runs longer. Both ends of the value stay
-     * on the label, so two values that agree over their opening still read as two, and the
-     * whole of it is a hover away as the label's tooltip.
-     */
-    static void showMiddleShortened(Label label, String value, int limit) {
-        String shown = middleShortened(value, limit);
-        label.setText(shown);
-        if (!shown.equals(value)) {
-            label.setTooltip(new Tooltip(value));
-        }
-    }
-
-    /**
      * Returns {@code value} cut from its middle to {@code limit} characters with an ellipsis
      * stood in for what was taken, or {@code value} itself when it is already that short.
      *
@@ -109,19 +64,5 @@ final class UiText {
         // rather than off behind a space either cut happened to land on
         return opening.stripTrailing() + ELLIPSIS
                 + StringUtil.lastCharacters(value, closing).stripLeading();
-    }
-
-    /**
-     * Puts {@code value} on {@code label} cut from its middle, and names the whole of it on
-     * hover whenever the label shows less than all of it: cut to the count, or drawn narrower
-     * than the text it holds needs.
-     *
-     * <p>A value within the count is cut all the same by the room its row has left over, and
-     * the label's own ellipsis says nothing about what it took. A name is worse off for that
-     * than a tag is, since a card holds nothing else that would identify the student.
-     */
-    static void showMiddleShortenedToFit(Label label, String value, int limit) {
-        showMiddleShortened(label, value, limit);
-        nameWhatIsCutAsItIsDrawn(label, value);
     }
 }

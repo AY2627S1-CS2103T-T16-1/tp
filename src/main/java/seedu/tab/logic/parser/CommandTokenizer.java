@@ -32,6 +32,10 @@ public class CommandTokenizer {
     /** Separator attaching an option value to its marker. */
     public static final char VALUE_SEPARATOR = '=';
 
+    private static final char LEFT_CURLY_QUOTE = '“';
+    private static final char RIGHT_CURLY_QUOTE = '”';
+    private static final char FULL_WIDTH_QUOTE = '＂';
+
     private CommandTokenizer() {} // this class only splits arguments
 
     /**
@@ -66,7 +70,7 @@ public class CommandTokenizer {
                 value.append(arguments.charAt(i + 1));
                 hasToken = true;
                 i++;
-            } else if (current == QUOTE) {
+            } else if (isQuote(current)) {
                 if (!hasToken) {
                     beganQuoted = true;
                 }
@@ -97,13 +101,22 @@ public class CommandTokenizer {
     }
 
     /**
-     * Returns true if {@code character} is one a backslash may escape. Only the two characters
+     * Returns whether the character groups a quoted value. Quote styles are interchangeable
+     * so a pasted or partially converted pair behaves like straight double quotes.
+     */
+    public static boolean isQuote(char character) {
+        return character == QUOTE || character == LEFT_CURLY_QUOTE
+                || character == RIGHT_CURLY_QUOTE || character == FULL_WIDTH_QUOTE;
+    }
+
+    /**
+     * Returns true if {@code character} is one a backslash may escape. Only characters
      * that mean something to the tokenizer are escapable, so a backslash before anything else
      * stays in the value rather than quietly disappearing. The colouring asks the same
      * question, so that what the User sees and what the parser reads agree on where a token
      * ends.
      */
     public static boolean isEscapable(char character) {
-        return character == QUOTE || character == ESCAPE;
+        return isQuote(character) || character == ESCAPE;
     }
 }

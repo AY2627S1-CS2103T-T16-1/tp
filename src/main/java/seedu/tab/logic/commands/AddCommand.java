@@ -32,7 +32,7 @@ public class AddCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a student to the student book. "
             + "Parameters: " + FIELD_NAME + " "
-            + FLAG_PHONE.getLabel() + " "
+            + "[" + FLAG_PHONE.getLabel() + "] "
             + "[" + FLAG_EMAIL.getLabel() + "] "
             + "[" + FLAG_NUS_STUDENT_ID.getLabel() + "] "
             + "[" + FLAG_TAG.getLabel() + "]... "
@@ -41,7 +41,8 @@ public class AddCommand extends Command {
             + "spaces, and any value opening with a hyphen, goes in double quotes. "
             + "The value options accept either spelling: " + FLAG_PHONE.getMarkerSummary() + ", "
             + FLAG_EMAIL.getMarkerSummary() + ", " + FLAG_NUS_STUDENT_ID.getMarkerSummary() + " and "
-            + FLAG_TAG.getMarkerSummary() + ". The NUS Student ID is optional. "
+            + FLAG_TAG.getMarkerSummary() + ". The phone number, email and NUS Student ID "
+            + "are optional. "
             + FLAG_FOLLOW_UP.getMarkerSummary()
             + " takes no value and marks the student as needing follow-up.\n"
             + "Example: " + COMMAND_WORD + " \"Siti Nur-Aisyah\" "
@@ -55,7 +56,7 @@ public class AddCommand extends Command {
 
     public static final String MESSAGE_SEARCH_CLEARED = "Search cleared to show the new student.";
 
-    private final Logger logger = LogsCenter.getLogger(AddCommand.class);
+    private static final Logger logger = LogsCenter.getLogger(AddCommand.class);
 
     private final Student toAdd;
 

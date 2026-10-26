@@ -21,8 +21,9 @@ A JDK that bundles JavaFX can override these dependencies and produce different
 UI behavior.
 
 The JavaFX native libraries bundled by this project target x64. On Apple
-Silicon, use the x64 JDK under Rosetta rather than an ARM64 JDK; CI explicitly
-selects x64 for its JavaFX 17 jobs even when macOS uses Apple Silicon.
+Silicon, use the x64 JDK under Rosetta rather than an ARM64 JDK. CI runs its
+JavaFX 17 jobs on x64 throughout, and takes the macOS one on an Intel runner,
+so the same libraries are exercised without Rosetta translating them.
 
 CI also tests the [course's Mac setup](https://se-education.org/guides/tutorials/javaInstallationMac.html)
 in a separate job: Zulu JDK+FX **25.0.3**, with its bundled JavaFX **25**, on
@@ -44,6 +45,12 @@ CI limits the complete Gradle build step to fifteen minutes to catch a
 stalled native toolkit while allowing cold downloads and slower runners.
 Failed tests print full exception traces without requiring Gradle's verbose
 `--info` logging.
+
+Keyboard navigation tests use an off-screen window whose activation is
+controlled through JavaFX's `WindowHelper`. They exercise scene focus and
+control key bindings without requiring desktop activation from the operating
+system. The test task exports this internal package when JavaFX is bundled
+with the JDK; JavaFX 17 on the classpath needs no module export.
 
 To reproduce CI locally, set `JAVA_HOME` to this JDK and put its `bin` directory
 first on `PATH`, then run `./gradlew clean check coverage` (Windows:

@@ -9,31 +9,31 @@ import java.util.Optional;
 import java.util.Set;
 
 import seedu.tab.commons.util.ToStringBuilder;
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.model.tag.Tag;
 
 /**
  * Represents a Student in the student book.
- * Guarantees: field values are validated and immutable. Every detail but the email and NUS Student ID is
- * present; a student may be held before either optional detail is known.
+ * Guarantees: field values are validated and immutable. Only the name is always present; a student may be
+ * held before any of the optional details is known.
  */
 public class Student {
-    // Required fields
+    // Required field
     private final Name name;
-    private final Phone phone;
 
+    private final Optional<Phone> phone;
     private final Optional<Email> email;
     private final Optional<NusStudentId> nusStudentId;
 
     // Data fields
     private final Set<Tag> tags = new HashSet<>();
-    private final Optional<Flag> flag;
+    private final Optional<FollowUpFlag> flag;
 
     /**
      * Constructs an unflagged student. Every argument must be non-null;
      * unknown optional details are represented by {@link Optional#empty()}.
      */
-    public Student(Name name, Phone phone, Optional<Email> email, Optional<NusStudentId> nusStudentId,
+    public Student(Name name, Optional<Phone> phone, Optional<Email> email, Optional<NusStudentId> nusStudentId,
             Set<Tag> tags) {
         this(name, phone, email, nusStudentId, tags, false);
     }
@@ -42,7 +42,7 @@ public class Student {
      * Constructs a student with the given follow-up state. Every argument must be non-null;
      * unknown optional details are represented by {@link Optional#empty()}.
      */
-    public Student(Name name, Phone phone, Optional<Email> email, Optional<NusStudentId> nusStudentId,
+    public Student(Name name, Optional<Phone> phone, Optional<Email> email, Optional<NusStudentId> nusStudentId,
             Set<Tag> tags, boolean isFlagged) {
         requireAllNonNull(name, phone, email, nusStudentId, tags);
         this.name = name;
@@ -50,14 +50,14 @@ public class Student {
         this.email = email;
         this.nusStudentId = nusStudentId;
         this.tags.addAll(tags);
-        this.flag = isFlagged ? Optional.of(new Flag()) : Optional.empty();
+        this.flag = isFlagged ? Optional.of(new FollowUpFlag()) : Optional.empty();
     }
 
     public Name getName() {
         return name;
     }
 
-    public Phone getPhone() {
+    public Optional<Phone> getPhone() {
         return phone;
     }
 
@@ -82,7 +82,7 @@ public class Student {
     }
 
     /** Returns the follow-up flag, when this student needs follow-up. */
-    public Optional<Flag> getFlag() {
+    public Optional<FollowUpFlag> getFlag() {
         return flag;
     }
 
@@ -131,7 +131,7 @@ public class Student {
     public String toString() {
         return new ToStringBuilder(this)
                 .add("name", name)
-                .add("phone", phone)
+                .add("phone", phone.map(Phone::toString).orElse("null"))
                 .add("email", email.map(Email::toString).orElse("null"))
                 .add("nusStudentId", nusStudentId.map(NusStudentId::toString).orElse("null"))
                 .add("tags", tags)

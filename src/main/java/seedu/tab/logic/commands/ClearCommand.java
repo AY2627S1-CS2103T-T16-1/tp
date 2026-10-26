@@ -24,7 +24,7 @@ public class ClearCommand extends Command {
             "No clear confirmation is pending. Enter clear to request one.";
     public static final String MESSAGE_SUCCESS = "Student book has been cleared!";
 
-    private final Logger logger = LogsCenter.getLogger(ClearCommand.class);
+    private static final Logger logger = LogsCenter.getLogger(ClearCommand.class);
 
 
     @Override

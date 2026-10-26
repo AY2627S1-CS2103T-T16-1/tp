@@ -29,6 +29,8 @@ import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.student.Email;
+import seedu.tab.model.student.NusStudentId;
+import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -140,6 +142,26 @@ public class JsonStudentBookStorageTest {
                 new StudentBuilder().withName("Bernice").withPhone("87438807").withoutEmail().build()),
                 loaded.getStudentList());
         assertEquals(json, Files.readString(path));
+    }
+
+    @Test
+    public void readAndSaveStudentBook_hiddenControls_normalizesNamesAndTagsWithoutRewritingOnRead() throws Exception {
+        Path path = testFolder.resolve("control-characters.json");
+        String json = "{\"students\":[{\"name\":\"Am\\u0001y\",\"phone\":\"91110000\","
+                + "\"tags\":[\"La\\u007fb\",\"组\\u009f1\"]}]}";
+        Files.writeString(path, json);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        ReadOnlyStudentBook loaded = storage.readStudentBook().orElseThrow();
+        Student expected = new StudentBuilder().withName("Amy").withPhone("91110000").withoutEmail()
+                .withTags("Lab", "组1").build();
+
+        assertEquals(List.of(expected), loaded.getStudentList());
+        assertEquals(json, Files.readString(path));
+        storage.saveStudentBook(loaded);
+        assertEquals(loaded, new JsonStudentBookStorage(path).readStudentBook().orElseThrow());
+        assertFalse(Files.readString(path).contains("\\u0001"));
+        assertFalse(Files.readString(path).contains("\\u007f"));
+        assertFalse(Files.readString(path).contains("\\u009f"));
     }
 
     @Test
@@ -318,22 +340,30 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readStudentBook_unknownStudentKeys_reportsRecordAndPreservesFile() throws Exception {
+        // the key is rejected by its name, before its value is looked at, so the two
+        // dimensions are walked separately rather than multiplied: every unknown key against
+        // one value, then every value type against one key
         for (String field : List.of("nusStudentID", "Email", "tag", "Flag", "notes", "Address")) {
-            for (String value : List.of("\"A0999999Z\"", "null", "{}", "[]")) {
-                // Put the unknown field before the name to cover property-order independence.
-                String json = "{\"students\":[{\"name\":\"Alex\",\"phone\":\"87438807\"},"
-                        + "{\"" + field + "\":" + value + ",\"name\":\"Bernice Yu\",\"phone\":\"99272758\"}]}";
-                Path path = testFolder.resolve("unknown.json");
-                Files.writeString(path, json);
-                DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
-                        DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
-                assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
-                assertTrue(exception.getMessage().contains("Unknown field \"" + field + "\" in student \"Bernice Yu\""),
-                        exception.getMessage());
-                assertTrue(exception.getMessage().contains("Expected: name, phone, email, nusStudentId, tags, flag."));
-                assertEquals(json, Files.readString(path));
-            }
+            assertUnknownFieldIsReported(field, "\"A0999999Z\"");
         }
+        for (String value : List.of("null", "{}", "[]")) {
+            assertUnknownFieldIsReported("notes", value);
+        }
+    }
+
+    private void assertUnknownFieldIsReported(String field, String value) throws Exception {
+        // Put the unknown field before the name to cover property-order independence.
+        String json = "{\"students\":[{\"name\":\"Alex\",\"phone\":\"87438807\"},"
+                + "{\"" + field + "\":" + value + ",\"name\":\"Bernice Yu\",\"phone\":\"99272758\"}]}";
+        Path path = testFolder.resolve("unknown.json");
+        Files.writeString(path, json);
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+        assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
+        assertTrue(exception.getMessage().contains("Unknown field \"" + field + "\" in student \"Bernice Yu\""),
+                exception.getMessage());
+        assertTrue(exception.getMessage().contains("Expected: name, phone, email, nusStudentId, tags, flag."));
+        assertEquals(json, Files.readString(path));
     }
 
     @Test
@@ -528,7 +558,28 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readStudentBook_invalidNusStudentIdStudentBook_throwDataLoadingException() {
-        assertThrows(DataLoadingException.class, () -> readStudentBook("invalidNusStudentIdStudentBook.json"));
+        String expectedMessage = "Student record 1 (\"Student With Invalid NUS Student ID\"): "
+                + NusStudentId.MESSAGE_CONSTRAINTS;
+
+        assertThrows(DataLoadingException.class, expectedMessage, () ->
+                readStudentBook("invalidNusStudentIdStudentBook.json"));
+    }
+
+    @Test
+    public void readStudentBook_reservedFollowUpTag_reportsTheFieldToEdit() {
+        String expectedMessage = "Student record 1 (\"Flagged One\"): " + JsonAdaptedTag.MESSAGE_RESERVED_TAG;
+
+        assertThrows(DataLoadingException.class, expectedMessage, () ->
+                readStudentBook("reservedTagStudentBook.json"));
+    }
+
+    @Test
+    public void readStudentBook_reservedFollowUpTagInAnotherCase_isRefusedToo() {
+        // the rule folds case and spacing, so a file cannot slip the label past by shouting it
+        String expectedMessage = "Student record 1 (\"Flagged Two\"): " + JsonAdaptedTag.MESSAGE_RESERVED_TAG;
+
+        assertThrows(DataLoadingException.class, expectedMessage, () ->
+                readStudentBook("reservedTagCaseVariantStudentBook.json"));
     }
 
     @Test
@@ -566,6 +617,67 @@ public class JsonStudentBookStorageTest {
         assertEquals(2, loaded.getStudentList().size());
         assertEquals(explicitNull, loaded.getStudentList().get(0));
         assertEquals(keyLeftOut, loaded.getStudentList().get(1));
+    }
+
+    @Test
+    public void readStudentBook_handEditedNullPhone_loadsWithoutOne() throws Exception {
+        // a file edited by hand may spell an absent phone either way, and both have to load
+        // alongside a record that does hold one
+        ReadOnlyStudentBook loaded = readStudentBook("nullPhoneStudentBook.json").get();
+
+        Student explicitNull = new StudentBuilder().withName("Alice Pauline").withoutPhone()
+                .withEmail("alice@example.com").withTags("friends").build();
+        Student keyLeftOut = new StudentBuilder().withName("Benson Meier").withoutPhone()
+                .withEmail("benson@example.com").withTags("owesMoney").build();
+        Student keyPresent = new StudentBuilder().withName("Carl Kurz").withPhone("+65 9123 4567 (HP)")
+                .withEmail("carl@example.com").withTags().build();
+
+        assertEquals(3, loaded.getStudentList().size());
+        assertEquals(explicitNull, loaded.getStudentList().get(0));
+        assertEquals(keyLeftOut, loaded.getStudentList().get(1));
+        assertEquals(keyPresent, loaded.getStudentList().get(2));
+    }
+
+    @Test
+    public void readStudentBook_handEditedPhoneWhitespace_loadsWithoutOne() throws Exception {
+        Path filePath = testFolder.resolve("PhoneWhitespace.json");
+        Files.writeString(filePath, """
+                {
+                  "students": [ {
+                    "name": "Alex Yeoh",
+                    "phone": ""
+                  }, {
+                    "name": "Bernice Yu",
+                    "phone": " 99272758 "
+                  } ]
+                }
+                """);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        ReadOnlyStudentBook loaded = storage.readStudentBook().get();
+
+        assertEquals(Optional.empty(), loaded.getStudentList().get(0).getPhone());
+        assertEquals(Optional.of(new Phone("99272758")), loaded.getStudentList().get(1).getPhone());
+    }
+
+    @Test
+    public void readAndSaveStudentBook_studentWithoutPhone_roundTripsAndLeavesTheKeyOut() throws Exception {
+        Path filePath = testFolder.resolve("NoPhone.json");
+        Student student = new StudentBuilder().withName("Wong Mei Ling").withoutPhone()
+                .withEmail("meiling@u.nus.edu").withTags("Lab 3").build();
+
+        StudentBook original = new StudentBook();
+        original.addStudent(student);
+
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+        storage.saveStudentBook(original, filePath);
+
+        // the file is meant to stay editable by hand, so an absent phone is an absent key
+        assertFalse(Files.readString(filePath).contains("phone"));
+
+        ReadOnlyStudentBook readBack = storage.readStudentBook(filePath).get();
+        assertEquals(original, new StudentBook(readBack));
+        assertEquals(Optional.empty(), readBack.getStudentList().get(0).getPhone());
     }
 
     @Test
@@ -654,6 +766,27 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readAndSaveStudentBook_longPhoneText_preservesCompleteValues() throws Exception {
+        String digits = "1234567890".repeat(40);
+        String annotated = "+65 9123 4567 (HP), 6516-2727 ext 21 (Office); " + "contact note ".repeat(40).strip();
+        StudentBook original = new StudentBook();
+        original.addStudent(new StudentBuilder().withName("Long Phone").withPhone(digits).build());
+        original.addStudent(new StudentBuilder().withName("Annotated Phone").withPhone(annotated).build());
+        Path filePath = testFolder.resolve("LongPhones.json");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(filePath);
+
+        storage.saveStudentBook(original);
+
+        String saved = Files.readString(filePath);
+        assertTrue(saved.contains(digits));
+        assertTrue(saved.contains(annotated));
+        ReadOnlyStudentBook loaded = new JsonStudentBookStorage(filePath).readStudentBook().orElseThrow();
+        assertEquals(original, new StudentBook(loaded));
+        assertEquals(digits, loaded.getStudentList().get(0).getPhone().orElseThrow().value);
+        assertEquals(annotated, loaded.getStudentList().get(1).getPhone().orElseThrow().value);
+    }
+
+    @Test
     public void readAndSaveStudentBook_widenedPhoneAndTag_roundTrips() throws Exception {
         // A phone number with a country code and a tag with a space are newly accepted.
         // Saving is only half the claim; they have to come back unchanged.
@@ -672,7 +805,7 @@ public class JsonStudentBookStorageTest {
         assertEquals(original, new StudentBook(readBack));
 
         Student loaded = readBack.getStudentList().get(0);
-        assertEquals("+65 9123 4567", loaded.getPhone().value);
+        assertEquals("+65 9123 4567", loaded.getPhone().orElseThrow().value);
         assertEquals("Ravi s/o Kumaran", loaded.getName().fullName);
         assertEquals(student.getTags(), loaded.getTags());
     }

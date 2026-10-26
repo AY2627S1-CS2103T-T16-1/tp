@@ -7,6 +7,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
+import static seedu.tab.logic.parser.CliFlags.FLAG_TARGET_ID;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,25 +41,22 @@ public class EditCommandParser implements Parser<EditCommand> {
      * field a value belongs to.
      *
      * <p>The target is read by {@link ParserUtil#parseRequiredStudentTarget}: a position in the
-     * displayed list, or an NUS Student ID that opens with a letter. Unlike {@code delete}, an
-     * ID opening with a digit cannot be a target, because {@code --id} names the field to set
-     * rather than the student to edit.
+     * displayed list, or an NUS Student ID that opens with a letter. The separate
+     * {@code --target-id} option accepts any valid ID while {@code --id} sets the ID field.
      *
      * @throws ParseException if the user input does not conform to the expected format
      */
     public EditCommand parse(String args) throws ParseException {
         FlagArgumentMap arguments = FlagTokenizer.tokenizeWithIndex(
                 args, FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG,
-                FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
+                FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP, FLAG_TARGET_ID);
         arguments.verifyNoDuplicateFlagsFor(FLAG_NAME, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID,
-                FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
+                FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP, FLAG_TARGET_ID);
         Optional<Boolean> followUp = ParserUtil.parseFollowUpSelector(arguments);
 
         ParseProblems problems = new ParseProblems();
 
-        StudentTarget target = problems.collect(() -> ParserUtil.parseRequiredStudentTarget(
-                arguments.getPreamble(), EditCommand.FIELD_TARGET, EditCommand.FIELD_INDEX,
-                EditCommand.MESSAGE_USAGE));
+        StudentTarget target = problems.collect(() -> parseTarget(arguments));
         if (!hasAnyField(arguments)) {
             problems.add(EditCommand.MESSAGE_NOT_EDITED);
         }
@@ -67,6 +65,19 @@ public class EditCommandParser implements Parser<EditCommand> {
         problems.throwIfAny();
 
         return new EditCommand(target, descriptor);
+    }
+
+    /** Reads exactly one target without confusing ID selection with an ID field edit. */
+    private static StudentTarget parseTarget(FlagArgumentMap arguments) throws ParseException {
+        if (arguments.getValue(FLAG_TARGET_ID).isPresent()) {
+            if (!arguments.getPreamble().isBlank()) {
+                throw new ParseException(EditCommand.MESSAGE_MULTIPLE_TARGETS);
+            }
+            return StudentTarget.byNusStudentId(ParserUtil.parseNusStudentId(
+                    arguments.getValue(FLAG_TARGET_ID).orElseThrow()));
+        }
+        return ParserUtil.parseRequiredStudentTarget(arguments.getPreamble(),
+                EditCommand.FIELD_TARGET, EditCommand.FIELD_INDEX);
     }
 
     /**
@@ -88,7 +99,8 @@ public class EditCommandParser implements Parser<EditCommand> {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
 
         descriptor.setName(problems.collectIfPresent(arguments.getValue(FLAG_NAME), ParserUtil::parseName));
-        descriptor.setPhone(problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone));
+        arguments.getValue(FLAG_PHONE).ifPresent(value -> parseClearableField(problems, value,
+                ParserUtil::parsePhone, descriptor::clearPhone, descriptor::setPhone));
         arguments.getValue(FLAG_EMAIL).ifPresent(value -> parseClearableField(problems, value,
                 ParserUtil::parseEmail, descriptor::clearEmail, descriptor::setEmail));
         arguments.getValue(FLAG_NUS_STUDENT_ID)

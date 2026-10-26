@@ -14,11 +14,15 @@ import java.util.regex.Pattern;
  */
 public class StringUtil {
 
+    /** Why {@link #holdsLetterOrNumber(String)} turned a value down, phrased for the user. */
+    public static final String REASON_NO_LETTER_OR_NUMBER = "it holds no letter or number";
+
     // almost every Unicode format character (category Cf), except the joiner and non-joiner a
     // script needs to shape a word. A few of them do draw something — the Arabic end-of-ayah
     // sign and the characters that tag a Scotland flag — but none is likely in a class list,
-    // and dropping them is the price of closing the whole category
-    private static final Pattern INVISIBLE = Pattern.compile("[\\p{Cf}&&[^\\u200C\\u200D]]");
+    // and dropping them is the price of closing the whole category. Non-whitespace control
+    // characters are removed too; whitespace controls remain available as separators.
+    private static final Pattern INVISIBLE = Pattern.compile("(?U)[\\p{Cf}\\p{Cc}&&[^\\u200C\\u200D\\s]]");
     private static final Pattern WHITESPACE = Pattern.compile("(?U)\\s+");
     private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
 
@@ -214,7 +218,7 @@ public class StringUtil {
     }
 
     /**
-     * Returns {@code raw} without the invisible format characters that would let two
+     * Returns {@code raw} without the invisible format and non-whitespace control characters that let two
      * identical-looking pieces of a command differ: a direction mark or a zero-width space
      * pasted before a command word or an index is removed, while the zero-width joiner and
      * non-joiner a script needs to shape a word are kept.
@@ -229,8 +233,8 @@ public class StringUtil {
     }
 
     /**
-     * Returns {@code raw} in the form a stored field holds: without the invisible format
-     * characters that would let two identical-looking values differ, with every run of
+     * Returns {@code raw} in the form a stored field holds: without invisible format
+     * and non-whitespace control characters that would let two identical-looking values differ, with every run of
      * whitespace reduced to one ASCII space, the ends trimmed, and the result composed to
      * Unicode form NFC.
      *
@@ -239,7 +243,8 @@ public class StringUtil {
      * be stored decomposed and compare unequal to {@code \u00E9}, which looks the same.
      *
      * <p>Every Unicode format character is discarded but the zero-width joiner and non-joiner,
-     * because scripts such as Sinhala and Arabic need them to shape correctly. What remains of
+     * because scripts such as Sinhala and Arabic need them to shape correctly. Non-whitespace
+     * control characters are discarded too. Whitespace controls still become spaces. What remains of
      * a name, a tag or a number is therefore what a reader sees: a direction mark pasted from a
      * chat app or a soft hyphen hides nothing, and two values that look alike are stored alike.
      */
@@ -258,6 +263,17 @@ public class StringUtil {
     public static boolean hasLetterOrNumber(String s) {
         requireNonNull(s);
         return HAS_LETTER_OR_NUMBER.matcher(s).find();
+    }
+
+    /**
+     * Returns true if {@code value} contains at least one letter or number once normalized:
+     * the rule a stored field value has to meet, shared so that two fields asking it cannot
+     * drift apart. A value of punctuation alone, such as "!!!", survives normalization and is
+     * turned down all the same.
+     */
+    public static boolean holdsLetterOrNumber(String value) {
+        requireNonNull(value);
+        return hasLetterOrNumber(normalizeFieldValue(value));
     }
 
     /**

@@ -102,7 +102,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentListPanel`, `SummaryPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-`CommandBox` owns its `CommandHistory` and `CommandTextField`, and calls the static `CommandHighlighter.highlight` method to color the input. The card controls extend JavaFX classes directly: `CardHeadline` extends `Pane`, `CardName` extends `Label`, `TagRow` extends `Region`, and `ContactRow` extends `FlowPane`. These controls are composed in `StudentListCard.fxml`.
+`CommandBox` owns its `CommandHistory`, `CommandTextField` and `HighlightedTextOverlay`. The overlay is what calls the static `CommandHighlighter.highlight` method to color the input, leaving `CommandBox` with running the command, recalling earlier ones and marking a failure. The card controls extend JavaFX classes directly: `CardHeadline` extends `Pane`, `CardName` extends `Label`, `TagRow` extends `Region`, and `ContactRow` extends `FlowPane`. These controls are composed in `StudentListCard.fxml`.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/MainWindow.java).
 
@@ -135,6 +135,19 @@ Each count retains its preferred width, while the tag list scrolls vertically
 as wrapped rows grow. Names are not shortened, so tags differing only at the
 end remain distinguishable without hovering.
 
+`MainWindow` handles plain Tab and Shift+Tab on the student page to keep a
+stable focus cycle: command box, student list, summary tag list, then the
+reply when visible. The student list stays one Tab from command entry even
+after a reply appears; Shift+Tab returns directly. Empty lists stay reachable.
+`SummaryPanel.fxml` makes the tag `ScrollPane` focus-traversable, and the theme
+marks its focus with an accent outline without changing its layout size.
+JavaFX supplies arrow and Home/End navigation for both lists, plus paging for
+the student list. `SummaryPanel` handles Page Up/Down using the tag viewport's
+height and content overflow: JavaFX's default `ScrollPane` page keys otherwise
+use the same increment as its arrow keys. The command box retains its separate
+Up/Down history behavior. Help uses its own pager and restores command focus
+when closed.
+
 `HelpCommand` returns a command summary and the existing `showHelp` signal.
 `MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
 the entire student page (command box, result, summary sidebar and student list).
@@ -147,9 +160,15 @@ flag labels from the command/parser definitions.
 `HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
 context, Enter/j and k move a line, d/u move half a screenful, g/G go to either end,
 and q/Esc return to commands. PgUp/PgDn, arrows and Home/End are also accepted.
-A wrapped label inside a scrollbar-free viewport takes the remaining window height.
-Page movement uses the current viewport and font metrics, so resizing and different
-fonts do not skip text. A persistent footer shows progress and navigation keys.
+The reference is drawn as spans of `Text` in a wrapped `TextFlow` inside a
+scrollbar-free viewport, which takes the remaining window height. `HelpText` gives
+each span the class its token asks for — heading, command word, option, placeholder
+or plain — reusing the command box's own colours, so a marker reads the same where
+it is described as where it is typed. A command word carrying punctuation stays
+plain, since it is being named in a sentence rather than shown as syntax, and a
+two-letter capital such as `ID` is prose rather than a field.
+Page movement uses the current viewport and the font those spans share, so resizing
+and different fonts do not skip text. A persistent footer shows progress and navigation keys.
 The c key copies `HelpCommand.USER_GUIDE_URL` to the system clipboard and confirms
 it in the footer. Unused typed keys show a reminder to quit help before entering
 a command. The reference keeps explicit lines short enough for minimum width;
@@ -229,7 +248,7 @@ content width and the card's maximum width, matching the width used by its
 skin during layout. Measuring at the wider cell width would miss a wrapped
 contact row near a wrap threshold and squeeze the headline.
 
-#### Colouring the command line
+#### Coloring the command line
 
 `CommandTextField` converts separators to spaces in text replacement before
 JavaFX filters control characters. It asks `StringUtil#isWhitespace` the
@@ -242,24 +261,25 @@ line, including when a paste replaces selected text. CRLF is treated as one
 separator.
 
 `CommandHighlighter` breaks a command where the parser breaks it, which the
-User Guide invites the User to rely on. That means two splits the colouring
+User Guide invites the User to rely on. That means two splits the coloring
 cannot make with the rule it uses for values. `StudentBookParser` ends the
 command word at the first separator whatever the quotes, so `add"Ravi s/o
 Kumaran"` is the command word `add"Ravi` and two words after it; reading that
 word with the value rule would draw one bold quoted word and then report an
-unknown command the colours never showed. `FlagTokenizer` reads `--tag="Lab
-3"` as an option and a value, so the marker and the equals sign are coloured
+unknown command the colors never showed. `FlagTokenizer` reads `--tag="Lab
+3"` as an option and a value, so the marker and the equals sign are colored
 as the option and the rest as its value. A marker holding a quote or a
 backslash is left whole instead, because either moves the equals sign the
 parser counts to, and a word split in the wrong place would be the same bug
 again.
 
-A `TextField` cannot colour its own content, so `CommandBox` keeps the field
-for input and draws a coloured copy of the command behind it, with the field's
-own text transparent. The field still takes every keystroke and still decides
+A `TextField` cannot color its own content, so `CommandBox` keeps the field
+for input and hands `HighlightedTextOverlay` the nodes that draw a colored
+copy of the command behind it, with the field's own text transparent. The
+overlay owns that copy, the caret and the selection band. The field still takes every keystroke and still decides
 which character a click lands on, which keeps editing exactly as it was.
 
-`CommandHighlighter` decides the colours. It returns spans covering every
+`CommandHighlighter` decides the colors. It returns spans covering every
 character of the command. It walks the command itself, rather than calling
 `CommandTokenizer`, because it has to keep the text exactly as typed, quotes
 and all, where the tokenizer removes them and may refuse an unclosed quote
@@ -270,7 +290,7 @@ awkward commands and compares how many tokens each found. That catches one of
 them splitting a command into a different number of pieces; it does not
 compare where each piece begins and ends, so a boundary that moves without
 changing the count slips through. It never rejects anything: a
-command is coloured while it is still half-typed.
+command is colored while it is still half-typed.
 
 The copy measures its natural width from the whole shaped `TextFlow`, rounded
 up to avoid wrapping at a fractional pixel boundary. Ordinary value words and
@@ -288,12 +308,12 @@ but interacts with the field:
   the field hit-tests another, and clicks land in the wrong place. Reading
   that node once is not enough, because the field's skin re-scrolls it after a
   delete, a replace or a change of width, which is after the caret and the
-  text the colouring was told about have both settled. The copy therefore
+  text the coloring was told about have both settled. The copy therefore
   follows the node's own position. The node is the one the field is drawing
   in, since an empty line shows the prompt in a node of the same kind which
   the field hides rather than throws away, and a command reading as the
   prompt would otherwise be taken for the hidden one.
-* **the caret.** The field's caret is drawn in its text colour, which is
+* **the caret.** The field's caret is drawn in its text color, which is
   transparent, so the line carries one of its own, sized from a run of the text
   so it sits where the text does. Its horizontal position follows the primary
   caret shape of the field’s text node, including its leading/trailing bias at
@@ -305,12 +325,12 @@ but interacts with the field:
   separate bands.
 
 `CommandBoxTest` checks the contrast of the selection band against the line,
-and of every colour the line uses against that band, including the one a
+and of every color the line uses against that band, including the one a
 refused command is written in, so that selecting a command cannot hide half of
 it. The bar it holds them to is 3:1 rather than the 4.5:1 WCAG asks of text
 this size: on a window this dark, a band light enough to be seen against the
 line (2.2:1) lightens the background enough that 4.5:1 would need every token
-colour moved towards white, which is not the palette the mockup sets. The
+color moved towards white, which is not the palette the mockup sets. The
 trade-off is deliberate and worth revisiting if the palette changes.
 
 #### Recalling session commands
@@ -325,18 +345,18 @@ it already matches the text in the box and an earlier entry exists. Blank
 submissions and consecutive identical submissions are skipped; editing a recalled entry does not alter stored text.
 
 The command box consumes unmodified Up/Down key presses before the text field
-handles them. Recalled text uses the existing text listener for colouring, and
+handles them. Recalled text uses the existing text listener for coloring, and
 the caret moves to its end. This UI state is session-only and never enters the
 student model or persisted data.
 
-#### Summarising the list
+#### Summarizing the list
 
 `SummaryPanel` shows the flagged count, a count per tag and the total, beside
 the list. It counts `Logic#getFilteredStudentList()`, which is the only list
-`Logic` exposes, so it summarises **what the list is showing** rather than the
+`Logic` exposes, so it summarizes **what the list is showing** rather than the
 whole student book: after `find -n Alex` it counts the matches. That is the
 reading the User Guide documents, and it keeps the panel answering the same
-question as the list it sits beside. Summarising the whole book instead would
+question as the list it sits beside. Summarizing the whole book instead would
 need `Logic` to expose it.
 
 The list is an `ObservableList`, so a listener keeps the counts current
@@ -401,7 +421,7 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 How the parsing works:
 * When called upon to parse a command entered by the User, the `StudentBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the command and create an `XYZCommand` object (e.g., `AddCommand`). The `StudentBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
-* A command's arguments are read in two passes: `CommandTokenizer` splits them into tokens, then `FlagTokenizer` sorts those tokens into the `Flag` each belongs to and hands back a `FlagArgumentMap`. [How commands read their arguments](#how-commands-read-their-arguments) covers why.
+* A command's arguments are read in two passes: `CommandTokenizer` splits them into tokens, then `FlagTokenizer` sorts those tokens into the `CliFlag` each belongs to and hands back a `FlagArgumentMap`. [How commands read their arguments](#how-commands-read-their-arguments) covers why.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/model/Model.java)
@@ -573,12 +593,19 @@ as its application directory, preserving the development workflow.
 ### How commands read their arguments
 
 `add` and `edit` mark their fields with options,
-`add NAME -p PHONE [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
-`edit INDEX [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`,
-where AB3 marked them with prefixes such as `p/`. The `edit` target may also
-be an NUS Student ID that starts with a letter instead of a displayed index;
-IDs starting with a digit must be addressed by index. The `--id` option sets
-the ID field rather than selecting the target.
+`add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` and
+`edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`,
+where AB3 marked them with prefixes such as `p/`. The `edit` target is a
+shown index, a letter-leading NUS Student ID, or `--target-id NUS_STUDENT_ID`.
+A dedicated target option keeps selection unambiguous when `--id` sets or
+clears the ID field, and permits digit-leading IDs without changing how bare
+numbers select displayed indices. `EditCommandParser` reuses
+`ParserUtil.parseRequiredStudentTarget` for preamble targets and
+`ParserUtil.parseNusStudentId` for explicit targets, building a `StudentTarget`
+in either case. Duplicate target options and mixed preamble/option targets
+are rejected before execution. Selecting a target alone does not count as a
+field edit. ID targets resolve across the whole book, preserving the search
+predicate after editing and using the existing persistence path.
 The value options have descriptive long aliases: `--name`, `--phone`,
 `--email`, and `--tag` correspond to `-n`, `-p`, `-e`, and `-t` respectively.
 `add` takes its name in the preamble. `edit` accepts `-n`/`--name` to change a
@@ -594,7 +621,11 @@ an option is a whole token, so a name is read as a name however it is spelled.
 Parsing runs in two passes, the way a shell does it.
 
 `CommandTokenizer` splits the arguments on whitespace and lets double quotes
-group a value containing whitespace. A token records whether a quote took part in it,
+group a value containing whitespace. Straight, curly and full-width double quotes
+are interchangeable delimiters, including in mixed pairs, to accept input from
+input methods and pasted documents. `CommandTokenizer#isQuote` shares this rule
+with the syntax highlighter; all supported quotes can be escaped to retain them
+literally. A token records whether a quote took part in it,
 because that is the only thing separating the value `-Ahmad` from the option
 `-e`. A backslash escapes a quote or another backslash, so a value may hold
 either; a backslash before anything else stays in the value, so nothing the User
@@ -611,7 +642,7 @@ whatever it takes in that position: the name for `add`, so a name of several
 words needs no quotes unless it would otherwise be misread, and the index for
 `edit`. Each command names its own, in `AddCommand.FIELD_NAME` and
 `EditCommand.FIELD_INDEX`, rather than the shared `CliFlags` doing it for
-them. Each short and long marker resolves to the same `Flag`, so mixed aliases
+them. Each short and long marker resolves to the same `CliFlag`, so mixed aliases
 for a single-valued field are duplicates rather than independent fields.
 Value-taking options take the token after them, and `-t` or `--tag` repeats
 for `add` and `edit`. The `tag` command takes exactly one tag through `-a`/`--add`
@@ -646,7 +677,7 @@ quotes. If the tokenizer refuses `-n` or `--name`, `AddCommandParser` adds a
 placement hint to the existing error. A missing name gets the same hint,
 so users familiar with the name options in `edit` can recover immediately.
 
-`Flag` also lets a value-taking option carry aliases. NUS Student ID uses
+`CliFlag` also lets a value-taking option carry aliases. NUS Student ID uses
 `--id` as its canonical option and the unused `-i` as its typing-friendly
 alias. Both spellings map to the same `FLAG_NUS_STUDENT_ID`, so giving
 both is rejected as a repeated single-valued field rather than letting one
@@ -670,9 +701,10 @@ in two passes:
 <puml src="diagrams/CommandArgumentParsing.puml" alt="CommandArgumentParsing" />
 
 `edit` clears a field with an explicitly empty value rather than with a bare
-option. `-e ""` removes the email, `--id ""` removes the NUS Student ID, and
-`-t ""` removes every tag. Email and NUS Student ID values are trimmed before
-this check, so quoted whitespace clears either optional field too.
+option. `-p ""` removes the phone number, `-e ""` removes the email,
+`--id ""` removes the NUS Student ID, and
+`-t ""` removes every tag. Phone, email and NUS Student ID values are trimmed
+before this check, so quoted whitespace clears any of those optional fields too.
 A bare option cannot mean "clear" here, because a bare option
 is what reports the mistake in `edit 1 -t -e a@b.com`: the `-e` is read as the
 value `-t` was left without, rather than being stored as a tag. An empty quoted
@@ -713,7 +745,11 @@ addition and removal.
 `ParserUtil.parseIndex` distinguishes malformed/non-positive input from a positive
 integer exceeding the supported index range. `StudentTarget` reports out-of-range
 positions with their original input spelling and the current displayed count,
-including zero. Retaining that spelling also lets delete suggest an exact `--id`
+including zero. Invalid non-positive or non-integer targets of edit, tag and
+delete retain the concise positive-integer reason from `parseIndex`, alongside
+any field errors; delete adds the explicit `--id` form whenever the refused
+target reads as a valid NUS Student ID.
+Retaining that spelling also lets delete suggest an exact `--id`
 command for a stored numeric ID without dropping leading zeroes. An in-range
 number remains an index even when another record holds the same numeric ID.
 The original spelling affects diagnostics only, not target equality or hashing.
@@ -740,9 +776,9 @@ from the follow-up flag, though the parsers no longer let one be added. Duplicat
 stored tag's spelling. If several case variants match, the reply chooses the
 first in the card's tag display order.
 
-For a hidden flagged student, the absent-tag hint asks the User to run `list`
-and use that student's displayed index to clear follow-up. It never suggests
-an unavailable index or an edit target that could identify someone else.
+For a hidden flagged student, the absent-tag hint supplies
+`edit --target-id NUS_STUDENT_ID --no-follow-up` with the student's stored ID.
+This addresses even digit-leading IDs without changing the active search.
 
 The following sequence diagram shows how a `tag` command adds or removes a tag:
 
@@ -770,8 +806,9 @@ and the JSON file.
 ### Invisible characters on the command line
 
 Before the command word is read, `StudentBookParser` strips the same Unicode
-format characters that `StringUtil.normalizeFieldValue` strips from a stored
-value, through `StringUtil.stripFormatCharacters`. A direction mark or a
+format and non-whitespace control characters that `StringUtil.normalizeFieldValue`
+strips from a stored value, through `StringUtil.stripFormatCharacters`. Whitespace controls such as tabs
+and line breaks remain separators rather than joining adjacent words. A direction mark or a
 zero-width space pasted before a command word or an index is otherwise a word
 that looks right but matches no command, or an index reported as not a positive
 integer. The zero-width joiner and non-joiner are kept, because a script such as
@@ -782,7 +819,7 @@ different word rather than the same word with a character removed.
 
 `StudentBookParser` folds the first word of the input to lower case before it
 dispatches, so `List`, `LIST` and `list` all reach `ListCommand`. No two
-command words differ only in case, so a capitalised word can only mean the one
+command words differ only in case, so a capitalized word can only mean the one
 command, and refusing it over a Caps Lock left on or a Shift held a moment too
 long costs the User a retyping for nothing.
 
@@ -818,7 +855,7 @@ which says more about what was meant than the distance to some other word
 does. Only a word that opens nothing is measured for edits at all.
 
 The measure is `StringUtil.editDistance`: how many insertions, deletions,
-substitutions and swaps of neighbouring characters turn one word into the
+substitutions and swaps of neighboring characters turn one word into the
 other. A swap counts as one edit because a fast typist makes them as readily
 as the other three, and `lsit` would otherwise sit two edits from `list`, as
 far away as a wilder guess.
@@ -852,10 +889,10 @@ sharing a first letter, so at most two are ever named at once, and the limit
 is there for the command words it may gain.
 
 The comparison folds case with the `CommandWords.foldCase` the parser
-dispatches with, so `Delte` is read as an attempt at `delete`; a word spelt
+dispatches with, so `Delte` is read as an attempt at `delete`; a word spelled
 correctly in any case is dispatched before it reaches here. The message quotes
 the word as it was typed, because a User who typed capitals needs to see them
-to recognise what they did. The quoted word is shortened the
+to recognize what they did. The quoted word is shortened the
 way a rejected field value is, so that a pasted line cannot push the rest of
 the message out of sight. Lengths are compared before any distance is, which
 also settles such a line against every command word without measuring it.
@@ -874,18 +911,20 @@ against the list rather than leaving that to be noticed.
 
 ### Follow-up flag
 
-`Flag` extends `Tag` and uses its validation, normalization, and display
+`FollowUpFlag` extends `Tag` and uses its validation, normalization, and display
 behavior. Its fixed name is `Needs follow-up`. A general tag with those words
 remains a distinct value: tag equality requires the same concrete class as
-well as the same normalized name. `ParserUtil.parseTagToAdd` refuses that name
-however it is spelt, so that a card cannot show the same label as a tag and as
-the marker, while `Tag` and `JsonAdaptedTag` still accept it and a file written
-before the rule still loads. Removal reads it as an ordinary tag, so `TagCommand`
-keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `Flag` and
+well as the same normalized name. `ParserUtil.parseTagToAdd` and
+`JsonAdaptedTag.toModelType` both refuse that name however it is spelled, so that
+a card cannot show the same label as a tag and as the marker whether the value
+arrives from a command or from a hand-edited file. A file written before the
+rule stops loading, with an error naming the record and the field to correct.
+`Tag` itself still accepts the name, so removal reads it as an ordinary tag and
+`TagCommand` keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `FollowUpFlag` and
 exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
 interface for commands and the UI. Full equality and hashing include the flag,
 but `isSameStudent` does not: changing whether a student needs a reply does not
-change their identity. The flag is stored as `Optional<Flag>`; the constructor
+change their identity. The flag is stored as `Optional<FollowUpFlag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
 Tag searches match ordinary tags as parts of their inherited `tagName` values,
@@ -903,7 +942,7 @@ This makes either request safe to repeat while preserving follow-up during
 unrelated edits. Descriptor copies and equality retain all three states.
 
 `JsonAdaptedStudent` uses a nullable `Boolean flag` at the storage boundary.
-Only `Boolean.TRUE` creates a `Flag` in the model; a missing key, JSON `null`, and
+Only `Boolean.TRUE` creates a `FollowUpFlag` in the model; a missing key, JSON `null`, and
 `false` all map to no flag. When saving, a present flag is written
 as `"flag": true`, while an absent flag is represented as null and omitted by
 Jackson's `NON_NULL` policy. Files created before the field existed therefore
@@ -917,14 +956,14 @@ follow-up status. The normal loading-error path identifies the record and
 `StudentCard` shows a `Needs follow-up` label for true. For false it makes the
 label both invisible and unmanaged, so the card keeps no blank placeholder
 row. Successful add, edit and delete feedback formats student records
-consistently with the student card: optional fields (NUS Student ID, email, tags,
-follow-up status) appear only when present, with tags ordered alphabetically ignoring
-case, avoiding placeholder labels or empty tag markers.
+consistently with the student card: optional fields (NUS Student ID, phone, email,
+tags, follow-up status) appear only when present, with tags ordered alphabetically
+ignoring case, avoiding placeholder labels or empty tag markers.
 
 ### Field values
 
-`Student` stores email and NUS Student ID as `Optional<Email>` and
-`Optional<NusStudentId>`. Both constructors require non-null arguments;
+`Student` stores phone, email and NUS Student ID as `Optional<Phone>`,
+`Optional<Email>` and `Optional<NusStudentId>`. Both constructors require non-null arguments;
 `Optional.empty()` explicitly represents an unknown detail. One constructor
 accepts the follow-up boolean, and the other defaults to unflagged for sample
 data. There are no overloads accepting nullable email or ID values, and no
@@ -934,7 +973,8 @@ to the storage adapter, preserving the existing file format.
 
 `Name`, `Tag`, `Phone`, `Email` and `NusStudentId` each store the form returned by
 `StringUtil.normalizeFieldValue`: without invisible format characters such as
-direction marks, with each run of whitespace reduced to one ASCII space
+direction marks and non-whitespace controls, with each run of whitespace reduced
+to one ASCII space
 and leading and trailing whitespace removed, and with the result composed to
 Unicode NFC. Composing happens last, because an invisible character between a
 base letter and its combining mark blocks the two from composing.
@@ -957,6 +997,18 @@ Nothing else is rejected in `Name`, `Tag` or `Phone`. A phone number may hold `+
 whitespace, brackets and an extension; a tag may hold whitespace, hyphens and any
 script. None of those characters can hinder TAB, because none of these
 fields is parsed, dialled, or used to build a file path.
+
+**Phone text intentionally has no maximum length.** Teaching assistants may
+record several numbers, extensions and contact annotations in one field. A fixed
+cap could reject useful contact details or prevent an existing saved record from
+loading. The minimum of three Unicode decimal digits still applies. Acceptance
+of a 400-digit value alone does not establish a usability, performance or
+persistence problem that justifies a cap. Email's separate length restriction
+addresses its validation and storage concerns; it is not a reason to restrict
+phone text. Reconsider this decision if a concrete problem is demonstrated,
+with a migration plan for existing data and a limit justified by contact use
+cases. Long phone presentation uses ellipses and complete-value tooltips rather
+than truncating the stored text.
 
 **The NUS Student ID may be absent.** `NusStudentId` accepts between 1 and 32
 ASCII letters and digits. Input letters are case-insensitive and the value is
@@ -1029,11 +1081,13 @@ normalization. Phone search and warnings share `Phone.normalizeDigits`, which
 removes non-digit characters and converts Unicode decimal digits to ASCII.
 Warnings require equality of the complete digit sequence; search permits
 substrings. Country codes and extension digits remain significant, while the
-stored number retains its formatting. Absent emails do not match.
+stored number retains its formatting. Absent phones and absent emails do not
+match: two records that both lack the detail share no value, so neither is
+offered as evidence of a duplicate.
 
 The commands collect the warnings before mutation and separate them from the
 ordinary success message with a blank line. Matches are grouped by field into
-one prominently labelled `WARNING: Possible duplicate student` line. A line
+one prominently labeled `WARNING: Possible duplicate student` line. A line
 names at most two students and summarizes further matches as `N others`, so a
 shared placeholder does not fill the result box. The review advice appears
 once after every matching field. Phone warnings omit the parenthetical value:
@@ -1131,9 +1185,34 @@ helper. Command parsing and storage share that message, so both paths report
 the same invalid value consistently.
 
 `Phone` is **not** an identity field and **not** a key: two students may hold the
-same number, and `isSameStudent` does not read it. It is normalized only so
-that a number typed with unusual whitespace, or wrapped in the invisible marks a
-chat app puts around a copied number, is stored consistently.
+same number, hold none at all, and `isSameStudent` reads neither case. It is
+normalized only so that a number typed with unusual whitespace, or wrapped in the
+invisible marks a chat app puts around a copied number, is stored consistently.
+
+**The phone number may be absent.** A class roster can give a name, an NUS
+Student ID and a university email without giving a personal mobile number, so a
+student is recorded before a number is known rather than one being invented.
+This follows the optional email in every layer, so that one pattern covers both
+details. `Student` accepts, stores and exposes `Optional<Phone>`.
+
+`AddCommandParser` wraps the parsed value in an optional and no longer reports a
+missing `-p`; the name is the only field it still requires. `EditStudentDescriptor`
+holds an `OptionalFieldEdit<Phone>`, so `edit INDEX -p ""` clears the number and a
+value replaces it, exactly as `-e ""` clears an email. A number that is supplied
+is still validated, and a rejected one is recorded as a parse problem rather than
+clearing the field.
+
+`JsonAdaptedStudent` shares `normalizeOptionalValue` with the email: a missing
+`phone` key, JSON `null`, and a string that is empty after normalization all load
+as absent, while a malformed non-null number rejects the data file instead of
+being silently dropped. Jackson omits the key on save when no number is present,
+so files written before the phone became optional continue to load and a saved
+record stays editable by hand.
+
+`StudentCard` leaves the phone label unmanaged when the number is absent, so the
+remaining contact details close up rather than keeping a blank line, and
+`Messages.format` omits the `Phone:` label. The `PHONE` search field returns false
+for a student without a number, consistent with every other absent optional field.
 
 `FindCommandParser` uses `FlagTokenizer` and the existing `CliFlags` aliases for
 name, NUS Student ID, phone, email and tag. Every search term must have a field
@@ -1291,15 +1370,17 @@ explanation and recovery guidance through the same `DataLoadingException`
 boundary; startup preserves the original bytes and blocks the normal UI.
 
 `JsonUtil` turns malformed JSON or an incompatible JSON shape into a
-`DataLoadingException`. For a syntax error, it uses the deepest parser
-exception with a usable location so that the displayed line and column
-identify the offending token rather than the last successfully mapped
-value. It pairs the concise parser explanation with the affected line
-and at most one line on either side. Each source line is limited to 160
-characters; an affected long line is cropped around the reported column
-so that minified JSON remains useful without filling the dialog. If the
-parser supplies no usable location, `JsonUtil` omits the source instead
-of falling back to Jackson's source-bearing message.
+`DataLoadingException`, and `JsonParseErrorFormatter` words the
+explanation it carries. For a syntax error, the formatter uses the
+deepest parser exception with a usable location so that the displayed
+line and column identify the offending token rather than the last
+successfully mapped value. It pairs the concise parser explanation with
+the affected line and at most one line on either side. Each source line
+is limited to 160 characters; an affected long line is cropped around
+the reported column so that minified JSON remains useful without
+filling the dialog. If the parser supplies no usable location, the
+formatter omits the source instead of falling back to Jackson's
+source-bearing message.
 During model conversion, `JsonAdaptedStudent` identifies the invalid field and
 `JsonSerializableStudentBook` adds the one-based record number and its name
 when available. `JsonStudentBookStorage` carries that explanation through the
@@ -1469,7 +1550,7 @@ These were raised during requirement gathering and left out of the product.
 
 | As a ... | I wanted to ... | Why it was dropped |
 |--------|---------------|--------------------|
-| teaching assistant | view a student's address | Cancelled, no need for address |
+| teaching assistant | view a student's address | Canceled, no need for address |
 | teaching assistant | send an email to a student | Not in the scope of TAB, it is not a messaging app |
 | teaching assistant | send a Telegram message to a student | Not in the scope of TAB, it is not a messaging app |
 | teaching assistant | send an SMS to a student | Not in the scope of TAB, it is not a messaging app |
@@ -1487,11 +1568,11 @@ These were raised during requirement gathering and left out of the product.
 * [UC01 - Add a student](#uc01-add-a-student)
 * [UC02 - Find a student and act on the right one](#uc02-find-a-student-and-act-on-the-right-one)
 * [UC03 - Flag and clear a follow-up](#uc03-flag-and-clear-a-follow-up)
-* [UC04 - Import a roster (proposed)](#uc04-import-a-roster)
+* [UC04 - Import a roster (proposed)](#uc04-import-a-roster-proposed)
 * [UC05 - Recover from an unreadable data file](#uc05-recover-from-an-unreadable-data-file)
-* [UC06 - Delete a class no longer taught (proposed)](#uc06-delete-a-class-no-longer-taught)
-* [UC07 - Archive last semester's students (proposed)](#uc07-archive-last-semester-s-students)
-* [UC08 - Semester close-out (proposed)](#uc08-semester-close-out)
+* [UC06 - Delete a class no longer taught (proposed)](#uc06-delete-a-class-no-longer-taught-proposed)
+* [UC07 - Archive last semester's students (proposed)](#uc07-archive-last-semester-s-students-proposed)
+* [UC08 - Semester close-out (proposed)](#uc08-semester-close-out-proposed)
 * [UC09 - Edit a student's details](#uc09-edit-a-student-s-details)
 * [UC10 - Add/remove a tag from a student](#uc10-add-remove-a-tag-from-a-student)
 
@@ -1918,33 +1999,36 @@ These were raised during requirement gathering and left out of the product.
 
 ### Non-Functional Requirements
 
-1.  **Operating environment**: Should work on any _mainstream OS_ as long as it has Java `25` (64-bit)
-    installed without requiring platform-specific installation or OS-dependent libraries. This
-    satisfies `Constraint-Platform-Independent` and `Constraint-Java-Version`.
-2.  **Portability**: Should be packaged as a single executable JAR file of at most 100 MB that runs
+1.  **Operating environment**: Should work on any _mainstream OS_ with Java `25` (64-bit)
+    installed, without requiring platform-specific installation or OS-dependent libraries. The
+    JAR carries JavaFX `17.0.7`, whose macOS natives are x86_64, so an Apple Silicon Mac needs
+    either the Azul `25.0.3` JDK+FX distribution the course installs, which supplies JavaFX
+    itself, or an x64 JDK under Rosetta, as the Quick start explains. This satisfies
+    `Constraint-Platform-Independent` and `Constraint-Java-Version`.
+1.  **Portability**: Should be packaged as a single executable JAR file of at most 100 MB that runs
     directly without requiring an installer or system administrator privileges. This satisfies
     `Constraint-Portable`, `Constraint-Single-File`, and `Constraint-File-Size`.
-3.  **Single-user operation**: Should be designed for a single user operating locally at any given time,
+1.  **Single-user operation**: Should be designed for a single user operating locally at any given time,
     without requiring or supporting concurrent multi-user write access to the data file. This
     satisfies `Constraint-Single-User`.
-4.  **CLI-first accessibility**: All student management operations must be executable entirely via
+1.  **CLI-first accessibility**: All student management operations must be executable entirely via
     keyboard commands without requiring a mouse, trackpad, or other pointing device. This
     satisfies `Constraint-Typing-Preferred`.
-5.  **Typing efficiency**: A user with above-average typing speed for regular English text should be able
+1.  **Typing efficiency**: A user with above-average typing speed for regular English text should be able
     to accomplish regular student management tasks faster using CLI commands than using a traditional
     mouse-driven graphical user interface. This satisfies `Constraint-Typing-Preferred`.
-6.  **Capacity**: Should comfortably store and manage up to 1,000 student records (sufficient for multiple
+1.  **Capacity**: Should comfortably store and manage up to 1,000 student records (sufficient for multiple
     semesters of active and archived tutorial and lab slots) without noticeable degradation in performance.
-7.  **Responsiveness**: Should execute typical commands (such as adding, editing, deleting, tagging, listing,
+1.  **Responsiveness**: Should execute typical commands (such as adding, editing, deleting, tagging, listing,
     and filtering across up to 1,000 student records) and update the GUI within 100 milliseconds on
     standard modern desktop hardware.
-8.  **Startup time**: Should launch and display the GUI, ready for user command input, within 2 seconds
+1.  **Startup time**: Should launch and display the GUI, ready for user command input, within 2 seconds
     on standard modern desktop hardware with an existing data file containing up to 1,000 student records.
-9.  **Screen resolution and scaling**: The GUI should render cleanly without visual clipping or overlapping
+1.  **Screen resolution and scaling**: The GUI should render cleanly without visual clipping or overlapping
     components at screen resolutions of 1920×1080 and higher with display scaling at 100% and 125%, and
     remain functional and usable down to 1280×720 with display scaling up to 150%. This satisfies
     `Constraint-Screen-Resolution`.
-10. **Data locality and offline operation**: TAB must store all student data only in local files,
+1.  **Data locality and offline operation**: TAB must store all student data only in local files,
     must not transmit student data to any network service, and must support all student management
     operations without a network connection.
 
@@ -2108,6 +2192,15 @@ testers are expected to do more *exploratory* testing.
       Repeat at minimum size and resize while on the last screenful: all text
       remains reachable without scrollbars.
 
+   1. Read the first screenful, then compare it with the command box: quit help
+      and type `add NAME -p PHONE`.<br>
+      Expected: `COMMANDS` and the other margin headings stand out from the body.
+      In both places `add` is bold in the accent colour, `-p` carries the option
+      colour and `NAME`/`PHONE` the value colour. In help, the brackets around an
+      optional field stay in the body colour, and the prose lines, including
+      `help, list, clear and exit take no arguments.` and `an ID instead of an
+      index`, carry no colour of their own.
+
    1. Press c while help is open, then paste into a browser address bar.<br>
       Expected: The exact address `https://ay2627s1-cs2103t-t16-1.github.io/tp/UserGuide.html`
       is copied and the footer confirms `User Guide URL copied.`. The reading
@@ -2144,6 +2237,50 @@ testers are expected to do more *exploratory* testing.
       Expected: The last student's card is readable. Press F1 and then G:<br>
       Expected: The help notice, `(END)` and both navigation hint lines remain
       visible. Press Esc to return to the command box.
+
+1. Keyboard navigation through students, tags and replies
+
+   1. Prerequisites: Use a disposable copy of TAB. Add 30 students with distinct
+      tags, for example `add Navigation 01 -p 90000001 -t tutorial-group-01`,
+      repeating through `Navigation 30`, `90000030` and `tutorial-group-30`.
+      Restart TAB so the reply is hidden, and use a window small enough for
+      both the student list and tag list to overflow.
+
+   1. From the command box, press Tab, Down, Up, Page Down, Page Up, End and
+      Home.<br>
+      Expected: Tab focuses the student list and shows an accent outline.
+      Arrows move the selected student;
+      page keys move by a screenful. End reveals the last student and Home
+      reveals the first. Repeating Up at the first student or Down at the last
+      keeps the selection at that end. Shift+Tab returns to the command box.
+
+   1. Press Tab twice from the command box. Try Down, Up, Page Down, Page Up,
+      End and Home.<br>
+      Expected: The tag list has an accent outline. Arrows scroll a little,
+      page keys scroll a page, End reveals `tutorial-group-30` and Home reveals
+      `tutorial-group-01`. Scrolling past either end stays there. Shift+Tab
+      twice returns to command entry; Tab from the tag list also returns there
+      while the reply is hidden. Student records stay unchanged.
+
+   1. Submit `list`, then type `find -n Navigation` without submitting it.
+      Press Tab repeatedly, then repeat using Shift+Tab.<br>
+      Expected: The forward cycle is command box → student list → tag list →
+      reply → command box; Shift+Tab reverses it. In particular, the student
+      list remains one Tab from the command box after the reply appears.
+      The draft stays unchanged. Back in the command box, Up recalls `list`
+      and Down restores the draft. A long reply can be scrolled and selected.
+
+   1. From the tag list, press F1, then q.<br>
+      Expected: Help opens and its navigation keys work. Closing it restores
+      command focus and the unfinished draft. Tab still reaches the student
+      list first.
+
+   1. Submit `find -n NobodyMatchesTheseNavigationStudents`, then repeat the
+      forward and reverse Tab cycles.<br>
+      Expected: Both empty lists remain reachable, and the reply is included.
+      There is no focus trap. Run `list` to restore the cohort. Repeat tag
+      scrolling after resizing the window and with a tag long enough to wrap:
+      the last row remains reachable and its complete name remains readable.
 
 1. Saving window preferences
 
@@ -2245,7 +2382,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Typing a command word in another case
 
-1. A correctly spelt command word in capitals
+1. A correctly spelled command word in capitals
 
    1. Prerequisites: at least one student listed.
 
@@ -2527,18 +2664,19 @@ testers are expected to do more *exploratory* testing.
 1. Removing variants from a human-edited data file
 
    1. Prerequisites: Exit TAB. Back up the data file, then set Tag Test's
-      `tags` array to `["Lab 3", "  lab   3  ", "T1", "Needs follow-up"]`.
-      Keep `"flag": true` and restart TAB. Run `find -n "Tag Test"`.
+      `tags` array to `["Lab 3", "  lab   3  ", "T1"]`. Keep `"flag": true`
+      and restart TAB. Run `find -n "Tag Test"`.
 
    1. Test case: `tag 1 -r "LAB 3"`.<br>
-      Expected: The variants load as one `Lab 3` tag, which is removed.
-      `T1`, `Needs follow-up`, the
-      follow-up flag and all other fields remain after restart.
+      Expected: The variants load as one `Lab 3` tag, which is removed. `T1`,
+      the follow-up flag and all other fields remain after restart.
 
    1. Test case: Run `find -n "Tag Test"` again after restarting and confirm only
       that student is shown, then run `tag 1 -r "needs follow-up"`.<br>
-      Expected: Only the general tag disappears. `T1` and the follow-up flag
-      remain. Restore the backup when finished.
+      Expected: TAB reports that the student carries no such tag and adds that
+      the label beside the name is the follow-up flag rather than a tag,
+      pointing at `edit INDEX --no-follow-up`. `T1` and the flag remain.
+      Restore the backup when finished.
 
 ### Adding a student
 
@@ -2548,6 +2686,18 @@ testers are expected to do more *exploratory* testing.
       Expected: John Doe is added to the student book and appears in the list.
       The status message shows `New student added: John Doe; Phone: 98765432`
       without placeholder labels for absent email or tags.
+
+   1. Test case: `add Email Only --email=e1234567@u.nus.edu --id=E1234567`<br>
+      Expected: The roster entry is added. The status message reads
+      `New student added: Email Only; NUS Student ID: E1234567; Email: e1234567@u.nus.edu`,
+      with no `Phone:` label, and the card shows the ID and the email with no
+      blank gap where a number would be. Exit and reopen TAB; the record
+      remains, still without a phone number.
+
+   1. Test case: `add Name Only`<br>
+      Expected: The student is added with the name alone. Only `-p 12` and
+      other malformed values are refused, with
+      `Phone "12" is not valid: a phone number needs at least 3 digits`.
 
 1. Revealing a newly saved student in an overflowing list
 
@@ -2564,7 +2714,7 @@ testers are expected to do more *exploratory* testing.
       Student ID.<br>
       Expected: The newly appended card is revealed, rather than the earlier
       matching record. The possible-duplicate warning is still shown.
-   1. Return to the top and try `add Missing Phone`, then an addition with a
+   1. Return to the top and try `add -p 91234567`, then an addition with a
       duplicate NUS Student ID.<br>
       Expected: No student is added and the list does not jump to the end.
    1. Make the data path unwritable, attempt a valid addition, then restore
@@ -2621,6 +2771,17 @@ testers are expected to do more *exploratory* testing.
 
 ### Long contact details on a card
 
+1. Retaining long phone text
+
+   1. Test case: Run `add Long Phone -p VALUE`, replacing `VALUE` with an actual
+      sequence of 400 decimal digits: `1234567890` repeated 40 times, matching
+      the automated regression tests.<br>
+      Expected: The student is added. Hover over the shortened phone on the card
+      to read the complete value.
+   1. Exit and reopen TAB.<br>
+      Expected: The complete phone value remains available on hover, with no
+      truncation of the saved value.
+
 1. Reading an annotated phone and an email
 
    1. Test case: `add Priya Nair -p "1234 5678 (HP) 1111-3333 (Office)" -e e0923841@u.nus.edu -t T1 --follow-up`.
@@ -2640,6 +2801,10 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add Mei Lin -p 91234567`.<br>
       Expected: The ordinary phone remains readable. Absent email and NUS
       Student ID leave no blank lines.
+   1. Test case: `add Mei Lin Without A Number -e e1234567@u.nus.edu`.<br>
+      Expected: The email sits where the phone would have started, and the card
+      keeps the same height as Mei Lin's. Narrow the window to its minimum
+      width; no blank line appears where the number would be.
    1. Add ten students with short names, ordinary phones, email addresses and
       NUS Student IDs. Compare the list at the default 740 by 600 window size
       with a list of phone-only students.<br>
@@ -3102,8 +3267,9 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Run `list` and note the list size.
 
    1. Test case: `edit 0 -p 12`<br>
-      Expected: No change. One message names both the index and the phone
-      number, rather than only the first fault found.
+      Expected: No change. The reply starts `Index must be a positive integer.`
+      and also reports the invalid phone, without the full edit usage block.
+      `edit 1.5 -p 91234567` reports only the positive-integer reason.
 
    1. Test cases: `edit` and `edit INDEX`<br>
       Expected: No change. The first names the missing index and says a field
@@ -3149,12 +3315,43 @@ testers are expected to do more *exploratory* testing.
       Expected: The email stays absent, the phone changes, tags are removed,
       and follow-up is cleared. All changes survive a restart.
 
-   1. Test cases: `edit INDEX -e`, `edit INDEX -e "" -e alice@example.com`,
-      and `edit INDEX -p "" -e ""`.<br>
-      Expected: Specific feedback for the missing email value, repeated option,
-      or required phone respectively. Neither the student
-      nor the JSON file changes. Restore an email with
-      `edit INDEX -e alice@example.com` and check that it is displayed again.
+   1. Test cases: `edit INDEX -e` and `edit INDEX -e "" -e alice@example.com`.<br>
+      Expected: Specific feedback for the missing email value or the repeated
+      option respectively. Neither the student nor the JSON file changes.
+      Restore an email with `edit INDEX -e alice@example.com` and check that it
+      is displayed again.
+
+### Clearing and supplying a student's phone number
+
+1. Recording a number only once it is known
+
+   1. Prerequisites: Add `add Alice Tan -p 91234567 -e alice@example.com
+      -t T1 --follow-up` as one line and note Alice's displayed `INDEX`.
+
+   1. Test case: `edit INDEX -p ""`<br>
+      Expected: The number disappears from the card and feedback, and the
+      remaining details close up with no blank line. Name, email, tags and
+      follow-up status remain unchanged. Alice's saved record has no `phone`
+      key, and the number stays absent after restarting TAB.
+
+   1. Test case: Repeat `edit INDEX -p ""`, then run `edit INDEX -p "   "`.<br>
+      Expected: Each command succeeds with no other change, even though the
+      number is already absent.
+
+   1. Test case: `find -p 9123`, then `list`, note Alice's displayed `INDEX`
+      again, and run `edit INDEX -p "+65 9123 4567"` followed by
+      `find -p 9123`.<br>
+      Expected: The first search does not list Alice, because she holds no
+      number, so `list` is needed before the edit can name her by position.
+      After the edit her card shows `+65 9123 4567` as entered, and the second
+      search lists her.
+
+   1. Test cases: `list`, note Alice's displayed `INDEX` once more, then
+      `edit INDEX -p` and `edit INDEX -p 12`.<br>
+      Expected: Specific feedback for the missing value and for the malformed
+      number respectively. Neither the student nor the JSON file changes. The
+      preceding search leaves its own list on screen, so `list` restores the
+      positions these commands count.
 
 ### Recording email addresses with symbols
 
@@ -3210,8 +3407,10 @@ testers are expected to do more *exploratory* testing.
       the removed student and shows their details (`Deleted student: NAME; Phone: PHONE...`).
 
    1. Test case: `delete 0`<br>
-      Expected: No student is deleted. The status message shows error details, and the student book
-      remains unchanged.
+      Expected: No student is deleted. The reply is `Index must be a positive integer.`
+      followed by the `delete --id 0` recovery, rather than the whole usage block,
+      and the student book remains unchanged. `delete -1` and `delete 1.5` report
+      the same reason on its own.
 
    1. Test case: `delete A02345678G`<br>
       Expected: Charlotte Oliveiro is deleted from the book wherever she appears, and the status
@@ -3219,8 +3418,8 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `add "Digit Ida" -p 91234567 --id 1ABC`, then `delete --id 1ABC`<br>
       Expected: The student holding `1ABC` is deleted, and the status message identifies them.
-      `delete 1ABC` is refused with the command's format, because a target starting with a digit
-      reads as an index.
+      `delete 1ABC` is refused as an unusable index, because a target starting with a digit
+      reads as an index, and the reply names `delete --id 1ABC` instead.
 
    1. Test case: `find -n Alex` followed by `delete A02345678G`, where the search hides
       Charlotte Oliveiro<br>
@@ -3258,7 +3457,7 @@ testers are expected to do more *exploratory* testing.
       then type `add draft` without submitting it.
    1. Press Up twice, then Up again.<br>
       Expected: The line recalls the find command, then `list`, then stays at
-      `list`. Each recalled line has matching colours and its caret at the end.
+      `list`. Each recalled line has matching colors and its caret at the end.
    1. Press Down twice.<br>
       Expected: The find command reappears, then the unsent `add draft` returns.
    1. Submit `addd` twice and press Up without changing the rejected text.<br>
@@ -3268,7 +3467,7 @@ testers are expected to do more *exploratory* testing.
       Expected: The rejected `addd` is recalled once, followed by the find command.
    1. Run `clear` with at least one student present, then press Enter on the
       empty reply. Press Up.<br>
-      Expected: Clear is cancelled without changing any students. Up recalls
+      Expected: Clear is canceled without changing any students. Up recalls
       `clear` immediately, without a blank entry. Repeat with spaces as the reply;
       the result is the same. Repeat with `n`, `no`, `y`, and `yes` (repopulate the
       book after confirming); Up still recalls `clear`. Submit `list` during a
@@ -3282,7 +3481,7 @@ testers are expected to do more *exploratory* testing.
    1. Copy two adjacent spreadsheet cells containing `Wei Ming` and `Tan`.
    1. Type `add `, paste the cells, then type ` -p 91234567`.<br>
       Expected: `Wei Ming` and `Tan` remain separate words, with matching
-      command colours. A trailing line break copied by the spreadsheet can
+      command colors. A trailing line break copied by the spreadsheet can
       leave an extra space before `-p`; this does not change the command.
    1. Press Enter.<br>
       Expected: One student named `Wei Ming Tan` is added.
@@ -3308,11 +3507,11 @@ testers are expected to do more *exploratory* testing.
       Expected: Each reads as a space in the box, and the name saved matches
       what the box shows.
 
-1. Checking what the colours say
+1. Checking what the colors say
 
    1. Test case: type `add "Siti Nur-Aisyah" -p 98765432 -t T1` without
       pressing Enter.<br>
-      Expected: `add` is bold and in the accent colour, `"Siti Nur-Aisyah"` is
+      Expected: `add` is bold and in the accent color, `"Siti Nur-Aisyah"` is
       green, `-p` and `-t` are mauve, and the remaining values are in ordinary
       text.
    1. Test case: type `addd` and press Enter.<br>
@@ -3324,7 +3523,7 @@ testers are expected to do more *exploratory* testing.
       Expected: The bold command word ends at `add"Ravi`, and `s/o` is an
       ordinary word after it rather than part of the bold word. The reply
       reports the unknown command `add"Ravi`, splitting the line where the
-      colours already did.
+      colors already did.
    1. Test case: type `add Mei Tan --phone=91234567 --tag="Lab 3" -t "Lab 4"`
       without pressing Enter.<br>
       Expected: `--phone=` and `--tag=` are mauve like `-t`, `91234567` is
@@ -3337,7 +3536,7 @@ testers are expected to do more *exploratory* testing.
       edge, then press `Home`, then `End`.<br>
       Expected: The line scrolls so the caret stays in view at both ends, the
       caret is visible at the end rather than cut off by the edge, and the
-      colours stay with the text.
+      colors stay with the text.
    1. Test case: with that command still typed, press `Ctrl`+`A`.<br>
       Expected: A band is drawn behind the whole command, and every part of
       the command is still readable on top of it.
@@ -3467,6 +3666,18 @@ testers are expected to do more *exploratory* testing.
       Expected: Original spellings survive saving and reloading; normalized
       comparisons still find the students. Run `list` to restore the full list.
 
+### Normalizing hidden control characters in saved names and tags
+
+1. Prerequisites: Close TAB in a disposable data folder and back up the data file.
+1. Set one student's JSON name to `"Am\u0001y"` and tags to `["La\u007fb"]`.
+   Restart TAB.<br>
+   Expected: The card shows `Amy` and `Lab`. `find -n Amy` and `find -t Lab`
+   both find that student. Loading alone leaves the file unchanged.
+1. Run `add Amy -p 789` with a phone different from the saved student's.<br>
+   Expected: The add succeeds with a possible duplicate name warning. The saved
+   name and tag no longer contain the hidden controls. Restarting retains both
+   searchable students. Restore the backup with TAB closed.
+
 ### Keeping one spelling of repeated command tags
 
 1. Start from an empty book and run
@@ -3508,7 +3719,8 @@ testers are expected to do more *exploratory* testing.
    That explicit command deletes Amy even while the filter hides her.
 1. Open help and find the delete section.<br>
    Expected: It lists index, plain NUS Student ID and explicit `--id` forms.
-   `delete 1ABC` shows usage including `delete --id 1ABC` as a recovery example.
+   `delete 1ABC` answers `Index must be a positive integer.` and names
+   `delete --id 1ABC` as the recovery.
 
 ### Locating students by digits in formatted phone numbers
 
@@ -3558,6 +3770,22 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `find -p 91234568`.<br>
       Expected: No students are shown, with `Found 0 students.`.
       `data/tab.json` is identical to the saved copy after all these searches.
+
+### Quoting values with input-method punctuation
+
+1. Curly and full-width double quotes
+
+   1. Prerequisites: In a disposable copy of TAB, clear all students (`clear`, then `yes`).
+   1. Run `add “Betsy Crowe” -p 1234567`, `tag 1 -a “组 1”`,
+      `tag 1 -a ＂Lab 3＂` and `edit 1 -n “Betsy Crower”`.<br>
+      Expected: Each succeeds. The name is `Betsy Crower` and the tags are `组 1`
+      and `Lab 3`, without surrounding quotes. Quoted values appear green while typing.
+   1. Run `find -n “Betsy Crower”` and `find -t ＂Lab 3＂`.<br>
+      Expected: Each finds the student, with `Found 1 student.`.
+   1. Run `edit 1 -n “Unclosed`.<br>
+      Expected: The unclosed-quote error appears and the name stays `Betsy Crower`.
+   1. Restart TAB.<br>
+      Expected: The name and both tags remain unchanged, without surrounding quote marks.
 
 ### Locating students with quoted phrases and error handling
 
@@ -3749,6 +3977,22 @@ testers are expected to do more *exploratory* testing.
       and restart again; the hand-edited value remains. Restore the backup
       with TAB closed when finished.
 
+1. Loading a hand-edited record without a phone number
+
+   1. Prerequisites: Close every TAB window using this data file and back up
+      `data/tab.json`.
+   1. Test case: Remove one student's `phone` key entirely, set another's to
+      `null`, preserve valid JSON, and restart TAB.<br>
+      Expected: Both records load with no number and no blank line on their
+      cards. Run `edit 1 -p 91234567` for one of them and restart; the number
+      is saved and shown, while the other record still has no `phone` key.
+   1. Test case: With TAB closed, set a student's `phone` to `"12"` and
+      restart.<br>
+      Expected: Startup refuses the file with
+      `Phone "12" is not valid: a phone number needs at least 3 digits`, naming
+      the student record. The file stays unchanged, so the number is reported
+      rather than dropped. Restore the backup with TAB closed when finished.
+
 1. Merging duplicate tags from a hand-edited file
 
    1. Prerequisites: Close TAB and back up `data/tab.json`.
@@ -3770,6 +4014,22 @@ testers are expected to do more *exploratory* testing.
       Expected: The error identifies `tags entry 2` and asks for a JSON string.
       Change it to `["Lab 3", "5"]` and restart; both tags load successfully.
       Restore the backup with TAB closed.
+
+1. Rejecting the follow-up label held as a tag
+
+   1. Prerequisites: Close every TAB window using this data file and back up
+      `data/tab.json`.
+   1. Test case: Add `"Needs follow-up"` to any record's `tags` list, preserve
+      valid JSON, and restart TAB.<br>
+      Expected: The main window does not open. TAB names the student record and
+      explains that the label marks a student for follow-up rather than naming
+      a tag, pointing at `"flag"`. The file is left unchanged.
+   1. Test case: Replace that entry with `"NEEDS FOLLOW-UP"` and restart.<br>
+      Expected: The same refusal, since letter case and surrounding spaces are
+      ignored.
+   1. Test case: Replace it with `"Needs follow-up soon"` and restart.<br>
+      Expected: TAB opens and the record carries that ordinary tag, because
+      only the label itself is reserved. Restore the backup when finished.
 
 1. Preserving existing data when a save fails
 
@@ -3968,3 +4228,30 @@ testers are expected to do more *exploratory* testing.
       Expected: Both students load with their names intact.
 
 1. More test cases to be added.
+
+### Editing students using an explicit ID target
+
+1. Add `add Numeric Student -p 81234567 --id 001234 -f` and
+   `add Other Student -p 82345678 --id A436`, then run `find -n Other`.
+   1. Run `tag --id 001234 -r "Needs follow-up"`.<br>
+      Expected: No mutation. The reply suggests
+      `edit --target-id 001234 --no-follow-up`.
+   1. Run the suggested command.<br>
+      Expected: Numeric Student's flag clears, Other Student remains displayed,
+      and the active search stays unchanged.
+   1. Run `edit --target-id=001234 --id 1ABC`.<br>
+      Expected: Only Numeric Student's ID changes. Restart TAB and verify the
+      new ID and cleared flag persist. `edit --target-id 1abc --id ""` then
+      clears the ID, leaving other details intact.
+1. With the two students restored to their initial IDs, run `find -n Other`.
+   1. Test cases: `edit 1 --target-id 001234 -nf`,
+      `edit A436 --target-id 001234 -nf`, and
+      `edit --target-id 001234 --target-id 001234 -nf`.<br>
+      Expected: Mixed or repeated targets are rejected; both records, displayed
+      list, search and saved data remain unchanged.
+   1. Test cases: `edit --target-id 001234`, `edit --target-id "" -nf`,
+      `edit --target-id -nf`, and `edit --target-id Missing436 -nf`.<br>
+      Expected: Respectively, a missing edit field, invalid empty ID, missing
+      target value and nonexistent student are reported without mutation.
+   1. Run `edit 001234 -nf`.<br>
+      Expected: An out-of-range index error; bare numbers still denote indices.

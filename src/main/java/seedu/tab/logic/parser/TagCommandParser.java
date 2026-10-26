@@ -23,7 +23,7 @@ public class TagCommandParser implements Parser<TagCommand> {
         if (arguments.getValue(FLAG_ADD_TAG).isPresent() && arguments.getValue(FLAG_REMOVE_TAG).isPresent()) {
             throw new ParseException(TagCommand.MESSAGE_CONFLICTING_ACTIONS);
         }
-        Flag actionFlag = arguments.getValue(FLAG_REMOVE_TAG).isPresent() ? FLAG_REMOVE_TAG : FLAG_ADD_TAG;
+        CliFlag actionFlag = arguments.getValue(FLAG_REMOVE_TAG).isPresent() ? FLAG_REMOVE_TAG : FLAG_ADD_TAG;
         ParseProblems problems = new ParseProblems();
         StudentTarget target = problems.collect(() -> parseTarget(arguments));
         if (arguments.getValue(actionFlag).isEmpty()) {
@@ -55,7 +55,7 @@ public class TagCommandParser implements Parser<TagCommand> {
         }
         if (Character.isLetter(preamble.charAt(0))) {
             return ParserUtil.parseRequiredStudentTarget(preamble, TagCommand.FIELD_TARGET,
-                    TagCommand.FIELD_INDEX, TagCommand.MESSAGE_USAGE);
+                    TagCommand.FIELD_INDEX);
         }
         return StudentTarget.byIndex(ParserUtil.parseRequiredIndex(preamble, TagCommand.FIELD_INDEX), preamble);
     }

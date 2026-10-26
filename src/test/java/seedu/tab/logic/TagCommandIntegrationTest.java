@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.ParserUtil;
@@ -130,7 +131,25 @@ public class TagCommandIntegrationTest {
         model.updateFilteredStudentList(shown -> false);
         assertFailureWithoutMutation("tag A01234567X -r \"Needs follow-up\"", CommandException.class,
                 "This student does not have tag [Needs follow-up]. No changes made.\n"
-                        + TagCommand.MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT);
+                        + String.format(TagCommand.MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT, "A01234567X"));
+    }
+
+    @Test
+    public void execute_hiddenNumericIdFollowUpHint_clearsFlagWithSuggestedCommand() throws Exception {
+        Student numericIdStudent = new StudentBuilder(student).withNusStudentId("001234").build();
+        model.setStudent(student, numericIdStudent);
+        model.updateFilteredStudentList(shown -> false);
+        storage.saveStudentBook(model.getStudentBook());
+        saveCount = 0;
+        assertFailureWithoutMutation("tag --id 001234 -r \"Needs follow-up\"", CommandException.class,
+                "This student does not have tag [Needs follow-up]. No changes made.\n"
+                        + "This student is flagged for follow-up, which is not a tag. To clear the flag, use "
+                        + "edit --target-id 001234 --no-follow-up.");
+        logic.execute("edit --target-id 001234 --no-follow-up");
+        Student expected = new StudentBuilder(numericIdStudent).withFlag(false).build();
+        assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        assertEquals(1, saveCount);
     }
 
     @Test
@@ -208,6 +227,16 @@ public class TagCommandIntegrationTest {
         for (Map.Entry<String, String> error : errors.entrySet()) {
             assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());
         }
+    }
+
+    @Test
+    public void execute_invalidEditIndex_reportsReasonWithoutMutation() throws Exception {
+        for (String target : List.of("0", "1.5", "+1", "\"-1\"")) {
+            assertFailureWithoutMutation("edit " + target + " -p 91234567", ParseException.class,
+                    ParserUtil.MESSAGE_INVALID_INDEX);
+        }
+        assertFailureWithoutMutation("edit 0", ParseException.class,
+                ParserUtil.MESSAGE_INVALID_INDEX + "\n" + EditCommand.MESSAGE_NOT_EDITED);
     }
 
     @Test

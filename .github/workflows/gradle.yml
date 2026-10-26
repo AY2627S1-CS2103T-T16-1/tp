@@ -8,7 +8,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        # macos-15-intel is an Intel runner, so the x64 JDK and the x64 JavaFX
+        # natives this job tests run without Rosetta translating every
+        # instruction, as they did on the Apple Silicon macos-latest image.
+        platform: [ubuntu-latest, macos-15-intel, windows-latest]
         java-package: [jdk]
         include:
           # Also test the course's Mac setup with its bundled JavaFX 25.

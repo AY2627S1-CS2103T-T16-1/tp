@@ -22,6 +22,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.tab.logic.LogicManager;
@@ -97,7 +99,8 @@ public class HelpSummaryTest {
                 String previousResult = resultOf(window).getText();
                 int windows = Window.getWindows().size();
                 enter(window, "help\t ");
-                assertEquals(HelpCommand.SHOWING_HELP_MESSAGE, ((Label) node(window, "helpText")).getText());
+                assertEquals(HelpCommand.SHOWING_HELP_MESSAGE,
+                        referenceOf((TextFlow) node(window, "helpText")));
                 assertEquals(windows, Window.getWindows().size());
                 assertEquals(node(window, "helpPage"), window.getRoot().getScene().getFocusOwner());
                 assertFalse(node(window, "studentPage").isVisible());
@@ -295,4 +298,14 @@ public class HelpSummaryTest {
         type(window, "G");
         assertEquals(1, viewport.getVvalue());
     }
+
+    /** Returns the help reference as one string, joined back from its coloured spans. */
+    private static String referenceOf(TextFlow helpText) {
+        StringBuilder whole = new StringBuilder();
+        for (Node span : helpText.getChildrenUnmodifiable()) {
+            whole.append(((Text) span).getText());
+        }
+        return whole.toString();
+    }
+
 }

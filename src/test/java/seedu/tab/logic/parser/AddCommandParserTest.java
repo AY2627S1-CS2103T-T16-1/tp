@@ -28,7 +28,6 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
-import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.tab.testutil.TypicalStudents.AMY;
@@ -123,6 +122,24 @@ public class AddCommandParserTest {
         Student tagged = new StudentBuilder(AMY).withTags(VALID_TAG_FRIEND).withoutEmail().build();
         assertParseSuccess(parser, NAME_AMY + PHONE_AMY + TAG_FRIEND,
                 new AddCommand(tagged));
+
+        // no phone, which is the student the optional phone exists to let a tutor record
+        Student withoutPhone = new StudentBuilder(AMY).withTags().withoutPhone().build();
+        assertParseSuccess(parser, NAME_AMY + EMAIL_AMY, new AddCommand(withoutPhone));
+
+        // only the name, the one field an addition cannot do without
+        Student nameOnly = new StudentBuilder(AMY).withTags().withoutPhone().withoutEmail().build();
+        assertParseSuccess(parser, NAME_AMY, new AddCommand(nameOnly));
+    }
+
+    @Test
+    public void parse_rosterDetailsWithoutPhone_success() {
+        // the roster entry from the issue: a name, a university email and an NUS Student ID
+        Student expected = new StudentBuilder().withName("Email Only").withoutPhone()
+                .withEmail("e1234567@u.nus.edu").withNusStudentId("E1234567").build();
+
+        assertParseSuccess(parser, " Email Only --email=e1234567@u.nus.edu --id=E1234567",
+                new AddCommand(expected));
     }
 
     @Test
@@ -149,26 +166,17 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_compulsoryFieldMissing_failure() {
-        // a field is left out entirely, so that each case fails for one reason only
+        String expected = Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME)
+                + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE;
 
-        // missing name
-        assertParseFailure(parser, PHONE_BOB + EMAIL_BOB,
-                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME)
-                        + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE);
+        // the name is the one field an addition cannot do without
+        assertParseFailure(parser, PHONE_BOB + EMAIL_BOB, expected);
 
-        // missing phone
-        assertParseFailure(parser, NAME_BOB + EMAIL_BOB,
-                Messages.getErrorMessageForMissingFields(FLAG_PHONE.getLabel()));
-
-        // several fields missing -> every one of them is named, in the order of the format
-        assertParseFailure(parser, TAG_FRIEND,
-                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME, FLAG_PHONE.getLabel())
-                        + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE);
+        // only an optional field
+        assertParseFailure(parser, TAG_FRIEND, expected);
 
         // nothing at all
-        assertParseFailure(parser, " ",
-                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME, FLAG_PHONE.getLabel())
-                        + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE);
+        assertParseFailure(parser, " ", expected);
     }
 
     @Test
@@ -245,12 +253,13 @@ public class AddCommandParserTest {
     @Test
     public void parse_missingFieldAndInvalidValue_reportsBoth() {
         // a missing field and a bad value are different complaints and arrive together
-        String expected = Messages.getErrorMessageForMissingFields(FLAG_PHONE.getLabel())
+        String expected = Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME)
+                + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE
                 + "\n"
                 + Messages.getErrorMessageForInvalidValue(Email.FIELD_NAME, "nope",
                         Email.getFailureReason("nope"));
 
-        assertParseFailure(parser, NAME_BOB + " -e nope", expected);
+        assertParseFailure(parser, PHONE_BOB + " -e nope", expected);
     }
 
     @Test
@@ -266,8 +275,9 @@ public class AddCommandParserTest {
     @Test
     public void parse_missingFieldIsNotAlsoReportedAsUnparseable() {
         // a field that is absent is reported once, as missing, and not a second time as a value
-        assertParseFailure(parser, NAME_BOB + EMAIL_BOB,
-                Messages.getErrorMessageForMissingFields(FLAG_PHONE.getLabel()));
+        assertParseFailure(parser, PHONE_BOB + EMAIL_BOB,
+                Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME)
+                        + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE);
     }
 
     @Test

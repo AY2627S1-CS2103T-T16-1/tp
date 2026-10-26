@@ -16,10 +16,13 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.model.student.Student;
 
 /**
@@ -34,8 +37,7 @@ public class SummaryPanel extends UiPart<Region> {
     private static final double TAG_ROW_SPACING = 4;
 
     private static final String FXML = "SummaryPanel.fxml";
-    private static final String SINGULAR = "%d student";
-    private static final String PLURAL = "%d students";
+    private static final String TOTAL_FORMAT = "%d student%s";
 
     @FXML
     private HBox flaggedRow;
@@ -54,10 +56,29 @@ public class SummaryPanel extends UiPart<Region> {
      */
     public SummaryPanel(ObservableList<Student> students) {
         super(FXML);
+        tagScroll.addEventFilter(KeyEvent.KEY_PRESSED, this::handlePageKeyPressed);
         students.addListener((javafx.collections.ListChangeListener<Student>) change -> summarise(students));
         tagScroll.viewportBoundsProperty().addListener((unused, previous, viewport) ->
                 reserveScrollBarWidth(viewport.getWidth()));
         summarise(students);
+    }
+
+    /** Scrolls a viewport per page key; JavaFX's ScrollPane otherwise uses the arrow-key increment. */
+    private void handlePageKeyPressed(KeyEvent event) {
+        boolean isPageKey = event.getCode() == KeyCode.PAGE_UP || event.getCode() == KeyCode.PAGE_DOWN;
+        if (!isPageKey || !tagScroll.isFocused() || event.isControlDown() || event.isAltDown() || event.isMetaDown()
+                || event.isShiftDown()) {
+            return;
+        }
+        double viewportHeight = tagScroll.getViewportBounds().getHeight();
+        double overflowHeight = tagRows.getHeight() - viewportHeight;
+        if (overflowHeight > 0) {
+            int direction = event.getCode() == KeyCode.PAGE_DOWN ? 1 : -1;
+            double range = tagScroll.getVmax() - tagScroll.getVmin();
+            double next = tagScroll.getVvalue() + direction * viewportHeight / overflowHeight * range;
+            tagScroll.setVvalue(Math.clamp(next, tagScroll.getVmin(), tagScroll.getVmax()));
+        }
+        event.consume();
     }
 
     /**
@@ -154,7 +175,7 @@ public class SummaryPanel extends UiPart<Region> {
      * Returns {@code count} with the word for it, so that one student is not "1 students".
      */
     public static String describeTotal(int count) {
-        return String.format(Locale.ROOT, count == 1 ? SINGULAR : PLURAL, count);
+        return String.format(Locale.ROOT, TOTAL_FORMAT, count, StringUtil.getPluralSuffix(count));
     }
 
     private void summarise(List<Student> students) {

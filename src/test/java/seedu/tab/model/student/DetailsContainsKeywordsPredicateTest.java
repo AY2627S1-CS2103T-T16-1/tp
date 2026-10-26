@@ -39,7 +39,7 @@ public class DetailsContainsKeywordsPredicateTest {
                         new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student));
             }
         });
-        assertEquals("9123-4567", student.getPhone().value);
+        assertEquals("9123-4567", student.getPhone().orElseThrow().value);
     }
 
     @Test
@@ -301,9 +301,24 @@ public class DetailsContainsKeywordsPredicateTest {
 
     @Test
     public void test_optionalFieldsAbsent_returnsFalse() {
-        Student student = new StudentBuilder().withoutEmail().withoutNusStudentId().withTags().build();
-        for (Field field : List.of(Field.EMAIL, Field.NUS_STUDENT_ID, Field.TAG)) {
+        Student student = new StudentBuilder().withoutPhone().withoutEmail()
+                .withoutNusStudentId().withTags().build();
+        for (Field field : List.of(Field.PHONE, Field.EMAIL, Field.NUS_STUDENT_ID, Field.TAG)) {
             assertFalse(new DetailsContainsKeywordsPredicate(Map.of(field, List.of("x"))).test(student));
+        }
+    }
+
+    @Test
+    public void test_phoneTermAgainstStudentWithoutPhone_matchesOnlyStudentHoldingOne() {
+        // a digit term takes the same path as any other, so an absent phone matches nothing
+        Student withoutPhone = new StudentBuilder().withName("Alice").withoutPhone().build();
+        Student withPhone = new StudentBuilder(withoutPhone).withPhone("+65 9123 4567").build();
+
+        for (String keyword : List.of("9123", "9123-4567", "+6591234567")) {
+            DetailsContainsKeywordsPredicate predicate =
+                    new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword)));
+            assertTrue(predicate.test(withPhone));
+            assertFalse(predicate.test(withoutPhone));
         }
     }
 

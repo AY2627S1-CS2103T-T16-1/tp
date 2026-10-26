@@ -90,6 +90,10 @@ public class StudentCardTest {
         return onFxThread(() -> (Label) new StudentCard(student, 1).getRoot().lookup("#email"));
     }
 
+    private static Label phoneLabelOf(Student student) throws Exception {
+        return onFxThread(() -> (Label) new StudentCard(student, 1).getRoot().lookup("#phone"));
+    }
+
     private static Label followUpLabelOf(Student student) throws Exception {
         return onFxThread(() -> (Label) new StudentCard(student, 1).getRoot().lookup("#followUp"));
     }
@@ -165,7 +169,7 @@ public class StudentCardTest {
                             .anyMatch(text -> text.getText().endsWith(label.getEllipsisString())));
                 }
             }
-            assertEquals(student.getPhone().value, phone.getText());
+            assertEquals(student.getPhone().orElseThrow().value, phone.getText());
             assertEquals(student.getEmail().orElseThrow().toString(), email.getText());
             assertContactsDoNotOverlap(phone, email);
             layOutAt(root, widthForAllContacts(root));
@@ -275,6 +279,41 @@ public class StudentCardTest {
         // the row is unmanaged as well as hidden, so the card does not keep a blank line for it
         assertFalse(email.isManaged());
         assertFalse(email.isVisible());
+    }
+
+    @Test
+    public void constructor_studentWithoutPhone_leavesTheRowOut() throws Exception {
+        Student student = new StudentBuilder().withoutPhone().build();
+        Label phone = phoneLabelOf(student);
+
+        // the row is unmanaged as well as hidden, so the card does not keep a blank line for it
+        assertFalse(phone.isManaged());
+        assertFalse(phone.isVisible());
+    }
+
+    @Test
+    public void constructor_studentWithoutPhone_closesTheGapWithoutGrowing() throws Exception {
+        Student withPhone = new StudentBuilder().withPhone("91234567")
+                .withEmail("alice@example.com").withTags().build();
+        Student withoutPhone = new StudentBuilder(withPhone).withoutPhone().build();
+
+        double[] measured = onFxThread(() -> {
+            Region laden = (Region) new StudentCard(withPhone, 1).getRoot();
+            roomyStyledScene(laden);
+            Region spare = (Region) new StudentCard(withoutPhone, 1).getRoot();
+            roomyStyledScene(spare);
+            return new double[] {
+                laden.getHeight(), spare.getHeight(),
+                laden.lookup("#email").getBoundsInParent().getMinX(),
+                spare.lookup("#email").getBoundsInParent().getMinX()
+            };
+        });
+
+        assertEquals(measured[0], measured[1], 0.5,
+                "a card without a phone should be no taller than one with it");
+        assertTrue(measured[3] < measured[2],
+                "the email should move left into the space the phone would have taken, from "
+                        + measured[2] + " to " + measured[3]);
     }
 
     @Test
@@ -1060,10 +1099,13 @@ public class StudentCardTest {
         onFxThread(() -> {
             boolean sawTotal = false;
             boolean sawChip = false;
+            // one card laid out again at each width, as the contact-row sweep does: building
+            // a card per width measures JavaFX construction rather than the layout under test
+            Region root = (Region) new StudentCard(student, 1).getRoot();
+            styledScene(root, 300, 120);
+            TagRow tags = (TagRow) root.lookup("#tags");
             for (int width = 300; width <= 800; width += 2) {
-                Region root = (Region) new StudentCard(student, 1).getRoot();
-                styledScene(root, width, 120);
-                TagRow tags = (TagRow) root.lookup("#tags");
+                layOutAt(root, width);
                 List<String> shown = visibleChipsOf(root);
                 sawTotal |= shown.equals(List.of("3 tags"));
                 sawChip |= shown.size() > 1;

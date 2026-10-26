@@ -20,7 +20,7 @@ import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -35,8 +35,7 @@ public class ParserUtil {
     public static final String MESSAGE_VALUE_AFTER_INDEX_ONLY =
             "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index and nothing else.";
     public static final String MESSAGE_FOLLOW_UP_IS_NOT_A_TAG =
-            "\"" + Flag.FOLLOW_UP_NAME + "\" marks a student for follow-up rather than naming a tag, "
-            + "so a card would show it twice. Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
+            FollowUpFlag.MESSAGE_RESERVED + " Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
 
     private ParserUtil() {} // this class only holds helpers
 
@@ -97,22 +96,22 @@ public class ParserUtil {
      * Parses a required student target, reporting an empty preamble as the missing
      * {@code missingField}. The first word is read the way {@link #parseStudentTarget} reads
      * it, as a displayed index or an NUS Student ID, and any word after it is refused,
-     * because a target is one word before the command's options.
+     * because a target is one word before the command's options. Invalid indices keep
+     * their concise validation reason rather than the full command usage.
      *
      * @param missingField How a missing target is named, so the caller can show every target form.
      * @throws ParseException if the target is missing, holds extra words, or names no student.
      */
-    public static StudentTarget parseRequiredStudentTarget(String preamble, String missingField, String fieldName,
-            String usage) throws ParseException {
+    public static StudentTarget parseRequiredStudentTarget(String preamble, String missingField, String fieldName)
+            throws ParseException {
         requireNonNull(missingField);
         requireNonNull(fieldName);
-        requireNonNull(usage);
         String trimmedPreamble = preamble.trim();
         if (trimmedPreamble.isEmpty()) {
             throw new ParseException(Messages.getErrorMessageForMissingFields(missingField));
         }
         String[] values = trimmedPreamble.split("(?U)\\s+", 2);
-        StudentTarget target = parseStudentTarget(values[0], usage);
+        StudentTarget target = parseNonBlankStudentTarget(values[0]);
         if (values.length > 1) {
             throw new ParseException(String.format(MESSAGE_VALUE_AFTER_INDEX, fieldName, Messages.shorten(values[1])));
         }
@@ -128,12 +127,12 @@ public class ParserUtil {
      *
      * <p>An NUS Student ID that is not a valid one keeps the reason it was refused, so the
      * User is told which value was rejected and why. Oversized positive indices retain their
-     * bounded-index diagnostic. An index that is not a positive integer
-     * is reported through {@code usage} instead, because a target of that shape reads as a
-     * mistyped index rather than as a candidate ID.
+     * bounded-index diagnostic, and an index that is not a positive integer keeps the concise
+     * positive-integer reason rather than the full command usage. A target given as no value
+     * at all names no field to explain, so that one is reported through {@code usage}.
      *
      * @param target The one token the User gave as the target.
-     * @param usage What the calling command shows when the target reads as an unusable index.
+     * @param usage What the calling command shows when no target is given.
      * @throws ParseException if {@code target} is blank, opens with a letter without holding
      *     a valid NUS Student ID, or is otherwise not a positive integer.
      */
@@ -144,17 +143,15 @@ public class ParserUtil {
         if (trimmedTarget.isEmpty()) {
             throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage));
         }
-        if (Character.isLetter(trimmedTarget.charAt(0))) {
-            return StudentTarget.byNusStudentId(parseNusStudentId(trimmedTarget));
+        return parseNonBlankStudentTarget(trimmedTarget);
+    }
+
+    /** Returns a non-blank target while retaining the field-specific validation reason. */
+    private static StudentTarget parseNonBlankStudentTarget(String target) throws ParseException {
+        if (Character.isLetter(target.charAt(0))) {
+            return StudentTarget.byNusStudentId(parseNusStudentId(target));
         }
-        try {
-            return StudentTarget.byIndex(parseIndex(trimmedTarget), trimmedTarget);
-        } catch (ParseException pe) {
-            if (!pe.getMessage().equals(MESSAGE_INVALID_INDEX)) {
-                throw pe;
-            }
-            throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, usage), pe);
-        }
+        return StudentTarget.byIndex(parseIndex(target), target);
     }
 
     /**
@@ -263,7 +260,7 @@ public class ParserUtil {
      */
     public static Tag parseTagToAdd(String tag) throws ParseException {
         Tag parsed = parseTag(tag);
-        if (Flag.isFollowUpName(parsed.tagName)) {
+        if (FollowUpFlag.isFollowUpName(parsed.tagName)) {
             throw new ParseException(MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
         }
         return parsed;

@@ -3,7 +3,6 @@ package seedu.tab.ui;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.logic.parser.CommandTokenizer.ESCAPE;
 import static seedu.tab.logic.parser.CommandTokenizer.OPTION_MARKER;
-import static seedu.tab.logic.parser.CommandTokenizer.QUOTE;
 import static seedu.tab.logic.parser.CommandTokenizer.VALUE_SEPARATOR;
 
 import java.util.ArrayList;
@@ -21,7 +20,7 @@ import seedu.tab.logic.parser.CommandTokenizer;
  * the parser to complain about when the command is submitted. Where a token ends, though, it
  * asks the same questions the parser does: the command word ends at the first separator
  * whatever the quotes, a command pasted from a web page carries a non-breaking space, which
- * separates tokens for the parser, a backslash escapes only the two characters that mean
+ * separates tokens for the parser, a backslash escapes only the characters that mean
  * something to it, and an option carrying its value after an equals sign is two things rather
  * than one. Deciding any of them differently here would colour a command as something other
  * than what running it does.
@@ -133,7 +132,7 @@ public class CommandHighlighter {
         for (int index = start + 1; index < command.length()
                 && !StringUtil.isWhitespace(command.charAt(index)); index++) {
             char current = command.charAt(index);
-            if (current == QUOTE || current == ESCAPE) {
+            if (CommandTokenizer.isQuote(current) || current == ESCAPE) {
                 return NOT_FOUND;
             }
             if (current == VALUE_SEPARATOR) {
@@ -160,7 +159,7 @@ public class CommandHighlighter {
             if (current == ESCAPE && index + 1 < command.length()
                     && CommandTokenizer.isEscapable(command.charAt(index + 1))) {
                 index++;
-            } else if (current == QUOTE) {
+            } else if (CommandTokenizer.isQuote(current)) {
                 isQuoted = !isQuoted;
                 wasQuoted = true;
             }

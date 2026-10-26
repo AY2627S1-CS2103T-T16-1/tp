@@ -1,0 +1,8 @@
+{
+  "students": [ {
+    "name": "Flagged One",
+    "phone": "92220000",
+    "tags": [ "Needs follow-up" ],
+    "flag": true
+  } ]
+}
