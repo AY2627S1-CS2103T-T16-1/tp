@@ -16,7 +16,7 @@ UniqueStudentList -right-> "*" Student
 Student -up-> "*" Tag
 
 Student *--> Name
-Student *--> Phone
+Student *--> "0..1" Phone
 Student *--> "0..1" Email
 Student *--> "0..1" NusStudentId
 Student *--> "0..1" FollowUpFlag
