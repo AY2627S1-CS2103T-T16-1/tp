@@ -122,11 +122,11 @@ final class LikelyDuplicateWarning {
         if (matchingStudents.size() == 1) {
             return firstName;
         }
-        String firstTwoNames = firstName + ", " + matchingStudents.get(1).getName();
         int remainingStudents = matchingStudents.size() - MAX_NAMED_STUDENTS;
         if (remainingStudents == 0) {
             return firstName + " and " + matchingStudents.get(1).getName();
         }
+        String firstTwoNames = firstName + ", " + matchingStudents.get(1).getName();
         return firstTwoNames + " and " + remainingStudents + " other"
                 + (remainingStudents == 1 ? "" : "s");
     }
