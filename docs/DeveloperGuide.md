@@ -2757,7 +2757,8 @@ testers are expected to do more *exploratory* testing.
 1. Retaining long phone text
 
    1. Test case: Run `add Long Phone -p VALUE`, replacing `VALUE` with an actual
-      sequence of 400 decimal digits.<br>
+      sequence of 400 decimal digits: `1234567890` repeated 40 times, matching
+      the automated regression tests.<br>
       Expected: The student is added. Hover over the shortened phone on the card
       to read the complete value.
    1. Exit and reopen TAB.<br>
