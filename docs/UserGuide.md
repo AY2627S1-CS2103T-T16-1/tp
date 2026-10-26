@@ -1087,12 +1087,6 @@ The linked reports track these limitations and their fixes:
 * **Pasted quotation marks:** Curly and full-width double quotes are read as
   part of a value rather than grouping it. Use plain `"` characters when quoting
   a phrase. See [#313](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/313).
-* **Keyboard access to summary tags:** The summary's tag list cannot receive
-  keyboard focus. Use a mouse or trackpad to scroll it, or narrow the displayed
-  students with `find` to reduce the summary. The student list can receive focus
-  with Tab and scroll with arrow keys, Page Up/Page Down and Home/End; use
-  Shift+Tab to move back. See
-  [#418](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/418).
 * **Read-only save lock:** A read-only `data/.tab.json.lock` can block saving
   while the error names `data/tab.json` instead. Close all TAB windows and
   restore write access to the lock file before restarting. See
