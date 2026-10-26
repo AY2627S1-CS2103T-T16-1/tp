@@ -1,6 +1,7 @@
 @startuml
 !include style.puml
-skinparam linetype ortho
+skinparam linetype polyline
+skinparam nodesep 20
 skinparam arrowThickness 1.1
 skinparam arrowColor UI_COLOR_T4
 skinparam classBackgroundColor UI_COLOR
@@ -31,13 +32,13 @@ Class HiddenOutside #FFFFFF
 HiddenOutside ..> Ui
 
 UiManager .left.|> Ui
-UiManager -down-> "1" MainWindow
-MainWindow *-down->  "1" CommandBox
-MainWindow *-down-> "1" ResultDisplay
-MainWindow *-down-> "1" HelpPage
-MainWindow *-down-> "1" StudentListPanel
-MainWindow *-down-> "1" SummaryPanel
-MainWindow *-down-> "1" StatusBarFooter
+UiManager -down-> "\n1" MainWindow
+MainWindow *-down->  "\n1" CommandBox
+MainWindow *-down-> "\n1" ResultDisplay
+MainWindow *-down-> "\n1" HelpPage
+MainWindow *-down-> "\n1" StudentListPanel
+MainWindow *-down-> "\n1" SummaryPanel
+MainWindow *-down-> "\n1" StatusBarFooter
 
 StudentListPanel .down.> StudentCard : <<create>>
 
