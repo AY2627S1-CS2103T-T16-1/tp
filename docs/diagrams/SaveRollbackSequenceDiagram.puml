@@ -47,10 +47,13 @@ else records changed
 
     alt save succeeds
         Storage --> LogicManager
+        deactivate Storage
         [<--LogicManager : r
 
     else IOException
+        activate Storage
         Storage --> LogicManager : IOException
+        deactivate Storage
         LogicManager -> Model : setStudentBook(copy)
         activate Model
         Model --> LogicManager
@@ -63,7 +66,6 @@ else records changed
 
         [<--LogicManager : CommandException
     end
-    deactivate Storage
 end
 
 deactivate LogicManager
