@@ -7,7 +7,6 @@ participant "StudentBookParser" as SBP LOGIC_COLOR
 participant "AddCommandParser" as Parser LOGIC_COLOR
 participant "CommandTokenizer" as Tokenizer LOGIC_COLOR
 participant "FlagTokenizer" as FlagTokenizer LOGIC_COLOR
-participant "FlagArgumentMap" as FlagMap LOGIC_COLOR
 participant "ParserUtil" as ParserUtil LOGIC_COLOR
 
 User -> LogicManager : execute("add John Doe -p 98765432 -e johnd@example.com")
