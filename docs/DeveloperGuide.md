@@ -273,86 +273,78 @@ Classes used by multiple components are in the `seedu.tab.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Showing commands and their results
+### Revealing a newly added student
 
-`AddCommand` includes the new student in its `CommandResult`.
-`MainWindow` asks `StudentListPanel` to reveal that card only after `Logic.execute`
-returns successfully, so failed saves cannot scroll to an unsaved student.
-Scrolling leaves focus in the command box and uses the displayed list after
-the existing search-preservation rules have been applied. It locates the exact
-saved student object so an earlier record with identical details is not revealed
-instead, and skips a target that has left the displayed list before layout.
-
-The student card's `TagRow` creates a label for every tag, with its full text.
-Layout shows as many complete chips as fit and lists all hidden tags in the
-overflow chip's tooltip. There is no fixed chip count or label length cap.
+`AddCommand` includes the new student in its `CommandResult`, and `MainWindow`
+asks `StudentListPanel` to reveal that card only after `Logic.execute` returns
+successfully, so a failed save cannot scroll to an unsaved student. Scrolling
+leaves focus in the command box and reads the displayed list after the
+search-preservation rules have run. It locates the exact saved object, so an
+earlier record with identical details is not revealed instead, and skips a
+target that has left the displayed list before layout.
 
 English numeric feedback and data-load diagnostics format with `Locale.ROOT`,
-and command highlight style names use the same locale when lowercasing. This
-keeps digits and CSS selectors consistent without changing the JVM locale or
-student data.
+and highlight style names lowercase with it, keeping digits and CSS selectors
+consistent without touching the JVM locale or student data.
 
-`SummaryPanel` wraps complete tag names within the fixed 150 px sidebar.
-Each count retains its preferred width, while the tag list scrolls vertically
-as wrapped rows grow. Names are not shortened, so tags differing only at the
-end remain distinguishable without hovering.
+### Keyboard focus order
 
-`MainWindow` handles plain Tab and Shift+Tab on the student page to keep a
-stable focus cycle: command box, student list, summary tag list, then the
-reply when visible. The student list stays one Tab from command entry even
-after a reply appears; Shift+Tab returns directly. Empty lists stay reachable.
-`SummaryPanel.fxml` makes the tag `ScrollPane` focus-traversable, and the theme
-marks its focus with an accent outline without changing its layout size.
-JavaFX supplies arrow and Home/End navigation for both lists, plus paging for
-the student list. `SummaryPanel` handles Page Up/Down using the tag viewport's
-height and content overflow: JavaFX's default `ScrollPane` page keys otherwise
-use the same increment as its arrow keys. The command box retains its separate
-Up/Down history behavior. Help uses its own pager and restores command focus
-when closed.
+`MainWindow` handles plain Tab and Shift+Tab on the student page to keep one
+cycle: command box, student list, summary tag list, then the reply when it is
+visible. The student list stays one Tab from command entry even after a reply
+appears, Shift+Tab returns directly, and empty lists stay reachable.
+`SummaryPanel.fxml` makes the tag `ScrollPane` focus-traversable and the theme
+outlines its focus without changing its layout size. JavaFX supplies arrow and
+Home/End navigation for both lists and paging for the student list;
+`SummaryPanel` handles Page Up/Down from the tag viewport's height and overflow,
+because JavaFX's default `ScrollPane` pages by its arrow-key increment. The
+command box keeps its own Up/Down history, and help uses its own pager.
+
+### The help pager
 
 `HelpCommand` returns a command summary and the existing `showHelp` signal.
-`MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
-the entire student page (command box, result, summary sidebar and student list).
-The hidden student page remains intact so closing help restores its filter,
-previous result and any unfinished command. When returning focus, `CommandBox`
-moves the caret to the end and clears JavaFX's automatic selection so the next
-keystroke continues editing the draft. The summary uses command words and
-flag labels from the command/parser definitions.
+`MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which
+replaces the whole student page. The hidden page stays intact, so closing help
+restores its filter, previous result and any unfinished command; `CommandBox`
+then moves the caret to the end and clears JavaFX's automatic selection so the
+next keystroke continues the draft. The summary draws its command words and
+flag labels from the command and parser definitions. No student data changes.
 
 `HelpPage` is a keyboard pager: Space/f and b move a screenful with one line of
-context, Enter/j and k move a line, d/u move half a screenful, g/G go to either end,
-and q/Esc return to commands. PgUp/PgDn, arrows and Home/End are also accepted.
-The reference is drawn as spans of `Text` in a wrapped `TextFlow` inside a
-scrollbar-free viewport, which takes the remaining window height. `HelpText` gives
-each span the class its token asks for — heading, command word, option, placeholder
-or plain — reusing the command box's own colours, so a marker reads the same where
-it is described as where it is typed. A command word carrying punctuation stays
-plain, since it is being named in a sentence rather than shown as syntax, and a
-two-letter capital such as `ID` is prose rather than a field.
-Page movement uses the current viewport and the font those spans share, so resizing
-and different fonts do not skip text. A persistent footer shows progress and navigation keys.
-The c key copies `HelpCommand.USER_GUIDE_URL` to the system clipboard and confirms
-it in the footer. Unused typed keys show a reminder to quit help before entering
-a command. The reference keeps explicit lines short enough for minimum width;
-the long User Guide address is available through c instead of wrapping in the label.
-Letter commands are handled on `KEY_TYPED`, consuming q before focus returns to the
-command box so quitting cannot insert a stray character. Enter navigates on
-`KEY_PRESSED`; its typed newline is consumed without changing the notice or scrolling
-again, including when focus moves into help after submitting `help`.
-The empty typed event emitted by macOS F1 is also consumed so it
-cannot overwrite the opening notice.
-No student data is changed.
+context, Enter/j and k a line, d/u half a screenful, g/G either end, and q/Esc
+back to commands, with PgUp/PgDn, arrows and Home/End also accepted. The
+reference is drawn as spans of `Text` in a wrapped `TextFlow` inside a
+scrollbar-free viewport that takes the remaining window height. `HelpText` gives
+each span the class its token asks for — heading, command word, option,
+placeholder or plain — reusing the command box's own colors, so a marker reads
+the same where it is described as where it is typed. A command word carrying
+punctuation stays plain, being named in a sentence rather than shown as syntax,
+and a two-letter capital such as `ID` is prose rather than a field. Page
+movement uses the current viewport and the font those spans share, so resizing
+and different fonts do not skip text.
 
-Parser and highlighter syntax characters are defined by `CommandTokenizer`,
-so quoting, escaping and attached option markers stay consistent. Each keeps
-its own scanning loop because highlighting must also accept unfinished input.
-`ParserUtil.parseFollowUpSelector` decodes the optional follow-up state for
-both find and edit. Edit performs its full duplicate-option check first, then
-checks the selector before collecting field errors, preserving error priority.
-Email and ID edits share clear-or-parse handling; each retains its own validator
-and descriptor setter. Add and edit share
-`StudentIdValidation.requireNoDuplicate`, with edit permitting the replaced
-record to retain its ID.
+A persistent footer shows progress and the navigation keys. `c` copies
+`HelpCommand.USER_GUIDE_URL` and confirms it there, which is how the long
+address is offered rather than wrapped into the reference; the reference keeps
+its explicit lines short enough for the minimum width. An unused typed key
+shows a reminder to quit help first. Letter commands are handled on
+`KEY_TYPED`, consuming `q` before focus returns so quitting cannot insert a
+stray character; Enter navigates on `KEY_PRESSED` and its typed newline is
+consumed without changing the notice or scrolling again, as is the empty typed
+event macOS sends for F1.
+
+### Shared parsing helpers
+
+`CommandTokenizer` defines the syntax characters for both the parser and the
+highlighter, so quoting, escaping and attached option markers stay consistent;
+each keeps its own scanning loop because highlighting must also accept
+unfinished input. `ParserUtil.parseFollowUpSelector` decodes the optional
+follow-up state for find and edit alike. Edit runs its duplicate-option check
+first, then the selector, then field errors, preserving that priority. Email
+and ID edits share clear-or-parse handling while keeping their own validator
+and descriptor setter, and add and edit share
+`StudentIdValidation.requireNoDuplicate`, with edit letting the replaced record
+keep its ID.
 
 ### Restoring window geometry
 
@@ -853,71 +845,53 @@ reports that `list` takes no arguments.
 
 ### Suggesting a command word
 
-A command word TAB does not dispatch on is answered with the word the User
-typed and the command words it is a likely attempt at. `CommandWords` works
-out which those are in two steps: what the typed word opens, and, failing
-that, what it is near.
+A word TAB does not dispatch on is answered with the word as typed and the
+command words it is a likely attempt at. `CommandWords` asks two questions in
+order.
 
-A word that opens a command word is read as that command word being typed.
-`del` stands for `delete`, although `help` is the nearer of the two by edits
-alone, at two against three. A part-typed word is right as far as it goes,
-which says more about what was meant than the distance to some other word
-does. Only a word that opens nothing is measured for edits at all.
+**What does the word open?** A part-typed word is right as far as it goes, so
+`del` stands for `delete` even though `help` is nearer by edits, at two
+against three. Only a word that opens nothing is measured at all.
 
-The measure is `StringUtil.editDistance`: how many insertions, deletions,
-substitutions and swaps of neighboring characters turn one word into the
-other. A swap counts as one edit because a fast typist makes them as readily
-as the other three, and `lsit` would otherwise sit two edits from `list`, as
-far away as a wilder guess.
+**What is it near?** `StringUtil.editDistance` counts insertions, deletions,
+substitutions and swaps of neighboring characters. A swap costs one edit
+because a fast typist makes them as readily as the rest; otherwise `lsit`
+would sit two edits from `list`, as far as a wilder guess. The budget is two
+edits for every command word whatever its length, which is what the user story
+asks for and what reaches the slips a teaching assistant makes: `ls` is two
+insertions short of `list`, `dlte` two deletions from `delete`.
 
-Two edits is the budget for every command word, whatever its length. That is
-what the user story asks for, and it is what reaches the words a teaching
-assistant types: `ls` opens nothing and is two insertions short of `list`,
-and `dlte` is two deletions from `delete`.
+Two edits also reach past a short command word's first letter, which is how
+`dlt` came to be answered with `edit`. A measured word must therefore open
+with the character the command word opens with, unless the single edit between
+them is that character — which keeps `felete`, `edlete` and `elete` reading as
+`delete`. The first letter is the one a typist is least likely to get wrong.
 
-Two edits also reach past the first letter of a short command word, which is
-how `dlt` came to be answered with `edit`. A word measured for edits
-therefore has to open with the character the command word opens with, unless
-the single edit between the two is that character. The first letter is the
-one a typist is least likely to get wrong, so a word two edits out that
-disagrees on it as well has little to do with the command it happens to sit
-near; where one edit is the whole difference, that edit may fall on the first
-letter and the rest of the word already agrees, which keeps `felete`,
-`edlete` and `elete` reading as `delete`.
+Every equally likely word is named, in the alphabetical order of
+`COMMAND_WORDS`: `eit` is a letter short of both `edit` and `exit`, and
+answering with one alone would read as knowledge TAB does not have. Past three
+the reply falls back to the pointer to `help`, since a list that long says only
+that TAB cannot tell. No typed word reaches that today, `edit` and `exit` being
+the only pair sharing a first letter; the limit is there for command words TAB
+may gain.
 
-Every command word equally likely is named. `eit` is a letter short of both
-`edit` and `exit`, and answering with `edit` alone would read as knowledge TAB
-does not have, with the other ruled out. Choosing between equally likely words
-dresses a guess up as help, while naming them all says exactly what is known.
-They are named in the alphabetical order of `COMMAND_WORDS`, so one typo
-always draws one reply.
+Comparison folds case with the `CommandWords.foldCase` the parser dispatches
+with, so `Delte` reads as `delete`, while a correctly spelled word in any case
+is dispatched before reaching here. The reply quotes the word as typed, so a
+User who typed capitals can recognize what they did, shortened the way a
+rejected field value is. Lengths are compared before distances, which settles a
+pasted line against every command word without measuring it.
 
-Past three equally likely words the reply falls back to the pointer to `help`,
-because a list that long says only that TAB cannot tell. No typed word reaches
-that with the command words TAB has: `edit` and `exit` are the only two
-sharing a first letter, so at most two are ever named at once, and the limit
-is there for the command words it may gain.
-
-The comparison folds case with the `CommandWords.foldCase` the parser
-dispatches with, so `Delte` is read as an attempt at `delete`; a word spelled
-correctly in any case is dispatched before it reaches here. The message quotes
-the word as it was typed, because a User who typed capitals needs to see them
-to recognize what they did. The quoted word is shortened the
-way a rejected field value is, so that a pasted line cannot push the rest of
-the message out of sight. Lengths are compared before any distance is, which
-also settles such a line against every command word without measuring it.
-
-A suggestion is never run. Dispatching `delete` for `dlte` would act on a word
-the User did not type, and a wrong guess there costs a student record, where a
+A suggestion is never run: dispatching `delete` for `dlte` would act on a word
+the User did not type, and a wrong guess there costs a student record where a
 wrong suggestion costs a line of text. `StudentBookParser` raises the same
-`ParseException` as it does for any unknown word, which leaves the model, the
-saved file and the typed text in the command box as they were.
+`ParseException` as for any unknown word, leaving the model, the saved file and
+the typed text as they were.
 
-The parser dispatches with a `switch` rather than from
-`CommandWords.COMMAND_WORDS`, so the two can disagree: a word missing from the
-list would work when typed while being suggested to nobody. `CommandWordsTest`
-resolves the command words out of the parser's own cases and compares them
-against the list rather than leaving that to be noticed.
+The parser dispatches from a `switch` rather than from `COMMAND_WORDS`, so the
+two could disagree and a word missing from the list would work while being
+suggested to nobody. `CommandWordsTest` resolves the command words out of the
+parser's own cases and compares them against the list.
 
 ### Follow-up flag
 
