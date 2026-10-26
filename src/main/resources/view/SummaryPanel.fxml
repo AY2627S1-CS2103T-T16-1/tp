@@ -28,7 +28,7 @@
   <!-- a cohort can carry more tags than the window is tall, so the list scrolls within
        whatever height is left rather than pushing the total off the bottom -->
   <ScrollPane fx:id="tagScroll" styleClass="summary-scroll" fitToWidth="true"
-              hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+              hbarPolicy="NEVER" focusTraversable="true" VBox.vgrow="ALWAYS">
     <VBox fx:id="tagRows" spacing="4" />
   </ScrollPane>
 

@@ -7,8 +7,10 @@ import java.util.logging.Logger;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
@@ -146,6 +148,30 @@ public class MainWindow extends UiPart<Stage> {
         commandBox = new CommandBox(this::executeCommand, logic::isAwaitingConfirmation);
         commandBoxPlaceholder.getChildren().add(commandBox.getRoot());
         fillHelpPage();
+        setKeyboardNavigation(summaryPanel);
+    }
+
+    /** Keeps the student list one Tab from commands, regardless of whether a reply is showing. */
+    private void setKeyboardNavigation(SummaryPanel summaryPanel) {
+        Node commandField = commandBox.getRoot().lookup("#commandTextField");
+        Node students = studentListPanel.getRoot().lookup("#studentListView");
+        Node tags = summaryPanel.getRoot().lookup("#tagScroll");
+        Node reply = resultDisplay.getRoot().lookup("#resultDisplay");
+        List<Node> readingPanes = List.of(commandField, students, tags);
+        List<Node> panesWithReply = List.of(commandField, students, tags, reply);
+        studentPage.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() != KeyCode.TAB || event.isControlDown() || event.isAltDown() || event.isMetaDown()) {
+                return;
+            }
+            List<Node> panes = resultDisplay.getRoot().isVisible() ? panesWithReply : readingPanes;
+            int current = panes.indexOf(primaryStage.getScene().getFocusOwner());
+            if (current < 0) {
+                return;
+            }
+            int direction = event.isShiftDown() ? -1 : 1;
+            panes.get(Math.floorMod(current + direction, panes.size())).requestFocus();
+            event.consume();
+        });
     }
 
     private void fillHelpPage() {
