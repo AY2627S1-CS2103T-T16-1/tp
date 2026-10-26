@@ -404,76 +404,63 @@ contact row near a wrap threshold and squeeze the headline.
 
 ### Coloring the command line
 
-`CommandTextField` converts separators to spaces in text replacement before
-JavaFX filters control characters. It asks `StringUtil#isWhitespace` the
-question the tokenizer asks of each character, so the box cannot hide a
-boundary the parser reads: JavaFX deletes a vertical tab or a form feed along
-with the other control characters, and draws a line, paragraph or next-line
-separator with no width, each of which joins the words around it on screen.
-The field preserves pasted word boundaries while keeping the command on one
-line, including when a paste replaces selected text. CRLF is treated as one
-separator.
+`CommandTextField` converts separators to spaces during text replacement,
+before JavaFX filters control characters, asking `StringUtil#isWhitespace` the
+question the tokenizer asks of each character. Otherwise the box could hide a
+boundary the parser reads: JavaFX deletes a vertical tab or form feed with the
+other control characters, and draws a line, paragraph or next-line separator
+with no width, each joining the words around it on screen. Pasted word
+boundaries survive while the command stays on one line, including when a paste
+replaces a selection, and CRLF counts as one separator.
 
 `CommandHighlighter` breaks a command where the parser breaks it, which the
-User Guide invites the User to rely on. That means two splits the coloring
-cannot make with the rule it uses for values. `StudentBookParser` ends the
-command word at the first separator whatever the quotes, so `add"Ravi s/o
-Kumaran"` is the command word `add"Ravi` and two words after it; reading that
-word with the value rule would draw one bold quoted word and then report an
-unknown command the colors never showed. `FlagTokenizer` reads `--tag="Lab
-3"` as an option and a value, so the marker and the equals sign are colored
-as the option and the rest as its value. A marker holding a quote or a
-backslash is left whole instead, because either moves the equals sign the
-parser counts to, and a word split in the wrong place would be the same bug
-again.
+User Guide invites the User to rely on. Two splits therefore cannot follow the
+value rule. `StudentBookParser` ends the command word at the first separator
+whatever the quotes, so `add"Ravi s/o Kumaran"` is the command word
+`add"Ravi` and two words after it; the value rule would draw one bold quoted
+word and then report an unknown command the colors never showed.
+`FlagTokenizer` reads `--tag="Lab 3"` as an option and a value, so the marker
+and equals sign take the option color and the rest its value color. A marker
+holding a quote or backslash is left whole, because either moves the equals
+sign the parser counts to.
 
-A `TextField` cannot color its own content, so `CommandBox` keeps the field
-for input and hands `HighlightedTextOverlay` the nodes that draw a colored
-copy of the command behind it, with the field's own text transparent. The
-overlay owns that copy, the caret and the selection band. The field still takes every keystroke and still decides
-which character a click lands on, which keeps editing exactly as it was.
+A `TextField` cannot color its own content, so `CommandBox` keeps the field for
+input and hands `HighlightedTextOverlay` the nodes that draw a colored copy
+behind it, with the field's own text transparent. The overlay owns that copy,
+the caret and the selection band. The field still takes every keystroke and
+still decides which character a click lands on, so editing is unchanged.
 
-`CommandHighlighter` decides the colors. It returns spans covering every
-character of the command. It walks the command itself, rather than calling
-`CommandTokenizer`, because it has to keep the text exactly as typed, quotes
-and all, where the tokenizer removes them and may refuse an unclosed quote
-that is merely half-typed. It asks the tokenizer the questions the two must
-agree on — `CommandTokenizer#isEscapable`, and `StringUtil#isWhitespace` for
-where a token ends — so the colors cannot split a command where the parser
-would not. It never rejects anything: a command is colored while it is still
-half-typed.
+`CommandHighlighter` returns spans covering every character. It walks the
+command itself rather than calling `CommandTokenizer`, which removes quotes and
+may refuse an unclosed one that is merely half-typed, but asks the tokenizer
+the questions the two must agree on — `CommandTokenizer#isEscapable` and
+`StringUtil#isWhitespace` for where a token ends. It rejects nothing: a command
+is colored while still half-typed. The copy measures its width from the whole
+shaped `TextFlow`, rounded up so it cannot wrap at a fractional pixel, and
+ordinary value words share a text node with their spaces so splitting an
+unquoted right-to-left name does not change shaping or click positions.
 
-The copy measures its natural width from the whole shaped `TextFlow`, rounded
-up to avoid wrapping at a fractional pixel boundary. Ordinary value words and
-spaces share a text node so that splitting an unquoted right-to-left name does
-not change shaping or click positions.
+Three things must then agree with the field, because the User reads the copy
+but interacts with the field.
 
-Three things then have to agree with the field, because the User reads our copy
-but interacts with the field:
-
-* **the scroll offset.** The copy is drawn wherever the field is drawing its
-  own text, read from the field's text node rather than worked out again here.
-  A field scrolls by rules that differ between typing, deleting, cutting and
-  undoing, and every attempt to reproduce them was right for some of those and
-  wrong for others; a copy even a pixel out of step shows one character where
-  the field hit-tests another, and clicks land in the wrong place. Reading
-  that node once is not enough, because the field's skin re-scrolls it after a
-  delete, a replace or a change of width, which is after the caret and the
-  text the coloring was told about have both settled. The copy therefore
-  follows the node's own position. The node is the one the field is drawing
-  in, since an empty line shows the prompt in a node of the same kind which
-  the field hides rather than throws away, and a command reading as the
-  prompt would otherwise be taken for the hidden one.
-* **the caret.** The field's caret is drawn in its text color, which is
-  transparent, so the line carries one of its own, sized from a run of the text
-  so it sits where the text does. Its horizontal position follows the primary
-  caret shape of the field’s text node, including its leading/trailing bias at
-  script boundaries. Logical prefix widths cannot locate RTL insertion points.
-* **the selection.** The field draws its highlight at its own offset, which
-  broke into fragments behind the copy, so it is turned off in the stylesheet
-  and drawn here instead. A path from `TextFlow.rangeShape` covers each visual
-  segment, including selections that cross RTL/LTR boundaries and appear as
-  separate bands.
+* **Scroll offset.** The copy is drawn wherever the field draws its own text,
+  read from the field's text node rather than recomputed. A field scrolls by
+  rules that differ between typing, deleting, cutting and undoing, and a copy
+  even a pixel out of step shows one character where the field hit-tests
+  another. Reading the node once is not enough, because the skin re-scrolls
+  after a delete, a replace or a width change, which is after the caret and the
+  text have settled; the copy follows the node's own position. It is the node
+  the field is drawing in, since an empty line shows the prompt in a node of
+  the same kind that the field hides rather than discards.
+* **Caret.** The field's caret is drawn in its transparent text color, so the
+  line carries one of its own, sized from a run of the text. Its position
+  follows the primary caret shape of the field's text node, including the
+  leading/trailing bias at script boundaries, because logical prefix widths
+  cannot locate RTL insertion points.
+* **Selection.** The field's own highlight broke into fragments behind the
+  copy, so it is disabled in the stylesheet and drawn here from a
+  `TextFlow.rangeShape` path, which covers each visual segment including
+  selections that cross RTL/LTR boundaries.
 
 Every color the line uses is held to 3:1 against the selection band, so
 selecting a command cannot hide half of it. That is below the 4.5:1 WCAG asks
@@ -622,80 +609,66 @@ book so the search predicate survives the edit.
 
 Parsing runs in two passes, the way a shell does it.
 
-`CommandTokenizer` splits the arguments on whitespace and lets double quotes
-group a value containing whitespace. Straight, curly and full-width double quotes
-are interchangeable delimiters, including in mixed pairs, to accept input from
-input methods and pasted documents. `CommandTokenizer#isQuote` shares this rule
-with the syntax highlighter; all supported quotes can be escaped to retain them
-literally. A token records whether a quote took part in it,
-because that is the only thing separating the value `-Ahmad` from the option
-`-e`. A backslash escapes a quote or another backslash, so a value may hold
-either; a backslash before anything else stays in the value, so nothing the User
-typed disappears without being asked for.
+**`CommandTokenizer` splits the arguments.** Whitespace separates tokens and
+double quotes group a value that contains it. Straight, curly and full-width
+quotes are interchangeable delimiters, including in mixed pairs, so input
+methods and pasted documents are accepted; `CommandTokenizer#isQuote` shares
+that rule with the highlighter, and every supported quote can be escaped to
+keep it literally. A backslash escapes a quote or another backslash, and
+before anything else stays in the value, so nothing the User typed disappears
+unasked. Each token records whether a quote took part in it, which is the only
+thing separating the value `-Ahmad` from the option `-e`.
 
-An option appearing where a value is expected is read as the option before it
-having been left empty, rather than as a value. `add John -p 123 -t -e` reports
-that `-t` needs a value instead of storing `-e` as a tag. A value that really
-does open with a hyphen is given in quotes.
+An option where a value was expected is read as the option before it having
+been left empty: `add John -p 123 -t -e` reports that `-t` needs a value rather
+than storing `-e` as a tag. A value that really opens with a hyphen is quoted.
 
-`FlagTokenizer` reads the tokens. Those before the first option are the
-*preamble*, joined with single ASCII spaces, which each command reads as
-whatever it takes in that position: the name for `add`, so a name of several
-words needs no quotes unless it would otherwise be misread, and the index for
-`edit`. Each command names its own, in `AddCommand.FIELD_NAME` and
-`EditCommand.FIELD_INDEX`, rather than the shared `CliFlags` doing it for
-them. Each short and long marker resolves to the same `CliFlag`, so mixed aliases
-for a single-valued field are duplicates rather than independent fields.
-Value-taking options take the token after them, and `-t` or `--tag` repeats
-for `add` and `edit`. The `tag` command takes exactly one tag through `-a`/`--add`
-for addition or `-r`/`--remove` for removal.
-They also accept a value joined to any short or long marker by an equals sign.
-`FlagTokenizer` splits only on the first equals sign, so later ones remain in
-the value. An attached value is unambiguously part of its option when it opens
-with a hyphen. An empty attached value must be quoted as in `--tag=""`, so an
-accidental `--tag=` cannot clear data. `CommandTokenizer` records whether a
-token began with a quote so a fully quoted `"--tag=T1"` remains a value, while
-the quote around the value in `--tag="Lab 3"` does not hide the option marker.
+**`FlagTokenizer` sorts the tokens into options.** Tokens before the first
+option are the *preamble*, joined with single ASCII spaces, and each command
+reads it as whatever it takes there — the name for `add`, so a multi-word name
+needs no quotes, and the index for `edit`. Each command names its own through
+`AddCommand.FIELD_NAME` and `EditCommand.FIELD_INDEX` rather than leaving it to
+the shared `CliFlags`.
 
-For `edit`, tag values use `StringUtil.normalizeFieldValue` before validation.
-A single normalized blank value clears all tags, including when the input holds
-Unicode spaces. A blank beside other tag values is rejected with an explanation
-that clearing requires the blank to be given on its own. Nonblank values are
-still validated so every problem can be reported without silently discarding tags.
+| Kind | Behavior |
+| --- | --- |
+| Value-taking (`-n`, `-p`, `-e`, `--id`, `-t`) | takes the token after it, or a value joined by `=`. `-t`/`--tag` repeats for `add` and `edit`; `tag` takes exactly one through `-a`/`--add` or `-r`/`--remove`. |
+| Presence-only (`--follow-up`/`-f`, `--no-follow-up`/`-nf`) | records an empty value and consumes no token, which lets `FlagArgumentMap` tell an absent option from a present marker without a second representation. `add` accepts only `--follow-up`, `edit` both to set or clear, `find` both to filter. An attached value on one is refused specifically. |
 
-The presence-only `--follow-up` option (alias `-f`) and
-`--no-follow-up` option (alias `-nf`) instead record an empty value and consume
-no following token. `add` accepts only `--follow-up`; `edit` accepts both to set
-or clear the status, and `find` accepts both to filter by that status. This lets
-`FlagArgumentMap` distinguish an
-absent option from a present marker without a separate representation. An
-attached value on a presence-only option is refused specifically. An unknown
-option names its marker without echoing an attached value, while a value-taking
-option left without a value and a token belonging to no option are each
-reported for what they are, rather than as one generic complaint.
+Each short and long marker resolves to the same `CliFlag`, so mixed aliases for
+a single-valued field are duplicates rather than independent fields. NUS
+Student ID uses `--id` as its canonical option with the otherwise unused `-i`
+as a typing-friendly alias; giving both is rejected as a repeated field rather
+than letting one silently override the other, and usage labels and messages use
+the canonical spelling. Duplicate-option feedback names the repeated markers
+rather than values, since presence-only options have none, and
+`FlagArgumentMap` keeps the first spelling supplied.
 
-`add` keeps its name before the options so names containing spaces need no
-quotes. If the tokenizer refuses `-n` or `--name`, `AddCommandParser` adds a
-placement hint to the existing error. A missing name gets the same hint,
-so users familiar with the name options in `edit` can recover immediately.
+An attached value splits on the first `=` only, so later ones stay in the
+value, and it is unambiguously part of its option when it opens with a hyphen.
+An empty attached value must be quoted, as `--tag=""`, so an accidental
+`--tag=` cannot clear data. Because `CommandTokenizer` records whether a token
+began with a quote, a fully quoted `"--tag=T1"` stays a value while the quote
+in `--tag="Lab 3"` does not hide the marker.
 
-`CliFlag` also lets a value-taking option carry aliases. NUS Student ID uses
-`--id` as its canonical option and the unused `-i` as its typing-friendly
-alias. Both spellings map to the same `FLAG_NUS_STUDENT_ID`, so giving
-both is rejected as a repeated single-valued field rather than letting one
-silently override the other. Usage labels and error messages use the canonical
-`--id NUS_STUDENT_ID` spelling.
+For `edit`, tag values are normalized before validation. One normalized blank
+clears every tag, including when the input holds Unicode spaces; a blank beside
+other tag values is refused with an explanation that clearing needs the blank
+on its own; and non-blank values are still validated, so every problem is
+reported without tags being discarded silently.
 
-Duplicate-option feedback names repeated option markers rather than values,
-because presence-only options such as `--follow-up` do not take values.
-`FlagArgumentMap` retains the first spelling supplied for each repeated option;
-the shared message lists those options and asks for each listed option only once.
+`add` keeps its name before the options. If the tokenizer refuses `-n` or
+`--name`, `AddCommandParser` adds a placement hint to the error, and a missing
+name gets the same hint, so a User who knows `edit`'s name option recovers at
+once.
 
 The shape of the command is settled before any field is read. An unclosed
-quote, an unknown option, or a single-valued option given twice, including
-once under each alias, all leave it
-unclear which field a value belongs to, so each is refused on its own instead
-of being collected with the field errors.
+quote, an unknown option, or a single-valued option given twice — including
+once under each alias — each leave it unclear which field a value belongs to,
+so each is refused on its own rather than collected with the field errors. An
+unknown option names its marker without echoing an attached value, and a
+missing value and a token belonging to no option are each reported for what
+they are.
 
 The following sequence diagram shows how a command's arguments are parsed
 in two passes:
@@ -1061,23 +1034,12 @@ storage share that message, so both report an invalid value the same way.
 
 #### Student names
 
-A name is displayed and searched as text, but is not an identity field.
-`Name` stores a normalized field value rather than the raw input so that two
-names which look identical are displayed and searched consistently. Multiple
-students may hold the same normalized name.
-
-**Normalizing.** On construction a name is
-
-* composed to Unicode form NFC, so that `Nguyễn` written as one code point and
-  as `e` plus two combining marks become the same string
-* stripped of Unicode format characters such as direction marks and zero-width
-  spaces, apart from the joiners described below
-* reduced to single ASCII spaces, with leading and trailing whitespace removed,
-  so that a non-breaking space cannot hide a word from the search
-
-The zero-width joiner and non-joiner are deliberately kept, because scripts
-such as Sinhala and Arabic need them to shape correctly. Two names that differ
-only by a joiner are therefore still two students.
+A name is displayed and searched as text but is not an identity field, so
+several students may hold the same normalized name. `Name` keeps the
+normalized form described above, with one exception: the zero-width joiner and
+non-joiner survive, because scripts such as Sinhala and Arabic need them to
+shape correctly. Two names differing only by a joiner are therefore two
+students.
 
 **A name is valid** when something remains after normalizing: at least one
 letter or number, judged by Unicode category rather than by ASCII.
@@ -1105,18 +1067,18 @@ marker joined to the value. `Name` enforces no restriction beyond holding at
 least one letter or number.
 
 **Showing a long name.** A card gives the name one line, shared with the tags
-and follow-up marker. `StudentCard` supplies the complete name through
-`UiText.showToFit`, and `CardName` measures it in the displayed font. Names
-appear in full whenever their allocated width permits; there is no fixed
-character limit. Widening the card restores text previously hidden by a cut.
+and follow-up marker. `StudentCard` passes the complete name to
+`UiText.showToFit` and `CardName` measures it in the displayed font, so a name
+appears in full whenever its width permits and widening the card restores what
+a cut hid. There is no character limit.
 
 When space runs out, `CardName` shortens from the middle through
-`UiText.middleShortened`. It keeps both ends, retaining up to nine characters
-at the end and using the remaining character budget for the opening.
-`StringUtil.firstCharacters` and `StringUtil.lastCharacters` preserve complete
-characters, including combining accents and emoji. Names can still coincide
-when their distinguishing text is hidden, so a tooltip shows the complete
-name whenever it is shortened and disappears when the name fits again.
+`UiText.middleShortened`, keeping up to nine characters at the end and
+spending the rest of the budget on the opening.
+`StringUtil.firstCharacters` and `lastCharacters` keep characters whole,
+combining accents and emoji included. Two names can still coincide once their
+distinguishing text is hidden, so a shortened name carries a tooltip with the
+whole of it, which goes when the name fits again.
 
 The cut happens during layout, after `CardHeadline` knows the actual width.
 Leaving middle shortening to JavaFX can split a surrogate pair: a character
