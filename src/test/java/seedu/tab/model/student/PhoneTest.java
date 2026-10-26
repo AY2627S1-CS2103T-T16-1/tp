@@ -46,6 +46,17 @@ public class PhoneTest {
     }
 
     @Test
+    public void constructor_longPhoneText_preservesCompleteValue() {
+        String digits = "1234567890".repeat(40);
+        String annotated = "+65 9123 4567 (HP), 6516-2727 ext 21 (Office); " + "contact note ".repeat(40).strip();
+
+        assertTrue(Phone.isValidPhone(digits));
+        assertEquals(digits, new Phone(digits).value);
+        assertTrue(Phone.isValidPhone(annotated));
+        assertEquals(annotated, new Phone(annotated).value);
+    }
+
+    @Test
     public void constructor_storesTheNumberTheWayItLooks() {
         // WhatsApp wraps a copied number in direction marks, which draw nothing on screen
         assertEquals("98765432", new Phone("\u202A98765432\u202C").value);

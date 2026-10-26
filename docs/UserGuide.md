@@ -435,6 +435,9 @@ accepted. Without either option, the student starts unflagged.
 **Tip:** A phone number may be written the way you would write it down:
 `+65 9123 4567`, `6516-2727 ext 21`, or even
 `1234 5678 (HP) 1111-3333 (Office)`. It only has to hold at least 3 digits.
+TAB intentionally sets no maximum length for phone text, so you can keep multiple
+numbers, extensions and contact notes together. Long values may be shortened on
+the card; hover over the phone to read the complete value.
 
 The phone number is optional too. Record a student from a class roster that
 gives only a name, an NUS Student ID and a university email, rather than

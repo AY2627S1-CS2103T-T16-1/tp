@@ -985,6 +985,18 @@ whitespace, brackets and an extension; a tag may hold whitespace, hyphens and an
 script. None of those characters can hinder TAB, because none of these
 fields is parsed, dialled, or used to build a file path.
 
+**Phone text intentionally has no maximum length.** Teaching assistants may
+record several numbers, extensions and contact annotations in one field. A fixed
+cap could reject useful contact details or prevent an existing saved record from
+loading. The minimum of three Unicode decimal digits still applies. Acceptance
+of a 400-digit value alone does not establish a usability, performance or
+persistence problem that justifies a cap. Email's separate length restriction
+addresses its validation and storage concerns; it is not a reason to restrict
+phone text. Reconsider this decision if a concrete problem is demonstrated,
+with a migration plan for existing data and a limit justified by contact use
+cases. Long phone presentation uses ellipses and complete-value tooltips rather
+than truncating the stored text.
+
 **The NUS Student ID may be absent.** `NusStudentId` accepts between 1 and 32
 ASCII letters and digits. Input letters are case-insensitive and the value is
 stored in uppercase, so `e0123456` and `E0123456` are the same value. This
@@ -2741,6 +2753,17 @@ testers are expected to do more *exploratory* testing.
       backup when finished.
 
 ### Long contact details on a card
+
+1. Retaining long phone text
+
+   1. Test case: Run `add Long Phone -p VALUE`, replacing `VALUE` with an actual
+      sequence of 400 decimal digits: `1234567890` repeated 40 times, matching
+      the automated regression tests.<br>
+      Expected: The student is added. Hover over the shortened phone on the card
+      to read the complete value.
+   1. Exit and reopen TAB.<br>
+      Expected: The complete phone value remains available on hover, with no
+      truncation of the saved value.
 
 1. Reading an annotated phone and an email
 
