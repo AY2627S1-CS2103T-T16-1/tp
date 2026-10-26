@@ -1,0 +1,33 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam arrowColor UI_COLOR_T4
+skinparam classBackgroundColor UI_COLOR
+
+package UI <<Rectangle>>{
+Class "{abstract}\nUiPart" as UiPart
+Class StudentCard
+Class CardHeadline
+Class CardName
+Class TagRow
+Class ContactRow
+}
+
+package JavaFX <<Rectangle>> {
+Class Pane
+Class Label
+Class Region
+Class FlowPane
+}
+
+StudentCard -up-|> UiPart
+StudentCard *-down-> "1" CardHeadline
+StudentCard *-down-> "1" ContactRow
+CardHeadline *-down-> "1" CardName
+CardHeadline *-down-> "1" TagRow
+
+CardHeadline --|> Pane
+CardName --|> Label
+TagRow --|> Region
+ContactRow --|> FlowPane
+@enduml

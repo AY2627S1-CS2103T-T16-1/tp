@@ -1,0 +1,29 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam arrowColor UI_COLOR_T4
+skinparam classBackgroundColor UI_COLOR
+
+package UI <<Rectangle>>{
+Class "{abstract}\nUiPart" as UiPart
+Class CommandBox
+Class CommandHistory
+Class CommandTextField
+Class HighlightedTextOverlay
+Class CommandHighlighter
+}
+
+package JavaFX <<Rectangle>> {
+Class TextField
+}
+
+CommandBox -up-|> UiPart
+CommandBox *-down-> "1" CommandHistory
+CommandBox *-down-> "1" CommandTextField
+CommandBox *-down-> "1" HighlightedTextOverlay
+HighlightedTextOverlay ..> CommandHighlighter
+CommandTextField --|> TextField
+
+CommandHistory -[hidden]right- CommandTextField
+CommandTextField -[hidden]right- HighlightedTextOverlay
+@enduml
