@@ -187,81 +187,7 @@ The `Storage` component,
 * can save both the student book's data and the User's preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonStudentBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
-
-`JsonUtil.readJsonFile` reports a file as missing only when its absence is
-established, with `Files.notExists`. `Files.exists` answers false both for a
-file that is not there and for one whose folder cannot be opened, and
-`MainApp.initModelManager` reads a missing file as a first run, so a folder
-TAB merely cannot open would open the window on sample students in place of
-records it was never able to read. A file whose existence cannot be determined
-is therefore read, and the access failure reported like any other.
-
-The records themselves are already safe from that mistake. The baseline
-`JsonStudentBookStorage` records for an unreadable folder is `Optional.empty()`,
-so once access is restored `saveIfUnchanged` finds a book on disk that the
-window never loaded and refuses the save. What is left without this check is a
-window opened on sample data that then refuses every save as stale, telling a
-User who changed nothing to close it and restart. Reporting the access failure
-at startup replaces both with the reason.
-
-`JsonUtil.readJsonFile` rejects a whole-file `null` with a
-`DataLoadingException`, so both preference and student data loading use their
-existing error handling instead of crashing. Invalid student data is preserved
-for repair. `JsonUserPrefsStorage` also rejects an explicit `null` for
-`guiSettings` with a `DataLoadingException`; a missing setting retains the
-`UserPrefs` defaults.
-`MainApp.initPrefs` handles invalid preferences by restoring and saving
-defaults before constructing the model. Student data is stored separately
-and is unchanged by preference recovery.
-Recoverable preference writes in `MainApp.initPrefs` and `MainApp.stop` log
-one `WARNING` naming the preferences path and I/O reason, without a stack
-trace. Startup retains the loaded or default preferences for the session;
-shutdown explains that window preferences were not saved. Permission errors
-without a reason are described as permission denied.
-
-`FileUtil.writeToFile` protects an existing JSON file from a partial save. It
-resolves an existing symbolic link to its destination, so replacing the saved
-data leaves the link in place. An unresolvable link is rejected without
-replacing it or creating its missing target. It also refuses a destination that is not
-writable and copies an existing file's POSIX permissions to its replacement.
-The new contents are written and forced to a temporary file beside the real
-destination before an atomic move replaces it. Keeping both files in one
-folder makes the atomic move possible, but also means that the folder must
-allow temporary-file creation. If writing or moving fails, the previous file
-remains unchanged and TAB removes the temporary file where possible.
-`FileUtil` creates only missing parent directories before writing the temporary
-file; it never pre-creates an empty destination. This applies to student-book
-and preference writes. A failed first save preserves the absence of a book and
-allows normal sample-data startup. On POSIX filesystems, a new file retains the
-temporary file's owner-only permissions; existing files retain their permissions.
-
-`JsonStudentBookStorage` reports data-folder/file collisions and save-lock failures
-at the operation boundary, where the failing path and its purpose are known.
-It preserves permission exceptions for the existing permission-specific feedback
-and never removes an obstructing file or folder. Logic rolls back records and the
-filter after these failures just as it does for other save errors.
-
-`StorageManager` logs read/write attempts and successful saves at `FINE`,
-including preference-file operations. Entries identify the file path without
-copying student or preference contents. Save completion is logged only after
-the storage delegate returns successfully.
-
-`JsonAdaptedStudent` and `JsonSerializableStudentBook` use Jackson's
-`@JsonAnySetter` callbacks to reject unknown keys while the data is being read.
-The student callback includes the record name and allowed field names in its
-error, and permits the removed `address` key as a compatibility exception.
-`JsonStudentBookStorage` adds the one-based student record number from Jackson's
-mapping path, so even unnamed records or students sharing a name can be located.
-The book also accepts the existing `_comment` metadata key.
-This prevents hand-edited values from disappearing during a later unrelated
-save. The shared JSON mapper keeps its existing behavior for preferences;
-startup follows the existing loading-error path and leaves rejected data intact.
-
-`JsonTagsDeserializer` checks the array and string types before adapting tags,
-so malformed `tags` values report the field and entry position rather than
-Jackson class names. Missing or null arrays still mean no tags; tag text
-continues through the existing model validation. Mapping errors retain their
-source location and student record number, and do not rewrite the file.
+* never leaves a half-written file behind, and never loads part of one it cannot read. The Implementation chapter covers [replacing a data file](#replacing-a-data-file-without-losing-it), [saves from stale windows](#protecting-saves-from-stale-windows), [an unreadable data file](#handling-an-unreadable-data-file), [unknown keys and malformed tags](#rejecting-unknown-keys-and-malformed-tags) and [bad preferences](#recovering-from-bad-preferences).
 
 ### Common classes
 
@@ -517,6 +443,37 @@ would answer a different question and split a group `tag` has already joined:
 a Greek capital sigma lowercases to a medial sigma, while the final sigma a
 student may carry the same tag under lowercases to itself.
 
+
+### Replacing a data file without losing it
+
+`FileUtil.writeToFile` protects an existing JSON file from a partial save. It
+resolves an existing symbolic link to its destination, so replacing the saved
+data leaves the link in place, and rejects an unresolvable link without
+replacing it or creating its missing target. It also refuses a destination that
+is not writable, and copies an existing file's POSIX permissions to its
+replacement. The new contents are written and forced to a temporary file beside
+the real destination before an atomic move replaces it. Keeping both files in
+one folder is what makes the atomic move possible, and also means the folder
+must allow temporary-file creation. If writing or moving fails, the previous
+file remains unchanged and TAB removes the temporary file where it can.
+`FileUtil` creates only missing parent directories before writing the temporary
+file and never pre-creates an empty destination, so a failed first save
+preserves the absence of a book and allows normal sample-data startup. This
+applies to student-book and preference writes alike. On POSIX filesystems a new
+file keeps the temporary file's owner-only permissions, and an existing file
+keeps its own.
+
+`JsonStudentBookStorage` reports a data-folder or file collision and a
+save-lock failure at the operation boundary, where the failing path and its
+purpose are known. It preserves permission exceptions for the existing
+permission-specific feedback and never removes an obstructing file or folder.
+Logic rolls back records and the filter after these failures just as it does
+for other save errors.
+
+`StorageManager` logs read and write attempts and successful saves at `FINE`,
+preference-file operations included. An entry identifies the file path without
+copying student or preference contents, and a save is logged as complete only
+after the storage delegate returns successfully.
 
 ### Protecting saves from stale windows
 
@@ -1232,6 +1189,22 @@ An existing file is first parsed as JSON and then every student record and
 field is converted to its model type. Both stages finish before the normal UI
 can accept a command.
 
+`JsonUtil.readJsonFile` therefore reports a file as missing only once its
+absence is established, using `Files.notExists`. `Files.exists` answers false
+both for a file that is not there and for one whose folder cannot be opened,
+and `MainApp.initModelManager` reads a missing file as a first run, so a folder
+TAB merely cannot open would open the window on sample students in place of
+records it was never able to read. A file whose existence cannot be determined
+is read instead, and the access failure reported like any other.
+
+The records themselves are already safe from that mistake. The baseline
+`JsonStudentBookStorage` records for an unreadable folder is `Optional.empty()`,
+so once access is restored `saveIfUnchanged` finds a book on disk that the
+window never loaded and refuses the save. What is left without this check is a
+window opened on sample data that then refuses every save as stale, telling a
+User who changed nothing to close it and restart. Reporting the access failure
+at startup replaces both with the reason.
+
 `JsonUtil` enables Jackson's strict duplicate-key detection and checks for
 another token after reading the root value. A repeated key or trailing value
 would otherwise silently lose data on the next save. Both are rejected through
@@ -1272,6 +1245,43 @@ Failing closed was chosen over displaying a partial or read-only student book,
 because it keeps recovery small and unambiguous: the User repairs or replaces
 the file and restarts TAB. Loading the readable records separately, and
 reloading without a restart, remain future features.
+
+### Rejecting unknown keys and malformed tags
+
+`JsonAdaptedStudent` and `JsonSerializableStudentBook` use Jackson's
+`@JsonAnySetter` callbacks to reject unknown keys while the data is being read,
+which keeps a hand-edited value from disappearing during a later unrelated
+save. The student callback names the record and the allowed field names in its
+error, and permits the removed `address` key as a compatibility exception;
+the book also accepts the existing `_comment` metadata key.
+`JsonStudentBookStorage` adds the one-based record number from Jackson's
+mapping path, so even an unnamed record or two students sharing a name can be
+located. The shared JSON mapper keeps its existing behavior for preferences,
+and startup follows the existing loading-error path, leaving rejected data
+intact.
+
+`JsonTagsDeserializer` checks the array and string types before adapting tags,
+so a malformed `tags` value reports the field and entry position rather than
+Jackson class names. A missing or null array still means no tags, and tag text
+continues through the existing model validation. Mapping errors retain their
+source location and student record number, and do not rewrite the file.
+
+### Recovering from bad preferences
+
+`JsonUtil.readJsonFile` rejects a whole-file `null` with a
+`DataLoadingException`, so both preference and student data loading use their
+existing error handling instead of crashing, and invalid student data is
+preserved for repair. `JsonUserPrefsStorage` likewise rejects an explicit
+`null` for `guiSettings`, while a missing setting retains the `UserPrefs`
+defaults. `MainApp.initPrefs` answers invalid preferences by restoring and
+saving the defaults before the model is constructed; student data is stored
+separately and a preference recovery does not touch it.
+
+A recoverable preference write in `MainApp.initPrefs` or `MainApp.stop` logs
+one `WARNING` naming the preferences path and the I/O reason, without a stack
+trace. Startup keeps the loaded or default preferences for the session, and
+shutdown explains that window preferences were not saved. A permission error
+that carries no reason is described as permission denied.
 
 ### Confirming a clear
 
