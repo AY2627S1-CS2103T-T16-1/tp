@@ -23,7 +23,7 @@ HiddenOutside ..> StudentBookParser
 StudentBookParser .down.> XYZCommandParser: <<create>>
 
 XYZCommandParser ..> XYZCommand : <<create>>
-StudentBookParser ..> Command : <<use>>
+StudentBookParser ..> Command
 XYZCommandParser .up.|> Parser
 XYZCommandParser ..> FlagArgumentMap
 XYZCommandParser ..> FlagTokenizer
