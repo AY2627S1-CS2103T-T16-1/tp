@@ -23,13 +23,15 @@ public class NusStudentId {
             "NUS Student IDs should be non-empty, contain only ASCII letters and digits, "
                     + "and be at most " + MAX_LENGTH + " characters long";
 
-    public static final String MESSAGE_EMPTY = "a NUS Student ID cannot be empty";
+    public static final String MESSAGE_EMPTY = "an NUS Student ID cannot be empty";
 
     public static final String MESSAGE_TOO_LONG =
-            "a NUS Student ID may hold at most " + MAX_LENGTH + " characters";
+            "an NUS Student ID may hold at most " + MAX_LENGTH + " characters";
 
     public static final String MESSAGE_NON_ALPHANUMERIC =
-            "a NUS Student ID can only contain ASCII letters and digits";
+            "an NUS Student ID can only contain ASCII letters and digits";
+
+    private static final int ASCII_LIMIT = 128;
 
     public final String value;
 
@@ -53,7 +55,7 @@ public class NusStudentId {
     }
 
     /**
-     * Returns why {@code test} does not hold a NUS Student ID, or an empty string when it is valid.
+     * Returns why {@code test} does not hold an NUS Student ID, or an empty string when it is valid.
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);
@@ -65,7 +67,8 @@ public class NusStudentId {
         if (normalizedTest.length() > MAX_LENGTH) {
             return MESSAGE_TOO_LONG;
         }
-        if (!normalizedTest.chars().allMatch(character -> character < 128 && Character.isLetterOrDigit(character))) {
+        if (!normalizedTest.chars().allMatch(character -> character < ASCII_LIMIT
+                && Character.isLetterOrDigit(character))) {
             return MESSAGE_NON_ALPHANUMERIC;
         }
         return "";

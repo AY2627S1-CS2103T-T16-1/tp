@@ -76,7 +76,7 @@ public class EditCommand extends Command {
     public static final String MESSAGE_UNCHANGED = "Student already has the requested details. No changes made.";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
 
-    private final Logger logger = LogsCenter.getLogger(EditCommand.class);
+    private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
 
     private final StudentTarget target;
     private final EditStudentDescriptor editStudentDescriptor;

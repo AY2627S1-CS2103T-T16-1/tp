@@ -24,6 +24,8 @@ import seedu.tab.model.student.exceptions.StudentNotFoundException;
  */
 public class UniqueStudentList implements Iterable<Student> {
 
+    private static final int NOT_FOUND = -1;
+
     private final ObservableList<Student> internalList = FXCollections.observableArrayList();
     private final ObservableList<Student> internalUnmodifiableList =
             FXCollections.unmodifiableObservableList(internalList);
@@ -57,7 +59,7 @@ public class UniqueStudentList implements Iterable<Student> {
         requireAllNonNull(target, editedStudent);
 
         int index = indexOfReference(target);
-        if (index == -1) {
+        if (index == NOT_FOUND) {
             throw new StudentNotFoundException();
         }
 
@@ -75,7 +77,7 @@ public class UniqueStudentList implements Iterable<Student> {
     public void remove(Student toRemove) {
         requireNonNull(toRemove);
         int index = indexOfReference(toRemove);
-        if (index == -1) {
+        if (index == NOT_FOUND) {
             throw new StudentNotFoundException();
         }
         internalList.remove(index);
@@ -155,6 +157,6 @@ public class UniqueStudentList implements Iterable<Student> {
                 return index;
             }
         }
-        return -1;
+        return NOT_FOUND;
     }
 }

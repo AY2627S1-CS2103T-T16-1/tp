@@ -10,7 +10,7 @@ import java.util.stream.Stream;
  * {@code add John -e john@example.com}.
  */
 public class Flag {
-    private final String flag;
+    private final String primaryMarker;
     private final List<String> aliases;
     private final String fieldName;
     private final boolean takesValue;
@@ -18,11 +18,11 @@ public class Flag {
     /**
      * Constructs a presence-only flag that takes no value.
      *
-     * @param flag The characters that mark the option, such as {@code -f}.
+     * @param primaryMarker The characters that mark the option, such as {@code -f}.
      */
-    public Flag(String flag) {
-        requireNonNull(flag);
-        this.flag = flag;
+    public Flag(String primaryMarker) {
+        requireNonNull(primaryMarker);
+        this.primaryMarker = primaryMarker;
         this.aliases = List.of();
         this.fieldName = null;
         this.takesValue = false;
@@ -31,13 +31,13 @@ public class Flag {
     /**
      * Constructs a presence-only flag with alternative markers that take no value.
      *
-     * @param flag The primary characters that mark the option.
+     * @param primaryMarker The primary characters that mark the option.
      * @param aliases Alternative characters that mark the same option.
      */
-    public Flag(String flag, List<String> aliases) {
-        requireNonNull(flag);
+    public Flag(String primaryMarker, List<String> aliases) {
+        requireNonNull(primaryMarker);
         requireNonNull(aliases);
-        this.flag = flag;
+        this.primaryMarker = primaryMarker;
         this.aliases = List.copyOf(aliases);
         this.fieldName = null;
         this.takesValue = false;
@@ -47,25 +47,25 @@ public class Flag {
      * Constructs a flag that marks a named field, so that a message can say which field it
      * means rather than only which characters mark it.
      *
-     * @param flag The characters that mark the field, such as {@code -e}.
+     * @param primaryMarker The characters that mark the field, such as {@code -e}.
      * @param fieldName The name of the field, such as {@code EMAIL}.
      */
-    public Flag(String flag, String fieldName) {
-        this(flag, List.of(), fieldName);
+    public Flag(String primaryMarker, String fieldName) {
+        this(primaryMarker, List.of(), fieldName);
     }
 
     /**
      * Constructs a flag with alternative markers that all mark the same named field.
      *
-     * @param flag The primary characters that mark the field.
+     * @param primaryMarker The primary characters that mark the field.
      * @param aliases Alternative characters that mark the same field.
      * @param fieldName The name of the field, such as {@code EMAIL}.
      */
-    public Flag(String flag, List<String> aliases, String fieldName) {
-        requireNonNull(flag);
+    public Flag(String primaryMarker, List<String> aliases, String fieldName) {
+        requireNonNull(primaryMarker);
         requireNonNull(aliases);
         requireNonNull(fieldName);
-        this.flag = flag;
+        this.primaryMarker = primaryMarker;
         this.aliases = List.copyOf(aliases);
         this.fieldName = fieldName;
         this.takesValue = true;
@@ -75,7 +75,7 @@ public class Flag {
      * Returns every marker that identifies this flag, with the primary marker first.
      */
     public List<String> getMarkers() {
-        return Stream.concat(Stream.of(flag), aliases.stream()).toList();
+        return Stream.concat(Stream.of(primaryMarker), aliases.stream()).toList();
     }
 
     /**
@@ -91,9 +91,9 @@ public class Flag {
      */
     public String getMarkerWithAliases() {
         if (aliases.isEmpty()) {
-            return flag;
+            return primaryMarker;
         }
-        return flag + " (or " + String.join(", ", aliases) + ")";
+        return primaryMarker + " (or " + String.join(", ", aliases) + ")";
     }
 
     public boolean takesValue() {
@@ -105,7 +105,7 @@ public class Flag {
      * Two flags are still equal when their characters match, whatever they are named.
      */
     public String getLabel() {
-        return takesValue ? flag + " " + fieldName : flag;
+        return takesValue ? primaryMarker + " " + fieldName : primaryMarker;
     }
 
     /**
@@ -121,12 +121,12 @@ public class Flag {
 
     @Override
     public String toString() {
-        return flag;
+        return primaryMarker;
     }
 
     @Override
     public int hashCode() {
-        return flag.hashCode();
+        return primaryMarker.hashCode();
     }
 
     @Override
@@ -140,6 +140,6 @@ public class Flag {
             return false;
         }
 
-        return flag.equals(otherFlag.flag);
+        return primaryMarker.equals(otherFlag.primaryMarker);
     }
 }
