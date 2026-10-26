@@ -1028,267 +1028,62 @@ fields is parsed, dialled, or used to build a file path.
 Worth revisiting if a concrete problem appears, with a migration plan for
 existing data and a limit justified by contact use cases.
 
-**The NUS Student ID may be absent.** `NusStudentId` accepts between 1 and 32
-ASCII letters and digits. Input letters are case-insensitive and the value is
-stored in uppercase, so `e0123456` and `E0123456` are the same value. This
-accommodates variations in the identifiers issued to different groups of
-students while preventing an accidentally pasted value from hiding the other
-details on a student's card. `Student` stores and exposes the value as
-`Optional<NusStudentId>`, using an empty optional rather than a sentinel value.
-`NusStudentId.getFailureReason` performs the single validation scan, and
-`isValidNusStudentId` delegates to it. This keeps the accepted format and the
-specific user-facing error synchronized without maintaining a separate regex.
+**The three optional details share one contract.** Phone, email and NUS
+Student ID are each an `Optional` on `Student`, and behave alike at every
+layer:
 
-The add and edit parsers read either `--id` or `-i` through the same flag
-and validate with `ParserUtil.parseNusStudentId`. Add leaves the field absent when no
-option is given. For edit, `EditStudentDescriptor.OptionalFieldEdit` encapsulates
-the value and edit intent as one three-state concept: an absent option preserves
-the old value, a present non-empty option replaces it, and `--id ""` clears it.
-The edit parser trims the supplied value before this check, so a quoted value
-containing only spaces also clears the field.
-Descriptor copies and equality operate on this encapsulated state, rather than
-repeating knowledge of its internal representation.
+| Layer | Behavior |
+| --- | --- |
+| `add` | leaves the field absent when its option is not given |
+| `edit` | `EditStudentDescriptor` holds an `OptionalFieldEdit<T>` carrying value and intent as one three-state concept: no option keeps the old value, a value replaces it, and an empty value clears it. The parser trims first, so a quoted run of spaces clears too; a bare option is still an error, and a rejected value is a parse problem rather than a clear. Copies and equality work on that state rather than on its representation. |
+| Storage | `JsonAdaptedStudent` keeps a nullable string and shares `normalizeOptionalValue`. Jackson omits the key when the detail is absent; a missing key, JSON `null` and a string that normalizes to nothing all load as absent; a malformed non-null value refuses the file rather than dropping the value silently. Files written before a field became optional still load. |
+| Display | the card leaves the label unmanaged and `Messages.format` omits it, so the remaining details close up with no blank line |
+| `find` | a student without the detail matches no term for it |
 
-`JsonAdaptedStudent` represents the storage property as a nullable string.
-Jackson omits it on save when no ID is present; both a missing `nusStudentId` key and
-JSON `null` load as absent, preserving files written before the field existed.
-A malformed non-null value rejects the data file instead of being silently
-dropped. The student card and command feedback show a present ID and omit the
-label entirely when absent.
+What differs is the rule each field enforces, and why it may be missing.
 
-NUS Student ID is the sole **identity key**. `Student.isSameStudent` returns
-true only when both records hold equal NUS Student IDs. Because construction
-normalizes letters to uppercase, this comparison is case-insensitive. A shared
-name does not establish identity, and neither does a shared phone number or
-email. Records without an NUS Student ID therefore remain distinct even when
-their other details match. `UniqueStudentList` applies this rule to add, edit,
-and model replacement, so command execution and storage loading enforce the
-same contract.
+**NUS Student ID.** Between 1 and 32 ASCII letters and digits, stored
+uppercase, so `e0123456` and `E0123456` are one value. The range covers the
+identifiers issued to different groups of students while stopping an
+accidentally pasted value from hiding the rest of a card.
+`NusStudentId.getFailureReason` performs the single validation scan and
+`isValidNusStudentId` delegates to it, keeping the accepted format and the
+user-facing error in step without a second regex.
 
-When `add` or `edit` finds a matching NUS Student ID, it rejects the operation
-without mutation and names the normalized ID and student who already holds it.
-During storage loading, `JsonSerializableStudentBook` admits repeated names but
-rejects a repeated NUS Student ID with both record numbers, both names, and the
-ID. This keeps hand-edited files diagnosable while allowing common names in a
-class.
+**Email.** `Email` accepts the RFC 5322 unquoted dot-atom local part, so
+addresses with apostrophes, repeated symbols or trailing underscores can be
+recorded; only dots require non-empty groups on both sides. Quoted local parts
+and domain literals stay unsupported. A student is recorded before an address
+is known rather than one being invented.
 
-The activity diagram below follows `AddCommand.execute` after parsing. The
-identity check scans the complete student book. A matching NUS Student ID stops
-the command before it changes the model; other matching details can warn the
-User while still allowing the record to be added.
-
-<puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Add command duplicate check" width="500" />
-
-`ModelManager.addStudent` preserves the active filter. After a successful
-addition, `AddCommand` checks the new student against that filter. A matching
-student appears at the end of the results without changing earlier indexes.
-For a non-match, the command clears the filter and appends
-`Search cleared to show the new student.` to its feedback so the student is
-visible and the User knows to re-read indexes. A rejected addition leaves
-both the book and filter unchanged.
-
-`EditCommand` first compares the prospective record with the selected record using
-full equality. An unchanged edit returns an explicit no-change response before
-checking duplicates or replacing the student, preserving the filter and avoiding
-unnecessary list notifications. `LogicManager` continues to skip saving an unchanged book.
-
-After the identity check succeeds, `LikelyDuplicateWarning` compares the
-prospective record with every existing student. Name and email comparisons
-ignore case; names already carry `normalizeFieldValue`'s whitespace
-normalization. Phone search and warnings share `Phone.normalizeDigits`, which
-removes non-digit characters and converts Unicode decimal digits to ASCII.
-Warnings require equality of the complete digit sequence; search permits
-substrings. Country codes and extension digits remain significant, while the
-stored number retains its formatting. Absent phones and absent emails do not
-match: two records that both lack the detail share no value, so neither is
-offered as evidence of a duplicate.
-
-The commands collect the warnings before mutation and separate them from the
-ordinary success message with a blank line. Matches are grouped by field into
-one prominently labeled `WARNING: Possible duplicate student` line. A line
-names at most two students and summarizes further matches as `N others`, so a
-shared placeholder does not fill the result box. The review advice appears
-once after every matching field. Phone warnings omit the parenthetical value:
-matched records can store different formatting for the same digits, so no single
-formatted value represents all named students.
-
-`EditCommand` compares only name, phone, or email values that differ from the
-selected record. It excludes the selected `Student` instance but still uses
-the complete unfiltered student book, so a filtered list cannot hide a match
-and unrelated tag or follow-up edits do not repeat an acknowledged warning.
-Name comparisons share `StringUtil.normalizeNameForComparison` with name
-searches: Latin accents and straight/curly apostrophe differences are ignored,
-so copied roster names can be found or flagged using ordinary keyboard input.
-
-These comparisons are advisory only: they never feed `isSameStudent` or the
-storage duplicate check, and therefore cannot reject or discard a legitimate
-shared detail.
-
-**The email may be absent.** A student is recorded before an email address is
-known rather than one being invented. `Student` accepts, stores, and exposes
-`Optional<Email>` so callers handle absence explicitly. `JsonAdaptedStudent`
-writes the email as a string when present; the optional wrapper is not written
-to JSON.
-
-The data file normally carries no `email` key. A missing key, JSON `null`, and
-a string that is empty after trimming all represent an absent email. A
-non-empty string is trimmed before validation, matching command input; a
-malformed address is still refused rather than being quietly dropped.
-
-`edit INDEX -e ""` clears an email without removing the student or changing
-other fields. `EditStudentDescriptor` stores an `OptionalFieldEdit<Email>`
-that encapsulates the value and edit intent; `isEmailEdited()` is derived from
-that state. An unedited field leaves the existing value alone, an edited field
-with an empty optional clears it, and an edited field with an address replaces
-it. `setEmail` requires an address and `clearEmail` explicitly requests removal.
-Both mark the email as edited, so callers cannot toggle the intent independently
-of the replacement value. The `OptionalFieldEdit` copy constructor preserves
-all three states. The descriptor is not persisted, so its state does not affect
-JSON.
-
-The parser leaves the email untouched when `-e` is absent, calls `clearEmail`
-for a token that is empty after trimming, and sets a replacement only after
-validation succeeds. A rejected value is recorded as a parse problem without
-assigning a null email or requesting a clear. A bare option is still an error.
-A clear satisfies the parser's requirement for a provided field even when the email
-is already absent; execution then reports no changes if no other value changes. `EditCommand`
-passes the optional value directly into the `Student` constructor, including
-an empty optional when clearing. The saved record omits the `email` key and
-reloads through the existing optional-email storage contract.
-
-`Email` accepts the RFC 5322 unquoted dot-atom local part so that legitimate
-student addresses with apostrophes, repeated symbols or trailing underscores
-can be recorded. Only dots require non-empty groups on both sides; other
-permitted symbols can repeat and appear at either end. Commands and saved
-records share this validator and preserve the address's spelling. Quoted
-local parts and domain literals remain unsupported; domain validation is
-unchanged.
-
-`Email.MAX_LENGTH` caps at 254 characters the address a **command** may enter.
-`ParserUtil.parseEmail` checks `Email.isWithinLengthLimit` before
-`Email.isValidEmail`, and `getFailureReason` carries the same guard because it
-matches the local part on its own.
-
-The limit is not there to simplify validation, which the guidance on arbitrary
-limits rules out. `VALIDATION_REGEX` nests one quantifier inside another,
-a repeated dot followed by a non-empty local-part atom, and Java matches a
-repeated group by recursion, one frame
-per repetition, so an address with enough `.`-separated groups exhausts the
-stack. `StackOverflowError` is an `Error` that no parser catches, and
+`Email.MAX_LENGTH` caps an entered address at 254 characters, and both
+`ParserUtil` and `JsonAdaptedStudent` check it before calling the matcher.
+The bound is not there to simplify validation. `VALIDATION_REGEX` nests a
+quantifier inside another, and Java matches a repeated group by recursion, one
+frame per repetition, so an address with enough `.`-separated groups exhausts
+the stack. `StackOverflowError` is an `Error` no parser catches and
 `CommandBox` catches only `CommandException` and `ParseException`, so the User
-saw no feedback at all. 254 is the limit RFC 5321 section 4.5.3.1 puts on a
-forward path, so the bound comes from the domain rather than from the parser.
-It is not the product's only bound: a `NusStudentId` holds at most 32
-characters, while `Name`, `Phone` and `Tag` are checked for the content they
-hold rather than for their length, and take a value of any size. What is
-particular to this bound is its purpose, which is to keep `VALIDATION_REGEX`
-from walking an address long enough to exhaust the stack, and 254 is the
-longest measured to be safe on every stack size tried: on a 256 KB stack even
-a 513-character address overflows.
+saw nothing at all. 254 is the limit RFC 5321 section 4.5.3.1 puts on a forward
+path, so the bound comes from the domain; it is also the longest measured to be
+safe on every stack size tried, where a 513-character address overflows a
+256 KB stack. `isValidEmail` itself keeps no length limit, so each input
+boundary reports length and format failures separately, and a saved address up
+to 254 characters loads while a longer one raises `IllegalValueException` with
+its actual and allowed lengths.
 
-`isValidEmail` deliberately keeps **no** length limit, so each input boundary
-can report length and format failures separately. Both `ParserUtil` and
-`JsonAdaptedStudent` check `Email.MAX_LENGTH` before calling the matcher. A
-saved address of up to 254 characters therefore loads, while a longer one
-raises `IllegalValueException` with its actual and allowed lengths before its
-shape can exhaust the stack. The storage tests cover both sides of that
-boundary.
+**Phone.** A class roster can give a name, an ID and a university email without
+a personal mobile number. `Phone` is neither an identity field nor a key: two
+students may hold the same number or none, and `isSameStudent` reads neither
+case. It is normalized only so that a number typed with unusual whitespace, or
+wrapped in the invisible marks a chat app puts around a copied one, is stored
+consistently.
 
 `Messages.getErrorMessageForInvalidValue` shortens a rejected value past
-`MAX_QUOTED_VALUE_LENGTH` characters, so that a very long value cannot push the
-reason out of view. It counts characters through `StringUtil.firstCharacters`,
-as a reader counts them, so it separates neither an emoji nor a letter from the
-accent that belongs to it; a student card cuts a name or a tag with the same
-helper. Command parsing and storage share that message, so both paths report
-the same invalid value consistently.
-
-`Phone` is **not** an identity field and **not** a key: two students may hold the
-same number, hold none at all, and `isSameStudent` reads neither case. It is
-normalized only so that a number typed with unusual whitespace, or wrapped in the
-invisible marks a chat app puts around a copied number, is stored consistently.
-
-**The phone number may be absent.** A class roster can give a name, an NUS
-Student ID and a university email without giving a personal mobile number, so a
-student is recorded before a number is known rather than one being invented.
-This follows the optional email in every layer, so that one pattern covers both
-details. `Student` accepts, stores and exposes `Optional<Phone>`.
-
-`AddCommandParser` wraps the parsed value in an optional and no longer reports a
-missing `-p`; the name is the only field it still requires. `EditStudentDescriptor`
-holds an `OptionalFieldEdit<Phone>`, so `edit INDEX -p ""` clears the number and a
-value replaces it, exactly as `-e ""` clears an email. A number that is supplied
-is still validated, and a rejected one is recorded as a parse problem rather than
-clearing the field.
-
-`JsonAdaptedStudent` shares `normalizeOptionalValue` with the email: a missing
-`phone` key, JSON `null`, and a string that is empty after normalization all load
-as absent, while a malformed non-null number rejects the data file instead of
-being silently dropped. Jackson omits the key on save when no number is present,
-so files written before the phone became optional continue to load and a saved
-record stays editable by hand.
-
-`StudentCard` leaves the phone label unmanaged when the number is absent, so the
-remaining contact details close up rather than keeping a blank line, and
-`Messages.format` omits the `Phone:` label. The `PHONE` search field returns false
-for a student without a number, consistent with every other absent optional field.
-
-`FindCommandParser` uses `FlagTokenizer` and the existing `CliFlags` aliases for
-name, NUS Student ID, phone, email and tag. Every search term must have a field
-option. An option takes one word or one double-quoted phrase; apostrophes are
-literal characters, so names such as `O'Brien` do not need quoting. Repeated
-options retain all values. Bare terms receive `MESSAGE_UNQUALIFIED_TERM`, and
-an extra bare word after an option receives the shared tokenizer's
-unexpected-value diagnostic. Empty or whitespace-only values receive
-`MESSAGE_EMPTY_KEYWORD`; unterminated double quotes report
-`CommandTokenizer.MESSAGE_UNCLOSED_QUOTE`.
-
-Search terms are normalized with `StringUtil.normalizeFieldValue`, collapsing
-whitespace runs and applying Unicode NFC normalization. The parser creates a
-`DetailsContainsKeywordsPredicate` with terms grouped by its `Field` enum.
-Every term must match its selected field, using case-insensitive substrings:
-AND applies both within and between fields. Each tag term must occur within
-one tag, but separate terms may match the same tag or different tags. Absent
-optional fields do not match. Explicit field selectors prevent unrelated
-matches in other details and replace the earlier unqualified OR search.
-Follow-up status is selected with the presence-only `-f`/`--follow-up` and
-`-nf`/`--no-follow-up` options. The predicate holds an `Optional<Boolean>`:
-empty imposes no status restriction, true requires follow-up, and false
-requires its absence. A status-only search is valid, and combinations require
-both the status and every field term. The parser rejects conflicting or
-repeated status options before execution, matching the existing edit rules.
-
-Case comparison folds each Unicode code point independently using
-`Character.toLowerCase(Character.toUpperCase(...))`, avoiding context-sensitive
-whole-word lowercasing of Greek final sigma. Tag searches therefore agree with
-the case comparison used by `TagCommand`. Name comparison additionally applies
-canonical decomposition and removes marks attached to Latin letters, then maps
-curly apostrophes to straight ones. Marks in other scripts remain significant,
-so vowels needed to distinguish names are retained. This is a comparison key,
-not transliteration; model values and JSON retain their existing spelling.
-
-For phone terms containing only Unicode decimal digits, or those digits with
-grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), matching
-also compares the digits with non-digit characters removed and each decimal digit
-mapped to its ASCII equivalent by numeric value. This lets
-`91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
-so copying a grouped number does not require manual reformatting. A query with
-a country code still requires those digits to occur in the stored phone.
-The allowed-character check uses a possessive quantifier to scan long phone terms
-without backtracking. Digit normalization separately checks that at least one digit
-remains, so punctuation-only terms cannot match every phone.
-The digit fallback requires at least one digit; annotations such as `"ext 21"`
-and punctuation-only terms retain literal matching. Unicode whitespace follows
-the same rule as field normalization. Normalizing both the phone digits and the
-search digits lets ASCII, full-width and other Unicode decimal digits match each
-other, including digits represented by supplementary code points. For example,
-`"９１２３ ４５６７"` matches `91234567`. Stored student details and saved data do not change.
-
-`FindCommand` and `ListCommand` report the count of displayed students in
-their execution feedback. `FindCommand` counts only the matching students
-(`Messages.getStudentsFoundOverview`), distinguishing zero (`Found 0 students.`),
-singular (`Found 1 student.`), and plural (`Found <n> students.`) results.
-`ListCommand` reports the number of students displayed after resetting the filter
-(`Listed 0 students.`, `Listed 1 student.`, or `Listed <n> students.`).
+`MAX_QUOTED_VALUE_LENGTH` characters so a very long one cannot push the reason
+out of view. It counts characters through `StringUtil.firstCharacters`, as a
+reader counts them, separating neither an emoji nor a letter from its accent;
+a student card cuts a name or tag with the same helper. Command parsing and
+storage share that message, so both report an invalid value the same way.
 
 #### Student names
 
@@ -1363,6 +1158,136 @@ stylesheet overrides what code sets on a styleable property, so a
 drawn. The row shares its width out from what the name asks for, so a name
 that asked only for what it is drawn at would be handed less room on every
 pass, and the name and the tags beside it would chase each other down.
+
+### Detecting duplicate students
+
+NUS Student ID is the sole **identity key**. `Student.isSameStudent` returns
+true only when both records hold equal NUS Student IDs. Because construction
+normalizes letters to uppercase, this comparison is case-insensitive. A shared
+name does not establish identity, and neither does a shared phone number or
+email. Records without an NUS Student ID therefore remain distinct even when
+their other details match. `UniqueStudentList` applies this rule to add, edit,
+and model replacement, so command execution and storage loading enforce the
+same contract.
+
+When `add` or `edit` finds a matching NUS Student ID, it rejects the operation
+without mutation and names the normalized ID and student who already holds it.
+During storage loading, `JsonSerializableStudentBook` admits repeated names but
+rejects a repeated NUS Student ID with both record numbers, both names, and the
+ID. This keeps hand-edited files diagnosable while allowing common names in a
+class.
+
+The activity diagram below follows `AddCommand.execute` after parsing. The
+identity check scans the complete student book. A matching NUS Student ID stops
+the command before it changes the model; other matching details can warn the
+User while still allowing the record to be added.
+
+<puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Add command duplicate check" width="500" />
+
+`ModelManager.addStudent` preserves the active filter. After a successful
+addition, `AddCommand` checks the new student against that filter. A matching
+student appears at the end of the results without changing earlier indexes.
+For a non-match, the command clears the filter and appends
+`Search cleared to show the new student.` to its feedback so the student is
+visible and the User knows to re-read indexes. A rejected addition leaves
+both the book and filter unchanged.
+
+`EditCommand` first compares the prospective record with the selected record using
+full equality. An unchanged edit returns an explicit no-change response before
+checking duplicates or replacing the student, preserving the filter and avoiding
+unnecessary list notifications. `LogicManager` continues to skip saving an unchanged book.
+
+After the identity check succeeds, `LikelyDuplicateWarning` compares the
+prospective record with every existing student. Name and email comparisons
+ignore case; names already carry `normalizeFieldValue`'s whitespace
+normalization. Phone search and warnings share `Phone.normalizeDigits`, which
+removes non-digit characters and converts Unicode decimal digits to ASCII.
+Warnings require equality of the complete digit sequence; search permits
+substrings. Country codes and extension digits remain significant, while the
+stored number retains its formatting. Absent phones and absent emails do not
+match: two records that both lack the detail share no value, so neither is
+offered as evidence of a duplicate.
+
+The commands collect the warnings before mutation and separate them from the
+ordinary success message with a blank line. Matches are grouped by field into
+one prominently labeled `WARNING: Possible duplicate student` line. A line
+names at most two students and summarizes further matches as `N others`, so a
+shared placeholder does not fill the result box. The review advice appears
+once after every matching field. Phone warnings omit the parenthetical value:
+matched records can store different formatting for the same digits, so no single
+formatted value represents all named students.
+
+`EditCommand` compares only name, phone, or email values that differ from the
+selected record. It excludes the selected `Student` instance but still uses
+the complete unfiltered student book, so a filtered list cannot hide a match
+and unrelated tag or follow-up edits do not repeat an acknowledged warning.
+Name comparisons share `StringUtil.normalizeNameForComparison` with name
+searches: Latin accents and straight/curly apostrophe differences are ignored,
+so copied roster names can be found or flagged using ordinary keyboard input.
+
+These comparisons are advisory only: they never feed `isSameStudent` or the
+storage duplicate check, and therefore cannot reject or discard a legitimate
+shared detail.
+
+### Finding students
+
+`FindCommandParser` uses `FlagTokenizer` and the existing `CliFlags` aliases for
+name, NUS Student ID, phone, email and tag. Every search term must have a field
+option. An option takes one word or one double-quoted phrase; apostrophes are
+literal characters, so names such as `O'Brien` do not need quoting. Repeated
+options retain all values. Bare terms receive `MESSAGE_UNQUALIFIED_TERM`, and
+an extra bare word after an option receives the shared tokenizer's
+unexpected-value diagnostic. Empty or whitespace-only values receive
+`MESSAGE_EMPTY_KEYWORD`; unterminated double quotes report
+`CommandTokenizer.MESSAGE_UNCLOSED_QUOTE`.
+
+Search terms are normalized with `StringUtil.normalizeFieldValue`, collapsing
+whitespace runs and applying Unicode NFC normalization. The parser creates a
+`DetailsContainsKeywordsPredicate` with terms grouped by its `Field` enum.
+Every term must match its selected field, using case-insensitive substrings:
+AND applies both within and between fields. Each tag term must occur within
+one tag, but separate terms may match the same tag or different tags. Absent
+optional fields do not match. Explicit field selectors prevent unrelated
+matches in other details and replace the earlier unqualified OR search.
+Follow-up status is selected with the presence-only `-f`/`--follow-up` and
+`-nf`/`--no-follow-up` options. The predicate holds an `Optional<Boolean>`:
+empty imposes no status restriction, true requires follow-up, and false
+requires its absence. A status-only search is valid, and combinations require
+both the status and every field term. The parser rejects conflicting or
+repeated status options before execution, matching the existing edit rules.
+
+Case comparison folds each Unicode code point independently using
+`Character.toLowerCase(Character.toUpperCase(...))`, avoiding context-sensitive
+whole-word lowercasing of Greek final sigma. Tag searches therefore agree with
+the case comparison used by `TagCommand`. Name comparison additionally applies
+canonical decomposition and removes marks attached to Latin letters, then maps
+curly apostrophes to straight ones. Marks in other scripts remain significant,
+so vowels needed to distinguish names are retained. This is a comparison key,
+not transliteration; model values and JSON retain their existing spelling.
+
+For phone terms containing only Unicode decimal digits, or those digits with
+grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), matching
+also compares the digits with non-digit characters removed and each decimal digit
+mapped to its ASCII equivalent by numeric value. This lets
+`91234567`, `9123-4567` and `"9123 4567"` match `+65 9123 4567` or `91234567`,
+so copying a grouped number does not require manual reformatting. A query with
+a country code still requires those digits to occur in the stored phone.
+The allowed-character check uses a possessive quantifier to scan long phone terms
+without backtracking. Digit normalization separately checks that at least one digit
+remains, so punctuation-only terms cannot match every phone.
+The digit fallback requires at least one digit; annotations such as `"ext 21"`
+and punctuation-only terms retain literal matching. Unicode whitespace follows
+the same rule as field normalization. Normalizing both the phone digits and the
+search digits lets ASCII, full-width and other Unicode decimal digits match each
+other, including digits represented by supplementary code points. For example,
+`"９１２３ ４５６７"` matches `91234567`. Stored student details and saved data do not change.
+
+`FindCommand` and `ListCommand` report the count of displayed students in
+their execution feedback. `FindCommand` counts only the matching students
+(`Messages.getStudentsFoundOverview`), distinguishing zero (`Found 0 students.`),
+singular (`Found 1 student.`), and plural (`Found <n> students.`) results.
+`ListCommand` reports the number of students displayed after resetting the filter
+(`Listed 0 students.`, `Listed 1 student.`, or `Listed <n> students.`).
 
 ### Handling an unreadable data file
 
