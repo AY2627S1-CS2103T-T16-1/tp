@@ -17,7 +17,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpTag;
 import seedu.tab.testutil.StudentBuilder;
 
 public class StudentTest {
@@ -33,7 +33,7 @@ public class StudentTest {
     @Test
     public void constructor_withFlag_exposesTypedFlag() {
         Student student = new StudentBuilder(ALICE).withFlag(true).build();
-        assertEquals(new Flag(), student.getFlag().orElseThrow());
+        assertEquals(new FollowUpTag(), student.getFlag().orElseThrow());
         assertTrue(student.isFlagged());
     }
 

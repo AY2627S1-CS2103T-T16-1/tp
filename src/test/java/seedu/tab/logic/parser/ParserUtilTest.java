@@ -20,7 +20,7 @@ import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpTag;
 import seedu.tab.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -355,12 +355,12 @@ public class ParserUtilTest {
     @Test
     public void parseTag_followUpLabel_returnsTag() throws Exception {
         // removing it is still read as a tag, so that TagCommand can explain the marker
-        assertEquals(new Tag(Flag.FOLLOW_UP_NAME), ParserUtil.parseTag(Flag.FOLLOW_UP_NAME));
+        assertEquals(new Tag(FollowUpTag.FOLLOW_UP_NAME), ParserUtil.parseTag(FollowUpTag.FOLLOW_UP_NAME));
     }
 
     @Test
     public void parseTagToAdd_followUpLabelHoweverSpelt_throwsParseException() {
-        List<String> spellings = List.of(Flag.FOLLOW_UP_NAME, "needs follow-up", "NEEDS FOLLOW-UP",
+        List<String> spellings = List.of(FollowUpTag.FOLLOW_UP_NAME, "needs follow-up", "NEEDS FOLLOW-UP",
                 WHITESPACE + "nEEds" + WHITESPACE + "follow-up" + WHITESPACE);
         for (String spelling : spellings) {
             assertThrows(ParseException.class, ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG, () ->

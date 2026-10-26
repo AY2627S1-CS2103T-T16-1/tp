@@ -874,7 +874,7 @@ against the list rather than leaving that to be noticed.
 
 ### Follow-up flag
 
-`Flag` extends `Tag` and uses its validation, normalization, and display
+`FollowUpTag` extends `Tag` and uses its validation, normalization, and display
 behavior. Its fixed name is `Needs follow-up`. A general tag with those words
 remains a distinct value: tag equality requires the same concrete class as
 well as the same normalized name. `ParserUtil.parseTagToAdd` and
@@ -883,11 +883,11 @@ a card cannot show the same label as a tag and as the marker whether the value
 arrives from a command or from a hand-edited file. A file written before the
 rule stops loading, with an error naming the record and the field to correct.
 `Tag` itself still accepts the name, so removal reads it as an ordinary tag and
-`TagCommand` keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `Flag` and
-exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
+`TagCommand` keeps explaining that the marker is what a flagged student carries.
+`Student` holds an optional `FollowUpTag` and exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
 interface for commands and the UI. Full equality and hashing include the flag,
 but `isSameStudent` does not: changing whether a student needs a reply does not
-change their identity. The flag is stored as `Optional<Flag>`; the constructor
+change their identity. The flag is stored as `Optional<FollowUpTag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
 Tag searches match ordinary tags as parts of their inherited `tagName` values,
@@ -905,7 +905,7 @@ This makes either request safe to repeat while preserving follow-up during
 unrelated edits. Descriptor copies and equality retain all three states.
 
 `JsonAdaptedStudent` uses a nullable `Boolean flag` at the storage boundary.
-Only `Boolean.TRUE` creates a `Flag` in the model; a missing key, JSON `null`, and
+Only `Boolean.TRUE` creates a `FollowUpTag` in the model; a missing key, JSON `null`, and
 `false` all map to no flag. When saving, a present flag is written
 as `"flag": true`, while an absent flag is represented as null and omitted by
 Jackson's `NON_NULL` policy. Files created before the field existed therefore

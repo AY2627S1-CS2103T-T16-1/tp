@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
 import seedu.tab.logic.Messages;
-import seedu.tab.model.tag.Flag;
+import seedu.tab.model.tag.FollowUpTag;
 import seedu.tab.model.tag.Tag;
 
 /**
@@ -14,7 +14,7 @@ import seedu.tab.model.tag.Tag;
 class JsonAdaptedTag {
 
     public static final String MESSAGE_RESERVED_TAG =
-            Flag.MESSAGE_RESERVED + " Remove it from \"tags\" and set \"flag\" to true instead.";
+            FollowUpTag.MESSAGE_RESERVED + " Remove it from \"tags\" and set \"flag\" to true instead.";
 
     private final String tagName;
 
@@ -51,7 +51,7 @@ class JsonAdaptedTag {
             throw new IllegalValueException(Messages.getErrorMessageForInvalidValue(
                     Tag.FIELD_NAME, tagName, Tag.getFailureReason(tagName)));
         }
-        if (Flag.isFollowUpName(tagName)) {
+        if (FollowUpTag.isFollowUpName(tagName)) {
             throw new IllegalValueException(MESSAGE_RESERVED_TAG);
         }
         return new Tag(tagName);
