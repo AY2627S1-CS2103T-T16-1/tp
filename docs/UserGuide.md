@@ -108,6 +108,12 @@ text remains one command; inspect it before pressing Enter.
   value after it. Where `edit` allows an empty value, write the deliberate
   empty value as `OPTION=""`, for example `--email=""`.
 
+* Straight (`"`), curly (`“` and `”`), and full-width (`＂`) double quotes
+  all group values and may be mixed. For example, `tag 2 -a “组 1”` and
+  `tag 1 -a ＂Lab 3＂` work like straight-quoted values. To keep any of these
+  quote marks as part of a value, put a backslash before it, as in `\“`.
+  Single quotation marks and apostrophes remain literal characters.
+
 * If a non-repeatable option is given twice, TAB names the repeated option
   and asks you to give it only once. For example, repeating `-f` reports
   `Options given more than once: -f. Give each listed option only once.`
@@ -1091,9 +1097,6 @@ closed, since TAB rewrites it from its own copy at the next change.
 
 The linked reports track these limitations and their fixes:
 
-* **Pasted quotation marks:** Curly and full-width double quotes are read as
-  part of a value rather than grouping it. Use plain `"` characters when quoting
-  a phrase. See [#313](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues/313).
 * **Keyboard access to summary tags:** The summary's tag list cannot receive
   keyboard focus. Use a mouse or trackpad to scroll it, or narrow the displayed
   students with `find` to reduce the summary. The student list can receive focus

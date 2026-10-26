@@ -19,6 +19,31 @@ public class CommandTokenizerTest {
     }
 
     @Test
+    public void tokenize_supportedQuotePairs_groupValuesAndPreserveTokenMetadata() throws Exception {
+        for (String opening : List.of("\"", "“", "”", "＂")) {
+            for (String closing : List.of("\"", "“", "”", "＂")) {
+                assertEquals(List.of(new Token("-组 1", true, true), new Token("-a", false, false)),
+                        tokenize(opening + "-组 1" + closing + " -a"));
+                assertEquals(List.of(new Token("--tag=Lab 3", true, false)),
+                        tokenize("--tag=" + opening + "Lab 3" + closing));
+                assertEquals(List.of(new Token("", true, true)), tokenize(opening + closing));
+                assertEquals(List.of("  "), valuesOf(opening + "  " + closing));
+            }
+        }
+    }
+
+    @Test
+    public void tokenize_supportedQuotes_canBeEscapedOrLeftUnclosed() throws Exception {
+        for (String quote : List.of("\"", "“", "”", "＂")) {
+            assertEquals(List.of("a" + quote + "b", "-t"), valuesOf("a\\" + quote + "b -t"));
+            assertEquals(List.of("a" + quote + " b"), valuesOf("“a\\" + quote + " b”"));
+            assertThrows(ParseException.class, CommandTokenizer.MESSAGE_UNCLOSED_QUOTE, () ->
+                    tokenize("--tag=" + quote + "组 1"));
+        }
+        assertEquals(List.of("O'Connor", "‘组", "1’"), valuesOf("O'Connor ‘组 1’"));
+    }
+
+    @Test
     public void tokenize_nothingToSplit_returnsNoTokens() throws Exception {
         assertEquals(List.of(), valuesOf(""));
         assertEquals(List.of(), valuesOf("   "));
