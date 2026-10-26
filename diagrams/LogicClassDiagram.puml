@@ -45,3 +45,4 @@ Logic ..> CommandResult
 LogicManager .down.> CommandResult
 Command .up.> CommandResult : <<create>>
 @enduml
+
