@@ -1,7 +1,7 @@
 @startuml
 !include style.puml
-skinparam nodesep 10
-skinparam ranksep 20
+skinparam linetype ortho
+skinparam nodesep 20
 skinparam arrowThickness 1.1
 skinparam arrowColor UI_COLOR_T4
 skinparam classBackgroundColor UI_COLOR
@@ -32,4 +32,8 @@ CardHeadline --|> Pane
 CardName --|> Label
 TagRow --|> Region
 ContactRow --|> FlowPane
+' TagRow and ContactRow sit on ranks of their own, so no multiplicity is
+' drawn on the run its neighbour's association takes.
+TagRow -[hidden]down- ContactRow
+TagRow -[hidden]down- CardHeadline
 @enduml
