@@ -135,6 +135,19 @@ Each count retains its preferred width, while the tag list scrolls vertically
 as wrapped rows grow. Names are not shortened, so tags differing only at the
 end remain distinguishable without hovering.
 
+`MainWindow` handles plain Tab and Shift+Tab on the student page to keep a
+stable focus cycle: command box, student list, summary tag list, then the
+reply when visible. The student list stays one Tab from command entry even
+after a reply appears; Shift+Tab returns directly. Empty lists stay reachable.
+`SummaryPanel.fxml` makes the tag `ScrollPane` focus-traversable, and the theme
+marks its focus with an accent outline without changing its layout size.
+JavaFX supplies arrow and Home/End navigation for both lists, plus paging for
+the student list. `SummaryPanel` handles Page Up/Down using the tag viewport's
+height and content overflow: JavaFX's default `ScrollPane` page keys otherwise
+use the same increment as its arrow keys. The command box retains its separate
+Up/Down history behavior. Help uses its own pager and restores command focus
+when closed.
+
 `HelpCommand` returns a command summary and the existing `showHelp` signal.
 `MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which replaces
 the entire student page (command box, result, summary sidebar and student list).
@@ -2195,6 +2208,50 @@ testers are expected to do more *exploratory* testing.
       Expected: The last student's card is readable. Press F1 and then G:<br>
       Expected: The help notice, `(END)` and both navigation hint lines remain
       visible. Press Esc to return to the command box.
+
+1. Keyboard navigation through students, tags and replies
+
+   1. Prerequisites: Use a disposable copy of TAB. Add 30 students with distinct
+      tags, for example `add Navigation 01 -p 90000001 -t tutorial-group-01`,
+      repeating through `Navigation 30`, `90000030` and `tutorial-group-30`.
+      Restart TAB so the reply is hidden, and use a window small enough for
+      both the student list and tag list to overflow.
+
+   1. From the command box, press Tab, Down, Up, Page Down, Page Up, End and
+      Home.<br>
+      Expected: Tab focuses the student list and shows an accent outline.
+      Arrows move the selected student;
+      page keys move by a screenful. End reveals the last student and Home
+      reveals the first. Repeating Up at the first student or Down at the last
+      keeps the selection at that end. Shift+Tab returns to the command box.
+
+   1. Press Tab twice from the command box. Try Down, Up, Page Down, Page Up,
+      End and Home.<br>
+      Expected: The tag list has an accent outline. Arrows scroll a little,
+      page keys scroll a page, End reveals `tutorial-group-30` and Home reveals
+      `tutorial-group-01`. Scrolling past either end stays there. Shift+Tab
+      twice returns to command entry; Tab from the tag list also returns there
+      while the reply is hidden. Student records stay unchanged.
+
+   1. Submit `list`, then type `find -n Navigation` without submitting it.
+      Press Tab repeatedly, then repeat using Shift+Tab.<br>
+      Expected: The forward cycle is command box → student list → tag list →
+      reply → command box; Shift+Tab reverses it. In particular, the student
+      list remains one Tab from the command box after the reply appears.
+      The draft stays unchanged. Back in the command box, Up recalls `list`
+      and Down restores the draft. A long reply can be scrolled and selected.
+
+   1. From the tag list, press F1, then q.<br>
+      Expected: Help opens and its navigation keys work. Closing it restores
+      command focus and the unfinished draft. Tab still reaches the student
+      list first.
+
+   1. Submit `find -n NobodyMatchesTheseNavigationStudents`, then repeat the
+      forward and reverse Tab cycles.<br>
+      Expected: Both empty lists remain reachable, and the reply is included.
+      There is no focus trap. Run `list` to restore the cohort. Repeat tag
+      scrolling after resizing the window and with a tag long enough to wrap:
+      the last row remains reachable and its complete name remains readable.
 
 1. Saving window preferences
 

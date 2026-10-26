@@ -119,6 +119,14 @@
     -fx-background-insets: 0;
     -fx-padding: 0;
     -fx-background-color: -tab-bg;
+    /* Draw outside the list so the focus outline does not change the cards' available space. */
+    -fx-border-color: transparent;
+    -fx-border-width: 1;
+    -fx-border-insets: -1;
+}
+
+.list-view:focused {
+    -fx-border-color: -tab-accent;
 }
 
 .list-cell {
@@ -641,6 +649,11 @@
 .summary-scroll {
     -fx-padding: 0;
     -fx-background-insets: 0;
+}
+
+.summary-scroll:focused {
+    -fx-background-color: -tab-accent, -tab-bg-sunken;
+    -fx-background-insets: 0, 1;
 }
 
 /* a value too long for its row is elided rather than widening the card it sits in. The

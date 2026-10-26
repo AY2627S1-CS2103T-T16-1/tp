@@ -10,8 +10,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.sun.javafx.stage.WindowHelper;
+
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
+import javafx.stage.Stage;
 
 /**
  * Starts the JavaFX toolkit for a test, and runs work on the thread it requires.
@@ -20,6 +23,20 @@ final class FxToolkit {
 
     // Cold window initialization under Rosetta can exceed ten seconds on hosted macOS runners.
     private static final int TIMEOUT_SECONDS = 60;
+
+    /**
+     * A window whose activation is controlled by the test instead of the desktop window manager.
+     * Scene focus and control key bindings still use JavaFX's normal focus machinery.
+     */
+    static final class FocusStage extends Stage {
+        void activate() {
+            WindowHelper.setFocused(this, true);
+        }
+
+        void deactivate() {
+            WindowHelper.setFocused(this, false);
+        }
+    }
 
     private FxToolkit() {} // this class only starts the toolkit
 
