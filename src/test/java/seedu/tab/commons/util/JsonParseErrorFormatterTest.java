@@ -162,6 +162,37 @@ public class JsonParseErrorFormatterTest {
     }
 
     @Test
+    public void format_rejectedComment_explainsRuleAndKeepsExcerpt() {
+        JsonLocation location = new JsonLocation("hidden source", -1, -1, 2, 2);
+        JsonProcessingException exception = createJsonProcessingException("Unexpected character ('/' (code 47)):"
+                + " maybe a (non-standard) comment? (not recognized as one since Feature 'ALLOW_COMMENTS'"
+                + " not enabled for parser)", location);
+
+        String expectedMessage = "The data is not in the expected JSON format at line 2, column 2:"
+                + " A JSON file cannot hold comments. Remove this one, or move its text into the"
+                + " optional top-level \"_comment\" field.\n"
+                + "Affected source:\n"
+                + "  1 | {\n"
+                + "> 2 | // a note\n"
+                + "  3 | }";
+        assertEquals(expectedMessage, JsonParseErrorFormatter.format(exception, "{\n// a note\n}"));
+    }
+
+    @Test
+    public void format_blankSource_explainsEmptyFileWithoutLocationOrExcerpt() {
+        JsonLocation location = new JsonLocation("hidden source", -1, -1, 1, 0);
+        JsonProcessingException exception =
+                createJsonProcessingException("No content to map due to end-of-input", location);
+
+        for (String jsonSource : new String[] {"", " \n\t "}) {
+            assertEquals("The data is not in the expected JSON format: The file holds no data."
+                            + " Restore your backup, or delete the file and restart TAB"
+                            + " to start again from the sample students.",
+                    JsonParseErrorFormatter.format(exception, jsonSource));
+        }
+    }
+
+    @Test
     public void formatIoError_invalidEncoding_explainsRecovery() {
         MalformedInputException exception = new MalformedInputException(1);
 
