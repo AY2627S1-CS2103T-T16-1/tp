@@ -1,5 +1,7 @@
 package seedu.tab.ui;
 
+import java.util.Locale;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -20,8 +22,6 @@ public class HelpPage extends UiPart<Region> {
     private static final String MESSAGE_RETURN_TO_COMMANDS = "Press q or Esc to return to the command box.";
     private static final String MESSAGE_GUIDE_COPIED = "User Guide URL copied.";
     private static final String END_MARKER = "(END)";
-    private static final String PROGRESS_PREFIX = "--More-- (";
-    private static final String PROGRESS_SUFFIX = "%)";
     private static final String LINE_HEIGHT_SAMPLE = "Ag";
     private static final String FXML = "HelpPage.fxml";
     private static final double HALF_PAGE = 0.5;
@@ -157,6 +157,6 @@ public class HelpPage extends UiPart<Region> {
         double bottom = helpViewport.getVvalue() * computeOverflowHeight()
                 + helpViewport.getViewportBounds().getHeight();
         int percent = (int) Math.clamp(PERCENT * bottom / helpText.getHeight(), 0, PERCENT - 1);
-        helpProgress.setText(PROGRESS_PREFIX + percent + PROGRESS_SUFFIX);
+        helpProgress.setText(String.format(Locale.ROOT, "--More-- (%d%%)", percent));
     }
 }

@@ -30,8 +30,6 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  */
 public class MainWindow extends UiPart<Stage> {
 
-    private static final String HELP_ACCELERATOR = "F1";
-
     private static final String FXML = "MainWindow.fxml";
 
     private final Logger logger = LogsCenter.getLogger(getClass());
@@ -94,7 +92,7 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     private void setAccelerators() {
-        setAccelerator(helpMenuItem, KeyCombination.valueOf(HELP_ACCELERATOR));
+        setAccelerator(helpMenuItem, KeyCombination.valueOf("F1"));
     }
 
     /**

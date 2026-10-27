@@ -2,6 +2,7 @@ package seedu.tab.ui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
@@ -23,9 +24,6 @@ import seedu.tab.commons.util.StringUtil;
  * little else, the row counts the tags instead and names them on hover.
  */
 public class TagRow extends Region {
-
-    private static final String TAG_COUNT_SUFFIX = " tag";
-    private static final String MORE_TAGS_SUFFIX = " more…";
 
     /** The gap between one chip and the next, matching the spacing the card uses. */
     private static final double SPACING = 6;
@@ -254,9 +252,9 @@ public class TagRow extends Region {
     private String formatOverflowText(int shown) {
         int leftOut = tagNames.size() - shown;
         if (shown == 0) {
-            return leftOut + TAG_COUNT_SUFFIX + StringUtil.getPluralSuffix(leftOut);
+            return String.format(Locale.ROOT, "%d tag%s", leftOut, StringUtil.getPluralSuffix(leftOut));
         }
-        return leftOut + MORE_TAGS_SUFFIX;
+        return String.format(Locale.ROOT, "%d more…", leftOut);
     }
 
     /**

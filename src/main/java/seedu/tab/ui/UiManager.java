@@ -34,20 +34,6 @@ public class UiManager implements Ui {
     static final String DATA_LOADING_ERROR_CLOSE = "Close TAB";
     static final String FATAL_ERROR_TITLE = "Fatal error during initializing";
 
-    private static final String STYLESHEET_RESOURCE = "/view/DarkTheme.css";
-    private static final String DATA_LOADING_ERROR_DIALOG_STYLE = "data-loading-error-dialog";
-    private static final String DATA_LOADING_ERROR_ICON_STYLE = "data-loading-error-icon";
-    private static final String ERROR_ACCESSIBLE_TEXT = "Error";
-    private static final String DATA_LOADING_FILE_CAPTION_STYLE = "data-loading-error-file-caption";
-    private static final String DATA_LOADING_FILE_STYLE = "data-loading-error-file";
-    private static final String DATA_LOADING_DETAIL_STYLE = "data-loading-error-detail";
-    private static final String DATA_LOADING_RECOVERY_STYLE = "data-loading-error-recovery";
-    private static final String DATA_LOADING_CONTENT_STYLE = "data-loading-error-content";
-    private static final String DATA_LOADING_FILE_ID = "dataLoadingErrorFile";
-    private static final String DATA_LOADING_DETAIL_ID = "dataLoadingErrorDetail";
-    private static final String DATA_LOADING_RECOVERY_ID = "dataLoadingErrorRecovery";
-
-
     private static final Logger logger = LogsCenter.getLogger(UiManager.class);
     private static final String ICON_APPLICATION = "/images/address_book_32.png";
 
@@ -120,7 +106,7 @@ public class UiManager implements Ui {
     static Alert createAlert(Stage owner, AlertType type, String title, String headerText) {
         Alert alert = new Alert(type);
         DialogPane dialogPane = alert.getDialogPane();
-        dialogPane.getStylesheets().add(UiManager.class.getResource(STYLESHEET_RESOURCE).toExternalForm());
+        dialogPane.getStylesheets().add(UiManager.class.getResource("/view/DarkTheme.css").toExternalForm());
         if (owner != null) {
             alert.initOwner(owner);
         }
@@ -145,13 +131,13 @@ public class UiManager implements Ui {
         Alert alert = createAlert(null, Alert.AlertType.ERROR,
                 DATA_LOADING_ERROR_TITLE, DATA_LOADING_ERROR_HEADER);
         DialogPane dialogPane = alert.getDialogPane();
-        dialogPane.getStyleClass().add(DATA_LOADING_ERROR_DIALOG_STYLE);
+        dialogPane.getStyleClass().add("data-loading-error-dialog");
         dialogPane.setMinHeight(Region.USE_PREF_SIZE);
         dialogPane.setContent(createDataLoadingErrorContent(error));
 
         Label icon = new Label("!");
-        icon.getStyleClass().add(DATA_LOADING_ERROR_ICON_STYLE);
-        icon.setAccessibleText(ERROR_ACCESSIBLE_TEXT);
+        icon.getStyleClass().add("data-loading-error-icon");
+        icon.setAccessibleText("Error");
         alert.setGraphic(icon);
 
         Button closeButton = (Button) dialogPane.lookupButton(ButtonType.OK);
@@ -166,19 +152,19 @@ public class UiManager implements Ui {
      */
     private VBox createDataLoadingErrorContent(String error) {
         Label fileCaption = createWrappingLabel(DATA_LOADING_ERROR_FILE_LABEL,
-                DATA_LOADING_FILE_CAPTION_STYLE);
-        Label filePath = createWrappingLabel(dataFilePath.toString(), DATA_LOADING_FILE_STYLE);
-        filePath.setId(DATA_LOADING_FILE_ID);
+                "data-loading-error-file-caption");
+        Label filePath = createWrappingLabel(dataFilePath.toString(), "data-loading-error-file");
+        filePath.setId("dataLoadingErrorFile");
 
-        Label errorDetail = createWrappingLabel(error, DATA_LOADING_DETAIL_STYLE);
-        errorDetail.setId(DATA_LOADING_DETAIL_ID);
+        Label errorDetail = createWrappingLabel(error, "data-loading-error-detail");
+        errorDetail.setId("dataLoadingErrorDetail");
 
         Label recovery = createWrappingLabel(DATA_LOADING_ERROR_RECOVERY,
-                DATA_LOADING_RECOVERY_STYLE);
-        recovery.setId(DATA_LOADING_RECOVERY_ID);
+                "data-loading-error-recovery");
+        recovery.setId("dataLoadingErrorRecovery");
 
         VBox content = new VBox(fileCaption, filePath, errorDetail, recovery);
-        content.getStyleClass().add(DATA_LOADING_CONTENT_STYLE);
+        content.getStyleClass().add("data-loading-error-content");
         content.setMinHeight(Region.USE_PREF_SIZE);
         return content;
     }
