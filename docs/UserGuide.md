@@ -462,7 +462,8 @@ least one letter or number, in any writing system.
 `add Ravi s/o Kumaran -p 91234567` needs no quotes at all. Slashes, hyphens and
 apostrophes are ordinary characters here.
 
-If you use a name option from `edit`, TAB explains where to put the name:
+If you use a name option from `edit`, including capitalized forms such as `-N` or
+`--NAME`, TAB explains where to put the name:
 
 ```text
 add --name "Betsy Crowe" --phone 1234567

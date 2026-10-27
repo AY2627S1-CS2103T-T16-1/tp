@@ -310,7 +310,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_nameOption_explainsNamePlacement() {
-        for (String marker : new String[] {"-n", "--name"}) {
+        for (String marker : new String[] {"-n", "--name", "-N", "--NAME", "--Name"}) {
             String expected = String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker)
                     + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE;
             for (String value : new String[] {" \"Betsy Crowe\"", "=\"Betsy Crowe\"", "", "=", "=\"\""}) {

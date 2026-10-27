@@ -638,7 +638,7 @@ on its own; and non-blank values are still validated, so every problem is
 reported without tags being discarded silently.
 
 `add` keeps its name before the options. If the tokenizer refuses `-n` or
-`--name`, `AddCommandParser` adds a placement hint to the error, and a missing
+`--name` in any letter case, `AddCommandParser` adds a placement hint to the error, and a missing
 name gets the same hint, so a User who knows `edit`'s name option recovers at
 once.
 
@@ -2436,7 +2436,8 @@ testers are expected to do more *exploratory* testing.
       Records, the displayed list, and the saved file stay unchanged.
    1. Test case: `add Tan -N Alex`.<br>
       Expected: No lowercase option is suggested because `add` does not take
-      a name option; other commands' options are not suggested.
+      a name option. Instead, the reply explains that the name comes first,
+      without an option; the same guidance appears for `--NAME`.
 
 1. Joining option values with an equals sign
 

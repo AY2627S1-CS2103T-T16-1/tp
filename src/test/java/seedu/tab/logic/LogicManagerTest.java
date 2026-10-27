@@ -361,6 +361,10 @@ public class LogicManagerTest {
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--name"),
                 "add --phone 1234567 -n=\"Betsy Crowe\"",
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-n"),
+                "add -N \"Betsy Crowe\" --phone 1234567",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-N"),
+                "add --NAME=\"Betsy Crowe\" --phone 1234567",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--NAME"),
                 "add -p 1234567", Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME)).entrySet()) {
             assertThrows(ParseException.class, entry.getValue() + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE, ()
                     -> logic.execute(entry.getKey()));
