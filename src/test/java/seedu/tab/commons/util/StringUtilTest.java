@@ -84,6 +84,13 @@ public class StringUtilTest {
     }
 
     @Test
+    public void normalizeNameForComparison_codePointUnicodeDoesNotName_keepsItAsItIs() {
+        // U+FDD0 is a permanent noncharacter, so Unicode will never give it a name. A name
+        // pasted from a damaged source can still hold one, and the key has to survive it.
+        assertEquals("amy﷐", StringUtil.normalizeNameForComparison("Amy﷐"));
+    }
+
+    @Test
     public void normalizeNameForComparison_nonLatinScript_keepsItsOwnLettersAndMarks() {
         // Cyrillic Ө is barred like Ø, but a reader tells it apart from Cyrillic and Latin O
         assertNotEquals(StringUtil.normalizeNameForComparison("О"),
