@@ -699,12 +699,17 @@ malformed or non-positive input from a positive integer beyond the supported
 range, and `StudentTarget` reports an out-of-range position with that spelling
 and the current displayed count, zero included. A non-positive or non-integer
 target keeps the concise positive-integer reason alongside any field errors,
-and `delete` adds the explicit `--id` form whenever the refused target reads as
-a valid NUS Student ID — spelling intact, so a stored numeric ID keeps its
-leading zeroes. `edit` and `tag` share `FlagTokenizer.tokenizeWithIndex`, which
-reports an unquoted negative number as both an invalid index and an unknown
-option, and each reports a value following an otherwise valid target. The
-retained spelling affects diagnostics only, not target equality or hashing.
+and a refused target that reads as a valid NUS Student ID, or an out-of-range
+number a student holds as one, also names the explicit form that reaches that
+student — spelling intact, so a stored numeric ID keeps its leading zeroes.
+`ParserUtil.withIdTargetHint` and `StudentTarget.resolve` build that hint from
+the form each command supplies as `ID_TARGET_COMMAND`, so the recovery names
+`--target-id` for `edit` and `--id` for `tag` and `delete` rather than an
+option the command does not take. `edit` and `tag` share
+`FlagTokenizer.tokenizeWithIndex`, which reports an unquoted negative number as
+both an invalid index and an unknown option, and each reports a value following
+an otherwise valid target. The retained spelling affects diagnostics only, not
+target equality or hashing.
 
 ### Adding or removing one tag
 
@@ -2846,15 +2851,26 @@ testers are expected to do more *exploratory* testing.
    and `add Other Student -p 82223333`, then run `find -n Amy`.
    1. Test cases: `delete 3`, `edit 3 -p 81112222` and `tag 3 -a T1`.<br>
       Expected: Each quotes index `3`, reports one displayed student and
-      suggests `list`. Nothing changes. After `find -n Missing` the same
-      commands report zero displayed students.
-   1. Test case: `edit 6591234567 -p 81112222`, then `delete 6591234567`.<br>
+      suggests `list`. No student holds `3` as an ID, so no reply offers an ID
+      form. Nothing changes. After `find -n Missing` the same commands report
+      zero displayed students.
+   1. Test cases: `edit 6591234567 -p 81112222`, `tag 6591234567 -a T1` and
+      `delete 6591234567`.<br>
       Expected: Each explains the upper index bound rather than calling a
-      positive integer non-positive, and delete also shows the explicit ID
-      form.
-   1. Test case: With Amy hidden, `delete 001234`.<br>
-      Expected: The error keeps the leading zeroes and suggests
-      `delete --id 001234`, which deletes her even while the filter hides her.
+      positive integer non-positive, and each shows its own explicit ID form:
+      `edit --target-id`, `tag --id` and `delete --id`.
+   1. Test cases: With Amy hidden, `edit 001234 -p 81112222`, then
+      `tag 001234 -a T1`, then `delete 001234`, running the command each reply
+      suggests before the next test case.<br>
+      Expected: Every error keeps the leading zeroes and suggests the form that
+      command takes. Each suggested command reaches Amy while the filter hides
+      her, so the last of them deletes her.
+   1. Test cases: `edit 1ABC -p 81112222`, `tag 1ABC -a T1` and
+      `delete 1ABC`.<br>
+      Expected: Each reports that an index must be a positive integer, because
+      a target starting with a digit reads as an index, and names the ID form
+      that selects `1ABC`. No student holds that ID, so running a suggested
+      command reports that no student has it.
 ### Locating students by digits in formatted phone numbers
 
 1. Full numbers, partial numbers, and unchanged saved formatting
