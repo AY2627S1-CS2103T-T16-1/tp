@@ -24,7 +24,9 @@ import seedu.tab.logic.commands.Command;
 
 public class CommandWordsTest {
 
-    /** Relative because Gradle runs the tests from the project root. */
+    /**
+     * Relative because Gradle runs the tests from the project root.
+     */
     private static final Path PARSER_SOURCE = Paths.get("src", "main", "java", "seedu", "tab",
             "logic", "parser", "StudentBookParser.java");
 
@@ -62,7 +64,9 @@ public class CommandWordsTest {
         return dispatchedWords;
     }
 
-    /** Returns the COMMAND_WORD that the command class named {@code className} declares. */
+    /**
+     * Returns the COMMAND_WORD that the command class named {@code className} declares.
+     */
     private static String commandWordDeclaredBy(String className) throws ReflectiveOperationException {
         Class<?> commandClass = Class.forName(Command.class.getPackageName() + "." + className);
         return (String) commandClass.getField("COMMAND_WORD").get(null);

@@ -24,7 +24,9 @@ import seedu.tab.model.ModelManager;
 import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.testutil.StudentBuilder;
 
-/** Tests English feedback and option styles under regional defaults. */
+/**
+ * Tests English feedback and option styles under regional defaults.
+ */
 public class LocaleConsistencyTest {
     private static final List<String> LOCALES = List.of("en-SG", "tr-TR", "az-AZ", "fa-IR", "ar-EG", "bn-BD");
 

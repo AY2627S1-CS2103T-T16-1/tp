@@ -13,6 +13,7 @@ import java.util.Set;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.parser.exceptions.ParseException;
+import seedu.tab.logic.parser.exceptions.UnknownFlagException;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
@@ -34,7 +35,7 @@ public class AddCommandParser implements Parser<AddCommand> {
      * settled first: an unclosed quote, an unknown flag, or a single-valued flag given twice
      * leaves it unclear which field a value belongs to, so any of them is refused on its own.
      *
-     * @throws ParseException if the user input does not conform to the expected format
+     * @throws ParseException if the user input does not conform to the expected format.
      */
     public AddCommand parse(String args) throws ParseException {
         FlagArgumentMap arguments = tokenize(args);
@@ -64,15 +65,15 @@ public class AddCommandParser implements Parser<AddCommand> {
         return new AddCommand(student);
     }
 
-    /** Adds placement guidance when an edit-style name option is refused. */
+    /**
+     * Adds placement guidance when an edit-style name option is refused.
+     */
     private static FlagArgumentMap tokenize(String args) throws ParseException {
         try {
             return FlagTokenizer.tokenize(
                     args, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG, FLAG_FOLLOW_UP);
-        } catch (ParseException e) {
-            boolean isNameOption = FLAG_NAME.getMarkers().stream()
-                    .anyMatch(marker -> String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker).equals(e.getMessage()));
-            if (isNameOption) {
+        } catch (UnknownFlagException e) {
+            if (FLAG_NAME.getMarkers().contains(e.getMarker())) {
                 throw new ParseException(e.getMessage() + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE, e);
             }
             throw e;

@@ -21,7 +21,7 @@ public class NusStudentIdTest {
 
     @Test
     public void constructor_lowercaseLetters_normalizesToUppercase() {
-        assertEquals("A01234567X", new NusStudentId("a01234567x").value);
+        assertEquals("A01234567X", new NusStudentId("a01234567x").getValue());
     }
 
     @Test
@@ -49,7 +49,7 @@ public class NusStudentIdTest {
         // normalized before it is judged, as names, phones and tags already are
         assertTrue(NusStudentId.isValidNusStudentId(" A01234567X ")); // leading and trailing space
         assertTrue(NusStudentId.isValidNusStudentId("\u200EA01234567X")); // leading direction mark
-        assertEquals("A01234567X", new NusStudentId("\u200Ea01234567x").value);
+        assertEquals("A01234567X", new NusStudentId("\u200Ea01234567x").getValue());
     }
 
     @Test

@@ -6,6 +6,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_ADD_TAG;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_REMOVE_TAG;
+import static seedu.tab.logic.parser.CliFlags.FLAG_TARGET_ID;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -29,7 +30,9 @@ import seedu.tab.model.tag.Tag;
  */
 public class TagCommand extends Command {
 
-    /** The change to make to the student's tags. */
+    /**
+     * The change to make to the student's tags.
+     */
     public enum Action { ADD, REMOVE }
 
     public static final String COMMAND_WORD = "tag";
@@ -57,7 +60,7 @@ public class TagCommand extends Command {
                     + EditCommand.COMMAND_WORD + " %1$d " + FLAG_NO_FOLLOW_UP + ".";
     public static final String MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT =
             "This student is flagged for follow-up, which is not a tag. To clear the flag, use "
-                    + EditCommand.COMMAND_WORD + " --target-id %1$s " + FLAG_NO_FOLLOW_UP + ".";
+                    + EditCommand.COMMAND_WORD + " " + FLAG_TARGET_ID + " %1$s " + FLAG_NO_FOLLOW_UP + ".";
     public static final String MESSAGE_MULTIPLE_TARGETS =
             "Give one student target: an index, a letter-leading NUS Student ID, or --id NUS_STUDENT_ID.";
     public static final String MESSAGE_CONFLICTING_ACTIONS = "Options " + FLAG_ADD_TAG.getMarkerSummary()
@@ -86,7 +89,9 @@ public class TagCommand extends Command {
         this(StudentTarget.byIndex(targetIndex), tag, action);
     }
 
-    /** Creates a command to perform {@code action} on the student named by {@code target}. */
+    /**
+     * Creates a command to perform {@code action} on the student named by {@code target}.
+     */
     public TagCommand(StudentTarget target, Tag tag, Action action) {
         requireAllNonNull(target, tag, action);
         this.target = target;
@@ -100,19 +105,19 @@ public class TagCommand extends Command {
         Student student = target.resolve(model);
         Optional<Tag> existingTag = student.getTags().stream()
                 .filter(this::matchesTag)
-                .min(Comparator.comparing(existing -> existing.tagName));
+                .min(Comparator.comparing(existing -> existing.getTagName()));
         if (action == Action.ADD && existingTag.isPresent()) {
             throw new CommandException(String.format(MESSAGE_ALREADY_PRESENT,
-                    Messages.shorten(existingTag.get().tagName)));
+                    Messages.shorten(existingTag.get().getTagName())));
         }
         if (action == Action.REMOVE && existingTag.isEmpty()) {
-            throw new CommandException(absentTagMessage(student, model.getFilteredStudentList()));
+            throw new CommandException(formatAbsentTagMessage(student, model.getFilteredStudentList()));
         }
         Student updatedStudent = createUpdatedStudent(student);
         model.setStudent(student, updatedStudent);
         String message = action == Action.ADD ? MESSAGE_ADD_SUCCESS : MESSAGE_REMOVE_SUCCESS;
         Tag changedTag = action == Action.ADD ? tag : existingTag.orElseThrow();
-        return new CommandResult(String.format(message, Messages.shorten(changedTag.tagName),
+        return new CommandResult(String.format(message, Messages.shorten(changedTag.getTagName()),
                 Messages.format(updatedStudent)));
     }
 
@@ -124,9 +129,9 @@ public class TagCommand extends Command {
      * the card draws the label beside the student's name, and the feedback of {@code edit}
      * prints it after the tags.
      */
-    private String absentTagMessage(Student student, List<Student> displayedStudents) {
-        String absent = String.format(MESSAGE_NOT_PRESENT, Messages.shorten(tag.tagName));
-        if (!student.isFlagged() || !FollowUpFlag.isFollowUpName(tag.tagName)) {
+    private String formatAbsentTagMessage(Student student, List<Student> displayedStudents) {
+        String absent = String.format(MESSAGE_NOT_PRESENT, Messages.shorten(tag.getTagName()));
+        if (!student.isFlagged() || !FollowUpFlag.isFollowUpName(tag.getTagName())) {
             return absent;
         }
         for (int index = 0; index < displayedStudents.size(); index++) {
@@ -135,15 +140,19 @@ public class TagCommand extends Command {
             }
         }
         return absent + "\n" + String.format(MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT,
-                student.getNusStudentId().orElseThrow().value);
+                student.getNusStudentId().orElseThrow().getValue());
     }
 
-    /** Returns whether a stored tag denotes the requested tag, ignoring case. */
+    /**
+     * Returns whether a stored tag denotes the requested tag, ignoring case.
+     */
     private boolean matchesTag(Tag existing) {
-        return existing.tagName.equalsIgnoreCase(tag.tagName);
+        return existing.getTagName().equalsIgnoreCase(tag.getTagName());
     }
 
-    /** Returns a replacement student with only the requested tag changed. */
+    /**
+     * Returns a replacement student with only the requested tag changed.
+     */
     private Student createUpdatedStudent(Student student) {
         Set<Tag> updatedTags = new HashSet<>(student.getTags());
         if (action == Action.ADD) {

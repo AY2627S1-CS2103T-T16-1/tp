@@ -17,6 +17,9 @@ public class StudentBook implements ReadOnlyStudentBook {
 
     private final UniqueStudentList students = new UniqueStudentList();
 
+    /**
+     * Creates an empty student book.
+     */
     public StudentBook() {}
 
     /**

@@ -30,6 +30,8 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  */
 public class MainWindow extends UiPart<Stage> {
 
+    private static final String HELP_ACCELERATOR = "F1";
+
     private static final String FXML = "MainWindow.fxml";
 
     private final Logger logger = LogsCenter.getLogger(getClass());
@@ -92,12 +94,14 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     private void setAccelerators() {
-        setAccelerator(helpMenuItem, KeyCombination.valueOf("F1"));
+        setAccelerator(helpMenuItem, KeyCombination.valueOf(HELP_ACCELERATOR));
     }
 
     /**
      * Sets the accelerator of a MenuItem.
-     * @param keyCombination the KeyCombination value of the accelerator
+     *
+     * @param menuItem The menu item receiving the shortcut.
+     * @param keyCombination the KeyCombination value of the accelerator.
      */
     private void setAccelerator(MenuItem menuItem, KeyCombination keyCombination) {
         menuItem.setAccelerator(keyCombination);
@@ -151,7 +155,9 @@ public class MainWindow extends UiPart<Stage> {
         setKeyboardNavigation(summaryPanel);
     }
 
-    /** Keeps the student list one Tab from commands, regardless of whether a reply is showing. */
+    /**
+     * Keeps the student list one Tab from commands, regardless of whether a reply is showing.
+     */
     private void setKeyboardNavigation(SummaryPanel summaryPanel) {
         Node commandField = commandBox.getRoot().lookup("#commandTextField");
         Node students = studentListPanel.getRoot().lookup("#studentListView");
@@ -179,7 +185,9 @@ public class MainWindow extends UiPart<Stage> {
         helpPagePlaceholder.getChildren().add(helpPage.getRoot());
     }
 
-    /** Restores the student view, its previous result, and any unfinished command. */
+    /**
+     * Restores the student view, its previous result, and any unfinished command.
+     */
     private void closeHelp() {
         helpPagePlaceholder.setVisible(false);
         helpPagePlaceholder.setManaged(false);
@@ -245,7 +253,7 @@ public class MainWindow extends UiPart<Stage> {
         try {
             CommandResult commandResult = logic.execute(commandText);
             logger.info("Result: " + commandResult.getFeedbackToUser());
-            if (commandResult.isShowHelp()) {
+            if (commandResult.isHelpRequested()) {
                 handleHelp();
             } else {
                 resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
@@ -253,7 +261,7 @@ public class MainWindow extends UiPart<Stage> {
 
             commandResult.getStudentToReveal().ifPresent(studentListPanel::scrollTo);
 
-            if (commandResult.isExit()) {
+            if (commandResult.isExitRequested()) {
                 handleExit();
             }
 

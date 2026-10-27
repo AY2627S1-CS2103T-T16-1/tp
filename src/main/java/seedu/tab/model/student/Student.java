@@ -81,7 +81,9 @@ public class Student {
         return flag.isPresent();
     }
 
-    /** Returns the follow-up flag, when this student needs follow-up. */
+    /**
+     * Returns the follow-up flag, when this student needs follow-up.
+     */
     public Optional<FollowUpFlag> getFlag() {
         return flag;
     }

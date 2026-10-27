@@ -71,13 +71,13 @@ public class FlagArgumentMap {
      * Throws a {@code ParseException} if any flag in {@code flags} was given more than once.
      */
     public void verifyNoDuplicateFlagsFor(CliFlag... flags) throws ParseException {
-        String[] duplicated = Stream.of(flags).distinct()
+        String[] duplicatedFlags = Stream.of(flags).distinct()
                 .filter(flag -> getAllValues(flag).size() > 1)
                 .map(flag -> values.get(flag).getFirst().marker())
                 .toArray(String[]::new);
 
-        if (duplicated.length > 0) {
-            throw new ParseException(Messages.getErrorMessageForDuplicateFlags(duplicated));
+        if (duplicatedFlags.length > 0) {
+            throw new ParseException(Messages.getErrorMessageForDuplicateFlags(duplicatedFlags));
         }
     }
 }

@@ -38,28 +38,28 @@ public class NameTest {
 
     @Test
     public void isValidName_surroundingWhitespace_isTrimmed() {
-        assertEquals("Peter", new Name(" Peter ").fullName); // space
-        assertEquals("Peter", new Name("\tPeter\t").fullName); // tab
-        assertEquals("Peter", new Name("\nPeter\n").fullName); // line feed
-        assertEquals("Peter", new Name("\rPeter\r").fullName); // carriage return
-        assertEquals("Peter", new Name("\fPeter\f").fullName); // form feed
-        assertEquals("Peter", new Name("\u000BPeter\u000B").fullName); // vertical tab
-        assertEquals("Peter", new Name("\u00A0Peter\u00A0").fullName); // non-breaking space
-        assertEquals("Peter", new Name("\u3000Peter\u3000").fullName); // ideographic space
+        assertEquals("Peter", new Name(" Peter ").getFullName()); // space
+        assertEquals("Peter", new Name("\tPeter\t").getFullName()); // tab
+        assertEquals("Peter", new Name("\nPeter\n").getFullName()); // line feed
+        assertEquals("Peter", new Name("\rPeter\r").getFullName()); // carriage return
+        assertEquals("Peter", new Name("\fPeter\f").getFullName()); // form feed
+        assertEquals("Peter", new Name("\u000BPeter\u000B").getFullName()); // vertical tab
+        assertEquals("Peter", new Name("\u00A0Peter\u00A0").getFullName()); // non-breaking space
+        assertEquals("Peter", new Name("\u3000Peter\u3000").getFullName()); // ideographic space
     }
 
     @Test
     public void isValidName_whitespaceInsideName_becomesOneSpace() {
-        assertEquals("John Doe", new Name("John\tDoe").fullName); // tab
-        assertEquals("John Doe", new Name("John\nDoe").fullName); // line feed
-        assertEquals("John Doe", new Name("John\u00A0Doe").fullName); // non-breaking space
-        assertEquals("John Doe", new Name("John\u2003Doe").fullName); // em space
-        assertEquals("John Doe", new Name("John\u2009Doe").fullName); // thin space
-        assertEquals("John Doe", new Name("John\u1680Doe").fullName); // ogham space mark
-        assertEquals("John Doe", new Name("John \t\n Doe").fullName); // a run of several
+        assertEquals("John Doe", new Name("John\tDoe").getFullName()); // tab
+        assertEquals("John Doe", new Name("John\nDoe").getFullName()); // line feed
+        assertEquals("John Doe", new Name("John\u00A0Doe").getFullName()); // non-breaking space
+        assertEquals("John Doe", new Name("John\u2003Doe").getFullName()); // em space
+        assertEquals("John Doe", new Name("John\u2009Doe").getFullName()); // thin space
+        assertEquals("John Doe", new Name("John\u1680Doe").getFullName()); // ogham space mark
+        assertEquals("John Doe", new Name("John \t\n Doe").getFullName()); // a run of several
 
         // an ideographic space is what a CJK input method produces
-        assertEquals("\u9673 \u5049\u660E", new Name("\u9673\u3000\u5049\u660E").fullName);
+        assertEquals("\u9673 \u5049\u660E", new Name("\u9673\u3000\u5049\u660E").getFullName());
     }
 
     @Test
@@ -199,7 +199,7 @@ public class NameTest {
     public void normalization_zeroWidthJoiner_isKept() {
         // Sinhala needs the joiner to shape correctly, so it is not stripped.
         String sinhala = "\u0DC1\u0DCA\u200D\u0DBB\u0DD3";
-        assertEquals(sinhala, new Name(sinhala).fullName);
+        assertEquals(sinhala, new Name(sinhala).getFullName());
     }
 
     @Test

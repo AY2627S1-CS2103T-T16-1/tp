@@ -55,49 +55,7 @@ public class CommandTokenizer {
      */
     public static List<Token> tokenize(String arguments) throws ParseException {
         requireNonNull(arguments);
-
-        List<Token> tokens = new ArrayList<>();
-        StringBuilder value = new StringBuilder();
-        boolean isQuoted = false;
-        boolean wasQuoted = false;
-        boolean beganQuoted = false;
-        // a token can be empty yet real, which is what "" spells, so its presence is tracked apart
-        boolean hasToken = false;
-
-        for (int i = 0; i < arguments.length(); i++) {
-            char current = arguments.charAt(i);
-            if (current == ESCAPE && i + 1 < arguments.length() && isEscapable(arguments.charAt(i + 1))) {
-                value.append(arguments.charAt(i + 1));
-                hasToken = true;
-                i++;
-            } else if (isQuote(current)) {
-                if (!hasToken) {
-                    beganQuoted = true;
-                }
-                isQuoted = !isQuoted;
-                wasQuoted = true;
-                hasToken = true;
-            } else if (!isQuoted && StringUtil.isWhitespace(current)) {
-                if (hasToken) {
-                    tokens.add(new Token(value.toString(), wasQuoted, beganQuoted));
-                    value.setLength(0);
-                    wasQuoted = false;
-                    beganQuoted = false;
-                    hasToken = false;
-                }
-            } else {
-                value.append(current);
-                hasToken = true;
-            }
-        }
-
-        if (isQuoted) {
-            throw new ParseException(MESSAGE_UNCLOSED_QUOTE);
-        }
-        if (hasToken) {
-            tokens.add(new Token(value.toString(), wasQuoted, beganQuoted));
-        }
-        return tokens;
+        return new TokenScanner(arguments).readTokens();
     }
 
     /**
@@ -112,11 +70,81 @@ public class CommandTokenizer {
     /**
      * Returns true if {@code character} is one a backslash may escape. Only characters
      * that mean something to the tokenizer are escapable, so a backslash before anything else
-     * stays in the value rather than quietly disappearing. The colouring asks the same
+     * stays in the value rather than quietly disappearing. The coloring asks the same
      * question, so that what the User sees and what the parser reads agree on where a token
      * ends.
      */
     public static boolean isEscapable(char character) {
         return isQuote(character) || character == ESCAPE;
     }
+    /**
+     * Keeps the quote, escape and token state for one argument scan.
+     */
+    private static final class TokenScanner {
+        private final String arguments;
+        private final List<Token> tokens = new ArrayList<>();
+        private final StringBuilder value = new StringBuilder();
+        private int index;
+        private boolean isQuoted;
+        private boolean wasQuoted;
+        private boolean beganQuoted;
+        // Empty quotes form a token even when the buffer contains no characters.
+        private boolean hasToken;
+
+        private TokenScanner(String arguments) {
+            this.arguments = arguments;
+        }
+
+        private List<Token> readTokens() throws ParseException {
+            while (index < arguments.length()) {
+                readCharacter();
+            }
+            if (isQuoted) {
+                throw new ParseException(MESSAGE_UNCLOSED_QUOTE);
+            }
+            finishToken();
+            return tokens;
+        }
+
+        private void readCharacter() {
+            char current = arguments.charAt(index);
+            if (current == ESCAPE && index + 1 < arguments.length()
+                    && isEscapable(arguments.charAt(index + 1))) {
+                append(arguments.charAt(++index));
+            } else if (isQuote(current)) {
+                acceptQuote();
+            } else if (!isQuoted && StringUtil.isWhitespace(current)) {
+                finishToken();
+            } else {
+                append(current);
+            }
+            index++;
+        }
+
+        private void append(char character) {
+            value.append(character);
+            hasToken = true;
+        }
+
+        private void acceptQuote() {
+            if (!hasToken) {
+                beganQuoted = true;
+            }
+            isQuoted = !isQuoted;
+            wasQuoted = true;
+            hasToken = true;
+        }
+
+        private void finishToken() {
+            if (!hasToken) {
+                return;
+            }
+            tokens.add(new Token(value.toString(), wasQuoted, beganQuoted));
+            value.setLength(0);
+            wasQuoted = false;
+            beganQuoted = false;
+            hasToken = false;
+        }
+    }
+
 }

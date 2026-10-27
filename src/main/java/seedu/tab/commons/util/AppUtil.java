@@ -35,7 +35,8 @@ public class AppUtil {
         try {
             Path codePath = Paths.get(codeLocation.toURI()).toAbsolutePath().normalize();
             return Files.isRegularFile(codePath) ? codePath.getParent() : normalizedWorkingDirectory;
-        } catch (URISyntaxException | FileSystemNotFoundException | IllegalArgumentException | SecurityException e) {
+        } catch (URISyntaxException | FileSystemNotFoundException
+                | IllegalArgumentException | SecurityException e) {
             return normalizedWorkingDirectory;
         }
     }
@@ -49,23 +50,23 @@ public class AppUtil {
     }
 
     /**
-     * Checks that {@code condition} is true. Used for validating arguments to methods.
+     * Checks that {@code isConditionSatisfied} is true. Used for validating arguments to methods.
      *
-     * @throws IllegalArgumentException if {@code condition} is false.
+     * @throws IllegalArgumentException if {@code isConditionSatisfied} is false.
      */
-    public static void checkArgument(Boolean condition) {
-        if (!condition) {
+    public static void checkArgument(boolean isConditionSatisfied) {
+        if (!isConditionSatisfied) {
             throw new IllegalArgumentException();
         }
     }
 
     /**
-     * Checks that {@code condition} is true. Used for validating arguments to methods.
+     * Checks that {@code isConditionSatisfied} is true. Used for validating arguments to methods.
      *
-     * @throws IllegalArgumentException with {@code errorMessage} if {@code condition} is false.
+     * @throws IllegalArgumentException with {@code errorMessage} if {@code isConditionSatisfied} is false.
      */
-    public static void checkArgument(Boolean condition, String errorMessage) {
-        if (!condition) {
+    public static void checkArgument(boolean isConditionSatisfied, String errorMessage) {
+        if (!isConditionSatisfied) {
             throw new IllegalArgumentException(errorMessage);
         }
     }

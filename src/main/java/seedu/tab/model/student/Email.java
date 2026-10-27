@@ -67,7 +67,7 @@ public class Email {
             "the domain may hold letters and digits in labels separated by dots, "
                     + "with hyphens allowed inside a label";
 
-    public final String value;
+    private final String value;
 
     /**
      * Constructs an {@code Email}, storing the form described by

@@ -782,8 +782,8 @@ public class JsonStudentBookStorageTest {
         assertTrue(saved.contains(annotated));
         ReadOnlyStudentBook loaded = new JsonStudentBookStorage(filePath).readStudentBook().orElseThrow();
         assertEquals(original, new StudentBook(loaded));
-        assertEquals(digits, loaded.getStudentList().get(0).getPhone().orElseThrow().value);
-        assertEquals(annotated, loaded.getStudentList().get(1).getPhone().orElseThrow().value);
+        assertEquals(digits, loaded.getStudentList().get(0).getPhone().orElseThrow().getValue());
+        assertEquals(annotated, loaded.getStudentList().get(1).getPhone().orElseThrow().getValue());
     }
 
     @Test
@@ -805,8 +805,8 @@ public class JsonStudentBookStorageTest {
         assertEquals(original, new StudentBook(readBack));
 
         Student loaded = readBack.getStudentList().get(0);
-        assertEquals("+65 9123 4567", loaded.getPhone().orElseThrow().value);
-        assertEquals("Ravi s/o Kumaran", loaded.getName().fullName);
+        assertEquals("+65 9123 4567", loaded.getPhone().orElseThrow().getValue());
+        assertEquals("Ravi s/o Kumaran", loaded.getName().getFullName());
         assertEquals(student.getTags(), loaded.getTags());
     }
 

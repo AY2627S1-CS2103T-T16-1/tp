@@ -145,7 +145,7 @@ public class AddCommandIntegrationTest {
     }
 
     private List<String> displayedNames() {
-        return model.getFilteredStudentList().stream().map(student -> student.getName().fullName).toList();
+        return model.getFilteredStudentList().stream().map(student -> student.getName().getFullName()).toList();
     }
 
     @Test

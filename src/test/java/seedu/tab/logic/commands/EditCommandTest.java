@@ -453,9 +453,9 @@ public class EditCommandTest {
         Index thirdStudentIndex = Index.fromOneBased(3);
         Student original = model.getFilteredStudentList().get(thirdStudentIndex.getZeroBased());
         Student firstStudent = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
-        Student edited = new StudentBuilder(original).withName(firstStudent.getName().fullName).build();
+        Student edited = new StudentBuilder(original).withName(firstStudent.getName().getFullName()).build();
         EditCommand command = new EditCommand(thirdStudentIndex,
-                new EditStudentDescriptorBuilder().withName(firstStudent.getName().fullName).build());
+                new EditStudentDescriptorBuilder().withName(firstStudent.getName().getFullName()).build());
         Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
         expectedModel.setStudent(original, edited);
 
@@ -511,7 +511,7 @@ public class EditCommandTest {
     @Test
     public void execute_editToNusStudentIdUsedByAnotherStudent_failure() {
         Student firstStudent = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
-        String duplicateId = firstStudent.getNusStudentId().orElseThrow().value.toLowerCase();
+        String duplicateId = firstStudent.getNusStudentId().orElseThrow().getValue().toLowerCase();
         EditCommand command = new EditCommand(INDEX_SECOND_STUDENT,
                 new EditStudentDescriptorBuilder().withNusStudentId(duplicateId).build());
 
@@ -618,7 +618,7 @@ public class EditCommandTest {
     @Test
     public void execute_changeIdToIdHeldByAnotherStudent_failure() {
         // the target is one student, and the new ID already belongs to another
-        String idOfCarl = CARL.getNusStudentId().orElseThrow().value;
+        String idOfCarl = CARL.getNusStudentId().orElseThrow().getValue();
         EditCommand command = new EditCommand(targetById("A12345678C"),
                 new EditStudentDescriptorBuilder().withNusStudentId(idOfCarl).build());
 
@@ -679,7 +679,9 @@ public class EditCommandTest {
         assertEquals(expected, editCommand.toString());
     }
 
-    /** Returns the edit command whose target names the student holding {@code nusStudentId}. */
+    /**
+     * Returns the edit command whose target names the student holding {@code nusStudentId}.
+     */
     private static StudentTarget targetById(String nusStudentId) {
         return StudentTarget.byNusStudentId(new NusStudentId(nusStudentId));
     }

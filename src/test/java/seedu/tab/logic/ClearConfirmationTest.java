@@ -99,7 +99,7 @@ public class ClearConfirmationTest {
         }
         assertEquals(ClearCommand.MESSAGE_CANCELLED, logic.execute("no").getFeedbackToUser());
         assertUnchanged();
-        assertTrue(logic.execute("help").isShowHelp());
+        assertTrue(logic.execute("help").isHelpRequested());
     }
 
     @Test
@@ -191,7 +191,9 @@ public class ClearConfirmationTest {
         assertEquals(0, saveCount);
     }
 
-    /** Verifies that no data or filter changed and no storage write occurred. */
+    /**
+     * Verifies that no data or filter changed and no storage write occurred.
+     */
     private void assertUnchanged() throws IOException {
         assertEquals(expectedModel, model);
         assertTrue(model.getFilteredStudentList().isEmpty());

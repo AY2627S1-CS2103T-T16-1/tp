@@ -53,8 +53,8 @@ public class TagTest {
     @Test
     public void constructor_storesTheNormalizedForm() {
         // a tag is a key in a set, so two that look identical must not both be stored
-        assertEquals("Lab 3", new Tag("Lab  3").tagName);
-        assertEquals("Lab 3", new Tag(" Lab 3 ").tagName);
+        assertEquals("Lab 3", new Tag("Lab  3").getTagName());
+        assertEquals("Lab 3", new Tag(" Lab 3 ").getTagName());
         assertEquals(new Tag("Lab 3"), new Tag("Lab\u00A03"));
         assertEquals(new Tag("caf\u00E9"), new Tag("cafe\u200B\u0301"));
 

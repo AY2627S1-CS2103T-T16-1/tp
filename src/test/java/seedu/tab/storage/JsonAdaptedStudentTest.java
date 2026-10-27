@@ -16,12 +16,14 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
+import seedu.tab.commons.util.JsonUtil;
 import seedu.tab.logic.Messages;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.tag.FollowUpFlag;
+import seedu.tab.testutil.StudentBuilder;
 
 public class JsonAdaptedStudentTest {
     private static final String INVALID_NAME = "---"; // no letter or number
@@ -54,7 +56,7 @@ public class JsonAdaptedStudentTest {
     public void toModelType_handEditedEmailSymbols_preservesAddress() throws Exception {
         for (String address : List.of("mei__tan@hotmail.com", "sean.o'brien@example.com", "mei_@example.com")) {
             JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, address, VALID_TAGS, false);
-            assertEquals(address, student.toModelType().getEmail().orElseThrow().value);
+            assertEquals(address, student.toModelType().getEmail().orElseThrow().getValue());
         }
     }
 
@@ -129,7 +131,7 @@ public class JsonAdaptedStudentTest {
         String annotated = "+65 9123 4567 (HP) ext 21";
         JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, annotated, VALID_EMAIL, VALID_TAGS, false);
 
-        assertEquals(annotated, student.toModelType().getPhone().orElseThrow().value);
+        assertEquals(annotated, student.toModelType().getPhone().orElseThrow().getValue());
     }
 
     @Test
@@ -315,7 +317,7 @@ public class JsonAdaptedStudentTest {
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, tags, false);
 
         var loaded = assertDoesNotThrow(student::toModelType);
-        assertTrue(loaded.getTags().stream().anyMatch(tag -> tag.tagName.equals("Needs follow-up soon")));
+        assertTrue(loaded.getTags().stream().anyMatch(tag -> tag.getTagName().equals("Needs follow-up soon")));
     }
 
     @Test
@@ -365,6 +367,15 @@ public class JsonAdaptedStudentTest {
         }
         localPart.append("a".repeat(localPartLength - localPart.length()));
         return localPart + domain;
+    }
+
+    @Test
+    public void serialize_flaggedStudent_preservesFlagKeyAndRoundTrips() throws Exception {
+        JsonAdaptedStudent adapted = new JsonAdaptedStudent(new StudentBuilder(BENSON).withFlag(true).build());
+        String json = JsonUtil.toJsonString(adapted);
+        assertTrue(json.contains("\"flag\" : true"), json);
+        assertFalse(json.contains("isFlagged"), json);
+        assertEquals(adapted.toModelType(), JsonUtil.fromJsonString(json, JsonAdaptedStudent.class).toModelType());
     }
 
 }

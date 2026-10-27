@@ -25,6 +25,7 @@ import seedu.tab.commons.exceptions.IllegalValueException;
  * Converts a Java object instance to JSON and vice versa
  */
 public class JsonUtil {
+    private static final String MESSAGE_NULL_DOCUMENT = "The JSON document must not be null.";
 
     private static final Logger logger = LogsCenter.getLogger(JsonUtil.class);
 
@@ -56,27 +57,31 @@ public class JsonUtil {
     public static <T> Optional<T> readJsonFile(
             Path filePath, Class<T> classOfObjectToDeserialize) throws DataLoadingException {
         requireNonNull(filePath);
-
         if (Files.notExists(filePath)) {
             return Optional.empty();
         }
         logger.info("JSON file " + filePath + " found.");
+        return Optional.of(deserializeDocument(readJsonSource(filePath), filePath, classOfObjectToDeserialize));
+    }
 
-        String jsonSource;
+    private static String readJsonSource(Path filePath) throws DataLoadingException {
         try {
-            jsonSource = FileUtil.readFromFile(filePath);
+            return FileUtil.readFromFile(filePath);
         } catch (IOException e) {
             logger.warning("Error reading from JSON file " + filePath + ": " + e);
             throw new DataLoadingException(JsonParseErrorFormatter.formatIoError(e), e);
         }
+    }
 
+    private static <T> T deserializeDocument(String jsonSource, Path filePath, Class<T> targetClass)
+            throws DataLoadingException {
         try {
-            T jsonFile = fromJsonString(jsonSource, classOfObjectToDeserialize);
-            if (jsonFile == null) {
-                IllegalValueException cause = new IllegalValueException("The JSON document must not be null.");
+            T value = fromJsonString(jsonSource, targetClass);
+            if (value == null) {
+                IllegalValueException cause = new IllegalValueException(MESSAGE_NULL_DOCUMENT);
                 throw new DataLoadingException(cause.getMessage(), cause);
             }
-            return Optional.of(jsonFile);
+            return value;
         } catch (JsonProcessingException e) {
             String errorMessage = JsonParseErrorFormatter.format(e, jsonSource);
             logger.warning("Error parsing JSON file " + filePath + ": " + errorMessage);
@@ -103,9 +108,10 @@ public class JsonUtil {
     /**
      * Saves the Json object to the specified file.
      * Overwrites existing file if it exists, creates a new file if it doesn't.
-     * @param jsonFile cannot be null
-     * @param filePath cannot be null
-     * @throws IOException if there was an error during writing to the file
+     *
+     * @param jsonFile cannot be null.
+     * @param filePath cannot be null.
+     * @throws IOException if there was an error during writing to the file.
      */
     public static <T> void saveJsonFile(T jsonFile, Path filePath) throws IOException {
         requireNonNull(filePath);
@@ -117,8 +123,11 @@ public class JsonUtil {
 
     /**
      * Converts a given string representation of JSON data to an instance of a class
-     * @param <T> The generic type to create an instance of
-     * @return The instance of T with the specified values in the JSON string
+     *
+     * @param <T> The generic type to create an instance of.
+     * @param json The JSON document to read.
+     * @param instanceClass The target class to deserialize.
+     * @return The instance of T with the specified values in the JSON string.
      */
     public static <T> T fromJsonString(String json, Class<T> instanceClass) throws IOException {
         try (JsonParser parser = objectMapper.getFactory().createParser(json)) {
@@ -146,9 +155,10 @@ public class JsonUtil {
 
     /**
      * Converts a given instance of a class into its JSON data string representation
-     * @param instance The T object to be converted into the JSON string
-     * @param <T> The generic type to create an instance of
-     * @return JSON data representation of the given class instance, in string
+     *
+     * @param instance The T object to be converted into the JSON string.
+     * @param <T> The generic type to create an instance of.
+     * @return JSON data representation of the given class instance, in string.
      */
     public static <T> String toJsonString(T instance) throws JsonProcessingException {
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(instance);

@@ -29,6 +29,7 @@ public interface Storage {
 
     /**
      * Saves the given {@link seedu.tab.model.ReadOnlyUserPrefs} to the storage.
+     *
      * @param userPrefs cannot be null.
      * @throws IOException if there was any problem writing to the file.
      */
@@ -49,6 +50,7 @@ public interface Storage {
 
     /**
      * Saves the given {@link ReadOnlyStudentBook} to the storage.
+     *
      * @param studentBook cannot be null.
      * @throws IOException if there was any problem writing to the file.
      */

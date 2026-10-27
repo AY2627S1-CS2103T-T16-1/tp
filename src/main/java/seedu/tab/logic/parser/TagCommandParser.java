@@ -40,7 +40,9 @@ public class TagCommandParser implements Parser<TagCommand> {
         return new TagCommand(target, tag, actionFlag.equals(FLAG_REMOVE_TAG) ? Action.REMOVE : Action.ADD);
     }
 
-    /** Reads one target, retaining index diagnostics and using the shared parser for IDs. */
+    /**
+     * Reads one target, retaining index diagnostics and using the shared parser for IDs.
+     */
     private static StudentTarget parseTarget(FlagArgumentMap arguments) throws ParseException {
         String preamble = arguments.getPreamble().trim();
         if (arguments.getValue(FLAG_NUS_STUDENT_ID).isPresent()) {
@@ -60,7 +62,9 @@ public class TagCommandParser implements Parser<TagCommand> {
         return StudentTarget.byIndex(ParserUtil.parseRequiredIndex(preamble, TagCommand.FIELD_INDEX), preamble);
     }
 
-    /** Adds command-specific guidance when the arguments cannot be read as options. */
+    /**
+     * Adds command-specific guidance when the arguments cannot be read as options.
+     */
     private static FlagArgumentMap tokenize(String args) throws ParseException {
         try {
             return FlagTokenizer.tokenizeWithIndex(args, FLAG_ADD_TAG, FLAG_REMOVE_TAG, FLAG_NUS_STUDENT_ID);

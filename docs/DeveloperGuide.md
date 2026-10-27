@@ -151,7 +151,10 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 How the parsing works:
 * When called upon to parse a command entered by the User, the `StudentBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the command and create an `XYZCommand` object (e.g., `AddCommand`). The `StudentBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
-* A command's arguments are read in two passes: `CommandTokenizer` splits them into tokens, then `FlagTokenizer` sorts those tokens into the `CliFlag` each belongs to and hands back a `FlagArgumentMap`. [How commands read their arguments](#how-commands-read-their-arguments) covers why.
+* `UnknownFlagException` retains the offending option marker separately from its
+message, so command-specific guidance does not depend on error-message wording.
+
+A command's arguments are read in two passes: `CommandTokenizer` splits them into tokens, then `FlagTokenizer` sorts those tokens into the `CliFlag` each belongs to and hands back a `FlagArgumentMap`. [How commands read their arguments](#how-commands-read-their-arguments) covers why.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/model/Model.java)
@@ -228,7 +231,7 @@ command box keeps its own Up/Down history, and help uses its own pager.
 
 ### The help pager
 
-`HelpCommand` returns a command summary and the existing `showHelp` signal.
+`HelpCommand` returns a command summary and the existing `isHelpRequested` signal.
 `MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which
 replaces the whole student page. The hidden page stays intact, so closing help
 restores its filter, previous result and any unfinished command; `CommandBox`
@@ -306,7 +309,7 @@ count beside the name. Its tooltip still lists every hidden tag. A partial
 chip requires room for four characters and an ellipsis, measured in its
 styled font with padding, so a two-letter fragment gives way to the total.
 A shorter tag can still appear in full.
-`TagRow.fittedWidth` reports the space its chosen chips or count actually use,
+`TagRow.computeFittedWidth` reports the space its chosen chips or count actually use,
 so `CardHeadline` returns any unused allocation to the name before laying it
 out. The name requests its full natural width.
 
@@ -438,8 +441,9 @@ need `Logic` to expose it.
 
 The list is an `ObservableList`, so a listener keeps the counts current
 without the panel being told when a command changes anything. The counting
-itself is static and takes a plain `List<Student>`, so it is tested without a
-toolkit; only the rendering needs one.
+lives in `StudentSummary`, which takes a plain `List<Student>` and owns tag
+grouping, representative spelling and count ordering. It is independent of
+JavaFX; `SummaryPanel` observes the displayed list and renders those results.
 
 Tags counted the same are listed alphabetically ignoring case, because a
 reader does not read `Zoo` as coming before `apple`.
@@ -869,7 +873,7 @@ but `isSameStudent` does not: changing whether a student needs a reply does not
 change their identity. The flag is stored as `Optional<FollowUpFlag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
-Tag searches match ordinary tags as parts of their inherited `tagName` values,
+Tag searches match ordinary tags as parts of their `getTagName()` values,
 ignoring case. Follow-up status is selected independently through `-f` or `-nf`, so its
 displayed label never produces a text-field match.
 The student card and command feedback display the same value, while the card
@@ -1004,9 +1008,11 @@ case. It is normalized only so that a number typed with unusual whitespace, or
 wrapped in the invisible marks a chat app puts around a copied one, is stored
 consistently.
 
-`Messages.getErrorMessageForInvalidValue` shortens a rejected value past
+`ValueMessages` in `commons.util` owns the invalid-value template and bounded
+value rendering. Commands access it through `Messages`, while storage uses it
+directly, avoiding a dependency on command-facing logic. It shortens a rejected value past
 `MAX_QUOTED_VALUE_LENGTH` characters so a very long one cannot push the reason
-out of view. It counts characters through `StringUtil.firstCharacters`, as a
+out of view. It counts characters through `StringUtil.getFirstCharacters`, as a
 reader counts them, separating neither an emoji nor a letter from its accent;
 a student card cuts a name or tag with the same helper. Command parsing and
 storage share that message, so both report an invalid value the same way.
@@ -1052,9 +1058,9 @@ appears in full whenever its width permits and widening the card restores what
 a cut hid. There is no character limit.
 
 When space runs out, `CardName` shortens from the middle through
-`UiText.middleShortened`, keeping up to nine characters at the end and
+`UiText.shortenMiddle`, keeping up to nine characters at the end and
 spending the rest of the budget on the opening.
-`StringUtil.firstCharacters` and `lastCharacters` keep characters whole,
+`StringUtil.getFirstCharacters` and `getLastCharacters` keep characters whole,
 combining accents and emoji included. Two names can still coincide once their
 distinguishing text is hidden, so a shortened name carries a tooltip with the
 whole of it, which goes when the name fits again.

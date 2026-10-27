@@ -97,11 +97,11 @@ public class CommandDispatchAndPersistenceTest {
 
         // Help
         CommandResult helpResult = logic.execute(HelpCommand.COMMAND_WORD);
-        assertTrue(helpResult.isShowHelp());
+        assertTrue(helpResult.isHelpRequested());
 
         // Exit
         CommandResult exitResult = logic.execute(ExitCommand.COMMAND_WORD);
-        assertTrue(exitResult.isExit());
+        assertTrue(exitResult.isExitRequested());
     }
 
     @Test
@@ -117,25 +117,25 @@ public class CommandDispatchAndPersistenceTest {
                 "WARNING: Possible duplicate student: John Doe has the same name (John Doe)."));
 
         assertEquals(2, model.getFilteredStudentList().size());
-        assertEquals("John Doe", model.getFilteredStudentList().get(0).getName().fullName);
-        assertEquals("John Doe", model.getFilteredStudentList().get(1).getName().fullName);
+        assertEquals("John Doe", model.getFilteredStudentList().get(0).getName().getFullName());
+        assertEquals("John Doe", model.getFilteredStudentList().get(1).getName().getFullName());
 
         ReadOnlyStudentBook saved = storage.readStudentBook().orElseThrow();
         assertEquals(2, saved.getStudentList().size());
-        assertEquals("John Doe", saved.getStudentList().get(1).getName().fullName);
+        assertEquals("John Doe", saved.getStudentList().get(1).getName().getFullName());
     }
 
     @Test
     public void execute_exitCommand_returnsExitSignal() throws Exception {
         CommandResult result = logic.execute(ExitCommand.COMMAND_WORD);
-        assertTrue(result.isExit());
+        assertTrue(result.isExitRequested());
         assertEquals(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, result.getFeedbackToUser());
     }
 
     @Test
     public void execute_helpCommand_returnsShowHelpSignal() throws Exception {
         CommandResult result = logic.execute(HelpCommand.COMMAND_WORD);
-        assertTrue(result.isShowHelp());
+        assertTrue(result.isHelpRequested());
         assertEquals(HelpCommand.SHOWING_HELP_MESSAGE, result.getFeedbackToUser());
     }
 
@@ -148,13 +148,13 @@ public class CommandDispatchAndPersistenceTest {
 
         ReadOnlyStudentBook readBook = storage.readStudentBook().get();
         assertEquals(1, readBook.getStudentList().size());
-        assertEquals("Bob Choo", readBook.getStudentList().get(0).getName().fullName);
+        assertEquals("Bob Choo", readBook.getStudentList().get(0).getName().getFullName());
 
         logic.execute(DeleteCommand.COMMAND_WORD + " 1");
 
         ReadOnlyStudentBook updatedBook = storage.readStudentBook().get();
         assertEquals(0, updatedBook.getStudentList().size());
         assertFalse(updatedBook.getStudentList().stream()
-                .anyMatch(s -> s.getName().fullName.equals("Bob Choo")));
+                .anyMatch(s -> s.getName().getFullName().equals("Bob Choo")));
     }
 }

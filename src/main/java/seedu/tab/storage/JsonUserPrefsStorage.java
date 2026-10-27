@@ -15,8 +15,13 @@ import seedu.tab.model.UserPrefs;
  */
 public class JsonUserPrefsStorage {
 
-    private Path filePath;
+    private static final String MESSAGE_NULL_SETTINGS = "GUI settings must not be null.";
 
+    private final Path filePath;
+
+    /**
+     * Creates storage for preferences at the given path.
+     */
     public JsonUserPrefsStorage(Path filePath) {
         this.filePath = filePath;
     }
@@ -36,14 +41,15 @@ public class JsonUserPrefsStorage {
     }
 
     /**
-     * Similar to {@link #readUserPrefs()}
+     * Reads preferences from the given path.
+     *
      * @param prefsFilePath location of the data. Cannot be null.
      * @throws DataLoadingException if the file format is not as expected or GUI settings are null.
      */
     public Optional<UserPrefs> readUserPrefs(Path prefsFilePath) throws DataLoadingException {
         Optional<UserPrefs> userPrefs = JsonUtil.readJsonFile(prefsFilePath, UserPrefs.class);
         if (userPrefs.isPresent() && userPrefs.get().getGuiSettings() == null) {
-            IllegalValueException cause = new IllegalValueException("GUI settings must not be null.");
+            IllegalValueException cause = new IllegalValueException(MESSAGE_NULL_SETTINGS);
             throw new DataLoadingException(cause.getMessage(), cause);
         }
         return userPrefs;
@@ -51,6 +57,7 @@ public class JsonUserPrefsStorage {
 
     /**
      * Saves the given {@link seedu.tab.model.ReadOnlyUserPrefs} to the storage.
+     *
      * @param userPrefs cannot be null.
      * @throws IOException if there was any problem writing to the file.
      */

@@ -117,7 +117,9 @@ public class UserGuideExamplesTest {
         assertTrue(guide.contains(reasonForRefusing("add --name \"Betsy Crowe\" --phone 1234567")));
     }
 
-    /** Returns why the parser refuses {@code input}, failing if it accepts it. */
+    /**
+     * Returns why the parser refuses {@code input}, failing if it accepts it.
+     */
     private static String reasonForRefusing(String input) {
         ParseException refusal = assertThrows(ParseException.class, ()
                 -> new StudentBookParser().parseCommand(input));

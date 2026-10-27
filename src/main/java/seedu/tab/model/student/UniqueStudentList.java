@@ -58,7 +58,7 @@ public class UniqueStudentList implements Iterable<Student> {
     public void setStudent(Student target, Student editedStudent) {
         requireAllNonNull(target, editedStudent);
 
-        int index = indexOfReference(target);
+        int index = findReferenceIndex(target);
         if (index == NOT_FOUND) {
             throw new StudentNotFoundException();
         }
@@ -76,7 +76,7 @@ public class UniqueStudentList implements Iterable<Student> {
      */
     public void remove(Student toRemove) {
         requireNonNull(toRemove);
-        int index = indexOfReference(toRemove);
+        int index = findReferenceIndex(toRemove);
         if (index == NOT_FOUND) {
             throw new StudentNotFoundException();
         }
@@ -94,7 +94,7 @@ public class UniqueStudentList implements Iterable<Student> {
      */
     public void setStudents(List<Student> students) {
         requireAllNonNull(students);
-        if (!studentsAreUnique(students)) {
+        if (!hasUniqueStudents(students)) {
             throw new DuplicateStudentException();
         }
 
@@ -140,7 +140,7 @@ public class UniqueStudentList implements Iterable<Student> {
     /**
      * Returns true if {@code students} contains only unique students.
      */
-    private boolean studentsAreUnique(List<Student> students) {
+    private boolean hasUniqueStudents(List<Student> students) {
         for (int i = 0; i < students.size() - 1; i++) {
             for (int j = i + 1; j < students.size(); j++) {
                 if (students.get(i).isSameStudent(students.get(j))) {
@@ -151,7 +151,7 @@ public class UniqueStudentList implements Iterable<Student> {
         return true;
     }
 
-    private int indexOfReference(Student target) {
+    private int findReferenceIndex(Student target) {
         for (int index = 0; index < internalList.size(); index++) {
             if (internalList.get(index) == target) {
                 return index;

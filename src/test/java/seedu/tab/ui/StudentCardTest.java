@@ -7,11 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.tab.ui.FxToolkit.onFxThread;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -55,11 +55,6 @@ public class StudentCardTest {
         FxToolkit.start();
     }
 
-    /** Runs {@code work} on the thread JavaFX requires its nodes to be built on. */
-    private static <T> T onFxThread(Callable<T> work) throws Exception {
-        return FxToolkit.onFxThread(work);
-    }
-
     /**
      * Returns a scene holding {@code root}, dressed in the stylesheet the window uses, so that
      * anything measured is measured in the font the product actually shows.
@@ -70,7 +65,9 @@ public class StudentCardTest {
         return scene;
     }
 
-    /** Returns a scene laid out at the width its dressed root asks for. */
+    /**
+     * Returns a scene laid out at the width its dressed root asks for.
+     */
     private static Scene roomyStyledScene(Region root) {
         Scene scene = new Scene(root);
         dressAndLayOut(root, scene);
@@ -169,7 +166,7 @@ public class StudentCardTest {
                             .anyMatch(text -> text.getText().endsWith(label.getEllipsisString())));
                 }
             }
-            assertEquals(student.getPhone().orElseThrow().value, phone.getText());
+            assertEquals(student.getPhone().orElseThrow().getValue(), phone.getText());
             assertEquals(student.getEmail().orElseThrow().toString(), email.getText());
             assertContactsDoNotOverlap(phone, email);
             layOutAt(root, widthForAllContacts(root));
@@ -413,7 +410,9 @@ public class StudentCardTest {
         assertHorizontallyInside(measured[0], measured[3], "email");
     }
 
-    /** Verifies that a field has visible width and is drawn inside its details container. */
+    /**
+     * Verifies that a field has visible width and is drawn inside its details container.
+     */
     private static void assertHorizontallyInside(Bounds container, Bounds field, String fieldName) {
         assertTrue(field.getWidth() > 0, "the " + fieldName + " has no visible width");
         assertTrue(field.getMinX() >= container.getMinX() - 0.5,
@@ -653,7 +652,7 @@ public class StudentCardTest {
 
         for (String whole : names) {
             Student student = studentNamed(whole);
-            assertTrue(student.getName().fullName.indexOf('\u0301') >= 0,
+            assertTrue(student.getName().getFullName().indexOf('\u0301') >= 0,
                     "the stored name holds no mark of its own, so this would prove nothing");
             for (String drawn : drawnAcrossNarrowLines(student)) {
                 assertTrue(holdsNoStrandedMark(drawn),
@@ -692,7 +691,9 @@ public class StudentCardTest {
         return name;
     }
 
-    /** Returns a card laid out at the width its dressed content asks for. */
+    /**
+     * Returns a card laid out at the width its dressed content asks for.
+     */
     private static Region cardLaidOutRoomily(Student student, int displayedIndex) {
         Region root = new StudentCard(student, displayedIndex).getRoot();
         roomyStyledScene(root);
@@ -758,13 +759,17 @@ public class StudentCardTest {
         });
     }
 
-    /** Draws {@code root} again at {@code width}, as a narrowing window would. */
+    /**
+     * Draws {@code root} again at {@code width}, as a narrowing window would.
+     */
     private static void layOutAt(Region root, double width) {
         root.resize(width, root.getHeight());
         root.layout();
     }
 
-    /** Returns what a card draws of {@code student}'s name at each width of the sweep. */
+    /**
+     * Returns what a card draws of {@code student}'s name at each width of the sweep.
+     */
     private static List<String> drawnAcrossNarrowLines(Student student) throws Exception {
         return onFxThread(() -> {
             Label name = nameLaidOutRoomily(student);
@@ -794,7 +799,9 @@ public class StudentCardTest {
         return widths;
     }
 
-    /** Returns true if no combining mark in {@code text} has been stranded from its letter. */
+    /**
+     * Returns true if no combining mark in {@code text} has been stranded from its letter.
+     */
     private static boolean holdsNoStrandedMark(String text) {
         for (int at = 0; at < text.length(); at++) {
             boolean isStranded = Character.getType(text.charAt(at)) == Character.NON_SPACING_MARK
@@ -950,7 +957,7 @@ public class StudentCardTest {
         });
 
         assertEquals(List.of(cut.get(0), cut.get(0), cut.get(0)), cut);
-        assertEquals(student.getName().fullName, cut.get(0));
+        assertEquals(student.getName().getFullName(), cut.get(0));
     }
 
     @Test
@@ -1049,7 +1056,9 @@ public class StudentCardTest {
         assertEquals(whole, shown.getTooltip().getText());
     }
 
-    /** Returns true if {@code text} holds no half of a character whose other half is gone. */
+    /**
+     * Returns true if {@code text} holds no half of a character whose other half is gone.
+     */
     private static boolean holdsOnlyWholeCharacters(String text) {
         for (int at = 0; at < text.length(); at++) {
             char character = text.charAt(at);

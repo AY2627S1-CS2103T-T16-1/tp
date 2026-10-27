@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.tab.ui.FxToolkit.onFxThread;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -38,9 +38,6 @@ public class StudentListPanelTest {
         FxToolkit.start();
     }
 
-    private static <T> T onFxThread(Callable<T> work) throws Exception {
-        return FxToolkit.onFxThread(work);
-    }
 
     @Test
     public void cells_reusedAfterStudent_clearDetailsAndSupportUnspecifiedWidth() throws Exception {
@@ -160,8 +157,8 @@ public class StudentListPanelTest {
             // a phone number cut in half is of no use, so it keeps its width whatever else
             // the card has to give up
             Label phone = (Label) root.lookup("#phone");
-            boolean phoneWhole = phone.getWidth() >= phone.prefWidth(-1) - 0.5;
-            assertTrue(phoneWhole, "the phone was cut to " + phone.getWidth()
+            boolean isPhoneWhole = phone.getWidth() >= phone.prefWidth(-1) - 0.5;
+            assertTrue(isPhoneWhole, "the phone was cut to " + phone.getWidth()
                     + " of the " + phone.prefWidth(-1) + " it needs");
             return cellsFit && pillShows;
         });

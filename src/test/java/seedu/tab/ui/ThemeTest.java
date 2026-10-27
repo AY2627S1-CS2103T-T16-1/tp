@@ -38,9 +38,9 @@ public class ThemeTest {
     private static final List<String> INTENDED_STYLESHEETS = List.of("DarkTheme.css", "Extensions.css");
 
     /**
-     * A colour written in place of a palette name, which the palette exists to prevent. Any
+     * A color written in place of a palette name, which the palette exists to prevent. Any
      * property can carry one, not only the ones named "color": a rule setting
-     * {@code -fx-text-fill} or {@code -fx-fill} paints just as hard. A colour can be written
+     * {@code -fx-text-fill} or {@code -fx-fill} paints just as hard. A color can be written
      * as a hex code, as a function, or by name.
      */
     private static final Pattern COLOUR_LITERAL = Pattern.compile(
@@ -48,7 +48,9 @@ public class ThemeTest {
             + "|\\b(white|black|red|green|blue|yellow|orange|purple|pink|brown"
             + "|gr[ae]y|silver|navy|teal|cyan|magenta|maroon|olive|lime|aqua|fuchsia)\\b)");
 
-    /** A palette name, wherever it is defined or used. */
+    /**
+     * A palette name, wherever it is defined or used.
+     */
     private static final Pattern PALETTE_NAME = Pattern.compile("-tab-[a-z0-9-]+");
 
     @Test
@@ -80,7 +82,7 @@ public class ThemeTest {
     @Test
     public void darkTheme_definesEveryPaletteNameItUses() throws IOException {
         // a name that is not defined resolves to nothing and JavaFX drops the rule without a
-        // word, so a slip of a letter takes a colour off the window silently
+        // word, so a slip of a letter takes a color off the window silently
         Set<String> defined = definedPaletteNames();
         Set<String> used = new TreeSet<>(usedPaletteNames());
         used.removeAll(defined);
@@ -207,7 +209,9 @@ public class ThemeTest {
         return properties;
     }
 
-    /** The palette names the stylesheet defines, which is what the top block is for. */
+    /**
+     * The palette names the stylesheet defines, which is what the top block is for.
+     */
     private static Set<String> definedPaletteNames() throws IOException {
         String css = Files.readString(DARK_THEME, StandardCharsets.UTF_8);
         String palette = css.substring(0, css.indexOf('}'));
@@ -216,7 +220,9 @@ public class ThemeTest {
                 .collect(Collectors.toCollection(TreeSet::new));
     }
 
-    /** The palette names the rules below the palette refer to. */
+    /**
+     * The palette names the rules below the palette refer to.
+     */
     private static Set<String> usedPaletteNames() throws IOException {
         String css = Files.readString(DARK_THEME, StandardCharsets.UTF_8);
         String belowThePalette = css.substring(css.indexOf('}') + 1);
@@ -227,9 +233,9 @@ public class ThemeTest {
 
     @Test
     public void everyStylesheet_namesEveryColourRatherThanRepeatingIt() throws IOException {
-        // every stylesheet the window loads, not only the main one: a looked-up colour is
+        // every stylesheet the window loads, not only the main one: a looked-up color is
         // resolved against the node it is used on rather than the file it was written in, so
-        // they all share one palette and a colour written into any of them escapes it
+        // they all share one palette and a color written into any of them escapes it
         List<String> literals = new ArrayList<>();
         for (Path stylesheet : List.of(DARK_THEME, EXTENSIONS)) {
             String css = Files.readString(stylesheet, StandardCharsets.UTF_8);
@@ -246,7 +252,9 @@ public class ThemeTest {
                 "these rules set a colour without going through the palette: " + literals);
     }
 
-    /** Pulls the matched text out, so a failure names the rules at fault. */
+    /**
+     * Pulls the matched text out, so a failure names the rules at fault.
+     */
     private static final class MatchResultText {
         private static String of(java.util.regex.MatchResult result) {
             return result.group().trim();

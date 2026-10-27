@@ -23,12 +23,16 @@ import seedu.tab.commons.util.ToStringBuilder;
  * Unicode decimal digits compared by their numeric values.
  */
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
-    /** Characters permitted in a phone keyword; digit presence is checked after normalization. */
+    /**
+     * Characters permitted in a phone keyword; digit presence is checked after normalization.
+     */
     private static final Pattern PHONE_KEYWORD = Pattern.compile("(?U)[\\p{Nd}\\s+().-]++");
 
-    /** The student field in which a search term must occur. */
+    /**
+     * The student field in which a search term must occur.
+     */
     public enum Field {
-        NAME((student, keyword) -> StringUtil.normalizeNameForComparison(student.getName().fullName)
+        NAME((student, keyword) -> StringUtil.normalizeNameForComparison(student.getName().getFullName())
                 .contains(StringUtil.normalizeNameForComparison(keyword))),
         NUS_STUDENT_ID((student, keyword) -> StringUtil.containsIgnoreCase(
                 student.getNusStudentId().map(NusStudentId::toString).orElse(""), keyword)),
@@ -52,12 +56,16 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     private final Map<Field, List<String>> keywordsByField;
     private final Optional<Boolean> followUp;
 
-    /** Creates a predicate requiring every term to match its selected field. */
+    /**
+     * Creates a predicate requiring every term to match its selected field.
+     */
     public DetailsContainsKeywordsPredicate(Map<Field, List<String>> keywordsByField) {
         this(keywordsByField, Optional.empty());
     }
 
-    /** Creates a predicate combining field terms with an optional follow-up status. */
+    /**
+     * Creates a predicate combining field terms with an optional follow-up status.
+     */
     public DetailsContainsKeywordsPredicate(Map<Field, List<String>> keywordsByField, Optional<Boolean> followUp) {
         this.followUp = requireNonNull(followUp);
         this.keywordsByField = new EnumMap<>(Field.class);
@@ -83,7 +91,7 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     }
 
     private static boolean matchesPhone(Phone phone, String keyword) {
-        return StringUtil.containsIgnoreCase(phone.value, keyword)
+        return StringUtil.containsIgnoreCase(phone.getValue(), keyword)
                 || matchesPhoneByDigits(phone, keyword);
     }
 
@@ -103,7 +111,7 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     }
 
     private static boolean matchesAnyTag(Student student, String keyword) {
-        return student.getTags().stream().anyMatch(tag -> StringUtil.containsIgnoreCase(tag.tagName, keyword));
+        return student.getTags().stream().anyMatch(tag -> StringUtil.containsIgnoreCase(tag.getTagName(), keyword));
     }
 
     @Override

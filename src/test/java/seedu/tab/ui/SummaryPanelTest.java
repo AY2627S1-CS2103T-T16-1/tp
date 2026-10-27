@@ -3,11 +3,11 @@ package seedu.tab.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.tab.ui.FxToolkit.onFxThread;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -28,6 +28,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import seedu.tab.model.student.Student;
+import seedu.tab.model.util.StudentSummary;
 import seedu.tab.testutil.StudentBuilder;
 
 /**
@@ -56,9 +57,6 @@ public class SummaryPanelTest {
         FxToolkit.start();
     }
 
-    private static <T> T onFxThread(Callable<T> work) throws Exception {
-        return FxToolkit.onFxThread(work);
-    }
 
     /**
      * Returns a scene holding {@code root}, dressed in the stylesheet the window uses, so
@@ -208,7 +206,9 @@ public class SummaryPanelTest {
         });
     }
 
-    /** Observes the application handler before JavaFX applies its own platform-dependent bindings. */
+    /**
+     * Observes the application handler before JavaFX applies its own platform-dependent bindings.
+     */
     private static void assertPageKeyIgnored(ScrollPane tags, KeyEvent event) {
         double before = tags.getVvalue();
         AtomicBoolean delivered = new AtomicBoolean();
@@ -287,7 +287,7 @@ public class SummaryPanelTest {
                 tagged("Bob", true, "CS2103T"),
                 tagged("Cara", false, "CS2103T", "T1", "Lab 3"));
 
-        assertEquals(Map.of("CS2103T", 3, "T1", 2, "Lab 3", 1), SummaryPanel.countByTag(students));
+        assertEquals(Map.of("CS2103T", 3, "T1", 2, "Lab 3", 1), StudentSummary.countByTag(students));
     }
 
     @Test
@@ -299,19 +299,19 @@ public class SummaryPanelTest {
 
         // a set would let equally used tags swap places between runs
         assertEquals(List.of("CS2103T", "T1", "T3"),
-                List.copyOf(SummaryPanel.countByTag(students).keySet()));
+                List.copyOf(StudentSummary.countByTag(students).keySet()));
     }
 
     @Test
     public void countByTag_noStudents_isEmpty() {
-        assertTrue(SummaryPanel.countByTag(List.of()).isEmpty());
+        assertTrue(StudentSummary.countByTag(List.of()).isEmpty());
     }
 
     @Test
     public void countByTag_studentWithoutTags_contributesNothing() {
         List<Student> students = List.of(tagged("Alice", false), tagged("Bob", false, "T1"));
 
-        assertEquals(Map.of("T1", 1), SummaryPanel.countByTag(students));
+        assertEquals(Map.of("T1", 1), StudentSummary.countByTag(students));
     }
 
     @Test
@@ -319,12 +319,12 @@ public class SummaryPanelTest {
         List<Student> students = List.of(
                 tagged("Alice", true), tagged("Bob", false), tagged("Cara", true));
 
-        assertEquals(2, SummaryPanel.countFlagged(students));
+        assertEquals(2, StudentSummary.countFlagged(students));
     }
 
     @Test
     public void countFlagged_noStudents_isZero() {
-        assertEquals(0, SummaryPanel.countFlagged(List.of()));
+        assertEquals(0, StudentSummary.countFlagged(List.of()));
     }
 
     @Test
@@ -384,7 +384,7 @@ public class SummaryPanelTest {
                 new StudentBuilder().withName("C").withTags("Mango").build());
 
         assertEquals(List.of("apple", "Mango", "Zoo"),
-                List.copyOf(SummaryPanel.countByTag(students).keySet()));
+                List.copyOf(StudentSummary.countByTag(students).keySet()));
     }
 
     @Test
@@ -395,7 +395,7 @@ public class SummaryPanelTest {
                 tagged("Cai Wei", false, "T1"));
 
         // tag and find make T1 and t1 one tag, so the panel should give the size of that group
-        assertEquals(Map.of("T1", 3), SummaryPanel.countByTag(students));
+        assertEquals(Map.of("T1", 3), StudentSummary.countByTag(students));
     }
 
     @Test
@@ -406,7 +406,7 @@ public class SummaryPanelTest {
                 tagged("Cai Wei", false, "t1"));
 
         // the row reads as most of the group typed the tag, whichever spelling that is
-        assertEquals(Map.of("t1", 3), SummaryPanel.countByTag(students));
+        assertEquals(Map.of("t1", 3), StudentSummary.countByTag(students));
     }
 
     @Test
@@ -415,7 +415,7 @@ public class SummaryPanelTest {
                 tagged("Ann Lee", false, "lab 3"),
                 tagged("Ben Tan", false, "Lab 3"));
 
-        assertEquals(Map.of("Lab 3", 2), SummaryPanel.countByTag(students));
+        assertEquals(Map.of("Lab 3", 2), StudentSummary.countByTag(students));
     }
 
     @Test
@@ -425,9 +425,9 @@ public class SummaryPanelTest {
                 tagged("Ben Tan", false, "t1", "lab 3"),
                 tagged("Cai Wei", false, "T1"));
 
-        assertEquals(Map.of("T1", 3, "Lab 3", 2), SummaryPanel.countByTag(students));
+        assertEquals(Map.of("T1", 3, "Lab 3", 2), StudentSummary.countByTag(students));
         assertEquals(List.of("T1", "Lab 3"),
-                List.copyOf(SummaryPanel.countByTag(students).keySet()));
+                List.copyOf(StudentSummary.countByTag(students).keySet()));
     }
 
     @Test
@@ -436,7 +436,7 @@ public class SummaryPanelTest {
                 tagged("Ann Lee", false, "T1", "t1"),
                 tagged("Ben Tan", false, "T1"));
 
-        assertEquals(Map.of("T1", 2), SummaryPanel.countByTag(students));
+        assertEquals(Map.of("T1", 2), StudentSummary.countByTag(students));
     }
 
     @Test
@@ -449,14 +449,14 @@ public class SummaryPanelTest {
                 tagged("Ann Lee", false, CAPITAL_SIGMA),
                 tagged("Ben Tan", false, FINAL_SIGMA));
 
-        assertEquals(Map.of(CAPITAL_SIGMA, 2), SummaryPanel.countByTag(students));
+        assertEquals(Map.of(CAPITAL_SIGMA, 2), StudentSummary.countByTag(students));
     }
 
     @Test
     public void countByTag_oneStudentCarryingTwoSuchVariants_countsThatStudentOnce() {
         List<Student> students = List.of(tagged("Ann Lee", false, CAPITAL_SIGMA, FINAL_SIGMA));
 
-        assertEquals(Map.of(CAPITAL_SIGMA, 1), SummaryPanel.countByTag(students));
+        assertEquals(Map.of(CAPITAL_SIGMA, 1), StudentSummary.countByTag(students));
     }
 
     @Test

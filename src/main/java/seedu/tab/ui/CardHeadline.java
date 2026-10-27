@@ -27,26 +27,26 @@ public class CardHeadline extends Pane {
 
     @Override
     protected double computePrefWidth(double height) {
-        read();
+        initializeChildren();
         return name.prefWidth(height) + SPACING + tags.prefWidth(height);
     }
 
     @Override
     protected double computePrefHeight(double width) {
-        read();
+        initializeChildren();
         return Math.max(name.prefHeight(width), tags.prefHeight(width));
     }
 
     @Override
     protected double computeMinWidth(double height) {
-        read();
+        initializeChildren();
         return name.minWidth(height) + SPACING + tags.minWidth(height);
     }
 
     @Override
     protected void layoutChildren() {
-        read();
-        double forTheTags = tags.fittedWidth(roomForTheTags());
+        initializeChildren();
+        double forTheTags = tags.computeFittedWidth(computeRoomForTags());
         double leftOver = Math.max(0, getWidth() - forTheTags - (forTheTags > 0 ? SPACING : 0));
         // the name is drawn no wider than its own text, so the tags sit against the name
         // rather than out at the edge of whatever room the line happens to have
@@ -60,7 +60,7 @@ public class CardHeadline extends Pane {
      * Returns how much of the row the tags are drawn in: what they ask for while the name has
      * room for all of itself, and enough for one chip to be read once it has not.
      */
-    private double roomForTheTags() {
+    private double computeRoomForTags() {
         double wanted = tags.prefWidth(-1);
         if (wanted == 0) {
             return 0;
@@ -87,15 +87,15 @@ public class CardHeadline extends Pane {
      * rather than by the order they were written in, so that the row still lays itself out
      * if the two are ever swapped round in the layout file.
      */
-    private void read() {
+    private void initializeChildren() {
         if (name != null) {
             return;
         }
-        name = firstOf(Label.class);
-        tags = firstOf(TagRow.class);
+        name = findFirstChild(Label.class);
+        tags = findFirstChild(TagRow.class);
     }
 
-    private <T> T firstOf(Class<T> kind) {
+    private <T> T findFirstChild(Class<T> kind) {
         return getChildren().stream()
                 .filter(kind::isInstance)
                 .map(kind::cast)

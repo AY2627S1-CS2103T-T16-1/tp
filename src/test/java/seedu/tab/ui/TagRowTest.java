@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.tab.ui.FxToolkit.onFxThread;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -28,11 +28,6 @@ public class TagRowTest {
     @BeforeAll
     public static void startToolkit() throws Exception {
         FxToolkit.start();
-    }
-
-    /** Runs {@code work} on the thread JavaFX requires its nodes to be built on. */
-    private static <T> T onFxThread(Callable<T> work) throws Exception {
-        return FxToolkit.onFxThread(work);
     }
 
     /**
@@ -269,7 +264,9 @@ public class TagRowTest {
                 .toList();
     }
 
-    /** What {@code label} actually draws, read from the text node inside it. */
+    /**
+     * What {@code label} actually draws, read from the text node inside it.
+     */
     private static String drawnTextOf(Label label) {
         return label.lookupAll(".text").stream()
                 .filter(Text.class::isInstance)
@@ -380,7 +377,9 @@ public class TagRowTest {
                 "the chip was stretched to " + chip.getWidth());
     }
 
-    /** Returns true if every chip the row shows is drawn within the row. */
+    /**
+     * Returns true if every chip the row shows is drawn within the row.
+     */
     private static boolean drawnInside(TagRow row) {
         return row.getChildrenUnmodifiable().stream()
                 .filter(Node::isVisible)

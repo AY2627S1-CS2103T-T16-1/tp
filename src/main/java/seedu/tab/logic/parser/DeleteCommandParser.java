@@ -40,7 +40,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
      * first named to the user, so that the part to remove is clear, while a token spelled the
      * way an option is spelled takes the usage message, which shows every form delete reads.
      *
-     * @throws ParseException if the user input does not conform to the expected format
+     * @throws ParseException if the user input does not conform to the expected format.
      */
     public DeleteCommand parse(String args) throws ParseException {
         requireNonNull(args);
@@ -55,7 +55,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
             return new DeleteCommand(readNusStudentIdTarget(tokens.get(1).value()));
         }
         if (tokens.stream().noneMatch(DeleteCommandParser::looksLikeOption)) {
-            throw new ParseException(extraneousValueMessage(tokens));
+            throw new ParseException(formatExtraneousValueMessage(tokens));
         }
         throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
     }
@@ -102,7 +102,9 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
         return StudentTarget.byNusStudentId(ParserUtil.parseNusStudentId(value));
     }
 
-    /** Returns true if {@code token} is one of the markers that name the NUS Student ID option. */
+    /**
+     * Returns true if {@code token} is one of the markers that name the NUS Student ID option.
+     */
     private static boolean isNusStudentIdFlag(Token token) {
         return !token.isQuoted() && FLAG_NUS_STUDENT_ID.getMarkers().contains(token.value());
     }
@@ -131,7 +133,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
      * and {@code delete} takes none: telling a user to put the value after an option suggests
      * a command delete cannot run.
      */
-    private static String extraneousValueMessage(List<Token> tokens) {
+    private static String formatExtraneousValueMessage(List<Token> tokens) {
         List<Token> values = tokens.subList(1, tokens.size());
         return String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX_ONLY, DeleteCommand.FIELD_INDEX,
                 Messages.shorten(String.join(" ", values.stream().map(Token::value).toList())),

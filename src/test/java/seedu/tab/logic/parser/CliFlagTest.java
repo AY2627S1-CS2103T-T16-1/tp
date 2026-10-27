@@ -21,7 +21,7 @@ public class CliFlagTest {
     public void markerOnlyFlag_labelIsJustTheMarkerAndTakesNoValue() {
         CliFlag markerOnly = new CliFlag("-f");
         assertEquals("-f", markerOnly.getLabel());
-        assertFalse(markerOnly.takesValue());
+        assertFalse(markerOnly.isValueRequired());
     }
 
     @Test
@@ -53,7 +53,7 @@ public class CliFlagTest {
 
     @Test
     public void valueTakingFlag_takesValue() {
-        assertTrue(new CliFlag("-e", "EMAIL").takesValue());
+        assertTrue(new CliFlag("-e", "EMAIL").isValueRequired());
     }
 
     @Test
@@ -64,7 +64,7 @@ public class CliFlagTest {
         assertEquals("-e/--email", valueTaking.getMarkerSummary());
         assertEquals("-e EMAIL", valueTaking.getLabel());
         assertEquals("--email EMAIL", valueTaking.getLabel("--email"));
-        assertTrue(valueTaking.takesValue());
+        assertTrue(valueTaking.isValueRequired());
     }
 
     @Test
@@ -75,7 +75,7 @@ public class CliFlagTest {
         assertEquals("--id/-i", valueTaking.getMarkerSummary());
         assertEquals("--id NUS_STUDENT_ID", valueTaking.getLabel());
         assertEquals("-i NUS_STUDENT_ID", valueTaking.getLabel("-i"));
-        assertTrue(valueTaking.takesValue());
+        assertTrue(valueTaking.isValueRequired());
     }
 
     @Test

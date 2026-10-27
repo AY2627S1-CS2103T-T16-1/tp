@@ -232,7 +232,9 @@ public class HelpPageTest {
                 "help line wraps at minimum width: " + line);
     }
 
-    /** Returns the reference as one string, joined back from the coloured spans. */
+    /**
+     * Returns the reference as one string, joined back from the colored spans.
+     */
     private static String textOf(TextFlow flow) {
         StringBuilder whole = new StringBuilder();
         for (Node node : flow.getChildrenUnmodifiable()) {
@@ -241,7 +243,9 @@ public class HelpPageTest {
         return whole.toString();
     }
 
-    /** Returns the font the spans share, which is the font one line of the block is set in. */
+    /**
+     * Returns the font the spans share, which is the font one line of the block is set in.
+     */
     private static Font spanFont(TextFlow flow) {
         return ((Text) flow.getChildrenUnmodifiable().get(0)).getFont();
     }

@@ -44,7 +44,7 @@ public class EditCommandParser implements Parser<EditCommand> {
      * displayed list, or an NUS Student ID that opens with a letter. The separate
      * {@code --target-id} option accepts any valid ID while {@code --id} sets the ID field.
      *
-     * @throws ParseException if the user input does not conform to the expected format
+     * @throws ParseException if the user input does not conform to the expected format.
      */
     public EditCommand parse(String args) throws ParseException {
         FlagArgumentMap arguments = FlagTokenizer.tokenizeWithIndex(
@@ -67,7 +67,9 @@ public class EditCommandParser implements Parser<EditCommand> {
         return new EditCommand(target, descriptor);
     }
 
-    /** Reads exactly one target without confusing ID selection with an ID field edit. */
+    /**
+     * Reads exactly one target without confusing ID selection with an ID field edit.
+     */
     private static StudentTarget parseTarget(FlagArgumentMap arguments) throws ParseException {
         if (arguments.getValue(FLAG_TARGET_ID).isPresent()) {
             if (!arguments.getPreamble().isBlank()) {
@@ -112,7 +114,9 @@ public class EditCommandParser implements Parser<EditCommand> {
         return descriptor;
     }
 
-    /** Describes an explicit clear or a validated replacement, collecting any rejected value. */
+    /**
+     * Describes an explicit clear or a validated replacement, collecting any rejected value.
+     */
     private static <T> void parseClearableField(ParseProblems problems, String value,
             ParseProblems.ValueParser<T> parser, Runnable clear, Consumer<T> set) {
         String trimmedValue = value.trim();

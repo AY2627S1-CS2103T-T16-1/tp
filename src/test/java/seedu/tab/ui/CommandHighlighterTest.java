@@ -18,7 +18,9 @@ import seedu.tab.ui.CommandHighlighter.Span;
 
 public class CommandHighlighterTest {
 
-    /** The kinds in order, with the runs of whitespace left out, which carry no colour. */
+    /**
+     * The kinds in order, with the runs of whitespace left out, which carry no color.
+     */
     private static List<Kind> kindsOf(String command) {
         return CommandHighlighter.highlight(command).stream()
                 .map(Span::kind)
@@ -26,7 +28,9 @@ public class CommandHighlighterTest {
                 .toList();
     }
 
-    /** Everything typed must come back, or the coloured line would not read as it was typed. */
+    /**
+     * Everything typed must come back, or the colored line would not read as it was typed.
+     */
     private static String rejoined(String command) {
         return CommandHighlighter.highlight(command).stream().map(Span::text)
                 .reduce("", String::concat);
@@ -88,7 +92,7 @@ public class CommandHighlighterTest {
 
     @Test
     public void highlight_unclosedQuote_coloursWhatIsThere() {
-        // half-typed commands are ordinary here: the parser complains, the colouring does not
+        // half-typed commands are ordinary here: the parser complains, the coloring does not
         assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("add \"Siti Nur-Aisyah"));
     }
 
@@ -131,7 +135,7 @@ public class CommandHighlighterTest {
     @Test
     public void highlight_aBackslashBeforeASpace_endsTheTokenAsTheParserDoes() {
         // a backslash escapes only the quote and another backslash, so this space still ends
-        // the token however it is coloured
+        // the token however it is colored
         assertEquals(List.of(COMMAND_WORD, VALUE, VALUE), kindsOf("add a\\ b"));
     }
 
@@ -188,13 +192,13 @@ public class CommandHighlighterTest {
     @Test
     public void highlight_markerWrittenWithQuotesOrEscapes_isLeftWhole() {
         // a quote or a backslash moves the equals sign the parser counts to, so rather than
-        // split such a word in the wrong place the colouring leaves it alone
+        // split such a word in the wrong place the coloring leaves it alone
         assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("add --ta\"g\"=x"));
         assertEquals(List.of(COMMAND_WORD, OPTION), kindsOf("add --ta\\\\g=x"));
     }
 
     /**
-     * Returns how many tokens the colouring claims the arguments hold, counting an option
+     * Returns how many tokens the coloring claims the arguments hold, counting an option
      * and the value attached to it by an equals sign as the one token they were typed as.
      */
     private static long argumentTokensOf(String command) {
@@ -217,7 +221,7 @@ public class CommandHighlighterTest {
 
     @Test
     public void highlight_everyCommand_breaksWhereTheParserDoes() throws Exception {
-        // the colouring tells the User where one token ends and the next begins, so it has to
+        // the coloring tells the User where one token ends and the next begins, so it has to
         // break a command in the same places the parser does: the command word at the first
         // separator, and the arguments after it the way the tokenizer splits them
         for (String command : List.of("list", "add John -p 123", "add \"Siti Nur-Aisyah\"",
@@ -231,7 +235,9 @@ public class CommandHighlighterTest {
         }
     }
 
-    /** Returns where the parser ends the command word, which is at the first separator. */
+    /**
+     * Returns where the parser ends the command word, which is at the first separator.
+     */
     private static int endOfCommandWord(String command) {
         for (int index = 0; index < command.length(); index++) {
             if (StringUtil.isWhitespace(command.charAt(index))) {

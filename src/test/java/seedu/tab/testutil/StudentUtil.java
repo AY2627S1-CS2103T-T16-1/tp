@@ -33,15 +33,15 @@ public class StudentUtil {
      */
     public static String getStudentDetails(Student student) {
         StringBuilder sb = new StringBuilder();
-        sb.append(quoted(student.getName().fullName)).append(" ");
+        sb.append(quoted(student.getName().getFullName())).append(" ");
         student.getPhone().ifPresent(phone ->
-                sb.append(FLAG_PHONE).append(" ").append(quoted(phone.value)).append(" "));
+                sb.append(FLAG_PHONE).append(" ").append(quoted(phone.getValue())).append(" "));
         student.getEmail().ifPresent(email ->
-                sb.append(FLAG_EMAIL).append(" ").append(quoted(email.value)).append(" "));
+                sb.append(FLAG_EMAIL).append(" ").append(quoted(email.getValue())).append(" "));
         student.getNusStudentId().ifPresent(nusStudentId ->
-                sb.append(FLAG_NUS_STUDENT_ID).append(" ").append(quoted(nusStudentId.value)).append(" "));
+                sb.append(FLAG_NUS_STUDENT_ID).append(" ").append(quoted(nusStudentId.getValue())).append(" "));
         student.getTags().forEach(tag ->
-                sb.append(FLAG_TAG).append(" ").append(quoted(tag.tagName)).append(" "));
+                sb.append(FLAG_TAG).append(" ").append(quoted(tag.getTagName())).append(" "));
         if (student.isFlagged()) {
             sb.append(FLAG_FOLLOW_UP).append(" ");
         }
@@ -60,17 +60,17 @@ public class StudentUtil {
     public static String getEditStudentDescriptorDetails(EditStudentDescriptor descriptor) {
         StringBuilder sb = new StringBuilder();
         descriptor.getName().ifPresent(name ->
-                sb.append(FLAG_NAME).append(" ").append(quoted(name.fullName)).append(" "));
+                sb.append(FLAG_NAME).append(" ").append(quoted(name.getFullName())).append(" "));
         if (descriptor.isPhoneEdited()) {
-            String phone = descriptor.getPhone().map(value -> value.value).orElse("");
+            String phone = descriptor.getPhone().map(value -> value.getValue()).orElse("");
             sb.append(FLAG_PHONE).append(" ").append(quoted(phone)).append(" ");
         }
         if (descriptor.isEmailEdited()) {
-            String email = descriptor.getEmail().map(value -> value.value).orElse("");
+            String email = descriptor.getEmail().map(value -> value.getValue()).orElse("");
             sb.append(FLAG_EMAIL).append(" ").append(quoted(email)).append(" ");
         }
         if (descriptor.isNusStudentIdEdited()) {
-            String nusStudentId = descriptor.getNusStudentId().map(value -> value.value).orElse("");
+            String nusStudentId = descriptor.getNusStudentId().map(value -> value.getValue()).orElse("");
             sb.append(FLAG_NUS_STUDENT_ID).append(" ").append(quoted(nusStudentId)).append(" ");
         }
         if (descriptor.getTags().isPresent()) {
@@ -80,7 +80,7 @@ public class StudentUtil {
                 sb.append(FLAG_TAG).append(" \"\" ");
             } else {
                 tags.forEach(tag ->
-                        sb.append(FLAG_TAG).append(" ").append(quoted(tag.tagName)).append(" "));
+                        sb.append(FLAG_TAG).append(" ").append(quoted(tag.getTagName())).append(" "));
             }
         }
         descriptor.getFlagged().ifPresent(isFlagged ->

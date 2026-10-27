@@ -14,7 +14,7 @@ public class Index {
     private final int zeroBasedIndex;
 
     /**
-     * Index can only be created by calling {@link Index#fromZeroBased(int)} or
+     * Creates an index only through {@link Index#fromZeroBased(int)} or
      * {@link Index#fromOneBased(int)}.
      */
     private Index(int zeroBasedIndex) {

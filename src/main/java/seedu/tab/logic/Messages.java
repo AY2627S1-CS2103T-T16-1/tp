@@ -2,6 +2,7 @@ package seedu.tab.logic;
 
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 
 import java.util.Comparator;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import seedu.tab.commons.util.StringUtil;
+import seedu.tab.commons.util.ValueMessages;
 import seedu.tab.model.student.Student;
 import seedu.tab.model.tag.Tag;
 
@@ -34,9 +36,9 @@ public class Messages {
     public static final String MESSAGE_STUDENTS_FOUND_OVERVIEW = "Found %1$d student%2$s.";
     public static final String MESSAGE_DUPLICATE_OPTIONS = "Options given more than once: ";
     public static final String MESSAGE_MISSING_FIELDS = "Missing required field(s): %1$s";
-    public static final String MESSAGE_INVALID_VALUE = "%1$s \"%2$s\" is not valid: %3$s";
+    public static final String MESSAGE_INVALID_VALUE = ValueMessages.MESSAGE_INVALID_VALUE;
     /** How much of a rejected value is quoted back, so that a long one cannot hide the reason. */
-    public static final int MAX_QUOTED_VALUE_LENGTH = 60;
+    public static final int MAX_QUOTED_VALUE_LENGTH = ValueMessages.MAX_QUOTED_VALUE_LENGTH;
     public static final String MESSAGE_UNKNOWN_FLAG = "There is no %1$s option.";
     public static final String MESSAGE_FLAG_TAKES_NO_VALUE =
             "%1$s takes no value. Use the option on its own.";
@@ -51,15 +53,20 @@ public class Messages {
 
     private Messages() {} // this class only holds the messages
 
-    /** Returns the rejected index and the size of the list it addresses. */
+    /**
+     * Returns the rejected index and the size of the list it addresses.
+     */
     public static String getErrorMessageForInvalidIndex(String index, int displayedCount) {
         return String.format(Locale.ROOT, MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, shorten(index),
                 displayedCount, StringUtil.getPluralSuffix(displayedCount));
     }
 
-    /** Returns the explicit ID form when a numeric target may have been intended as an ID. */
+    /**
+     * Returns the explicit ID form when a numeric target may have been intended as an ID.
+     */
     public static String getIdTargetHint(String commandWord, String value) {
-        return "If \"" + value + "\" is an NUS Student ID, use " + commandWord + " --id " + value + ".";
+        return "If \"" + value + "\" is an NUS Student ID, use " + commandWord
+                + " " + FLAG_NUS_STUDENT_ID + " " + value + ".";
     }
 
     /**
@@ -91,7 +98,7 @@ public class Messages {
      * shortened, so that the reason stays visible rather than being pushed out of sight.
      */
     public static String getErrorMessageForInvalidValue(String fieldName, String value, String reason) {
-        return String.format(MESSAGE_INVALID_VALUE, fieldName, shorten(value), reason);
+        return ValueMessages.getErrorMessageForInvalidValue(fieldName, value, reason);
     }
 
     /**
@@ -149,11 +156,7 @@ public class Messages {
      * rejected the value says whatever its own rule makes relevant.
      */
     public static String shorten(String value) {
-        String shown = StringUtil.firstCharacters(value, MAX_QUOTED_VALUE_LENGTH);
-        if (shown.equals(value)) {
-            return value;
-        }
-        return shown + "…";
+        return ValueMessages.shorten(value);
     }
 
     /**
@@ -168,11 +171,11 @@ public class Messages {
         if (!student.getTags().isEmpty()) {
             builder.append("; Tags: ");
             student.getTags().stream()
-                    .sorted(Comparator.<Tag, String>comparing(tag -> tag.tagName, String.CASE_INSENSITIVE_ORDER)
-                            .thenComparing(tag -> tag.tagName))
+                    .sorted(Comparator.<Tag, String>comparing(tag -> tag.getTagName(), String.CASE_INSENSITIVE_ORDER)
+                            .thenComparing(tag -> tag.getTagName()))
                     .forEach(builder::append);
         }
-        student.getFlag().ifPresent(flag -> builder.append("; ").append(flag.tagName));
+        student.getFlag().ifPresent(flag -> builder.append("; ").append(flag.getTagName()));
         return builder.toString();
     }
 

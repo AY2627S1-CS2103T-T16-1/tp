@@ -88,16 +88,20 @@ public class EditCommand extends Command {
     private final EditStudentDescriptor editStudentDescriptor;
 
     /**
-     * @param targetIndex of the student in the filtered student list to edit
-     * @param editStudentDescriptor details to edit the student with
+     * Creates an edit command for a displayed student index.
+     *
+     * @param targetIndex of the student in the filtered student list to edit.
+     * @param editStudentDescriptor details to edit the student with.
      */
     public EditCommand(Index targetIndex, EditStudentDescriptor editStudentDescriptor) {
         this(StudentTarget.byIndex(targetIndex), editStudentDescriptor);
     }
 
     /**
-     * @param target names the student to edit, by displayed index or by NUS Student ID
-     * @param editStudentDescriptor details to edit the student with
+     * Creates an edit command for the given student target.
+     *
+     * @param target names the student to edit, by displayed index or by NUS Student ID.
+     * @param editStudentDescriptor details to edit the student with.
      */
     public EditCommand(StudentTarget target, EditStudentDescriptor editStudentDescriptor) {
         requireNonNull(target);
@@ -133,6 +137,9 @@ public class EditCommand extends Command {
      */
     private static Student createEditedStudent(Student studentToEdit, EditStudentDescriptor editStudentDescriptor) {
         assert studentToEdit != null;
+        if (!editStudentDescriptor.isAnyFieldEdited()) {
+            return studentToEdit;
+        }
 
         Name updatedName = editStudentDescriptor.getName().orElse(studentToEdit.getName());
         Optional<Phone> updatedPhone = editStudentDescriptor.isPhoneEdited()
@@ -145,10 +152,10 @@ public class EditCommand extends Command {
                 ? editStudentDescriptor.getNusStudentId()
                 : studentToEdit.getNusStudentId();
         Set<Tag> updatedTags = editStudentDescriptor.getTags().orElse(studentToEdit.getTags());
-        boolean updatedFlag = editStudentDescriptor.getFlagged().orElse(studentToEdit.isFlagged());
+        boolean isFlaggedAfterEdit = editStudentDescriptor.getFlagged().orElse(studentToEdit.isFlagged());
 
         return new Student(updatedName, updatedPhone, updatedEmail, updatedNusStudentId,
-                updatedTags, updatedFlag);
+                updatedTags, isFlaggedAfterEdit);
     }
 
     @Override
@@ -201,7 +208,7 @@ public class EditCommand extends Command {
         }
 
         /**
-         * Copy constructor.
+         * Copies the changes recorded in the descriptor.
          * A defensive copy of {@code tags} is used internally.
          */
         public EditStudentDescriptor(EditStudentDescriptor toCopy) {
@@ -384,7 +391,7 @@ public class EditCommand extends Command {
             }
 
             private OptionalFieldEdit(OptionalFieldEdit<T> toCopy) {
-                value = toCopy.value;
+                value = toCopy.getValue();
                 isEdited = toCopy.isEdited;
             }
 
@@ -407,7 +414,7 @@ public class EditCommand extends Command {
             }
 
             private boolean hasSameStateAs(OptionalFieldEdit<?> other) {
-                return isEdited == other.isEdited && value.equals(other.value);
+                return isEdited == other.isEdited && value.equals(other.getValue());
             }
         }
     }

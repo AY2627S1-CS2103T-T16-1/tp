@@ -12,7 +12,9 @@ import seedu.tab.model.student.Name;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
 
-/** Formats non-blocking warnings about student records with matching details. */
+/**
+ * Formats non-blocking warnings about student records with matching details.
+ */
 final class LikelyDuplicateWarning {
     static final String MESSAGE_WARNING_SINGULAR =
             "WARNING: Possible duplicate student: %1$s has the same %2$s%3$s.";
@@ -62,16 +64,16 @@ final class LikelyDuplicateWarning {
     private static void addMatches(List<Student> matchingNames, List<Student> matchingPhones,
             List<Student> matchingEmails, Student changedStudent, Student existingStudent, Student originalStudent) {
         if (isChanged(changedStudent.getName(), originalStudent == null ? null : originalStudent.getName())
-                && StringUtil.normalizeNameForComparison(changedStudent.getName().fullName)
-                        .equals(StringUtil.normalizeNameForComparison(existingStudent.getName().fullName))) {
+                && StringUtil.normalizeNameForComparison(changedStudent.getName().getFullName())
+                        .equals(StringUtil.normalizeNameForComparison(existingStudent.getName().getFullName()))) {
             matchingNames.add(existingStudent);
         }
         if (isChanged(changedStudent.getPhone(), originalStudent == null ? null : originalStudent.getPhone())
-                && phonesMatch(changedStudent, existingStudent)) {
+                && hasMatchingPhone(changedStudent, existingStudent)) {
             matchingPhones.add(existingStudent);
         }
         if (isChanged(changedStudent.getEmail(), originalStudent == null ? null : originalStudent.getEmail())
-                && emailsMatch(changedStudent, existingStudent)) {
+                && hasMatchingEmail(changedStudent, existingStudent)) {
             matchingEmails.add(existingStudent);
         }
     }
@@ -79,11 +81,11 @@ final class LikelyDuplicateWarning {
     private static List<String> formatWarnings(Student changedStudent, List<Student> matchingNames,
             List<Student> matchingPhones, List<Student> matchingEmails) {
         List<String> warnings = new ArrayList<>();
-        addWarning(warnings, matchingNames, Name.FIELD_NAME, changedStudent.getName().fullName);
+        addWarning(warnings, matchingNames, Name.FIELD_NAME, changedStudent.getName().getFullName());
         changedStudent.getPhone().ifPresent(phone ->
-                addWarning(warnings, matchingPhones, Phone.FIELD_NAME, phone.value));
+                addWarning(warnings, matchingPhones, Phone.FIELD_NAME, phone.getValue()));
         changedStudent.getEmail().ifPresent(email ->
-                addWarning(warnings, matchingEmails, Email.FIELD_NAME, email.value));
+                addWarning(warnings, matchingEmails, Email.FIELD_NAME, email.getValue()));
         return warnings;
     }
 
@@ -91,14 +93,14 @@ final class LikelyDuplicateWarning {
         return originalValue == null || !changedValue.equals(originalValue);
     }
 
-    private static boolean phonesMatch(Student first, Student second) {
+    private static boolean hasMatchingPhone(Student first, Student second) {
         return first.getPhone().flatMap(phone -> second.getPhone()
                 .filter(otherPhone -> phone.getDigits().equals(otherPhone.getDigits()))).isPresent();
     }
 
-    private static boolean emailsMatch(Student first, Student second) {
+    private static boolean hasMatchingEmail(Student first, Student second) {
         return first.getEmail().flatMap(email -> second.getEmail()
-                .filter(otherEmail -> matchesIgnoringCase(email.value, otherEmail.value))).isPresent();
+                .filter(otherEmail -> matchesIgnoringCase(email.getValue(), otherEmail.getValue()))).isPresent();
     }
 
     private static boolean matchesIgnoringCase(String first, String second) {

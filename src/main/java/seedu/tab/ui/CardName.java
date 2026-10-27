@@ -19,6 +19,7 @@ import javafx.scene.text.Text;
  * drawn at would be handed less room on every pass and the two would chase each other down.
  */
 public class CardName extends Label {
+    private static final int MIN_VISIBLE_CHARACTERS = 2;
 
     private final Text measurer = new Text();
     private String whole = "";
@@ -38,14 +39,14 @@ public class CardName extends Label {
 
     @Override
     protected double computePrefWidth(double height) {
-        return widthOf(whole) + besideTheText();
+        return measureWidth(whole) + computeHorizontalInsets();
     }
 
     @Override
     protected double computeMinWidth(double height) {
         // Preserve a character from each end when tags need extra room. Font metrics
         // decide how much that takes; a fixed pixel floor can lose the final character.
-        return widthOf(UiText.middleShortened(whole, 2)) + besideTheText();
+        return measureWidth(UiText.shortenMiddle(whole, MIN_VISIBLE_CHARACTERS)) + computeHorizontalInsets();
     }
 
     @Override
@@ -55,12 +56,12 @@ public class CardName extends Label {
     }
 
     private void drawWhatFits() {
-        double room = getWidth() - besideTheText();
-        if (widthOf(whole) <= room) {
+        double room = getWidth() - computeHorizontalInsets();
+        if (measureWidth(whole) <= room) {
             draw(whole);
             return;
         }
-        draw(UiText.middleShortened(whole, charactersThatFit(room)));
+        draw(UiText.shortenMiddle(whole, countCharactersThatFit(room)));
     }
 
     /**
@@ -68,12 +69,12 @@ public class CardName extends Label {
      * {@code room}. A cut to one more character is never the narrower of the two, so the count
      * is found by halving the range rather than by measuring every count in it.
      */
-    private int charactersThatFit(double room) {
+    private int countCharactersThatFit(double room) {
         int fewest = 0;
         int most = whole.length();
         while (fewest < most) {
             int count = (fewest + most + 1) / 2;
-            if (widthOf(UiText.middleShortened(whole, count)) <= room) {
+            if (measureWidth(UiText.shortenMiddle(whole, count)) <= room) {
                 fewest = count;
             } else {
                 most = count - 1;
@@ -91,13 +92,13 @@ public class CardName extends Label {
         isDrawingLessThanTheWhole = false;
     }
 
-    private double widthOf(String text) {
+    private double measureWidth(String text) {
         measurer.setFont(getFont());
         measurer.setText(text);
         return measurer.getLayoutBounds().getWidth();
     }
 
-    private double besideTheText() {
+    private double computeHorizontalInsets() {
         Insets insets = getInsets();
         return insets.getLeft() + insets.getRight();
     }

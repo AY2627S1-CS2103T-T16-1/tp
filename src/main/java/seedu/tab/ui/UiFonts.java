@@ -20,7 +20,7 @@ final class UiFonts {
      * The families the window prefers, in order. Each is the usual interface font of a
      * platform the product supports; a machine with none of them keeps its own.
      */
-    private static final List<String> PREFERRED =
+    private static final List<String> PREFERRED_FAMILIES =
             List.of("Inter", "Segoe UI", "Helvetica Neue", "Cantarell", "Noto Sans");
 
     private UiFonts() {} // this class only chooses a font
@@ -28,17 +28,17 @@ final class UiFonts {
     /**
      * Returns the first preferred family the machine has, or the font it would use anyway.
      */
-    static String bodyFamily() {
-        return firstOf(PREFERRED, Font.getFamilies());
+    static String chooseBodyFamily() {
+        return findFirstInstalledFamily(PREFERRED_FAMILIES, Font.getFamilies());
     }
 
     /**
-     * Returns the first of {@code preferred} that is {@code installed}, or the family the
-     * machine would use anyway when it carries none of them.
+     * Returns the first preferred family present in {@code installedFamilies}, or the default family
+     * when none of {@code preferredFamilies} is installed.
      */
-    static String firstOf(List<String> preferred, List<String> installed) {
-        return preferred.stream()
-                .filter(installed::contains)
+    static String findFirstInstalledFamily(List<String> preferredFamilies, List<String> installedFamilies) {
+        return preferredFamilies.stream()
+                .filter(installedFamilies::contains)
                 .findFirst()
                 .orElseGet(() -> Font.getDefault().getFamily());
     }
@@ -48,6 +48,6 @@ final class UiFonts {
      * rule in the stylesheet only has to name a family where it wants a different one.
      */
     static void applyTo(Scene scene) {
-        scene.getRoot().setStyle("-fx-font-family: \"" + bodyFamily() + "\";");
+        scene.getRoot().setStyle("-fx-font-family: \"" + chooseBodyFamily() + "\";");
     }
 }

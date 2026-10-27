@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.tab.ui.FxToolkit.onFxThread;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -53,11 +53,10 @@ public class MainWindowTest {
         FxToolkit.start();
     }
 
-    private static <T> T onFxThread(Callable<T> work) throws Exception {
-        return FxToolkit.onFxThread(work);
-    }
 
-    /** A {@code Logic} that holds one student and runs nothing. */
+    /**
+     * A {@code Logic} that holds one student and runs nothing.
+     */
     private static class LogicStub implements Logic {
         private GuiSettings guiSettings = new GuiSettings();
         private final ObservableList<Student> students =
@@ -187,7 +186,9 @@ public class MainWindowTest {
         });
     }
 
-    /** Sends Tab through the real window, checking focus eligibility and both traversal directions. */
+    /**
+     * Sends Tab through the real window, checking focus eligibility and both traversal directions.
+     */
     private static void assertTraversal(MainWindow window, boolean isBackwards, String... expectedIds) {
         Scene scene = window.getRoot().getScene();
         for (String id : expectedIds) {
@@ -225,7 +226,9 @@ public class MainWindowTest {
         });
     }
 
-    /** Stops default traversal after checking that the application leaves the event untouched. */
+    /**
+     * Stops default traversal after checking that the application leaves the event untouched.
+     */
     private static void assertTabIgnored(Node target, KeyEvent event) {
         Node focused = target.getScene().getFocusOwner();
         AtomicBoolean delivered = new AtomicBoolean();

@@ -27,8 +27,8 @@ public class ExitCommandTest {
     public void execute_exit_commandResultProperties() {
         CommandResult result = new ExitCommand().execute(model);
         assertEquals(MESSAGE_EXIT_ACKNOWLEDGEMENT, result.getFeedbackToUser());
-        assertTrue(result.isExit());
-        assertFalse(result.isShowHelp());
+        assertTrue(result.isExitRequested());
+        assertFalse(result.isHelpRequested());
     }
 
     @Test

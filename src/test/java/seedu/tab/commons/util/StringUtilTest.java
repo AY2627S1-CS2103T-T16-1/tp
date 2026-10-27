@@ -296,140 +296,141 @@ public class StringUtilTest {
         assertFalse(StringUtil.isWhitespace('\u001C'), "a file separator is not a space");
     }
 
-    //---------------- Tests for editDistance --------------------------------------
+    //---------------- Tests for computeEditDistance --------------------------------------
 
     @Test
-    public void editDistance_identicalStrings_returnsZero() {
-        assertEquals(0, StringUtil.editDistance("delete", "delete"));
-        assertEquals(0, StringUtil.editDistance("", ""));
+    public void computeEditDistance_identicalStrings_returnsZero() {
+        assertEquals(0, StringUtil.computeEditDistance("delete", "delete"));
+        assertEquals(0, StringUtil.computeEditDistance("", ""));
     }
 
     @Test
-    public void editDistance_oneEditApart_returnsOne() {
-        assertEquals(1, StringUtil.editDistance("delte", "delete")); // missing letter
-        assertEquals(1, StringUtil.editDistance("deletee", "delete")); // extra letter
-        assertEquals(1, StringUtil.editDistance("lsit", "list")); // swapped letters
-        assertEquals(1, StringUtil.editDistance("lixt", "list")); // wrong letter
+    public void computeEditDistance_oneEditApart_returnsOne() {
+        assertEquals(1, StringUtil.computeEditDistance("delte", "delete")); // missing letter
+        assertEquals(1, StringUtil.computeEditDistance("deletee", "delete")); // extra letter
+        assertEquals(1, StringUtil.computeEditDistance("lsit", "list")); // swapped letters
+        assertEquals(1, StringUtil.computeEditDistance("lixt", "list")); // wrong letter
     }
 
     @Test
-    public void editDistance_twoEditsApart_returnsTwo() {
-        assertEquals(2, StringUtil.editDistance("dlte", "delete")); // two missing letters
-        assertEquals(2, StringUtil.editDistance("ls", "list"));
-        assertEquals(2, StringUtil.editDistance("lixtt", "list"));
+    public void computeEditDistance_twoEditsApart_returnsTwo() {
+        assertEquals(2, StringUtil.computeEditDistance("dlte", "delete")); // two missing letters
+        assertEquals(2, StringUtil.computeEditDistance("ls", "list"));
+        assertEquals(2, StringUtil.computeEditDistance("lixtt", "list"));
     }
 
     @Test
-    public void editDistance_unrelatedStrings_returnsThreeOrMore() {
-        assertEquals(3, StringUtil.editDistance("cat", "add"));
-        assertEquals(3, StringUtil.editDistance("list", "find"));
-        assertEquals(6, StringUtil.editDistance("", "delete"));
+    public void computeEditDistance_unrelatedStrings_returnsThreeOrMore() {
+        assertEquals(3, StringUtil.computeEditDistance("cat", "add"));
+        assertEquals(3, StringUtil.computeEditDistance("list", "find"));
+        assertEquals(6, StringUtil.computeEditDistance("", "delete"));
     }
 
     @Test
-    public void editDistance_caseAndAccents_countAsEdits() {
-        assertEquals(1, StringUtil.editDistance("List", "list"));
-        assertEquals(4, StringUtil.editDistance("LIST", "list"));
-        assertEquals(1, StringUtil.editDistance("lïst", "list"));
+    public void computeEditDistance_caseAndAccents_countAsEdits() {
+        assertEquals(1, StringUtil.computeEditDistance("List", "list"));
+        assertEquals(4, StringUtil.computeEditDistance("LIST", "list"));
+        assertEquals(1, StringUtil.computeEditDistance("lïst", "list"));
     }
 
     @Test
-    public void editDistance_isSymmetric() {
-        assertEquals(StringUtil.editDistance("delte", "delete"), StringUtil.editDistance("delete", "delte"));
-        assertEquals(StringUtil.editDistance("ca", "abc"), StringUtil.editDistance("abc", "ca"));
+    public void computeEditDistance_isSymmetric() {
+        assertEquals(StringUtil.computeEditDistance("delte", "delete"),
+                StringUtil.computeEditDistance("delete", "delte"));
+        assertEquals(StringUtil.computeEditDistance("ca", "abc"), StringUtil.computeEditDistance("abc", "ca"));
     }
 
     @Test
-    public void editDistance_swapWithAnEditBetweenIt_countsBothEdits() {
+    public void computeEditDistance_swapWithAnEditBetweenIt_countsBothEdits() {
         // the optimal string alignment reading: "ca" and "abc" are a swap and an insertion
         // apart, but the insertion falls between the swapped pair, so it counts as three
-        assertEquals(3, StringUtil.editDistance("ca", "abc"));
+        assertEquals(3, StringUtil.computeEditDistance("ca", "abc"));
     }
 
     @Test
-    public void editDistance_nullArgument_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> StringUtil.editDistance(null, "list"));
-        assertThrows(NullPointerException.class, () -> StringUtil.editDistance("list", null));
+    public void computeEditDistance_nullArgument_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StringUtil.computeEditDistance(null, "list"));
+        assertThrows(NullPointerException.class, () -> StringUtil.computeEditDistance("list", null));
     }
 
-    //---------------- Tests for firstCharacters --------------------------------------
+    //---------------- Tests for getFirstCharacters --------------------------------------
 
     @Test
-    public void firstCharacters_valueWithinTheLimit_returnsTheWholeValue() {
-        assertEquals("Lab 3", StringUtil.firstCharacters("Lab 3", 10));
-        assertEquals("Lab 3", StringUtil.firstCharacters("Lab 3", 5), "a value exactly at the limit");
-        assertEquals("", StringUtil.firstCharacters("", 5));
-    }
-
-    @Test
-    public void firstCharacters_valueOverTheLimit_keepsTheOpeningCharacters() {
-        assertEquals("attendance", StringUtil.firstCharacters("attendance-low", 10));
-        assertEquals("", StringUtil.firstCharacters("attendance-low", 0));
+    public void getFirstCharacters_valueWithinTheLimit_returnsTheWholeValue() {
+        assertEquals("Lab 3", StringUtil.getFirstCharacters("Lab 3", 10));
+        assertEquals("Lab 3", StringUtil.getFirstCharacters("Lab 3", 5), "a value exactly at the limit");
+        assertEquals("", StringUtil.getFirstCharacters("", 5));
     }
 
     @Test
-    public void firstCharacters_emojiAtTheLimit_keepsItWhole() {
+    public void getFirstCharacters_valueOverTheLimit_keepsTheOpeningCharacters() {
+        assertEquals("attendance", StringUtil.getFirstCharacters("attendance-low", 10));
+        assertEquals("", StringUtil.getFirstCharacters("attendance-low", 0));
+    }
+
+    @Test
+    public void getFirstCharacters_emojiAtTheLimit_keepsItWhole() {
         // an emoji is one character to a reader and two to Java, and half of one draws as a box
-        assertEquals("ab\uD83D\uDE00", StringUtil.firstCharacters("ab\uD83D\uDE00cd", 3));
-        assertEquals("ab", StringUtil.firstCharacters("ab\uD83D\uDE00cd", 2));
+        assertEquals("ab\uD83D\uDE00", StringUtil.getFirstCharacters("ab\uD83D\uDE00cd", 3));
+        assertEquals("ab", StringUtil.getFirstCharacters("ab\uD83D\uDE00cd", 2));
     }
 
     @Test
-    public void firstCharacters_combiningAccentAtTheLimit_keepsItOnItsLetter() {
+    public void getFirstCharacters_combiningAccentAtTheLimit_keepsItOnItsLetter() {
         String value = "ae\u0301iou"; // "a\u00E9iou", with the accent held as a separate code point
 
-        assertEquals("ae\u0301", StringUtil.firstCharacters(value, 2));
-        assertEquals("a", StringUtil.firstCharacters(value, 1));
+        assertEquals("ae\u0301", StringUtil.getFirstCharacters(value, 2));
+        assertEquals("a", StringUtil.getFirstCharacters(value, 1));
     }
 
     @Test
-    public void firstCharacters_negativeLimit_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> StringUtil.firstCharacters("abc", -1));
+    public void getFirstCharacters_negativeLimit_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> StringUtil.getFirstCharacters("abc", -1));
     }
 
     @Test
-    public void firstCharacters_null_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> StringUtil.firstCharacters(null, 3));
+    public void getFirstCharacters_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StringUtil.getFirstCharacters(null, 3));
     }
 
-    //---------------- Tests for lastCharacters --------------------------------------
+    //---------------- Tests for getLastCharacters --------------------------------------
 
     @Test
-    public void lastCharacters_valueWithinTheLimit_returnsTheWholeValue() {
-        assertEquals("Lab 3", StringUtil.lastCharacters("Lab 3", 10));
-        assertEquals("Lab 3", StringUtil.lastCharacters("Lab 3", 5), "a value exactly at the limit");
-        assertEquals("", StringUtil.lastCharacters("", 5));
-    }
-
-    @Test
-    public void lastCharacters_valueOverTheLimit_keepsTheClosingCharacters() {
-        assertEquals("ance-low", StringUtil.lastCharacters("attendance-low", 8));
-        assertEquals("", StringUtil.lastCharacters("attendance-low", 0));
+    public void getLastCharacters_valueWithinTheLimit_returnsTheWholeValue() {
+        assertEquals("Lab 3", StringUtil.getLastCharacters("Lab 3", 10));
+        assertEquals("Lab 3", StringUtil.getLastCharacters("Lab 3", 5), "a value exactly at the limit");
+        assertEquals("", StringUtil.getLastCharacters("", 5));
     }
 
     @Test
-    public void lastCharacters_emojiAtTheLimit_keepsItWhole() {
+    public void getLastCharacters_valueOverTheLimit_keepsTheClosingCharacters() {
+        assertEquals("ance-low", StringUtil.getLastCharacters("attendance-low", 8));
+        assertEquals("", StringUtil.getLastCharacters("attendance-low", 0));
+    }
+
+    @Test
+    public void getLastCharacters_emojiAtTheLimit_keepsItWhole() {
         // an emoji is one character to a reader and two to Java, and half of one draws as a box
-        assertEquals("\uD83D\uDE00cd", StringUtil.lastCharacters("ab\uD83D\uDE00cd", 3));
-        assertEquals("cd", StringUtil.lastCharacters("ab\uD83D\uDE00cd", 2));
+        assertEquals("\uD83D\uDE00cd", StringUtil.getLastCharacters("ab\uD83D\uDE00cd", 3));
+        assertEquals("cd", StringUtil.getLastCharacters("ab\uD83D\uDE00cd", 2));
     }
 
     @Test
-    public void lastCharacters_combiningAccentAtTheLimit_keepsItOnItsLetter() {
+    public void getLastCharacters_combiningAccentAtTheLimit_keepsItOnItsLetter() {
         String value = "aie\u0301ou"; // "ai\u00E9ou", with the accent held as a separate code point
 
-        assertEquals("e\u0301ou", StringUtil.lastCharacters(value, 3));
-        assertEquals("ou", StringUtil.lastCharacters(value, 2));
+        assertEquals("e\u0301ou", StringUtil.getLastCharacters(value, 3));
+        assertEquals("ou", StringUtil.getLastCharacters(value, 2));
     }
 
     @Test
-    public void lastCharacters_negativeLimit_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> StringUtil.lastCharacters("abc", -1));
+    public void getLastCharacters_negativeLimit_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> StringUtil.getLastCharacters("abc", -1));
     }
 
     @Test
-    public void lastCharacters_null_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> StringUtil.lastCharacters(null, 3));
+    public void getLastCharacters_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StringUtil.getLastCharacters(null, 3));
     }
 
     //---------------- Tests for getPluralSuffix --------------------------------------

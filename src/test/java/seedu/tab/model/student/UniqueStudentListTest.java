@@ -136,7 +136,7 @@ public class UniqueStudentListTest {
         uniqueStudentList.add(ALICE);
         uniqueStudentList.add(BOB);
         Student editedBob = new StudentBuilder(BOB)
-                .withNusStudentId(ALICE.getNusStudentId().orElseThrow().value).build();
+                .withNusStudentId(ALICE.getNusStudentId().orElseThrow().getValue()).build();
 
         assertThrows(DuplicateStudentException.class, () -> uniqueStudentList.setStudent(BOB, editedBob));
     }

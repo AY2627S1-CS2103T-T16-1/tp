@@ -204,7 +204,9 @@ public class StudentBookParserTest {
         }
     }
 
-    /** Returns the command {@code input} parses to, or null when it is refused. */
+    /**
+     * Returns the command {@code input} parses to, or null when it is refused.
+     */
     private Command parseOrNull(String input) {
         try {
             return parser.parseCommand(input);
@@ -392,17 +394,23 @@ public class StudentBookParserTest {
         assertThrows(ParseException.class, expected, () -> parser.parseCommand("LIST oops"));
     }
 
-    /** Returns the command word {@code command} opens with. */
+    /**
+     * Returns the command word {@code command} opens with.
+     */
     private static String commandWordOf(String command) {
         return command.substring(0, endOfCommandWord(command));
     }
 
-    /** Returns {@code command} with its command word capitalised. */
+    /**
+     * Returns {@code command} with its command word capitalized.
+     */
     private static String withCapitalisedWord(String command) {
         return Character.toUpperCase(command.charAt(0)) + command.substring(1);
     }
 
-    /** Returns {@code command} with its command word in capitals. */
+    /**
+     * Returns {@code command} with its command word in capitals.
+     */
     private static String withUpperCasedWord(String command) {
         int wordEnd = endOfCommandWord(command);
         return command.substring(0, wordEnd).toUpperCase(Locale.ROOT) + command.substring(wordEnd);
@@ -474,7 +482,9 @@ public class StudentBookParserTest {
         }
     }
 
-    /** Returns why {@code input} is refused, or null when it is accepted. */
+    /**
+     * Returns why {@code input} is refused, or null when it is accepted.
+     */
     private String messageFromParsing(String input) {
         try {
             parser.parseCommand(input);

@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.StringUtil;
@@ -37,6 +38,8 @@ public class ParserUtil {
     public static final String MESSAGE_FOLLOW_UP_IS_NOT_A_TAG =
             FollowUpFlag.MESSAGE_RESERVED + " Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
 
+    private static final Pattern TARGET_SEPARATOR_PATTERN = Pattern.compile("(?U)\\s+");
+
     private ParserUtil() {} // this class only holds helpers
 
     /**
@@ -60,6 +63,7 @@ public class ParserUtil {
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
      * trimmed.
+     *
      * @throws ParseException if the specified index is invalid (not a non-zero unsigned integer).
      */
     public static Index parseIndex(String oneBasedIndex) throws ParseException {
@@ -84,7 +88,7 @@ public class ParserUtil {
         if (oneBasedIndex.isEmpty()) {
             throw new ParseException(Messages.getErrorMessageForMissingFields(fieldName));
         }
-        String[] values = oneBasedIndex.trim().split("(?U)\\s+", 2);
+        String[] values = TARGET_SEPARATOR_PATTERN.split(oneBasedIndex.trim(), 2);
         Index index = parseIndex(values[0]);
         if (values.length > 1) {
             throw new ParseException(String.format(MESSAGE_VALUE_AFTER_INDEX, fieldName, Messages.shorten(values[1])));
@@ -99,8 +103,10 @@ public class ParserUtil {
      * because a target is one word before the command's options. Invalid indices keep
      * their concise validation reason rather than the full command usage.
      *
+     * @param preamble The text before the first option.
+     * @param fieldName The field named in invalid-index diagnostics.
      * @param missingField How a missing target is named, so the caller can show every target form.
-     * @throws ParseException if the target is missing, holds extra words, or names no student.
+     * @throws ParseException if the target is missing, holds extra words, or has invalid syntax.
      */
     public static StudentTarget parseRequiredStudentTarget(String preamble, String missingField, String fieldName)
             throws ParseException {
@@ -110,7 +116,7 @@ public class ParserUtil {
         if (trimmedPreamble.isEmpty()) {
             throw new ParseException(Messages.getErrorMessageForMissingFields(missingField));
         }
-        String[] values = trimmedPreamble.split("(?U)\\s+", 2);
+        String[] values = TARGET_SEPARATOR_PATTERN.split(trimmedPreamble, 2);
         StudentTarget target = parseNonBlankStudentTarget(values[0]);
         if (values.length > 1) {
             throw new ParseException(String.format(MESSAGE_VALUE_AFTER_INDEX, fieldName, Messages.shorten(values[1])));
@@ -123,7 +129,7 @@ public class ParserUtil {
      * an NUS Student ID, and any other target is the index shown in the displayed student
      * list. An index is all digits and a natural NUS Student ID opens with a letter, so the
      * two shapes are read apart without ever mistaking one for the other; an all-digit ID is
-     * the exception, and is addressed by index.
+     * the exception, and needs an explicit ID option to be selected as an ID.
      *
      * <p>An NUS Student ID that is not a valid one keeps the reason it was refused, so the
      * User is told which value was rejected and why. Oversized positive indices retain their
@@ -146,7 +152,9 @@ public class ParserUtil {
         return parseNonBlankStudentTarget(trimmedTarget);
     }
 
-    /** Returns a non-blank target while retaining the field-specific validation reason. */
+    /**
+     * Returns a non-blank target while retaining the field-specific validation reason.
+     */
     private static StudentTarget parseNonBlankStudentTarget(String target) throws ParseException {
         if (Character.isLetter(target.charAt(0))) {
             return StudentTarget.byNusStudentId(parseNusStudentId(target));
@@ -226,7 +234,7 @@ public class ParserUtil {
      * case-insensitive duplicates consistently with the tag command and summary.
      */
     public static Set<Tag> parseTags(Collection<String> values, ParseProblems problems) {
-        Set<Tag> tags = new TreeSet<>(Comparator.comparing(tag -> tag.tagName, String.CASE_INSENSITIVE_ORDER));
+        Set<Tag> tags = new TreeSet<>(Comparator.comparing(tag -> tag.getTagName(), String.CASE_INSENSITIVE_ORDER));
         tags.addAll(problems.collectEach(values, ParserUtil::parseTagToAdd));
         return new HashSet<>(tags);
     }
@@ -260,7 +268,7 @@ public class ParserUtil {
      */
     public static Tag parseTagToAdd(String tag) throws ParseException {
         Tag parsed = parseTag(tag);
-        if (FollowUpFlag.isFollowUpName(parsed.tagName)) {
+        if (FollowUpFlag.isFollowUpName(parsed.getTagName())) {
             throw new ParseException(MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
         }
         return parsed;

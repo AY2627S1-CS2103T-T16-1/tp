@@ -21,6 +21,9 @@ public class SampleDataUtil {
 
     private SampleDataUtil() {} // this class only holds helpers
 
+    /**
+     * Returns newly created sample students, independent of previous calls.
+     */
     public static Student[] getSampleStudents() {
         return new Student[] {
             new Student(new Name("Alex Yeoh"), Optional.of(new Phone("87438807")),
@@ -44,12 +47,15 @@ public class SampleDataUtil {
         };
     }
 
+    /**
+     * Returns a new student book populated with sample students.
+     */
     public static ReadOnlyStudentBook getSampleStudentBook() {
-        StudentBook sampleAb = new StudentBook();
+        StudentBook sampleStudentBook = new StudentBook();
         for (Student sampleStudent : getSampleStudents()) {
-            sampleAb.addStudent(sampleStudent);
+            sampleStudentBook.addStudent(sampleStudent);
         }
-        return sampleAb;
+        return sampleStudentBook;
     }
 
     /**

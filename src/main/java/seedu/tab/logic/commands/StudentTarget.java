@@ -39,7 +39,9 @@ public final class StudentTarget {
         return byIndex(index, String.valueOf(index.getOneBased()));
     }
 
-    /** Returns an index target retaining its input spelling for diagnostics and ID recovery. */
+    /**
+     * Returns an index target retaining its input spelling for diagnostics and ID recovery.
+     */
     public static StudentTarget byIndex(Index index, String input) {
         requireNonNull(index);
         requireNonNull(input);
@@ -65,7 +67,9 @@ public final class StudentTarget {
         return resolve(model, null);
     }
 
-    /** Resolves a target, optionally naming a command that supports explicit ID targeting. */
+    /**
+     * Resolves a target, optionally naming a command that supports explicit ID targeting.
+     */
     public Student resolve(Model model, String idCommandWord) throws CommandException {
         if (index != null) {
             return resolveIndex(model, idCommandWord);
@@ -95,7 +99,7 @@ public final class StudentTarget {
             String message = Messages.getErrorMessageForInvalidIndex(indexInput, displayedStudents.size());
             boolean isStoredId = idCommandWord != null && model.getStudentBook().getStudentList().stream()
                     .anyMatch(student -> student.getNusStudentId()
-                            .filter(id -> id.value.equals(indexInput)).isPresent());
+                            .filter(id -> id.getValue().equals(indexInput)).isPresent());
             if (isStoredId) {
                 message += " " + Messages.getIdTargetHint(idCommandWord, indexInput);
             }

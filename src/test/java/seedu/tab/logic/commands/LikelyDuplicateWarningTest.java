@@ -31,8 +31,8 @@ public class LikelyDuplicateWarningTest {
                     + " has the same name (" + typedName + ")."
                     + "\nReview the records and delete duplicates only if they are the same person.";
             assertEquals(expected, LikelyDuplicateWarning.appendTo(SUCCESS_MESSAGE, changed, List.of(existing)));
-            assertEquals(storedName, existing.getName().fullName);
-            assertEquals(typedName, changed.getName().fullName);
+            assertEquals(storedName, existing.getName().getFullName());
+            assertEquals(typedName, changed.getName().getFullName());
         }
     }
 
@@ -48,7 +48,7 @@ public class LikelyDuplicateWarningTest {
                     + "has the same phone.\n"
                     + "Review the records and delete duplicates only if they are the same person.",
                     LikelyDuplicateWarning.appendTo(SUCCESS_MESSAGE, changed, List.of(existing)));
-            assertEquals("9123-4567", existing.getPhone().orElseThrow().value);
+            assertEquals("9123-4567", existing.getPhone().orElseThrow().getValue());
         }
     }
 

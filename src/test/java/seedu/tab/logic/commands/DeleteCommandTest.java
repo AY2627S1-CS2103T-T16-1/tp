@@ -291,7 +291,9 @@ public class DeleteCommandTest {
         assertEquals(expected, deleteCommand.toString());
     }
 
-    /** Returns the delete command that names the student holding {@code nusStudentId}. */
+    /**
+     * Returns the delete command that names the student holding {@code nusStudentId}.
+     */
     private static DeleteCommand deleteById(String nusStudentId) {
         return new DeleteCommand(StudentTarget.byNusStudentId(new NusStudentId(nusStudentId)));
     }

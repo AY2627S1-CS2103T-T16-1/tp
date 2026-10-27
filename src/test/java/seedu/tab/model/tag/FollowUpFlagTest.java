@@ -14,9 +14,9 @@ public class FollowUpFlagTest {
     @Test
     public void constructor_inheritsTagBehavior() {
         Tag flag = new FollowUpFlag();
-        assertEquals(FollowUpFlag.FOLLOW_UP_NAME, flag.tagName);
+        assertEquals(FollowUpFlag.FOLLOW_UP_NAME, flag.getTagName());
         assertEquals("[Needs follow-up]", flag.toString());
-        assertTrue(Tag.isValidTagName(flag.tagName));
+        assertTrue(Tag.isValidTagName(flag.getTagName()));
     }
 
     @Test

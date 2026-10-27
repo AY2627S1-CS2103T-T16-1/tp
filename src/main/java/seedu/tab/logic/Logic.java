@@ -13,6 +13,7 @@ import seedu.tab.model.student.Student;
 public interface Logic {
     /**
      * Executes the command and returns the result.
+     *
      * @param commandText The command as entered by the user.
      * @return the result of the command execution.
      * @throws CommandException If an error occurs during command execution.
@@ -25,7 +26,9 @@ public interface Logic {
      */
     boolean isAwaitingConfirmation();
 
-    /** Returns an unmodifiable view of the filtered list of students */
+    /**
+     * Returns an unmodifiable view of the filtered list of students
+     */
     ObservableList<Student> getFilteredStudentList();
 
     /**
@@ -34,7 +37,7 @@ public interface Logic {
     GuiSettings getGuiSettings();
 
     /**
-     * Set the user prefs' GUI settings.
+     * Sets the user prefs' GUI settings.
      */
     void setGuiSettings(GuiSettings guiSettings);
 }
