@@ -12,7 +12,13 @@ public class UnknownFlagException extends ParseException {
      * Creates an unknown-option failure retaining the marker that was supplied.
      */
     public UnknownFlagException(String marker) {
-        super(String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker));
+        this(marker, null);
+    }
+
+    /** Creates a failure with an optional suggestion for a supported option. */
+    public UnknownFlagException(String marker, String suggestion) {
+        super(String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker)
+                + (suggestion == null ? "" : " Did you mean " + suggestion + "?"));
         this.marker = marker;
     }
 
