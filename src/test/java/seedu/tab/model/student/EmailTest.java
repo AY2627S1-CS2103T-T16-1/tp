@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
 
+import java.util.List;
+import java.util.Random;
+
 import org.junit.jupiter.api.Test;
 
 public class EmailTest {
@@ -71,10 +74,10 @@ public class EmailTest {
             for (String localPart : new String[] {symbol + "Mei", "Mei" + symbol,
                 "Mei" + symbol + symbol + "Tan", String.valueOf(symbol)}) {
                 String address = localPart + "@example.com";
-                assertEquals(address, new Email(address).value);
+                assertEquals(address, new Email(address).getValue());
             }
         }
-        assertEquals("sean.o'brien@example.com", new Email("sean.o'brien@example.com").value);
+        assertEquals("sean.o'brien@example.com", new Email("sean.o'brien@example.com").getValue());
     }
 
     @Test
@@ -84,7 +87,7 @@ public class EmailTest {
         assertTrue(Email.isValidEmail(" peterjack@example.com ")); // leading and trailing space
         assertTrue(Email.isValidEmail("\u200Epeterjack@example.com")); // leading direction mark
         assertTrue(Email.isValidEmail("peterjack@\u200Bexample.com")); // zero-width space inside
-        assertEquals("peterjack@example.com", new Email("\u200Epeterjack@example.com").value);
+        assertEquals("peterjack@example.com", new Email("\u200Epeterjack@example.com").getValue());
     }
 
     @Test
@@ -170,4 +173,31 @@ public class EmailTest {
         assertEquals("the domain may hold letters and digits in labels separated by dots, "
                 + "with hyphens allowed inside a label", Email.getFailureReason("john@x_y.com"));
     }
+    @Test
+    public void isValidEmail_longDirectInput_preservesFormatWithoutStackOverflow() {
+        String local = "a.".repeat(5000) + "a";
+        String address = local + "@example.com";
+        assertTrue(Email.isValidEmail(address));
+        assertEquals(address, new Email(address).getValue());
+        assertFalse(Email.isValidEmail("a@" + "a-".repeat(5000) + "a"));
+        assertTrue(Email.isValidEmail("a@" + "a-".repeat(5000) + "ab"));
+        assertTrue(Email.isValidEmail("a@" + "a.".repeat(5000) + "com"));
+    }
+
+    @Test
+    public void isValidEmail_shortGeneratedAddresses_matchesExistingGrammar() {
+        Random random = new Random(556);
+        String alphabet = "ab19-.";
+        for (int sample = 0; sample < 3000; sample++) {
+            StringBuilder domain = new StringBuilder();
+            for (int index = 0; index < 1 + sample % 12; index++) {
+                domain.append(alphabet.charAt(random.nextInt(alphabet.length())));
+            }
+            for (String local : List.of("a", "a.b", "a..b", "a_+b", ".a", "a.")) {
+                String address = local + "@" + domain;
+                assertEquals(address.matches(Email.VALIDATION_REGEX), Email.isValidEmail(address), address);
+            }
+        }
+    }
+
 }

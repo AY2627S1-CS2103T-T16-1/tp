@@ -988,20 +988,14 @@ recorded; only dots require non-empty groups on both sides. Quoted local parts
 and domain literals stay unsupported. A student is recorded before an address
 is known rather than one being invented.
 
-`Email.MAX_LENGTH` caps an entered address at 254 characters, and both
-`ParserUtil` and `JsonAdaptedStudent` check it before calling the matcher.
-The bound is not there to simplify validation. `VALIDATION_REGEX` nests a
-quantifier inside another, and Java matches a repeated group by recursion, one
-frame per repetition, so an address with enough `.`-separated groups exhausts
-the stack. `StackOverflowError` is an `Error` no parser catches and
-`CommandBox` catches only `CommandException` and `ParseException`, so the User
-saw nothing at all. 254 is the limit RFC 5321 section 4.5.3.1 puts on a forward
-path, so the bound comes from the domain; it is also the longest measured to be
-safe on every stack size tried, where a 513-character address overflows a
-256 KB stack. `isValidEmail` itself keeps no length limit, so each input
-boundary reports length and format failures separately, and a saved address up
-to 254 characters loads while a longer one raises `IllegalValueException` with
-its actual and allowed lengths.
+`Email.MAX_LENGTH` caps an entered or loaded address at 254 characters, based
+on RFC 5321 section 4.5.3.1. `ParserUtil` and `JsonAdaptedStudent` report that
+boundary separately from format failures. `isValidEmail` keeps its independent
+format contract, including for direct model construction: it checks local
+atoms and domain labels iteratively rather than matching the recursive full
+regex. The equivalent `VALIDATION_REGEX` remains available to describe the
+existing grammar, and regression tests compare both forms on short inputs.
+Long direct inputs therefore cannot exhaust the stack through validation.
 
 **Phone.** A class roster can give a name, an ID and a university email without
 a personal mobile number. `Phone` is neither an identity field nor a key: two
