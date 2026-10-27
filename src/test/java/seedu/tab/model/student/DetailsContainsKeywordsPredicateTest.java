@@ -43,6 +43,25 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_latinLetterWithModifier_matchesBaseLetterEitherWay() {
+        String[][] cases = {
+            {"Đặng Thị Mai", "dang"},
+            {"Dang Thi Mai", "đặng"},
+            {"Łukasz Nowak", "lukasz"},
+            {"Lukasz Nowak", "Łukasz"},
+            {"Søren Kierkegaard", "soren"},
+            {"Soren Kierkegaard", "Søren"}
+        };
+        for (String[] pair : cases) {
+            String storedName = pair[0];
+            Student student = new StudentBuilder().withName(storedName).build();
+            assertTrue(new DetailsContainsKeywordsPredicate(
+                    Map.of(Field.NAME, List.of(pair[1]))).test(student));
+            assertEquals(storedName, student.getName().getFullName());
+        }
+    }
+
+    @Test
     public void equals() {
         List<String> firstPredicateKeywordList = List.of("first");
         List<String> secondPredicateKeywordList = List.of("first", "second");
