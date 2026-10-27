@@ -59,17 +59,13 @@ public final class StudentTarget {
      * displays, an NUS Student ID among every student the book holds. NusStudentId normalizes
      * its value, so a case variant of an ID names the same student.
      *
+     * @param model Holds the displayed list and the book the target is looked up in.
+     * @param idTargetCommand The command form that addresses a student by their NUS Student
+     *     ID, which a numeric target the book holds as an ID is pointed at.
      * @throws CommandException if no student matches the target.
      */
-    public Student resolve(Model model) throws CommandException {
-        return resolve(model, null);
-    }
-
-    /**
-     * Resolves a target, optionally naming the command form that addresses a student by their
-     * NUS Student ID, so that a numeric target the book holds as an ID offers that form.
-     */
     public Student resolve(Model model, String idTargetCommand) throws CommandException {
+        requireNonNull(idTargetCommand);
         if (index != null) {
             return resolveIndex(model, idTargetCommand);
         }
@@ -96,7 +92,7 @@ public final class StudentTarget {
         List<Student> displayedStudents = model.getFilteredStudentList();
         if (index.getZeroBased() >= displayedStudents.size()) {
             String message = Messages.getErrorMessageForInvalidIndex(indexInput, displayedStudents.size());
-            boolean isStoredId = idTargetCommand != null && model.getStudentBook().getStudentList().stream()
+            boolean isStoredId = model.getStudentBook().getStudentList().stream()
                     .anyMatch(student -> student.getNusStudentId()
                             .filter(id -> id.getValue().equals(indexInput)).isPresent());
             if (isStoredId) {

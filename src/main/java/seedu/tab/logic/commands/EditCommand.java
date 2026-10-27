@@ -43,6 +43,9 @@ public class EditCommand extends Command {
     /** How the missing target is named, so a user who typed only an option is shown both forms. */
     public static final String FIELD_TARGET = FIELD_INDEX + " or NUS_STUDENT_ID";
 
+    /** The command form that addresses a student by their NUS Student ID. */
+    public static final String ID_TARGET_COMMAND = COMMAND_WORD + " " + FLAG_TARGET_ID;
+
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the student identified "
             + "by the index number used in the displayed student list, or by the NUS Student ID "
             + "they hold anywhere in the book. Use " + FLAG_TARGET_ID.getLabel()
@@ -113,7 +116,7 @@ public class EditCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        Student studentToEdit = target.resolve(model);
+        Student studentToEdit = target.resolve(model, ID_TARGET_COMMAND);
         Student editedStudent = createEditedStudent(studentToEdit, editStudentDescriptor);
         if (studentToEdit.equals(editedStudent)) {
             return new CommandResult(MESSAGE_UNCHANGED);

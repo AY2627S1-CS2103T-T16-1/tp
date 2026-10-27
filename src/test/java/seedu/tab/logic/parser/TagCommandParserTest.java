@@ -25,7 +25,8 @@ public class TagCommandParserTest {
         for (String index : List.of("2147483648", "999999999999999999999")) {
             for (String action : List.of("-a", "-r", "--remove")) {
                 assertParseFailure(parser, index + " " + action + " T1",
-                        String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, index));
+                        String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, index) + " "
+                                + Messages.getIdTargetHint(TagCommand.ID_TARGET_COMMAND, index));
             }
         }
     }
@@ -96,10 +97,12 @@ public class TagCommandParserTest {
 
     @Test
     public void parse_invalidIndex_reportsIndex() {
-        for (String index : List.of("0", "1.5")) {
-            assertParseFailure(parser, index + " -a T1", ParserUtil.MESSAGE_INVALID_INDEX);
-        }
+        assertParseFailure(parser, "1.5 -a T1", ParserUtil.MESSAGE_INVALID_INDEX);
         assertParseFailure(parser, "\"-1\" -a T1", ParserUtil.MESSAGE_INVALID_INDEX);
+
+        // a target that would be a valid ID also names the option that selects one
+        assertParseFailure(parser, "0 -a T1", invalidIndexWithIdHint("0"));
+        assertParseFailure(parser, "1ABC -a T1", invalidIndexWithIdHint("1ABC"));
         assertParseSuccess(parser, "2147483647 -a T1",
                 new TagCommand(Index.fromOneBased(Integer.MAX_VALUE), new Tag("T1")));
     }
@@ -112,7 +115,7 @@ public class TagCommandParserTest {
                             "it holds no letter or number"));
         }
         assertParseFailure(parser, "0 -a \"\"",
-                ParserUtil.MESSAGE_INVALID_INDEX + "\nTag \"\" is not valid: it holds no letter or number");
+                invalidIndexWithIdHint("0") + "\nTag \"\" is not valid: it holds no letter or number");
     }
 
     @Test
@@ -186,9 +189,8 @@ public class TagCommandParserTest {
     @Test
     public void parse_removeInvalidIndexOrTag_reportsSpecificProblems() {
         for (String marker : List.of("-r", "--remove")) {
-            for (String index : List.of("0", "1.5")) {
-                assertParseFailure(parser, index + " " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX);
-            }
+            assertParseFailure(parser, "1.5 " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX);
+            assertParseFailure(parser, "0 " + marker + " T1", invalidIndexWithIdHint("0"));
             assertFailureWithGuidance("-1 " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX
                     + "\n" + String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-1"));
             assertParseSuccess(parser, "2147483647 " + marker + " T1",
@@ -201,7 +203,7 @@ public class TagCommandParserTest {
             }
         }
         assertParseFailure(parser, "0 -r \"\"",
-                ParserUtil.MESSAGE_INVALID_INDEX + "\nTag \"\" is not valid: it holds no letter or number");
+                invalidIndexWithIdHint("0") + "\nTag \"\" is not valid: it holds no letter or number");
     }
 
     @Test
@@ -237,5 +239,11 @@ public class TagCommandParserTest {
 
     private void assertFailureWithGuidance(String input, String problem) {
         assertParseFailure(parser, input, problem + "\n" + TagCommand.MESSAGE_ACTION_GUIDANCE);
+    }
+
+    /** The reply {@code tag} gives for a target it cannot use that would be a valid ID. */
+    private static String invalidIndexWithIdHint(String value) {
+        return ParserUtil.MESSAGE_INVALID_INDEX + " "
+                + Messages.getIdTargetHint(TagCommand.ID_TARGET_COMMAND, value);
     }
 }

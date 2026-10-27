@@ -462,20 +462,18 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_invalidTarget_failure() {
-        // zero, and anything that is not a positive integer, is not an index and reads
-        // as a mistyped one rather than as a candidate NUS Student ID
-        assertParseFailure(parser, "0" + FLAG_NAME_AMY,
-                ParserUtil.MESSAGE_INVALID_INDEX);
+        // zero is not an index, and a value that would be a valid ID also names the option
+        // that selects an ID, because a target starting with a digit reads as an index
+        assertParseFailure(parser, "0" + FLAG_NAME_AMY, invalidIndexWithIdHint("0"));
 
         // a letter-first target that is not a valid NUS Student ID keeps the field-level reason
         assertParseFailure(parser, "A0123-456" + FLAG_NAME_AMY,
                 Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
                         NusStudentId.getFailureReason("A0123-456")));
 
-        // a bare digit-leading ID reads as an index, and
-        // --id names the field to set rather than the student to edit
-        assertParseFailure(parser, "1A2B3C" + FLAG_NAME_AMY,
-                ParserUtil.MESSAGE_INVALID_INDEX);
+        // a bare digit-leading ID reads as an index, and --target-id selects the student,
+        // because --id names the field to set rather than the student to edit
+        assertParseFailure(parser, "1A2B3C" + FLAG_NAME_AMY, invalidIndexWithIdHint("1A2B3C"));
 
         // a token before the options that is not part of the target
         assertParseFailure(parser, "1 some random string" + FLAG_NAME_AMY,
@@ -489,7 +487,7 @@ public class EditCommandParserTest {
     @Test
     public void parse_invalidTargetAndInvalidField_reportsBothAtOnce() {
         assertParseFailure(parser, "0" + INVALID_PHONE,
-                ParserUtil.MESSAGE_INVALID_INDEX + "\n"
+                invalidIndexWithIdHint("0") + "\n"
                         + Messages.getErrorMessageForInvalidValue("Phone", "12",
                                 Phone.getFailureReason("12")));
     }
@@ -632,5 +630,11 @@ public class EditCommandParserTest {
     public void parse_unclosedQuote_isReportedAsSuch() {
         assertParseFailure(parser, "1 " + FLAG_NAME + " \"Amy Bee" + PHONE_BOB,
                 CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
+    }
+
+    /** The reply {@code edit} gives for a target it cannot use that would be a valid ID. */
+    private static String invalidIndexWithIdHint(String value) {
+        return ParserUtil.MESSAGE_INVALID_INDEX + " "
+                + Messages.getIdTargetHint(EditCommand.ID_TARGET_COMMAND, value);
     }
 }
