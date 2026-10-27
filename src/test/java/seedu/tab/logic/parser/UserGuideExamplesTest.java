@@ -81,17 +81,20 @@ public class UserGuideExamplesTest {
     }
 
     @Test
-    public void userGuide_idTargetExamples_executeWithDocumentedSetup() throws Exception {
+    public void userGuide_idTargetExamples_executeSequentiallyWithDocumentedSetup() throws Exception {
         String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
         List<List<String>> scenarios = List.of(
                 List.of("edit --target-id A02345678G --no-follow-up"),
-                List.of("edit --target-id A02345678G --id A0123456X"),
-                List.of("add Numeric Edit --id 1234 --follow-up", "edit --target-id 1234 --no-follow-up"),
+                List.of("add Numeric Edit --id 1234 --follow-up", "edit --target-id 1234 --no-follow-up",
+                        "edit --target-id 1234 --id A0123456X"),
+                List.of("edit A02345678G --phone 91234567", "edit a02345678g --phone 81112222",
+                        "edit A0123456X --id A7654321Y"),
                 List.of("tag A02345678G -a \"Lab 3\"", "tag A02345678G -r \"Lab 3\""),
-                List.of("add Numeric Tag --id 1234", "tag --id 1234 --add T2", "tag -i 1234 --remove T2"),
-                List.of("add Numeric Delete --id 1A2B3C", "delete --id 1A2B3C"));
+                List.of("add Numeric Tag --id 2345", "tag --id 2345 --add T2", "tag -i 2345 --remove T2"),
+                List.of("add Numeric Delete --id 1A2B3C", "delete --id 1A2B3C"),
+                List.of("find -n Alex", "delete A02345678G"));
+        Model model = new ModelManager(SampleDataUtil.getSampleStudentBook(), new UserPrefs());
         for (List<String> commands : scenarios) {
-            Model model = new ModelManager(SampleDataUtil.getSampleStudentBook(), new UserPrefs());
             for (String command : commands) {
                 assertTrue(guide.contains("`" + command + "`"), "Missing documented command: " + command);
                 new StudentBookParser().parseCommand(command).execute(model);

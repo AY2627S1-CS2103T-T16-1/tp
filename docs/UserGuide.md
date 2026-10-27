@@ -674,9 +674,9 @@ done to it beyond the quotes any value with spaces takes:
 
 Examples:
 
-*  `edit --target-id A02345678G --id A0123456X` Changes Charlotte Oliveiro's sample ID to `A0123456X`.
 *  To try a digit-leading ID, first run `add Numeric Edit --id 1234 --follow-up`, then
    `edit --target-id 1234 --no-follow-up` to clear that student's follow-up flag.
+*  After that setup, `edit --target-id 1234 --id A0123456X` changes Numeric Edit's ID to `A0123456X`.
 *  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 1 -e mei__tan@hotmail.com` Records the address with both underscores.
 *  `edit 1 --email ""` Removes the 1st student's email while keeping all other details.
@@ -691,8 +691,8 @@ Examples:
 *  `edit 2 -p 91234567 --follow-up` Updates the phone number and sets follow-up in one command.
 *  `edit A02345678G --phone 91234567` Edits the phone number of the student holding the NUS
    Student ID `A02345678G`, even while a search hides that student.
-*  `edit a02345678g -n "Betsy Crower"` Edits the same student, because matching an ID ignores case.
-*  `edit A02345678G --id A7654321Y` Changes that student's NUS Student ID from `A02345678G` to
+*  `edit a02345678g --phone 81112222` Edits the same student, because matching an ID ignores case.
+*  `edit A0123456X --id A7654321Y` Changes Numeric Edit's ID from the earlier setup to
    `A7654321Y`, keeping all other details.
 
 A cleared phone number, email or NUS Student ID, a cleared tag set, and an explicitly set or cleared follow-up status are
@@ -749,8 +749,7 @@ Format: `tag TARGET -a TAG`
 Examples:
 
 * `tag A02345678G -a "Lab 3"` adds a tag to Charlotte Oliveiro in the sample data, even if she is hidden.
-* First run `add Numeric Tag --id 1234`, then `tag --id 1234 --add T2` to add a tag by digit-leading ID.
-  Try this on a fresh sample book if you already used `1234` in the edit examples.
+* First run `add Numeric Tag --id 2345`, then `tag --id 2345 --add T2` to add a tag by digit-leading ID.
 * `tag 1 -a T2` adds `T2` to the 1st displayed student while keeping existing tags.
 * `tag 1 --add "Lab 3"` adds a tag containing a space.
 * `tag 2 -a "Project A/B"` adds a tag containing a slash.
@@ -816,7 +815,7 @@ Examples:
 * After `tag A02345678G -a "Lab 3"`, run `tag A02345678G -r "Lab 3"` to remove it from
   Charlotte Oliveiro in the sample data.
 * After the digit-leading ID setup in [Adding one tag](#adding-one-tag-tag),
-  `tag -i 1234 --remove T2` removes the tag just added to Numeric Tag.
+  `tag -i 2345 --remove T2` removes the tag just added to Numeric Tag.
 * `tag 1 -r T2` removes `T2` from the 1st displayed student.
 * `tag 1 --remove "  lab   3  "` removes `Lab 3`, ignoring case and extra spaces.
 * `tag 2 -r "Project A/B"` removes a tag containing a slash.
