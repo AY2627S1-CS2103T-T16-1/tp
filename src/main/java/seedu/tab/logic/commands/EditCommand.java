@@ -137,9 +137,6 @@ public class EditCommand extends Command {
      */
     private static Student createEditedStudent(Student studentToEdit, EditStudentDescriptor editStudentDescriptor) {
         assert studentToEdit != null;
-        if (!editStudentDescriptor.isAnyFieldEdited()) {
-            return studentToEdit;
-        }
 
         Name updatedName = editStudentDescriptor.getName().orElse(studentToEdit.getName());
         Optional<Phone> updatedPhone = editStudentDescriptor.isPhoneEdited()
