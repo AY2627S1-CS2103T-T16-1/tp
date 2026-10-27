@@ -81,7 +81,8 @@ public class JsonStudentBookStorage {
     public Optional<ReadOnlyStudentBook> readStudentBook(Path filePath) throws DataLoadingException {
         requireNonNull(filePath);
 
-        Optional<ReadOnlyStudentBook> book = loadStudentBook(filePath);
+        Optional<LoadedBook> loaded = loadStudentBook(filePath);
+        Optional<ReadOnlyStudentBook> book = loaded.map(LoadedBook::book);
         loadedBooks.put(filePath.toAbsolutePath().normalize(), book.map(StudentBook::new));
         return book;
     }
@@ -89,14 +90,15 @@ public class JsonStudentBookStorage {
     /**
      * Loads and validates all records without changing the remembered stale-save baseline.
      */
-    private Optional<ReadOnlyStudentBook> loadStudentBook(Path filePath) throws DataLoadingException {
+    private Optional<LoadedBook> loadStudentBook(Path filePath) throws DataLoadingException {
         Optional<JsonSerializableStudentBook> jsonStudentBook = readJsonStudentBook(filePath);
         if (!jsonStudentBook.isPresent()) {
             return Optional.empty();
         }
 
+        JsonSerializableStudentBook jsonBook = jsonStudentBook.get();
         try {
-            return Optional.of(jsonStudentBook.get().toModelType());
+            return Optional.of(new LoadedBook(jsonBook.toModelType(), jsonBook.getComment()));
         } catch (IllegalValueException ive) {
             logger.info("Illegal values found in " + filePath + ": " + ive.getMessage());
             throw new DataLoadingException(ive.getMessage(), ive);
@@ -168,19 +170,23 @@ public class JsonStudentBookStorage {
 
     /**
      * Rejects stale writes before replacing the file, then remembers the successfully saved book.
+     *
+     * <p>The description is taken from the file about to be replaced, so a description added or
+     * edited by hand after this window started survives the save.
      */
     private void saveIfUnchanged(ReadOnlyStudentBook studentBook, Path filePath, Path key) throws IOException {
-        Optional<StudentBook> diskBook;
+        Optional<LoadedBook> loadedDiskBook;
         try {
-            diskBook = loadStudentBook(filePath).map(StudentBook::new);
+            loadedDiskBook = loadStudentBook(filePath);
         } catch (DataLoadingException e) {
             throw new IOException(String.format(MESSAGE_CANNOT_VERIFY, filePath), e);
         }
+        Optional<StudentBook> diskBook = loadedDiskBook.map(LoadedBook::book);
         Optional<StudentBook> expectedBook = loadedBooks.getOrDefault(key, diskBook);
         if (!expectedBook.equals(diskBook)) {
             throw new IOException(String.format(MESSAGE_STALE_DATA, filePath));
         }
-        writeStudentBook(studentBook, filePath);
+        writeStudentBook(studentBook, filePath, loadedDiskBook.map(LoadedBook::comment).orElse(null));
         loadedBooks.put(key, Optional.of(new StudentBook(studentBook)));
     }
 
@@ -218,8 +224,11 @@ public class JsonStudentBookStorage {
     }
 
     /** Writes the book through a delegate that tests can override to simulate a write failure. */
-    void writeStudentBook(ReadOnlyStudentBook studentBook, Path filePath) throws IOException {
-        JsonUtil.saveJsonFile(new JsonSerializableStudentBook(studentBook), filePath);
+    void writeStudentBook(ReadOnlyStudentBook studentBook, Path filePath, String comment) throws IOException {
+        JsonUtil.saveJsonFile(new JsonSerializableStudentBook(studentBook, comment), filePath);
     }
+
+    /** A student book read from a file, with the description that file carries. */
+    private record LoadedBook(StudentBook book, String comment) {}
 
 }
