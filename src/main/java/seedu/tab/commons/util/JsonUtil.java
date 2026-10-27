@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import seedu.tab.commons.core.DataLoadingErrorMessage;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.commons.exceptions.IllegalValueException;
@@ -83,8 +84,8 @@ public class JsonUtil {
             }
             return value;
         } catch (JsonProcessingException e) {
-            String errorMessage = JsonParseErrorFormatter.format(e, jsonSource);
-            logger.warning("Error parsing JSON file " + filePath + ": " + errorMessage);
+            DataLoadingErrorMessage errorMessage = JsonParseErrorFormatter.format(e, jsonSource);
+            logger.warning("Error parsing JSON file " + filePath + ": " + errorMessage.toDisplayText());
             throw new DataLoadingException(errorMessage, e);
         } catch (IOException e) {
             logger.warning("Error processing JSON file " + filePath + ": " + e);

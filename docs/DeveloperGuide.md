@@ -3066,8 +3066,9 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Replace the contents with `not json format!`, then on a later
       run restore the copy and remove the comma after one student's `"name"`.<br>
       Expected: Each refuses to open the main window, naming the file,
-      reporting the line and column, and showing the affected line numbered
-      with at most one line on either side. The file is left as it is.
+      reporting the line and column, and quoting the affected line numbered
+      with at most one line on either side, as a monospaced listing below the
+      message. The file is left as it is.
    1. Test case: Change the second student's `nusStudentId` key to
       `nusStudentID`, keeping its value.<br>
       Expected: The error names the unknown key, the record and that student,
