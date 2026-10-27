@@ -1,7 +1,5 @@
 package seedu.tab.commons.exceptions;
 
-import java.util.Objects;
-
 import seedu.tab.commons.core.DataLoadingErrorMessage;
 
 /**
@@ -10,14 +8,6 @@ import seedu.tab.commons.core.DataLoadingErrorMessage;
 public class DataLoadingException extends Exception {
 
     private final DataLoadingErrorMessage errorMessage;
-
-    /**
-     * Creates a loading failure caused by an underlying exception.
-     */
-    public DataLoadingException(Exception cause) {
-        super(cause);
-        this.errorMessage = DataLoadingErrorMessage.of(Objects.toString(super.getMessage(), ""));
-    }
 
     /**
      * Creates an exception with a user-readable explanation and its underlying cause.
