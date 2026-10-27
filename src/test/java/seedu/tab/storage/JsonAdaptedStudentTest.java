@@ -203,7 +203,7 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, overLimit, VALID_TAGS, false);
         String expectedMessage = String.format(
-                "Email field is too long to read safely: it holds %d characters, but saved emails may hold at most %d",
+                "Email field is too long: it holds %d characters, but an email may hold at most %d",
                 overLimit.length(), Email.MAX_LENGTH);
 
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);

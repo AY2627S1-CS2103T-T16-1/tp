@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.AppUtil.checkArgument;
 
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import seedu.tab.commons.util.StringUtil;
 
@@ -67,6 +68,8 @@ public class Email {
             "the domain may hold letters and digits in labels separated by dots, "
                     + "with hyphens allowed inside a label";
 
+    private static final Pattern LOCAL_ATOM_PATTERN = Pattern.compile(LOCAL_ATOM_REGEX);
+
     private final String value;
 
     /**
@@ -100,7 +103,7 @@ public class Email {
 
     private static boolean isValidLocalPart(String localPart) {
         for (String atom : localPart.split("\\.", -1)) {
-            if (!atom.matches(LOCAL_ATOM_REGEX)) {
+            if (!LOCAL_ATOM_PATTERN.matcher(atom).matches()) {
                 return false;
             }
         }

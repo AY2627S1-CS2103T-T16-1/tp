@@ -70,8 +70,8 @@ public class LocaleConsistencyTest {
                         + "student record 1 (\"Priya\").");
         String longEmail = "x".repeat(255);
         assertRejectedSource("{\"students\":[{\"name\":\"Priya\",\"phone\":\"91234567\",\"email\":\""
-                + longEmail + "\"}]}", "Student record 1 (\"Priya\"): Email field is too long to read safely: "
-                + "it holds 255 characters, but saved emails may hold at most 254");
+                + longEmail + "\"}]}", "Student record 1 (\"Priya\"): Email field is too long: "
+                + "it holds 255 characters, but an email may hold at most 254");
     }
 
     private void assertRejectedSource(String source, String expectedMessage) throws Exception {

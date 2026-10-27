@@ -36,7 +36,7 @@ class JsonAdaptedStudent {
     static final String MISSING_FIELD_MESSAGE_FORMAT = "%s field is missing.";
 
     private static final String MESSAGE_EMAIL_TOO_LONG =
-            "%s field is too long to read safely: it holds %d characters, but saved emails may hold at most %d";
+            "%s field is too long: it holds %d characters, but an email may hold at most %d";
 
     private static final String LEGACY_ADDRESS_FIELD = "address";
     private static final String MESSAGE_UNKNOWN_FIELD = "Unknown field \"%s\" in %s. Check its spelling. "
