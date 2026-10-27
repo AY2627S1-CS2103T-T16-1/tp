@@ -200,4 +200,14 @@ public class EmailTest {
         }
     }
 
+    @Test
+    public void isValidEmail_domainCharacterBounds_acceptsOnlyAsciiLettersAndDigits() {
+        for (String character : List.of("a", "z", "A", "Z", "0", "9")) {
+            assertTrue(Email.isValidEmail("student@" + character + "a"), character);
+        }
+        for (String character : List.of("/", ":", "[", "`", "{", "é")) {
+            assertFalse(Email.isValidEmail("student@" + character + "a"), character);
+        }
+    }
+
 }

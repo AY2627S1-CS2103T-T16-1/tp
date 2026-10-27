@@ -27,6 +27,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -37,6 +38,7 @@ import javafx.stage.Stage;
 import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.logic.Logic;
 import seedu.tab.logic.commands.CommandResult;
+import seedu.tab.logic.commands.ExitCommand;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -64,6 +66,9 @@ public class MainWindowTest {
 
         @Override
         public CommandResult execute(String commandText) {
+            if (commandText.equals(ExitCommand.COMMAND_WORD)) {
+                return new CommandResult(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, false, true);
+            }
             return new CommandResult(
                     commandText.equals("long") ? FIVE_LINE_REPLY : commandText);
         }
@@ -85,7 +90,7 @@ public class MainWindowTest {
 
         @Override
         public void setGuiSettings(GuiSettings guiSettings) {
-            // the window under test never saves its settings
+            this.guiSettings = guiSettings;
         }
     }
 
@@ -568,4 +573,30 @@ public class MainWindowTest {
         assertTrue(measured[2] <= measured[3],
                 "the list should be the pane that gives way");
     }
+
+    @Test
+    public void commandLine_exitResult_closesWindowAndSavesBounds() throws Exception {
+        onFxThread(() -> {
+            LogicStub logic = new LogicStub();
+            MainWindow window = new MainWindow(new Stage(), logic, DATA_FILE);
+            window.fillInnerParts();
+            window.show();
+            Stage stage = window.getPrimaryStage();
+            try {
+                GuiSettings expected = new GuiSettings(stage.getWidth(), stage.getHeight(),
+                        (int) stage.getX(), (int) stage.getY());
+                TextField field = (TextField) stage.getScene().lookup("#commandTextField");
+                field.setText(ExitCommand.COMMAND_WORD);
+                field.fireEvent(new ActionEvent());
+                assertFalse(stage.isShowing());
+                assertEquals(expected, logic.guiSettings);
+                TextArea feedback = (TextArea) stage.getScene().lookup("#resultDisplay");
+                assertEquals(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, feedback.getText());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
 }

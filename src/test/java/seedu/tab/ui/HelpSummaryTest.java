@@ -14,6 +14,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.ScrollPane;
@@ -263,6 +264,13 @@ public class HelpSummaryTest {
     }
 
     private static void assertPagerNavigation(MainWindow window) {
+        // A resize can arrive between the readiness check and this FX callback.
+        // Measure and navigate only after laying out the current scene bounds.
+        Scene scene = window.getRoot().getScene();
+        Region root = (Region) scene.getRoot();
+        root.resize(scene.getWidth(), scene.getHeight());
+        root.applyCss();
+        root.layout();
         ScrollPane viewport = (ScrollPane) node(window, "helpViewport");
         assertEquals(ScrollPane.ScrollBarPolicy.NEVER, viewport.getVbarPolicy());
         assertEquals(ScrollPane.ScrollBarPolicy.NEVER, viewport.getHbarPolicy());
