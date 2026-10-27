@@ -131,6 +131,17 @@ public class FileUtilTest {
     }
 
     @Test
+    public void requireResolvableLink_existingFileOrLink_doesNotThrow() throws Exception {
+        Path file = testFolder.resolve("tab.json");
+        Files.writeString(file, "{}");
+        Path link = testFolder.resolve("linked.json");
+        createSymbolicLinkOrSkip(link, Path.of("tab.json"));
+
+        assertDoesNotThrow(() -> FileUtil.requireResolvableLink(file));
+        assertDoesNotThrow(() -> FileUtil.requireResolvableLink(link));
+    }
+
+    @Test
     public void writeToFile_existingPosixPermissions_preservesPermissions() throws Exception {
         Path file = testFolder.resolve("tab.json");
         Files.writeString(file, "old contents");

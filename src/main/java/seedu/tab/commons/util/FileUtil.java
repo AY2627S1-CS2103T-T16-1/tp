@@ -96,12 +96,10 @@ public class FileUtil {
      *     save can create without guessing where the records were meant to live.
      */
     private static Path resolveMissingLinkTarget(Path link) throws IOException {
-        if (!Files.isSymbolicLink(link)) {
-            return link;
-        }
+        // the callers reach this only for a path that exists without being followed and not
+        // with, which is a link; an absolute link always resolves to a target with a parent
         Path target = link.resolveSibling(Files.readSymbolicLink(link)).normalize();
-        Path targetParent = target.getParent();
-        if (targetParent != null && Files.notExists(targetParent)) {
+        if (Files.notExists(target.getParent())) {
             throw new NoSuchFileException(link.toString(), null,
                     "it is a link to " + target + ", and that folder does not exist");
         }
