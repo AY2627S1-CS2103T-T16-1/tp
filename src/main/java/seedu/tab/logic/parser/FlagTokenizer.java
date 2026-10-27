@@ -159,6 +159,7 @@ public class FlagTokenizer {
         }
         return flag;
     }
+
     /**
      * Returns true if {@code token} marks a field rather than being a value. A quoted token is
      * always a value, which is how a value opening with the flag marker is given.
@@ -192,6 +193,4 @@ public class FlagTokenizer {
         String marker = token.value().substring(0, separator);
         return new AttachedOption(marker, token.value().substring(separator + 1));
     }
-
-
 }

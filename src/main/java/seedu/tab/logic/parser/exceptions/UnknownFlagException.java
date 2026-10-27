@@ -8,14 +8,7 @@ import seedu.tab.logic.Messages;
 public class UnknownFlagException extends ParseException {
     private final String marker;
 
-    /**
-     * Creates an unknown-option failure retaining the marker that was supplied.
-     */
-    public UnknownFlagException(String marker) {
-        this(marker, null);
-    }
-
-    /** Creates a failure with an optional suggestion for a supported option. */
+    /** Creates a failure retaining the supplied marker, with an optional supported-option suggestion. */
     public UnknownFlagException(String marker, String suggestion) {
         super(String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker)
                 + (suggestion == null ? "" : " Did you mean " + suggestion + "?"));
