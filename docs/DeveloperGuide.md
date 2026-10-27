@@ -1294,6 +1294,17 @@ Jackson class names. A missing or null array still means no tags, and tag text
 continues through the existing model validation. Mapping errors retain their
 source location and student record number, and do not rewrite the file.
 
+`JsonTextFieldDeserializer` gives the same treatment to `name`, `phone`,
+`email` and `nusStudentId`, whose values Jackson reads as plain text. A list or
+an object in place of one of them states the field and the rule, where Jackson
+names a Java class and a parser token instead. The deserializer learns the
+field name from the property it is contextualized for, so one class serves
+every text field, and every other value reaches the existing model validation
+unchanged. `JsonParseErrorFormatter` replaces the two parser complaints whose
+own wording only helps a Jackson user: a rejected comment names the rule and
+the supported `_comment` key, and a file holding no JSON is explained without a
+location or an excerpt, neither of which has anything to point at.
+
 ### Recovering from bad preferences
 
 `JsonUtil.readJsonFile` rejects a whole-file `null` with a
@@ -3073,6 +3084,15 @@ testers are expected to do more *exploratory* testing.
       Expected: The error names the unknown key, the record and that student,
       and lists the supported fields, erasing no value. Correcting the spelling
       lets it load; a legacy `address` key is ignored rather than refused.
+   1. Test case: Give the first student a second email with
+      `"email": ["a@b.com", "c@d.com"]`, then on later runs restore the copy
+      and instead add a `// moved` line above `"students"`, and finally empty
+      the file with `: > data/tab.json`.<br>
+      Expected: The first names the record and the field, saying that `email`
+      must be a single text value and not a list. The second says that a JSON
+      file cannot hold comments and points at the top-level `_comment` field.
+      The empty file is reported as holding no data, with no line number and no
+      excerpt. No Java class name or parser feature is shown in any of them.
    1. Test case: Move `data/tab.json` elsewhere, then restore it and make the
       folder unreadable with `chmod 000 data`.<br>
       Expected: A missing file is treated as a first launch and opens with
