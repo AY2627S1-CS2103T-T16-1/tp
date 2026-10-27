@@ -133,7 +133,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
      */
     private static String formatExtraneousValueMessage(List<Token> tokens) {
         List<Token> values = tokens.subList(1, tokens.size());
-        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX_ONLY, DeleteCommand.FIELD_INDEX,
+        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET_ONLY, DeleteCommand.FIELD_INDEX,
                 Messages.shorten(String.join(" ", values.stream().map(Token::value).toList())),
                 DeleteCommand.COMMAND_WORD);
     }

@@ -194,7 +194,7 @@ public class DeleteCommandParserTest {
 
     /** The reply {@code delete} gives for the value it found after the index. */
     private static String valueAfterIndexMessage(String value) {
-        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX_ONLY, DeleteCommand.FIELD_INDEX,
+        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET_ONLY, DeleteCommand.FIELD_INDEX,
                 value, DeleteCommand.COMMAND_WORD);
     }
 

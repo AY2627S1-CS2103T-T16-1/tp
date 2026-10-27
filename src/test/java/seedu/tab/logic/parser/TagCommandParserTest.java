@@ -152,11 +152,11 @@ public class TagCommandParserTest {
     @Test
     public void parse_unflaggedTag_reportsUnexpectedValueAndActionGuidance() {
         for (String value : List.of("lab4", "Lab 3", "组 1")) {
-            assertFailureWithGuidance("1 " + value, String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX,
+            assertFailureWithGuidance("1 " + value, String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET,
                     "INDEX", value) + "\nMissing required field(s): -a TAG or -r TAG");
         }
         assertParseFailure(parser, "1 extra -a T1",
-                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, "INDEX", "extra"));
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET, "INDEX", "extra"));
     }
 
     @Test

@@ -31,9 +31,9 @@ public class ParserUtil {
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
     public static final String MESSAGE_INDEX_TOO_LARGE = "Index \"%s\" exceeds the largest supported index ("
             + Integer.MAX_VALUE + "). Use an index from the displayed list.";
-    public static final String MESSAGE_VALUE_AFTER_INDEX =
+    public static final String MESSAGE_VALUE_AFTER_TARGET =
             "Unexpected value after %1$s: \"%2$s\". Put field values after an option.";
-    public static final String MESSAGE_VALUE_AFTER_INDEX_ONLY =
+    public static final String MESSAGE_VALUE_AFTER_TARGET_ONLY =
             "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index and nothing else.";
     public static final String MESSAGE_FOLLOW_UP_IS_NOT_A_TAG =
             FollowUpFlag.MESSAGE_RESERVED + " Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
@@ -91,7 +91,7 @@ public class ParserUtil {
         String[] values = TARGET_SEPARATOR_PATTERN.split(oneBasedIndex.trim(), 2);
         Index index = parseIndex(values[0]);
         if (values.length > 1) {
-            throw new ParseException(String.format(MESSAGE_VALUE_AFTER_INDEX, fieldName, Messages.shorten(values[1])));
+            throw new ParseException(String.format(MESSAGE_VALUE_AFTER_TARGET, fieldName, Messages.shorten(values[1])));
         }
         return index;
     }
@@ -119,7 +119,7 @@ public class ParserUtil {
         String[] values = TARGET_SEPARATOR_PATTERN.split(trimmedPreamble, 2);
         StudentTarget target = parseNonBlankStudentTarget(values[0]);
         if (values.length > 1) {
-            throw new ParseException(String.format(MESSAGE_VALUE_AFTER_INDEX, fieldName, Messages.shorten(values[1])));
+            throw new ParseException(String.format(MESSAGE_VALUE_AFTER_TARGET, fieldName, Messages.shorten(values[1])));
         }
         return target;
     }
