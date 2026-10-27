@@ -579,8 +579,8 @@ For example, `edit A01234567X -p 91234567`
 edits the student holding that ID, found among all students even while a search is hiding
 them, and matching ignores case. `--id` still sets or clears the student's NUS Student ID,
 so `edit A01234567X --id A05678901K` changes the ID of the student found by the old one.
-Use `edit --target-id 1234 --no-follow-up` to clear follow-up for the student whose ID is
-`1234`, even when a search hides them. `--target-id` also accepts `--target-id=VALUE`.
+Use `edit --target-id A02345678G --no-follow-up` to clear follow-up for Charlotte
+Oliveiro in the sample data, even when a search hides her. `--target-id` also accepts `--target-id=VALUE`.
 
 The value options accept these equivalent spellings: `-n` and `--name`, `-p`
 and `--phone`, `-e` and `--email`, `--id` and `-i`, and `-t` and `--tag`.
@@ -674,7 +674,9 @@ done to it beyond the quotes any value with spaces takes:
 
 Examples:
 
-*  `edit --target-id 1234 --id A0123456X` Changes the ID of the student holding `1234` to `A0123456X`.
+*  `edit --target-id A02345678G --id A0123456X` Changes Charlotte Oliveiro's sample ID to `A0123456X`.
+*  To try a digit-leading ID, first run `add Numeric Edit --id 1234 --follow-up`, then
+   `edit --target-id 1234 --no-follow-up` to clear that student's follow-up flag.
 *  `edit 1 --phone 91234567 --email johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 1 -e mei__tan@hotmail.com` Records the address with both underscores.
 *  `edit 1 --email ""` Removes the 1st student's email while keeping all other details.
@@ -746,8 +748,9 @@ Format: `tag TARGET -a TAG`
 
 Examples:
 
-* `tag E7654321 -a "Lab 3"` adds a tag by ID, even if the student is hidden.
-* `tag --id 1234 --add T2` targets the student whose ID is `1234`.
+* `tag A02345678G -a "Lab 3"` adds a tag to Charlotte Oliveiro in the sample data, even if she is hidden.
+* First run `add Numeric Tag --id 1234`, then `tag --id 1234 --add T2` to add a tag by digit-leading ID.
+  Try this on a fresh sample book if you already used `1234` in the edit examples.
 * `tag 1 -a T2` adds `T2` to the 1st displayed student while keeping existing tags.
 * `tag 1 --add "Lab 3"` adds a tag containing a space.
 * `tag 2 -a "Project A/B"` adds a tag containing a slash.
@@ -810,8 +813,10 @@ Format: `tag TARGET -r TAG`
 
 Examples:
 
-* `tag E7654321 -r "Lab 3"` removes a tag by ID.
-* `tag -i 1234 --remove T2` removes `T2` from the student whose ID is `1234`.
+* After `tag A02345678G -a "Lab 3"`, run `tag A02345678G -r "Lab 3"` to remove it from
+  Charlotte Oliveiro in the sample data.
+* After the digit-leading ID setup in [Adding one tag](#adding-one-tag-tag),
+  `tag -i 1234 --remove T2` removes the tag just added to Numeric Tag.
 * `tag 1 -r T2` removes `T2` from the 1st displayed student.
 * `tag 1 --remove "  lab   3  "` removes `Lab 3`, ignoring case and extra spaces.
 * `tag 2 -r "Project A/B"` removes a tag containing a slash.
@@ -917,8 +922,8 @@ Examples:
 * `find -n Betsy` followed by `delete 1` deletes the 1st student in the results of the `find` command.
 * `delete A01234567X` deletes the student holding the NUS Student ID `A01234567X`.
 * `delete a01234567x` deletes the same student, because matching an ID ignores case.
-* `delete --id 1A2B3C` deletes the student whose NUS Student ID is `1A2B3C`, which the plain
-  form would otherwise read as an index.
+* First run `add Numeric Delete --id 1A2B3C`, then `delete --id 1A2B3C` to delete that student.
+  The explicit ID option is needed because the ID starts with a digit.
 * `find -n Alex` followed by `delete A02345678G` deletes Charlotte Oliveiro, whose NUS Student
   ID is `A02345678G` in the sample data, even while the search hides her.
 
@@ -1141,7 +1146,7 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | Keeps the search if the new student matches; otherwise shows all students with a notice. <br> `add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` <br> Alternate spellings: `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> e.g., `add James Ho --phone=22224444 -i=A07890123M --tag=T1 -t Lab3 --follow-up`
 **Clear**  | `clear`, then `y`/`yes` to confirm; `n`/`no` or an empty reply to cancel (replies ignore case)
-**Delete** | `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`<br> The ID option, spelled `-i`/`--id` or `--id=VALUE`, is what an ID starting with a digit needs<br> e.g., `delete 3`, `delete A01234567X`, `delete --id 1A2B3C`
+**Delete** | `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`<br> The ID option, spelled `-i`/`--id` or `--id=VALUE`, is what an ID starting with a digit needs<br> e.g., `delete 3`, `delete A01234567X`; for a digit-leading ID, first `add Numeric Delete --id 1A2B3C`, then `delete --id 1A2B3C`
 **Edit**   | `edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]`<br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--target-id NUS_STUDENT_ID`; `--id` sets the ID field <br> Alternate value spellings: `-n`/`--name`, `-p`/`--phone`, `-e`/`--email`, `--id`/`-i`, `-t`/`--tag`; `OPTION=VALUE` is also accepted <br> Follow-up aliases: `-f` sets; `-nf` clears.<br> e.g., `edit 2 --name="James Lee" --id=A08901234N`, `edit A01234567X -p 91234567`
 **Tag**    | `tag TARGET -a TAG` or `tag TARGET -r TAG` <br> `TARGET`: displayed index, letter-leading NUS Student ID, or `--id NUS_STUDENT_ID` (alias `-i`) <br> Alternate spellings: `--add`, `--remove`; `OPTION=VALUE` is also accepted <br> e.g., `tag 1 --add="Lab 3"`, `tag 1 --remove="Lab 3"`, `tag --id A02345678G --add T2`
 **Find**   | `find [FIELD_OPTION TERM]... [-f \| -nf]`<br> e.g., `find -n Jason -t lab -t tutorial` (all terms required)
