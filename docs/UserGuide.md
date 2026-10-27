@@ -421,6 +421,8 @@ spaces, hyphens and any script, so `Lab 3`, `needs-followup` and
 `AY2627 Sem 1 CS2103T T16` are all valid. The one name a tag cannot take is
 `Needs follow-up`, which labels the follow-up marker; use `--follow-up` for
 that. Names built around it, such as `Needs follow-up soon`, are ordinary tags.
+Similar spellings such as `Needs follow up` are saved with an advisory note; see
+[Adding one tag](#adding-one-tag-tag).
 </box>
 
 <box type="tip" seamless>
@@ -658,7 +660,8 @@ done to it beyond the quotes any value with spaces takes:
   another student. Unchanged fields are not reported again, and the edited
   student is not compared with its own earlier record.
 * `Needs follow-up` names the follow-up marker rather than a tag, so `-t` refuses
-  it whatever its case or spacing and points you to `--follow-up`.
+  it whatever its case or spacing and points you to `--follow-up`. Newly added
+  tags that resemble the marker, such as `Needs followup`, are saved with a note.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
 * To remove all of a student's tags, give `-t` an empty value: `-t ""` or
@@ -724,6 +727,10 @@ Format: `tag TARGET -a TAG`
   it is refused whatever its case or spacing, with a reply pointing to
   `--follow-up`. A card would otherwise show the same label twice, once as a
   tag and once as the marker.
+  Similar spellings such as `Needs follow up`, `Needs followup`, and `Needs follow-up.`
+  are saved as ordinary tags with a note pointing to `--follow-up`. This also applies
+  to new tags supplied with `add` or `edit`. The note does not flag the student;
+  `find -f` matches only students whose follow-up flag is set.
 * Leading and trailing whitespace is removed and runs of whitespace become
   one space. Tags retain their letter case. When checking whether the student
   already has the tag, case and insignificant whitespace are ignored, so

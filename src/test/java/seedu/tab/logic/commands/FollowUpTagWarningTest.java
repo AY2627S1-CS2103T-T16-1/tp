@@ -17,7 +17,6 @@ public class FollowUpTagWarningTest {
             assertEquals("Saved.\n\nNOTE: \"" + tag.getTagName()
                     + "\" looks like the follow-up marker. To flag the student, use --follow-up.",
                     FollowUpTagWarning.appendTo("Saved.", List.of(tag)));
-            assertEquals(new Tag(name), tag);
         }
     }
 

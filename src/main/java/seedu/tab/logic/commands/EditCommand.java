@@ -124,6 +124,8 @@ public class EditCommand extends Command {
         String feedback = LikelyDuplicateWarning.appendChangedFieldsTo(
                 String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)),
                 studentToEdit, editedStudent, model.getStudentBook().getStudentList());
+        feedback = FollowUpTagWarning.appendTo(feedback, editedStudent.getTags().stream()
+                .filter(tag -> !studentToEdit.getTags().contains(tag)).toList());
         model.setStudent(studentToEdit, editedStudent);
         logger.info("Edited the student " + target.describe()
                 + "; the book now holds " + model.getStudentBook().getStudentList().size());

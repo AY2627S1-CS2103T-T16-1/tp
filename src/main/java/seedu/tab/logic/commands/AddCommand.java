@@ -77,6 +77,7 @@ public class AddCommand extends Command {
         String feedback = LikelyDuplicateWarning.appendTo(
                 String.format(MESSAGE_SUCCESS, Messages.format(toAdd)),
                 toAdd, model.getStudentBook().getStudentList());
+        feedback = FollowUpTagWarning.appendTo(feedback, toAdd.getTags());
         model.addStudent(toAdd);
         if (!model.getFilteredStudentPredicate().test(toAdd)) {
             model.updateFilteredStudentList(PREDICATE_SHOW_ALL_STUDENTS);

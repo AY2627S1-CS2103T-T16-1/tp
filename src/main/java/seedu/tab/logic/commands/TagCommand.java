@@ -114,8 +114,10 @@ public class TagCommand extends Command {
         model.setStudent(student, updatedStudent);
         String message = action == Action.ADD ? MESSAGE_ADD_SUCCESS : MESSAGE_REMOVE_SUCCESS;
         Tag changedTag = action == Action.ADD ? tag : existingTag.orElseThrow();
-        return new CommandResult(String.format(message, Messages.shorten(changedTag.getTagName()),
-                Messages.format(updatedStudent)));
+        String feedback = String.format(message, Messages.shorten(changedTag.getTagName()),
+                Messages.format(updatedStudent));
+        return new CommandResult(action == Action.ADD
+                ? FollowUpTagWarning.appendTo(feedback, List.of(tag)) : feedback);
     }
 
     /**
