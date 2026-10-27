@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.BreakIterator;
 import java.text.Normalizer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -16,6 +17,14 @@ public class StringUtil {
 
     /** Why {@link #holdsLetterOrNumber(String)} turned a value down, phrased for the user. */
     public static final String REASON_NO_LETTER_OR_NUMBER = "it holds no letter or number";
+
+    // The Unicode name of a Latin letter that is one base letter carrying a modifier, such as
+    // LATIN SMALL LETTER D WITH STROKE for đ. The base letter has to be a single letter, and the
+    // modifier must name no second letter, so that the pattern passes over the letters whose name
+    // spells out two of them: ǅ is LATIN CAPITAL LETTER D WITH SMALL LETTER Z WITH CARON, and
+    // taking D alone from it would lose the z a reader sees.
+    private static final Pattern LETTER_WITH_MODIFIER =
+            Pattern.compile("LATIN (?:CAPITAL|SMALL) LETTER ([A-Z]) WITH (?!.*LETTER).+");
 
     // almost every Unicode format character (category Cf), except the joiner and non-joiner a
     // script needs to shape a word. A few of them do draw something — the Arabic end-of-ayah
@@ -130,9 +139,10 @@ public class StringUtil {
     public static String normalizeNameForComparison(String name) {
         requireNonNull(name);
         String decomposed = Normalizer.normalize(name, Normalizer.Form.NFD);
+        String withBaseLetters = stripLetterModifiers(decomposed);
         StringBuilder result = new StringBuilder();
         boolean isLatin = false;
-        for (int codePoint : decomposed.codePoints().toArray()) {
+        for (int codePoint : withBaseLetters.codePoints().toArray()) {
             int type = Character.getType(codePoint);
             boolean isMark = type == Character.NON_SPACING_MARK || type == Character.COMBINING_SPACING_MARK
                     || type == Character.ENCLOSING_MARK;
@@ -153,6 +163,46 @@ public class StringUtil {
         value.codePoints().forEach(codePoint ->
                 result.appendCodePoint(Character.toLowerCase(Character.toUpperCase(codePoint))));
         return result.toString();
+    }
+
+    /**
+     * Returns {@code value} with every Latin letter that carries a stroke, a slash, a bar, a hook
+     * or another modifier replaced by the letter underneath it, so that {@code Đặng} reads as
+     * {@code Dang} and {@code Søren} as {@code Soren} when names are compared.
+     *
+     * <p>Canonical decomposition alone cannot reach these letters. An accented letter such as
+     * {@code é} splits into a base letter and a mark that the caller then drops, but {@code Đ},
+     * {@code Ł} and {@code Ø} are single code points that no decomposition takes apart, so their
+     * stroke survives every step and a reader typing {@code dang} finds nobody.
+     *
+     * <p>Which letter lies underneath comes from the Unicode name rather than a list written
+     * here, because Unicode already answers the question for every such letter and never
+     * renames one. The name has to describe one base letter plus a modifier, which keeps the
+     * mapping one letter to one letter and leaves out the letters that stand on their own:
+     * {@code Æ}, {@code Œ}, {@code ß}, {@code Ð} and {@code Þ} name no base letter, and a reader
+     * spells each of them with two keys, so expanding one would be transliteration rather than
+     * a comparison key.
+     */
+    private static String stripLetterModifiers(String value) {
+        StringBuilder result = new StringBuilder();
+        for (int codePoint : value.codePoints().toArray()) {
+            result.appendCodePoint(findBaseLetter(codePoint));
+        }
+        return result.toString();
+    }
+
+    /**
+     * Returns the letter underneath {@code codePoint} when Unicode names it as a base letter
+     * carrying a modifier, and {@code codePoint} itself otherwise. The letter comes back in
+     * capital form, as Unicode names spell it; the caller folds case afterwards.
+     */
+    private static int findBaseLetter(int codePoint) {
+        String name = Character.getName(codePoint);
+        if (name == null) {
+            return codePoint;
+        }
+        Matcher named = LETTER_WITH_MODIFIER.matcher(name);
+        return named.matches() ? named.group(1).codePointAt(0) : codePoint;
     }
 
     /**
