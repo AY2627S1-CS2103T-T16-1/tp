@@ -210,4 +210,23 @@ public class EmailTest {
         }
     }
 
+    @Test
+    public void hasDotlessDomain_singleLabelDomain_returnsTrue() {
+        for (String address : List.of("john@gmail", "e1234567@nus", "a@localhost", "john@my-host")) {
+            assertTrue(new Email(address).hasDotlessDomain(), address);
+        }
+    }
+
+    @Test
+    public void hasDotlessDomain_dottedDomain_returnsFalse() {
+        for (String address : List.of("john@gmail.com", "e1234567@u.nus.edu", "a.b@x.co")) {
+            assertFalse(new Email(address).hasDotlessDomain(), address);
+        }
+    }
+
+    @Test
+    public void hasDotlessDomain_dotInLocalPartOnly_returnsTrue() {
+        assertTrue(new Email("john.tan@gmail").hasDotlessDomain());
+    }
+
 }
