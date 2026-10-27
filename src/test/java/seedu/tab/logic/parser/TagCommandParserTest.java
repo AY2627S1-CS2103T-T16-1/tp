@@ -160,6 +160,16 @@ public class TagCommandParserTest {
     }
 
     @Test
+    public void parse_unflaggedValueAfterIdTarget_namesTheIdForm() {
+        // a letter-leading target is an NUS Student ID, so a user who typed a name is not
+        // told the first word they typed is an index
+        for (String target : List.of("Alex", "A01234567X")) {
+            assertParseFailure(parser, target + " Yeoh -a T1", String.format(
+                    ParserUtil.MESSAGE_VALUE_AFTER_TARGET, ParserUtil.FIELD_NUS_STUDENT_ID, "Yeoh"));
+        }
+    }
+
+    @Test
     public void parse_tagActionOptionsInOtherCommands_rejected() {
         for (String marker : List.of("-a", "--add", "-r", "--remove")) {
             String expected = String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker);

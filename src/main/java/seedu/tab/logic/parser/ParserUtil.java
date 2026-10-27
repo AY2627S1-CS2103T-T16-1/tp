@@ -34,9 +34,13 @@ public class ParserUtil {
     public static final String MESSAGE_VALUE_AFTER_TARGET =
             "Unexpected value after %1$s: \"%2$s\". Put field values after an option.";
     public static final String MESSAGE_VALUE_AFTER_TARGET_ONLY =
-            "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index and nothing else.";
+            "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index or NUS Student ID "
+                    + "and nothing else.";
     public static final String MESSAGE_FOLLOW_UP_IS_NOT_A_TAG =
             FollowUpFlag.MESSAGE_RESERVED + " Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
+
+    /** How a target read as an NUS Student ID is named, as the usage messages name it. */
+    public static final String FIELD_NUS_STUDENT_ID = "NUS_STUDENT_ID";
 
     private static final Pattern TARGET_SEPARATOR_PATTERN = Pattern.compile("(?U)\\s+");
 
@@ -104,7 +108,7 @@ public class ParserUtil {
      * their concise validation reason rather than the full command usage.
      *
      * @param preamble The text before the first option.
-     * @param fieldName The field named in invalid-index diagnostics.
+     * @param fieldName The field named in diagnostics about a target read as an index.
      * @param missingField How a missing target is named, so the caller can show every target form.
      * @throws ParseException if the target is missing, holds extra words, or has invalid syntax.
      */
@@ -119,9 +123,27 @@ public class ParserUtil {
         String[] values = TARGET_SEPARATOR_PATTERN.split(trimmedPreamble, 2);
         StudentTarget target = parseNonBlankStudentTarget(values[0]);
         if (values.length > 1) {
-            throw new ParseException(String.format(MESSAGE_VALUE_AFTER_TARGET, fieldName, Messages.shorten(values[1])));
+            throw new ParseException(String.format(MESSAGE_VALUE_AFTER_TARGET,
+                    getTargetFieldName(values[0], fieldName), Messages.shorten(values[1])));
         }
         return target;
+    }
+
+    /**
+     * Returns how the target in {@code target} is named, so that a diagnostic about the
+     * words after it describes the form the target was read as. A target opening with a
+     * letter is an NUS Student ID, the way {@link #parseStudentTarget} reads it, and every
+     * other target is named by {@code indexFieldName}.
+     *
+     * @param target The one token the User gave as the target, which may be empty.
+     * @param indexFieldName How the calling command names a target read as an index.
+     */
+    public static String getTargetFieldName(String target, String indexFieldName) {
+        requireNonNull(target);
+        requireNonNull(indexFieldName);
+        String trimmedTarget = target.trim();
+        boolean isNusStudentId = !trimmedTarget.isEmpty() && Character.isLetter(trimmedTarget.charAt(0));
+        return isNusStudentId ? FIELD_NUS_STUDENT_ID : indexFieldName;
     }
 
     /**

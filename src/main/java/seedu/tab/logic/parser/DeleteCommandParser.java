@@ -126,14 +126,17 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
     }
 
     /**
-     * Reports the tokens left after the index. The recovery hint names {@code delete} rather
-     * than the one {@code edit} and {@code tag} use, because those commands take field values
-     * and {@code delete} takes none: telling a user to put the value after an option suggests
-     * a command delete cannot run.
+     * Reports the tokens left after the target, naming the target by the form it was read as
+     * rather than by the index form alone, so that a user who typed a name is not told they
+     * typed an index. The recovery hint names {@code delete} rather than the one {@code edit}
+     * and {@code tag} use, because those commands take field values and {@code delete} takes
+     * none: telling a user to put the value after an option suggests a command delete cannot
+     * run.
      */
     private static String formatExtraneousValueMessage(List<Token> tokens) {
         List<Token> values = tokens.subList(1, tokens.size());
-        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET_ONLY, DeleteCommand.FIELD_INDEX,
+        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET_ONLY,
+                ParserUtil.getTargetFieldName(tokens.getFirst().value(), DeleteCommand.FIELD_INDEX),
                 Messages.shorten(String.join(" ", values.stream().map(Token::value).toList())),
                 DeleteCommand.COMMAND_WORD);
     }
