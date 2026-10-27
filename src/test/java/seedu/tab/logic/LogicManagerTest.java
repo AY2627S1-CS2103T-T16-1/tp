@@ -379,7 +379,7 @@ public class LogicManagerTest {
         String advice = "\" looks like the follow-up marker. To flag the student, use --follow-up.";
         assertEquals("New student added: Marker Test; Tags: [Needs follow up]"
                 + "\n\nNOTE: \"Needs follow up" + advice,
-                logic.execute("add Marker Test -t \"Needs follow up\"").getFeedbackToUser());
+                logic.execute("add Marker Test -t \"Needs follow up\" -t \"NEEDS FOLLOW UP\"").getFeedbackToUser());
         assertEquals("Edited student: Marker Test; Tags: [Needs followup]"
                 + "\n\nNOTE: \"Needs followup" + advice,
                 logic.execute("edit 1 -t \"Needs followup\"").getFeedbackToUser());
