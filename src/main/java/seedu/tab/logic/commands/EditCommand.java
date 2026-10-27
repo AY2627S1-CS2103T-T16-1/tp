@@ -19,7 +19,6 @@ import java.util.logging.Logger;
 
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.core.index.Index;
-import seedu.tab.commons.util.CollectionUtil;
 import seedu.tab.commons.util.ToStringBuilder;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.exceptions.CommandException;
@@ -216,14 +215,6 @@ public class EditCommand extends Command {
             setName(toCopy.name);
             setTags(toCopy.tags);
             isFlagged = toCopy.isFlagged;
-        }
-
-        /**
-         * Returns true if at least one field is edited.
-         */
-        public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, tags, isFlagged)
-                    || phoneEdit.isEdited() || emailEdit.isEdited() || nusStudentIdEdit.isEdited();
         }
 
         public void setName(Name name) {

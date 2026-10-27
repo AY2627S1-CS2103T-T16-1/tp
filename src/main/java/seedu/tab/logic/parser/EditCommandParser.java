@@ -63,7 +63,6 @@ public class EditCommandParser implements Parser<EditCommand> {
         EditStudentDescriptor descriptor = describeEdit(problems, arguments, followUp);
 
         problems.throwIfAny();
-        assert descriptor.isAnyFieldEdited();
 
         return new EditCommand(target, descriptor);
     }
