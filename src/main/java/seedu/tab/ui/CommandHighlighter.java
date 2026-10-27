@@ -187,8 +187,8 @@ public class CommandHighlighter {
         if (wasQuoted) {
             return Kind.QUOTED_VALUE;
         }
-        if (!isAttachedValue && !word.isEmpty() && CommandTokenizer.isOptionMarker(word.charAt(0))
-                && word.length() > OPTION_MARKER.length()) {
+        if (!isAttachedValue && word.length() > OPTION_MARKER.length()
+                && CommandTokenizer.isOptionMarker(word.charAt(0))) {
             return Kind.OPTION;
         }
         return Kind.VALUE;
