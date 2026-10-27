@@ -599,6 +599,15 @@ before anything else stays in the value, so nothing the User typed disappears
 unasked. Each token records whether a quote took part in it, which is the only
 thing separating the value `-Ahmad` from the option `-e`.
 
+A token opening with a dash an editor writes for a typed hyphen — U+2010 to
+U+2015 and the minus sign U+2212 — opens an option, for the same reason the
+quote styles are interchangeable: a pasted command is read the way it was
+typed. `CommandTokenizer#isOptionMarker` shares that rule with the highlighter,
+so the box and the parser agree on which word is an option, and a token that
+opens with a quote keeps the dash it was given. One dash stands for one
+hyphen, so an em dash autocorrected from `--` reaches the parser as `-phone`
+and is refused by name rather than stored in a field.
+
 An option where a value was expected is read as the option before it having
 been left empty: `add John -p 123 -t -e` reports that `-t` needs a value rather
 than storing `-e` as a tag. A value that really opens with a hyphen is quoted.

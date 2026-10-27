@@ -114,6 +114,14 @@ text remains one command; inspect it before pressing Enter.
   quote marks as part of a value, put a backslash before it, as in `\“`.
   Single quotation marks and apostrophes remain literal characters.
 
+* A word opening with a dash your editor wrote for a hyphen — such as the en
+  dash `–` or em dash `—` that "smart dashes" produce — opens an option, so a
+  command pasted from a document behaves like a typed one. `add Amy Lim –p
+  91234567` records the phone number rather than storing it in the name. Each
+  dash stands for one hyphen, so `—phone` reads as `-phone` and is refused by
+  name. A dash inside a word, as in `Jean–Luc`, stays part of the value; to
+  keep one at the start of a value, quote it, as in `add "–Mystery"`.
+
 * If a non-repeatable option is given twice, TAB names the repeated option
   and asks you to give it only once. For example, repeating `-f` reports
   `Options given more than once: -f. Give each listed option only once.`
