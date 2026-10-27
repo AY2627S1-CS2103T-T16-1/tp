@@ -113,8 +113,7 @@ public class FlagTokenizer {
         }
         CliFlag flag = getFlag(token, flagsByMarker);
         if (!flag.isValueRequired()) {
-            parsed.put(flag, token.value(), "");
-            return index + 1;
+            return readPresenceFlag(tokens, index, flag, parsed);
         }
         if (index + 1 >= tokens.size() || isOption(tokens.get(index + 1))) {
             throw new ParseException(String.format(
@@ -122,6 +121,21 @@ public class FlagTokenizer {
         }
         parsed.put(flag, token.value(), tokens.get(index + 1).value());
         return index + 2;
+    }
+
+    /**
+     * Records the presence-only flag at {@code index} and returns the index after it. A value
+     * written after such a flag belongs to no option at all, and naming the flag that takes
+     * none points at the token to drop rather than at a place to move it to.
+     */
+    private static int readPresenceFlag(List<Token> tokens, int index, CliFlag flag,
+            FlagArgumentMap parsed) throws ParseException {
+        Token token = tokens.get(index);
+        if (index + 1 < tokens.size() && !isOption(tokens.get(index + 1))) {
+            throw new ParseException(String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, token.value()));
+        }
+        parsed.put(flag, token.value(), "");
+        return index + 1;
     }
 
     /**

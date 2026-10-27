@@ -537,7 +537,7 @@ public class LogicManagerTest {
                 "find -t lab tutorial", String.format(unexpectedValueMessage, "tutorial"),
                 "find -n Jason Tan", String.format(unexpectedValueMessage, "Tan"),
                 "find -n 'Jason Tan'", String.format(unexpectedValueMessage, "Tan'"),
-                "find -f true", String.format(unexpectedValueMessage, "true"),
+                "find -f true", String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-f"),
                 "find -t", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-t TAG")).entrySet()) {
             assertThrows(ParseException.class, entry.getValue(), () -> logic.execute(entry.getKey()));
             assertEquals(filtered, model.getFilteredStudentList());

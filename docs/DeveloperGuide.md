@@ -2196,9 +2196,9 @@ testers are expected to do more *exploratory* testing.
    1. Test cases: `edit 1 --follow-up -f`, then `edit 1 --follow-up true`,
       then `edit 1 --follow-up --no-follow-up`.<br>
       Expected: None changes Alice. The first reads `Options given more than
-      once: --follow-up. Give each listed option only once.`; the second
-      reports that `true` belongs to no option; the third says the two
-      follow-up options cannot be used together.
+      once: --follow-up. Give each listed option only once.`; the second reads
+      `--follow-up takes no value. Use the option on its own.`; the third says
+      the two follow-up options cannot be used together.
 
 1. Persisting and loading follow-up status
 
@@ -2977,8 +2977,9 @@ testers are expected to do more *exploratory* testing.
       options.
    1. Test cases: `find -f -nf`, `find -f --follow-up` and `find -f true`.<br>
       Expected: A clear error for conflicting selectors, a repeated selector,
-      and a bare value after an option that takes none. The displayed list is
-      unchanged, and restarting TAB leaves every student and status intact.
+      and `-f takes no value. Use the option on its own.` for the last. The
+      displayed list is unchanged, and restarting TAB leaves every student and
+      status intact.
 ### Confirming before clearing all students
 
 1. Confirmation, cancellation, and keyboard use

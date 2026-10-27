@@ -331,9 +331,9 @@ public class FlagTokenizerTest {
     }
 
     @Test
-    public void tokenize_separateValueAfterMarkerOnlyFlag_saysItBelongsToNoOption() {
+    public void tokenize_separateValueAfterMarkerOnlyFlag_saysFlagTakesNoValue() {
         assertThrows(ParseException.class,
-                String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "true"), () ->
+                String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "--follow-up"), () ->
                     parse("John --follow-up true"));
     }
 

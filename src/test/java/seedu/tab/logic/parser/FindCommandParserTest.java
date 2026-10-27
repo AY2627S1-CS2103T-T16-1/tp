@@ -144,7 +144,7 @@ public class FindCommandParserTest {
             assertParseFailure(parser, input, Messages.getErrorMessageForDuplicateFlags("-f"));
         }
         assertParseFailure(parser, "-nf --no-follow-up", Messages.getErrorMessageForDuplicateFlags("-nf"));
-        assertParseFailure(parser, "-f true", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "true"));
+        assertParseFailure(parser, "-f true", String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-f"));
         assertParseFailure(parser, "-nf=none", String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-nf"));
         assertParseFailure(parser, "-f -n", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-n NAME"));
     }
