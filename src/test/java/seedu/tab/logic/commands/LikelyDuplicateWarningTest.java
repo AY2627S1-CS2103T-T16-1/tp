@@ -28,7 +28,7 @@ public class LikelyDuplicateWarningTest {
             Student existing = new StudentBuilder().withName(storedName).withPhone("91234567").withoutEmail().build();
             Student changed = new StudentBuilder().withName(typedName).withPhone("92345678").withoutEmail().build();
             String expected = SUCCESS_MESSAGE + "\n\nWARNING: Possible duplicate student: " + storedName
-                    + " has the same name (" + typedName + ")."
+                    + " has the same name."
                     + "\nReview the records and delete duplicates only if they are the same person.";
             assertEquals(expected, LikelyDuplicateWarning.appendTo(SUCCESS_MESSAGE, changed, List.of(existing)));
             assertEquals(storedName, existing.getName().getFullName());
@@ -85,13 +85,30 @@ public class LikelyDuplicateWarningTest {
                 .withPhone("+6591234567").withEmail("alex@example.com").build();
 
         String expected = SUCCESS_MESSAGE
-                + "\n\nWARNING: Possible duplicate student: Alex Yeoh has the same name (aLeX yEoH)."
+                + "\n\nWARNING: Possible duplicate student: Alex Yeoh has the same name."
                 + "\nWARNING: Possible duplicate student: Alex Yeoh has the same phone."
-                + "\nWARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.com)."
+                + "\nWARNING: Possible duplicate student: Alex Yeoh has the same email."
                 + "\nReview the records and delete duplicates only if they are the same person.";
 
         assertEquals(expected, LikelyDuplicateWarning.appendTo(
                 SUCCESS_MESSAGE, changed, List.of(existing)));
+    }
+
+    @Test
+    public void appendChangedFieldsTo_multipleNameAndEmailMatches_omitsAmbiguousValues() {
+        Student original = new StudentBuilder().withName("Other Name").withoutPhone().withoutEmail().build();
+        Student changed = new StudentBuilder(original).withName("Jose Ng").withEmail("upper@x.com").build();
+        Student first = new StudentBuilder().withName("José Ng").withoutPhone().withEmail("UPPER@X.COM").build();
+        Student second = new StudentBuilder().withName("JOSE NG").withoutPhone().withEmail("Upper@x.com").build();
+        String expected = SUCCESS_MESSAGE
+                + "\n\nWARNING: Possible duplicate students: José Ng and JOSE NG have the same name."
+                + "\nWARNING: Possible duplicate students: José Ng and JOSE NG have the same email."
+                + "\nReview the records and delete duplicates only if they are the same person.";
+
+        assertEquals(expected, LikelyDuplicateWarning.appendChangedFieldsTo(
+                SUCCESS_MESSAGE, original, changed, List.of(original, first, second)));
+        assertEquals("José Ng", first.getName().getFullName());
+        assertEquals("UPPER@X.COM", first.getEmail().orElseThrow().getValue());
     }
 
     @Test

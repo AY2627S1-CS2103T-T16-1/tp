@@ -17,9 +17,9 @@ import seedu.tab.model.student.Student;
  */
 final class LikelyDuplicateWarning {
     static final String MESSAGE_WARNING_SINGULAR =
-            "WARNING: Possible duplicate student: %1$s has the same %2$s%3$s.";
+            "WARNING: Possible duplicate student: %1$s has the same %2$s.";
     static final String MESSAGE_WARNING_PLURAL =
-            "WARNING: Possible duplicate students: %1$s have the same %2$s%3$s.";
+            "WARNING: Possible duplicate students: %1$s have the same %2$s.";
     static final String MESSAGE_ADVICE =
             "Review the records and delete duplicates only if they are the same person.";
 
@@ -55,7 +55,7 @@ final class LikelyDuplicateWarning {
             addMatches(matchingNames, matchingPhones, matchingEmails,
                     changedStudent, existingStudent, studentToExclude);
         }
-        List<String> warnings = formatWarnings(changedStudent, matchingNames, matchingPhones, matchingEmails);
+        List<String> warnings = formatWarnings(matchingNames, matchingPhones, matchingEmails);
         return warnings.isEmpty()
                 ? successMessage
                 : successMessage + "\n\n" + String.join("\n", warnings) + "\n" + MESSAGE_ADVICE;
@@ -78,14 +78,12 @@ final class LikelyDuplicateWarning {
         }
     }
 
-    private static List<String> formatWarnings(Student changedStudent, List<Student> matchingNames,
+    private static List<String> formatWarnings(List<Student> matchingNames,
             List<Student> matchingPhones, List<Student> matchingEmails) {
         List<String> warnings = new ArrayList<>();
-        addWarning(warnings, matchingNames, Name.FIELD_NAME, changedStudent.getName().getFullName());
-        changedStudent.getPhone().ifPresent(phone ->
-                addWarning(warnings, matchingPhones, Phone.FIELD_NAME, phone.getValue()));
-        changedStudent.getEmail().ifPresent(email ->
-                addWarning(warnings, matchingEmails, Email.FIELD_NAME, email.getValue()));
+        addWarning(warnings, matchingNames, Name.FIELD_NAME);
+        addWarning(warnings, matchingPhones, Phone.FIELD_NAME);
+        addWarning(warnings, matchingEmails, Email.FIELD_NAME);
         return warnings;
     }
 
@@ -108,15 +106,13 @@ final class LikelyDuplicateWarning {
     }
 
     private static void addWarning(List<String> warnings, List<Student> matchingStudents,
-            String fieldName, String value) {
+            String fieldName) {
         if (matchingStudents.isEmpty()) {
             return;
         }
         String message = matchingStudents.size() == 1 ? MESSAGE_WARNING_SINGULAR : MESSAGE_WARNING_PLURAL;
-        // Matching phone digits can have different formatting in every named record.
-        String detail = fieldName.equals(Phone.FIELD_NAME) ? "" : " (" + value + ")";
         warnings.add(String.format(message, formatStudentNames(matchingStudents),
-                fieldName.toLowerCase(Locale.ROOT), detail));
+                fieldName.toLowerCase(Locale.ROOT)));
     }
 
     private static String formatStudentNames(List<Student> matchingStudents) {
