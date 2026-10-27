@@ -249,7 +249,20 @@ public class EditCommandParserTest {
         // a name is marked by an option here rather than given before them, so it takes one
         // token and needs quotes, exactly as a tag does
         assertParseFailure(parser, "1 " + FLAG_NAME + " Amy Bee",
-                String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "Bee"));
+                Messages.getErrorMessageForValueAfterFlags("Bee", true));
+        assertParseSuccess(parser, "1 " + FLAG_NAME + " \"Amy Bee\"",
+                new EditCommand(INDEX_FIRST_STUDENT,
+                        new EditStudentDescriptorBuilder().withName("Amy Bee").build()));
+    }
+
+    @Test
+    public void parse_indexAfterTheOptions_pointsToTheFrontOfTheCommand() {
+        // no target stands before the options yet, so the index belongs at the front
+        assertParseFailure(parser, FLAG_NAME + " Amy 1",
+                Messages.getErrorMessageForValueAfterFlags("1", false));
+        assertParseSuccess(parser, "1 " + FLAG_NAME + " Amy",
+                new EditCommand(INDEX_FIRST_STUDENT,
+                        new EditStudentDescriptorBuilder().withName("Amy").build()));
     }
 
     @Test

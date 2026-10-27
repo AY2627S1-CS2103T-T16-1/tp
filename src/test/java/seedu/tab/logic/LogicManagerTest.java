@@ -526,17 +526,15 @@ public class LogicManagerTest {
         List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
         Path dataPath = temporaryFolder.resolve("studentBook.json");
         String savedJson = Files.readString(dataPath);
-        String unexpectedValueMessage = "\"%1$s\" does not belong to any option. "
-                + "If the command takes a name or index without an option, put it before all options. "
-                + "Options that take a value take one token, and a value holding spaces goes in double quotes.";
+        // find takes no term before its options, so a term after them reads the same way
         for (var entry : Map.of(
                 "find Jason -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
                 "find Jason", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
                 "find -t \"\"", FindCommandParser.MESSAGE_EMPTY_KEYWORD,
                 "find --unknown friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"),
-                "find -t lab tutorial", String.format(unexpectedValueMessage, "tutorial"),
-                "find -n Jason Tan", String.format(unexpectedValueMessage, "Tan"),
-                "find -n 'Jason Tan'", String.format(unexpectedValueMessage, "Tan'"),
+                "find -t lab tutorial", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
+                "find -n Jason Tan", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
+                "find -n 'Jason Tan'", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
                 "find -f true", String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-f"),
                 "find -t", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-t TAG")).entrySet()) {
             assertThrows(ParseException.class, entry.getValue(), () -> logic.execute(entry.getKey()));

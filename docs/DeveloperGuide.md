@@ -1157,9 +1157,11 @@ detail.
 name, NUS Student ID, phone, email and tag. Every search term must have a field
 option. An option takes one word or one double-quoted phrase; apostrophes are
 literal characters, so names such as `O'Brien` do not need quoting. Repeated
-options retain all values. Bare terms receive `MESSAGE_UNQUALIFIED_TERM`, and
-an extra bare word after an option receives the shared tokenizer's
-unexpected-value diagnostic. Empty or whitespace-only values receive
+options retain all values. Bare terms receive `MESSAGE_UNQUALIFIED_TERM`,
+including an extra bare word after an option: the parser catches the
+tokenizer's `ValueAfterFlagsException` and answers with its own message, since
+the shared one offers the front of the command, where `find` takes nothing.
+Empty or whitespace-only values receive
 `MESSAGE_EMPTY_KEYWORD`; unterminated double quotes report
 `CommandTokenizer.MESSAGE_UNCLOSED_QUOTE`.
 
@@ -2259,6 +2261,17 @@ testers are expected to do more *exploratory* testing.
       `-a`/`--add` and `-r`/`--remove` guidance, naming the unknown `-t` option
       and the unexpected value `lab4`.
 
+1. Following the reply to a two-word tag left unquoted
+
+   1. Test cases: `tag 1 -a Lab 3`, then the quoted form the reply names,
+      `tag 1 -a "Lab 3"`.<br>
+      Expected: The first names `"3"` as belonging to no option and offers only
+      the quotes, since the index already stands before the options. The second
+      adds `Lab 3`.
+   1. Test cases: `tag -a Lab 1`, then `tag 1 -a Lab`.<br>
+      Expected: The first reply also offers the front of the command, which no
+      target occupies there, and the second adds `Lab` to the first student.
+
 1. Removing a tag that supplies the search match
 
    1. Test case: `tag 1 -a "Lab 3"`, `find -t "Lab 3"`, then `tag 1 -r "Lab 3"`.<br>
@@ -2955,9 +2968,15 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `find Jason`, `find -t lab tutorial`, `find -t`,
       `find --unknown friend`, `find -t ""` and `find -t "lab`.<br>
-      Expected: Each names the missing field option, unexpected value, missing
-      value, unknown option, empty term or unclosed quote. The displayed list
-      is unchanged after every refusal.
+      Expected: The first two read alike, since a bare term is the same mistake
+      before and after an option, and both name `find -n Jason -t Lab -n Tan`
+      and `find -n "Jason Tan"` as the forms that work. The rest name the
+      missing value, unknown option, empty term and unclosed quote. The
+      displayed list is unchanged after every refusal.
+   1. Test cases: Run the two forms the second reply names,
+      `find -t lab -t tutorial` and `find -t "lab tutorial"`.<br>
+      Expected: Both are accepted and report their counts, so following the
+      reply costs no second refusal.
    1. Test case: Run `list` and restart TAB.<br>
       Expected: All six students and their details remain, the saved file
       untouched by any search, successful or refused.
