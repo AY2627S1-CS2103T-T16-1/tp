@@ -117,6 +117,12 @@ public class UserGuideExamplesTest {
         assertTrue(guide.contains(reasonForRefusing("add --name \"Betsy Crowe\" --phone 1234567")));
     }
 
+    @Test
+    public void userGuide_capitalizedOptionReply_matchesParser() throws IOException {
+        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
+        assertTrue(guide.contains(reasonForRefusing("add Tan -P 91234567")));
+    }
+
     /** Returns why the parser refuses {@code input}, failing if it accepts it. */
     private static String reasonForRefusing(String input) {
         ParseException refusal = assertThrows(ParseException.class, ()
