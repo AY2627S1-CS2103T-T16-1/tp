@@ -99,7 +99,7 @@ public class ClearConfirmationTest {
         }
         assertEquals(ClearCommand.MESSAGE_CANCELLED, logic.execute("no").getFeedbackToUser());
         assertUnchanged();
-        assertTrue(logic.execute("help").isShowHelp());
+        assertTrue(logic.execute("help").isHelpRequested());
     }
 
     @Test

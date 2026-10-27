@@ -202,11 +202,11 @@ public class CommandLoggingTest {
     /** Everything about {@code student} that belongs to the student rather than to the book. */
     private static Set<String> fieldsOf(Student student) {
         Set<String> fields = new HashSet<>();
-        fields.add(student.getName().fullName);
-        fields.add(student.getPhone().orElseThrow().value);
-        student.getEmail().ifPresent(email -> fields.add(email.value));
-        student.getNusStudentId().ifPresent(id -> fields.add(id.value));
-        student.getTags().forEach(tag -> fields.add(tag.tagName));
+        fields.add(student.getName().getFullName());
+        fields.add(student.getPhone().orElseThrow().getValue());
+        student.getEmail().ifPresent(email -> fields.add(email.getValue()));
+        student.getNusStudentId().ifPresent(id -> fields.add(id.getValue()));
+        student.getTags().forEach(tag -> fields.add(tag.getTagName()));
         return fields;
     }
 

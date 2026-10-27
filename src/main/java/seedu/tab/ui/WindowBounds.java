@@ -7,7 +7,9 @@ import java.util.List;
 import javafx.geometry.Rectangle2D;
 import seedu.tab.commons.core.GuiSettings;
 
-/** Restores saved window bounds within one display's usable area. */
+/**
+ * Restores saved window bounds within one display's usable area.
+ */
 final class WindowBounds {
 
     private WindowBounds() {}
@@ -24,8 +26,8 @@ final class WindowBounds {
     static Rectangle2D restore(GuiSettings settings, List<Rectangle2D> displays,
             double minWidth, double minHeight) {
         GuiSettings defaults = new GuiSettings();
-        double width = usableDimension(settings.getWindowWidth(), defaults.getWindowWidth());
-        double height = usableDimension(settings.getWindowHeight(), defaults.getWindowHeight());
+        double width = chooseUsableDimension(settings.getWindowWidth(), defaults.getWindowWidth());
+        double height = chooseUsableDimension(settings.getWindowHeight(), defaults.getWindowHeight());
         Point position = settings.getWindowCoordinates();
         Rectangle2D saved = position == null ? null
                 : new Rectangle2D(position.getX(), position.getY(), width, height);
@@ -39,10 +41,16 @@ final class WindowBounds {
                 clamp(y, display.getMinY(), display.getMaxY() - height), width, height);
     }
 
-    private static double usableDimension(double dimension, double fallback) {
+    /**
+     * Returns the positive finite saved dimension, falling back when the saved value is unusable.
+     */
+    private static double chooseUsableDimension(double dimension, double fallback) {
         return Double.isFinite(dimension) && dimension > 0 ? dimension : fallback;
     }
 
+    /**
+     * Selects the display with the largest saved-window overlap, defaulting to the primary display.
+     */
     private static Rectangle2D selectDisplay(Rectangle2D saved, List<Rectangle2D> displays) {
         Rectangle2D selected = displays.get(0);
         double largestOverlap = 0;
@@ -59,6 +67,9 @@ final class WindowBounds {
         return selected;
     }
 
+    /**
+     * Returns the shared area of two window or display bounds.
+     */
     private static double overlap(Rectangle2D first, Rectangle2D second) {
         double width = Math.max(0, Math.min(first.getMaxX(), second.getMaxX())
                 - Math.max(first.getMinX(), second.getMinX()));
@@ -67,6 +78,9 @@ final class WindowBounds {
         return width * height;
     }
 
+    /**
+     * Clamps a position to the range that keeps the restored window within the display.
+     */
     private static double clamp(double value, double minimum, double maximum) {
         return Math.max(minimum, Math.min(value, maximum));
     }

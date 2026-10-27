@@ -58,7 +58,7 @@ public class StringUtil {
      * @return The opening characters of {@code value}, or {@code value} itself when it is already
      *         within {@code limit}.
      */
-    public static String firstCharacters(String value, int limit) {
+    public static String getFirstCharacters(String value, int limit) {
         requireNonNull(value);
         checkArgument(limit >= 0, "negative limit");
 
@@ -90,7 +90,7 @@ public class StringUtil {
      * @return The closing characters of {@code value}, or {@code value} itself when it is already
      *         within {@code limit}.
      */
-    public static String lastCharacters(String value, int limit) {
+    public static String getLastCharacters(String value, int limit) {
         requireNonNull(value);
         checkArgument(limit >= 0, "negative limit");
 
@@ -111,8 +111,8 @@ public class StringUtil {
      * Returns true if {@code sentence} contains {@code keyword}, ignoring case.
      * A partial match is allowed (e.g. "Hans" contains "Han").
      *
-     * @param sentence cannot be null
-     * @param keyword cannot be null, cannot be empty
+     * @param sentence cannot be null.
+     * @param keyword cannot be null, cannot be empty.
      */
     public static boolean containsIgnoreCase(String sentence, String keyword) {
         requireNonNull(sentence);
@@ -157,7 +157,7 @@ public class StringUtil {
 
     /**
      * Returns how many single-character edits turn {@code source} into {@code target}, counting
-     * an insertion, a deletion, a substitution and a swap of two neighbouring characters as one
+     * an insertion, a deletion, a substitution and a swap of two neighboring characters as one
      * edit each. Comparison is by character, so case and accents matter; a caller that wants to
      * ignore either folds both strings first.
      *
@@ -172,7 +172,7 @@ public class StringUtil {
      * things wrong with it in the same place, so counting it as the further of the two is the
      * reading a caller looking for a likely typo wants.
      */
-    public static int editDistance(String source, String target) {
+    public static int computeEditDistance(String source, String target) {
         requireNonNull(source);
         requireNonNull(target);
 
@@ -180,12 +180,12 @@ public class StringUtil {
         for (int i = 0; i <= source.length(); i++) {
             distances[i][0] = i;
         }
-        for (int j = 0; j <= target.length(); j++) {
-            distances[0][j] = j;
+        for (int column = 0; column <= target.length(); column++) {
+            distances[0][column] = column;
         }
         for (int i = 1; i <= source.length(); i++) {
             for (int j = 1; j <= target.length(); j++) {
-                distances[i][j] = cheapestEdit(distances, source, target, i, j);
+                distances[i][j] = computeCheapestEdit(distances, source, target, i, j);
             }
         }
         return distances[source.length()][target.length()];
@@ -195,7 +195,7 @@ public class StringUtil {
      * Returns the fewest edits that align the first {@code i} characters of {@code source} with
      * the first {@code j} of {@code target}, given the answers for every shorter pair.
      */
-    private static int cheapestEdit(int[][] distances, String source, String target, int i, int j) {
+    private static int computeCheapestEdit(int[][] distances, String source, String target, int i, int j) {
         int substitutionCost = source.charAt(i - 1) == target.charAt(j - 1) ? 0 : 1;
         int cheapest = Math.min(
                 Math.min(distances[i - 1][j] + 1, distances[i][j - 1] + 1),
@@ -281,6 +281,7 @@ public class StringUtil {
      * e.g. 1, 2, 3, ..., {@code Integer.MAX_VALUE} <br>
      * Will return false for any other non-null string input
      * e.g. empty string, "-1", "0", "+1", and " 2 " (untrimmed), "3 0" (contains whitespace), "1 a" (contains letters)
+     *
      * @throws NullPointerException if {@code s} is null.
      */
     public static boolean isNonZeroUnsignedInteger(String s) {

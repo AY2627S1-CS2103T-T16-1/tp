@@ -97,7 +97,9 @@ public class MainWindow extends UiPart<Stage> {
 
     /**
      * Sets the accelerator of a MenuItem.
-     * @param keyCombination the KeyCombination value of the accelerator
+     *
+     * @param menuItem The menu item receiving the shortcut.
+     * @param keyCombination the KeyCombination value of the accelerator.
      */
     private void setAccelerator(MenuItem menuItem, KeyCombination keyCombination) {
         menuItem.setAccelerator(keyCombination);
@@ -245,7 +247,7 @@ public class MainWindow extends UiPart<Stage> {
         try {
             CommandResult commandResult = logic.execute(commandText);
             logger.info("Result: " + commandResult.getFeedbackToUser());
-            if (commandResult.isShowHelp()) {
+            if (commandResult.isHelpRequested()) {
                 handleHelp();
             } else {
                 resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
@@ -253,7 +255,7 @@ public class MainWindow extends UiPart<Stage> {
 
             commandResult.getStudentToReveal().ifPresent(studentListPanel::scrollTo);
 
-            if (commandResult.isExit()) {
+            if (commandResult.isExitRequested()) {
                 handleExit();
             }
 

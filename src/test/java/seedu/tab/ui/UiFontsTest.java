@@ -3,9 +3,9 @@ package seedu.tab.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static seedu.tab.ui.FxToolkit.onFxThread;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ public class UiFontsTest {
      * from {@code UiFonts}, so that the test states what the list should be instead of
      * agreeing with whatever it happens to be.
      */
-    private static final List<String> PREFERRED =
+    private static final List<String> PREFERRED_FAMILIES =
             List.of("Inter", "Segoe UI", "Helvetica Neue", "Cantarell", "Noto Sans");
 
     @BeforeAll
@@ -30,13 +30,10 @@ public class UiFontsTest {
         FxToolkit.start();
     }
 
-    private static <T> T onFxThread(Callable<T> work) throws Exception {
-        return FxToolkit.onFxThread(work);
-    }
 
     @Test
-    public void bodyFamily_isOneTheMachineHas() throws Exception {
-        String family = onFxThread(UiFonts::bodyFamily);
+    public void chooseBodyFamily_isOneTheMachineHas() throws Exception {
+        String family = onFxThread(UiFonts::chooseBodyFamily);
 
         assertTrue(Font.getFamilies().contains(family) || family.equals(Font.getDefault().getFamily()),
                 "the window should be written in a family the machine has, not " + family);
@@ -53,7 +50,7 @@ public class UiFontsTest {
             UiFonts.applyTo(scene);
             root.applyCss();
             root.layout();
-            return new String[] {label.getFont().getFamily(), UiFonts.bodyFamily()};
+            return new String[] {label.getFont().getFamily(), UiFonts.chooseBodyFamily()};
         });
 
         // a stylesheet naming several families falls back to the system font rather than
@@ -62,23 +59,23 @@ public class UiFontsTest {
     }
 
     @Test
-    public void bodyFamily_aMachineWithAPreferredFamily_usesTheFirstOfThem() throws Exception {
+    public void chooseBodyFamily_aMachineWithAPreferredFamily_usesTheFirstOfThem() throws Exception {
         List<String> installedPreferred = onFxThread(() -> {
-            List<String> installed = Font.getFamilies();
-            return PREFERRED.stream().filter(installed::contains).toList();
+            List<String> installedFamilies = Font.getFamilies();
+            return PREFERRED_FAMILIES.stream().filter(installedFamilies::contains).toList();
         });
         // the families a machine carries are its own affair, so this one is reported skipped
         // rather than passed where there is nothing to choose
         assumeFalse(installedPreferred.isEmpty(),
                 "this machine carries none of the families the window prefers");
 
-        assertEquals(installedPreferred.get(0), onFxThread(UiFonts::bodyFamily),
+        assertEquals(installedPreferred.get(0), onFxThread(UiFonts::chooseBodyFamily),
                 "the window should be written in the first preferred family the machine has");
     }
 
     @Test
-    public void firstOf_aPreferredFamilyInstalled_doesNotKeepTheMachinesOwn() throws Exception {
-        String chosen = onFxThread(() -> UiFonts.firstOf(
+    public void findFirstInstalledFamily_aPreferredFamilyInstalled_doesNotKeepTheMachinesOwn() throws Exception {
+        String chosen = onFxThread(() -> UiFonts.findFirstInstalledFamily(
                 List.of("Segoe UI"), List.of(Font.getDefault().getFamily(), "Segoe UI")));
 
         assertEquals("Segoe UI", chosen,
@@ -86,8 +83,8 @@ public class UiFontsTest {
     }
 
     @Test
-    public void firstOf_aMachineWithNoneOfThem_keepsItsOwn() throws Exception {
-        String chosen = onFxThread(() -> UiFonts.firstOf(
+    public void findFirstInstalledFamily_aMachineWithNoneOfThem_keepsItsOwn() throws Exception {
+        String chosen = onFxThread(() -> UiFonts.findFirstInstalledFamily(
                 List.of("Inter", "Segoe UI"), List.of("Some Other Face", "And Another")));
 
         assertEquals(Font.getDefault().getFamily(), chosen,
@@ -95,8 +92,8 @@ public class UiFontsTest {
     }
 
     @Test
-    public void firstOf_severalInstalled_takesTheFirstPreferred() throws Exception {
-        String chosen = onFxThread(() -> UiFonts.firstOf(
+    public void findFirstInstalledFamily_severalInstalled_takesTheFirstPreferred() throws Exception {
+        String chosen = onFxThread(() -> UiFonts.findFirstInstalledFamily(
                 List.of("Inter", "Segoe UI"), List.of("Segoe UI", "Inter")));
 
         assertEquals("Inter", chosen, "the order preferred decides, not the order installed");

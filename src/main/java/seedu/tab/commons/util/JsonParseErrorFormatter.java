@@ -31,6 +31,7 @@ class JsonParseErrorFormatter {
      * Returns an explanation of the given parse failure, naming the offending location and
      * quoting the affected part of {@code jsonSource} when the parser reports a usable one.
      *
+     * @param exception The parsing failure to explain.
      * @param jsonSource the JSON text that failed to parse, or null when it is unavailable.
      */
     static String format(JsonProcessingException exception, String jsonSource) {

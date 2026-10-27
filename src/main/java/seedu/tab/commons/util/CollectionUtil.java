@@ -14,7 +14,11 @@ public class CollectionUtil {
 
     private CollectionUtil() {} // this class only holds helpers
 
-    /** @see #requireAllNonNull(Collection) */
+    /**
+     * Requires every supplied element to be non-null.
+     *
+     * @see #requireAllNonNull(Collection)
+     */
     public static void requireAllNonNull(Object... items) {
         requireNonNull(items);
         Stream.of(items).forEach(Objects::requireNonNull);

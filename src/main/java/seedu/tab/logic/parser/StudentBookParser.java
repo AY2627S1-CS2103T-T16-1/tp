@@ -53,13 +53,13 @@ public class StudentBookParser {
      * the tokenizer, which reads this separator like any other.
      *
      * <p>The command word is read in any case, because no two commands differ only in case
-     * and so a capitalised word can only mean the one command. The fold reaches the first
+     * and so a capitalized word can only mean the one command. The fold reaches the first
      * word alone: {@code Find -n Alex} searches for {@code Alex} with its capital, and the word
      * is quoted back as typed when it is no command at all.
      *
-     * @param userInput full user input string
-     * @return the command based on the user input
-     * @throws ParseException if the user input does not conform to the expected format
+     * @param userInput full user input string.
+     * @return the command based on the user input.
+     * @throws ParseException if the user input does not conform to the expected format.
      */
     public Command parseCommand(String userInput) throws ParseException {
         String line = StringUtil.stripFormatCharacters(userInput);
@@ -81,6 +81,13 @@ public class StudentBookParser {
         // Lower level log messages are used sparingly to minimize noise in the code.
         logger.fine("Command word: " + commandWord + "; Arguments: " + arguments);
 
+        return dispatchCommand(commandWord, typedWord, arguments);
+    }
+
+    /**
+     * Dispatches normalized command words while retaining the original spelling for diagnostics.
+     */
+    private Command dispatchCommand(String commandWord, String typedWord, String arguments) throws ParseException {
         return switch (commandWord) {
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
@@ -92,7 +99,7 @@ public class StudentBookParser {
             case ExitCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new ExitCommand());
             case HelpCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new HelpCommand());
             default -> {
-                logger.finer("This user input caused a ParseException: " + userInput);
+                logger.finer("This command word caused a ParseException: " + typedWord);
                 throw new ParseException(describeUnknownCommand(typedWord));
             }
         };

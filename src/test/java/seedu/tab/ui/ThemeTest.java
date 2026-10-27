@@ -38,9 +38,9 @@ public class ThemeTest {
     private static final List<String> INTENDED_STYLESHEETS = List.of("DarkTheme.css", "Extensions.css");
 
     /**
-     * A colour written in place of a palette name, which the palette exists to prevent. Any
+     * A color written in place of a palette name, which the palette exists to prevent. Any
      * property can carry one, not only the ones named "color": a rule setting
-     * {@code -fx-text-fill} or {@code -fx-fill} paints just as hard. A colour can be written
+     * {@code -fx-text-fill} or {@code -fx-fill} paints just as hard. A color can be written
      * as a hex code, as a function, or by name.
      */
     private static final Pattern COLOUR_LITERAL = Pattern.compile(
@@ -80,7 +80,7 @@ public class ThemeTest {
     @Test
     public void darkTheme_definesEveryPaletteNameItUses() throws IOException {
         // a name that is not defined resolves to nothing and JavaFX drops the rule without a
-        // word, so a slip of a letter takes a colour off the window silently
+        // word, so a slip of a letter takes a color off the window silently
         Set<String> defined = definedPaletteNames();
         Set<String> used = new TreeSet<>(usedPaletteNames());
         used.removeAll(defined);
@@ -227,9 +227,9 @@ public class ThemeTest {
 
     @Test
     public void everyStylesheet_namesEveryColourRatherThanRepeatingIt() throws IOException {
-        // every stylesheet the window loads, not only the main one: a looked-up colour is
+        // every stylesheet the window loads, not only the main one: a looked-up color is
         // resolved against the node it is used on rather than the file it was written in, so
-        // they all share one palette and a colour written into any of them escapes it
+        // they all share one palette and a color written into any of them escapes it
         List<String> literals = new ArrayList<>();
         for (Path stylesheet : List.of(DARK_THEME, EXTENSIONS)) {
             String css = Files.readString(stylesheet, StandardCharsets.UTF_8);

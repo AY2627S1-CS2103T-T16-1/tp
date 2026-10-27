@@ -39,7 +39,7 @@ public class DetailsContainsKeywordsPredicateTest {
                         new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student));
             }
         });
-        assertEquals("9123-4567", student.getPhone().orElseThrow().value);
+        assertEquals("9123-4567", student.getPhone().orElseThrow().getValue());
     }
 
     @Test

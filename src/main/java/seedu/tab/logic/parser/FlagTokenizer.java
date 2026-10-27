@@ -7,12 +7,14 @@ import static seedu.tab.logic.parser.CommandTokenizer.VALUE_SEPARATOR;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.parser.CommandTokenizer.Token;
 import seedu.tab.logic.parser.exceptions.ParseException;
+import seedu.tab.logic.parser.exceptions.UnknownFlagException;
 
 /**
  * Reads the arguments of a command as a preamble followed by flagged fields, the way a shell
@@ -25,6 +27,7 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  * flag, and a value-taking flag left without a value are each reported for what they are.
  */
 public class FlagTokenizer {
+    private static final Pattern NEGATIVE_INDEX_PATTERN = Pattern.compile("-[0-9]+(?:\\.[0-9]+)?");
 
 
     private record AttachedOption(String marker, String value) {}
@@ -40,7 +43,7 @@ public class FlagTokenizer {
     public static FlagArgumentMap tokenize(String arguments, CliFlag... knownFlags) throws ParseException {
         requireNonNull(arguments);
 
-        return readTokens(CommandTokenizer.tokenize(arguments), knownFlags);
+        return tokenizeTokens(CommandTokenizer.tokenize(arguments), knownFlags);
     }
 
     /**
@@ -53,16 +56,16 @@ public class FlagTokenizer {
         List<Token> tokens = CommandTokenizer.tokenize(arguments);
         if (!tokens.isEmpty()) {
             Token first = tokens.getFirst();
-            if (!first.isQuoted() && first.value().matches("-[0-9]+(?:\\.[0-9]+)?")) {
+            if (!first.isQuoted() && NEGATIVE_INDEX_PATTERN.matcher(first.value()).matches()) {
                 throw new ParseException(ParserUtil.MESSAGE_INVALID_INDEX + "\n"
                         + String.format(Messages.MESSAGE_UNKNOWN_FLAG, Messages.shorten(first.value())));
             }
         }
-        return readTokens(tokens, knownFlags);
+        return tokenizeTokens(tokens, knownFlags);
     }
 
     /** Reads already split tokens, sharing flag handling between index and name preambles. */
-    private static FlagArgumentMap readTokens(List<Token> tokens, CliFlag... knownFlags) throws ParseException {
+    static FlagArgumentMap tokenizeTokens(List<Token> tokens, CliFlag... knownFlags) throws ParseException {
         // a caller that names the same marker twice means one flag, not a broken collector
         Map<String, CliFlag> flagsByMarker = Stream.of(knownFlags)
                 .flatMap(flag -> flag.getMarkers().stream().map(marker -> Map.entry(marker, flag)))
@@ -105,33 +108,36 @@ public class FlagTokenizer {
         Token token = tokens.get(index);
         AttachedOption attached = getAttachedOption(token);
         if (attached != null) {
-            CliFlag flag = getAttachedFlag(attached, flagsByMarker);
-            if (!flag.takesValue()) {
-                throw new ParseException(String.format(
-                        Messages.MESSAGE_FLAG_TAKES_NO_VALUE, attached.marker()));
-            }
-            if (attached.value().isEmpty() && !token.isQuoted()) {
-                throw new ParseException(String.format(
-                        Messages.MESSAGE_FLAG_WITHOUT_VALUE, flag.getLabel(attached.marker())));
-            }
-            parsed.put(flag, attached.marker(), attached.value());
+            readAttachedFlag(token, attached, flagsByMarker, parsed);
             return index + 1;
         }
-
         CliFlag flag = getFlag(token, flagsByMarker);
-        if (!flag.takesValue()) {
+        if (!flag.isValueRequired()) {
             parsed.put(flag, token.value(), "");
             return index + 1;
         }
-        // an option in the value position means the one before it was left empty, not that
-        // the user wants to store "-e" as a tag
         if (index + 1 >= tokens.size() || isOption(tokens.get(index + 1))) {
             throw new ParseException(String.format(
                     Messages.MESSAGE_FLAG_WITHOUT_VALUE, flag.getLabel(token.value())));
         }
-
         parsed.put(flag, token.value(), tokens.get(index + 1).value());
         return index + 2;
+    }
+
+    /**
+     * Reads an attached option while preserving the distinction between absent and quoted empty values.
+     */
+    private static void readAttachedFlag(Token token, AttachedOption attached, Map<String, CliFlag> flagsByMarker,
+            FlagArgumentMap parsed) throws ParseException {
+        CliFlag flag = getAttachedFlag(attached, flagsByMarker);
+        if (!flag.isValueRequired()) {
+            throw new ParseException(String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, attached.marker()));
+        }
+        if (attached.value().isEmpty() && !token.isQuoted()) {
+            throw new ParseException(String.format(
+                    Messages.MESSAGE_FLAG_WITHOUT_VALUE, flag.getLabel(attached.marker())));
+        }
+        parsed.put(flag, attached.marker(), attached.value());
     }
 
     /** Returns the known flag named by {@code token}. */
@@ -142,7 +148,7 @@ public class FlagTokenizer {
 
         CliFlag flag = flagsByMarker.get(token.value());
         if (flag == null) {
-            throw new ParseException(String.format(Messages.MESSAGE_UNKNOWN_FLAG, token.value()));
+            throw new UnknownFlagException(token.value());
         }
         return flag;
     }
@@ -186,7 +192,7 @@ public class FlagTokenizer {
             throws ParseException {
         CliFlag flag = flagsByMarker.get(option.marker());
         if (flag == null) {
-            throw new ParseException(String.format(Messages.MESSAGE_UNKNOWN_FLAG, option.marker()));
+            throw new UnknownFlagException(option.marker());
         }
         return flag;
     }

@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.commons.util.ValueMessages;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.DeleteCommand;
 import seedu.tab.logic.commands.StudentTarget;
@@ -180,9 +181,9 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_longExtraneousToken_shortensItInTheFeedback() {
-        String extra = "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH + 1);
+        String extra = "x".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH + 1);
         assertParseFailure(parser, "1 " + extra,
-                valueAfterIndexMessage("x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…"));
+                valueAfterIndexMessage("x".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH) + "…"));
     }
 
     /** The reply {@code delete} gives for a target that reads as an unusable index. */

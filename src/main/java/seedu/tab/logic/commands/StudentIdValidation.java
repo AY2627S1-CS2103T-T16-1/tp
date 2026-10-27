@@ -7,7 +7,9 @@ import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.model.Model;
 import seedu.tab.model.student.Student;
 
-/** Validates student IDs before add and edit commands change the model. */
+/**
+ * Validates student IDs before add and edit commands change the model.
+ */
 final class StudentIdValidation {
 
     private StudentIdValidation() {

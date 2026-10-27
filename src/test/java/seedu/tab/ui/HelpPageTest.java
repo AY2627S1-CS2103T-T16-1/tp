@@ -232,7 +232,9 @@ public class HelpPageTest {
                 "help line wraps at minimum width: " + line);
     }
 
-    /** Returns the reference as one string, joined back from the coloured spans. */
+    /**
+     * Returns the reference as one string, joined back from the colored spans.
+     */
     private static String textOf(TextFlow flow) {
         StringBuilder whole = new StringBuilder();
         for (Node node : flow.getChildrenUnmodifiable()) {

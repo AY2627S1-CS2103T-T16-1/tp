@@ -304,7 +304,7 @@ public class LogicManagerTest {
         setUp();
         assertEquals(new CommandResult("Found 1 student."), logic.execute("find -n " + query));
         assertEquals(List.of(students.getFirst()), model.getFilteredStudentList());
-        assertEquals(name, model.getFilteredStudentList().getFirst().getName().fullName);
+        assertEquals(name, model.getFilteredStudentList().getFirst().getName().getFullName());
         assertEquals(new CommandResult("Found 0 students."), logic.execute("find -n missing"));
         assertTrue(model.getFilteredStudentList().isEmpty());
         assertEquals(students, model.getStudentBook().getStudentList());
@@ -407,7 +407,7 @@ public class LogicManagerTest {
 
         assertEquals(model.getStudentBook(), storage.readStudentBook().orElseThrow());
         assertEquals(List.of("9123-4567", "9123.4567"), model.getStudentBook().getStudentList().stream()
-                .map(student -> student.getPhone().orElseThrow().value).toList());
+                .map(student -> student.getPhone().orElseThrow().getValue()).toList());
     }
 
     @Test
@@ -441,7 +441,7 @@ public class LogicManagerTest {
         logic.execute("add Wang Fang -p ９１２３４５６７");
         logic.execute("add Lim Jia Hui -p 87654321");
         assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p 9123"));
-        assertEquals("Wang Fang", model.getFilteredStudentList().getFirst().getName().fullName);
+        assertEquals("Wang Fang", model.getFilteredStudentList().getFirst().getName().getFullName());
         logic.execute("edit 1 -p \"+６５ ９１２３ ４５６７\"");
         List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
         JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
@@ -453,7 +453,8 @@ public class LogicManagerTest {
                 "\"９１２３ ４５６７\"", "\"٩١٢٣\u00a0٤٥٦٧\"", "\"9123 4567\"")) {
             assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p " + keyword));
             assertEquals(List.of(students.getFirst()), model.getFilteredStudentList());
-            assertEquals("+６５ ９１２３ ４５６７", model.getFilteredStudentList().getFirst().getPhone().orElseThrow().value);
+            assertEquals("+６５ ９１２３ ４５６７",
+                    model.getFilteredStudentList().getFirst().getPhone().orElseThrow().getValue());
         }
         assertEquals(new CommandResult("Found 1 student."), logic.execute("find -p \"８７６５ ４３２１\""));
         assertEquals(List.of(students.get(1)), model.getFilteredStudentList());
@@ -645,8 +646,8 @@ public class LogicManagerTest {
         String exitCommand = ExitCommand.COMMAND_WORD;
         CommandResult result = logic.execute(exitCommand);
         assertEquals(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, result.getFeedbackToUser());
-        assertTrue(result.isExit());
-        assertFalse(result.isShowHelp());
+        assertTrue(result.isExitRequested());
+        assertFalse(result.isHelpRequested());
         assertEquals(model, new ModelManager());
     }
 
@@ -1080,7 +1081,7 @@ public class LogicManagerTest {
         model.addStudent(AMY);
         setUpUnwritableStorage();
 
-        CommandResult result = logic.execute("edit 1 -p " + AMY.getPhone().orElseThrow().value);
+        CommandResult result = logic.execute("edit 1 -p " + AMY.getPhone().orElseThrow().getValue());
 
         assertEquals(EditCommand.MESSAGE_UNCHANGED, result.getFeedbackToUser());
         assertEquals(List.of(AMY), model.getStudentBook().getStudentList());
@@ -1117,6 +1118,7 @@ public class LogicManagerTest {
      * - no exceptions are thrown <br>
      * - the feedback message is equal to {@code expectedMessage} <br>
      * - the internal model manager state is the same as that in {@code expectedModel} <br>
+     *
      * @see #assertCommandFailure(String, Class, String, Model)
      */
     private void assertCommandSuccess(String inputCommand, String expectedMessage,
@@ -1128,6 +1130,7 @@ public class LogicManagerTest {
 
     /**
      * Executes the command, confirms that a ParseException is thrown and that the result message is correct.
+     *
      * @see #assertCommandFailure(String, Class, String, Model)
      */
     private void assertParseException(String inputCommand, String expectedMessage) {
@@ -1136,6 +1139,7 @@ public class LogicManagerTest {
 
     /**
      * Executes the command, confirms that a CommandException is thrown and that the result message is correct.
+     *
      * @see #assertCommandFailure(String, Class, String, Model)
      */
     private void assertCommandException(String inputCommand, String expectedMessage) {
@@ -1144,6 +1148,7 @@ public class LogicManagerTest {
 
     /**
      * Executes the command, confirms that the exception is thrown and that the result message is correct.
+     *
      * @see #assertCommandFailure(String, Class, String, Model)
      */
     private void assertCommandFailure(String inputCommand, Class<? extends Throwable> expectedException,
@@ -1157,6 +1162,7 @@ public class LogicManagerTest {
      * - the {@code expectedException} is thrown <br>
      * - the resulting error message is equal to {@code expectedMessage} <br>
      * - the internal model manager state is the same as that in {@code expectedModel} <br>
+     *
      * @see #assertCommandSuccess(String, String, Model)
      */
     private void assertCommandFailure(String inputCommand, Class<? extends Throwable> expectedException,
@@ -1168,8 +1174,8 @@ public class LogicManagerTest {
     /**
      * Tests the Logic component's handling of an {@code IOException} thrown by the Storage component.
      *
-     * @param e the exception to be thrown by the Storage component
-     * @param expectedMessage the message expected inside exception thrown by the Logic component
+     * @param e the exception to be thrown by the Storage component.
+     * @param expectedMessage the message expected inside exception thrown by the Logic component.
      */
     private void assertCommandFailureForExceptionFromStorage(IOException e, String expectedMessage) {
         logic = createLogicWithFailingStorage(e);

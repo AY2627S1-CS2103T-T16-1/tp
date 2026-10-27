@@ -406,7 +406,7 @@ public class TagCommandIntegrationTest {
     @Test
     public void execute_removeTagUsedByFilter_keepsFilterActive() throws Exception {
         model.updateFilteredStudentList(shown -> shown.getTags().stream()
-                .anyMatch(tag -> tag.tagName.equals("Lab 3")));
+                .anyMatch(tag -> tag.getTagName().equals("Lab 3")));
         logic.execute("tag 1 -r \"Lab 3\"");
         assertEquals(List.of(), model.getFilteredStudentList());
         Student expected = new StudentBuilder(student).withTags("T1").build();

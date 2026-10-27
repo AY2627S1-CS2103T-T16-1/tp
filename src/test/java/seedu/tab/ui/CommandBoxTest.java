@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.tab.ui.FxToolkit.onFxThread;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,7 +13,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -80,9 +80,6 @@ public class CommandBoxTest {
         FxToolkit.start();
     }
 
-    private static <T> T onFxThread(Callable<T> work) throws Exception {
-        return FxToolkit.onFxThread(work);
-    }
 
     /**
      * Returns a scene holding {@code root}, dressed in the stylesheet the window uses. A bare
@@ -98,7 +95,9 @@ public class CommandBoxTest {
         return scene;
     }
 
-    /** A command box that executes nothing, since only the colouring is under test here. */
+    /**
+     * A command box that executes nothing, since only the coloring is under test here.
+     */
     private static CommandBox boxShowing(String typed) throws Exception {
         return onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
@@ -123,7 +122,7 @@ public class CommandBoxTest {
     public void typing_aCommand_paintsItBehindTheField() throws Exception {
         CommandBox box = boxShowing("add John -p 123");
 
-        // joined back together, the coloured copy must read as what was typed
+        // joined back together, the colored copy must read as what was typed
         assertEquals("add John -p 123", String.join("", colouredTextOf(box)));
     }
 
@@ -140,7 +139,7 @@ public class CommandBoxTest {
 
     @Test
     public void typing_anUnclosedQuote_stillPaints() throws Exception {
-        // a command is coloured while it is being typed, so a quote not yet closed is ordinary
+        // a command is colored while it is being typed, so a quote not yet closed is ordinary
         CommandBox box = boxShowing("add \"Siti Nur-Aisyah");
 
         assertEquals("add \"Siti Nur-Aisyah", String.join("", colouredTextOf(box)));
@@ -167,8 +166,8 @@ public class CommandBoxTest {
 
     @Test
     public void caret_movesWithTheCharacterTheUserIsOn() throws Exception {
-        // the field's own caret is drawn in its text colour, which is transparent while the
-        // colours show, so the line carries one of its own and has to place it
+        // the field's own caret is isDrawn in its text color, which is transparent while the
+        // colors show, so the line carries one of its own and has to place it
         double[] offsets = onFxThread(() -> {
             CommandBox box = new CommandBox(unused -> null);
             setTextOf(box, "add John");
@@ -214,7 +213,7 @@ public class CommandBoxTest {
         // Measuring a span before the stylesheet reached it gave the default proportional
         // font instead, and the caret came to rest partway through a character. What is
         // compared is the advance from one character to the next, not the distance from
-        // the edge: the caret is centred on the point it marks, and the field insets its
+        // the edge: the caret is centered on the point it marks, and the field insets its
         // text, so where it starts is not one character's width
         double step = offsets[1] - offsets[0];
         assertTrue(step > 0, "the caret should move as characters are typed");
@@ -244,7 +243,7 @@ public class CommandBoxTest {
                 emptyWidth, lane.getClip() != null, flow.getHeight()};
         });
 
-        // the colours stay on however long the command is: they scroll with it rather than
+        // the colors stay on however long the command is: they scroll with it rather than
         // switching off, which is what the field itself does with its own text
         assertTrue((Boolean) state[0], "the colours should stay on");
         assertTrue((Double) state[1] < 0, "the copy should be scrolled to keep the caret in view");
@@ -296,7 +295,7 @@ public class CommandBoxTest {
                 selection.getBoundsInLocal().getHeight(), flow.getWidth()};
         });
 
-        // the field's own highlight is turned off, because it is drawn at the offset the
+        // the field's own highlight is turned off, because it is isDrawn at the offset the
         // field has scrolled to and broke into fragments behind the copy
         assertEquals(band[2], band[0], 1.0, "the band should cover exactly the selected text");
         assertTrue(band[1] > 0, "the band should be as tall as the line");
@@ -527,7 +526,7 @@ public class CommandBoxTest {
                 field.paste();
                 assertEquals("add Wei Ming Tan -p 91234567", field.getText());
                 field.fireEvent(new ActionEvent());
-                assertEquals("Wei Ming Tan", model.getFilteredStudentList().getFirst().getName().fullName);
+                assertEquals("Wei Ming Tan", model.getFilteredStudentList().getFirst().getName().getFullName());
                 assertEquals("", field.getText());
             } finally {
                 clipboard.setContent(previous);
@@ -763,7 +762,7 @@ public class CommandBoxTest {
         TextField field = onFxThread(() -> (TextField) box.getRoot().lookup("#commandTextField"));
         onFxThread(() -> styledScene((Region) box.getRoot(), 400, 60));
 
-        // typing moves the caret before it reports the new text, which the colouring has to
+        // typing moves the caret before it reports the new text, which the coloring has to
         // sit out rather than measure the command before it against the text after it
         for (char typed : "find Siti".toCharArray()) {
             onFxThread(() -> {
@@ -783,7 +782,7 @@ public class CommandBoxTest {
         TextFlow copy = (TextFlow) root.lookup("#highlighted");
         TextField field = (TextField) root.lookup("#commandTextField");
 
-        // JavaFX moves the caret before it reports the new text, so the colouring is asked
+        // JavaFX moves the caret before it reports the new text, so the coloring is asked
         // where to put a copy of the command before it, against the text after it
         double before = onFxThread(() -> {
             copy.getChildren().setAll(new Text("find Sit"));
@@ -793,7 +792,7 @@ public class CommandBoxTest {
         });
 
         assertEquals(-12, before, "a copy that has fallen behind should be left where it is");
-        // and the recolour that follows puts both the copy and its place right
+        // and the recolor that follows puts both the copy and its place right
         onFxThread(() -> setTextOf(box, "find Sitie"));
         assertEquals(List.of("find", " ", "Sitie"), colouredTextOf(box));
     }
@@ -824,7 +823,7 @@ public class CommandBoxTest {
         Region root = box.getRoot();
         onFxThread(() -> styledScene(root, 300, 60));
 
-        boolean drawn = onFxThread(() -> {
+        boolean isDrawn = onFxThread(() -> {
             setTextOf(box, "list");
             root.layout();
             Region lane = (Region) root.lookup("#lane");
@@ -833,10 +832,12 @@ public class CommandBoxTest {
             return cut.getHeight() >= copy.getHeight() && copy.getHeight() > 0;
         });
 
-        assertTrue(drawn, "what was typed should be inside the part of the lane that is drawn");
+        assertTrue(isDrawn, "what was typed should be inside the part of the lane that is drawn");
     }
 
-    /** Returns how light {@code colour} is, as WCAG weighs a colour's parts. */
+    /**
+     * Returns how light {@code color} is, as WCAG weighs a color's parts.
+     */
     private static double luminanceOf(Color colour) {
         double[] parts = {colour.getRed(), colour.getGreen(), colour.getBlue()};
         double[] weights = {0.2126, 0.7152, 0.0722};
@@ -850,7 +851,9 @@ public class CommandBoxTest {
         return luminance;
     }
 
-    /** Returns the contrast between two colours, as WCAG states it. */
+    /**
+     * Returns the contrast between two colors, as WCAG states it.
+     */
     private static double contrastBetween(Color one, Color other) {
         double lighter = Math.max(luminanceOf(one), luminanceOf(other));
         double darker = Math.min(luminanceOf(one), luminanceOf(other));
@@ -892,21 +895,23 @@ public class CommandBoxTest {
 
     @Test
     public void selection_onARefusedCommand_leavesItLegible() throws Exception {
-        // a refused command is written in one colour, and selecting it to correct it must
+        // a wasRefused command is written in one color, and selecting it to correct it must
         // not take it away
         assertTrue(faintTokensOf(true).isEmpty(),
                 "a refused command disappears into the selection: " + faintTokensOf(true));
     }
 
-    /** Returns the tokens that do not stand out from the band drawn behind a selection. */
-    private static List<String> faintTokensOf(boolean refused) throws Exception {
+    /**
+     * Returns the tokens that do not stand out from the band isDrawn behind a selection.
+     */
+    private static List<String> faintTokensOf(boolean wasRefused) throws Exception {
         CommandBox box = boxShowing("add \"Siti Nur-Aisyah\" -p 98765432 -t T1");
         Region root = box.getRoot();
         onFxThread(() -> styledScene(root, 500, 60));
 
         return onFxThread(() -> {
             TextField field = (TextField) root.lookup("#commandTextField");
-            if (refused) {
+            if (wasRefused) {
                 field.getStyleClass().add(CommandBox.ERROR_STYLE_CLASS);
                 root.lookup("#highlighted").getStyleClass().add("command-error");
                 root.applyCss();
@@ -956,10 +961,10 @@ public class CommandBoxTest {
                 root.layout();
 
                 TextFlow copy = (TextFlow) root.lookup("#highlighted");
-                Text drawn = fieldTextOf(field);
-                assertNotNull(drawn, "the field should be drawing its own text");
+                Text isDrawn = fieldTextOf(field);
+                assertNotNull(isDrawn, "the field should be drawing its own text");
                 return Math.abs(copy.getLayoutX()
-                        - (drawn.getLayoutX() + drawn.getTranslateX()));
+                        - (isDrawn.getLayoutX() + isDrawn.getTranslateX()));
             });
             if (apart > 0.5) {
                 adrift.add(edit + " by " + apart);
@@ -1091,15 +1096,15 @@ public class CommandBoxTest {
     @Test
     public void editsThroughTheSkin_atEitherWidth_leaveTheCopyOnTheFieldsOwnText() throws Exception {
         // the skin re-scrolls the field's text after a delete, a replace or a change of
-        // width, after the caret and the text the colouring was told about have settled.
+        // width, after the caret and the text the coloring was told about have settled.
         // Nothing else says it has, so a copy that is not following the field's own text
         // node is left drawing the command over characters the field no longer has there
         List<String> adrift = complaintsIn((root, field, skin) -> {
-            Text drawn = fieldTextOf(field);
-            assertNotNull(drawn, "the field should be drawing its own text");
+            Text isDrawn = fieldTextOf(field);
+            assertNotNull(isDrawn, "the field should be drawing its own text");
             TextFlow copy = (TextFlow) root.lookup("#highlighted");
             double apart = Math.abs(copy.getLayoutX()
-                    - (drawn.getLayoutX() + drawn.getTranslateX()));
+                    - (isDrawn.getLayoutX() + isDrawn.getTranslateX()));
             return apart > 0.5 ? "the copy is " + apart + " from the field's own text" : "";
         });
 
@@ -1144,9 +1149,9 @@ public class CommandBoxTest {
             field.positionCaret(field.getLength());
             root.layout();
 
-            Text drawn = fieldTextOf(field);
-            assertNotNull(drawn, "the field should be drawing its own text");
-            return new double[] {copy.getLayoutX(), drawn.getLayoutX() + drawn.getTranslateX(),
+            Text isDrawn = fieldTextOf(field);
+            assertNotNull(isDrawn, "the field should be drawing its own text");
+            return new double[] {copy.getLayoutX(), isDrawn.getLayoutX() + isDrawn.getTranslateX(),
                 mark.getLayoutX() + mark.getWidth(), lane.getWidth(), mark.getWidth()};
         });
 
@@ -1173,17 +1178,17 @@ public class CommandBoxTest {
             field.setText(LONG_COMMAND);
             field.positionCaret(field.getLength());
             root.layout();
-            Text drawn = fieldTextOf(field);
-            assertNotNull(drawn, "the field should be drawing its own text");
+            Text isDrawn = fieldTextOf(field);
+            assertNotNull(isDrawn, "the field should be drawing its own text");
             double atTheEnd = copy.getLayoutX();
-            double fieldAtTheEnd = drawn.getLayoutX() + drawn.getTranslateX();
+            double fieldAtTheEnd = isDrawn.getLayoutX() + isDrawn.getTranslateX();
 
             for (int step = 0; step < A_FEW_CHARACTERS; step++) {
                 skin.moveCaret(TextUnit.CHARACTER, Direction.LEFT, false);
             }
             root.layout();
             return new double[] {atTheEnd, copy.getLayoutX(), fieldAtTheEnd,
-                drawn.getLayoutX() + drawn.getTranslateX()};
+                isDrawn.getLayoutX() + isDrawn.getTranslateX()};
         });
 
         // the field scrolls only when the caret would leave the line, so a copy that scrolls
@@ -1211,19 +1216,19 @@ public class CommandBoxTest {
             // so that the prompt's node cannot stand in for it once the two read alike
             field.setText("list");
             root.layout();
-            Text drawn = fieldTextOf(field);
-            assertNotNull(drawn, "the field should be drawing its own text");
+            Text isDrawn = fieldTextOf(field);
+            assertNotNull(isDrawn, "the field should be drawing its own text");
 
             field.setText(field.getPromptText());
             field.positionCaret(field.getLength());
             root.layout();
-            return new double[] {copy.getLayoutX(), drawn.getLayoutX() + drawn.getTranslateX()};
+            return new double[] {copy.getLayoutX(), isDrawn.getLayoutX() + isDrawn.getTranslateX()};
         });
 
         // an empty line shows the prompt, and the field keeps the node it drew that in and
         // hides it rather than throwing it away. A command that reads as the prompt matches
         // that node too, and the field leaves it where it is however far the command runs
-        // past the edge, so a copy drawn on it shows one character where the field
+        // past the edge, so a copy isDrawn on it shows one character where the field
         // hit-tests another
         assertEquals(measured[1], measured[0], 0.5,
                 "the copy is drawn from " + measured[0] + " where the field's text is at "

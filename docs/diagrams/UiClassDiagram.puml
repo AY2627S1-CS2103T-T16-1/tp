@@ -21,6 +21,7 @@ Class CommandBox
 }
 
 package Model <<Rectangle>> {
+Class StudentSummary
 Class HiddenModel #FFFFFF
 }
 
@@ -53,6 +54,7 @@ StatusBarFooter --|> UiPart
 SummaryPanel --|> UiPart
 
 StudentCard .right.> Model
+SummaryPanel .right.> StudentSummary
 UiManager -right-> Logic
 MainWindow -left-> Logic
 

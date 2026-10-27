@@ -10,36 +10,45 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import seedu.tab.logic.Messages;
+import seedu.tab.commons.util.ValueMessages;
 
-/** Reads saved tags with field-specific diagnostics instead of Jackson type errors. */
+/**
+ * Reads saved tags with field-specific diagnostics instead of Jackson type errors.
+ */
 class JsonTagsDeserializer extends JsonDeserializer<List<JsonAdaptedTag>> {
+    private static final String MESSAGE_EXPECTED_ARRAY = "Use a JSON array of tag strings, such as [\"Lab 3\"].";
+    private static final String MESSAGE_EXPECTED_STRING = "Each tag must be a JSON string, such as \"Lab 3\".";
+    private static final String MESSAGE_INVALID_VALUE = "Invalid %s value: %s. %s";
+
     @Override
     public List<JsonAdaptedTag> deserialize(JsonParser parser, DeserializationContext context) throws IOException {
         if (parser.getCurrentToken() != JsonToken.START_ARRAY) {
-            throw invalidValue(parser, "tags", "Use a JSON array of tag strings, such as [\"Lab 3\"].");
+            throw createInvalidValueException(parser, "tags", MESSAGE_EXPECTED_ARRAY);
         }
         List<JsonAdaptedTag> tags = new ArrayList<>();
         while (parser.nextToken() != JsonToken.END_ARRAY) {
             if (parser.getCurrentToken() != JsonToken.VALUE_STRING) {
-                throw invalidValue(parser, "tags entry " + (tags.size() + 1),
-                        "Each tag must be a JSON string, such as \"Lab 3\".");
+                throw createInvalidValueException(parser, "tags entry " + (tags.size() + 1),
+                        MESSAGE_EXPECTED_STRING);
             }
             tags.add(new JsonAdaptedTag(parser.getText()));
         }
         return tags;
     }
 
-    private static JsonMappingException invalidValue(JsonParser parser, String field, String reason)
+    /**
+     * Creates a bounded tag diagnostic without exposing Jackson implementation errors.
+     */
+    private static JsonMappingException createInvalidValueException(JsonParser parser, String field, String reason)
             throws IOException {
         String value = switch (parser.getCurrentToken()) {
             case START_OBJECT -> "an object";
             case START_ARRAY -> "an array";
-            default -> Messages.shorten(parser.getText());
+            default -> ValueMessages.shorten(parser.getText());
         };
         if (parser.getCurrentToken() == JsonToken.VALUE_STRING) {
             value = "\"" + value + "\"";
         }
-        return JsonMappingException.from(parser, "Invalid " + field + " value: " + value + ". " + reason);
+        return JsonMappingException.from(parser, String.format(MESSAGE_INVALID_VALUE, field, value, reason));
     }
 }

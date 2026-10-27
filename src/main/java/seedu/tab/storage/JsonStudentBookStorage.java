@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -29,12 +30,30 @@ import seedu.tab.model.StudentBook;
  * A class to access StudentBook data stored as a JSON file on the hard disk.
  */
 public class JsonStudentBookStorage {
+    private static final String MESSAGE_FOLDER_BLOCKED = "Cannot create data folder %s"
+            + " because a file already occupies that path. Close TAB and move or rename that file before restarting";
+    private static final String MESSAGE_LOCK_IS_FOLDER = "Cannot open save lock %s because it is a folder."
+            + " Close all TAB windows and move or rename that folder before retrying";
+    private static final String MESSAGE_LOCK_UNWRITABLE = "Cannot open save lock %s: %s."
+            + " Close all TAB windows and check that this path is a writable file before retrying";
+    private static final String MESSAGE_CANNOT_VERIFY = "Cannot verify saved student data in %s."
+            + " Close this window, check the file and restart TAB before retrying";
+    private static final String MESSAGE_STALE_DATA = "Student data in %s has changed since this window loaded it. "
+            + "Close this window and restart TAB to load the saved records before retrying";
+    private static final String MESSAGE_SAVE_BUSY = "Another TAB window is saving %s."
+            + " Wait for it to finish and retry; if the data changed, restart this window first";
+    private static final String MESSAGE_STUDENT_CONTEXT = "Student record %d: %s";
+
+    private static final String SAVE_LOCK_SUFFIX = ".lock";
 
     private static final Logger logger = LogsCenter.getLogger(JsonStudentBookStorage.class);
 
     private final Map<Path, Optional<StudentBook>> loadedBooks = new HashMap<>();
-    private Path filePath;
+    private final Path filePath;
 
+    /**
+     * Creates storage for the student book at the given path.
+     */
     public JsonStudentBookStorage(Path filePath) {
         this.filePath = filePath;
     }
@@ -54,7 +73,7 @@ public class JsonStudentBookStorage {
     }
 
     /**
-     * Similar to {@link #readStudentBook()}.
+     * Reads the student book from the given path.
      *
      * @param filePath location of the data. Cannot be null.
      * @throws DataLoadingException if loading the data from storage failed.
@@ -67,6 +86,9 @@ public class JsonStudentBookStorage {
         return book;
     }
 
+    /**
+     * Loads and validates all records without changing the remembered stale-save baseline.
+     */
     private Optional<ReadOnlyStudentBook> loadStudentBook(Path filePath) throws DataLoadingException {
         Optional<JsonSerializableStudentBook> jsonStudentBook = readJsonStudentBook(filePath);
         if (!jsonStudentBook.isPresent()) {
@@ -83,6 +105,7 @@ public class JsonStudentBookStorage {
 
     /**
      * Saves the given {@link ReadOnlyStudentBook} to the storage.
+     *
      * @param studentBook cannot be null.
      * @throws IOException if there was any problem writing to the file.
      */
@@ -91,9 +114,10 @@ public class JsonStudentBookStorage {
     }
 
     /**
-     * Similar to {@link #saveStudentBook(ReadOnlyStudentBook)}.
+     * Saves the student book to the given path.
      *
-     * @param filePath location of the data. Cannot be null.
+     * @param studentBook The student book to save. Cannot be null.
+     * @param filePath Location of the data. Cannot be null.
      */
     public void saveStudentBook(ReadOnlyStudentBook studentBook, Path filePath) throws IOException {
         requireNonNull(studentBook);
@@ -103,7 +127,7 @@ public class JsonStudentBookStorage {
         createDataDirectory(absolutePath.getParent());
         Path target = Files.exists(absolutePath) ? absolutePath.toRealPath()
                 : absolutePath.getParent().toRealPath().resolve(absolutePath.getFileName());
-        Path lockPath = target.resolveSibling("." + target.getFileName() + ".lock");
+        Path lockPath = target.resolveSibling("." + target.getFileName() + SAVE_LOCK_SUFFIX);
         try (FileChannel channel = openSaveLock(lockPath);
                 FileLock lock = channel.tryLock()) {
             if (lock == null) {
@@ -115,79 +139,82 @@ public class JsonStudentBookStorage {
         }
     }
 
+    /**
+     * Creates missing data directories and explains a file blocking the intended directory.
+     */
     private static void createDataDirectory(Path directory) throws IOException {
         try {
             Files.createDirectories(directory);
         } catch (FileAlreadyExistsException e) {
-            throw new IOException("Cannot create data folder " + e.getFile()
-                    + " because a file already occupies that path. Close TAB and move or rename that file"
-                    + " before restarting", e);
+            throw new IOException(String.format(MESSAGE_FOLDER_BLOCKED, e.getFile()), e);
         }
     }
 
+    /**
+     * Opens the shared save lock and reports recovery guidance when its path is unusable.
+     */
     private static FileChannel openSaveLock(Path lockPath) throws IOException {
         if (Files.isDirectory(lockPath)) {
-            throw new IOException("Cannot open save lock " + lockPath + " because it is a folder."
-                    + " Close all TAB windows and move or rename that folder before retrying");
+            throw new IOException(String.format(MESSAGE_LOCK_IS_FOLDER, lockPath));
         }
         try {
             return FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
         } catch (AccessDeniedException e) {
             throw e;
         } catch (IOException e) {
-            throw new IOException("Cannot open save lock " + lockPath + ": " + e.getMessage()
-                    + ". Close all TAB windows and check that this path is a writable file before retrying", e);
+            throw new IOException(String.format(MESSAGE_LOCK_UNWRITABLE, lockPath, e.getMessage()), e);
         }
     }
 
+    /**
+     * Rejects stale writes before replacing the file, then remembers the successfully saved book.
+     */
     private void saveIfUnchanged(ReadOnlyStudentBook studentBook, Path filePath, Path key) throws IOException {
         Optional<StudentBook> diskBook;
         try {
             diskBook = loadStudentBook(filePath).map(StudentBook::new);
         } catch (DataLoadingException e) {
-            throw new IOException("Cannot verify saved student data in " + filePath
-                    + ". Close this window, check the file and restart TAB before retrying", e);
+            throw new IOException(String.format(MESSAGE_CANNOT_VERIFY, filePath), e);
         }
         Optional<StudentBook> expectedBook = loadedBooks.getOrDefault(key, diskBook);
         if (!expectedBook.equals(diskBook)) {
-            throw new IOException("Student data in " + filePath + " has changed since this window loaded it. "
-                    + "Close this window and restart TAB to load the saved records before retrying");
+            throw new IOException(String.format(MESSAGE_STALE_DATA, filePath));
         }
-        writeStudentBookFile(studentBook, filePath);
+        writeStudentBook(studentBook, filePath);
         loadedBooks.put(key, Optional.of(new StudentBook(studentBook)));
     }
 
+    /**
+     * Returns recovery guidance when another window holds the save lock.
+     */
     private String formatBusyMessage(Path path) {
-        return "Another TAB window is saving " + path
-                + ". Wait for it to finish and retry; if the data changed, restart this window first";
+        return String.format(MESSAGE_SAVE_BUSY, path);
     }
 
+    /**
+     * Reads the JSON book, adding the offending student-record index when available.
+     */
     private Optional<JsonSerializableStudentBook> readJsonStudentBook(Path filePath) throws DataLoadingException {
         try {
             return JsonUtil.readJsonFile(filePath, JsonSerializableStudentBook.class);
         } catch (DataLoadingException e) {
-            if (e.getCause() instanceof JsonMappingException mappingException) {
-                Optional<JsonMappingException.Reference> studentRecord = mappingException.getPath().stream()
-                        .filter(reference -> reference.getIndex() >= 0).findFirst();
-                if (studentRecord.isPresent()) {
-                    throw new DataLoadingException("Student record " + (studentRecord.get().getIndex() + 1)
-                            + ": " + e.getMessage(), e);
-                }
-            }
-            throw e;
+            throw addStudentRecordContext(e);
         }
     }
 
     /**
-     * Similar to {@link #saveStudentBook(ReadOnlyStudentBook)}.
-     *
-     * @param filePath location of the data. Cannot be null.
+     * Adds the first affected array index when Jackson can identify a student record.
      */
-    private void writeStudentBookFile(ReadOnlyStudentBook studentBook, Path filePath) throws IOException {
-        requireNonNull(studentBook);
-        requireNonNull(filePath);
-
-        writeStudentBook(studentBook, filePath);
+    private static DataLoadingException addStudentRecordContext(DataLoadingException failure) {
+        if (!(failure.getCause() instanceof JsonMappingException mappingException)) {
+            return failure;
+        }
+        return mappingException.getPath().stream()
+                .filter(reference -> reference.getIndex() >= 0)
+                .findFirst()
+                .map(reference -> new DataLoadingException(String.format(Locale.ROOT,
+                        MESSAGE_STUDENT_CONTEXT, reference.getIndex() + 1, failure.getMessage()), failure))
+                .orElse(failure);
     }
 
     /** Writes the book through a delegate that tests can override to simulate a write failure. */

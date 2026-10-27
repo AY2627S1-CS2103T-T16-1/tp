@@ -24,7 +24,7 @@
 * [Jackson](https://github.com/FasterXML/jackson) is used for JSON serialization
   and deserialization of storage data (via `JacksonUtil`).
 * [JUnit 5](https://junit.org/junit5/) is used for automated testing.
-* `StringUtil.editDistance` implements the published
+* `StringUtil.computeEditDistance` implements the published
   [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance),
   a known algorithm whose recurrence we wrote out ourselves. No code was
   copied, and the idea is reused in that one method.
@@ -144,11 +144,15 @@ records, and puts them back if that write fails.
 [Rolling back model changes when saving fails](#rolling-back-model-changes-when-saving-fails)
 covers how.
 
+`UnknownFlagException` retains the offending option marker separately from its
+message, so command-specific guidance does not depend on error-message wording.
+
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a command entered by the User:
 
 <puml src="diagrams/ParserClasses.puml" width="600"/>
 
 How the parsing works:
+
 * When called upon to parse a command entered by the User, the `StudentBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the command and create an `XYZCommand` object (e.g., `AddCommand`). The `StudentBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 * A command's arguments are read in two passes: `CommandTokenizer` splits them into tokens, then `FlagTokenizer` sorts those tokens into the `CliFlag` each belongs to and hands back a `FlagArgumentMap`. [How commands read their arguments](#how-commands-read-their-arguments) covers why.
@@ -228,7 +232,7 @@ command box keeps its own Up/Down history, and help uses its own pager.
 
 ### The help pager
 
-`HelpCommand` returns a command summary and the existing `showHelp` signal.
+`HelpCommand` returns a command summary and the existing `isHelpRequested` signal.
 `MainWindow` routes that signal, F1 and the Help menu to `HelpPage`, which
 replaces the whole student page. The hidden page stays intact, so closing help
 restores its filter, previous result and any unfinished command; `CommandBox`
@@ -306,7 +310,7 @@ count beside the name. Its tooltip still lists every hidden tag. A partial
 chip requires room for four characters and an ellipsis, measured in its
 styled font with padding, so a two-letter fragment gives way to the total.
 A shorter tag can still appear in full.
-`TagRow.fittedWidth` reports the space its chosen chips or count actually use,
+`TagRow.computeFittedWidth` reports the space its chosen chips or count actually use,
 so `CardHeadline` returns any unused allocation to the name before laying it
 out. The name requests its full natural width.
 
@@ -438,8 +442,9 @@ need `Logic` to expose it.
 
 The list is an `ObservableList`, so a listener keeps the counts current
 without the panel being told when a command changes anything. The counting
-itself is static and takes a plain `List<Student>`, so it is tested without a
-toolkit; only the rendering needs one.
+lives in `StudentSummary`, which takes a plain `List<Student>` and owns tag
+grouping, representative spelling and count ordering. It is independent of
+JavaFX; `SummaryPanel` observes the displayed list and renders those results.
 
 Tags counted the same are listed alphabetically ignoring case, because a
 reader does not read `Zoo` as coming before `apple`.
@@ -807,7 +812,7 @@ order.
 `del` stands for `delete` even though `help` is nearer by edits, at two
 against three. Only a word that opens nothing is measured at all.
 
-**What is it near?** `StringUtil.editDistance` counts insertions, deletions,
+**What is it near?** `StringUtil.computeEditDistance` counts insertions, deletions,
 substitutions and swaps of neighboring characters. A swap costs one edit
 because a fast typist makes them as readily as the rest; otherwise `lsit`
 would sit two edits from `list`, as far as a wilder guess. The budget is two
@@ -869,7 +874,7 @@ but `isSameStudent` does not: changing whether a student needs a reply does not
 change their identity. The flag is stored as `Optional<FollowUpFlag>`; the constructor
 without a follow-up argument defaults to `Optional.empty()`.
 
-Tag searches match ordinary tags as parts of their inherited `tagName` values,
+Tag searches match ordinary tags as parts of their `getTagName()` values,
 ignoring case. Follow-up status is selected independently through `-f` or `-nf`, so its
 displayed label never produces a text-field match.
 The student card and command feedback display the same value, while the card
@@ -988,20 +993,14 @@ recorded; only dots require non-empty groups on both sides. Quoted local parts
 and domain literals stay unsupported. A student is recorded before an address
 is known rather than one being invented.
 
-`Email.MAX_LENGTH` caps an entered address at 254 characters, and both
-`ParserUtil` and `JsonAdaptedStudent` check it before calling the matcher.
-The bound is not there to simplify validation. `VALIDATION_REGEX` nests a
-quantifier inside another, and Java matches a repeated group by recursion, one
-frame per repetition, so an address with enough `.`-separated groups exhausts
-the stack. `StackOverflowError` is an `Error` no parser catches and
-`CommandBox` catches only `CommandException` and `ParseException`, so the User
-saw nothing at all. 254 is the limit RFC 5321 section 4.5.3.1 puts on a forward
-path, so the bound comes from the domain; it is also the longest measured to be
-safe on every stack size tried, where a 513-character address overflows a
-256 KB stack. `isValidEmail` itself keeps no length limit, so each input
-boundary reports length and format failures separately, and a saved address up
-to 254 characters loads while a longer one raises `IllegalValueException` with
-its actual and allowed lengths.
+`Email.MAX_LENGTH` caps an entered or loaded address at 254 characters, based
+on RFC 5321 section 4.5.3.1. `ParserUtil` and `JsonAdaptedStudent` report that
+boundary separately from format failures. `isValidEmail` keeps its independent
+format contract, including for direct model construction: it checks local
+atoms and domain labels iteratively rather than matching the recursive full
+regex. The equivalent `VALIDATION_REGEX` remains available to describe the
+existing grammar, and regression tests compare both forms on short inputs.
+Long direct inputs therefore cannot exhaust the stack through validation.
 
 **Phone.** A class roster can give a name, an ID and a university email without
 a personal mobile number. `Phone` is neither an identity field nor a key: two
@@ -1010,9 +1009,11 @@ case. It is normalized only so that a number typed with unusual whitespace, or
 wrapped in the invisible marks a chat app puts around a copied one, is stored
 consistently.
 
-`Messages.getErrorMessageForInvalidValue` shortens a rejected value past
+`ValueMessages` in `commons.util` owns the invalid-value template and bounded
+value rendering. Commands access it through `Messages`, while storage uses it
+directly, avoiding a dependency on command-facing logic. It shortens a rejected value past
 `MAX_QUOTED_VALUE_LENGTH` characters so a very long one cannot push the reason
-out of view. It counts characters through `StringUtil.firstCharacters`, as a
+out of view. It counts characters through `StringUtil.getFirstCharacters`, as a
 reader counts them, separating neither an emoji nor a letter from its accent;
 a student card cuts a name or tag with the same helper. Command parsing and
 storage share that message, so both report an invalid value the same way.
@@ -1058,9 +1059,9 @@ appears in full whenever its width permits and widening the card restores what
 a cut hid. There is no character limit.
 
 When space runs out, `CardName` shortens from the middle through
-`UiText.middleShortened`, keeping up to nine characters at the end and
+`UiText.shortenMiddle`, keeping up to nine characters at the end and
 spending the rest of the budget on the opening.
-`StringUtil.firstCharacters` and `lastCharacters` keep characters whole,
+`StringUtil.getFirstCharacters` and `getLastCharacters` keep characters whole,
 combining accents and emoji included. Two names can still coincide once their
 distinguishing text is hidden, so a shortened name carries a tooltip with the
 whole of it, which goes when the name fits again.

@@ -38,10 +38,16 @@ public class DeleteCommand extends Command {
 
     private final StudentTarget target;
 
+    /**
+     * Creates a command deleting the student at the displayed index.
+     */
     public DeleteCommand(Index targetIndex) {
         this(StudentTarget.byIndex(targetIndex));
     }
 
+    /**
+     * Creates a command deleting the student identified by the target.
+     */
     public DeleteCommand(StudentTarget target) {
         this.target = target;
     }

@@ -84,13 +84,11 @@ public class EditStudentDescriptorTest {
     public void copyConstructor_followUpStates_preservedAndIndependent() {
         EditStudentDescriptor untouched = new EditStudentDescriptor();
         assertEquals(untouched, new EditStudentDescriptor(untouched));
-        assertFalse(untouched.isAnyFieldEdited());
         for (boolean isFlagged : new boolean[] {true, false}) {
             EditStudentDescriptor source = new EditStudentDescriptorBuilder().withFlag(isFlagged).build();
             EditStudentDescriptor copy = new EditStudentDescriptor(source);
             assertEquals(source, copy);
             assertFalse(source.equals(untouched));
-            assertTrue(copy.isAnyFieldEdited());
             assertEquals(Optional.of(isFlagged), copy.getFlagged());
             source.setFlagged(!isFlagged);
             assertFalse(source.equals(copy));
@@ -99,19 +97,10 @@ public class EditStudentDescriptorTest {
     }
 
     @Test
-    public void isAnyFieldEdited_nonEmailFields_returnsTrue() {
-        assertTrue(new EditStudentDescriptorBuilder().withName(VALID_NAME_BOB).build().isAnyFieldEdited());
-        assertTrue(new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_BOB).build().isAnyFieldEdited());
-        assertTrue(new EditStudentDescriptorBuilder().withTags(VALID_TAG_HUSBAND).build().isAnyFieldEdited());
-    }
-
-    @Test
     public void copyConstructor_emailEditIntent_preserved() {
         EditStudentDescriptor untouched = new EditStudentDescriptor();
         EditStudentDescriptor cleared = new EditStudentDescriptorBuilder().withoutEmail().build();
-        assertFalse(untouched.isAnyFieldEdited());
         assertFalse(new EditStudentDescriptor(untouched).isEmailEdited());
-        assertTrue(cleared.isAnyFieldEdited());
         assertTrue(new EditStudentDescriptor(cleared).isEmailEdited());
         assertEquals(cleared, new EditStudentDescriptor(cleared));
         assertFalse(cleared.equals(untouched));
@@ -147,7 +136,7 @@ public class EditStudentDescriptorTest {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
         NusStudentId replacement = new NusStudentId("A01234567X");
         descriptor.setNusStudentId(replacement);
-        assertTrue(descriptor.isAnyFieldEdited());
+        assertTrue(descriptor.isNusStudentIdEdited());
         assertEquals(Optional.of(replacement), descriptor.getNusStudentId());
         assertEquals(descriptor, new EditStudentDescriptor(descriptor));
         descriptor.clearNusStudentId();

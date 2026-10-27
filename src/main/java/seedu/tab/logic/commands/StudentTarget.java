@@ -95,7 +95,7 @@ public final class StudentTarget {
             String message = Messages.getErrorMessageForInvalidIndex(indexInput, displayedStudents.size());
             boolean isStoredId = idCommandWord != null && model.getStudentBook().getStudentList().stream()
                     .anyMatch(student -> student.getNusStudentId()
-                            .filter(id -> id.value.equals(indexInput)).isPresent());
+                            .filter(id -> id.getValue().equals(indexInput)).isPresent());
             if (isStoredId) {
                 message += " " + Messages.getIdTargetHint(idCommandWord, indexInput);
             }

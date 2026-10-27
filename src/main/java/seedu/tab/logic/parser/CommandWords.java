@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.commands.AddCommand;
@@ -82,8 +83,8 @@ public class CommandWords {
      */
     public static List<String> suggestFor(String typedWord) {
         String typed = foldCase(typedWord);
-        List<String> opened = wordsOpenedBy(typed);
-        List<String> suggestions = opened.isEmpty() ? wordsNearestTo(typed) : opened;
+        List<String> matchingWords = findWordsStartingWith(typed);
+        List<String> suggestions = matchingWords.isEmpty() ? findNearestWords(typed) : matchingWords;
         return suggestions.size() > MAX_SUGGESTIONS ? List.of() : suggestions;
     }
 
@@ -103,7 +104,7 @@ public class CommandWords {
      * Returns the command words {@code typed} is the opening of, which is every one of them
      * when {@code typed} is empty.
      */
-    private static List<String> wordsOpenedBy(String typed) {
+    private static List<String> findWordsStartingWith(String typed) {
         return COMMAND_WORDS.stream()
                 .filter(commandWord -> commandWord.startsWith(typed))
                 .toList();
@@ -113,34 +114,29 @@ public class CommandWords {
      * Returns the command words {@code typed} is nearest to, among those near enough to be a
      * mistyping of one, or an empty list when none of them is.
      */
-    private static List<String> wordsNearestTo(String typed) {
-        List<String> nearMisses = COMMAND_WORDS.stream()
-                .filter(commandWord -> isLikelyAttemptAt(commandWord, typed))
+    private static List<String> findNearestWords(String typed) {
+        List<Map.Entry<String, Integer>> candidates = COMMAND_WORDS.stream()
+                .filter(word -> Math.abs(word.length() - typed.length()) <= MAX_EDITS)
+                .map(word -> Map.entry(word, StringUtil.computeEditDistance(typed, word)))
+                .filter(candidate -> isLikelyAttemptAt(candidate.getKey(), typed, candidate.getValue()))
                 .toList();
-        if (nearMisses.isEmpty()) {
+        if (candidates.isEmpty()) {
             return List.of();
         }
-
-        int nearestDistance = nearMisses.stream()
-                .mapToInt(commandWord -> StringUtil.editDistance(typed, commandWord))
-                .min()
-                .orElseThrow();
-        return nearMisses.stream()
-                .filter(commandWord -> StringUtil.editDistance(typed, commandWord) == nearestDistance)
+        int nearestDistance = candidates.stream().mapToInt(Map.Entry::getValue).min().orElseThrow();
+        return candidates.stream()
+                .filter(candidate -> candidate.getValue() == nearestDistance)
+                .map(Map.Entry::getKey)
                 .toList();
     }
 
     /**
-     * Returns true if {@code typed} is near enough to {@code commandWord} to be a mistyping of
-     * it. The lengths are compared first, which settles a pasted line against every command
-     * word without measuring it against any of them.
+     * Returns true if the computed distance is within the allowance for the two initial characters.
+     * The caller excludes incompatible lengths before calculating the distance.
      */
-    private static boolean isLikelyAttemptAt(String commandWord, String typed) {
-        if (Math.abs(commandWord.length() - typed.length()) > MAX_EDITS) {
-            return false;
-        }
-        int allowedEdits = opensTheSameWay(commandWord, typed) ? MAX_EDITS : MAX_EDITS_FROM_ANOTHER_OPENING;
-        return StringUtil.editDistance(typed, commandWord) <= allowedEdits;
+    private static boolean isLikelyAttemptAt(String commandWord, String typed, int distance) {
+        int allowedEdits = hasSameInitialCharacter(commandWord, typed) ? MAX_EDITS : MAX_EDITS_FROM_ANOTHER_OPENING;
+        return distance <= allowedEdits;
     }
 
     /**
@@ -149,9 +145,9 @@ public class CommandWords {
      * two characters are compared in the one case.
      *
      * <p>{@code typed} holds something, because every command word opens with the empty
-     * string, so an empty one is answered by {@link #wordsOpenedBy} and never measured here.
+     * string, so an empty one is answered by {@link #findWordsStartingWith} and never measured here.
      */
-    private static boolean opensTheSameWay(String commandWord, String typed) {
+    private static boolean hasSameInitialCharacter(String commandWord, String typed) {
         return commandWord.charAt(0) == typed.charAt(0);
     }
 

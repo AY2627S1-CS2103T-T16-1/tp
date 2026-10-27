@@ -23,7 +23,7 @@ public class Phone {
     private static final Pattern NON_DIGIT = Pattern.compile("\\P{Nd}");
     private static final int MINIMUM_DIGITS = 3;
     private static final int DECIMAL_RADIX = 10;
-    public final String value;
+    private final String value;
 
     /**
      * Constructs a {@code Phone}.
@@ -74,6 +74,10 @@ public class Phone {
     public static String getFailureReason(String test) {
         requireNonNull(test);
         return "a phone number needs at least " + MINIMUM_DIGITS + " digits";
+    }
+
+    public String getValue() {
+        return value;
     }
 
     @Override

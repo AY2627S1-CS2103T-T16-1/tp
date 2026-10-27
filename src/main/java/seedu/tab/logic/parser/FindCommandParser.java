@@ -41,7 +41,8 @@ public class FindCommandParser implements Parser<FindCommand> {
     /**
      * Parses the given {@code String} of arguments in the context of the FindCommand
      * and returns a FindCommand object for execution.
-     * @throws ParseException if the user input does not conform to the expected format
+     *
+     * @throws ParseException if the user input does not conform to the expected format.
      */
     public FindCommand parse(String args) throws ParseException {
         List<Token> tokens = CommandTokenizer.tokenize(args);
@@ -50,7 +51,7 @@ public class FindCommandParser implements Parser<FindCommand> {
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
 
-        FlagArgumentMap arguments = FlagTokenizer.tokenize(args, FLAG_NAME, FLAG_NUS_STUDENT_ID,
+        FlagArgumentMap arguments = FlagTokenizer.tokenizeTokens(tokens, FLAG_NAME, FLAG_NUS_STUDENT_ID,
                 FLAG_PHONE, FLAG_EMAIL, FLAG_TAG, FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
         if (!arguments.getPreamble().isEmpty() || tokens.getFirst().beginsQuoted()) {
             throw new ParseException(MESSAGE_UNQUALIFIED_TERM);

@@ -39,6 +39,9 @@ public class FindCommand extends Command {
 
     private final DetailsContainsKeywordsPredicate predicate;
 
+    /**
+     * Creates a command selecting students that satisfy the predicate.
+     */
     public FindCommand(DetailsContainsKeywordsPredicate predicate) {
         this.predicate = predicate;
     }

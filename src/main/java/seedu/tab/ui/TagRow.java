@@ -2,6 +2,7 @@ package seedu.tab.ui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
@@ -27,7 +28,7 @@ public class TagRow extends Region {
     /** The gap between one chip and the next, matching the spacing the card uses. */
     private static final double SPACING = 6;
     /** A truncated chip should retain at least four letters rather than an ambiguous pair. */
-    private static final int RECOGNISABLE_CHARACTERS = 4;
+    private static final int RECOGNIZABLE_CHARACTERS = 4;
     private final List<Label> chips = new ArrayList<>();
     private final Label overflow = new Label();
     private final Rectangle clip = new Rectangle();
@@ -61,39 +62,39 @@ public class TagRow extends Region {
 
     @Override
     protected double computePrefWidth(double height) {
-        return widthOf(chips.size());
+        return measureWidth(chips.size());
     }
 
     /**
      * Returns the width actually used within {@code available}, returning unused chip or
      * count space to the name. A partially drawn chip uses the remaining allocation.
      */
-    double fittedWidth(double available) {
+    double computeFittedWidth(double available) {
         if (chips.isEmpty()) {
             return 0;
         }
         int shown = countThatFit(available);
         if (shown > 0) {
-            return widthOf(shown);
+            return measureWidth(shown);
         }
         if (tagNames.size() > 1
-                && available - widthOfTheRest(1) - SPACING < recognisableChipWidth()) {
-            return Math.min(available, widthOfTheRest(0));
+                && available - measureOverflowWidth(1) - SPACING < computeRecognizableChipWidth()) {
+            return Math.min(available, measureOverflowWidth(0));
         }
         return available;
     }
 
     /** Returns room for a useful prefix and ellipsis, including the chip's styled padding. */
-    private double recognisableChipWidth() {
+    private double computeRecognizableChipWidth() {
         Label chip = chips.getFirst();
         // The skin clips at glyph hit-test boundaries; reserve the next character too
         // so a boundary inside it still leaves the useful prefix intact.
-        Text prefix = new Text(StringUtil.firstCharacters(chip.getText(), RECOGNISABLE_CHARACTERS + 1)
+        Text prefix = new Text(StringUtil.getFirstCharacters(chip.getText(), RECOGNIZABLE_CHARACTERS + 1)
                 + chip.getEllipsisString());
         prefix.setFont(chip.getFont());
         double width = Math.ceil(prefix.getLayoutBounds().getWidth())
                 + Math.ceil(chip.getInsets().getLeft()) + Math.ceil(chip.getInsets().getRight());
-        return Math.min(drawnWidthOf(chip), width);
+        return Math.min(measureDrawnWidth(chip), width);
     }
 
     @Override
@@ -103,13 +104,13 @@ public class TagRow extends Region {
         }
         // enough for the start of one tag and a count of the others, since a row showing
         // one chip and no count says nothing about the tags it left out
-        double forACount = tagNames.size() > 1 ? widthOfTheRest(1) + SPACING : 0;
-        return Math.min(computePrefWidth(height), recognisableChipWidth() + forACount);
+        double forACount = tagNames.size() > 1 ? measureOverflowWidth(1) + SPACING : 0;
+        return Math.min(computePrefWidth(height), computeRecognizableChipWidth() + forACount);
     }
 
     /** Returns the width needed to show the total count when every tag is hidden. */
     double getCountWidth() {
-        return tagNames.size() > 1 ? snapSizeX(widthOfTheRest(0)) : 0;
+        return tagNames.size() > 1 ? snapSizeX(measureOverflowWidth(0)) : 0;
     }
 
     @Override
@@ -162,9 +163,9 @@ public class TagRow extends Region {
             return;
         }
 
-        double countWidth = widthOfTheRest(1);
+        double countWidth = measureOverflowWidth(1);
         double forTheChip = getWidth() - countWidth - SPACING;
-        if (forTheChip < recognisableChipWidth()) {
+        if (forTheChip < computeRecognizableChipWidth()) {
             // what is left of the chip would be an ellipsis and little else, which names no
             // tag, so the row says how many there are instead
             describeTheRest(0);
@@ -185,10 +186,10 @@ public class TagRow extends Region {
         double chipsWidth = 0;
         int fitting = 0;
         for (int shown = 1; shown <= chips.size(); shown++) {
-            chipsWidth += drawnWidthOf(chips.get(shown - 1)) + (shown > 1 ? SPACING : 0);
+            chipsWidth += measureDrawnWidth(chips.get(shown - 1)) + (shown > 1 ? SPACING : 0);
             double needed = chipsWidth;
             if (shown < chips.size()) {
-                needed += SPACING + widthOfTheRest(shown);
+                needed += SPACING + measureOverflowWidth(shown);
             }
             if (needed <= available) {
                 fitting = shown;
@@ -201,13 +202,13 @@ public class TagRow extends Region {
      * Returns the width the row takes to draw {@code shown} chips, together with the trailing
      * chip when that leaves any out.
      */
-    private double widthOf(int shown) {
+    private double measureWidth(int shown) {
         double needed = 0;
         for (int i = 0; i < shown; i++) {
-            needed += drawnWidthOf(chips.get(i)) + SPACING;
+            needed += measureDrawnWidth(chips.get(i)) + SPACING;
         }
         if (shown < tagNames.size()) {
-            needed += widthOfTheRest(shown) + SPACING;
+            needed += measureOverflowWidth(shown) + SPACING;
         }
         return Math.max(0, needed - SPACING);
     }
@@ -220,10 +221,10 @@ public class TagRow extends Region {
      * out a little narrower than the one drawn, which is enough to fit one chip too many on
      * a row that is nearly full.
      */
-    private double widthOfTheRest(int shown) {
+    private double measureOverflowWidth(int shown) {
         String wasShowing = overflow.getText();
-        overflow.setText(textForTheRest(shown));
-        double width = drawnWidthOf(overflow);
+        overflow.setText(formatOverflowText(shown));
+        double width = measureDrawnWidth(overflow);
         overflow.setText(wasShowing);
         return width;
     }
@@ -232,7 +233,7 @@ public class TagRow extends Region {
      * Puts the number of chips left out on the trailing chip, and names them on hover.
      */
     private void describeTheRest(int shown) {
-        overflow.setText(textForTheRest(shown));
+        overflow.setText(formatOverflowText(shown));
         overflow.getTooltip().setText(String.join(", ", tagNames.subList(shown, tagNames.size())));
     }
 
@@ -244,29 +245,29 @@ public class TagRow extends Region {
      * nothing for the tags to be more <em>than</em>, so it counts them rather than
      * counting what it left out.
      */
-    private String textForTheRest(int shown) {
+    private String formatOverflowText(int shown) {
         int leftOut = tagNames.size() - shown;
         if (shown == 0) {
-            return leftOut + " tag" + StringUtil.getPluralSuffix(leftOut);
+            return String.format(Locale.ROOT, "%d tag%s", leftOut, StringUtil.getPluralSuffix(leftOut));
         }
-        return leftOut + " more…";
+        return String.format(Locale.ROOT, "%d more…", leftOut);
     }
 
     /**
-     * Lays {@code chip} out at {@code x}, centred down the row, and returns where the next
+     * Lays {@code chip} out at {@code x}, centered down the row, and returns where the next
      * chip starts.
      */
     private double place(Label chip, double x) {
-        return place(chip, x, drawnWidthOf(chip));
+        return place(chip, x, measureDrawnWidth(chip));
     }
 
     /**
-     * Lays {@code chip} out at {@code x} in {@code room}, centred down the row. A chip is
+     * Lays {@code chip} out at {@code x} in {@code room}, centered down the row. A chip is
      * never drawn wider than its own text needs, so a lone tag reads as a tag rather than
      * as a pill stretched across the row.
      */
     private double place(Label chip, double x, double room) {
-        double width = Math.min(drawnWidthOf(chip), room);
+        double width = Math.min(measureDrawnWidth(chip), room);
         double height = chip.prefHeight(-1);
         chip.resizeRelocate(x, Math.round((getHeight() - height) / 2), width, height);
         chip.setVisible(true);
@@ -276,7 +277,7 @@ public class TagRow extends Region {
     /**
      * Returns the natural width of {@code chip}, including its styled padding.
      */
-    private static double drawnWidthOf(Label chip) {
+    private static double measureDrawnWidth(Label chip) {
         return Math.min(chip.prefWidth(-1), chip.maxWidth(-1));
     }
 }

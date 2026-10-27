@@ -17,7 +17,7 @@ public class Tag {
     public static final String MESSAGE_CONSTRAINTS =
             "Tags should contain at least one letter or number, in any writing system";
 
-    public final String tagName;
+    private final String tagName;
 
     /**
      * Constructs a {@code Tag}.
@@ -36,6 +36,10 @@ public class Tag {
     public static boolean isValidTagName(String test) {
         requireNonNull(test);
         return StringUtil.holdsLetterOrNumber(test);
+    }
+
+    public String getTagName() {
+        return tagName;
     }
 
     @Override

@@ -33,7 +33,7 @@ public class NusStudentId {
 
     private static final int ASCII_LIMIT = 128;
 
-    public final String value;
+    private final String value;
 
     /**
      * Constructs a {@code NusStudentId}, storing the form described by
@@ -72,6 +72,10 @@ public class NusStudentId {
             return MESSAGE_NON_ALPHANUMERIC;
         }
         return "";
+    }
+
+    public String getValue() {
+        return value;
     }
 
     @Override

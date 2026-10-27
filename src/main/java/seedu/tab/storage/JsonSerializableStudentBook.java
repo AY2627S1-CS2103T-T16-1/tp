@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
-import seedu.tab.logic.Messages;
+import seedu.tab.commons.util.ValueMessages;
 import seedu.tab.model.ReadOnlyStudentBook;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.student.Student;
@@ -25,6 +25,13 @@ class JsonSerializableStudentBook {
     public static final String MESSAGE_DUPLICATE_STUDENT =
             "NUS Student ID %1$s is already used by student record %2$d (\"%3$s\").";
     public static final String MESSAGE_MISSING_STUDENT_LIST = "Student list is missing.";
+
+    private static final String COMMENT_FIELD = "_comment";
+    private static final String MESSAGE_UNKNOWN_FIELD = "Unknown field \"%s\" in the student book. "
+            + "Expected top-level fields: students, _comment (optional description).";
+    private static final String MESSAGE_MISSING_RECORD = "Student record %d is missing.";
+    private static final String RECORD_DESCRIPTION = "Student record %d";
+    private static final String NAMED_RECORD_DESCRIPTION = "Student record %d (\"%s\")";
 
     private final List<JsonAdaptedStudent> students;
 
@@ -49,11 +56,10 @@ class JsonSerializableStudentBook {
     @JsonAnySetter
     public void rejectUnknownField(String field, Object value) {
         // Existing hand-editable fixtures use this key for a file description.
-        if (field.equals("_comment")) {
+        if (field.equals(COMMENT_FIELD)) {
             return;
         }
-        throw new IllegalArgumentException("Unknown field \"" + Messages.shorten(field)
-                + "\" in the student book. Expected top-level fields: students, _comment (optional description).");
+        throw new IllegalArgumentException(String.format(MESSAGE_UNKNOWN_FIELD, ValueMessages.shorten(field)));
     }
 
     /**
@@ -70,7 +76,7 @@ class JsonSerializableStudentBook {
         for (int index = 0; index < students.size(); index++) {
             JsonAdaptedStudent jsonAdaptedStudent = students.get(index);
             if (jsonAdaptedStudent == null) {
-                throw new IllegalValueException(String.format(Locale.ROOT, "Student record %d is missing.", index + 1));
+                throw new IllegalValueException(String.format(Locale.ROOT, MESSAGE_MISSING_RECORD, index + 1));
             }
             String recordDescription = getRecordDescription(index, jsonAdaptedStudent);
             Student student;
@@ -91,14 +97,20 @@ class JsonSerializableStudentBook {
         return studentBook;
     }
 
+    /**
+     * Returns a one-based record description with its saved name when available.
+     */
     private static String getRecordDescription(int index, JsonAdaptedStudent student) {
         String name = student.getNameForErrorMessage();
         if (name == null) {
-            return String.format(Locale.ROOT, "Student record %d", index + 1);
+            return String.format(Locale.ROOT, RECORD_DESCRIPTION, index + 1);
         }
-        return String.format(Locale.ROOT, "Student record %d (\"%s\")", index + 1, name);
+        return String.format(Locale.ROOT, NAMED_RECORD_DESCRIPTION, index + 1, name);
     }
 
+    /**
+     * Returns the existing record with the same identity, or -1 when this identity is new.
+     */
     private static int findDuplicateIndex(StudentBook studentBook, Student student) {
         for (int index = 0; index < studentBook.getStudentList().size(); index++) {
             if (student.isSameStudent(studentBook.getStudentList().get(index))) {

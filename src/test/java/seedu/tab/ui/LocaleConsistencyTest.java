@@ -24,7 +24,9 @@ import seedu.tab.model.ModelManager;
 import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.testutil.StudentBuilder;
 
-/** Tests English feedback and option styles under regional defaults. */
+/**
+ * Tests English feedback and option styles under regional defaults.
+ */
 public class LocaleConsistencyTest {
     private static final List<String> LOCALES = List.of("en-SG", "tr-TR", "az-AZ", "fa-IR", "ar-EG", "bn-BD");
 
@@ -68,8 +70,8 @@ public class LocaleConsistencyTest {
                         + "student record 1 (\"Priya\").");
         String longEmail = "x".repeat(255);
         assertRejectedSource("{\"students\":[{\"name\":\"Priya\",\"phone\":\"91234567\",\"email\":\""
-                + longEmail + "\"}]}", "Student record 1 (\"Priya\"): Email field is too long to read safely: "
-                + "it holds 255 characters, but saved emails may hold at most 254");
+                + longEmail + "\"}]}", "Student record 1 (\"Priya\"): Email field is too long: "
+                + "it holds 255 characters, but an email may hold at most 254");
     }
 
     private void assertRejectedSource(String source, String expectedMessage) throws Exception {

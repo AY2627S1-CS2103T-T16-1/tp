@@ -49,7 +49,7 @@ public class AppUtilTest {
     }
 
     @Test
-    public void getImage_exitingImage() {
+    public void getImage_existingImage() {
         assertNotNull(AppUtil.getImage("/images/address_book_32.png"));
     }
 

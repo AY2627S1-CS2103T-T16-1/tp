@@ -80,7 +80,7 @@ public class AddCommandParserTest {
     public void parse_longAndMixedAliases_success() {
         Student expected = new StudentBuilder(BOB).withTags(VALID_TAG_FRIEND, "Lab 3").build();
 
-        assertParseSuccess(parser, " " + BOB.getName().fullName
+        assertParseSuccess(parser, " " + BOB.getName().getFullName()
                 + " --phone " + VALID_PHONE_BOB
                 + " --email " + VALID_EMAIL_BOB
                 + " -t " + VALID_TAG_FRIEND
@@ -92,7 +92,7 @@ public class AddCommandParserTest {
         Student expected = new StudentBuilder(BOB).withNusStudentId(VALID_NUS_STUDENT_ID_BOB)
                 .withTags("Lab = 3").build();
 
-        assertParseSuccess(parser, " " + BOB.getName().fullName
+        assertParseSuccess(parser, " " + BOB.getName().getFullName()
                 + " --phone=" + VALID_PHONE_BOB
                 + " -e=" + VALID_EMAIL_BOB
                 + " -i=" + VALID_NUS_STUDENT_ID_BOB
@@ -103,7 +103,7 @@ public class AddCommandParserTest {
     public void parse_unquotedNameOfSeveralWords_success() {
         // quoting is only needed for a value that would otherwise be read as something else
         Student expected = new StudentBuilder(BOB).withTags().build();
-        assertParseSuccess(parser, " " + BOB.getName().fullName + PHONE_BOB + EMAIL_BOB,
+        assertParseSuccess(parser, " " + BOB.getName().getFullName() + PHONE_BOB + EMAIL_BOB,
                 new AddCommand(expected));
     }
 

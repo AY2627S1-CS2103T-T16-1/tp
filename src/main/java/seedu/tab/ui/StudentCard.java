@@ -20,16 +20,10 @@ public class StudentCard extends UiPart<Region> {
 
     private static final String FXML = "StudentListCard.fxml";
 
-    /**
-     * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
-     * As a consequence, UI elements' variable names cannot be set to such keywords
-     * or an exception will be thrown by JavaFX during runtime.
-     *
-     * @see <a href="https://github.com/se-edu/addressbook-level4/issues/336">The issue on AddressBook level 4</a>
-     */
+    private final Student student;
 
-    public final Student student;
-
+    // JavaFX reserves names such as location and resources for injected fields.
+    // See https://github.com/se-edu/addressbook-level4/issues/336.
     @FXML
     private HBox cardPane;
     @FXML
@@ -58,21 +52,21 @@ public class StudentCard extends UiPart<Region> {
         super(FXML);
         this.student = student;
         id.setText(String.valueOf(displayedIndex));
-        UiText.showToFit(name, student.getName().fullName);
+        UiText.showToFit(name, student.getName().getFullName());
         show(phone, student.getPhone().map(Phone::toString).orElse(null));
         if (student.getEmail().isPresent()) {
             UiText.showToFit(email, student.getEmail().orElseThrow().toString());
         } else {
             show(email, null);
         }
-        show(followUp, student.getFlag().map(flag -> flag.tagName).orElse(null));
+        show(followUp, student.getFlag().map(flag -> flag.getTagName()).orElse(null));
         show(nusStudentId, student.getNusStudentId().map(NusStudentId::toString).orElse(null));
         for (Label contact : new Label[] {nusStudentId, phone, email}) {
             contact.maxWidthProperty().bind(contacts.widthProperty());
         }
         clipToItsOwnBox(details);
         tags.setTags(student.getTags().stream()
-                .map(tag -> tag.tagName)
+                .map(tag -> tag.getTagName())
                 .sorted(String.CASE_INSENSITIVE_ORDER.thenComparing(Comparator.naturalOrder()))
                 .toList());
     }
@@ -100,5 +94,9 @@ public class StudentCard extends UiPart<Region> {
             return;
         }
         UiText.showToFit(label, value);
+    }
+
+    public Student getStudent() {
+        return student;
     }
 }

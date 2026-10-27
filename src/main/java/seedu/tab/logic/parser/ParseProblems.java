@@ -87,6 +87,9 @@ public class ParseProblems {
      */
     @FunctionalInterface
     public interface Step<T> {
+        /**
+         * Returns the parsed result, or throws when the input is rejected.
+         */
         T run() throws ParseException;
     }
 
@@ -97,6 +100,9 @@ public class ParseProblems {
      */
     @FunctionalInterface
     public interface ValueParser<T> {
+        /**
+         * Parses the field value, or throws when it is rejected.
+         */
         T parse(String value) throws ParseException;
     }
 }

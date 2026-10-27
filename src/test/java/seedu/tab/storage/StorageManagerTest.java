@@ -35,7 +35,7 @@ public class StorageManagerTest {
     }
 
     @Test
-    public void prefsReadSave() throws Exception {
+    public void readAndSaveUserPrefs() throws Exception {
         /*
          * Note: This is an integration test that verifies the StorageManager is properly wired to the
          * {@link JsonUserPrefsStorage} class.
@@ -49,7 +49,7 @@ public class StorageManagerTest {
     }
 
     @Test
-    public void studentBookReadSave() throws Exception {
+    public void readAndSaveStudentBook() throws Exception {
         /*
          * Note: This is an integration test that verifies the StorageManager is properly wired to the
          * {@link JsonStudentBookStorage} class.
@@ -73,7 +73,7 @@ public class StorageManagerTest {
     }
 
     @Test
-    public void studentBook_deleteAndPersistAcrossSessions_success() throws Exception {
+    public void deleteStudent_acrossSessions_persistsDeletion() throws Exception {
         StudentBook sessionOneBook = getTypicalStudentBook();
         Student studentToDelete = sessionOneBook.getStudentList().get(0);
         sessionOneBook.removeStudent(studentToDelete);
@@ -101,7 +101,7 @@ public class StorageManagerTest {
     }
 
     @Test
-    public void userPrefs_guiSettingsPersistAcrossSessions_success() throws Exception {
+    public void saveUserPrefs_acrossSessions_persistsGuiSettings() throws Exception {
         UserPrefs sessionOnePrefs = new UserPrefs();
         GuiSettings customGuiSettings = new GuiSettings(1440, 900, 50, 100);
         sessionOnePrefs.setGuiSettings(customGuiSettings);

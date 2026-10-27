@@ -20,15 +20,15 @@ import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 
 /**
- * Draws a text field's content in colour, behind a field whose own text is transparent.
+ * Draws a text field's content in color, behind a field whose own text is transparent.
  *
- * <p>A {@code TextField} cannot colour its own content, so the colours are painted as a
+ * <p>A {@code TextField} cannot color its own content, so the colors are painted as a
  * separate copy of the line, and the field is left to do everything else: it keeps every key
  * the User presses, it decides where a click lands, and it scrolls a command longer than the
  * line by rules of its own. The copy, the caret and the selection are all drawn wherever the
  * field has put its own text, which is the one thing they have to agree with.
  *
- * <p>This is measurement rather than behaviour: it changes when a JavaFX skin draws something
+ * <p>This is measurement rather than behavior: it changes when a JavaFX skin draws something
  * somewhere new, not when a command does something new.
  */
 public class HighlightedTextOverlay {
@@ -48,11 +48,11 @@ public class HighlightedTextOverlay {
     /**
      * Creates an overlay that paints {@code field}'s text in the nodes it is handed.
      *
-     * @param field the field whose text is painted, and whose own text is transparent
-     * @param highlighted the coloured copy of the line
-     * @param caret the bar drawn where the field puts its own caret
-     * @param lane the clipped line the copy, the caret and the selection are drawn in
-     * @param selection the shape drawn behind the selected characters
+     * @param field the field whose text is painted, and whose own text is transparent.
+     * @param highlighted the colored copy of the line.
+     * @param caret the bar drawn where the field puts its own caret.
+     * @param lane the clipped line the copy, the caret and the selection are drawn in.
+     * @param selection the shape drawn behind the selected characters.
      */
     public HighlightedTextOverlay(TextField field, TextFlow highlighted, Region caret, Pane lane,
             Path selection) {
@@ -77,15 +77,15 @@ public class HighlightedTextOverlay {
     }
 
     /**
-     * Repaints the coloured text behind the field so that it reads as what was typed.
+     * Repaints the colored text behind the field so that it reads as what was typed.
      *
      * <p>The field keeps every key the User presses and decides where a click lands; only its
-     * own text is transparent, so what is read is the coloured copy underneath, and the caret
+     * own text is transparent, so what is read is the colored copy underneath, and the caret
      * and the selection are drawn here to go with it. A command longer than the line scrolls
-     * the copy the way the field scrolls its own text, so the colours hold however long the
+     * the copy the way the field scrolls its own text, so the colors hold however long the
      * command is.
      */
-    public void recolour(String typed) {
+    public void recolor(String typed) {
         highlighted.getChildren().clear();
         // Keep ordinary words and spaces together so bidi shaping agrees with the field.
         Text value = null;
@@ -96,7 +96,7 @@ public class HighlightedTextOverlay {
                 continue;
             }
             Text text = new Text(span.text());
-            text.getStyleClass().addAll("command-token", styleClassFor(span.kind()));
+            text.getStyleClass().addAll("command-token", getStyleClass(span.kind()));
             highlighted.getChildren().add(text);
             value = span.kind() == CommandHighlighter.Kind.VALUE ? text : null;
         }
@@ -109,7 +109,7 @@ public class HighlightedTextOverlay {
     }
 
     /**
-     * Lays the coloured copy out on one line, where the field is drawing its own text.
+     * Lays the colored copy out on one line, where the field is drawing its own text.
      *
      * <p>A TextFlow wraps at the width it is given, which would turn a long command into
      * several lines and grow the box. It is sized to its content instead and the lane around
@@ -120,11 +120,19 @@ public class HighlightedTextOverlay {
     public void refresh() {
         followTheFieldsText();
         // JavaFX moves the caret before it reports the new text, so this runs once against
-        // the copy of the previous command. The recolour that follows puts it right.
-        if (!copyMatchesField()) {
+        // the copy of the previous command. The recolor that follows puts it right.
+        if (!isCopyMatchingField()) {
             return;
         }
 
+        measureCopy();
+        positionCopy();
+    }
+
+    /**
+     * Sizes the shaped line as a single unwrapped copy before caret and selection placement.
+     */
+    private void measureCopy() {
         // Measure the shaped line as a whole: separate RTL runs can round differently.
         highlighted.setPrefWidth(Region.USE_COMPUTED_SIZE);
         double content = Math.ceil(highlighted.prefWidth(-1));
@@ -135,15 +143,20 @@ public class HighlightedTextOverlay {
         highlighted.autosize();
         highlighted.layout();
         caret.autosize();
+    }
 
-        double caretAt = caretOnTheCopy();
+    /**
+     * Positions the overlay using the field's own scroll offset and caret metrics.
+     */
+    private void positionCopy() {
+        double caretAt = getCaretPosition();
         matchCaretToTheLine();
 
         // where the field is drawing its own text, which is the one thing the copy has to
         // agree with: the field decides which character a click lands on, and it scrolls by
         // rules of its own that differ between typing, deleting, cutting and undoing. Every
         // attempt to work them out again here has been wrong in some case or other.
-        double drawnFrom = whereTheFieldDrawsItsText();
+        double drawnFrom = getFieldTextOffset();
         double middle = lane.getHeight() / 2;
         showSelection(drawnFrom, middle);
         highlighted.relocate(drawnFrom, middle - highlighted.getHeight() / 2);
@@ -153,9 +166,9 @@ public class HighlightedTextOverlay {
     }
 
     /**
-     * Returns true if the coloured copy is of the text the field now holds.
+     * Returns true if the colored copy is of the text the field now holds.
      */
-    private boolean copyMatchesField() {
+    private boolean isCopyMatchingField() {
         StringBuilder painted = new StringBuilder();
         for (Node node : highlighted.getChildren()) {
             painted.append(((Text) node).getText());
@@ -174,15 +187,15 @@ public class HighlightedTextOverlay {
      * <p>Before the field has a skin there is nothing to ask, so the copy falls back to the
      * inset the field will use.
      */
-    private double whereTheFieldDrawsItsText() {
-        Text drawn = fieldText();
-        return drawn == null ? halfACaret() : drawn.getLayoutX() + drawn.getTranslateX();
+    private double getFieldTextOffset() {
+        Text drawn = findFieldText();
+        return drawn == null ? computeHalfCaretWidth() : drawn.getLayoutX() + drawn.getTranslateX();
     }
 
     /**
      * Returns where a caret wanting to be drawn from {@code left} is drawn instead.
      *
-     * <p>The caret is centred on the point it marks, as the field's own caret is, except at
+     * <p>The caret is centered on the point it marks, as the field's own caret is, except at
      * either edge of the line, where half of it would fall outside and the lane's clip would
      * take that half away. How far in from the right edge a field scrolls the end of a
      * command differs between JavaFX releases, so a caret there lands outside the line on
@@ -205,7 +218,7 @@ public class HighlightedTextOverlay {
      * for as long as it keeps that skin, so there is never a second one to move to.
      */
     private void followTheFieldsText() {
-        Text drawn = fieldText();
+        Text drawn = findFieldText();
         if (drawn == null || drawn == followed) {
             return;
         }
@@ -223,7 +236,7 @@ public class HighlightedTextOverlay {
      * the field is drawing in whose text is the command. A command that reads as the prompt
      * matches the hidden node as well, and the field never scrolls that one.
      */
-    private Text fieldText() {
+    private Text findFieldText() {
         return field.lookupAll(".text").stream()
                 .filter(Text.class::isInstance)
                 .map(Text.class::cast)
@@ -241,7 +254,7 @@ public class HighlightedTextOverlay {
      * end of the command is drawn rather than cut in half by the edge. The copy is drawn
      * behind the field's own text, so it is drawn at the same inset.
      */
-    private double halfACaret() {
+    private double computeHalfCaretWidth() {
         return Math.max(caret.getWidth(), caret.prefWidth(-1)) / 2;
     }
 
@@ -274,8 +287,8 @@ public class HighlightedTextOverlay {
     /**
      * Gives the caret the height of the text beside it.
      *
-     * <p>A bar of a fixed height centred in the line does not sit where the text does: a
-     * font's ink is not centred in its line box, so the two are out by a point or so. Taking
+     * <p>A bar of a fixed height centered in the line does not sit where the text does: a
+     * font's ink is not centered in its line box, so the two are out by a point or so. Taking
      * the height from a run of the text itself keeps them together whatever the font, and an
      * empty line falls back to one line of the field's own font rather than keeping the
      * height the command before it needed.
@@ -304,8 +317,8 @@ public class HighlightedTextOverlay {
      * Both matter at script boundaries, where one insertion index has two visual positions.
      * A logical prefix width cannot locate a caret inside a right-to-left word.
      */
-    private double caretOnTheCopy() {
-        Text drawn = fieldText();
+    private double getCaretPosition() {
+        Text drawn = findFieldText();
         PathElement[] shape = drawn == null
                 ? highlighted.caretShape(field.getCaretPosition(), true) : drawn.getCaretShape();
         if (shape.length == 0) {
@@ -328,9 +341,9 @@ public class HighlightedTextOverlay {
     }
 
     /**
-     * Returns the style class that colours {@code kind}.
+     * Returns the style class that colors {@code kind}.
      */
-    private static String styleClassFor(CommandHighlighter.Kind kind) {
+    private static String getStyleClass(CommandHighlighter.Kind kind) {
         return "command-" + kind.name().toLowerCase(Locale.ROOT).replace('_', '-');
     }
 }

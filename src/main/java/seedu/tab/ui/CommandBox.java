@@ -21,7 +21,7 @@ import seedu.tab.logic.parser.exceptions.ParseException;
 public class CommandBox extends UiPart<Region> {
 
     public static final String ERROR_STYLE_CLASS = "error";
-    /** Marks the coloured copy, which is the text the User actually sees. */
+    /** Marks the colored copy, which is the text the User actually sees. */
     private static final String COPY_ERROR_STYLE_CLASS = "command-error";
     private static final String FXML = "CommandBox.fxml";
 
@@ -29,7 +29,7 @@ public class CommandBox extends UiPart<Region> {
     private final CommandExecutor commandExecutor;
     private final BooleanSupplier isAwaitingConfirmation;
 
-    /** Paints what the User reads, since a text field cannot colour its own content. */
+    /** Paints what the User reads, since a text field cannot color its own content. */
     private final HighlightedTextOverlay overlay;
 
     @FXML
@@ -65,8 +65,8 @@ public class CommandBox extends UiPart<Region> {
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
         overlay = new HighlightedTextOverlay(commandTextField, highlighted, caret, lane, selection);
-        commandTextField.textProperty().addListener((unused, old, typed) -> overlay.recolour(typed));
-        overlay.recolour(commandTextField.getText());
+        commandTextField.textProperty().addListener((unused, old, typed) -> overlay.recolor(typed));
+        overlay.recolor(commandTextField.getText());
         // every task is meant to be reachable from the keyboard alone, so the line the User
         // types into is where the caret starts rather than somewhere they have to click
         Platform.runLater(commandTextField::requestFocus);
@@ -111,10 +111,10 @@ public class CommandBox extends UiPart<Region> {
         String recalled;
         switch (event.getCode()) {
             case UP:
-                recalled = history.previous(current);
+                recalled = history.recallPrevious(current);
                 break;
             case DOWN:
-                recalled = history.next(current);
+                recalled = history.recallNext(current);
                 break;
             default:
                 return;
@@ -136,13 +136,13 @@ public class CommandBox extends UiPart<Region> {
      * Sets the command box style to indicate a failed command.
      */
     private void setStyleToIndicateCommandFailure() {
-        ObservableList<String> styleClass = commandTextField.getStyleClass();
+        ObservableList<String> styleClasses = commandTextField.getStyleClass();
 
-        if (styleClass.contains(ERROR_STYLE_CLASS)) {
+        if (styleClasses.contains(ERROR_STYLE_CLASS)) {
             return;
         }
 
-        styleClass.add(ERROR_STYLE_CLASS);
+        styleClasses.add(ERROR_STYLE_CLASS);
         highlighted.getStyleClass().add(COPY_ERROR_STYLE_CLASS);
     }
 

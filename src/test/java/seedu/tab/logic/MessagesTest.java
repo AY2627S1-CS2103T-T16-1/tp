@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.commons.util.ValueMessages;
 import seedu.tab.model.student.Student;
 import seedu.tab.testutil.StudentBuilder;
 
@@ -103,7 +104,7 @@ public class MessagesTest {
 
     @Test
     public void getErrorMessageForInvalidValue_valueAtTheQuotingLimit_isQuotedWhole() {
-        String value = "a".repeat(Messages.MAX_QUOTED_VALUE_LENGTH);
+        String value = "a".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH);
 
         assertEquals("Email \"" + value + "\" is not valid: too long",
                 Messages.getErrorMessageForInvalidValue("Email", value, "too long"));
@@ -116,14 +117,14 @@ public class MessagesTest {
 
         String message = Messages.getErrorMessageForInvalidValue("Email", value, "too long");
 
-        assertEquals("Email \"" + "a".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…\" is not valid: too long",
+        assertEquals("Email \"" + "a".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH) + "…\" is not valid: too long",
                 message);
         assertTrue(message.length() < 200, "the message is still far too long: " + message.length());
     }
 
     @Test
     public void shorten_longValueWithEmojiAtBoundary_keepsEmojiIntact() {
-        String prefix = "a".repeat(Messages.MAX_QUOTED_VALUE_LENGTH - 1);
+        String prefix = "a".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH - 1);
         String value = prefix + "😀" + "more";
 
         assertEquals(prefix + "😀…", Messages.shorten(value));
@@ -132,7 +133,7 @@ public class MessagesTest {
     @Test
     public void shorten_longValueWithCombiningAccentAtBoundary_keepsTheAccentOnItsLetter() {
         // a letter and the accent that follows it are two code points and one character
-        String prefix = "a".repeat(Messages.MAX_QUOTED_VALUE_LENGTH - 1);
+        String prefix = "a".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH - 1);
         String value = prefix + "e\u0301" + "more";
 
         assertEquals(prefix + "e\u0301…", Messages.shorten(value));
@@ -207,8 +208,9 @@ public class MessagesTest {
 
     @Test
     public void getErrorMessageForMistypedCommand_longWord_isShortenedLikeAnyOtherValue() {
-        String typed = "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH + 1);
-        assertEquals("Unknown command \"" + "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…\". Did you mean add?",
+        String typed = "x".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH + 1);
+        assertEquals("Unknown command \"" + "x".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH)
+                        + "…\". Did you mean add?",
                 Messages.getErrorMessageForMistypedCommand(typed, List.of("add")));
     }
 

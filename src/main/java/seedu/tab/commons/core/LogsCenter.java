@@ -21,6 +21,7 @@ import seedu.tab.commons.util.AppUtil;
  */
 public class LogsCenter {
     // Change this to a lower level (e.g., Level.FINE) to enable more detailed log messages
+    private static final String BASE_LOGGER_NAME = "tab";
     private static final Level LOG_LEVEL = Level.INFO;
 
     private static final int MAX_FILE_COUNT = 5;
@@ -68,11 +69,11 @@ public class LogsCenter {
     }
 
     /**
-     * Creates a logger named 'ab3', containing a {@code ConsoleHandler} and, if writable, a {@code FileHandler}.
+     * Creates a logger named 'tab', containing a {@code ConsoleHandler} and, if writable, a {@code FileHandler}.
      * Sets it as the {@code baseLogger}, to be used as the parent logger of all other loggers.
      */
     private static void setBaseLogger() {
-        baseLogger = Logger.getLogger("ab3");
+        baseLogger = Logger.getLogger(BASE_LOGGER_NAME);
         baseLogger.setUseParentHandlers(false);
         removeHandlers(baseLogger);
         // set the level of the baseLogger, which will be inherited by other loggers

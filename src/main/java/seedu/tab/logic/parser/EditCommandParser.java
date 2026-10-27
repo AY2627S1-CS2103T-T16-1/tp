@@ -44,7 +44,7 @@ public class EditCommandParser implements Parser<EditCommand> {
      * displayed list, or an NUS Student ID that opens with a letter. The separate
      * {@code --target-id} option accepts any valid ID while {@code --id} sets the ID field.
      *
-     * @throws ParseException if the user input does not conform to the expected format
+     * @throws ParseException if the user input does not conform to the expected format.
      */
     public EditCommand parse(String args) throws ParseException {
         FlagArgumentMap arguments = FlagTokenizer.tokenizeWithIndex(

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.ScrollPane;
@@ -156,10 +157,10 @@ public class HelpSummaryTest {
         FxToolkit.onFxThread(() -> {
             MainWindow window = createWindow(new ModelManager());
             try {
-                for (boolean useMenu : List.of(false, true)) {
+                for (boolean isMenuUsed : List.of(false, true)) {
                     for (KeyCode quitKey : List.of(KeyCode.Q, KeyCode.ESCAPE)) {
-                        assertDraftCanBeEdited(window, useMenu, quitKey);
-                        restoreDraft(window, useMenu, quitKey, "");
+                        assertDraftCanBeEdited(window, isMenuUsed, quitKey);
+                        restoreDraft(window, isMenuUsed, quitKey, "");
                         type(window, "list");
                         assertEquals("list", fieldOf(window).getText());
                     }
@@ -171,24 +172,24 @@ public class HelpSummaryTest {
         });
     }
 
-    private static void assertDraftCanBeEdited(MainWindow window, boolean useMenu, KeyCode quitKey) {
-        restoreDraft(window, useMenu, quitKey, "add Wei Ming");
+    private static void assertDraftCanBeEdited(MainWindow window, boolean isMenuUsed, KeyCode quitKey) {
+        restoreDraft(window, isMenuUsed, quitKey, "add Wei Ming");
         type(window, " Tan");
         assertEquals("add Wei Ming Tan", fieldOf(window).getText());
 
-        restoreDraft(window, useMenu, quitKey, "add Wei Ming");
+        restoreDraft(window, isMenuUsed, quitKey, "add Wei Ming");
         press(window, KeyCode.BACK_SPACE);
         assertEquals("add Wei Min", fieldOf(window).getText());
 
-        restoreDraft(window, useMenu, quitKey, "add Wei Ming");
+        restoreDraft(window, isMenuUsed, quitKey, "add Wei Ming");
         press(window, KeyCode.DELETE);
         assertEquals("add Wei Ming", fieldOf(window).getText());
     }
 
-    private static void restoreDraft(MainWindow window, boolean useMenu, KeyCode quitKey, String draft) {
+    private static void restoreDraft(MainWindow window, boolean isMenuUsed, KeyCode quitKey, String draft) {
         fieldOf(window).setText(draft);
         fieldOf(window).requestFocus();
-        if (useMenu) {
+        if (isMenuUsed) {
             MenuBar menu = (MenuBar) node(window, "menuBar");
             menu.getMenus().get(1).getItems().get(0).fire();
         } else {
@@ -263,6 +264,13 @@ public class HelpSummaryTest {
     }
 
     private static void assertPagerNavigation(MainWindow window) {
+        // A resize can arrive between the readiness check and this FX callback.
+        // Measure and navigate only after laying out the current scene bounds.
+        Scene scene = window.getRoot().getScene();
+        Region root = (Region) scene.getRoot();
+        root.resize(scene.getWidth(), scene.getHeight());
+        root.applyCss();
+        root.layout();
         ScrollPane viewport = (ScrollPane) node(window, "helpViewport");
         assertEquals(ScrollPane.ScrollBarPolicy.NEVER, viewport.getVbarPolicy());
         assertEquals(ScrollPane.ScrollBarPolicy.NEVER, viewport.getHbarPolicy());
@@ -299,7 +307,9 @@ public class HelpSummaryTest {
         assertEquals(1, viewport.getVvalue());
     }
 
-    /** Returns the help reference as one string, joined back from its coloured spans. */
+    /**
+     * Returns the help reference as one string, joined back from its colored spans.
+     */
     private static String referenceOf(TextFlow helpText) {
         StringBuilder whole = new StringBuilder();
         for (Node span : helpText.getChildrenUnmodifiable()) {

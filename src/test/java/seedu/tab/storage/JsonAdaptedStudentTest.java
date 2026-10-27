@@ -16,12 +16,14 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
-import seedu.tab.logic.Messages;
+import seedu.tab.commons.util.JsonUtil;
+import seedu.tab.commons.util.ValueMessages;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.tag.FollowUpFlag;
+import seedu.tab.testutil.StudentBuilder;
 
 public class JsonAdaptedStudentTest {
     private static final String INVALID_NAME = "---"; // no letter or number
@@ -54,7 +56,7 @@ public class JsonAdaptedStudentTest {
     public void toModelType_handEditedEmailSymbols_preservesAddress() throws Exception {
         for (String address : List.of("mei__tan@hotmail.com", "sean.o'brien@example.com", "mei_@example.com")) {
             JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, address, VALID_TAGS, false);
-            assertEquals(address, student.toModelType().getEmail().orElseThrow().value);
+            assertEquals(address, student.toModelType().getEmail().orElseThrow().getValue());
         }
     }
 
@@ -97,7 +99,7 @@ public class JsonAdaptedStudentTest {
         String invalidName = "-".repeat(61);
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(invalidName, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
-        String expectedMessage = "Name \"" + "-".repeat(Messages.MAX_QUOTED_VALUE_LENGTH)
+        String expectedMessage = "Name \"" + "-".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH)
                 + "…\" is not valid: it holds no letter or number";
 
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
@@ -129,7 +131,7 @@ public class JsonAdaptedStudentTest {
         String annotated = "+65 9123 4567 (HP) ext 21";
         JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, annotated, VALID_EMAIL, VALID_TAGS, false);
 
-        assertEquals(annotated, student.toModelType().getPhone().orElseThrow().value);
+        assertEquals(annotated, student.toModelType().getPhone().orElseThrow().getValue());
     }
 
     @Test
@@ -201,7 +203,7 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, overLimit, VALID_TAGS, false);
         String expectedMessage = String.format(
-                "Email field is too long to read safely: it holds %d characters, but saved emails may hold at most %d",
+                "Email field is too long: it holds %d characters, but an email may hold at most %d",
                 overLimit.length(), Email.MAX_LENGTH);
 
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
@@ -315,7 +317,7 @@ public class JsonAdaptedStudentTest {
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, VALID_EMAIL, tags, false);
 
         var loaded = assertDoesNotThrow(student::toModelType);
-        assertTrue(loaded.getTags().stream().anyMatch(tag -> tag.tagName.equals("Needs follow-up soon")));
+        assertTrue(loaded.getTags().stream().anyMatch(tag -> tag.getTagName().equals("Needs follow-up soon")));
     }
 
     @Test
@@ -365,6 +367,15 @@ public class JsonAdaptedStudentTest {
         }
         localPart.append("a".repeat(localPartLength - localPart.length()));
         return localPart + domain;
+    }
+
+    @Test
+    public void serialize_flaggedStudent_preservesFlagKeyAndRoundTrips() throws Exception {
+        JsonAdaptedStudent adapted = new JsonAdaptedStudent(new StudentBuilder(BENSON).withFlag(true).build());
+        String json = JsonUtil.toJsonString(adapted);
+        assertTrue(json.contains("\"flag\" : true"), json);
+        assertFalse(json.contains("isFlagged"), json);
+        assertEquals(adapted.toModelType(), JsonUtil.fromJsonString(json, JsonAdaptedStudent.class).toModelType());
     }
 
 }

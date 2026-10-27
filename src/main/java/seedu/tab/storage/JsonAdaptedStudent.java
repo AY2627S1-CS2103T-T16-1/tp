@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
 import seedu.tab.commons.util.StringUtil;
-import seedu.tab.logic.Messages;
+import seedu.tab.commons.util.ValueMessages;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
@@ -35,12 +35,21 @@ import seedu.tab.model.tag.Tag;
 class JsonAdaptedStudent {
     static final String MISSING_FIELD_MESSAGE_FORMAT = "%s field is missing.";
 
+    private static final String MESSAGE_EMAIL_TOO_LONG =
+            "%s field is too long: it holds %d characters, but an email may hold at most %d";
+
+    private static final String LEGACY_ADDRESS_FIELD = "address";
+    private static final String MESSAGE_UNKNOWN_FIELD = "Unknown field \"%s\" in %s. Check its spelling. "
+            + "Expected: name, phone, email, nusStudentId, tags, flag."
+            + " The legacy address field is also accepted and ignored.";
+
     private final String name;
     private final String phone;
     private final String email;
     private final String nusStudentId;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
-    private final Boolean flag;
+    @JsonProperty("flag")
+    private final Boolean isFlagged;
 
     /**
      * Constructs a {@code JsonAdaptedStudent} with the given student details.
@@ -50,7 +59,7 @@ class JsonAdaptedStudent {
             @JsonProperty("email") String email,
             @JsonProperty("nusStudentId") String nusStudentId,
             @JsonProperty("tags") @JsonDeserialize(using = JsonTagsDeserializer.class) List<JsonAdaptedTag> tags,
-            @JsonProperty("flag") @JsonDeserialize(using = JsonFollowUpFlagDeserializer.class) Boolean flag) {
+            @JsonProperty("flag") @JsonDeserialize(using = JsonFollowUpFlagDeserializer.class) Boolean isFlagged) {
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -58,42 +67,40 @@ class JsonAdaptedStudent {
         if (tags != null) {
             this.tags.addAll(tags);
         }
-        this.flag = flag;
+        this.isFlagged = isFlagged;
     }
 
     /**
      * Constructs a {@code JsonAdaptedStudent} without a NUS Student ID.
      */
     public JsonAdaptedStudent(String name, String phone, String email,
-            List<JsonAdaptedTag> tags, Boolean flag) {
-        this(name, phone, email, null, tags, flag);
+            List<JsonAdaptedTag> tags, Boolean isFlagged) {
+        this(name, phone, email, null, tags, isFlagged);
     }
 
     /**
      * Converts a given {@code Student} into this class for Jackson use.
      */
     public JsonAdaptedStudent(Student source) {
-        name = source.getName().fullName;
-        phone = source.getPhone().map(sourcePhone -> sourcePhone.value).orElse(null);
-        email = source.getEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
-        nusStudentId = source.getNusStudentId().map(sourceNusStudentId -> sourceNusStudentId.value).orElse(null);
+        name = source.getName().getFullName();
+        phone = source.getPhone().map(sourcePhone -> sourcePhone.getValue()).orElse(null);
+        email = source.getEmail().map(sourceEmail -> sourceEmail.getValue()).orElse(null);
+        nusStudentId = source.getNusStudentId().map(sourceNusStudentId -> sourceNusStudentId.getValue()).orElse(null);
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
-        flag = source.getFlag().isPresent() ? Boolean.TRUE : null;
+        isFlagged = source.getFlag().isPresent() ? Boolean.TRUE : null;
     }
 
     /** Rejects unrecognized keys before their values can be lost on the next save. */
     @JsonAnySetter
     public void rejectUnknownField(String field, Object value) {
         // TAB data files from before the address field was removed still contain it and must still load.
-        if (field.equals("address")) {
+        if (field.equals(LEGACY_ADDRESS_FIELD)) {
             return;
         }
-        String record = name == null ? "student record" : "student \"" + Messages.shorten(name) + "\"";
-        throw new IllegalArgumentException("Unknown field \"" + Messages.shorten(field) + "\" in " + record
-                + ". Check its spelling. Expected: name, phone, email, nusStudentId, tags, flag."
-                + " The legacy address field is also accepted and ignored.");
+        String record = name == null ? "student record" : "student \"" + ValueMessages.shorten(name) + "\"";
+        throw new IllegalArgumentException(String.format(MESSAGE_UNKNOWN_FIELD, ValueMessages.shorten(field), record));
     }
 
     /**
@@ -102,60 +109,80 @@ class JsonAdaptedStudent {
      * @throws IllegalValueException if there were any data constraints violated in the adapted student.
      */
     public Student toModelType() throws IllegalValueException {
-        // Unlike Tag.equals, this groups case variants; retaining the first entry keeps its JSON spelling.
-        final Set<Tag> studentTags = new TreeSet<>(
-                Comparator.comparing(tag -> tag.tagName, String.CASE_INSENSITIVE_ORDER));
+        Set<Tag> modelTags = convertTags();
+        Name modelName = convertName();
+        Optional<Phone> modelPhone = convertPhone();
+        Optional<Email> modelEmail = convertEmail();
+        Optional<NusStudentId> modelNusStudentId = convertNusStudentId();
+        return new Student(modelName, modelPhone, modelEmail, modelNusStudentId,
+                modelTags, Boolean.TRUE.equals(isFlagged));
+    }
+
+    /**
+     * Converts tags, retaining the first spelling of case-insensitive duplicates.
+     */
+    private Set<Tag> convertTags() throws IllegalValueException {
+        Set<Tag> modelTags = new TreeSet<>(Comparator.comparing(Tag::getTagName, String.CASE_INSENSITIVE_ORDER));
         for (JsonAdaptedTag tag : tags) {
             if (tag == null) {
-                throw new IllegalValueException("Tag field is missing.");
+                throw new IllegalValueException(JsonAdaptedTag.MESSAGE_MISSING_TAG);
             }
-            studentTags.add(tag.toModelType());
+            modelTags.add(tag.toModelType());
         }
+        return new HashSet<>(modelTags);
+    }
 
+    /**
+     * Validates the required saved name before constructing its model value.
+     */
+    private Name convertName() throws IllegalValueException {
         if (name == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.FIELD_NAME));
         }
         if (!Name.isValidName(name)) {
-            throw new IllegalValueException(Messages.getErrorMessageForInvalidValue(
+            throw new IllegalValueException(ValueMessages.getErrorMessageForInvalidValue(
                     Name.FIELD_NAME, name, Name.getFailureReason(name)));
         }
-        final Name modelName = new Name(name);
+        return new Name(name);
+    }
 
-        // A hand-edited file may spell an absent phone as a missing key, null or a blank string,
-        // just as it may for an email. A non-blank value is still validated rather than dropped.
-        final String normalizedPhone = normalizeOptionalValue(phone);
+    /**
+     * Treats a missing, null or blank optional phone as absent without dropping invalid nonblank data.
+     */
+    private Optional<Phone> convertPhone() throws IllegalValueException {
+        String normalizedPhone = normalizeOptionalValue(phone);
         if (normalizedPhone != null && !Phone.isValidPhone(normalizedPhone)) {
-            throw new IllegalValueException(Messages.getErrorMessageForInvalidValue(
+            throw new IllegalValueException(ValueMessages.getErrorMessageForInvalidValue(
                     Phone.FIELD_NAME, normalizedPhone, Phone.getFailureReason(normalizedPhone)));
         }
-        final Optional<Phone> modelPhone = Optional.ofNullable(normalizedPhone).map(Phone::new);
+        return Optional.ofNullable(normalizedPhone).map(Phone::new);
+    }
 
-        // A hand-edited file may spell an absent email as a missing key, null or a blank string.
-        // A non-blank value follows the same trimming behavior as command input before validation.
-        final String normalizedEmail = normalizeOptionalValue(email);
+    /**
+     * Converts an optional email while preserving storage-specific length and format diagnostics.
+     */
+    private Optional<Email> convertEmail() throws IllegalValueException {
+        String normalizedEmail = normalizeOptionalValue(email);
         if (normalizedEmail != null && !Email.isWithinLengthLimit(normalizedEmail)) {
             throw new IllegalValueException(String.format(Locale.ROOT,
-                    "%s field is too long to read safely: it holds %d characters, but saved emails may hold at most %d",
-                    Email.FIELD_NAME, normalizedEmail.length(), Email.MAX_LENGTH));
+                    MESSAGE_EMAIL_TOO_LONG, Email.FIELD_NAME, normalizedEmail.length(), Email.MAX_LENGTH));
         }
         if (normalizedEmail != null && !Email.isValidEmail(normalizedEmail)) {
-            throw new IllegalValueException(Messages.getErrorMessageForInvalidValue(
+            throw new IllegalValueException(ValueMessages.getErrorMessageForInvalidValue(
                     Email.FIELD_NAME, normalizedEmail, Email.getFailureReason(normalizedEmail)));
         }
-        final Optional<Email> modelEmail = Optional.ofNullable(normalizedEmail).map(Email::new);
+        return Optional.ofNullable(normalizedEmail).map(Email::new);
+    }
 
-        // A missing or null key represents an ID that has not been recorded. A malformed
-        // value is rejected rather than being silently discarded from the student record.
-        final String normalizedNusStudentId =
-                nusStudentId == null ? null : StringUtil.normalizeFieldValue(nusStudentId);
-        if (normalizedNusStudentId != null && !NusStudentId.isValidNusStudentId(normalizedNusStudentId)) {
+    /**
+     * Preserves missing IDs as absent while rejecting malformed IDs, including explicit blank values.
+     */
+    private Optional<NusStudentId> convertNusStudentId() throws IllegalValueException {
+        String normalizedId = nusStudentId == null ? null : StringUtil.normalizeFieldValue(nusStudentId);
+        if (normalizedId != null && !NusStudentId.isValidNusStudentId(normalizedId)) {
             throw new IllegalValueException(NusStudentId.MESSAGE_CONSTRAINTS);
         }
-        final Optional<NusStudentId> modelNusStudentId = Optional.ofNullable(normalizedNusStudentId)
-                .map(NusStudentId::new);
-
-        final Set<Tag> modelTags = new HashSet<>(studentTags);
-        return new Student(modelName, modelPhone, modelEmail, modelNusStudentId, modelTags, Boolean.TRUE.equals(flag));
+        return Optional.ofNullable(normalizedId).map(NusStudentId::new);
     }
 
     /**
@@ -170,7 +197,10 @@ class JsonAdaptedStudent {
         return normalizedValue.isEmpty() ? null : normalizedValue;
     }
 
+    /**
+     * Returns a bounded saved name for record diagnostics, or null if the name is missing.
+     */
     String getNameForErrorMessage() {
-        return name == null ? null : Messages.shorten(name);
+        return name == null ? null : ValueMessages.shorten(name);
     }
 }

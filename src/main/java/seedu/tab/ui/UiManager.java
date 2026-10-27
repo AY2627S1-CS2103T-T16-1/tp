@@ -82,6 +82,9 @@ public class UiManager implements Ui {
         }
     }
 
+    /**
+     * Shows a modal alert owned by the main window.
+     */
     void showAlertDialogAndWait(Alert.AlertType type, String title, String headerText, String contentText) {
         showAlertDialogAndWait(mainWindow.getPrimaryStage(), type, title, headerText, contentText);
     }
@@ -97,6 +100,9 @@ public class UiManager implements Ui {
         alert.showAndWait();
     }
 
+    /**
+     * Creates a styled alert, optionally owned by the given stage.
+     */
     static Alert createAlert(Stage owner, AlertType type, String title, String headerText) {
         Alert alert = new Alert(type);
         DialogPane dialogPane = alert.getDialogPane();
@@ -111,10 +117,16 @@ public class UiManager implements Ui {
         return alert;
     }
 
+    /**
+     * Shows the startup data error before the main window can expose incomplete records.
+     */
     void showDataLoadingErrorDialogAndWait(String error) {
         createDataLoadingErrorAlert(error).showAndWait();
     }
 
+    /**
+     * Creates a data-loading alert with the file location and recovery instructions.
+     */
     Alert createDataLoadingErrorAlert(String error) {
         Alert alert = createAlert(null, Alert.AlertType.ERROR,
                 DATA_LOADING_ERROR_TITLE, DATA_LOADING_ERROR_HEADER);
@@ -135,6 +147,9 @@ public class UiManager implements Ui {
         return alert;
     }
 
+    /**
+     * Builds the file, error and recovery sections of the startup alert.
+     */
     private VBox createDataLoadingErrorContent(String error) {
         Label fileCaption = createWrappingLabel(DATA_LOADING_ERROR_FILE_LABEL,
                 "data-loading-error-file-caption");
@@ -154,6 +169,9 @@ public class UiManager implements Ui {
         return content;
     }
 
+    /**
+     * Creates a styled label that wraps long file paths and error descriptions.
+     */
     private static Label createWrappingLabel(String text, String styleClass) {
         Label label = new Label(text);
         label.getStyleClass().add(styleClass);

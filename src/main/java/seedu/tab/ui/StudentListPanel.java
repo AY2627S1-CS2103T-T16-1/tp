@@ -41,7 +41,7 @@ public class StudentListPanel extends UiPart<Region> {
 
     /** Scrolls the list so that {@code student}'s card is in view, if the list still holds it. */
     private void scrollListTo(Student student) {
-        int index = indexOfReference(student);
+        int index = findReferenceIndex(student);
         if (index < 0) {
             return;
         }
@@ -79,7 +79,10 @@ public class StudentListPanel extends UiPart<Region> {
         }
     }
 
-    private int indexOfReference(Student student) {
+    /**
+     * Returns the position of this exact student object, or -1 if it has left the displayed list.
+     */
+    private int findReferenceIndex(Student student) {
         for (int index = 0; index < studentListView.getItems().size(); index++) {
             if (studentListView.getItems().get(index) == student) {
                 return index;
@@ -97,7 +100,7 @@ public class StudentListPanel extends UiPart<Region> {
      * been resized. A maximum leaves each part of the card its preferred width until the card
      * really has run out of room.
      */
-    private Region cardFor(Student student, int displayedIndex) {
+    private Region createCard(Student student, int displayedIndex) {
         Region card = new StudentCard(student, displayedIndex).getRoot();
         card.maxWidthProperty().bind(studentListView.widthProperty().subtract(SCROLL_BAR_ALLOWANCE));
         return card;
@@ -107,6 +110,9 @@ public class StudentListPanel extends UiPart<Region> {
      * Custom {@code ListCell} that displays the graphics of a {@code Student} using a {@code StudentCard}.
      */
     class StudentListViewCell extends ListCell<Student> {
+        /**
+         * Measures the graphic at its capped width so wrapped contact details retain their height.
+         */
         @Override
         protected double computePrefHeight(double width) {
             if (!(getGraphic() instanceof Region card) || width < 0) {
@@ -119,15 +125,18 @@ public class StudentListPanel extends UiPart<Region> {
             return snappedTopInset() + card.prefHeight(cardWidth) + snappedBottomInset();
         }
 
+        /**
+         * Replaces the graphic for a displayed student and clears graphics on recycled empty cells.
+         */
         @Override
-        protected void updateItem(Student student, boolean empty) {
-            super.updateItem(student, empty);
+        protected void updateItem(Student student, boolean isEmpty) {
+            super.updateItem(student, isEmpty);
 
-            if (empty || student == null) {
+            if (isEmpty || student == null) {
                 setGraphic(null);
                 setText(null);
             } else {
-                setGraphic(cardFor(student, getIndex() + 1));
+                setGraphic(createCard(student, getIndex() + 1));
             }
         }
     }

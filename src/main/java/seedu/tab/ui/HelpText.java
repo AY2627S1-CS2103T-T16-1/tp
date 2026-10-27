@@ -8,14 +8,21 @@ import javafx.scene.text.Text;
 import seedu.tab.logic.parser.CommandWords;
 
 /**
- * Colours the command reference the help pager shows.
+ * Colors the command reference the help pager shows.
  *
  * <p>The reference is one block of text holding section headings, command names, syntax lines
  * and prose. Drawn in a single fill it reads as a wall, and the same syntax the command box
- * colours as the User types it goes flat the moment they look it up. The classes handed out
- * here are the command box's own, so a marker is the same colour in both places.
+ * colors as the User types it goes flat the moment they look it up. The classes handed out
+ * here are the command box's own, so a marker is the same color in both places.
  */
 final class HelpText {
+
+    private static final String COMMAND_STYLE_CLASS = "help-command-word";
+    private static final String PLAIN_STYLE_CLASS = "help-plain";
+    private static final String HEADING_STYLE_CLASS = "help-heading";
+    private static final String TOKEN_STYLE_CLASS = "help-token";
+    private static final String OPTION_STYLE_CLASS = "help-option";
+    private static final String PLACEHOLDER_STYLE_CLASS = "help-placeholder";
 
     /**
      * A value the User fills in, such as NAME or NUS_STUDENT_ID. Three characters at the least,
@@ -29,16 +36,16 @@ final class HelpText {
     private HelpText() {} // this class only builds the spans
 
     /**
-     * Returns {@code reference} as coloured spans, one run of text per span, with the line
+     * Returns {@code reference} as colored spans, one run of text per span, with the line
      * breaks kept so that the pager still measures the block by its lines.
      */
-    static List<Text> colour(String reference) {
+    static List<Text> color(String reference) {
         List<Text> spans = new ArrayList<>();
         String[] lines = reference.split("\n", -1);
         for (int index = 0; index < lines.length; index++) {
             addLine(spans, lines[index]);
             if (index < lines.length - 1) {
-                spans.add(span("\n", "help-plain"));
+                spans.add(createSpan("\n", PLAIN_STYLE_CLASS));
             }
         }
         return spans;
@@ -46,12 +53,12 @@ final class HelpText {
 
     private static void addLine(List<Text> spans, String line) {
         if (line.isBlank()) {
-            spans.add(span(line, "help-plain"));
+            spans.add(createSpan(line, PLAIN_STYLE_CLASS));
             return;
         }
         if (!Character.isWhitespace(line.charAt(0))) {
             // a line against the margin is a heading; everything the reference says sits under one
-            spans.add(span(line, "help-heading"));
+            spans.add(createSpan(line, HEADING_STYLE_CLASS));
             return;
         }
         addWords(spans, line);
@@ -74,7 +81,7 @@ final class HelpText {
                 index++;
             }
             if (index > spaceStart) {
-                spans.add(span(line.substring(spaceStart, index), "help-plain"));
+                spans.add(createSpan(line.substring(spaceStart, index), PLAIN_STYLE_CLASS));
             }
         }
     }
@@ -94,37 +101,37 @@ final class HelpText {
             end--;
         }
         if (start > 0) {
-            spans.add(span(word.substring(0, start), "help-plain"));
+            spans.add(createSpan(word.substring(0, start), PLAIN_STYLE_CLASS));
         }
         String core = word.substring(start, end);
         if (!core.isEmpty()) {
             // a command word opens a line of syntax; one carrying punctuation is being talked
             // about in a sentence, as in "help, list, clear and exit take no arguments", where
-            // colouring the first of the four and none of the rest would read as an accident
-            boolean opensSyntax = isFirstWord && start == 0 && end == word.length();
-            spans.add(span(core, styleOf(core, opensSyntax)));
+            // coloring the first of the four and none of the rest would read as an accident
+            boolean isSyntaxStart = isFirstWord && start == 0 && end == word.length();
+            spans.add(createSpan(core, determineStyle(core, isSyntaxStart)));
         }
         if (end < word.length()) {
-            spans.add(span(word.substring(end), "help-plain"));
+            spans.add(createSpan(word.substring(end), PLAIN_STYLE_CLASS));
         }
     }
 
-    private static String styleOf(String core, boolean isFirstWord) {
+    private static String determineStyle(String core, boolean isFirstWord) {
         if (isFirstWord && CommandWords.COMMAND_WORDS.contains(core)) {
-            return "help-command-word";
+            return COMMAND_STYLE_CLASS;
         }
         if (core.startsWith("-")) {
-            return "help-option";
+            return OPTION_STYLE_CLASS;
         }
         if (PLACEHOLDER.matcher(core).matches()) {
-            return "help-placeholder";
+            return PLACEHOLDER_STYLE_CLASS;
         }
-        return "help-plain";
+        return PLAIN_STYLE_CLASS;
     }
 
-    private static Text span(String text, String styleClass) {
+    private static Text createSpan(String text, String styleClass) {
         Text span = new Text(text);
-        span.getStyleClass().addAll("help-token", styleClass);
+        span.getStyleClass().addAll(TOKEN_STYLE_CLASS, styleClass);
         return span;
     }
 }

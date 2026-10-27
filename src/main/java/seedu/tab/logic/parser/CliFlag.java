@@ -13,7 +13,7 @@ public class CliFlag {
     private final String primaryMarker;
     private final List<String> aliases;
     private final String fieldName;
-    private final boolean takesValue;
+    private final boolean isValueRequired;
 
     /**
      * Constructs a presence-only flag that takes no value.
@@ -25,7 +25,7 @@ public class CliFlag {
         this.primaryMarker = primaryMarker;
         this.aliases = List.of();
         this.fieldName = null;
-        this.takesValue = false;
+        this.isValueRequired = false;
     }
 
     /**
@@ -40,7 +40,7 @@ public class CliFlag {
         this.primaryMarker = primaryMarker;
         this.aliases = List.copyOf(aliases);
         this.fieldName = null;
-        this.takesValue = false;
+        this.isValueRequired = false;
     }
 
     /**
@@ -68,7 +68,7 @@ public class CliFlag {
         this.primaryMarker = primaryMarker;
         this.aliases = List.copyOf(aliases);
         this.fieldName = fieldName;
-        this.takesValue = true;
+        this.isValueRequired = true;
     }
 
     /**
@@ -96,8 +96,8 @@ public class CliFlag {
         return primaryMarker + " (or " + String.join(", ", aliases) + ")";
     }
 
-    public boolean takesValue() {
-        return takesValue;
+    public boolean isValueRequired() {
+        return isValueRequired;
     }
 
     /**
@@ -105,7 +105,7 @@ public class CliFlag {
      * Two flags are still equal when their characters match, whatever they are named.
      */
     public String getLabel() {
-        return takesValue ? primaryMarker + " " + fieldName : primaryMarker;
+        return isValueRequired ? primaryMarker + " " + fieldName : primaryMarker;
     }
 
     /**

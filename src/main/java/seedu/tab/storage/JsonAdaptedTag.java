@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
-import seedu.tab.logic.Messages;
+import seedu.tab.commons.util.ValueMessages;
 import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.model.tag.Tag;
 
@@ -15,6 +15,8 @@ class JsonAdaptedTag {
 
     public static final String MESSAGE_RESERVED_TAG =
             FollowUpFlag.MESSAGE_RESERVED + " Remove it from \"tags\" and set \"flag\" to true instead.";
+
+    static final String MESSAGE_MISSING_TAG = "Tag field is missing.";
 
     private final String tagName;
 
@@ -30,7 +32,7 @@ class JsonAdaptedTag {
      * Converts a given {@code Tag} into this class for Jackson use.
      */
     public JsonAdaptedTag(Tag source) {
-        tagName = source.tagName;
+        tagName = source.getTagName();
     }
 
     @JsonValue
@@ -45,10 +47,10 @@ class JsonAdaptedTag {
      */
     public Tag toModelType() throws IllegalValueException {
         if (tagName == null) {
-            throw new IllegalValueException("Tag field is missing.");
+            throw new IllegalValueException(MESSAGE_MISSING_TAG);
         }
         if (!Tag.isValidTagName(tagName)) {
-            throw new IllegalValueException(Messages.getErrorMessageForInvalidValue(
+            throw new IllegalValueException(ValueMessages.getErrorMessageForInvalidValue(
                     Tag.FIELD_NAME, tagName, Tag.getFailureReason(tagName)));
         }
         if (FollowUpFlag.isFollowUpName(tagName)) {

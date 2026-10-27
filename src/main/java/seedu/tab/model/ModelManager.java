@@ -37,6 +37,9 @@ public class ModelManager implements Model {
         filteredStudents = new FilteredList<>(this.studentBook.getStudentList());
     }
 
+    /**
+     * Creates an empty model with default preferences.
+     */
     public ModelManager() {
         this(new StudentBook(), new UserPrefs());
     }

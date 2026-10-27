@@ -70,6 +70,7 @@ public interface Model {
 
     /**
      * Updates the filter of the filtered student list to filter by the given {@code predicate}.
+     *
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredStudentList(Predicate<? super Student> predicate);

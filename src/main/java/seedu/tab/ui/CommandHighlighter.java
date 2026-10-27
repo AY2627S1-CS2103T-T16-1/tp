@@ -12,22 +12,24 @@ import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.parser.CommandTokenizer;
 
 /**
- * Splits a command into the runs of text that are coloured differently, so that the command
+ * Splits a command into the runs of text that are colored differently, so that the command
  * word, the options and the values are told apart as the User types.
  *
- * <p>This is only about appearance. It never rejects anything: a command is coloured while it
+ * <p>This is only about appearance. It never rejects anything: a command is colored while it
  * is still half-typed, so an unclosed quote or an unknown word is ordinary here and is left to
  * the parser to complain about when the command is submitted. Where a token ends, though, it
  * asks the same questions the parser does: the command word ends at the first separator
  * whatever the quotes, a command pasted from a web page carries a non-breaking space, which
  * separates tokens for the parser, a backslash escapes only the characters that mean
  * something to it, and an option carrying its value after an equals sign is two things rather
- * than one. Deciding any of them differently here would colour a command as something other
+ * than one. Deciding any of them differently here would color a command as something other
  * than what running it does.
  */
 public class CommandHighlighter {
 
-    /** The part a run of text plays in the command, which decides how it is coloured. */
+    /**
+     * The part a run of text plays in the command, which decides how it is colored.
+     */
     public enum Kind {
         COMMAND_WORD,
         OPTION,
@@ -40,18 +42,18 @@ public class CommandHighlighter {
      * One run of text and the part it plays.
      *
      * @param text What the User typed, exactly, so that joining every span returns the command.
-     * @param kind How it should be coloured.
+     * @param kind How it should be colored.
      */
     public record Span(String text, Kind kind) {}
 
 
     private static final int NOT_FOUND = -1;
 
-    private CommandHighlighter() {} // this class only colours commands
+    private CommandHighlighter() {} // this class only colors commands
 
     /**
      * Returns the spans of {@code command}, in order and covering every character of it, so
-     * that the coloured text reads exactly as it was typed.
+     * that the colored text reads exactly as it was typed.
      */
     public static List<Span> highlight(String command) {
         requireNonNull(command);
@@ -90,7 +92,7 @@ public class CommandHighlighter {
      * <p>It ends at the first separator whatever the quotes, because that is where
      * {@code StudentBookParser} ends it. Reading it with the quote rule the values use would
      * draw {@code add"Ravi s/o Kumaran"} as one command word, and then the reply would report
-     * the unknown command {@code add"Ravi}, splitting the line where no colour ever did.
+     * the unknown command {@code add"Ravi}, splitting the line where no color ever did.
      */
     private static int addCommandWord(String command, int start, List<Span> spans) {
         int index = start;
@@ -106,7 +108,7 @@ public class CommandHighlighter {
      * its value after an equals sign becomes two spans, as the parser reads it.
      */
     private static int addArgument(String command, int start, List<Span> spans) {
-        int markerEnd = endOfAttachedMarker(command, start);
+        int markerEnd = findAttachedMarkerEnd(command, start);
         if (markerEnd == NOT_FOUND) {
             return addWord(command, start, spans, false);
         }
@@ -120,12 +122,12 @@ public class CommandHighlighter {
      * not such an option.
      *
      * <p>{@code FlagTokenizer} reads {@code --tag="Lab 3"} as the option {@code --tag} and the
-     * value {@code Lab 3}, so colouring the whole of it as one quoted value shows a value
+     * value {@code Lab 3}, so coloring the whole of it as one quoted value shows a value
      * where the parser sees an option. The marker is only taken when it is written plainly: a
      * quote or a backslash within it moves the equals sign the parser counts to, and a word
      * written that way is left whole rather than split in the wrong place.
      */
-    private static int endOfAttachedMarker(String command, int start) {
+    private static int findAttachedMarkerEnd(String command, int start) {
         if (command.charAt(start) != OPTION_MARKER.charAt(0)) {
             return NOT_FOUND;
         }
@@ -146,6 +148,9 @@ public class CommandHighlighter {
      * Adds the word at {@code start} and returns where it ends. An empty word adds nothing,
      * which is what an option left with no value after its equals sign leaves behind.
      *
+     * @param command The input being highlighted.
+     * @param start The first character of this word.
+     * @param spans The highlighted spans receiving the word.
      * @param isAttachedValue Whether the word follows an option's equals sign, which makes it
      *     that option's value whatever it is written like.
      */
@@ -168,7 +173,7 @@ public class CommandHighlighter {
 
         String word = command.substring(start, index);
         if (!word.isEmpty()) {
-            spans.add(new Span(word, kindOf(word, wasQuoted, isAttachedValue)));
+            spans.add(new Span(word, determineKind(word, wasQuoted, isAttachedValue)));
         }
         return index;
     }
@@ -178,7 +183,7 @@ public class CommandHighlighter {
      * value opening with the option marker is told from an option, and so is a word the parser
      * has already read as the value of the option before it.
      */
-    private static Kind kindOf(String word, boolean wasQuoted, boolean isAttachedValue) {
+    private static Kind determineKind(String word, boolean wasQuoted, boolean isAttachedValue) {
         if (wasQuoted) {
             return Kind.QUOTED_VALUE;
         }

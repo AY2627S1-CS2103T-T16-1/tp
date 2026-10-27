@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import seedu.tab.commons.util.StringUtil;
+import seedu.tab.commons.util.ValueMessages;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.commands.ClearCommand;
@@ -96,9 +97,9 @@ public class StudentBookParserTest {
 
     @Test
     public void parseCommand_longUnexpectedInput_shortensFeedback() {
-        String input = "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH + 1);
+        String input = "x".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH + 1);
         String expected = String.format(Messages.MESSAGE_UNEXPECTED_ARGUMENTS,
-                "clear", "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…");
+                "clear", "x".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH) + "…");
         assertThrows(ParseException.class, expected, () -> parser.parseCommand("clear " + input));
     }
 
@@ -397,7 +398,9 @@ public class StudentBookParserTest {
         return command.substring(0, endOfCommandWord(command));
     }
 
-    /** Returns {@code command} with its command word capitalised. */
+    /**
+     * Returns {@code command} with its command word capitalized.
+     */
     private static String withCapitalisedWord(String command) {
         return Character.toUpperCase(command.charAt(0)) + command.substring(1);
     }
@@ -458,9 +461,9 @@ public class StudentBookParserTest {
 
     @Test
     public void parseCommand_pastedWordTooLongToRead_isShortenedInTheFeedback() {
-        String typed = "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH + 1);
+        String typed = "x".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH + 1);
         String expected = String.format(Messages.MESSAGE_UNKNOWN_COMMAND,
-                "x".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…");
+                "x".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH) + "…");
         assertThrows(ParseException.class, expected, () -> parser.parseCommand(typed + " and more"));
     }
 

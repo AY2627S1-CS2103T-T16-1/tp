@@ -104,7 +104,7 @@ public class ResultDisplay extends UiPart<Region> {
         isCounting = true;
         Platform.runLater(() -> {
             isCounting = false;
-            int rows = (int) Math.clamp(rowsNeededFor(resultDisplay.getText()), 1, MAX_ROWS);
+            int rows = (int) Math.clamp(countRequiredRows(resultDisplay.getText()), 1, MAX_ROWS);
             if (rows != resultDisplay.getPrefRowCount()) {
                 resultDisplay.setPrefRowCount(rows);
             }
@@ -126,7 +126,7 @@ public class ResultDisplay extends UiPart<Region> {
      * JavaFX reads that as "do not wrap", which gives the lines the reply was written with,
      * the same answer as having nothing drawn at all.
      */
-    private int rowsNeededFor(String text) {
+    private int countRequiredRows(String text) {
         long written = Math.max(1, text.lines().count());
         if (drawn == null) {
             // nothing has been drawn yet, so the breaks in the reply are all there is

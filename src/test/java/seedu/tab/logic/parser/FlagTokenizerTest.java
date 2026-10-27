@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.parser.exceptions.ParseException;
+import seedu.tab.logic.parser.exceptions.UnknownFlagException;
 
 public class FlagTokenizerTest {
 
@@ -355,4 +356,15 @@ public class FlagTokenizerTest {
                 String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()), () ->
                     parse("John -e -f"));
     }
+    @Test
+    public void tokenize_unknownOption_retainsMarkerSeparatelyFromMessage() {
+        for (String input : List.of("Ann -n Ada", "Ann --name=Ada", "Ann --name=\"\"")) {
+            UnknownFlagException failure = org.junit.jupiter.api.Assertions.assertThrows(
+                    UnknownFlagException.class, () -> FlagTokenizer.tokenize(input, FLAG_PHONE));
+            String marker = input.contains("--name") ? "--name" : "-n";
+            assertEquals(marker, failure.getMarker());
+            assertEquals(String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker), failure.getMessage());
+        }
+    }
+
 }

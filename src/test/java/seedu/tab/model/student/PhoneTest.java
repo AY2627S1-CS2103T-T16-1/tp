@@ -51,16 +51,16 @@ public class PhoneTest {
         String annotated = "+65 9123 4567 (HP), 6516-2727 ext 21 (Office); " + "contact note ".repeat(40).strip();
 
         assertTrue(Phone.isValidPhone(digits));
-        assertEquals(digits, new Phone(digits).value);
+        assertEquals(digits, new Phone(digits).getValue());
         assertTrue(Phone.isValidPhone(annotated));
-        assertEquals(annotated, new Phone(annotated).value);
+        assertEquals(annotated, new Phone(annotated).getValue());
     }
 
     @Test
     public void constructor_storesTheNumberTheWayItLooks() {
         // WhatsApp wraps a copied number in direction marks, which draw nothing on screen
-        assertEquals("98765432", new Phone("\u202A98765432\u202C").value);
-        assertEquals("+65 9123 4567", new Phone("\u200E+65 9123 4567").value);
+        assertEquals("98765432", new Phone("\u202A98765432\u202C").getValue());
+        assertEquals("+65 9123 4567", new Phone("\u200E+65 9123 4567").getValue());
     }
 
     @Test
@@ -69,7 +69,7 @@ public class PhoneTest {
         Phone phone = new Phone(formatted);
 
         assertEquals("659123456721", phone.getDigits());
-        assertEquals(formatted, phone.value);
+        assertEquals(formatted, phone.getValue());
         assertEquals("", Phone.normalizeDigits("---"));
     }
 

@@ -5,7 +5,9 @@ import java.util.List;
 
 import seedu.tab.commons.util.StringUtil;
 
-/** Keeps submitted commands and an unsent draft for one command-box session. */
+/**
+ * Keeps submitted commands and an unsent draft for one command-box session.
+ */
 final class CommandHistory {
 
     private final List<String> commands = new ArrayList<>();
@@ -28,7 +30,7 @@ final class CommandHistory {
     }
 
     /** Returns the previous command, saving the draft when navigation begins. */
-    String previous(String text) {
+    String recallPrevious(String text) {
         if (position == 0) {
             return text;
         }
@@ -42,7 +44,7 @@ final class CommandHistory {
     }
 
     /** Returns the next command, or restores the draft after the newest command. */
-    String next(String text) {
+    String recallNext(String text) {
         if (position == commands.size()) {
             return text;
         }

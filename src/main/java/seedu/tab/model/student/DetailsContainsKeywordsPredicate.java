@@ -28,7 +28,7 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
 
     /** The student field in which a search term must occur. */
     public enum Field {
-        NAME((student, keyword) -> StringUtil.normalizeNameForComparison(student.getName().fullName)
+        NAME((student, keyword) -> StringUtil.normalizeNameForComparison(student.getName().getFullName())
                 .contains(StringUtil.normalizeNameForComparison(keyword))),
         NUS_STUDENT_ID((student, keyword) -> StringUtil.containsIgnoreCase(
                 student.getNusStudentId().map(NusStudentId::toString).orElse(""), keyword)),
@@ -83,7 +83,7 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     }
 
     private static boolean matchesPhone(Phone phone, String keyword) {
-        return StringUtil.containsIgnoreCase(phone.value, keyword)
+        return StringUtil.containsIgnoreCase(phone.getValue(), keyword)
                 || matchesPhoneByDigits(phone, keyword);
     }
 
@@ -103,7 +103,7 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     }
 
     private static boolean matchesAnyTag(Student student, String keyword) {
-        return student.getTags().stream().anyMatch(tag -> StringUtil.containsIgnoreCase(tag.tagName, keyword));
+        return student.getTags().stream().anyMatch(tag -> StringUtil.containsIgnoreCase(tag.getTagName(), keyword));
     }
 
     @Override

@@ -3,6 +3,9 @@ package seedu.tab.model.student;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.AppUtil.checkArgument;
 
+import java.util.Locale;
+import java.util.regex.Pattern;
+
 import seedu.tab.commons.util.StringUtil;
 
 /**
@@ -18,10 +21,9 @@ public class Email {
      * The longest address a command may enter, which is the limit RFC 5321 section 4.5.3.1 puts
      * on a forward path. It is far above any address a teaching assistant records.
      *
-     * <p>The limit exists because {@link #VALIDATION_REGEX} nests one quantifier inside another
-     * and Java matches a repeated group by recursion, so a long enough address exhausts the
-     * stack. It is deliberately not applied by {@link #isValidEmail(String)} so callers can
-     * report a length failure separately from a format failure.
+     * <p>Structural validation is independent of this entry limit so callers can report length
+     * failures separately and existing model values retain their format contract. Validation
+     * examines atoms and domain labels iteratively, including for direct model construction.
      */
     public static final int MAX_LENGTH = 254;
 
@@ -52,7 +54,23 @@ public class Email {
     private static final String DOMAIN_REGEX = "(" + DOMAIN_PART_REGEX + "\\.)*" + DOMAIN_LAST_PART_REGEX;
     public static final String VALIDATION_REGEX = LOCAL_PART_REGEX + "@" + DOMAIN_REGEX;
 
-    public final String value;
+    private static final String MESSAGE_TOO_LONG =
+            "an email may hold at most %d characters, and this one holds %d";
+    private static final String MESSAGE_MISSING_SEPARATOR = "an email needs an @ between the local part and the domain";
+    private static final String MESSAGE_MULTIPLE_SEPARATORS = "an email may hold only one @";
+    private static final String MESSAGE_EMPTY_LOCAL_PART = "there is nothing before the @";
+    private static final String MESSAGE_INVALID_LOCAL_PART =
+            "the part before the @ may hold letters, digits and " + SPECIAL_CHARACTERS
+                    + ", with dots allowed only between non-empty groups";
+    private static final String MESSAGE_EMPTY_DOMAIN = "there is nothing after the @";
+    private static final String MESSAGE_SHORT_LAST_LABEL = "the last part of the domain needs at least %d characters";
+    private static final String MESSAGE_INVALID_DOMAIN =
+            "the domain may hold letters and digits in labels separated by dots, "
+                    + "with hyphens allowed inside a label";
+
+    private static final Pattern LOCAL_ATOM_PATTERN = Pattern.compile(LOCAL_ATOM_REGEX);
+
+    private final String value;
 
     /**
      * Constructs an {@code Email}, storing the form described by
@@ -69,13 +87,70 @@ public class Email {
     /**
      * Returns true if a given string is a valid email.
      *
-     * <p>Callers taking an address from an untrusted source must clear
-     * {@link #isWithinLengthLimit(String)} first: this matches {@link #VALIDATION_REGEX} as a
-     * whole, which exhausts the stack on a long enough address.
+     * <p>This checks format independently of the command-entry length limit and avoids the
+     * recursive matching of the equivalent {@link #VALIDATION_REGEX}.
      */
     public static boolean isValidEmail(String test) {
         requireNonNull(test);
-        return StringUtil.normalizeFieldValue(test).matches(VALIDATION_REGEX);
+        String normalized = StringUtil.normalizeFieldValue(test);
+        int separator = normalized.indexOf('@');
+        if (separator <= 0 || separator != normalized.lastIndexOf('@')) {
+            return false;
+        }
+        return isValidLocalPart(normalized.substring(0, separator))
+                && isValidDomain(normalized.substring(separator + 1));
+    }
+
+    private static boolean isValidLocalPart(String localPart) {
+        for (String atom : localPart.split("\\.", -1)) {
+            if (!LOCAL_ATOM_PATTERN.matcher(atom).matches()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isValidDomain(String domain) {
+        String[] labels = domain.split("\\.", -1);
+        for (String label : labels) {
+            if (!isValidDomainLabel(label)) {
+                return false;
+            }
+        }
+        return hasAdjacentAlphanumericCharacters(labels[labels.length - 1]);
+    }
+
+    private static boolean isValidDomainLabel(String label) {
+        if (label.isEmpty() || label.charAt(0) == '-' || label.charAt(label.length() - 1) == '-') {
+            return false;
+        }
+        boolean wasHyphen = false;
+        for (char character : label.toCharArray()) {
+            boolean isHyphen = character == '-';
+            if ((!isHyphen && !isAsciiAlphanumeric(character)) || (isHyphen && wasHyphen)) {
+                return false;
+            }
+            wasHyphen = isHyphen;
+        }
+        return true;
+    }
+
+    private static boolean isAsciiAlphanumeric(char character) {
+        return character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z'
+                || character >= '0' && character <= '9';
+    }
+
+    /**
+     * Preserves the final-label rule in the existing regex: two alphanumeric groups must fit.
+     * A validated label can split into two such groups only at adjacent alphanumeric characters.
+     */
+    private static boolean hasAdjacentAlphanumericCharacters(String label) {
+        for (int index = 1; index < label.length(); index++) {
+            if (label.charAt(index - 1) != '-' && label.charAt(index) != '-') {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -94,42 +169,40 @@ public class Email {
     public static String getFailureReason(String test) {
         requireNonNull(test);
         String normalizedTest = StringUtil.normalizeFieldValue(test);
-
-        // before anything that matches part of the address, for the reason given on MAX_LENGTH
         if (normalizedTest.length() > MAX_LENGTH) {
-            return "an email may hold at most " + MAX_LENGTH + " characters, and this one holds "
-                    + normalizedTest.length();
+            return String.format(Locale.ROOT, MESSAGE_TOO_LONG, MAX_LENGTH, normalizedTest.length());
         }
-
-        int at = normalizedTest.indexOf('@');
-        if (at < 0) {
-            return "an email needs an @ between the local part and the domain";
+        int separator = normalizedTest.indexOf('@');
+        if (separator < 0) {
+            return MESSAGE_MISSING_SEPARATOR;
         }
-        if (normalizedTest.indexOf('@', at + 1) >= 0) {
-            return "an email may hold only one @";
+        if (separator != normalizedTest.lastIndexOf('@')) {
+            return MESSAGE_MULTIPLE_SEPARATORS;
         }
+        String localFailure = getLocalPartFailure(normalizedTest.substring(0, separator));
+        return localFailure == null ? getDomainFailure(normalizedTest.substring(separator + 1)) : localFailure;
+    }
 
-        String localPart = normalizedTest.substring(0, at);
-        String domain = normalizedTest.substring(at + 1);
-
+    private static String getLocalPartFailure(String localPart) {
         if (localPart.isEmpty()) {
-            return "there is nothing before the @";
+            return MESSAGE_EMPTY_LOCAL_PART;
         }
-        if (!localPart.matches(LOCAL_PART_REGEX)) {
-            return "the part before the @ may hold letters, digits and " + SPECIAL_CHARACTERS
-                    + ", with dots allowed only between non-empty groups";
-        }
-        if (domain.isEmpty()) {
-            return "there is nothing after the @";
-        }
+        return isValidLocalPart(localPart) ? null : MESSAGE_INVALID_LOCAL_PART;
+    }
 
+    private static String getDomainFailure(String domain) {
+        if (domain.isEmpty()) {
+            return MESSAGE_EMPTY_DOMAIN;
+        }
         String lastLabel = domain.substring(domain.lastIndexOf('.') + 1);
         if (lastLabel.length() < MINIMUM_LAST_LABEL_LENGTH) {
-            return "the last part of the domain needs at least "
-                    + MINIMUM_LAST_LABEL_LENGTH + " characters";
+            return String.format(Locale.ROOT, MESSAGE_SHORT_LAST_LABEL, MINIMUM_LAST_LABEL_LENGTH);
         }
-        return "the domain may hold letters and digits in labels separated by dots, "
-                + "with hyphens allowed inside a label";
+        return MESSAGE_INVALID_DOMAIN;
+    }
+
+    public String getValue() {
+        return value;
     }
 
     @Override

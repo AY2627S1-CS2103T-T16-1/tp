@@ -5,13 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.tab.ui.FxToolkit.onFxThread;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -53,11 +54,6 @@ public class StudentCardTest {
     @BeforeAll
     public static void startToolkit() throws Exception {
         FxToolkit.start();
-    }
-
-    /** Runs {@code work} on the thread JavaFX requires its nodes to be built on. */
-    private static <T> T onFxThread(Callable<T> work) throws Exception {
-        return FxToolkit.onFxThread(work);
     }
 
     /**
@@ -169,7 +165,7 @@ public class StudentCardTest {
                             .anyMatch(text -> text.getText().endsWith(label.getEllipsisString())));
                 }
             }
-            assertEquals(student.getPhone().orElseThrow().value, phone.getText());
+            assertEquals(student.getPhone().orElseThrow().getValue(), phone.getText());
             assertEquals(student.getEmail().orElseThrow().toString(), email.getText());
             assertContactsDoNotOverlap(phone, email);
             layOutAt(root, widthForAllContacts(root));
@@ -653,7 +649,7 @@ public class StudentCardTest {
 
         for (String whole : names) {
             Student student = studentNamed(whole);
-            assertTrue(student.getName().fullName.indexOf('\u0301') >= 0,
+            assertTrue(student.getName().getFullName().indexOf('\u0301') >= 0,
                     "the stored name holds no mark of its own, so this would prove nothing");
             for (String drawn : drawnAcrossNarrowLines(student)) {
                 assertTrue(holdsNoStrandedMark(drawn),
@@ -950,7 +946,7 @@ public class StudentCardTest {
         });
 
         assertEquals(List.of(cut.get(0), cut.get(0), cut.get(0)), cut);
-        assertEquals(student.getName().fullName, cut.get(0));
+        assertEquals(student.getName().getFullName(), cut.get(0));
     }
 
     @Test
@@ -1309,6 +1305,42 @@ public class StudentCardTest {
 
         // the whole name is on the card again, so naming it on hover says nothing further
         assertEquals("none,set,none", hovers);
+    }
+
+    @Test
+    public void constructor_equalStudentRecords_retainsEachExactRecord() throws Exception {
+        Student first = new StudentBuilder().build();
+        Student second = new StudentBuilder(first).build();
+        onFxThread(() -> {
+            StudentCard firstCard = new StudentCard(first, 1);
+            StudentCard secondCard = new StudentCard(second, 2);
+            assertSame(first, firstCard.getStudent());
+            assertSame(second, secondCard.getStudent());
+            assertEquals("1", ((Label) firstCard.getRoot().lookup("#id")).getText());
+            assertEquals("2", ((Label) secondCard.getRoot().lookup("#id")).getText());
+            return null;
+        });
+    }
+
+    @Test
+    public void minWidth_reversedHeadlineChildren_keepsNameAndTagsApart() throws Exception {
+        onFxThread(() -> {
+            CardHeadline headline = new CardHeadline();
+            CardName name = new CardName();
+            name.setText("Siti Nur-Aisyah Binte Abdullah Rahman");
+            TagRow tags = new TagRow();
+            tags.setTags(List.of("Lab 3", "Tutorial Group 11"));
+            headline.getChildren().addAll(tags, name);
+            roomyStyledScene(headline);
+            double minimum = headline.minWidth(-1);
+            headline.resize(minimum, headline.prefHeight(minimum));
+            headline.layout();
+            assertTrue(name.getWidth() > 0);
+            assertTrue(tags.getWidth() > 0);
+            assertTrue(name.getBoundsInParent().getMaxX() <= tags.getBoundsInParent().getMinX());
+            assertTrue(tags.getBoundsInParent().getMaxX() <= minimum + ONE_PIXEL);
+            return null;
+        });
     }
 
 }

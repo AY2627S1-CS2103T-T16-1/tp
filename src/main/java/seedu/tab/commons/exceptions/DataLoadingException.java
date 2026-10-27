@@ -4,6 +4,9 @@ package seedu.tab.commons.exceptions;
  * Represents an error during loading of data from a file.
  */
 public class DataLoadingException extends Exception {
+    /**
+     * Creates a loading failure caused by an underlying exception.
+     */
     public DataLoadingException(Exception cause) {
         super(cause);
     }
