@@ -99,7 +99,7 @@ public class StudentBookParser {
             case ExitCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new ExitCommand());
             case HelpCommand.COMMAND_WORD -> parseNoArgumentCommand(commandWord, arguments, new HelpCommand());
             default -> {
-                logger.finer("This user input caused a ParseException: " + typedWord);
+                logger.finer("This command word caused a ParseException: " + typedWord);
                 throw new ParseException(describeUnknownCommand(typedWord));
             }
         };

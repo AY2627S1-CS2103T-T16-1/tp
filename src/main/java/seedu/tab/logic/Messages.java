@@ -36,9 +36,6 @@ public class Messages {
     public static final String MESSAGE_STUDENTS_FOUND_OVERVIEW = "Found %1$d student%2$s.";
     public static final String MESSAGE_DUPLICATE_OPTIONS = "Options given more than once: ";
     public static final String MESSAGE_MISSING_FIELDS = "Missing required field(s): %1$s";
-    public static final String MESSAGE_INVALID_VALUE = ValueMessages.MESSAGE_INVALID_VALUE;
-    /** How much of a rejected value is quoted back, so that a long one cannot hide the reason. */
-    public static final int MAX_QUOTED_VALUE_LENGTH = ValueMessages.MAX_QUOTED_VALUE_LENGTH;
     public static final String MESSAGE_UNKNOWN_FLAG = "There is no %1$s option.";
     public static final String MESSAGE_FLAG_TAKES_NO_VALUE =
             "%1$s takes no value. Use the option on its own.";

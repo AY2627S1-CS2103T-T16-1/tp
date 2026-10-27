@@ -95,8 +95,8 @@ public class CommandResult {
     public String toString() {
         return new ToStringBuilder(this)
                 .add("feedbackToUser", feedbackToUser)
-                .add("showHelp", isHelpRequested)
-                .add("exit", isExitRequested)
+                .add("isHelpRequested", isHelpRequested)
+                .add("isExitRequested", isExitRequested)
                 .add("studentToReveal", studentToReveal)
                 .toString();
     }

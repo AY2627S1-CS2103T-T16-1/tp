@@ -62,7 +62,8 @@ public class TagCommand extends Command {
             "This student is flagged for follow-up, which is not a tag. To clear the flag, use "
                     + EditCommand.COMMAND_WORD + " " + FLAG_TARGET_ID + " %1$s " + FLAG_NO_FOLLOW_UP + ".";
     public static final String MESSAGE_MULTIPLE_TARGETS =
-            "Give one student target: an index, a letter-leading NUS Student ID, or --id NUS_STUDENT_ID.";
+            "Give one student target: an index, a letter-leading NUS Student ID, or "
+                    + FLAG_NUS_STUDENT_ID.getLabel() + ".";
     public static final String MESSAGE_CONFLICTING_ACTIONS = "Options " + FLAG_ADD_TAG.getMarkerSummary()
             + " and " + FLAG_REMOVE_TAG.getMarkerSummary() + " cannot be used together.";
     public static final String MESSAGE_ACTION_GUIDANCE =

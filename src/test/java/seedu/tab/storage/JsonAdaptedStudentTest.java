@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
 import seedu.tab.commons.util.JsonUtil;
-import seedu.tab.logic.Messages;
+import seedu.tab.commons.util.ValueMessages;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
@@ -99,7 +99,7 @@ public class JsonAdaptedStudentTest {
         String invalidName = "-".repeat(61);
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(invalidName, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
-        String expectedMessage = "Name \"" + "-".repeat(Messages.MAX_QUOTED_VALUE_LENGTH)
+        String expectedMessage = "Name \"" + "-".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH)
                 + "…\" is not valid: it holds no letter or number";
 
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);

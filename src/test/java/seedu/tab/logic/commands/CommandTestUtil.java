@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import seedu.tab.commons.core.index.Index;
-import seedu.tab.logic.Messages;
+import seedu.tab.commons.util.ValueMessages;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.model.Model;
 import seedu.tab.model.StudentBook;
@@ -74,7 +74,7 @@ public class CommandTestUtil {
             " " + FLAG_EMAIL + " " + INVALID_EMAIL_OVER_MAX_LENGTH;
     /** What a command answers an address one character over the limit with. */
     public static final String MESSAGE_EMAIL_OVER_MAX_LENGTH =
-            "Email \"" + "a".repeat(Messages.MAX_QUOTED_VALUE_LENGTH) + "…\" is not valid: "
+            "Email \"" + "a".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH) + "…\" is not valid: "
                     + "an email may hold at most " + Email.MAX_LENGTH
                     + " characters, and this one holds " + INVALID_EMAIL_OVER_MAX_LENGTH.length();
     public static final String INVALID_NUS_STUDENT_ID = " " + FLAG_NUS_STUDENT_ID + " A0123-456";

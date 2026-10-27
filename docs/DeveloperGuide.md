@@ -24,7 +24,7 @@
 * [Jackson](https://github.com/FasterXML/jackson) is used for JSON serialization
   and deserialization of storage data (via `JacksonUtil`).
 * [JUnit 5](https://junit.org/junit5/) is used for automated testing.
-* `StringUtil.editDistance` implements the published
+* `StringUtil.computeEditDistance` implements the published
   [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance),
   a known algorithm whose recurrence we wrote out ourselves. No code was
   copied, and the idea is reused in that one method.
@@ -144,17 +144,18 @@ records, and puts them back if that write fails.
 [Rolling back model changes when saving fails](#rolling-back-model-changes-when-saving-fails)
 covers how.
 
+`UnknownFlagException` retains the offending option marker separately from its
+message, so command-specific guidance does not depend on error-message wording.
+
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a command entered by the User:
 
 <puml src="diagrams/ParserClasses.puml" width="600"/>
 
 How the parsing works:
+
 * When called upon to parse a command entered by the User, the `StudentBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the command and create an `XYZCommand` object (e.g., `AddCommand`). The `StudentBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
-* `UnknownFlagException` retains the offending option marker separately from its
-message, so command-specific guidance does not depend on error-message wording.
-
-A command's arguments are read in two passes: `CommandTokenizer` splits them into tokens, then `FlagTokenizer` sorts those tokens into the `CliFlag` each belongs to and hands back a `FlagArgumentMap`. [How commands read their arguments](#how-commands-read-their-arguments) covers why.
+* A command's arguments are read in two passes: `CommandTokenizer` splits them into tokens, then `FlagTokenizer` sorts those tokens into the `CliFlag` each belongs to and hands back a `FlagArgumentMap`. [How commands read their arguments](#how-commands-read-their-arguments) covers why.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/model/Model.java)
@@ -811,7 +812,7 @@ order.
 `del` stands for `delete` even though `help` is nearer by edits, at two
 against three. Only a word that opens nothing is measured at all.
 
-**What is it near?** `StringUtil.editDistance` counts insertions, deletions,
+**What is it near?** `StringUtil.computeEditDistance` counts insertions, deletions,
 substitutions and swaps of neighboring characters. A swap costs one edit
 because a fast typist makes them as readily as the rest; otherwise `lsit`
 would sit two edits from `list`, as far as a wilder guess. The budget is two
