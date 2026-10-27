@@ -1145,7 +1145,10 @@ the complete unfiltered student book, so a filtered list cannot hide a match
 and unrelated tag or follow-up edits do not repeat an acknowledged warning.
 Name comparisons share `StringUtil.normalizeNameForComparison` with name
 searches: Latin accents and straight/curly apostrophe differences are ignored,
-so copied roster names can be found or flagged using ordinary keyboard input.
+and a hyphen is compared as a space, so copied roster names can be found or
+flagged using ordinary keyboard input even when two lists disagree on whether
+a name such as `Mary-Jane` is hyphenated. The longer dashes are left alone,
+because a reader can tell them from a hyphen and so chooses between them.
 
 All of this is advisory: these comparisons never feed `isSameStudent` or the
 storage duplicate check, so they cannot reject or discard a legitimate shared
@@ -1167,7 +1170,10 @@ Search terms are normalized with `StringUtil.normalizeFieldValue`, collapsing
 whitespace runs and applying Unicode NFC normalization. The parser creates a
 `DetailsContainsKeywordsPredicate` with terms grouped by its `Field` enum.
 Every term must match its selected field, using case-insensitive substrings:
-AND applies both within and between fields. Each tag term must occur within
+AND applies both within and between fields. A name term is compared through
+`StringUtil.normalizeNameForComparison`, the key the possible-duplicate warning
+uses, so a search spelled with a hyphen or with a space reaches the same
+students. Tags and the other fields compare their terms literally. Each tag term must occur within
 one tag, but separate terms may match the same tag or different tags. Absent
 optional fields do not match. Explicit field selectors prevent unrelated
 matches in other details and replace the earlier unqualified OR search.
@@ -2813,6 +2819,11 @@ testers are expected to do more *exploratory* testing.
       Expected: The add succeeds with a possible-duplicate name warning rather
       than a refusal, and the original spellings survive saving and reloading
       while the normalized comparisons still find them.
+   1. Test case: `add "Mary Jane" -p 84445555`, then `add Mary-Jane -p
+      85556666`, then `find -n "mary jane"`.<br>
+      Expected: The second add warns that Mary Jane has the same name, the two
+      cards keep the space and the hyphen they were given, and the search
+      lists both students.
 ### Normalizing hidden control characters in saved names and tags
 
 1. Test case: With TAB closed, set one student's saved name to `"Am\u0001y"`

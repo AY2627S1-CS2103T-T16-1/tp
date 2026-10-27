@@ -38,6 +38,25 @@ public class StringUtilTest {
     }
 
     @Test
+    public void normalizeNameForComparison_hyphens_matchSpace() {
+        // the ASCII hyphen, the typographic hyphen and the non-breaking hyphen all read as one
+        for (String name : new String[] {"Mary-Jane", "Mary - Jane", "Mary‐Jane", "Mary‑Jane"}) {
+            assertEquals("mary jane", StringUtil.normalizeNameForComparison(name));
+        }
+        assertEquals("charlotte oliveiro", StringUtil.normalizeNameForComparison("Charlotte-Oliveiro"));
+        assertEquals("charlotte oliveiro", StringUtil.normalizeNameForComparison("Charlotte Oliveiro"));
+    }
+
+    @Test
+    public void normalizeNameForComparison_longerDashes_keepsThemDistinct() {
+        // a reader can tell an en dash, an em dash and a minus sign from a hyphen, so each stands
+        for (String name : new String[] {"Mary–Jane", "Mary—Jane", "Mary−Jane"}) {
+            assertFalse(StringUtil.normalizeNameForComparison(name)
+                    .equals(StringUtil.normalizeNameForComparison("Mary Jane")));
+        }
+    }
+
+    @Test
     public void normalizeNameForComparison_combiningMarkCategories_removesOnlyLatinMarks() {
         // Nonspacing, spacing and enclosing marks all belong to the preceding base letter.
         assertEquals("a", StringUtil.normalizeNameForComparison("A\u0301\u093f\u20dd"));
