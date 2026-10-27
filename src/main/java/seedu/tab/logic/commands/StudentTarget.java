@@ -65,10 +65,13 @@ public final class StudentTarget {
         return resolve(model, null);
     }
 
-    /** Resolves a target, optionally naming a command that supports explicit ID targeting. */
-    public Student resolve(Model model, String idCommandWord) throws CommandException {
+    /**
+     * Resolves a target, optionally naming the command form that addresses a student by their
+     * NUS Student ID, so that a numeric target the book holds as an ID offers that form.
+     */
+    public Student resolve(Model model, String idTargetCommand) throws CommandException {
         if (index != null) {
-            return resolveIndex(model, idCommandWord);
+            return resolveIndex(model, idTargetCommand);
         }
         return resolveNusStudentId(model.getStudentBook().getStudentList());
     }
@@ -89,15 +92,15 @@ public final class StudentTarget {
      *
      * @throws CommandException if the position is past the end of the displayed list.
      */
-    private Student resolveIndex(Model model, String idCommandWord) throws CommandException {
+    private Student resolveIndex(Model model, String idTargetCommand) throws CommandException {
         List<Student> displayedStudents = model.getFilteredStudentList();
         if (index.getZeroBased() >= displayedStudents.size()) {
             String message = Messages.getErrorMessageForInvalidIndex(indexInput, displayedStudents.size());
-            boolean isStoredId = idCommandWord != null && model.getStudentBook().getStudentList().stream()
+            boolean isStoredId = idTargetCommand != null && model.getStudentBook().getStudentList().stream()
                     .anyMatch(student -> student.getNusStudentId()
                             .filter(id -> id.getValue().equals(indexInput)).isPresent());
             if (isStoredId) {
-                message += " " + Messages.getIdTargetHint(idCommandWord, indexInput);
+                message += " " + Messages.getIdTargetHint(idTargetCommand, indexInput);
             }
             throw new CommandException(message);
         }

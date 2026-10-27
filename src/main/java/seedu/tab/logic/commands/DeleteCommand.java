@@ -22,6 +22,9 @@ public class DeleteCommand extends Command {
 
     public static final String FIELD_INDEX = "INDEX";
 
+    /** The command form that addresses a student by their NUS Student ID. */
+    public static final String ID_TARGET_COMMAND = COMMAND_WORD + " " + FLAG_NUS_STUDENT_ID;
+
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Deletes the student identified by the index number used in the displayed student list,\n"
             + "or by the NUS Student ID they hold anywhere in the book.\n"
@@ -55,7 +58,7 @@ public class DeleteCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        Student studentToDelete = target.resolve(model, COMMAND_WORD);
+        Student studentToDelete = target.resolve(model, ID_TARGET_COMMAND);
         model.deleteStudent(studentToDelete);
         logger.info("Deleted the student " + target.describe()
                 + "; the book now holds " + model.getStudentBook().getStudentList().size());

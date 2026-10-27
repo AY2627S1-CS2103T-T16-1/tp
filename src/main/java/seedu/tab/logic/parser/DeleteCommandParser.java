@@ -14,7 +14,6 @@ import seedu.tab.logic.commands.DeleteCommand;
 import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.CommandTokenizer.Token;
 import seedu.tab.logic.parser.exceptions.ParseException;
-import seedu.tab.model.student.NusStudentId;
 
 /**
  * Parses input arguments and creates a new DeleteCommand object
@@ -83,11 +82,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
         try {
             return ParserUtil.parseStudentTarget(token.value(), DeleteCommand.MESSAGE_USAGE);
         } catch (ParseException e) {
-            if (NusStudentId.isValidNusStudentId(token.value())) {
-                throw new ParseException(e.getMessage() + " "
-                        + Messages.getIdTargetHint(DeleteCommand.COMMAND_WORD, token.value()), e);
-            }
-            throw e;
+            throw ParserUtil.withIdTargetHint(e, token.value(), DeleteCommand.ID_TARGET_COMMAND);
         }
     }
 
