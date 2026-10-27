@@ -265,7 +265,39 @@ public class JsonAdaptedStudentTest {
     public void toModelType_invalidNusStudentId_throwsIllegalValueExceptionNamingField() {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, INVALID_NUS_STUDENT_ID, VALID_TAGS, false);
-        assertThrows(IllegalValueException.class, NusStudentId.MESSAGE_CONSTRAINTS, student::toModelType);
+        String expectedMessage = "NUS Student ID \"A0123-456X\" is not valid: "
+                + "an NUS Student ID can only contain ASCII letters and digits";
+
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
+    public void toModelType_digitLeadingNusStudentId_throwsIllegalValueExceptionNamingValue() {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, "0123-456X", VALID_TAGS, false);
+        String expectedMessage = "NUS Student ID \"0123-456X\" is not valid: "
+                + "an NUS Student ID can only contain ASCII letters and digits";
+
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
+    public void toModelType_nusStudentIdWithPastedEmail_throwsIllegalValueExceptionNamingValue() {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, "A0234567Y e0234567@u.nus.edu", VALID_TAGS, false);
+        String expectedMessage = "NUS Student ID \"A0234567Y e0234567@u.nus.edu\" is not valid: "
+                + "an NUS Student ID can only contain ASCII letters and digits";
+
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
+    public void toModelType_blankNusStudentId_throwsIllegalValueExceptionGivingTheEmptyReason() {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, "   ", VALID_TAGS, false);
+        String expectedMessage = "NUS Student ID \"\" is not valid: an NUS Student ID cannot be empty";
+
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
 
     @Test
@@ -273,8 +305,10 @@ public class JsonAdaptedStudentTest {
         String tooLong = "A".repeat(NusStudentId.MAX_LENGTH + 1);
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, tooLong, VALID_TAGS, false);
+        String expectedMessage = "NUS Student ID \"" + tooLong + "\" is not valid: "
+                + "an NUS Student ID may hold at most " + NusStudentId.MAX_LENGTH + " characters";
 
-        assertThrows(IllegalValueException.class, NusStudentId.MESSAGE_CONSTRAINTS, student::toModelType);
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
 
     @Test

@@ -2472,8 +2472,9 @@ testers are expected to do more *exploratory* testing.
       the ID survived the restart.
    1. Test case: With TAB closed, change one `nusStudentId` to `A0123-456X`
       and relaunch.<br>
-      Expected: A startup error names the file, the record and the invalid ID,
-      and the main window does not open.
+      Expected: A startup error names the file, the record, the rejected ID
+      and the one rule it breaks, as an `add --id A0123-456X` reply does, and
+      the main window does not open.
 
 1. Reporting unchanged edits
 
