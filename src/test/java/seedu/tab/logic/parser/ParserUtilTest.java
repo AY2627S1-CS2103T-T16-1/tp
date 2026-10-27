@@ -189,7 +189,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseRequiredStudentTarget_extraValueAfterId_namesTheIdForm() {
-        // a target opening with a letter is an NUS Student ID, so the index field it is not
+        // a target opening with a letter is an NUS Student ID rather than an index
         for (String target : List.of(VALID_NUS_STUDENT_ID, "Alex")) {
             assertThrows(ParseException.class,
                     "Unexpected value after NUS_STUDENT_ID: \"Yeoh\". Put field values after an option.", () ->
