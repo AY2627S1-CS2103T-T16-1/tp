@@ -25,9 +25,7 @@ final class UiText {
 
     private UiText() {} // this class only holds helpers
 
-    /**
-     * Shows {@code value} in full, with a tooltip whenever the available width cuts it.
-     */
+    /** Shows {@code value} in full, with a tooltip whenever the available width cuts it. */
     static void showToFit(Label label, String value) {
         label.setText(value);
         observeTruncation(label, value);

@@ -72,9 +72,7 @@ public class CommandBox extends UiPart<Region> {
         Platform.runLater(commandTextField::requestFocus);
     }
 
-    /**
-     * Focuses the input field with the unfinished command unselected and the caret at its end.
-     */
+    /** Focuses the input field with the unfinished command unselected and the caret at its end. */
     public void focusDraftAtEnd() {
         commandTextField.requestFocus();
         commandTextField.end();
@@ -104,9 +102,7 @@ public class CommandBox extends UiPart<Region> {
         }
     }
 
-    /**
-     * Recalls a session submission while preserving ordinary modified-arrow shortcuts.
-     */
+    /** Recalls a session submission while preserving ordinary modified-arrow shortcuts. */
     private void handleHistoryKeyPressed(KeyEvent event) {
         if (event.isAltDown() || event.isControlDown() || event.isMetaDown() || event.isShiftDown()) {
             return;

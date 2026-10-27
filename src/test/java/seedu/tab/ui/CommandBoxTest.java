@@ -106,9 +106,7 @@ public class CommandBoxTest {
         });
     }
 
-    /**
-     * Puts {@code typed} in the field and returns nothing, so it can be run on the FX thread.
-     */
+    /** Puts {@code typed} in the field and returns nothing, so it can be run on the FX thread. */
     private static Object setTextOf(CommandBox box, String typed) {
         TextField field = (TextField) box.getRoot().lookup("#commandTextField");
         field.setText(typed);
@@ -331,9 +329,7 @@ public class CommandBoxTest {
         });
     }
 
-    /**
-     * Checks clicks on both sides of each glyph, including trailing bias at script boundaries.
-     */
+    /** Checks clicks on both sides of each glyph, including trailing bias at script boundaries. */
     private static void assertClicksMatchNative(Region root, TextField field) {
         TextFieldSkin skin = (TextFieldSkin) field.getSkin();
         Text nativeText = fieldTextOf(field);
@@ -350,9 +346,7 @@ public class CommandBoxTest {
         }
     }
 
-    /**
-     * Compares the visible caret to the field that receives insertion and deletion.
-     */
+    /** Compares the visible caret to the field that receives insertion and deletion. */
     private static void assertCaretMatchesNative(Region root, TextField field) {
         Text nativeText = fieldTextOf(field);
         Region mark = (Region) root.lookup("#caret");
@@ -456,9 +450,7 @@ public class CommandBoxTest {
         assertEquals(List.of(), colouredTextOf(box));
     }
 
-    /**
-     * A box whose executor records what it was asked to run, and may refuse to run it.
-     */
+    /** A box whose executor records what it was asked to run, and may refuse to run it. */
     private static CommandBox boxExecutedBy(List<String> ran, boolean refuses) throws Exception {
         return onFxThread(() -> new CommandBox(command -> {
             ran.add(command);
@@ -469,9 +461,7 @@ public class CommandBoxTest {
         }));
     }
 
-    /**
-     * Presses Enter on the command line, as the field's own action does.
-     */
+    /** Presses Enter on the command line, as the field's own action does. */
     private static void pressEnter(CommandBox box) throws Exception {
         onFxThread(() -> {
             box.getRoot().lookup("#commandTextField").fireEvent(new ActionEvent());
@@ -984,9 +974,7 @@ public class CommandBoxTest {
         assertTrue(adrift.isEmpty(), "the copy left the field's own text: " + adrift);
     }
 
-    /**
-     * Does to {@code field} what the User would, by the name of the edit.
-     */
+    /** Does to {@code field} what the User would, by the name of the edit. */
     private static void applyEdit(TextField field, String edit) {
         if (edit.equals("type")) {
             field.appendText("!");
@@ -1012,9 +1000,7 @@ public class CommandBoxTest {
         }
     }
 
-    /**
-     * Returns the node the field draws its own text in.
-     */
+    /** Returns the node the field draws its own text in. */
     private static Text fieldTextOf(TextField field) {
         return field.lookupAll(".text").stream()
                 .filter(node -> node instanceof Text text
@@ -1024,13 +1010,9 @@ public class CommandBoxTest {
                 .orElse(null);
     }
 
-    /**
-     * What has to hold of the command line once the field has re-scrolled its own text.
-     */
+    /** What has to hold of the command line once the field has re-scrolled its own text. */
     private interface LineCheck {
-        /**
-         * Returns what is wrong with the line as it stands, or nothing if it is right.
-         */
+        /** Returns what is wrong with the line as it stands, or nothing if it is right. */
         String complaintAbout(Region root, TextField field, TextFieldSkin skin);
     }
 

@@ -207,9 +207,7 @@ public class FindCommandTest {
         assertEquals(expected, findCommand.toString());
     }
 
-    /**
-     * Checks command feedback and book preservation independently of matching results.
-     */
+    /** Checks command feedback and book preservation independently of matching results. */
     private static void assertSearchSuccess(FindCommand command, Model actualModel, String expectedMessage) {
         List<Student> originalStudents = List.copyOf(actualModel.getStudentBook().getStudentList());
 

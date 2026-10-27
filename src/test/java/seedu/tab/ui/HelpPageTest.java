@@ -243,9 +243,7 @@ public class HelpPageTest {
         return whole.toString();
     }
 
-    /**
-     * Returns the font the spans share, which is the font one line of the block is set in.
-     */
+    /** Returns the font the spans share, which is the font one line of the block is set in. */
     private static Font spanFont(TextFlow flow) {
         return ((Text) flow.getChildrenUnmodifiable().get(0)).getFont();
     }

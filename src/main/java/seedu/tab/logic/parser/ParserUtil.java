@@ -152,9 +152,7 @@ public class ParserUtil {
         return parseNonBlankStudentTarget(trimmedTarget);
     }
 
-    /**
-     * Returns a non-blank target while retaining the field-specific validation reason.
-     */
+    /** Returns a non-blank target while retaining the field-specific validation reason. */
     private static StudentTarget parseNonBlankStudentTarget(String target) throws ParseException {
         if (Character.isLetter(target.charAt(0))) {
             return StudentTarget.byNusStudentId(parseNusStudentId(target));

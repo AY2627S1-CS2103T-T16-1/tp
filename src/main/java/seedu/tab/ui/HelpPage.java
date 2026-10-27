@@ -39,9 +39,7 @@ public class HelpPage extends UiPart<Region> {
     @FXML
     private Label helpNotice;
 
-    /**
-     * Creates a pager that restores the command view when the user quits help.
-     */
+    /** Creates a pager that restores the command view when the user quits help. */
     public HelpPage(Runnable closeHelp) {
         super(FXML);
         this.closeHelp = closeHelp;
@@ -55,18 +53,14 @@ public class HelpPage extends UiPart<Region> {
         updateProgress();
     }
 
-    /**
-     * Opens help at the beginning with immediate keyboard navigation.
-     */
+    /** Opens help at the beginning with immediate keyboard navigation. */
     public void show() {
         helpNotice.setText(READY_MESSAGE);
         helpViewport.setVvalue(0);
         getRoot().requestFocus();
     }
 
-    /**
-     * Handles navigation by key code, including Enter before its typed newline.
-     */
+    /** Handles navigation by key code, including Enter before its typed newline. */
     private void handleKeyPressed(KeyEvent event) {
         if (event.isAltDown() || event.isMetaDown() || event.isControlDown()) {
             return;
@@ -86,9 +80,7 @@ public class HelpPage extends UiPart<Region> {
         event.consume();
     }
 
-    /**
-     * Handles pager letters on KEY_TYPED so quitting cannot type a stray q into the command box.
-     */
+    /** Handles pager letters on KEY_TYPED so quitting cannot type a stray q into the command box. */
     private void handleKeyTyped(KeyEvent event) {
         if (event.isAltDown() || event.isMetaDown() || event.isControlDown()) {
             return;

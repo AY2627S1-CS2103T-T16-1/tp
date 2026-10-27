@@ -30,9 +30,7 @@ import seedu.tab.model.tag.Tag;
  */
 public class TagCommand extends Command {
 
-    /**
-     * The change to make to the student's tags.
-     */
+    /** The change to make to the student's tags. */
     public enum Action { ADD, REMOVE }
 
     public static final String COMMAND_WORD = "tag";
@@ -90,9 +88,7 @@ public class TagCommand extends Command {
         this(StudentTarget.byIndex(targetIndex), tag, action);
     }
 
-    /**
-     * Creates a command to perform {@code action} on the student named by {@code target}.
-     */
+    /** Creates a command to perform {@code action} on the student named by {@code target}. */
     public TagCommand(StudentTarget target, Tag tag, Action action) {
         requireAllNonNull(target, tag, action);
         this.target = target;
@@ -144,16 +140,12 @@ public class TagCommand extends Command {
                 student.getNusStudentId().orElseThrow().getValue());
     }
 
-    /**
-     * Returns whether a stored tag denotes the requested tag, ignoring case.
-     */
+    /** Returns whether a stored tag denotes the requested tag, ignoring case. */
     private boolean matchesTag(Tag existing) {
         return existing.getTagName().equalsIgnoreCase(tag.getTagName());
     }
 
-    /**
-     * Returns a replacement student with only the requested tag changed.
-     */
+    /** Returns a replacement student with only the requested tag changed. */
     private Student createUpdatedStudent(Student student) {
         Set<Tag> updatedTags = new HashSet<>(student.getTags());
         if (action == Action.ADD) {

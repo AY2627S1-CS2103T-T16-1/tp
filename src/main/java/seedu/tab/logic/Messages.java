@@ -50,17 +50,13 @@ public class Messages {
 
     private Messages() {} // this class only holds the messages
 
-    /**
-     * Returns the rejected index and the size of the list it addresses.
-     */
+    /** Returns the rejected index and the size of the list it addresses. */
     public static String getErrorMessageForInvalidIndex(String index, int displayedCount) {
         return String.format(Locale.ROOT, MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, shorten(index),
                 displayedCount, StringUtil.getPluralSuffix(displayedCount));
     }
 
-    /**
-     * Returns the explicit ID form when a numeric target may have been intended as an ID.
-     */
+    /** Returns the explicit ID form when a numeric target may have been intended as an ID. */
     public static String getIdTargetHint(String commandWord, String value) {
         return "If \"" + value + "\" is an NUS Student ID, use " + commandWord
                 + " " + FLAG_NUS_STUDENT_ID + " " + value + ".";

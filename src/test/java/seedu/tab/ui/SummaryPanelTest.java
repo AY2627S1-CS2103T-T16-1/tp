@@ -200,9 +200,7 @@ public class SummaryPanelTest {
         });
     }
 
-    /**
-     * Observes the application handler before JavaFX applies its own platform-dependent bindings.
-     */
+    /** Observes the application handler before JavaFX applies its own platform-dependent bindings. */
     private static void assertPageKeyIgnored(ScrollPane tags, KeyEvent event) {
         double before = tags.getVvalue();
         AtomicBoolean delivered = new AtomicBoolean();

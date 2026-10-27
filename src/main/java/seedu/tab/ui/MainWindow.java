@@ -153,9 +153,7 @@ public class MainWindow extends UiPart<Stage> {
         setKeyboardNavigation(summaryPanel);
     }
 
-    /**
-     * Keeps the student list one Tab from commands, regardless of whether a reply is showing.
-     */
+    /** Keeps the student list one Tab from commands, regardless of whether a reply is showing. */
     private void setKeyboardNavigation(SummaryPanel summaryPanel) {
         Node commandField = commandBox.getRoot().lookup("#commandTextField");
         Node students = studentListPanel.getRoot().lookup("#studentListView");
@@ -183,9 +181,7 @@ public class MainWindow extends UiPart<Stage> {
         helpPagePlaceholder.getChildren().add(helpPage.getRoot());
     }
 
-    /**
-     * Restores the student view, its previous result, and any unfinished command.
-     */
+    /** Restores the student view, its previous result, and any unfinished command. */
     private void closeHelp() {
         helpPagePlaceholder.setVisible(false);
         helpPagePlaceholder.setManaged(false);

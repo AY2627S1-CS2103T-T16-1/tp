@@ -65,9 +65,7 @@ public class ClearConfirmationUiTest {
         });
     }
 
-    /**
-     * Builds a window with real logic and temporary storage for one student.
-     */
+    /** Builds a window with real logic and temporary storage for one student. */
     private MainWindow createWindow() throws IOException {
         model.addStudent(new StudentBuilder().build());
         Path dataFile = testFolder.resolve("tab.json");
@@ -82,9 +80,7 @@ public class ClearConfirmationUiTest {
         return window;
     }
 
-    /**
-     * Runs the same action the command field fires when Enter is pressed.
-     */
+    /** Runs the same action the command field fires when Enter is pressed. */
     private static void enter(TextField field, String text) {
         field.setText(text);
         field.fireEvent(new ActionEvent());

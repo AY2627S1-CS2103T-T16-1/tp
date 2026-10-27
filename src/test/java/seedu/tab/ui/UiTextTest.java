@@ -8,9 +8,7 @@ public class UiTextTest {
 
     private static final int LIMIT = 18;
 
-    /**
-     * Returns {@code value} cut from the middle to {@code LIMIT}.
-     */
+    /** Returns {@code value} cut from the middle to {@code LIMIT}. */
     private static String shortenMiddle(String value) {
         return UiText.shortenMiddle(value, LIMIT);
     }

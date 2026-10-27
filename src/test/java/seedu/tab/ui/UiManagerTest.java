@@ -74,9 +74,7 @@ public class UiManagerTest {
         assertFalse(outcome.isAnyWindowShowing, "no window of TAB's should have become visible");
     }
 
-    /**
-     * Returns whether {@code stage}, or any stage owned by it, is showing.
-     */
+    /** Returns whether {@code stage}, or any stage owned by it, is showing. */
     private static boolean isAnyWindowShowing(Stage stage) {
         return Window.getWindows().stream()
                 .anyMatch(window -> window == stage
@@ -242,9 +240,7 @@ public class UiManagerTest {
                 "both boxes should start their text at the same offset");
     }
 
-    /**
-     * Returns the scene x at which the control's drawn text begins.
-     */
+    /** Returns the scene x at which the control's drawn text begins. */
     private static double renderedTextStart(DialogPane dialogPane, String id) {
         Node control = dialogPane.lookup(id);
         Node text = control.lookup(".text");

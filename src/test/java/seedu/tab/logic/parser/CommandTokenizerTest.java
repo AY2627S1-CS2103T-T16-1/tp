@@ -13,9 +13,7 @@ import seedu.tab.logic.parser.exceptions.ParseException;
 
 public class CommandTokenizerTest {
 
-    /**
-     * Returns the text of each token, which is what most of these tests are about.
-     */
+    /** Returns the text of each token, which is what most of these tests are about. */
     private static List<String> valuesOf(String arguments) throws ParseException {
         return tokenize(arguments).stream().map(Token::value).toList();
     }

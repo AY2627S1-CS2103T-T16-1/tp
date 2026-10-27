@@ -19,9 +19,7 @@ public class HelpTextTest {
         FxToolkit.start();
     }
 
-    /**
-     * Returns the spans as "text|class" pairs, with the runs of spaces left out.
-     */
+    /** Returns the spans as "text|class" pairs, with the runs of spaces left out. */
     private static List<String> spansOf(String reference) throws Exception {
         return FxToolkit.onFxThread(() -> HelpText.color(reference).stream()
                 .filter(createSpan -> !createSpan.getText().isBlank())

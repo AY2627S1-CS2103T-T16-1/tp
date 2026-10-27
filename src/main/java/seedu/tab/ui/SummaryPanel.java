@@ -59,9 +59,7 @@ public class SummaryPanel extends UiPart<Region> {
         summarize(students);
     }
 
-    /**
-     * Scrolls a viewport per page key; JavaFX's ScrollPane otherwise uses the arrow-key increment.
-     */
+    /** Scrolls a viewport per page key; JavaFX's ScrollPane otherwise uses the arrow-key increment. */
     private void handlePageKeyPressed(KeyEvent event) {
         boolean isPageKey = event.getCode() == KeyCode.PAGE_UP || event.getCode() == KeyCode.PAGE_DOWN;
         if (!isPageKey || !tagScroll.isFocused() || event.isControlDown() || event.isAltDown() || event.isMetaDown()

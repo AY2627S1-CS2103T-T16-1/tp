@@ -186,17 +186,13 @@ public class DeleteCommandParserTest {
                 valueAfterIndexMessage("x".repeat(ValueMessages.MAX_QUOTED_VALUE_LENGTH) + "…"));
     }
 
-    /**
-     * The reply {@code delete} gives for a target that reads as an unusable index.
-     */
+    /** The reply {@code delete} gives for a target that reads as an unusable index. */
     private static String invalidIndexWithIdHint(String value) {
         return ParserUtil.MESSAGE_INVALID_INDEX + " "
                 + Messages.getIdTargetHint(DeleteCommand.COMMAND_WORD, value);
     }
 
-    /**
-     * The reply {@code delete} gives for the value it found after the index.
-     */
+    /** The reply {@code delete} gives for the value it found after the index. */
     private static String valueAfterIndexMessage(String value) {
         return String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX_ONLY, DeleteCommand.FIELD_INDEX,
                 value, DeleteCommand.COMMAND_WORD);
@@ -244,9 +240,7 @@ public class DeleteCommandParserTest {
         assertParseFailure(parser, "\"--id=1ABC\"", USAGE_MESSAGE);
     }
 
-    /**
-     * Returns the delete command that names the student holding {@code nusStudentId}.
-     */
+    /** Returns the delete command that names the student holding {@code nusStudentId}. */
     private static DeleteCommand deleteById(String nusStudentId) {
         return new DeleteCommand(StudentTarget.byNusStudentId(new NusStudentId(nusStudentId)));
     }

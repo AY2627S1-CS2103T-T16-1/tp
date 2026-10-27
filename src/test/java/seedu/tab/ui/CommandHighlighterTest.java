@@ -235,9 +235,7 @@ public class CommandHighlighterTest {
         }
     }
 
-    /**
-     * Returns where the parser ends the command word, which is at the first separator.
-     */
+    /** Returns where the parser ends the command word, which is at the first separator. */
     private static int endOfCommandWord(String command) {
         for (int index = 0; index < command.length(); index++) {
             if (StringUtil.isWhitespace(command.charAt(index))) {

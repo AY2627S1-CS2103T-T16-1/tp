@@ -60,9 +60,7 @@ public class FindCommandParser implements Parser<FindCommand> {
         return new FindCommand(new DetailsContainsKeywordsPredicate(parseFieldKeywords(arguments), followUp));
     }
 
-    /**
-     * Reads all required terms for each selected field.
-     */
+    /** Reads all required terms for each selected field. */
     private static Map<Field, List<String>> parseFieldKeywords(FlagArgumentMap arguments) throws ParseException {
         Map<Field, List<String>> keywordsByField = new EnumMap<>(Field.class);
         for (Map.Entry<CliFlag, Field> entry : SEARCH_FIELDS.entrySet()) {
@@ -74,9 +72,7 @@ public class FindCommandParser implements Parser<FindCommand> {
         return keywordsByField;
     }
 
-    /**
-     * Normalizes search values like stored details, rejecting empty terms.
-     */
+    /** Normalizes search values like stored details, rejecting empty terms. */
     private static List<String> normalizeKeywords(List<String> values) throws ParseException {
         List<String> keywords = new ArrayList<>();
         for (String value : values) {

@@ -52,9 +52,7 @@ class JsonSerializableStudentBook {
         students = source.getStudentList().stream().map(JsonAdaptedStudent::new).collect(Collectors.toList());
     }
 
-    /**
-     * Rejects unknown top-level keys instead of silently dropping their contents.
-     */
+    /** Rejects unknown top-level keys instead of silently dropping their contents. */
     @JsonAnySetter
     public void rejectUnknownField(String field, Object value) {
         // Existing hand-editable fixtures use this key for a file description.

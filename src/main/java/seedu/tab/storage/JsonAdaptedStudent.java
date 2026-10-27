@@ -92,9 +92,7 @@ class JsonAdaptedStudent {
         isFlagged = source.getFlag().isPresent() ? Boolean.TRUE : null;
     }
 
-    /**
-     * Rejects unrecognized keys before their values can be lost on the next save.
-     */
+    /** Rejects unrecognized keys before their values can be lost on the next save. */
     @JsonAnySetter
     public void rejectUnknownField(String field, Object value) {
         // TAB data files from before the address field was removed still contain it and must still load.

@@ -18,9 +18,7 @@ public class FollowUpFlag extends Tag {
             "\"" + FOLLOW_UP_NAME + "\" marks a student for follow-up rather than naming a tag, "
             + "so a card would show it twice.";
 
-    /**
-     * Constructs the follow-up flag.
-     */
+    /** Constructs the follow-up flag. */
     public FollowUpFlag() {
         super(FOLLOW_UP_NAME);
     }

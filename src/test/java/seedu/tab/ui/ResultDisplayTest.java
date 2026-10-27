@@ -142,9 +142,7 @@ public class ResultDisplayTest {
         assertFalse(display.getRoot().isManaged());
     }
 
-    /**
-     * A display laid out in a scene of its own, for sizing to be measured on.
-     */
+    /** A display laid out in a scene of its own, for sizing to be measured on. */
     private static ResultDisplay displayAt(double width) throws Exception {
         return onFxThread(() -> {
             ResultDisplay display = new ResultDisplay();
@@ -153,9 +151,7 @@ public class ResultDisplayTest {
         });
     }
 
-    /**
-     * Says {@code reply} and lets the window settle around it.
-     */
+    /** Says {@code reply} and lets the window settle around it. */
     private static void say(ResultDisplay display, String reply) throws Exception {
         onFxThread(() -> {
             display.setFeedbackToUser(reply);
@@ -164,9 +160,7 @@ public class ResultDisplayTest {
         pulse(display.getRoot());
     }
 
-    /**
-     * Lays {@code display} out at {@code width}, as a window being resized would.
-     */
+    /** Lays {@code display} out at {@code width}, as a window being resized would. */
     private static void widen(ResultDisplay display, double width) throws Exception {
         Region root = (Region) display.getRoot();
         onFxThread(() -> {
@@ -180,9 +174,7 @@ public class ResultDisplayTest {
                 .getPrefRowCount());
     }
 
-    /**
-     * How many rows the area is drawing the reply in, measured against one row of it.
-     */
+    /** How many rows the area is drawing the reply in, measured against one row of it. */
     private static int rowsDrawnIn(ResultDisplay display, double oneRow) throws Exception {
         return onFxThread(() -> {
             Text drawn = (Text) display.getRoot().lookup("#resultDisplay").lookup(".text");

@@ -64,9 +64,7 @@ public class FlagTokenizer {
         return tokenizeTokens(tokens, knownFlags);
     }
 
-    /**
-     * Reads already split tokens, sharing flag handling between index and name preambles.
-     */
+    /** Reads already split tokens, sharing flag handling between index and name preambles. */
     static FlagArgumentMap tokenizeTokens(List<Token> tokens, CliFlag... knownFlags) throws ParseException {
         // a caller that names the same marker twice means one flag, not a broken collector
         Map<String, CliFlag> flagsByMarker = Stream.of(knownFlags)
@@ -104,9 +102,7 @@ public class FlagTokenizer {
         }
     }
 
-    /**
-     * Reads the flag at {@code index} and returns the index after its optional value.
-     */
+    /** Reads the flag at {@code index} and returns the index after its optional value. */
     private static int readFlag(List<Token> tokens, int index, Map<String, CliFlag> flagsByMarker,
             FlagArgumentMap parsed) throws ParseException {
         Token token = tokens.get(index);
@@ -144,9 +140,7 @@ public class FlagTokenizer {
         parsed.put(flag, attached.marker(), attached.value());
     }
 
-    /**
-     * Returns the known flag named by {@code token}.
-     */
+    /** Returns the known flag named by {@code token}. */
     private static CliFlag getFlag(Token token, Map<String, CliFlag> flagsByMarker) throws ParseException {
         if (!isOption(token)) {
             throw new ParseException(String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, token.value()));
@@ -169,16 +163,12 @@ public class FlagTokenizer {
                 && token.value().length() > OPTION_MARKER.length();
     }
 
-    /**
-     * Returns true if {@code token} looks like either supported option form.
-     */
+    /** Returns true if {@code token} looks like either supported option form. */
     private static boolean isOption(Token token) {
         return isFlag(token) || isAttachedOption(token);
     }
 
-    /**
-     * Returns true if {@code token} has an unquoted option marker before an equals sign.
-     */
+    /** Returns true if {@code token} has an unquoted option marker before an equals sign. */
     private static boolean isAttachedOption(Token token) {
         int separator = token.value().indexOf(VALUE_SEPARATOR);
         return !token.beginsQuoted()
@@ -186,9 +176,7 @@ public class FlagTokenizer {
                 && separator > OPTION_MARKER.length();
     }
 
-    /**
-     * Returns the option marker and value joined in {@code token}, if any.
-     */
+    /** Returns the option marker and value joined in {@code token}, if any. */
     private static AttachedOption getAttachedOption(Token token) {
         if (!isAttachedOption(token)) {
             return null;
@@ -199,9 +187,7 @@ public class FlagTokenizer {
         return new AttachedOption(marker, token.value().substring(separator + 1));
     }
 
-    /**
-     * Returns the known flag named by an attached option.
-     */
+    /** Returns the known flag named by an attached option. */
     private static CliFlag getAttachedFlag(AttachedOption option, Map<String, CliFlag> flagsByMarker)
             throws ParseException {
         CliFlag flag = flagsByMarker.get(option.marker());

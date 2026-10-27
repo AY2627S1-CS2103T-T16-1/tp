@@ -1187,9 +1187,7 @@ public class LogicManagerTest {
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
     }
 
-    /**
-     * Returns a LogicManager whose student-book storage always throws {@code exception}.
-     */
+    /** Returns a LogicManager whose student-book storage always throws {@code exception}. */
     private Logic createLogicWithFailingStorage(IOException exception) {
         Path studentBookPath = temporaryFolder.resolve("ExceptionStudentBook.json");
         JsonStudentBookStorage studentBookStorage = new JsonStudentBookStorage(studentBookPath) {

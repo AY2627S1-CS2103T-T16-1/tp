@@ -199,9 +199,7 @@ public class CommandLoggingTest {
         assertTrue(leaked.isEmpty(), "a student's own details reached the log: " + leaked);
     }
 
-    /**
-     * Everything about {@code student} that belongs to the student rather than to the book.
-     */
+    /** Everything about {@code student} that belongs to the student rather than to the book. */
     private static Set<String> fieldsOf(Student student) {
         Set<String> fields = new HashSet<>();
         fields.add(student.getName().getFullName());

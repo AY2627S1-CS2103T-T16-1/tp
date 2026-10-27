@@ -14,9 +14,7 @@ final class WindowBounds {
 
     private WindowBounds() {}
 
-    /**
-     * Returns display bounds with the primary first and without repeating its bounds.
-     */
+    /** Returns display bounds with the primary first and without repeating its bounds. */
     static List<Rectangle2D> prioritizePrimary(Rectangle2D primary, List<Rectangle2D> displays) {
         List<Rectangle2D> orderedDisplays = new ArrayList<>();
         orderedDisplays.add(primary);
@@ -24,9 +22,7 @@ final class WindowBounds {
         return orderedDisplays;
     }
 
-    /**
-     * Returns fitted bounds; the first display is the primary display.
-     */
+    /** Returns fitted bounds; the first display is the primary display. */
     static Rectangle2D restore(GuiSettings settings, List<Rectangle2D> displays,
             double minWidth, double minHeight) {
         GuiSettings defaults = new GuiSettings();

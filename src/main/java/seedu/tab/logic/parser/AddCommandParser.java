@@ -65,9 +65,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         return new AddCommand(student);
     }
 
-    /**
-     * Adds placement guidance when an edit-style name option is refused.
-     */
+    /** Adds placement guidance when an edit-style name option is refused. */
     private static FlagArgumentMap tokenize(String args) throws ParseException {
         try {
             return FlagTokenizer.tokenize(

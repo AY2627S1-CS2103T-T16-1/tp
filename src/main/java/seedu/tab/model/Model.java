@@ -34,9 +34,7 @@ public interface Model {
      */
     void setStudentBook(ReadOnlyStudentBook studentBook);
 
-    /**
-     * Returns the StudentBook
-     */
+    /** Returns the StudentBook */
     ReadOnlyStudentBook getStudentBook();
 
     /**
@@ -64,14 +62,10 @@ public interface Model {
      */
     void setStudent(Student target, Student editedStudent);
 
-    /**
-     * Returns an unmodifiable view of the filtered student list
-     */
+    /** Returns an unmodifiable view of the filtered student list */
     ObservableList<Student> getFilteredStudentList();
 
-    /**
-     * Returns a predicate representing the current displayed-student filter.
-     */
+    /** Returns a predicate representing the current displayed-student filter. */
     Predicate<? super Student> getFilteredStudentPredicate();
 
     /**

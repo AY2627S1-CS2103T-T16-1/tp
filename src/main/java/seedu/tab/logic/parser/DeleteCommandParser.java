@@ -102,9 +102,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
         return StudentTarget.byNusStudentId(ParserUtil.parseNusStudentId(value));
     }
 
-    /**
-     * Returns true if {@code token} is one of the markers that name the NUS Student ID option.
-     */
+    /** Returns true if {@code token} is one of the markers that name the NUS Student ID option. */
     private static boolean isNusStudentIdFlag(Token token) {
         return !token.isQuoted() && FLAG_NUS_STUDENT_ID.getMarkers().contains(token.value());
     }

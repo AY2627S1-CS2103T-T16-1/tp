@@ -274,9 +274,7 @@ public class HighlightedTextOverlay {
         lane.setClip(clip);
     }
 
-    /**
-     * Draws every visual segment of the selection, including disjoint bidirectional ranges.
-     */
+    /** Draws every visual segment of the selection, including disjoint bidirectional ranges. */
     private void showSelection(double drawnFrom, double middle) {
         IndexRange range = field.getSelection();
         selection.setVisible(range.getLength() > 0);

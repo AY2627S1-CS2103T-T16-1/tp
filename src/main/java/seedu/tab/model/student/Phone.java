@@ -57,9 +57,7 @@ public class Phone {
         return normalizeDigits(value);
     }
 
-    /**
-     * Returns the ASCII decimal digits in {@code value}, excluding all non-digit characters.
-     */
+    /** Returns the ASCII decimal digits in {@code value}, excluding all non-digit characters. */
     public static String normalizeDigits(String value) {
         requireNonNull(value);
         return NON_DIGIT.matcher(value).replaceAll("").codePoints()

@@ -84,9 +84,7 @@ public class TagRow extends Region {
         return available;
     }
 
-    /**
-     * Returns room for a useful prefix and ellipsis, including the chip's styled padding.
-     */
+    /** Returns room for a useful prefix and ellipsis, including the chip's styled padding. */
     private double computeRecognizableChipWidth() {
         Label chip = chips.getFirst();
         // The skin clips at glyph hit-test boundaries; reserve the next character too
@@ -110,9 +108,7 @@ public class TagRow extends Region {
         return Math.min(computePrefWidth(height), computeRecognizableChipWidth() + forACount);
     }
 
-    /**
-     * Returns the width needed to show the total count when every tag is hidden.
-     */
+    /** Returns the width needed to show the total count when every tag is hidden. */
     double getCountWidth() {
         return tagNames.size() > 1 ? snapSizeX(measureOverflowWidth(0)) : 0;
     }

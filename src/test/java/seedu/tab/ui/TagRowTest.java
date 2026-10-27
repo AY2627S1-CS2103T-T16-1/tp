@@ -264,9 +264,7 @@ public class TagRowTest {
                 .toList();
     }
 
-    /**
-     * What {@code label} actually draws, read from the text node inside it.
-     */
+    /** What {@code label} actually draws, read from the text node inside it. */
     private static String drawnTextOf(Label label) {
         return label.lookupAll(".text").stream()
                 .filter(Text.class::isInstance)
@@ -377,9 +375,7 @@ public class TagRowTest {
                 "the chip was stretched to " + chip.getWidth());
     }
 
-    /**
-     * Returns true if every chip the row shows is drawn within the row.
-     */
+    /** Returns true if every chip the row shows is drawn within the row. */
     private static boolean drawnInside(TagRow row) {
         return row.getChildrenUnmodifiable().stream()
                 .filter(Node::isVisible)

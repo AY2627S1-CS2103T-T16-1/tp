@@ -58,16 +58,12 @@ final class FxToolkit {
         Platform.runLater(() -> Platform.setImplicitExit(false));
     }
 
-    /**
-     * Retries assertions after successive pulses until they pass or the shared timeout expires.
-     */
+    /** Retries assertions after successive pulses until they pass or the shared timeout expires. */
     static void awaitAssertion(Runnable assertion) throws Exception {
         awaitAssertion(assertion, TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
-    /**
-     * Retries assertions with a caller-supplied timeout, preserving the last assertion failure.
-     */
+    /** Retries assertions with a caller-supplied timeout, preserving the last assertion failure. */
     static void awaitAssertion(Runnable assertion, long timeout, TimeUnit unit) throws Exception {
         CompletableFuture<Void> result = new CompletableFuture<>();
         AtomicReference<AssertionError> lastFailure = new AtomicReference<>();
@@ -117,9 +113,7 @@ final class FxToolkit {
         }
     }
 
-    /**
-     * Runs {@code work} on the thread JavaFX requires its nodes to be built on.
-     */
+    /** Runs {@code work} on the thread JavaFX requires its nodes to be built on. */
     static <T> T onFxThread(Callable<T> work) throws Exception {
         FutureTask<T> task = new FutureTask<>(work);
         Platform.runLater(task);

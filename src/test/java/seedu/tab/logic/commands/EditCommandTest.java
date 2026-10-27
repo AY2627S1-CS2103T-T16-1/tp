@@ -679,9 +679,7 @@ public class EditCommandTest {
         assertEquals(expected, editCommand.toString());
     }
 
-    /**
-     * Returns the edit command whose target names the student holding {@code nusStudentId}.
-     */
+    /** Returns the edit command whose target names the student holding {@code nusStudentId}. */
     private static StudentTarget targetById(String nusStudentId) {
         return StudentTarget.byNusStudentId(new NusStudentId(nusStudentId));
     }

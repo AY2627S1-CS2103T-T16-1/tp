@@ -67,9 +67,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         return new EditCommand(target, descriptor);
     }
 
-    /**
-     * Reads exactly one target without confusing ID selection with an ID field edit.
-     */
+    /** Reads exactly one target without confusing ID selection with an ID field edit. */
     private static StudentTarget parseTarget(FlagArgumentMap arguments) throws ParseException {
         if (arguments.getValue(FLAG_TARGET_ID).isPresent()) {
             if (!arguments.getPreamble().isBlank()) {
@@ -114,9 +112,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         return descriptor;
     }
 
-    /**
-     * Describes an explicit clear or a validated replacement, collecting any rejected value.
-     */
+    /** Describes an explicit clear or a validated replacement, collecting any rejected value. */
     private static <T> void parseClearableField(ParseProblems problems, String value,
             ParseProblems.ValueParser<T> parser, Runnable clear, Consumer<T> set) {
         String trimmedValue = value.trim();

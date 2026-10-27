@@ -39,9 +39,7 @@ public final class StudentTarget {
         return byIndex(index, String.valueOf(index.getOneBased()));
     }
 
-    /**
-     * Returns an index target retaining its input spelling for diagnostics and ID recovery.
-     */
+    /** Returns an index target retaining its input spelling for diagnostics and ID recovery. */
     public static StudentTarget byIndex(Index index, String input) {
         requireNonNull(index);
         requireNonNull(input);
@@ -67,9 +65,7 @@ public final class StudentTarget {
         return resolve(model, null);
     }
 
-    /**
-     * Resolves a target, optionally naming a command that supports explicit ID targeting.
-     */
+    /** Resolves a target, optionally naming a command that supports explicit ID targeting. */
     public Student resolve(Model model, String idCommandWord) throws CommandException {
         if (index != null) {
             return resolveIndex(model, idCommandWord);

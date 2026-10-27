@@ -48,9 +48,7 @@ public class ThemeTest {
             + "|\\b(white|black|red|green|blue|yellow|orange|purple|pink|brown"
             + "|gr[ae]y|silver|navy|teal|cyan|magenta|maroon|olive|lime|aqua|fuchsia)\\b)");
 
-    /**
-     * A palette name, wherever it is defined or used.
-     */
+    /** A palette name, wherever it is defined or used. */
     private static final Pattern PALETTE_NAME = Pattern.compile("-tab-[a-z0-9-]+");
 
     @Test
@@ -209,9 +207,7 @@ public class ThemeTest {
         return properties;
     }
 
-    /**
-     * The palette names the stylesheet defines, which is what the top block is for.
-     */
+    /** The palette names the stylesheet defines, which is what the top block is for. */
     private static Set<String> definedPaletteNames() throws IOException {
         String css = Files.readString(DARK_THEME, StandardCharsets.UTF_8);
         String palette = css.substring(0, css.indexOf('}'));
@@ -220,9 +216,7 @@ public class ThemeTest {
                 .collect(Collectors.toCollection(TreeSet::new));
     }
 
-    /**
-     * The palette names the rules below the palette refer to.
-     */
+    /** The palette names the rules below the palette refer to. */
     private static Set<String> usedPaletteNames() throws IOException {
         String css = Files.readString(DARK_THEME, StandardCharsets.UTF_8);
         String belowThePalette = css.substring(css.indexOf('}') + 1);
@@ -252,9 +246,7 @@ public class ThemeTest {
                 "these rules set a colour without going through the palette: " + literals);
     }
 
-    /**
-     * Pulls the matched text out, so a failure names the rules at fault.
-     */
+    /** Pulls the matched text out, so a failure names the rules at fault. */
     private static final class MatchResultText {
         private static String of(java.util.regex.MatchResult result) {
             return result.group().trim();

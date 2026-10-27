@@ -39,9 +39,7 @@ public class StudentListPanel extends UiPart<Region> {
         Platform.requestNextPulse();
     }
 
-    /**
-     * Scrolls the list so that {@code student}'s card is in view, if the list still holds it.
-     */
+    /** Scrolls the list so that {@code student}'s card is in view, if the list still holds it. */
     private void scrollListTo(Student student) {
         int index = findReferenceIndex(student);
         if (index < 0) {

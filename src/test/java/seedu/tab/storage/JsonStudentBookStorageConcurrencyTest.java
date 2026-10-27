@@ -205,9 +205,7 @@ public class JsonStudentBookStorageConcurrencyTest {
                 new JsonUserPrefsStorage(testFolder.resolve("preferences.json"))));
     }
 
-    /**
-     * Holds an operating-system lock in a separate JVM until its input closes.
-     */
+    /** Holds an operating-system lock in a separate JVM until its input closes. */
     public static class LockHolder {
         public static void main(String[] args) throws Exception {
             try (FileChannel channel = FileChannel.open(Path.of(args[0]), StandardOpenOption.WRITE);

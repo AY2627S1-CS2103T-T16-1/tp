@@ -413,9 +413,7 @@ public class TagCommandIntegrationTest {
         assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
     }
 
-    /**
-     * Verifies the exact failure, unchanged records and display, and absence of a storage write.
-     */
+    /** Verifies the exact failure, unchanged records and display, and absence of a storage write. */
     private <T extends Exception> void assertFailureWithoutMutation(String input, Class<T> type, String message)
             throws IOException {
         StudentBook expectedBook = new StudentBook(model.getStudentBook());
