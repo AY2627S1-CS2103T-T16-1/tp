@@ -1,6 +1,7 @@
 package seedu.tab.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -18,6 +19,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystemException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
@@ -78,17 +80,54 @@ public class FileUtilTest {
     }
 
     @Test
-    public void writeToFile_brokenSymbolicLink_rejectsWithoutReplacingLink() throws Exception {
+    public void writeToFile_linkToMissingFileInExistingFolder_createsTargetAndPreservesLink() throws Exception {
         Path link = testFolder.resolve("tab.json");
         Path destination = Path.of("missing-data.json");
         createSymbolicLinkOrSkip(link, destination);
 
-        assertThrows(IOException.class, () -> FileUtil.writeToFile(link, "new contents"));
+        FileUtil.writeToFile(link, "new contents");
 
         assertTrue(Files.isSymbolicLink(link));
         assertEquals(destination, Files.readSymbolicLink(link));
-        assertFalse(Files.exists(testFolder.resolve(destination)));
+        assertEquals("new contents", Files.readString(testFolder.resolve(destination)));
+        assertEquals("new contents", Files.readString(link));
+    }
+
+    @Test
+    public void writeToFile_linkToMissingFolder_rejectsWithReasonAndPreservesLink() throws Exception {
+        Path link = testFolder.resolve("tab.json");
+        Path destination = Path.of("missing-folder", "tab.json");
+        createSymbolicLinkOrSkip(link, destination);
+
+        IOException exception = assertThrows(NoSuchFileException.class, () ->
+                FileUtil.writeToFile(link, "new contents"));
+
+        assertTrue(exception.getMessage().contains("that folder does not exist"));
+        assertTrue(Files.isSymbolicLink(link));
+        assertEquals(destination, Files.readSymbolicLink(link));
+        assertFalse(Files.exists(testFolder.resolve("missing-folder")));
         assertEquals(List.of(link), listFilesInTestFolder());
+    }
+
+    @Test
+    public void requireResolvableLink_linkToMissingFolder_throwsWithReason() throws Exception {
+        Path link = testFolder.resolve("tab.json");
+        createSymbolicLinkOrSkip(link, Path.of("missing-folder", "tab.json"));
+
+        IOException exception = assertThrows(NoSuchFileException.class, () ->
+                FileUtil.requireResolvableLink(link));
+
+        assertTrue(exception.getMessage().contains("that folder does not exist"));
+    }
+
+    @Test
+    public void requireResolvableLink_missingFileAndResolvableLink_doesNotThrow() throws Exception {
+        Path absent = testFolder.resolve("not-there.json");
+        Path link = testFolder.resolve("tab.json");
+        createSymbolicLinkOrSkip(link, Path.of("missing-data.json"));
+
+        assertDoesNotThrow(() -> FileUtil.requireResolvableLink(absent));
+        assertDoesNotThrow(() -> FileUtil.requireResolvableLink(link));
     }
 
     @Test

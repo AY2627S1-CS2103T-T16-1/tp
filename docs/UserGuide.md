@@ -1019,6 +1019,14 @@ at the next run instead of opening the main window. It never treats a file it
 cannot read as a first launch, so your records are not replaced by sample
 students. Restore your permission to the file and the folder, then restart TAB.
 
+`data/tab.json` may be a symbolic link, which is one way to keep your records
+in a synced folder. TAB follows the link and saves through it, leaving the link
+itself in place, and creates the file at the other end on the first save if it
+is not there yet. If the link points into a folder that does not exist, TAB
+reports that at startup and names the missing target, because it cannot tell
+where you meant the records to go. Create the folder, or point the link
+somewhere else, then restart TAB.
+
 Save the file as **UTF-8**, with or without a leading byte order mark (BOM).
 TAB accepts both forms and preserves accented letters and other Unicode text.
 Files saved in another encoding, such as Windows-1252 (ANSI), may contain

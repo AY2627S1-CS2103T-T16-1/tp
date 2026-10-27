@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
@@ -45,7 +46,8 @@ public class FileUtil {
      * Writes the given string to a temporary file, then atomically replaces the target file.
      * Creates missing parent directories and creates the target only after a successful write.
      * Preserves an existing file if writing the new contents fails.
-     * Rejects an unresolvable symbolic link without replacing it.
+     * Follows a symbolic link to its target, creating that target when the folder holding it
+     * exists, and rejects a link pointing into a folder that is not there.
      */
     public static void writeToFile(Path file, String content) throws IOException {
         writeToFile(file, content, FileUtil::writeAndSync);
@@ -80,7 +82,42 @@ public class FileUtil {
 
     private static Path resolveWriteTarget(Path file) throws IOException {
         Path absoluteFile = file.toAbsolutePath();
-        return Files.exists(absoluteFile, LinkOption.NOFOLLOW_LINKS) ? absoluteFile.toRealPath() : absoluteFile;
+        if (!Files.exists(absoluteFile, LinkOption.NOFOLLOW_LINKS)) {
+            return absoluteFile;
+        }
+        return Files.exists(absoluteFile) ? absoluteFile.toRealPath() : resolveMissingLinkTarget(absoluteFile);
+    }
+
+    /**
+     * Returns the file a symbolic link points at, which a save creates when it is not there yet,
+     * so a link set up before its file still receives the first save.
+     *
+     * @throws NoSuchFileException if the link points into a folder that is not there, which no
+     *     save can create without guessing where the records were meant to live.
+     */
+    private static Path resolveMissingLinkTarget(Path link) throws IOException {
+        if (!Files.isSymbolicLink(link)) {
+            return link;
+        }
+        Path target = link.resolveSibling(Files.readSymbolicLink(link)).normalize();
+        Path targetParent = target.getParent();
+        if (targetParent != null && Files.notExists(targetParent)) {
+            throw new NoSuchFileException(link.toString(), null,
+                    "it is a link to " + target + ", and that folder does not exist");
+        }
+        return target;
+    }
+
+    /**
+     * Throws if {@code file} is a symbolic link whose target cannot be created, so a caller that
+     * reads a missing file as a first run does not do so for records it cannot reach.
+     *
+     * @throws IOException if the link points into a folder that is not there.
+     */
+    public static void requireResolvableLink(Path file) throws IOException {
+        if (Files.exists(file, LinkOption.NOFOLLOW_LINKS) && Files.notExists(file)) {
+            resolveMissingLinkTarget(file.toAbsolutePath());
+        }
     }
 
     private static void ensureWritable(Path file) throws AccessDeniedException {

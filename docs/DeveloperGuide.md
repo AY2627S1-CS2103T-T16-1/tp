@@ -468,8 +468,12 @@ student may carry the same tag under lowercases to itself.
 
 `FileUtil.writeToFile` protects an existing JSON file from a partial save. It
 resolves an existing symbolic link to its destination, so replacing the saved
-data leaves the link in place, and rejects an unresolvable link without
-replacing it or creating its missing target. It also refuses a destination that
+data leaves the link in place. A link whose target is not there yet is followed
+too, so a link set up before its file receives the first save, and only a link
+pointing into a folder that does not exist is refused — no save can create that
+folder without guessing where the records were meant to live. Startup applies
+the same rule through `FileUtil.requireResolvableLink`, so such a link is
+reported rather than read as a first run. It also refuses a destination that
 is not writable, and copies an existing file's POSIX permissions to its
 replacement. The new contents are written and forced to a temporary file beside
 the real destination before an atomic move replaces it. Keeping both files in
