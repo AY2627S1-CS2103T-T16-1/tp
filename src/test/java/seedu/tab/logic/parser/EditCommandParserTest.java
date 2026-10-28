@@ -479,7 +479,12 @@ public class EditCommandParserTest {
 
         // a token before the options that is not part of the target
         assertParseFailure(parser, "1 some random string" + FLAG_NAME_AMY,
-                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, "INDEX", "some random string"));
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET, "INDEX", "some random string"));
+
+        // the target a user typing a name gives is read as an NUS Student ID, so the words
+        // after it are reported against that form rather than against the index form
+        assertParseFailure(parser, "Alex Yeoh" + FLAG_NAME_AMY,
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET, ParserUtil.FIELD_NUS_STUDENT_ID, "Yeoh"));
 
         // an unquoted negative number is invalid as both an index and an option
         assertParseFailure(parser, "-5" + FLAG_NAME_AMY,

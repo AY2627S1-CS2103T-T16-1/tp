@@ -716,8 +716,11 @@ and `delete` adds the explicit `--id` form whenever the refused target reads as
 a valid NUS Student ID — spelling intact, so a stored numeric ID keeps its
 leading zeroes. `edit` and `tag` share `FlagTokenizer.tokenizeWithIndex`, which
 reports an unquoted negative number as both an invalid index and an unknown
-option, and each reports a value following an otherwise valid target. The
-retained spelling affects diagnostics only, not target equality or hashing.
+option, and each reports a value following an otherwise valid target.
+`ParserUtil.getTargetFieldName` names that target by the form it was read as,
+`NUS_STUDENT_ID` for a letter-leading target and the command's index label
+otherwise, so a user who typed a name is not told that the name is an index.
+The retained spelling affects diagnostics only, not target equality or hashing.
 
 ### Adding or removing one tag
 
@@ -2731,7 +2734,16 @@ testers are expected to do more *exploratory* testing.
       Expected: `No student has NUS Student ID A99999999Z.`; a bare `delete`
       shows the command's format; `delete 999` is refused as past the end of
       the displayed list; and `delete 1 2` reads `Unexpected value after INDEX:
-      "2". delete accepts one index and nothing else.` No student is deleted.
+      "2". delete accepts one index or NUS Student ID and nothing else.` No
+      student is deleted.
+   1. Test case: `delete Alex Yeoh`, then `edit Alex Yeoh -p 91234567` and
+      `tag Alex Yeoh -a T1`.<br>
+      Expected: Nothing is changed. Each reply names the word to remove after
+      `NUS_STUDENT_ID`, the form a target that is not a number is read as:
+      `Unexpected value after NUS_STUDENT_ID: "Yeoh". delete accepts one index
+      or NUS Student ID and nothing else.` for `delete`, and the same opening
+      followed by `Put field values after an option.` for the other two. No
+      reply calls `Alex` an index.
    1. Test case: `delete 1` followed by a non-breaking space (`U+00A0`) pasted
       from a web page.<br>
       Expected: The first record is deleted exactly as with an ordinary space.

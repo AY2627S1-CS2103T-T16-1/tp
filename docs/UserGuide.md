@@ -936,7 +936,11 @@ Format: `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID
   so you can verify exactly which student was deleted from the book.
 * `delete` takes no field values, so a value found after the target is refused with
   `Unexpected value after INDEX: "..."`, naming the part to remove, as in
-  `Unexpected value after INDEX: "2". delete accepts one index and nothing else.`
+  `Unexpected value after INDEX: "2". delete accepts one index or NUS Student ID and
+  nothing else.` A target that opens with a letter is read as an ID, so a word left
+  after a target such as `Alex` is reported after `NUS_STUDENT_ID` in place of
+  `INDEX`. Deleting by name is not supported: use the index shown beside the student,
+  or their NUS Student ID.
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd student in the student book.
