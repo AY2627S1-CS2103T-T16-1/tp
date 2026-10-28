@@ -392,8 +392,12 @@ public class ParserUtilTest {
     @Test
     public void parseTagToAdd_tagSpeltAroundTheLabel_returnsTag() throws Exception {
         // the label itself is reserved rather than every tag that reads like it
-        for (String tag : List.of("Needs follow-up soon", "Follow-up", "Needs follow up")) {
+        // "Needs follow up" (space instead of hyphen) is now caught as a near spelling
+        for (String tag : List.of("Needs follow-up soon", "Follow-up")) {
             assertEquals(new Tag(tag), ParserUtil.parseTagToAdd(tag));
         }
+        // These near spellings are now rejected as they read like the follow-up marker
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG, () ->
+                ParserUtil.parseTagToAdd("Needs follow up"));
     }
 }
