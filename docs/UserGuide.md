@@ -417,7 +417,9 @@ Review the records and delete duplicates only if they are the same person.
 
 Names and emails are compared without regard to letter case. Names also ignore
 Latin accents and straight/curly apostrophe differences: `José` matches `Jose`,
-and `O’Brien` matches `O'Brien`. Repeated, leading, and trailing whitespace in
+and `O’Brien` matches `O'Brien`. A hyphen is compared as a space, so
+`Mary-Jane` matches `Mary Jane`; longer dashes such as an en dash are compared
+as themselves. Repeated, leading, and trailing whitespace in
 names is insignificant. Phone numbers match when their complete digit sequences
 match, ignoring spaces and other non-digit characters; equivalent Unicode
 decimal digits also match. For example, `9123-4567`, `91234567`, and
@@ -871,6 +873,10 @@ Provide at least one field term or one follow-up status option. Every search ter
 * Name searches ignore Latin accents and straight/curly apostrophe differences:
   `find -n nguyen` matches `Nguyễn Văn An`, `find -n jose` matches `José Rivera`,
   and `find -n O'Brien` matches `Sean O’Brien`. The stored spelling stays unchanged.
+* Name searches also compare a hyphen as a space, so `find -n "Mary Jane"` matches
+  `Mary-Jane Tan` and `find -n Mary-Jane` matches `Mary Jane Tan`. A longer dash, such
+  as an en dash, is compared as itself, and hyphens stay significant in tags and
+  other fields.
 * Unicode case variants match in names and tags: `find -n σ` matches `ΝΙΚΟΣ`,
   and `find -t οσ` matches tag `ΟΣ`, consistent with adding/removing that tag.
   Accents and apostrophes remain significant in tags and other fields.
