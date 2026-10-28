@@ -76,8 +76,8 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_emptyArgs_throwsParseException() {
-        assertParseFailure(parser, "", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
-        assertParseFailure(parser, "   ", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "", DeleteCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "   ", DeleteCommand.MESSAGE_USAGE);
     }
 
     @Test
@@ -93,10 +93,14 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_negativeIndex_throwsParseException() {
-        // a marker followed by a digit is a negative number rather than an option delete
-        // does not know, so the index reason, not the usage block, carries the refusal
-        assertParseFailure(parser, "-1", ParserUtil.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "-10", ParserUtil.MESSAGE_INVALID_INDEX);
+        // a marker followed by a digit is a negative number; tokenizeWithIndex reports both
+        // the index reason and the unknown-flag hint, so the user sees why it fails either way
+        String expected = ParserUtil.MESSAGE_INVALID_INDEX + "\n"
+                + String.format(Messages.MESSAGE_UNKNOWN_FLAG, Messages.shorten("-1"));
+        assertParseFailure(parser, "-1", expected);
+        String expected10 = ParserUtil.MESSAGE_INVALID_INDEX + "\n"
+                + String.format(Messages.MESSAGE_UNKNOWN_FLAG, Messages.shorten("-10"));
+        assertParseFailure(parser, "-10", expected10);
     }
 
     @Test
@@ -108,9 +112,15 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_loneOption_throwsUsageMessage() {
-        // an option spelled without its value names no target, so every form delete reads helps
-        assertParseFailure(parser, "--follow-up", USAGE_MESSAGE);
-        assertParseFailure(parser, "-i", USAGE_MESSAGE);
+        // an unknown option is reported as such
+        assertParseFailure(parser, "--follow-up", "There is no --follow-up option.");
+        // a known value-taking option without its value reports the missing value with the marker used
+        String missingValueMsgForI = "-i NUS_STUDENT_ID needs a value after it. "
+                + "A value opening with a hyphen goes in double quotes.";
+        String missingValueMsgForId = "--id NUS_STUDENT_ID needs a value after it. "
+                + "A value opening with a hyphen goes in double quotes.";
+        assertParseFailure(parser, "-i", missingValueMsgForI);
+        assertParseFailure(parser, "--id", missingValueMsgForId);
     }
 
     @Test
@@ -189,8 +199,8 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_negativeNumberAfterTheIndex_namesItAsTheExtraValue() {
-        // a negative number is a value rather than an option, so the part to remove is named
-        assertParseFailure(parser, "1 -1", valueAfterIndexMessage("-1"));
+        // a negative number after the target is read as an unknown flag (consistent with tag/edit)
+        assertParseFailure(parser, "1 -1", "There is no -1 option.");
     }
 
     @Test
@@ -233,8 +243,10 @@ public class DeleteCommandParserTest {
     public void parse_invalidNusStudentIdFlagValue_throwsParseException() {
         assertParseFailure(parser, "--id A0123-456", Messages.getErrorMessageForInvalidValue(
                 NusStudentId.FIELD_NAME, "A0123-456", NusStudentId.MESSAGE_NON_ALPHANUMERIC));
-        assertParseFailure(parser, "--id=", Messages.getErrorMessageForInvalidValue(
-                NusStudentId.FIELD_NAME, "", NusStudentId.MESSAGE_EMPTY));
+        // an empty value after = is reported as missing value, not as invalid ID
+        String missingValueMsg = "--id NUS_STUDENT_ID needs a value after it. "
+                + "A value opening with a hyphen goes in double quotes.";
+        assertParseFailure(parser, "--id=", missingValueMsg);
     }
 
     @Test
@@ -249,14 +261,21 @@ public class DeleteCommandParserTest {
     @Test
     public void parse_malformedNusStudentIdFlag_throwsParseException() {
         // the option takes exactly one value and leaves no room for a second target
-        assertParseFailure(parser, "--id", USAGE_MESSAGE);
-        assertParseFailure(parser, "--id 1ABC extra", USAGE_MESSAGE);
-        assertParseFailure(parser, "1 --id A01234567X", USAGE_MESSAGE);
-        assertParseFailure(parser, "--id A01234567X --follow-up", USAGE_MESSAGE);
+        String missingValueMsg = "--id NUS_STUDENT_ID needs a value after it. "
+                + "A value opening with a hyphen goes in double quotes.";
+        assertParseFailure(parser, "--id", missingValueMsg);
+        // extra token after flag value is reported as value after flags (no preamble in this case)
+        assertParseFailure(parser, "--id 1ABC extra",
+                "\"extra\" does not belong to any option. Options that take a value take one token, "
+                        + "and a value holding spaces goes in double quotes. "
+                        + "If the command takes a name or index without an option, put it before all options.");
+        assertParseFailure(parser, "1 --id A01234567X", DeleteCommand.MESSAGE_MULTIPLE_TARGETS);
+        assertParseFailure(parser, "--id A01234567X --follow-up", "There is no --follow-up option.");
 
         // a quoted token is a value, not an option, as everywhere else in a command
-        assertParseFailure(parser, "\"--id\" 1ABC", USAGE_MESSAGE);
-        assertParseFailure(parser, "\"--id=1ABC\"", USAGE_MESSAGE);
+        // the combined preamble "--id 1ABC" is not a valid index
+        assertParseFailure(parser, "\"--id\" 1ABC", ParserUtil.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "\"--id=1ABC\"", ParserUtil.MESSAGE_INVALID_INDEX);
     }
 
     /** Returns the delete command that names the student holding {@code nusStudentId}. */
