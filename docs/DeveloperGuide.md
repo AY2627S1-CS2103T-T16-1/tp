@@ -206,7 +206,7 @@ The comparison uses validated student-book content. Formatting-only edits and ch
 
 After validation, `JsonUtil` serializes the book and delegates replacement to `FileUtil.writeToFile()`. It writes UTF-8 to a temporary sibling, preserves existing POSIX permissions where supported, flushes the new file, and uses an atomic move to replace the target. On an I/O failure, it attempts to remove the temporary file and propagates the error. If atomic replacement is unsupported, saving fails rather than falling back to truncating the existing file.
 
-There are two reasons for this design. Atomic replacement protects the previous file from a partial write; the baseline comparison and lock protect against a stale TAB window replacing a newer book. Logic's rollback then restores the user's in-memory view after either kind of save failure. These safeguards support local single-user work; they do not merge concurrent edits.
+These safeguards support local single-user work; they do not merge concurrent edits.
 
 ### Loading and preserving the data contract
 
@@ -607,8 +607,8 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
    * Expected: Attached values are accepted; the capital option suggests `-p`; the unclosed quote is reported without changing records.
 1. Paste `add “Paste Probe” –p “8123 4567” –t “Lab 6”`, then paste a command containing tab/newline separators before pressing Enter.
    * Expected: Curly quotes and a pasted option dash are recognized. Separators become spaces in one command, and the line's color follows its structure.
-1. Type an unsent draft, press Up repeatedly through accepted and rejected submissions, then Down to the newest position.
-   * Expected: Recall changes the input without executing it; the draft returns after the newest command. Consecutive identical submissions occur once, and clear replies are absent. Restarting clears history.
+1. Enter `list` twice, then `clear` and reply `no`. Type an unsent draft, press Up repeatedly through accepted and rejected submissions, then Down to the newest position.
+   * Expected: Recall changes the input without executing it; the draft returns after the newest command. The two consecutive `list` submissions occupy one history entry, and the `no` reply is absent. Restarting clears history.
 1. Add a student with a long accented name and a long tag, then narrow the window. For a reproducible value, use `add José José José José José José José José José José José José José José José José -t "A very long tutorial group name used to check wrapping" -p "+65 9123 4567 extension 1234567890"`.
    * Expected: Card contents stay inside their bounds. Shortened values have full-value tooltips, contact details wrap, and summary tag names remain readable beside their counts.
 
