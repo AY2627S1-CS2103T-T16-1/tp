@@ -35,6 +35,10 @@ public class DeleteCommand extends Command {
             + "Example: " + COMMAND_WORD + " A0123456X\n"
             + "Example: " + COMMAND_WORD + " --id 1ABC";
 
+    public static final String MESSAGE_MULTIPLE_TARGETS =
+            "Give one student target: an index, a letter-leading NUS Student ID, or "
+                    + FLAG_NUS_STUDENT_ID.getLabel() + ".";
+
     public static final String MESSAGE_DELETE_STUDENT_SUCCESS = "Deleted student: %1$s";
 
     private static final Logger logger = LogsCenter.getLogger(DeleteCommand.class);
