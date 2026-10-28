@@ -167,12 +167,25 @@ public class EmailTest {
         assertEquals("there is nothing after the @", Email.getFailureReason("john@"));
         assertEquals("the last part of the domain needs at least 2 characters",
                 Email.getFailureReason("john@x"));
-        assertEquals("the part before the @ may hold letters, digits and !#$%&'*+/=?^_`{|}~-"
+        assertEquals("the part before the @ may hold ASCII letters, digits and !#$%&'*+/=?^_`{|}~-"
                 + ", with dots allowed only between non-empty groups",
                 Email.getFailureReason("john doe@x.com"));
-        assertEquals("the domain may hold letters and digits in labels separated by dots, "
+        assertEquals("the domain may hold ASCII letters and digits in labels separated by dots, "
                 + "with hyphens allowed inside a label", Email.getFailureReason("john@x_y.com"));
     }
+
+    @Test
+    public void getFailureReason_accentedLetters_saysOnlyAsciiLettersAreAccepted() {
+        assertFalse(Email.isValidEmail("josé@example.com"));
+        assertEquals("the part before the @ may hold ASCII letters, digits and !#$%&'*+/=?^_`{|}~-"
+                + ", with dots allowed only between non-empty groups",
+                Email.getFailureReason("josé@example.com"));
+
+        assertFalse(Email.isValidEmail("hans@bücher.de"));
+        assertEquals("the domain may hold ASCII letters and digits in labels separated by dots, "
+                + "with hyphens allowed inside a label", Email.getFailureReason("hans@bücher.de"));
+    }
+
     @Test
     public void isValidEmail_longDirectInput_preservesFormatWithoutStackOverflow() {
         String local = "a.".repeat(5000) + "a";

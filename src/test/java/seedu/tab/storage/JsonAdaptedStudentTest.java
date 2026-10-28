@@ -74,7 +74,7 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, "mei..tan@example.com", VALID_TAGS, false);
         String expectedMessage = "Email \"mei..tan@example.com\" is not valid: "
-                + "the part before the @ may hold letters, digits and !#$%&'*+/=?^_`{|}~-"
+                + "the part before the @ may hold ASCII letters, digits and !#$%&'*+/=?^_`{|}~-"
                 + ", with dots allowed only between non-empty groups";
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }

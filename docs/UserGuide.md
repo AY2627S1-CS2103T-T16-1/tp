@@ -364,10 +364,10 @@ at either end. Dots may separate non-empty groups; leading, trailing and
 consecutive dots are refused. For example, `mei__tan@hotmail.com` and
 `sean.o'brien@example.com` are accepted and stored as entered. Addresses that
 require a quoted local part (such as one containing spaces) are unsupported.
-The domain uses letters and digits with internal hyphens, separated by dots;
-its final label must have at least two characters. A domain with no dot at
-all, such as `john@gmail`, is a valid host name, so TAB saves it and warns you
-instead of refusing it:
+The domain uses ASCII letters and digits with internal hyphens, separated by
+dots; its final label must have at least two characters. A domain with no dot
+at all, such as `john@gmail`, is a valid host name, so TAB saves it and warns
+you instead of refusing it:
 
 ```
 WARNING: Possibly incomplete email: john@gmail has no dot in its domain.

@@ -60,12 +60,12 @@ public class Email {
     private static final String MESSAGE_MULTIPLE_SEPARATORS = "an email may hold only one @";
     private static final String MESSAGE_EMPTY_LOCAL_PART = "there is nothing before the @";
     private static final String MESSAGE_INVALID_LOCAL_PART =
-            "the part before the @ may hold letters, digits and " + SPECIAL_CHARACTERS
+            "the part before the @ may hold ASCII letters, digits and " + SPECIAL_CHARACTERS
                     + ", with dots allowed only between non-empty groups";
     private static final String MESSAGE_EMPTY_DOMAIN = "there is nothing after the @";
     private static final String MESSAGE_SHORT_LAST_LABEL = "the last part of the domain needs at least %d characters";
     private static final String MESSAGE_INVALID_DOMAIN =
-            "the domain may hold letters and digits in labels separated by dots, "
+            "the domain may hold ASCII letters and digits in labels separated by dots, "
                     + "with hyphens allowed inside a label";
 
     private static final Pattern LOCAL_ATOM_PATTERN = Pattern.compile(LOCAL_ATOM_REGEX);
