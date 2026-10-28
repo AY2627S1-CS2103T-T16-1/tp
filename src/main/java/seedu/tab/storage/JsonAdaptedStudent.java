@@ -55,9 +55,12 @@ class JsonAdaptedStudent {
      * Constructs a {@code JsonAdaptedStudent} with the given student details.
      */
     @JsonCreator
-    public JsonAdaptedStudent(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
-            @JsonProperty("email") String email,
-            @JsonProperty("nusStudentId") String nusStudentId,
+    public JsonAdaptedStudent(
+            @JsonProperty("name") @JsonDeserialize(using = JsonTextFieldDeserializer.class) String name,
+            @JsonProperty("phone") @JsonDeserialize(using = JsonTextFieldDeserializer.class) String phone,
+            @JsonProperty("email") @JsonDeserialize(using = JsonTextFieldDeserializer.class) String email,
+            @JsonProperty("nusStudentId")
+            @JsonDeserialize(using = JsonTextFieldDeserializer.class) String nusStudentId,
             @JsonProperty("tags") @JsonDeserialize(using = JsonTagsDeserializer.class) List<JsonAdaptedTag> tags,
             @JsonProperty("flag") @JsonDeserialize(using = JsonFollowUpFlagDeserializer.class) Boolean isFlagged) {
         this.name = name;

@@ -225,6 +225,68 @@ public class JsonStudentBookStorageTest {
         }
     }
 
+    @Test
+    public void readStudentBook_structuredTextField_reportsFieldAndPreservesBytes() throws Exception {
+        for (String field : List.of("name", "phone", "email", "nusStudentId")) {
+            assertInvalidTextFieldPreservesFile(field, "[\"first\",\"second\"]",
+                    field + " must be a single text value, not a list.");
+            assertInvalidTextFieldPreservesFile(field, "{\"home\":\"first\"}",
+                    field + " must be a single text value, not an object.");
+        }
+    }
+
+    @Test
+    public void readStudentBook_commentedFile_reportsCommentRuleAndPreservesBytes() throws Exception {
+        Path path = testFolder.resolve("commented.json");
+        for (String comment : List.of("// Alice changed her phone", "/* Alice changed her phone */")) {
+            String json = "{\n" + comment + "\n\"students\":[{\"name\":\"Alice Tan\",\"phone\":\"91234567\"}]}";
+            Files.writeString(path, json);
+
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+            assertTrue(exception.getMessage().contains("A JSON file cannot hold comments. Remove this one,"
+                    + " or move its text into the optional top-level \"_comment\" field."),
+                    exception.getMessage());
+            assertTrue(exception.getMessage().contains("at line 2, column 2"), exception.getMessage());
+            assertFalse(exception.getMessage().contains("ALLOW_COMMENTS"));
+            assertEquals(json, Files.readString(path));
+        }
+    }
+
+    @Test
+    public void readStudentBook_fileWithoutJson_reportsMissingDataWithoutSource() throws Exception {
+        Path path = testFolder.resolve("empty.json");
+        for (String content : List.of("", "   \n  \n")) {
+            Files.writeString(path, content);
+
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+            assertEquals("The data is not in the expected JSON format: The file holds no data."
+                    + " Restore your backup, or delete the file and restart TAB"
+                    + " to start again from the sample students.", exception.getMessage());
+            assertEquals(content, Files.readString(path));
+        }
+    }
+
+    private void assertInvalidTextFieldPreservesFile(String field, String value, String expectedReason)
+            throws Exception {
+        Path path = testFolder.resolve("invalid-text-field.json");
+        String json = "{\"students\":[{\"name\":\"Before\",\"phone\":\"81111111\"},"
+                + "{\"" + field + "\":" + value + "}]}";
+        Files.writeString(path, json);
+        DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+        assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
+        assertTrue(exception.getMessage().contains(expectedReason), exception.getMessage());
+        assertTrue(exception.getMessage().contains("at line 1, column"), exception.getMessage());
+        assertFalse(exception.getMessage().contains("java.lang"));
+        assertFalse(exception.getMessage().contains("token"));
+        assertEquals(json, Files.readString(path));
+    }
+
     private void assertInvalidTagsPreservesFile(String tags, String expectedReason) throws Exception {
         Path path = testFolder.resolve("invalid-tags.json");
         String json = "{\"students\":[{\"name\":\"Before\",\"phone\":\"81111111\"},"

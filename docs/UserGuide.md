@@ -1097,6 +1097,16 @@ repeated key, its name. Move extra records into the `students` array or keep
 only the intended value for the repeated key, then restart TAB. The rejected
 file stays unchanged.
 
+Give `name`, `phone`, `email` and `nusStudentId` one text value in quotation
+marks. A list or an object in their place is rejected with an error naming the
+field and the student record, such as `email must be a single text value, not
+a list`. JSON has no comments, so a line starting with `//` or text wrapped in
+`/* */` is rejected as well; put a description of the file in the top-level
+`_comment` field instead. A file that holds no JSON at all, such as an empty
+one, is reported as holding no data, without an excerpt of the file: restore
+your backup, or delete the file and restart TAB to start again from the sample
+students.
+
 The `tags` field holds a JSON array of strings, such as `"tags": ["Lab 3", "组 1"]`.
 An absent key, `null`, or `[]` means no tags. A single string without array
 brackets, or an array entry that is a number, Boolean, object, array or `null`,
