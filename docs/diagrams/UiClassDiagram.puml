@@ -1,68 +1,33 @@
 @startuml
 !include style.puml
-skinparam linetype polyline
-skinparam nodesep 20
-skinparam arrowThickness 1.1
-skinparam arrowColor UI_COLOR_T4
-skinparam classBackgroundColor UI_COLOR
+!pragma layout smetana
+skinparam classBackgroundColor UI_COLOR_T1
+skinparam classFontColor #222222
+skinparam classBorderColor #555555
+skinparam arrowColor #555555
+skinparam ArrowFontStyle plain
+skinparam nodesep 25
+skinparam ranksep 35
 
-package UI <<Rectangle>>{
-Class "<<interface>>\nUi" as Ui
-Class "{abstract}\nUiPart" as UiPart
-Class UiManager
-Class MainWindow
-Class HelpPage
-Class ResultDisplay
-Class StudentListPanel
-Class StudentCard
-Class SummaryPanel
-Class StatusBarFooter
-Class CommandBox
-}
+class MainWindow
+class CommandBox
+class ResultDisplay
+class StudentListPanel
+class StudentCard
+class SummaryPanel
+class HelpPage
+class StatusBarFooter
 
-package Model <<Rectangle>> {
-Class StudentSummary
-Class HiddenModel #FFFFFF
-}
+MainWindow --> CommandBox
+MainWindow --> ResultDisplay
+MainWindow --> StudentListPanel
+MainWindow --> SummaryPanel
+MainWindow --> HelpPage
+MainWindow --> StatusBarFooter
+StudentListPanel ..> StudentCard : creates for visible cells
 
-package Logic <<Rectangle>> {
-Class HiddenLogic #FFFFFF
-}
-
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Ui
-
-UiManager .left.|> Ui
-UiManager -down-> "\n1" MainWindow
-MainWindow *-down->  "\n1" CommandBox
-MainWindow *-down-> "\n1" ResultDisplay
-MainWindow *-down-> "\n1" HelpPage
-MainWindow *-down-> "\n1" StudentListPanel
-MainWindow *-down-> "\n1" SummaryPanel
-MainWindow *-down-> "\n1" StatusBarFooter
-
-StudentListPanel .down.> StudentCard : <<create>>
-
-MainWindow -left-|> UiPart
-
-HelpPage --|> UiPart
-ResultDisplay --|> UiPart
-CommandBox --|> UiPart
-StudentListPanel --|> UiPart
-StudentCard --|> UiPart
-StatusBarFooter --|> UiPart
-SummaryPanel --|> UiPart
-
-StudentCard .right.> Model
-SummaryPanel .right.> StudentSummary
-UiManager -right-> Logic
-MainWindow -left-> Logic
-
-StatusBarFooter -[hidden]right- ResultDisplay
-ResultDisplay -[hidden]right- CommandBox
-CommandBox -[hidden]right- HelpPage
-HelpPage -[hidden]right- SummaryPanel
-SummaryPanel -[hidden]right- StudentListPanel
-
-MainWindow -[hidden]-|> UiPart
+CommandBox -[hidden]right-> ResultDisplay
+ResultDisplay -[hidden]right-> StudentListPanel
+SummaryPanel -[hidden]right-> HelpPage
+HelpPage -[hidden]right-> StatusBarFooter
 @enduml

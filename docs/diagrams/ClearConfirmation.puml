@@ -1,48 +1,20 @@
 @startuml
 !include style.puml
+!pragma layout smetana
+skinparam defaultFontSize 16
+skinparam ArrowFontStyle plain
+skinparam stateBackgroundColor LOGIC_COLOR_T1
+skinparam stateBorderColor #555555
+skinparam stateFontColor #222222
+skinparam arrowColor #555555
 
-[*] --> IDLE : Launch
+state "No pending confirmation" as Idle
+state "Awaiting clear reply" as Pending
 
-state IDLE {
-    [*] --> NO_PENDING
-}
-
-state NO_PENDING {
-    NO_PENDING : pendingClearCommand = empty
-}
-
-state PENDING : pendingClearCommand present
-PENDING : awaiting user reply
-
-state "Processing reply" as REPLY {
-    [*] --> STRIP
-    STRIP : stripFormatCharacters(reply)
-    STRIP --> TRIM
-    TRIM : trim Unicode whitespace
-    TRIM --> CHECK
-    CHECK : isEmpty || equals("n") || equals("no") ?
-    CHECK --> DROP : [yes]
-    CHECK --> IS_YES : [no]
-    IS_YES : equals("y") || equals("yes") ?
-    IS_YES --> CONFIRM : [yes]
-    IS_YES --> INVALID : [no]
-}
-
-DROP : pendingClearCommand = empty
-DROP --> NO_PENDING : no-op / message
-
-CONFIRM : pendingClearCommand = empty
-CONFIRM --> NO_PENDING : executeConfirmed() then clear
-
-INVALID : ParseException with feedback
-INVALID --> PENDING : prompt repeated
-
-NO_PENDING --> PENDING : clear (non-empty book)
-PENDING --> REPLY : user replies
-REPLY --> DROP : cancel / decline
-REPLY --> CONFIRM : confirm
-REPLY --> INVALID : invalid input
-
-NO_PENDING --> [*] : exit
+[*] --> Idle
+Idle -left-> Idle : clear [empty]\n/ report empty
+Idle -down-> Pending : clear [nonempty]\n/ show prompt
+Pending -right-> Pending : invalid reply\n/ repeat prompt
+Pending -left-> Idle : n, no, or empty\n/ cancel
+Pending -up-> Idle : y or yes\n/ clear and save
 @enduml
-

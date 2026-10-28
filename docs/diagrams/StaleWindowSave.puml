@@ -1,40 +1,34 @@
 @startuml
 !include style.puml
-skinparam ActivityFontSize 15
-skinparam ArrowFontSize 12
+skinparam defaultFontSize 16
+skinparam ArrowFontStyle plain
+skinparam activityBackgroundColor STORAGE_COLOR_T1
+skinparam activityBorderColor #555555
+skinparam arrowColor #555555
 
 start
-:Take the lock on
-.tab.json.lock;
-note right
-  The sidecar sits beside the real
-  destination, so windows that reach
-  it through a symbolic link share
-  one lock.
-end note
-
-if (Lock already held?) then ([yes])
-    :Refuse the save,
-    with retry guidance;
+:Resolve data target and sibling lock path;
+if (Save lock acquired?) then (yes)
+  :Reload and validate disk book;
+  if (Disk book matches remembered baseline?) then (yes)
+    :Carry forward current disk comment;
+    :Serialize and atomically replace file;
+    :Remember successfully saved book;
+    :Release lock;
     stop
-else ([no])
+  else (no)
+    :Release lock;
+    :Report stale data;
+    stop
+  endif
+else (no)
+  :Report lock failure or busy save;
+  stop
 endif
 
-:Reread the records on disk;
-
-if (Reread failed?) then ([yes])
-    :Refuse the save;
-    stop
-else ([no])
-endif
-
-if (Records match this window's snapshot?) then ([no])
-    :Refuse the save, asking for
-    a restart before retrying;
-    stop
-else ([yes])
-    :Write the file;
-    :Advance the snapshot;
-    stop
-endif
+legend bottom
+  I/O or validation failure aborts the save.
+  An acquired lock is released on every exit.
+  Logic restores the book and filter on save failure.
+endlegend
 @enduml

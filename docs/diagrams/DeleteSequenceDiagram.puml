@@ -1,71 +1,49 @@
 @startuml
 !include style.puml
 skinparam ArrowFontStyle plain
+skinparam defaultFontSize 16
 
-box Logic LOGIC_COLOR_T1
-participant ":LogicManager" as LogicManager LOGIC_COLOR
-participant ":StudentBookParser" as StudentBookParser LOGIC_COLOR
-participant ":DeleteCommandParser" as DeleteCommandParser LOGIC_COLOR
-participant "d:DeleteCommand" as DeleteCommand LOGIC_COLOR
-participant "r:CommandResult" as CommandResult LOGIC_COLOR
-end box
+participant ":LogicManager" as logic LOGIC_COLOR
+participant ":StudentBookParser" as dispatcher LOGIC_COLOR
+participant ":DeleteCommandParser" as parser LOGIC_COLOR
+participant "c:DeleteCommand" as command LOGIC_COLOR
+participant ":Model" as model MODEL_COLOR
 
-box Model MODEL_COLOR_T1
-participant "m:Model" as Model MODEL_COLOR
-end box
+[-> logic : execute("delete 1")
+activate logic
+logic -> dispatcher : parseCommand("delete 1")
+activate dispatcher
+create parser
+dispatcher -> parser : «create»
+dispatcher -> parser : parse(" 1")
+activate parser
+create command
+parser -> command : «create»
+parser --> dispatcher : command
+deactivate parser
+dispatcher --> logic : command
+deactivate dispatcher
 
-[-> LogicManager : execute("delete 1")
-activate LogicManager
+note over logic : Snapshot book and filter
 
-LogicManager -> StudentBookParser : parseCommand("delete 1")
-activate StudentBookParser
+logic -> command : execute(model)
+activate command
+command -> model : read displayed list
+activate model
+model --> command : displayed students
+deactivate model
+note over command : Resolve index 1
+command -> model : deleteStudent(student)
+activate model
+model --> command
+deactivate model
+command --> logic : result
+deactivate command
 
-create DeleteCommandParser
-StudentBookParser -> DeleteCommandParser
-activate DeleteCommandParser
-
-DeleteCommandParser --> StudentBookParser
-deactivate DeleteCommandParser
-
-StudentBookParser -> DeleteCommandParser : parse("1")
-activate DeleteCommandParser
-
-create DeleteCommand
-DeleteCommandParser -> DeleteCommand
-activate DeleteCommand
-
-DeleteCommand --> DeleteCommandParser :
-deactivate DeleteCommand
-
-DeleteCommandParser --> StudentBookParser : d
-deactivate DeleteCommandParser
-'Hidden arrow to position the destroy marker below the end of the activation bar.
-DeleteCommandParser -[hidden]-> StudentBookParser
-destroy DeleteCommandParser
-
-StudentBookParser --> LogicManager : d
-deactivate StudentBookParser
-
-LogicManager -> DeleteCommand : execute(m)
-activate DeleteCommand
-
-DeleteCommand -> Model : deleteStudent(student)
-activate Model
-
-Model --> DeleteCommand
-deactivate Model
-
-create CommandResult
-DeleteCommand -> CommandResult
-activate CommandResult
-
-CommandResult --> DeleteCommand
-deactivate CommandResult
-
-DeleteCommand --> LogicManager : r
-deactivate DeleteCommand
-
-[<--LogicManager
-deactivate LogicManager
+ref over logic, model
+  Save changed book or restore snapshot
+  (Saving changes safely)
+end ref
+[<-- logic : result
+deactivate logic
 @enduml
-
