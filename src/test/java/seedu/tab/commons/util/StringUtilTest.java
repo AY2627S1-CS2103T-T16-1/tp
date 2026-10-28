@@ -6,11 +6,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.io.FileNotFoundException;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
 public class StringUtilTest {
+
+    @Test
+    public void isBlankInput_nothingToReadACommandFrom_returnsTrue() {
+        for (String blank : List.of("", " ", "\t", "   ", "\u3000", "\u200b", " \u200b\t ", "\u00a0")) {
+            assertTrue(StringUtil.isBlankInput(blank), "should be blank: " + blank);
+        }
+    }
+
+    @Test
+    public void isBlankInput_anythingVisible_returnsFalse() {
+        for (String input : List.of("list", " list ", "\u200blist", "-", ".", "\u200b.")) {
+            assertFalse(StringUtil.isBlankInput(input), "should not be blank: " + input);
+        }
+    }
 
     @Test
     public void containsIgnoreCase_unicodeCaseVariants_returnsTrue() {
@@ -35,6 +50,25 @@ public class StringUtilTest {
     public void normalizeNameForComparison_curlyApostrophes_matchesStraightApostrophe() {
         assertEquals("sean o'brien", StringUtil.normalizeNameForComparison("Sean O‘Brien"));
         assertEquals("sean o'brien", StringUtil.normalizeNameForComparison("Sean O’Brien"));
+    }
+
+    @Test
+    public void normalizeNameForComparison_hyphens_matchSpace() {
+        // the ASCII hyphen, the typographic hyphen and the non-breaking hyphen all read as one
+        for (String name : new String[] {"Mary-Jane", "Mary - Jane", "Mary‐Jane", "Mary‑Jane"}) {
+            assertEquals("mary jane", StringUtil.normalizeNameForComparison(name));
+        }
+        assertEquals("charlotte oliveiro", StringUtil.normalizeNameForComparison("Charlotte-Oliveiro"));
+        assertEquals("charlotte oliveiro", StringUtil.normalizeNameForComparison("Charlotte Oliveiro"));
+    }
+
+    @Test
+    public void normalizeNameForComparison_longerDashes_keepsThemDistinct() {
+        // a reader can tell an en dash, an em dash and a minus sign from a hyphen, so each stands
+        for (String name : new String[] {"Mary–Jane", "Mary—Jane", "Mary−Jane"}) {
+            assertFalse(StringUtil.normalizeNameForComparison(name)
+                    .equals(StringUtil.normalizeNameForComparison("Mary Jane")));
+        }
     }
 
     @Test

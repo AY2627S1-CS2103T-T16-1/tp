@@ -468,8 +468,12 @@ student may carry the same tag under lowercases to itself.
 
 `FileUtil.writeToFile` protects an existing JSON file from a partial save. It
 resolves an existing symbolic link to its destination, so replacing the saved
-data leaves the link in place, and rejects an unresolvable link without
-replacing it or creating its missing target. It also refuses a destination that
+data leaves the link in place. A link whose target is not there yet is followed
+too, so a link set up before its file receives the first save, and only a link
+pointing into a folder that does not exist is refused — no save can create that
+folder without guessing where the records were meant to live. Startup applies
+the same rule through `FileUtil.requireResolvableLink`, so such a link is
+reported rather than read as a first run. It also refuses a destination that
 is not writable, and copies an existing file's POSIX permissions to its
 replacement. The new contents are written and forced to a temporary file beside
 the real destination before an atomic move replaces it. Keeping both files in
@@ -599,6 +603,15 @@ before anything else stays in the value, so nothing the User typed disappears
 unasked. Each token records whether a quote took part in it, which is the only
 thing separating the value `-Ahmad` from the option `-e`.
 
+A token opening with a dash an editor writes for a typed hyphen — U+2010 to
+U+2015 and the minus sign U+2212 — opens an option, for the same reason the
+quote styles are interchangeable: a pasted command is read the way it was
+typed. `CommandTokenizer#isOptionMarker` shares that rule with the highlighter,
+so the box and the parser agree on which word is an option, and a token that
+opens with a quote keeps the dash it was given. One dash stands for one
+hyphen, so an em dash autocorrected from `--` reaches the parser as `-phone`
+and is refused by name rather than stored in a field.
+
 An option where a value was expected is read as the option before it having
 been left empty: `add John -p 123 -t -e` reports that `-t` needs a value rather
 than storing `-e` as a tag. A value that really opens with a hyphen is quoted.
@@ -703,8 +716,11 @@ and `delete` adds the explicit `--id` form whenever the refused target reads as
 a valid NUS Student ID — spelling intact, so a stored numeric ID keeps its
 leading zeroes. `edit` and `tag` share `FlagTokenizer.tokenizeWithIndex`, which
 reports an unquoted negative number as both an invalid index and an unknown
-option, and each reports a value following an otherwise valid target. The
-retained spelling affects diagnostics only, not target equality or hashing.
+option, and each reports a value following an otherwise valid target.
+`ParserUtil.getTargetFieldName` names that target by the form it was read as,
+`NUS_STUDENT_ID` for a letter-leading target and the command's index label
+otherwise, so a user who typed a name is not told that the name is an index.
+The retained spelling affects diagnostics only, not target equality or hashing.
 
 ### Adding or removing one tag
 
@@ -1145,11 +1161,25 @@ the complete unfiltered student book, so a filtered list cannot hide a match
 and unrelated tag or follow-up edits do not repeat an acknowledged warning.
 Name comparisons share `StringUtil.normalizeNameForComparison` with name
 searches: Latin accents and straight/curly apostrophe differences are ignored,
-so copied roster names can be found or flagged using ordinary keyboard input.
+and a hyphen is compared as a space, so copied roster names can be found or
+flagged using ordinary keyboard input even when two lists disagree on whether
+a name such as `Mary-Jane` is hyphenated. The longer dashes are left alone,
+because a reader can tell them from a hyphen and so chooses between them.
 
 All of this is advisory: these comparisons never feed `isSameStudent` or the
 storage duplicate check, so they cannot reject or discard a legitimate shared
 detail.
+
+`DotlessEmailDomainWarning` follows the same contract for a different doubt.
+An email whose domain is a single label, such as `john@gmail`, is a valid host
+name, yet on a student roster it is nearly always a forgotten `.com` or
+`.nus.edu`. `Email.hasDotlessDomain` reports one, and `AddCommand` and
+`EditCommand` append its warning as a second block after any duplicate block,
+so the two read as separate concerns. `EditCommand` passes the selected record
+as well, so an address the student already holds carries no warning and an
+unrelated edit does not repeat an acknowledged one. Email validation is
+untouched, so such an address is still entered, stored, loaded and compared as
+it always was.
 
 ### Finding students
 
@@ -1157,9 +1187,11 @@ detail.
 name, NUS Student ID, phone, email and tag. Every search term must have a field
 option. An option takes one word or one double-quoted phrase; apostrophes are
 literal characters, so names such as `O'Brien` do not need quoting. Repeated
-options retain all values. Bare terms receive `MESSAGE_UNQUALIFIED_TERM`, and
-an extra bare word after an option receives the shared tokenizer's
-unexpected-value diagnostic. Empty or whitespace-only values receive
+options retain all values. Bare terms receive `MESSAGE_UNQUALIFIED_TERM`,
+including an extra bare word after an option: the parser catches the
+tokenizer's `ValueAfterFlagsException` and answers with its own message, since
+the shared one offers the front of the command, where `find` takes nothing.
+Empty or whitespace-only values receive
 `MESSAGE_EMPTY_KEYWORD`; unterminated double quotes report
 `CommandTokenizer.MESSAGE_UNCLOSED_QUOTE`.
 
@@ -1167,7 +1199,10 @@ Search terms are normalized with `StringUtil.normalizeFieldValue`, collapsing
 whitespace runs and applying Unicode NFC normalization. The parser creates a
 `DetailsContainsKeywordsPredicate` with terms grouped by its `Field` enum.
 Every term must match its selected field, using case-insensitive substrings:
-AND applies both within and between fields. Each tag term must occur within
+AND applies both within and between fields. A name term is compared through
+`StringUtil.normalizeNameForComparison`, the key the possible-duplicate warning
+uses, so a search spelled with a hyphen or with a space reaches the same
+students. Tags and the other fields compare their terms literally. Each tag term must occur within
 one tag, but separate terms may match the same tag or different tags. Absent
 optional fields do not match. Explicit field selectors prevent unrelated
 matches in other details and replace the earlier unqualified OR search.
@@ -1357,8 +1392,11 @@ stale confirmation active, and it lives only in memory, so restarting TAB cannot
 confirm a previous request. The prompt and the replies both travel through the
 existing result area and command field, with no mouse or dialog.
 `MainWindow` supplies `Logic.isAwaitingConfirmation` to `CommandBox`, which
-submits an empty Enter only during confirmation; otherwise an empty Enter
-keeps its existing no-op behavior. Each `Logic` implementation must supply
+submits a blank Enter only during confirmation, where a blank reply cancels
+the pending clear; otherwise Enter on a blank line does nothing. Blank is what
+`StringUtil.isBlankInput` calls blank — nothing, whitespace, or only the
+invisible characters a paste carries — so a stray space before Enter is
+ignored the way an empty line is rather than answered with the `help` usage. Each `Logic` implementation must supply
 this state explicitly so a default cannot silently suppress cancellation.
 
 ### \[Proposed\] Data archiving
@@ -2207,9 +2245,9 @@ testers are expected to do more *exploratory* testing.
    1. Test cases: `edit 1 --follow-up -f`, then `edit 1 --follow-up true`,
       then `edit 1 --follow-up --no-follow-up`.<br>
       Expected: None changes Alice. The first reads `Options given more than
-      once: --follow-up. Give each listed option only once.`; the second
-      reports that `true` belongs to no option; the third says the two
-      follow-up options cannot be used together.
+      once: --follow-up. Give each listed option only once.`; the second reads
+      `--follow-up takes no value. Use the option on its own.`; the third says
+      the two follow-up options cannot be used together.
 
 1. Persisting and loading follow-up status
 
@@ -2226,8 +2264,8 @@ testers are expected to do more *exploratory* testing.
 
 1. Preserving the student's other details and persisting the change
 
-   1. Prerequisites: Add `add Tag Test -p 91234567 -e tag@example.com
-      --id A01234567X -t T1 --follow-up` as one line, then `find -n "Tag Test"`.
+   1. Prerequisites: Add `add Tag Test -p 99887766 -e tag@example.com
+      --id A09999999Z -t T1 --follow-up` as one line, then `find -n "Tag Test"`.
    1. Test case: `tag 1 --add "Lab 3"`, then `tag 1 --remove "  LAB   3  "`.<br>
       Expected: The replies start `Added tag [Lab 3]:` and `Removed tag
       [Lab 3]:`. Only that tag comes and goes, `T1`, the contact details and
@@ -2269,6 +2307,17 @@ testers are expected to do more *exploratory* testing.
       they were. Wherever the action is left unclear the reply also carries the
       `-a`/`--add` and `-r`/`--remove` guidance, naming the unknown `-t` option
       and the unexpected value `lab4`.
+
+1. Following the reply to a two-word tag left unquoted
+
+   1. Test cases: `tag 1 -a Lab 3`, then the quoted form the reply names,
+      `tag 1 -a "Lab 3"`.<br>
+      Expected: The first names `"3"` as belonging to no option and offers only
+      the quotes, since the index already stands before the options. The second
+      adds `Lab 3`.
+   1. Test cases: `tag -a Lab 1`, then `tag 1 -a Lab`.<br>
+      Expected: The first reply also offers the front of the command, which no
+      target occupies there, and the second adds `Lab` to the first student.
 
 1. Removing a tag that supplies the search match
 
@@ -2397,9 +2446,9 @@ testers are expected to do more *exploratory* testing.
 
 1. Reading every tag that fits
 
-   1. Test case: Add `add Alex Yeoh -p 87438807 -t T01 -t "Lab 3" -t W5
+   1. Test case: Add `add Alvin Yeo -p 86543210 -t T01 -t "Lab 3" -t W5
       -t consult`, widen to about 1400 px, then add
-      `add Irfan Ibrahim -p 92492021 -t "CS2103T Tutorial W09"
+      `add Imran Ibrahim -p 86543211 -t "CS2103T Tutorial W09"
       -t "CS2103T Tutorial W10"` and narrow and widen repeatedly.<br>
       Expected: All four chips appear alphabetically with no count when there
       is room. Chips that fit appear in full, hidden ones are counted and
@@ -2483,8 +2532,9 @@ testers are expected to do more *exploratory* testing.
       the ID survived the restart.
    1. Test case: With TAB closed, change one `nusStudentId` to `A0123-456X`
       and relaunch.<br>
-      Expected: A startup error names the file, the record and the invalid ID,
-      and the main window does not open.
+      Expected: A startup error names the file, the record, the rejected ID
+      and the one rule it breaks, as an `add --id A0123-456X` reply does, and
+      the main window does not open.
 
 1. Reporting unchanged edits
 
@@ -2522,6 +2572,21 @@ testers are expected to do more *exploratory* testing.
       `Student Four` each with phone `000`, then `add Student Five -p 000`.<br>
       Expected: Student Five is saved, one warning naming two of them and
       saying two others match, with the review advice appearing once.
+
+1. Warning about an email whose domain has no dot
+
+   1. Test case: From an empty book, `add Tan -e john@gmail`, then
+      `add Ng -e john@gmail.com`, then `add Lee -e john@gmail.c`.<br>
+      Expected: Tan is saved and warned about, the warning naming the address
+      and suggesting a missing part such as `.com`. Ng is saved without a
+      warning. Lee is refused, the two-character rule on the final label being
+      validation rather than a warning.
+   1. Test case: Continuing above, `list`, note Tan's index, then
+      `edit INDEX -t T1`, then `edit INDEX -e tan@nus`.<br>
+      Expected: The tag edit shows no warning, the address being one the
+      student already holds. The address edit warns again, naming `tan@nus`.
+      Restarting TAB keeps the address as entered.
+
 ### Editing a student
 
 1. Editing a name that AB3's prefixes made impossible to type
@@ -2565,7 +2630,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Repeating an edit after a search
 
-   1. Prerequisites: Add `add Alex Yeoh -p 87438807`, `add John Doe -p 98765432`
+   1. Prerequisites: Add `add Mary Chen -p 86543212`, `add John Doe -p 98765432`
       and `add John Smith -p 91112222`, then run `find -n john`.
    1. Test case: Run `edit 1 --follow-up` twice, then `edit 1 -n Jack` followed
       by `edit 1 -p 91112233`.<br>
@@ -2693,7 +2758,16 @@ testers are expected to do more *exploratory* testing.
       Expected: `No student has NUS Student ID A99999999Z.`; a bare `delete`
       shows the command's format; `delete 999` is refused as past the end of
       the displayed list; and `delete 1 2` reads `Unexpected value after INDEX:
-      "2". delete accepts one index and nothing else.` No student is deleted.
+      "2". delete accepts one index or NUS Student ID and nothing else.` No
+      student is deleted.
+   1. Test case: `delete Alex Yeoh`, then `edit Alex Yeoh -p 91234567` and
+      `tag Alex Yeoh -a T1`.<br>
+      Expected: Nothing is changed. Each reply names the word to remove after
+      `NUS_STUDENT_ID`, the form a target that is not a number is read as:
+      `Unexpected value after NUS_STUDENT_ID: "Yeoh". delete accepts one index
+      or NUS Student ID and nothing else.` for `delete`, and the same opening
+      followed by `Put field values after an option.` for the other two. No
+      reply calls `Alex` an index.
    1. Test case: `delete 1` followed by a non-breaking space (`U+00A0`) pasted
       from a web page.<br>
       Expected: The first record is deleted exactly as with an ordinary space.
@@ -2824,6 +2898,11 @@ testers are expected to do more *exploratory* testing.
       Expected: The add succeeds with a possible-duplicate name warning rather
       than a refusal, and the original spellings survive saving and reloading
       while the normalized comparisons still find them.
+   1. Test case: `add "Mary Jane" -p 84445555`, then `add Mary-Jane -p
+      85556666`, then `find -n "mary jane"`.<br>
+      Expected: The second add warns that Mary Jane has the same name, the two
+      cards keep the space and the hyphen they were given, and the search
+      lists both students.
 ### Normalizing hidden control characters in saved names and tags
 
 1. Test case: With TAB closed, set one student's saved name to `"Am\u0001y"`
@@ -2966,9 +3045,15 @@ testers are expected to do more *exploratory* testing.
 
    1. Test cases: `find Jason`, `find -t lab tutorial`, `find -t`,
       `find --unknown friend`, `find -t ""` and `find -t "lab`.<br>
-      Expected: Each names the missing field option, unexpected value, missing
-      value, unknown option, empty term or unclosed quote. The displayed list
-      is unchanged after every refusal.
+      Expected: The first two read alike, since a bare term is the same mistake
+      before and after an option, and both name `find -n Jason -t Lab -n Tan`
+      and `find -n "Jason Tan"` as the forms that work. The rest name the
+      missing value, unknown option, empty term and unclosed quote. The
+      displayed list is unchanged after every refusal.
+   1. Test cases: Run the two forms the second reply names,
+      `find -t lab -t tutorial` and `find -t "lab tutorial"`.<br>
+      Expected: Both are accepted and report their counts, so following the
+      reply costs no second refusal.
    1. Test case: Run `list` and restart TAB.<br>
       Expected: All six students and their details remain, the saved file
       untouched by any search, successful or refused.
@@ -2988,8 +3073,9 @@ testers are expected to do more *exploratory* testing.
       options.
    1. Test cases: `find -f -nf`, `find -f --follow-up` and `find -f true`.<br>
       Expected: A clear error for conflicting selectors, a repeated selector,
-      and a bare value after an option that takes none. The displayed list is
-      unchanged, and restarting TAB leaves every student and status intact.
+      and `-f takes no value. Use the option on its own.` for the last. The
+      displayed list is unchanged, and restarting TAB leaves every student and
+      status intact.
 ### Confirming before clearing all students
 
 1. Confirmation, cancellation, and keyboard use
@@ -3083,8 +3169,9 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Replace the contents with `not json format!`, then on a later
       run restore the copy and remove the comma after one student's `"name"`.<br>
       Expected: Each refuses to open the main window, naming the file,
-      reporting the line and column, and showing the affected line numbered
-      with at most one line on either side. The file is left as it is.
+      reporting the line and column, and quoting the affected line numbered
+      with at most one line on either side, as a monospaced listing below the
+      message. The file is left as it is.
    1. Test case: Change the second student's `nusStudentId` key to
       `nusStudentID`, keeping its value.<br>
       Expected: The error names the unknown key, the record and that student,

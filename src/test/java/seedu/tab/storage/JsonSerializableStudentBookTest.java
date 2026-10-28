@@ -38,7 +38,7 @@ public class JsonSerializableStudentBookTest {
                 JsonSerializableStudentBook.class).get();
         assertThrows(IllegalValueException.class,
                 "Student record 1 (\"Hans Muster\"): Email \"invalid@email!3e\" is not valid: "
-                        + "the domain may hold letters and digits in labels separated by dots, "
+                        + "the domain may hold ASCII letters and digits in labels separated by dots, "
                         + "with hyphens allowed inside a label", dataFromFile::toModelType);
     }
 
