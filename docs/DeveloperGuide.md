@@ -39,7 +39,7 @@ When packaged, TAB resolves `data/tab.json` and `preferences.json` relative to t
 
 ### Architecture
 
-TAB retains AB3's four main components. The UML package diagram below shows their dependencies; an arrow points from the component that uses an API or type to the component that provides it. `Main` represents application startup and shutdown. Shared utilities in `Commons` are used across these components and are omitted from the arrows to keep the diagram focused.
+TAB retains AB3's four main components and the shared `Commons` utilities. The UML package diagram below shows their dependencies; an arrow points from the component that uses an API or type to the component that provides it. `Main` represents application startup and shutdown. `Commons` utilities are used across components and omitted from the arrows for focus.
 
 <puml src="diagrams/ArchitectureDiagram.puml" alt="Dependencies between TAB's architectural components" />
 
@@ -50,6 +50,10 @@ TAB retains AB3's four main components. The UML package diagram below shows thei
 | Model | [`Model`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/model/Model.java), implemented by `ModelManager` | Owns the student book, user preferences, and active filtered view. |
 | Storage | [`Storage`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/storage/Storage.java), implemented by `StorageManager` | Loads and saves student records and preferences through separate JSON storage classes. |
 | Commons | `seedu.tab.commons` | Supplies indexing, logging, value normalization, file access, and error formatting. |
+
+The sequence diagram shows how these components cooperate for a successful `delete 1`. Lifelines represent components; messages summarize interactions rather than every internal call. Logic parses the command, snapshots the model, and executes the deletion, then saves the changed book before returning feedback. Parser details and failure paths are expanded in the Logic and saving sections.
+
+<puml src="diagrams/ArchitectureSequenceDiagram.puml" alt="Successful deletion flowing through UI, Logic, Model, and Storage" />
 
 `MainApp.init()` reads preferences, constructs storage, loads the student book into `ModelManager`, and connects `LogicManager` and `UiManager`. A missing student file produces sample students. An unreadable student file produces a startup error that prevents the normal window from opening. This distinction protects existing records from being replaced by an empty or sample book.
 
