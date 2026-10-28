@@ -230,6 +230,24 @@ public class TagCommandIntegrationTest {
     }
 
     @Test
+    public void execute_nameAsTarget_namesTheFormTheTargetWasReadAs() throws Exception {
+        // a user who types a name gives a first word that is not a number, which every
+        // command reads as an NUS Student ID, so none of them calls that word an index
+        String valueAfterId = "Unexpected value after NUS_STUDENT_ID: \"Yeoh\". ";
+        String deleteOnly = "delete accepts one index or NUS Student ID and nothing else.";
+        Map<String, String> errors = Map.of(
+                "delete Alex Yeoh", valueAfterId + deleteOnly,
+                "delete A01234567X Yeoh", valueAfterId + deleteOnly,
+                "edit Alex Yeoh -p 91234567", valueAfterId + "Put field values after an option.",
+                "tag Alex Yeoh -a T1", valueAfterId + "Put field values after an option.",
+                // a target that really is an index keeps the index wording
+                "delete 2 3", "Unexpected value after INDEX: \"3\". " + deleteOnly);
+        for (Map.Entry<String, String> error : errors.entrySet()) {
+            assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());
+        }
+    }
+
+    @Test
     public void execute_invalidEditIndex_reportsReasonWithoutMutation() throws Exception {
         for (String target : List.of("0", "1.5", "+1", "\"-1\"")) {
             assertFailureWithoutMutation("edit " + target + " -p 91234567", ParseException.class,
