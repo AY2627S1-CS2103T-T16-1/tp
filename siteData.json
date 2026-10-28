@@ -67,6 +67,7 @@
         "follow-up-flag": "Follow-up flag",
         "field-values": "Field values",
         "detecting-duplicate-students": "Detecting duplicate students",
+        "warning-about-tags-that-resemble-the-follow-up-marker": "Warning about tags that resemble the follow-up marker",
         "finding-students": "Finding students",
         "handling-an-unreadable-data-file": "Handling an unreadable data file",
         "rejecting-unknown-keys-and-malformed-tags": "Rejecting unknown keys and malformed tags",
