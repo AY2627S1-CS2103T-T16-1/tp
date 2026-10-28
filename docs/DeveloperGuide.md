@@ -198,6 +198,10 @@ Adding has one additional usability rule. If the new student fails the current p
 
 `TagCommand` copies the selected student's tag set, adds or removes one case-insensitive match, and constructs a replacement student with all other details preserved. Adding an existing tag or removing an absent one reports that no change was made. This provides incremental grouping without rebuilding the entire tag set through `edit`.
 
+The sequence diagram traces execution of `tag 1 -a T1` when the displayed student does not already have that tag. `StudentTarget` resolves the displayed index before the command replaces the record. Parsing has already constructed the command; Logic saves the changed book after execution, following [Saving changes safely](#saving-changes-safely).
+
+<puml src="diagrams/TagCommandSequence.puml" alt="Resolving a displayed student and replacing its record to add tag T1" />
+
 Follow-up is a separate status. `Student` holds an optional `FollowUpFlag`, a specialized `Tag` used for its display label, outside the general tag set. The `-f` option on `add` starts a flagged record; on `edit`, `-f` sets the status and `-nf` clears it. The shared selector parser rejects repeated or conflicting status options. `find -f` and `find -nf` use the same status as a filter.
 
 The exact label `Needs follow-up` is reserved, ignoring case and normalized spacing. Commands reject it as a new general tag, and storage asks users to represent it with `"flag": true`. Related labels remain valid tags; `FollowUpTagWarning` explains that labels resembling the marker do not set follow-up status. Keeping status separate prevents a student from displaying and counting the same marker twice.

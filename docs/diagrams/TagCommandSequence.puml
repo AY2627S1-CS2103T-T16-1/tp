@@ -1,73 +1,33 @@
 @startuml
 !include style.puml
+skinparam ArrowFontStyle plain
+skinparam defaultFontSize 16
 
-actor User
-participant "LogicManager" as LogicManager LOGIC_COLOR
-participant "StudentBookParser" as SBP LOGIC_COLOR
-participant "TagCommandParser" as TagParser LOGIC_COLOR
-participant "FlagTokenizer" as FlagTokenizer LOGIC_COLOR
-participant "ParserUtil" as ParserUtil LOGIC_COLOR
-participant "ParseProblems" as Problems LOGIC_COLOR
-participant "TagCommand" as TagCommand LOGIC_COLOR
-participant "Model" as Model MODEL_COLOR
+participant "c:TagCommand" as command LOGIC_COLOR
+participant "target:StudentTarget" as target LOGIC_COLOR
+participant ":Model" as model MODEL_COLOR
 
-User -> LogicManager : execute("tag 1 -a T1")
-activate LogicManager
-
-LogicManager -> SBP : parseCommand("tag 1 -a T1")
-activate SBP
-
-SBP -> TagParser : parse("1 -a T1")
-activate TagParser
-
-TagParser -> FlagTokenizer : tokenizeWithIndex(args, FLAG_ADD_TAG, FLAG_REMOVE_TAG, FLAG_NUS_STUDENT_ID)
-activate FlagTokenizer
-FlagTokenizer --> TagParser : FlagArgumentMap
-deactivate FlagTokenizer
-
-TagParser -> Problems : new ParseProblems()
-activate Problems
-
-TagParser -> ParserUtil : parseRequiredStudentTarget("1", ...)
-activate ParserUtil
-ParserUtil --> TagParser : StudentTarget.byIndex(Index(1))
-deactivate ParserUtil
-TagParser -> Problems : collect(result)
-Problems --> TagParser : StudentTarget
-
-TagParser -> ParserUtil : parseTag("T1")
-activate ParserUtil
-ParserUtil --> TagParser : Tag("T1")
-deactivate ParserUtil
-TagParser -> Problems : collectIfPresent(actionFlagValue, result)
-Problems --> TagParser : Tag
-
-TagParser -> Problems : throwIfAny()
-deactivate Problems
-
-TagParser --> SBP : TagCommand(StudentTarget, Action.ADD, Tag)
-deactivate TagParser
-
-SBP --> LogicManager : TagCommand
-deactivate SBP
-
-LogicManager -> TagCommand : execute(model)
-activate TagCommand
-
-TagCommand -> Model : target.resolve(model)
-activate Model
-Model --> TagCommand : Student
-deactivate Model
-
-TagCommand -> Model : setStudent(original, updated)
-activate Model
-Model --> TagCommand : updated
-deactivate Model
-
-TagCommand --> LogicManager : CommandResult
-deactivate TagCommand
-
-LogicManager --> User : "Edited student: ... Tags: [T1]"
-deactivate LogicManager
+[-> command : execute(model)
+activate command
+command -> target : resolve(model, ID_TARGET_COMMAND)
+activate target
+target -> model : getFilteredStudentList()
+activate model
+model --> target : displayed students
+deactivate model
+note over target : Select index 1
+target --> command : student
+deactivate target
+note over command
+  Check that tag T1 is absent, ignoring case.
+  Copy tags and construct replacement student.
+  Feedback starts "Added tag [T1]:".
+end note
+command -> model : setStudent(student, updatedStudent)
+activate model
+model --> command
+deactivate model
+[<-- command : result
+deactivate command
 @enduml
 
