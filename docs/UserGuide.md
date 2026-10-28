@@ -364,9 +364,9 @@ at either end. Dots may separate non-empty groups; leading, trailing and
 consecutive dots are refused. For example, `mei__tan@hotmail.com` and
 `sean.o'brien@example.com` are accepted and stored as entered. Addresses that
 require a quoted local part (such as one containing spaces) are unsupported.
-The domain uses letters and digits with internal hyphens, separated by dots;
-its final label must have at least two characters. If an address starts with
-`-`, wrap the whole address in double quotes so it is read as a value.
+The domain uses ASCII letters and digits with internal hyphens, separated by
+dots; its final label must have at least two characters. If an address starts
+with `-`, wrap the whole address in double quotes so it is read as a value.
 
 <box type="tip" seamless>
 
