@@ -81,6 +81,35 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_quotedEmptyTarget_throwsUsageMessage() {
+        for (String input : List.of("\"\"", "\"   \"", "\"\" \"\"")) {
+            assertParseFailure(parser, input, DeleteCommand.MESSAGE_USAGE);
+        }
+    }
+
+    @Test
+    public void parse_invalidTargetBeforeExtraValue_throwsInvalidIndexMessage() {
+        for (String input : List.of("\"\" !", "! extra")) {
+            assertParseFailure(parser, input, ParserUtil.MESSAGE_INVALID_INDEX);
+        }
+    }
+
+    @Test
+    public void parse_repeatedIdOption_throwsDuplicateOptionMessage() {
+        for (String input : List.of("--id A --id B", "--id A -i B", "-i=A -i=B")) {
+            String marker = input.startsWith("--id") ? "--id" : "-i";
+            assertParseFailure(parser, input,
+                    "Options given more than once: " + marker + ". Give each listed option only once.");
+        }
+    }
+
+    @Test
+    public void parse_miscasedIdOption_suggestsLowercaseOption() {
+        assertParseFailure(parser, "--ID A01234567X", "There is no --ID option. Did you mean --id?");
+        assertParseFailure(parser, "-I A01234567X", "There is no -I option. Did you mean -i?");
+    }
+
+    @Test
     public void parse_zeroIndex_throwsParseException() {
         // the reason stands on its own, as edit and tag report theirs, rather than under the
         // usage block, and a target that reads as an ID still names the --id command for it
