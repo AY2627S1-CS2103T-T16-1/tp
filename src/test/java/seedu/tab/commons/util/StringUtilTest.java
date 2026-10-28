@@ -2,6 +2,7 @@ package seedu.tab.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
 
@@ -77,6 +78,61 @@ public class StringUtilTest {
         assertEquals("a", StringUtil.normalizeNameForComparison("A\u0301\u093f\u20dd"));
         assertEquals("क\u0301\u093f\u20dd",
                 StringUtil.normalizeNameForComparison("क\u0301\u093f\u20dd"));
+    }
+
+    @Test
+    public void normalizeNameForComparison_latinLetterWithModifier_readsAsBaseLetter() {
+        // no decomposition takes these letters apart, so the stroke has to be mapped away
+        String[][] cases = {
+            {"Đặng Thị Mai", "dang thi mai"},
+            {"đặng thị mai", "dang thi mai"},
+            {"Łukasz Nowak", "lukasz nowak"},
+            {"Søren Kierkegaard", "soren kierkegaard"},
+            {"Ħamed", "hamed"},
+            {"Ŧorvald", "torvald"},
+            {"Ǥunnar", "gunnar"},
+            {"Ɨsabel", "isabel"},
+            {"Ƀjörn", "bjorn"},
+            {"Paŀla", "palla"}
+        };
+        for (String[] pair : cases) {
+            assertEquals(pair[1], StringUtil.normalizeNameForComparison(pair[0]));
+        }
+    }
+
+    @Test
+    public void normalizeNameForComparison_letterStandingOnItsOwn_staysDistinct() {
+        // Unicode names no base letter for these, and a reader spells each of them with two keys,
+        // so folding them would be transliteration rather than a comparison key
+        String[][] cases = {
+            {"Æsa", "aesa"},
+            {"Œuvre", "oeuvre"},
+            {"Weiß", "weiss"},
+            {"Ðóra", "dora"},
+            {"Þór", "thor"},
+            {"Ŋuyen", "nguyen"}
+        };
+        for (String[] pair : cases) {
+            assertNotEquals(pair[1], StringUtil.normalizeNameForComparison(pair[0]));
+        }
+    }
+
+    @Test
+    public void normalizeNameForComparison_codePointUnicodeDoesNotName_keepsItAsItIs() {
+        // U+FDD0 is a permanent noncharacter, so Unicode will never give it a name. A name
+        // pasted from a damaged source can still hold one, and the key has to survive it.
+        assertEquals("amy﷐", StringUtil.normalizeNameForComparison("Amy﷐"));
+    }
+
+    @Test
+    public void normalizeNameForComparison_nonLatinScript_keepsItsOwnLettersAndMarks() {
+        // Cyrillic Ө is barred like Ø, but a reader tells it apart from Cyrillic and Latin O
+        assertNotEquals(StringUtil.normalizeNameForComparison("О"),
+                StringUtil.normalizeNameForComparison("Ө"));
+        assertNotEquals(StringUtil.normalizeNameForComparison("O"),
+                StringUtil.normalizeNameForComparison("Ө"));
+        // a Devanagari vowel sign is a vowel of its own, not an optional accent
+        assertEquals("कि", StringUtil.normalizeNameForComparison("कि"));
     }
 
     @Test

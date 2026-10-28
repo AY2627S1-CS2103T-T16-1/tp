@@ -1160,11 +1160,12 @@ selected record. It excludes the selected `Student` instance but still uses
 the complete unfiltered student book, so a filtered list cannot hide a match
 and unrelated tag or follow-up edits do not repeat an acknowledged warning.
 Name comparisons share `StringUtil.normalizeNameForComparison` with name
-searches: Latin accents and straight/curly apostrophe differences are ignored,
-and a hyphen is compared as a space, so copied roster names can be found or
-flagged using ordinary keyboard input even when two lists disagree on whether
-a name such as `Mary-Jane` is hyphenated. The longer dashes are left alone,
-because a reader can tell them from a hyphen and so chooses between them.
+searches: Latin accents, the stroke or slash on a Latin letter and
+straight/curly apostrophe differences are ignored, and a hyphen is compared as
+a space, so copied roster names can be found or flagged using ordinary keyboard
+input even when two lists disagree on whether a name such as `Mary-Jane` is
+hyphenated. The longer dashes are left alone, because a reader can tell them
+from a hyphen and so chooses between them.
 
 All of this is advisory: these comparisons never feed `isSameStudent` or the
 storage duplicate check, so they cannot reject or discard a legitimate shared
@@ -1221,6 +1222,17 @@ canonical decomposition and removes marks attached to Latin letters, then maps
 curly apostrophes to straight ones. Marks in other scripts remain significant,
 so vowels needed to distinguish names are retained. This is a comparison key,
 not transliteration; model values and JSON retain their existing spelling.
+
+Decomposition leaves `Đ`, `Ł` and `Ø` whole, so the mark removal never reaches
+their stroke. `stripLetterModifiers` therefore replaces each such letter with
+the letter underneath it. Which letter that is comes from the Unicode character
+name rather than a list of pairs: a name reading `LATIN SMALL LETTER D WITH
+STROKE` gives up its base letter, which keeps the mapping one letter to one
+letter and extends itself as Unicode assigns more of them. A letter whose name
+states no base letter is left alone, so `Æ`, `Œ`, `ß`, `Ð` and `Þ` stay
+distinct; each of them reads as two keyboard letters, and expanding it would be
+transliteration. The rule reaches only names beginning `LATIN`, so a stroked
+letter in another script, such as Cyrillic `Ө`, keeps its own identity.
 
 A phone term made only of Unicode decimal digits, or of those digits with
 grouping whitespace and phone punctuation (`+`, `-`, `(`, `)`, `.`), is also
@@ -2883,12 +2895,13 @@ testers are expected to do more *exploratory* testing.
 1. Searching copied roster names without changing their stored spelling
 
    1. Prerequisites: In a disposable folder, add `add Sean O’Brien -p 87654321`,
-      `add Nguyễn Văn An -p 81234567`, `add José Rivera -p 81234568` and
-      `add ΝΙΚΟΣ -p 91234567 -t ΟΣ`.
-   1. Test cases: `find -n O'Brien`, `find -n nguyen` and `find -n jose`.<br>
+      `add Nguyễn Văn An -p 81234567`, `add José Rivera -p 81234568`,
+      `add Đặng Thị Mai -p 81112222` and `add ΝΙΚΟΣ -p 91234567 -t ΟΣ`.
+   1. Test cases: `find -n O'Brien`, `find -n nguyen`, `find -n jose` and
+      `find -n dang`.<br>
       Expected: Each finds its student although the term is typed with a
-      straight apostrophe or without accents, and the cards keep the curly
-      apostrophe and the accents.
+      straight apostrophe, without accents or with a plain `D` for `Đ`, and the
+      cards keep the curly apostrophe, the accents and the stroke.
    1. Test cases: `find -n Σ`, `find -n ς` and `find -t οσ`.<br>
       Expected: Each finds ΝΙΚΟΣ, so the two lower-case forms of a Greek sigma
       match the capital. `tag 1 -a οσ` reports `This student already has tag

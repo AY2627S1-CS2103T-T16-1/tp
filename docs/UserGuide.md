@@ -416,8 +416,9 @@ Review the records and delete duplicates only if they are the same person.
 ```
 
 Names and emails are compared without regard to letter case. Names also ignore
-Latin accents and straight/curly apostrophe differences: `José` matches `Jose`,
-and `O’Brien` matches `O'Brien`. A hyphen is compared as a space, so
+Latin accents, the stroke or slash on a Latin letter, and straight/curly
+apostrophe differences: `José` matches `Jose`, `Đặng` matches `Dang`, and
+`O’Brien` matches `O'Brien`. A hyphen is compared as a space, so
 `Mary-Jane` matches `Mary Jane`; longer dashes such as an en dash are compared
 as themselves. Repeated, leading, and trailing whitespace in
 names is insignificant. Phone numbers match when their complete digit sequences
@@ -870,7 +871,8 @@ Provide at least one field term or one follow-up status option. Every search ter
 * Enclose a multi-word term in double quotes: `find -n "Jason Tan"` requires that whole
   phrase in the name. `find -t "lab tutorial"` requires the phrase within one tag;
   separate tags are never joined. Repeated spaces inside a phrase are collapsed to one space.
-* Name searches ignore Latin accents and straight/curly apostrophe differences:
+* Name searches ignore Latin accents, the stroke or slash on a Latin letter, and
+  straight/curly apostrophe differences: `find -n dang` matches `Đặng Thị Mai`,
   `find -n nguyen` matches `Nguyễn Văn An`, `find -n jose` matches `José Rivera`,
   and `find -n O'Brien` matches `Sean O’Brien`. The stored spelling stays unchanged.
 * Name searches also compare a hyphen as a space, so `find -n "Mary Jane"` matches
@@ -880,6 +882,9 @@ Provide at least one field term or one follow-up status option. Every search ter
 * Unicode case variants match in names and tags: `find -n σ` matches `ΝΙΚΟΣ`,
   and `find -t οσ` matches tag `ΟΣ`, consistent with adding/removing that tag.
   Accents and apostrophes remain significant in tags and other fields.
+* A letter that a reader spells with two keys, such as `Æ`, `Œ`, `ß` or `Þ`, is
+  compared as itself rather than expanded. Search for such a name by a part of it
+  you can type.
 * Single quotation marks do not group words; use double quotes for phrases.
 * Bare terms are refused, including a name given before any option. Use a field option
   for every term. An extra word after an option is also refused; repeat the option or quote a phrase.
