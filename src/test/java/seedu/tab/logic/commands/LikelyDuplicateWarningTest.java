@@ -26,7 +26,9 @@ public class LikelyDuplicateWarningTest {
             {"Søren Kierkegaard", "Soren Kierkegaard"},
             {"Soren Kierkegaard", "Søren Kierkegaard"},
             {"ΝΙΚΟΣ", "νικοσ"},
-            {"νικοσ", "νικος"}
+            {"νικοσ", "νικος"},
+            {"Charlotte Oliveiro", "Charlotte-Oliveiro"},
+            {"Mary-Jane Tan", "Mary Jane Tan"}
         };
         for (String[] pair : cases) {
             String storedName = pair[0];
@@ -40,6 +42,16 @@ public class LikelyDuplicateWarningTest {
             assertEquals(storedName, existing.getName().getFullName());
             assertEquals(typedName, changed.getName().getFullName());
         }
+    }
+
+    @Test
+    public void appendTo_longerDashInName_doesNotWarn() {
+        // an en dash is a character of its own, not the hyphen a second roster writes as a space
+        Student existing = new StudentBuilder().withName("Mary Jane Tan").withoutPhone().withoutEmail().build();
+        Student changed = new StudentBuilder().withName("Mary–Jane Tan").withoutPhone().withoutEmail().build();
+
+        assertEquals(SUCCESS_MESSAGE, LikelyDuplicateWarning.appendTo(
+                SUCCESS_MESSAGE, changed, List.of(existing)));
     }
 
     @Test

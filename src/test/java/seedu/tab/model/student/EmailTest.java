@@ -167,12 +167,25 @@ public class EmailTest {
         assertEquals("there is nothing after the @", Email.getFailureReason("john@"));
         assertEquals("the last part of the domain needs at least 2 characters",
                 Email.getFailureReason("john@x"));
-        assertEquals("the part before the @ may hold letters, digits and !#$%&'*+/=?^_`{|}~-"
+        assertEquals("the part before the @ may hold ASCII letters, digits and !#$%&'*+/=?^_`{|}~-"
                 + ", with dots allowed only between non-empty groups",
                 Email.getFailureReason("john doe@x.com"));
-        assertEquals("the domain may hold letters and digits in labels separated by dots, "
+        assertEquals("the domain may hold ASCII letters and digits in labels separated by dots, "
                 + "with hyphens allowed inside a label", Email.getFailureReason("john@x_y.com"));
     }
+
+    @Test
+    public void getFailureReason_accentedLetters_saysOnlyAsciiLettersAreAccepted() {
+        assertFalse(Email.isValidEmail("josé@example.com"));
+        assertEquals("the part before the @ may hold ASCII letters, digits and !#$%&'*+/=?^_`{|}~-"
+                + ", with dots allowed only between non-empty groups",
+                Email.getFailureReason("josé@example.com"));
+
+        assertFalse(Email.isValidEmail("hans@bücher.de"));
+        assertEquals("the domain may hold ASCII letters and digits in labels separated by dots, "
+                + "with hyphens allowed inside a label", Email.getFailureReason("hans@bücher.de"));
+    }
+
     @Test
     public void isValidEmail_longDirectInput_preservesFormatWithoutStackOverflow() {
         String local = "a.".repeat(5000) + "a";
@@ -208,6 +221,25 @@ public class EmailTest {
         for (String character : List.of("/", ":", "[", "`", "{", "é")) {
             assertFalse(Email.isValidEmail("student@" + character + "a"), character);
         }
+    }
+
+    @Test
+    public void hasDotlessDomain_singleLabelDomain_returnsTrue() {
+        for (String address : List.of("john@gmail", "e1234567@nus", "a@localhost", "john@my-host")) {
+            assertTrue(new Email(address).hasDotlessDomain(), address);
+        }
+    }
+
+    @Test
+    public void hasDotlessDomain_dottedDomain_returnsFalse() {
+        for (String address : List.of("john@gmail.com", "e1234567@u.nus.edu", "a.b@x.co")) {
+            assertFalse(new Email(address).hasDotlessDomain(), address);
+        }
+    }
+
+    @Test
+    public void hasDotlessDomain_dotInLocalPartOnly_returnsTrue() {
+        assertTrue(new Email("john.tan@gmail").hasDotlessDomain());
     }
 
 }

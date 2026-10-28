@@ -114,6 +114,14 @@ text remains one command; inspect it before pressing Enter.
   quote marks as part of a value, put a backslash before it, as in `\“`.
   Single quotation marks and apostrophes remain literal characters.
 
+* A word opening with a dash your editor wrote for a hyphen — such as the en
+  dash `–` or em dash `—` that "smart dashes" produce — opens an option, so a
+  command pasted from a document behaves like a typed one. `add Amy Lim –p
+  91234567` records the phone number rather than storing it in the name. Each
+  dash stands for one hyphen, so `—phone` reads as `-phone` and is refused by
+  name. A dash inside a word, as in `Jean–Luc`, stays part of the value; to
+  keep one at the start of a value, quote it, as in `add "–Mystery"`.
+
 * If a non-repeatable option is given twice, TAB names the repeated option
   and asks you to give it only once. For example, repeating `-f` reports
   `Options given more than once: -f. Give each listed option only once.`
@@ -364,9 +372,21 @@ at either end. Dots may separate non-empty groups; leading, trailing and
 consecutive dots are refused. For example, `mei__tan@hotmail.com` and
 `sean.o'brien@example.com` are accepted and stored as entered. Addresses that
 require a quoted local part (such as one containing spaces) are unsupported.
-The domain uses letters and digits with internal hyphens, separated by dots;
-its final label must have at least two characters. If an address starts with
-`-`, wrap the whole address in double quotes so it is read as a value.
+The domain uses ASCII letters and digits with internal hyphens, separated by
+dots; its final label must have at least two characters. A domain with no dot
+at all, such as `john@gmail`, is a valid host name, so TAB saves it and warns
+you instead of refusing it:
+
+```
+WARNING: Possibly incomplete email: john@gmail has no dot in its domain.
+Check whether a part such as .com or .nus.edu is missing; the address is saved as entered.
+```
+
+The warning appears after `add`, and after an `edit` that sets the address. A
+student address nearly always ends in something like `.com` or `.nus.edu`, so
+the warning catches a forgotten ending while you still remember the student.
+If an address starts with `-`, wrap the whole address in double quotes so it
+is read as a value.
 
 <box type="tip" seamless>
 
@@ -398,7 +418,9 @@ Review the records and delete duplicates only if they are the same person.
 Names and emails are compared without regard to letter case. Names also ignore
 Latin accents, the stroke or slash on a Latin letter, and straight/curly
 apostrophe differences: `José` matches `Jose`, `Đặng` matches `Dang`, and
-`O’Brien` matches `O'Brien`. Repeated, leading, and trailing whitespace in
+`O’Brien` matches `O'Brien`. A hyphen is compared as a space, so
+`Mary-Jane` matches `Mary Jane`; longer dashes such as an en dash are compared
+as themselves. Repeated, leading, and trailing whitespace in
 names is insignificant. Phone numbers match when their complete digit sequences
 match, ignoring spaces and other non-digit characters; equivalent Unicode
 decimal digits also match. For example, `9123-4567`, `91234567`, and
@@ -557,7 +579,7 @@ For example, an ID containing punctuation is rejected specifically:
 
 ```
 > add John Doe -p 98765432 --id A0123-456X
-NUS Student ID "A0123-456X" is not valid: a NUS Student ID can only contain ASCII letters and digits
+NUS Student ID "A0123-456X" is not valid: an NUS Student ID can only contain ASCII letters and digits
 ```
 
 ### Listing all students: `list`
@@ -707,7 +729,7 @@ details, including follow-up status.
 
 Format: `tag TARGET -a TAG`
 
-* `TARGET` is a positive index in the displayed list, a NUS Student ID starting
+* `TARGET` is a positive index in the displayed list, an NUS Student ID starting
   with a letter, or `--id NUS_STUDENT_ID` (alias `-i`). An ID is matched
   case-insensitively across the whole student book, even when the current
   search hides that student. IDs starting with a digit need `--id` or `-i`;
@@ -853,6 +875,10 @@ Provide at least one field term or one follow-up status option. Every search ter
   straight/curly apostrophe differences: `find -n dang` matches `Đặng Thị Mai`,
   `find -n nguyen` matches `Nguyễn Văn An`, `find -n jose` matches `José Rivera`,
   and `find -n O'Brien` matches `Sean O’Brien`. The stored spelling stays unchanged.
+* Name searches also compare a hyphen as a space, so `find -n "Mary Jane"` matches
+  `Mary-Jane Tan` and `find -n Mary-Jane` matches `Mary Jane Tan`. A longer dash, such
+  as an en dash, is compared as itself, and hyphens stay significant in tags and
+  other fields.
 * Unicode case variants match in names and tags: `find -n σ` matches `ΝΙΚΟΣ`,
   and `find -t οσ` matches tag `ΟΣ`, consistent with adding/removing that tag.
   Accents and apostrophes remain significant in tags and other fields.
@@ -915,7 +941,11 @@ Format: `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID
   so you can verify exactly which student was deleted from the book.
 * `delete` takes no field values, so a value found after the target is refused with
   `Unexpected value after INDEX: "..."`, naming the part to remove, as in
-  `Unexpected value after INDEX: "2". delete accepts one index and nothing else.`
+  `Unexpected value after INDEX: "2". delete accepts one index or NUS Student ID and
+  nothing else.` A target that opens with a letter is read as an ID, so a word left
+  after a target such as `Alex` is reported after `NUS_STUDENT_ID` in place of
+  `INDEX`. Deleting by name is not supported: use the index shown beside the student,
+  or their NUS Student ID.
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd student in the student book.
@@ -1024,6 +1054,14 @@ at the next run instead of opening the main window. It never treats a file it
 cannot read as a first launch, so your records are not replaced by sample
 students. Restore your permission to the file and the folder, then restart TAB.
 
+`data/tab.json` may be a symbolic link, which is one way to keep your records
+in a synced folder. TAB follows the link and saves through it, leaving the link
+itself in place, and creates the file at the other end on the first save if it
+is not there yet. If the link points into a folder that does not exist, TAB
+reports that at startup and names the missing target, because it cannot tell
+where you meant the records to go. Create the folder, or point the link
+somewhere else, then restart TAB.
+
 Save the file as **UTF-8**, with or without a leading byte order mark (BOM).
 TAB accepts both forms and preserves accented letters and other Unicode text.
 Files saved in another encoding, such as Windows-1252 (ANSI), may contain
@@ -1042,6 +1080,14 @@ one `t1` tag). The next successful save writes the merged tags.
 The top-level object accepts `students` and an optional `_comment` description.
 Correct the spelling or remove the unsupported field, then restart TAB; the
 rejected file stays unchanged.
+
+A `_comment` you add is kept: every save writes it back ahead of the records, so
+a note such as `"_comment": "Tutorial T16, backup in Dropbox"` stays in the file
+as your records change, and TAB keeps the wording the file holds when it saves
+even if you edited it after starting TAB. The description must be a JSON string.
+A number, Boolean, object or array there stops loading with an error naming
+`_comment`, and `null` counts as no description, so its key goes away on the
+next save.
 
 Keep one student-book object in the file, with each key appearing only once
 within its object. TAB rejects extra records or JSON values after the closing

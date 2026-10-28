@@ -180,7 +180,8 @@ class JsonAdaptedStudent {
     private Optional<NusStudentId> convertNusStudentId() throws IllegalValueException {
         String normalizedId = nusStudentId == null ? null : StringUtil.normalizeFieldValue(nusStudentId);
         if (normalizedId != null && !NusStudentId.isValidNusStudentId(normalizedId)) {
-            throw new IllegalValueException(NusStudentId.MESSAGE_CONSTRAINTS);
+            throw new IllegalValueException(ValueMessages.getErrorMessageForInvalidValue(
+                    NusStudentId.FIELD_NAME, normalizedId, NusStudentId.getFailureReason(normalizedId)));
         }
         return Optional.ofNullable(normalizedId).map(NusStudentId::new);
     }
