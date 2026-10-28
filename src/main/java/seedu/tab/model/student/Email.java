@@ -60,12 +60,12 @@ public class Email {
     private static final String MESSAGE_MULTIPLE_SEPARATORS = "an email may hold only one @";
     private static final String MESSAGE_EMPTY_LOCAL_PART = "there is nothing before the @";
     private static final String MESSAGE_INVALID_LOCAL_PART =
-            "the part before the @ may hold letters, digits and " + SPECIAL_CHARACTERS
+            "the part before the @ may hold ASCII letters, digits and " + SPECIAL_CHARACTERS
                     + ", with dots allowed only between non-empty groups";
     private static final String MESSAGE_EMPTY_DOMAIN = "there is nothing after the @";
     private static final String MESSAGE_SHORT_LAST_LABEL = "the last part of the domain needs at least %d characters";
     private static final String MESSAGE_INVALID_DOMAIN =
-            "the domain may hold letters and digits in labels separated by dots, "
+            "the domain may hold ASCII letters and digits in labels separated by dots, "
                     + "with hyphens allowed inside a label";
 
     private static final Pattern LOCAL_ATOM_PATTERN = Pattern.compile(LOCAL_ATOM_REGEX);
@@ -199,6 +199,15 @@ public class Email {
             return String.format(Locale.ROOT, MESSAGE_SHORT_LAST_LABEL, MINIMUM_LAST_LABEL_LENGTH);
         }
         return MESSAGE_INVALID_DOMAIN;
+    }
+
+    /**
+     * Returns true if the domain is a single label, such as {@code john@gmail}. Such an address
+     * is valid, because a host name needs no dot, but a student address always has one, so this
+     * reports an address worth a second look rather than one to refuse.
+     */
+    public boolean hasDotlessDomain() {
+        return value.indexOf('.', value.indexOf('@')) < 0;
     }
 
     public String getValue() {

@@ -559,7 +559,8 @@ public class JsonStudentBookStorageTest {
     @Test
     public void readStudentBook_invalidNusStudentIdStudentBook_throwDataLoadingException() {
         String expectedMessage = "Student record 1 (\"Student With Invalid NUS Student ID\"): "
-                + NusStudentId.MESSAGE_CONSTRAINTS;
+                + "NUS Student ID \"A0123-456X\" is not valid: "
+                + NusStudentId.MESSAGE_NON_ALPHANUMERIC;
 
         assertThrows(DataLoadingException.class, expectedMessage, () ->
                 readStudentBook("invalidNusStudentIdStudentBook.json"));

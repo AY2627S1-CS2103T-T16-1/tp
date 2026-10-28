@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -452,13 +453,18 @@ public class CommandBoxTest {
 
     /** A box whose executor records what it was asked to run, and may refuse to run it. */
     private static CommandBox boxExecutedBy(List<String> ran, boolean refuses) throws Exception {
+        return boxExecutedBy(ran, refuses, () -> false);
+    }
+
+    private static CommandBox boxExecutedBy(List<String> ran, boolean refuses,
+            BooleanSupplier isAwaitingConfirmation) throws Exception {
         return onFxThread(() -> new CommandBox(command -> {
             ran.add(command);
             if (refuses) {
                 throw new ParseException("no");
             }
             return new CommandResult("done");
-        }));
+        }, isAwaitingConfirmation));
     }
 
     /** Presses Enter on the command line, as the field's own action does. */
@@ -697,6 +703,32 @@ public class CommandBoxTest {
 
         // Enter on an empty line is how a User checks they have one, not a command
         assertEquals(List.of(), ran);
+    }
+
+    @Test
+    public void handleCommandEntered_aBlankLine_runsNothingLikeAnEmptyOne() throws Exception {
+        for (String blank : List.of(" ", "\t", "   ", "\u3000", "\u200b", " \u200b \t")) {
+            List<String> ran = new ArrayList<>();
+            CommandBox box = boxExecutedBy(ran, false);
+            onFxThread(() -> setTextOf(box, blank));
+
+            pressEnter(box);
+
+            // a stray space before Enter is no more a command than an empty line is
+            assertEquals(List.of(), ran, "should have run nothing for: " + blank);
+        }
+    }
+
+    @Test
+    public void handleCommandEntered_aBlankConfirmationReply_isStillSubmitted() throws Exception {
+        List<String> ran = new ArrayList<>();
+        CommandBox box = boxExecutedBy(ran, false, () -> true);
+        onFxThread(() -> setTextOf(box, " "));
+
+        pressEnter(box);
+
+        // a blank reply cancels a pending clear, so confirmation still receives it
+        assertEquals(List.of(" "), ran);
     }
 
     @Test

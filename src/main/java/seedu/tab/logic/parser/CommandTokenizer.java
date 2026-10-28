@@ -32,6 +32,9 @@ public class CommandTokenizer {
     /** Separator attaching an option value to its marker. */
     public static final char VALUE_SEPARATOR = '=';
 
+    /** Dashes an editor writes in place of a typed hyphen, read as the option marker. */
+    private static final String DASH_VARIANTS = "\u2010\u2011\u2012\u2013\u2014\u2015\u2212";
+
     private static final char LEFT_CURLY_QUOTE = '“';
     private static final char RIGHT_CURLY_QUOTE = '”';
     private static final char FULL_WIDTH_QUOTE = '＂';
@@ -65,6 +68,16 @@ public class CommandTokenizer {
     public static boolean isQuote(char character) {
         return character == QUOTE || character == LEFT_CURLY_QUOTE
                 || character == RIGHT_CURLY_QUOTE || character == FULL_WIDTH_QUOTE;
+    }
+
+    /**
+     * Returns true if {@code character} opens an unquoted option. An editor that autocorrects
+     * a typed hyphen writes a dash of its own, and a command pasted from it is read the way it
+     * was typed, as the interchangeable quote styles already are. The coloring asks the same
+     * question, so the box and the parser agree on which word is an option.
+     */
+    public static boolean isOptionMarker(char character) {
+        return character == OPTION_MARKER.charAt(0) || DASH_VARIANTS.indexOf(character) >= 0;
     }
 
     /**
@@ -135,11 +148,27 @@ public class CommandTokenizer {
             hasToken = true;
         }
 
+        /**
+         * Returns {@code value} with the dashes opening it written as the option marker, so a
+         * pasted option reaches the parser as the one it stands for. A token that opens with a
+         * quote is a value, and keeps the dash it was given.
+         */
+        private static String normalizeMarkers(String value, boolean beganQuoted) {
+            if (beganQuoted) {
+                return value;
+            }
+            int markerLength = 0;
+            while (markerLength < value.length() && isOptionMarker(value.charAt(markerLength))) {
+                markerLength++;
+            }
+            return markerLength == 0 ? value : OPTION_MARKER.repeat(markerLength) + value.substring(markerLength);
+        }
+
         private void finishToken() {
             if (!hasToken) {
                 return;
             }
-            tokens.add(new Token(value.toString(), wasQuoted, beganQuoted));
+            tokens.add(new Token(normalizeMarkers(value.toString(), beganQuoted), wasQuoted, beganQuoted));
             value.setLength(0);
             wasQuoted = false;
             beganQuoted = false;
