@@ -1316,12 +1316,23 @@ reloading without a restart, remain future features.
 which keeps a hand-edited value from disappearing during a later unrelated
 save. The student callback names the record and the allowed field names in its
 error, and permits the removed `address` key as a compatibility exception;
-the book also accepts the existing `_comment` metadata key.
+the book keeps the `_comment` description instead, reading it through
+`JsonCommentDeserializer` so that a number or object there is reported as a
+`_comment` problem rather than quietly becoming text.
 `JsonStudentBookStorage` adds the one-based record number from Jackson's
 mapping path, so even an unnamed record or two students sharing a name can be
 located. The shared JSON mapper keeps its existing behavior for preferences,
 and startup follows the existing loading-error path, leaving rejected data
 intact.
+
+The description is file metadata rather than student data, so it stays in the
+storage layer: `JsonStudentBookStorage` already reads the file it is about to
+replace to detect a stale save, and the same read supplies the description that
+`JsonSerializableStudentBook` writes back ahead of the records. Reading it
+there, under the save lock, keeps the newest wording the User typed even when
+they edited the description while TAB was running. Holding it in the model was
+rejected because every command, undo step and book comparison would then carry
+a value no feature uses.
 
 `JsonTagsDeserializer` checks the array and string types before adapting tags,
 so a malformed `tags` value reports the field and entry position rather than
@@ -3108,6 +3119,12 @@ testers are expected to do more *exploratory* testing.
       load with no blank line on their cards. Restarting again keeps all three,
       and `edit 1 -p 91234567` adds a number to one without giving the others
       a `phone` key.
+   1. Test case: Add `"_comment": "Tutorial T16, backup in Dropbox"` as the
+      first key of the top-level object, restart, enter `tag 1 -a Probe`, then
+      exit and reopen the file. On a later run change that key's value to `5`.<br>
+      Expected: The tag change is saved with the description still the first key
+      of the file. The numeric value refuses the file at startup, naming
+      `_comment` and asking for a JSON string, and leaves the file unchanged.
 
 1. Reading values TAB cannot accept
 

@@ -61,7 +61,7 @@ public class JsonSerializableStudentBookTest {
         JsonAdaptedStudent duplicateStudent = new JsonAdaptedStudent(
                 "Bob Lim", "91234567", "bob@example.com", "a12345678c", List.of(), false);
         JsonSerializableStudentBook dataFromFile = new JsonSerializableStudentBook(
-                List.of(firstStudent, matchingStudent, duplicateStudent));
+                null, List.of(firstStudent, matchingStudent, duplicateStudent));
         String expectedMessage = "Student record 3 (\"Bob Lim\"): "
                 + String.format(JsonSerializableStudentBook.MESSAGE_DUPLICATE_STUDENT,
                         "A12345678C", 2, "Carol Elle");
@@ -80,7 +80,7 @@ public class JsonSerializableStudentBookTest {
     @Test
     public void toModelType_nullStudentRecord_throwsIllegalValueException() {
         JsonSerializableStudentBook dataFromFile = new JsonSerializableStudentBook(
-                Arrays.asList((JsonAdaptedStudent) null));
+                null, Arrays.asList((JsonAdaptedStudent) null));
 
         assertThrows(IllegalValueException.class, "Student record 1 is missing.", dataFromFile::toModelType);
     }
@@ -88,7 +88,7 @@ public class JsonSerializableStudentBookTest {
     @Test
     public void toModelType_missingStudentList_throwsIllegalValueException() {
         JsonSerializableStudentBook dataFromFile =
-                new JsonSerializableStudentBook((List<JsonAdaptedStudent>) null);
+                new JsonSerializableStudentBook(null, (List<JsonAdaptedStudent>) null);
 
         assertThrows(IllegalValueException.class, JsonSerializableStudentBook.MESSAGE_MISSING_STUDENT_LIST,
                 dataFromFile::toModelType);
@@ -98,7 +98,7 @@ public class JsonSerializableStudentBookTest {
     public void toModelType_studentWithoutName_reportsRecordNumberWithoutName() {
         JsonAdaptedStudent studentWithoutName = new JsonAdaptedStudent(
                 null, "91234567", null, List.of(), false);
-        JsonSerializableStudentBook dataFromFile = new JsonSerializableStudentBook(List.of(studentWithoutName));
+        JsonSerializableStudentBook dataFromFile = new JsonSerializableStudentBook(null, List.of(studentWithoutName));
 
         assertThrows(IllegalValueException.class, "Student record 1: Name field is missing.",
                 dataFromFile::toModelType);

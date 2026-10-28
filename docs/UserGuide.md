@@ -1076,6 +1076,14 @@ The top-level object accepts `students` and an optional `_comment` description.
 Correct the spelling or remove the unsupported field, then restart TAB; the
 rejected file stays unchanged.
 
+A `_comment` you add is kept: every save writes it back ahead of the records, so
+a note such as `"_comment": "Tutorial T16, backup in Dropbox"` stays in the file
+as your records change, and TAB keeps the wording the file holds when it saves
+even if you edited it after starting TAB. The description must be a JSON string.
+A number, Boolean, object or array there stops loading with an error naming
+`_comment`, and `null` counts as no description, so its key goes away on the
+next save.
+
 Keep one student-book object in the file, with each key appearing only once
 within its object. TAB rejects extra records or JSON values after the closing
 brace and repeated keys such as two `phone` entries in one student or two
