@@ -75,6 +75,10 @@ The UI uses JavaFX controls and FXML layouts in `src/main/resources/view/`. `UiP
 
 `StudentBookParser` dispatches a command word to its command-specific parser. Each parser implementing `Parser<T>` validates arguments and constructs a `Command`; commands execute against the `Model` interface. `CommandResult` keeps presentation requests separate from JavaFX controls, so commands can be tested without a window.
 
+The partial class diagram shows this structure using `delete` as the representative command. Other command/parser pairs follow the same pattern. Model and Storage dependencies appear in the architecture view above.
+
+<puml src="diagrams/LogicClassDiagram.puml" alt="Logic API, command and parser hierarchies, and command results" />
+
 The sequence diagram traces a successful `delete 1` through Logic. Target resolution is summarized as a lookup in the displayed list, and the shared save procedure is shown as a reference to [Saving changes safely](#saving-changes-safely). Tokenization and value validation remain inside the command parser. Descriptive messages summarize list access and snapshot creation.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing and executing delete 1 through Logic" />
