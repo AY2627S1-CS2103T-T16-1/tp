@@ -1,72 +1,55 @@
 @startuml
 !include style.puml
 skinparam ArrowFontStyle plain
+skinparam defaultFontSize 16
+skinparam sequenceReferenceBackgroundColor white
 
-box Logic LOGIC_COLOR_T1
-participant ":LogicManager" as LogicManager LOGIC_COLOR
-participant "c:Command" as Command LOGIC_COLOR
-end box
+participant ":LogicManager" as logic LOGIC_COLOR
+participant "c:Command" as command LOGIC_COLOR
+participant ":Model" as model MODEL_COLOR
+participant ":Storage" as storage STORAGE_COLOR
 
-box Model MODEL_COLOR_T1
-participant "m:Model" as Model MODEL_COLOR
-end box
+[-> logic : execute(commandText)
+activate logic
+note over logic : Parsing succeeds; ordinary command
+logic -> model : read book and filter
+activate model
+model --> logic : book / predicate
+deactivate model
+note over logic : Copy book; retain predicate
+logic -> command : execute(model)
+activate command
+command -> model : apply command operation
+activate model
+model --> command
+deactivate model
+command --> logic : result
+deactivate command
 
-box Storage STORAGE_COLOR_T1
-participant ":Storage" as Storage STORAGE_COLOR
-end box
-
-[-> LogicManager : execute(commandText)
-activate LogicManager
-
-LogicManager -> Model : getStudentBook()
-activate Model
-Model --> LogicManager : book
-deactivate Model
-
-LogicManager -> LogicManager : new StudentBook(book)
-activate LogicManager
-LogicManager --> LogicManager : copy
-deactivate LogicManager
-
-LogicManager -> Model : getFilteredStudentPredicate()
-activate Model
-Model --> LogicManager : filter
-deactivate Model
-
-LogicManager -> Command : execute(m)
-activate Command
-Command --> LogicManager : r
-deactivate Command
-
-alt no student record changed
-    [<--LogicManager : r
-
-else records changed
-    LogicManager -> Storage : saveStudentBook(book)
-    activate Storage
-
-    alt save succeeds
-        Storage --> LogicManager
-        deactivate Storage
-        [<--LogicManager : r
-
-    else IOException
-        activate Storage
-        Storage --> LogicManager : IOException
-        deactivate Storage
-        LogicManager -> Model : setStudentBook(copy)
-        activate Model
-        Model --> LogicManager
-        deactivate Model
-
-        LogicManager -> Model : updateFilteredStudentList(filter)
-        activate Model
-        Model --> LogicManager
-        deactivate Model
-
-        [<--LogicManager : CommandException
-    end
+alt student book unchanged
+  [<-- logic : result
+else student book changed
+  logic -> storage : saveStudentBook(book)
+  activate storage
+  ref over storage
+    Safe disk save
+    (activity below)
+  end ref
+  storage --> logic : saved / IOException
+  deactivate storage
+  alt save succeeds
+    [<-- logic : result
+  else IOException
+    logic -> model : setStudentBook(snapshot)
+    activate model
+    model --> logic
+    deactivate model
+    logic -> model : updateFilteredStudentList(\npredicate)
+    activate model
+    model --> logic
+    deactivate model
+    [<-- logic : CommandException
+  end
 end
-
-deactivate LogicManager
+deactivate logic
 @enduml

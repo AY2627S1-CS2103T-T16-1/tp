@@ -1,49 +1,37 @@
 @startuml
 !include style.puml
-skinparam nodesep 40
-skinparam arrowThickness 1.1
-skinparam arrowColor LOGIC_COLOR_T4
-skinparam classBackgroundColor LOGIC_COLOR
+skinparam classBackgroundColor LOGIC_COLOR_T1
+skinparam classFontColor #222222
+skinparam classStereotypeFontColor #222222
+skinparam classBorderColor #555555
+skinparam arrowColor #555555
+skinparam ArrowFontStyle plain
+skinparam genericDisplay old
+skinparam nodesep 45
+skinparam ranksep 45
 
-package Logic as LogicPackage {
+interface Logic <<interface>>
+class LogicManager
+class StudentBookParser
+interface "Parser<T>" as Parser <<interface>>
+class DeleteCommandParser
+abstract class Command
+class DeleteCommand
+class CommandResult
 
-package "Parser Classes" as ParserClasses{
-}
-Class XYZCommand
-Class CommandResult
-Class "{abstract}\nCommand" as Command
+LogicManager .up.|> Logic
+LogicManager --> "1" StudentBookParser
+LogicManager ..> Command : executes
+StudentBookParser ..> DeleteCommandParser : creates
+DeleteCommandParser .up.|> Parser
+DeleteCommandParser ..> DeleteCommand : creates
+DeleteCommand -up-|> Command
+Command ..> CommandResult : returns
 
-
-Class "<<interface>>\nLogic" as Logic
-Class LogicManager
-}
-
-package Model {
-Class HiddenModel #FFFFFF
-}
-
-package Storage {
-}
-
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Logic
-
-LogicManager .right.|> Logic
-LogicManager -right->"1" ParserClasses
-ParserClasses ..> XYZCommand : <<create>>
-
-XYZCommand -up-|> Command
-LogicManager .left.> Command : <<call>>
-
-LogicManager --> Model
-LogicManager --> Storage
-Storage --[hidden] Model
-Command .[hidden]up.> Storage
-Command .right.> Model
-note right of XYZCommand: XYZCommand = AddCommand, \nFindCommand, etc
-
-Logic ..> CommandResult
-LogicManager .down.> CommandResult
-Command .up.> CommandResult : <<create>>
+note bottom of DeleteCommandParser
+  Implements Parser<DeleteCommand>.
+  Other command parsers and commands
+  follow the same pattern and are omitted.
+end note
 @enduml
 

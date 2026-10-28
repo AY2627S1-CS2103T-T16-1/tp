@@ -82,7 +82,7 @@ The field options below are used by `add`, `edit` and `find`.
 
 * Spaces at the ends of values are removed, and repeated spaces become one space.
 * Tags differing only in case or extra spaces are treated as the same tag.
-* The tag `Needs follow-up` is reserved for the follow-up flag, while similar tags such as `Needs follow up` are saved with a warning and do not set the flag.
+* The tag `Needs follow-up` is reserved for the follow-up flag, as are its spacing, hyphen and trailing-punctuation variants such as `Needs follow up`. A tag differing by other punctuation, such as `Needs_follow_up`, is saved with a warning instead and does not set the flag.
 * NUS Student IDs must be unique across the book, ignoring case.
 * After you `add` or `edit` a student, a matching name, phone or email raises a possible-duplicate warning.
 * For duplicate warnings, you can exercise your own judgement and ignore them if you know that the records describe different students.
