@@ -41,30 +41,9 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
             throw new ParseException(DeleteCommand.MESSAGE_USAGE);
         }
 
-        // Check for negative index in first token (like tokenizeWithIndex does)
-        Token firstToken = tokens.getFirst();
-        if (!firstToken.isQuoted() && firstToken.value().matches("-[0-9]+(?:\\.[0-9]+)?")) {
-            // Report negative index error with unknown flag hint, as tokenizeWithIndex does
-            throw new ParseException(ParserUtil.MESSAGE_INVALID_INDEX + "\n"
-                    + String.format(Messages.MESSAGE_UNKNOWN_FLAG, Messages.shorten(firstToken.value())));
-        }
-
-        // Find the first flag token to detect extraneous values in preamble
-        int firstFlagIndex = findFirstFlagIndex(tokens);
-        if (firstFlagIndex > 1) {
-            // Multiple tokens before first flag - check if first token is a valid target
-            String firstValue = tokens.getFirst().value();
-            if (isValidTargetStart(firstValue)) {
-                String fieldName = Character.isLetter(firstValue.charAt(0))
-                        ? ParserUtil.FIELD_NUS_STUDENT_ID
-                        : DeleteCommand.FIELD_INDEX;
-                throw new ParseException(formatExtraneousValueMessage(tokens.subList(1, firstFlagIndex), fieldName));
-            }
-        }
-
-        // Use FlagTokenizer for proper flag error messages
-        FlagArgumentMap arguments = FlagTokenizer.tokenizeTokens(tokens, FLAG_NUS_STUDENT_ID);
+        FlagArgumentMap arguments = FlagTokenizer.tokenizeWithIndexTokens(tokens, FLAG_NUS_STUDENT_ID);
         arguments.verifyNoDuplicateFlagsFor(FLAG_NUS_STUDENT_ID);
+        verifyNoExtraTargets(tokens.getFirst(), arguments.getPreamble());
 
         String preamble = arguments.getPreamble().trim();
         Optional<String> idValue = arguments.getValue(FLAG_NUS_STUDENT_ID);
@@ -83,27 +62,6 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
             target = parsePreambleTarget(preamble);
         }
         return new DeleteCommand(target);
-    }
-
-    /** Returns the index of the first token that looks like a flag, or tokens.size() if none. */
-    private static int findFirstFlagIndex(List<Token> tokens) {
-        for (int i = 0; i < tokens.size(); i++) {
-            Token token = tokens.get(i);
-            if (!token.isQuoted() && token.value().startsWith(CommandTokenizer.OPTION_MARKER)
-                    && token.value().length() > CommandTokenizer.OPTION_MARKER.length()) {
-                return i;
-            }
-        }
-        return tokens.size();
-    }
-
-    /** Returns true if {@code value} could be a valid target (index or letter-leading NUS Student ID). */
-    private static boolean isValidTargetStart(String value) {
-        if (value.isEmpty()) {
-            return false;
-        }
-        char first = value.charAt(0);
-        return Character.isDigit(first) || Character.isLetter(first);
     }
 
     /**
@@ -129,12 +87,18 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
      * none: telling a user to put the value after an option suggests a command delete cannot
      * run.
      */
-    private static String formatExtraneousValueMessage(List<Token> extraTokens, String fieldName) {
-        String values = extraTokens.stream().map(Token::value).reduce((a, b) -> a + " " + b).orElse("");
-        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET_ONLY,
-                fieldName,
-                Messages.shorten(values),
-                DeleteCommand.COMMAND_WORD);
+    private static void verifyNoExtraTargets(Token firstToken, String preamble) throws ParseException {
+        String firstValue = firstToken.value();
+        if (preamble.length() <= firstValue.length() || firstValue.isEmpty()) {
+            return;
+        }
+        char first = firstValue.charAt(0);
+        if (Character.isDigit(first) || Character.isLetter(first)) {
+            String values = preamble.substring(firstValue.length() + 1);
+            throw new ParseException(String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET_ONLY,
+                    ParserUtil.getTargetFieldName(firstValue, DeleteCommand.FIELD_INDEX),
+                    Messages.shorten(values), DeleteCommand.COMMAND_WORD));
+        }
     }
 
 }

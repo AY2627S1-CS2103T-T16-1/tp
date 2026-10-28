@@ -133,6 +133,13 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_negativeDecimal_reportsInvalidIndexAndOption() {
+        assertParseFailure(parser, "-1.5", ParserUtil.MESSAGE_INVALID_INDEX
+                + "\nThere is no -1.5 option.");
+        assertParseFailure(parser, "\"-1.5\"", ParserUtil.MESSAGE_INVALID_INDEX);
+    }
+
+    @Test
     public void parse_nonIntegerIndex_throwsParseException() {
         for (String target : List.of("1.5", "+1", "1,5", "1-2")) {
             assertParseFailure(parser, target, ParserUtil.MESSAGE_INVALID_INDEX);
