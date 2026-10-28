@@ -159,11 +159,25 @@ public class DeleteCommandParserTest {
     public void parse_extraneousTokens_throwsParseException() {
         assertParseFailure(parser, "1 extra", valueAfterIndexMessage("extra"));
         assertParseFailure(parser, "1 2", valueAfterIndexMessage("2"));
+        // the wording the User Guide quotes, so that the two stay in step
+        assertEquals("Unexpected value after INDEX: \"2\". "
+                + "delete accepts one index or NUS Student ID and nothing else.",
+                valueAfterIndexMessage("2"));
     }
 
     @Test
     public void parse_severalExtraneousTokens_namesEveryOneOfThem() {
         assertParseFailure(parser, "1 extra 2", valueAfterIndexMessage("extra 2"));
+    }
+
+    @Test
+    public void parse_extraneousTokensAfterLetterLeadingTarget_namesTheIdForm() {
+        // a target opening with a letter is read as an NUS Student ID, so a user who typed
+        // a name is not told they typed an index
+        String expected = valueAfterTargetMessage(ParserUtil.FIELD_NUS_STUDENT_ID, "Yeoh");
+        assertParseFailure(parser, "Alex Yeoh", expected);
+        assertParseFailure(parser, "A01234567X Yeoh", expected);
+        assertTrue(expected.startsWith("Unexpected value after NUS_STUDENT_ID: \"Yeoh\"."));
     }
 
     @Test
@@ -189,13 +203,18 @@ public class DeleteCommandParserTest {
     /** The reply {@code delete} gives for a target that reads as an unusable index. */
     private static String invalidIndexWithIdHint(String value) {
         return ParserUtil.MESSAGE_INVALID_INDEX + " "
-                + Messages.getIdTargetHint(DeleteCommand.COMMAND_WORD, value);
+                + Messages.getIdTargetHint(DeleteCommand.ID_TARGET_COMMAND, value);
     }
 
-    /** The reply {@code delete} gives for the value it found after the index. */
+    /** The reply {@code delete} gives for the value it found after a target read as an index. */
     private static String valueAfterIndexMessage(String value) {
-        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX_ONLY, DeleteCommand.FIELD_INDEX,
-                value, DeleteCommand.COMMAND_WORD);
+        return valueAfterTargetMessage(DeleteCommand.FIELD_INDEX, value);
+    }
+
+    /** The reply {@code delete} gives for the value it found after a target named {@code fieldName}. */
+    private static String valueAfterTargetMessage(String fieldName, String value) {
+        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET_ONLY, fieldName, value,
+                DeleteCommand.COMMAND_WORD);
     }
 
     @Test

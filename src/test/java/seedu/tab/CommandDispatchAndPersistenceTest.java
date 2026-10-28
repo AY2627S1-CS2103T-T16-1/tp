@@ -114,7 +114,7 @@ public class CommandDispatchAndPersistenceTest {
         CommandResult result = logic.execute(pastedAdd);
 
         assertTrue(result.getFeedbackToUser().contains(
-                "WARNING: Possible duplicate student: John Doe has the same name (John Doe)."));
+                "WARNING: Possible duplicate student: John Doe has the same name."));
 
         assertEquals(2, model.getFilteredStudentList().size());
         assertEquals("John Doe", model.getFilteredStudentList().get(0).getName().getFullName());
@@ -123,6 +123,25 @@ public class CommandDispatchAndPersistenceTest {
         ReadOnlyStudentBook saved = storage.readStudentBook().orElseThrow();
         assertEquals(2, saved.getStudentList().size());
         assertEquals("John Doe", saved.getStudentList().get(1).getName().getFullName());
+    }
+
+    @Test
+    public void execute_addHyphenatedName_warnsAndKeepsBothSpellings() throws Exception {
+        logic.execute(AddCommand.COMMAND_WORD + " \"Mary Jane\" -p 98765432");
+
+        CommandResult result = logic.execute(AddCommand.COMMAND_WORD + " Mary-Jane -p 87654321");
+
+        assertTrue(result.getFeedbackToUser().contains(
+                "WARNING: Possible duplicate student: Mary Jane has the same name."));
+
+        assertEquals("Mary Jane", model.getFilteredStudentList().get(0).getName().getFullName());
+        assertEquals("Mary-Jane", model.getFilteredStudentList().get(1).getName().getFullName());
+
+        ReadOnlyStudentBook saved = storage.readStudentBook().orElseThrow();
+        assertEquals("Mary-Jane", saved.getStudentList().get(1).getName().getFullName());
+
+        logic.execute(FindCommand.COMMAND_WORD + " -n \"mary jane\"");
+        assertEquals(2, model.getFilteredStudentList().size());
     }
 
     @Test

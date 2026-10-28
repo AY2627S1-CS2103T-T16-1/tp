@@ -461,10 +461,41 @@ public class EditCommandTest {
 
         assertCommandSuccess(command, model,
                 String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited))
-                        + "\n\nWARNING: Possible duplicate student: " + firstStudent.getName() + " has the same name ("
-                        + edited.getName() + ")."
+                        + "\n\nWARNING: Possible duplicate student: " + firstStudent.getName() + " has the same name."
                         + "\nReview the records and delete duplicates only if they are the same person.",
                 expectedModel);
+    }
+
+    @Test
+    public void execute_editEmailToDotlessDomain_success() {
+        Student original = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student edited = new StudentBuilder(original).withEmail("john@gmail").build();
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withEmail("john@gmail").build());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(original, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited))
+                        + "\n\nWARNING: Possibly incomplete email: john@gmail has no dot in its domain.\n"
+                        + "Check whether a part such as .com or .nus.edu is missing; "
+                        + "the address is saved as entered.",
+                expectedModel);
+    }
+
+    @Test
+    public void execute_editOtherFieldOfStudentHoldingDotlessDomain_doesNotWarn() {
+        Student original = model.getFilteredStudentList().get(INDEX_FIRST_STUDENT.getZeroBased());
+        Student dotless = new StudentBuilder(original).withEmail("john@gmail").build();
+        model.setStudent(original, dotless);
+        Student edited = new StudentBuilder(dotless).withTags(VALID_TAG_HUSBAND).build();
+        EditCommand command = new EditCommand(INDEX_FIRST_STUDENT,
+                new EditStudentDescriptorBuilder().withTags(VALID_TAG_HUSBAND).build());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+        expectedModel.setStudent(dotless, edited);
+
+        assertCommandSuccess(command, model,
+                String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited)), expectedModel);
     }
 
     @Test

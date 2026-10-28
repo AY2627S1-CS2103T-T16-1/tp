@@ -19,8 +19,16 @@ public class LikelyDuplicateWarningTest {
             {"Mary O'Neil", "Mary O’Neil"},
             {"José Rivera", "JOSE RIVERA"},
             {"Nguyễn Văn An", "nguyen van an"},
+            {"Đặng Thị Mai", "Dang Thi Mai"},
+            {"Dang Thi Mai", "Đặng Thị Mai"},
+            {"Łukasz Nowak", "Lukasz Nowak"},
+            {"Lukasz Nowak", "Łukasz Nowak"},
+            {"Søren Kierkegaard", "Soren Kierkegaard"},
+            {"Soren Kierkegaard", "Søren Kierkegaard"},
             {"ΝΙΚΟΣ", "νικοσ"},
-            {"νικοσ", "νικος"}
+            {"νικοσ", "νικος"},
+            {"Charlotte Oliveiro", "Charlotte-Oliveiro"},
+            {"Mary-Jane Tan", "Mary Jane Tan"}
         };
         for (String[] pair : cases) {
             String storedName = pair[0];
@@ -28,12 +36,22 @@ public class LikelyDuplicateWarningTest {
             Student existing = new StudentBuilder().withName(storedName).withPhone("91234567").withoutEmail().build();
             Student changed = new StudentBuilder().withName(typedName).withPhone("92345678").withoutEmail().build();
             String expected = SUCCESS_MESSAGE + "\n\nWARNING: Possible duplicate student: " + storedName
-                    + " has the same name (" + typedName + ")."
+                    + " has the same name."
                     + "\nReview the records and delete duplicates only if they are the same person.";
             assertEquals(expected, LikelyDuplicateWarning.appendTo(SUCCESS_MESSAGE, changed, List.of(existing)));
             assertEquals(storedName, existing.getName().getFullName());
             assertEquals(typedName, changed.getName().getFullName());
         }
+    }
+
+    @Test
+    public void appendTo_longerDashInName_doesNotWarn() {
+        // an en dash is a character of its own, not the hyphen a second roster writes as a space
+        Student existing = new StudentBuilder().withName("Mary Jane Tan").withoutPhone().withoutEmail().build();
+        Student changed = new StudentBuilder().withName("Mary–Jane Tan").withoutPhone().withoutEmail().build();
+
+        assertEquals(SUCCESS_MESSAGE, LikelyDuplicateWarning.appendTo(
+                SUCCESS_MESSAGE, changed, List.of(existing)));
     }
 
     @Test
@@ -85,13 +103,30 @@ public class LikelyDuplicateWarningTest {
                 .withPhone("+6591234567").withEmail("alex@example.com").build();
 
         String expected = SUCCESS_MESSAGE
-                + "\n\nWARNING: Possible duplicate student: Alex Yeoh has the same name (aLeX yEoH)."
+                + "\n\nWARNING: Possible duplicate student: Alex Yeoh has the same name."
                 + "\nWARNING: Possible duplicate student: Alex Yeoh has the same phone."
-                + "\nWARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.com)."
+                + "\nWARNING: Possible duplicate student: Alex Yeoh has the same email."
                 + "\nReview the records and delete duplicates only if they are the same person.";
 
         assertEquals(expected, LikelyDuplicateWarning.appendTo(
                 SUCCESS_MESSAGE, changed, List.of(existing)));
+    }
+
+    @Test
+    public void appendChangedFieldsTo_multipleNameAndEmailMatches_omitsAmbiguousValues() {
+        Student original = new StudentBuilder().withName("Other Name").withoutPhone().withoutEmail().build();
+        Student changed = new StudentBuilder(original).withName("Jose Ng").withEmail("upper@x.com").build();
+        Student first = new StudentBuilder().withName("José Ng").withoutPhone().withEmail("UPPER@X.COM").build();
+        Student second = new StudentBuilder().withName("JOSE NG").withoutPhone().withEmail("Upper@x.com").build();
+        String expected = SUCCESS_MESSAGE
+                + "\n\nWARNING: Possible duplicate students: José Ng and JOSE NG have the same name."
+                + "\nWARNING: Possible duplicate students: José Ng and JOSE NG have the same email."
+                + "\nReview the records and delete duplicates only if they are the same person.";
+
+        assertEquals(expected, LikelyDuplicateWarning.appendChangedFieldsTo(
+                SUCCESS_MESSAGE, original, changed, List.of(original, first, second)));
+        assertEquals("José Ng", first.getName().getFullName());
+        assertEquals("UPPER@X.COM", first.getEmail().orElseThrow().getValue());
     }
 
     @Test

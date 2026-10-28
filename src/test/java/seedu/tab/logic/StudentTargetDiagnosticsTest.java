@@ -51,6 +51,7 @@ public class StudentTargetDiagnosticsTest {
     public void execute_outOfRangeIndex_explainsFilteredAndEmptyListsWithoutMutation() throws Exception {
         for (int count : List.of(2, 1, 0)) {
             model.updateFilteredStudentList(student -> count == 2 || count == 1 && student.equals(first));
+            // no student holds "3" as an ID, so the reply offers no ID form to recover with
             String expected = "There is no student at index \"3\" in the displayed list (" + count
                     + (count == 1 ? " student). " : " students). ") + "Use list to show all students.";
             for (String command : List.of("delete 3", "edit 3 -p 81112222", "tag 3 -a T1")) {
@@ -63,8 +64,10 @@ public class StudentTargetDiagnosticsTest {
     public void execute_oversizedIndex_explainsBoundWithoutMutation() throws Exception {
         String expected = "Index \"6591234567\" exceeds the largest supported index (2147483647). "
                 + "Use an index from the displayed list.";
-        assertRejectedWithoutMutation("edit 6591234567 -p 81112222", ParseException.class, expected);
-        assertRejectedWithoutMutation("tag 6591234567 -a T1", ParseException.class, expected);
+        assertRejectedWithoutMutation("edit 6591234567 -p 81112222", ParseException.class, expected
+                + " If \"6591234567\" is an NUS Student ID, use edit --target-id 6591234567.");
+        assertRejectedWithoutMutation("tag 6591234567 -a T1", ParseException.class, expected
+                + " If \"6591234567\" is an NUS Student ID, use tag --id 6591234567.");
         assertRejectedWithoutMutation("delete 6591234567", ParseException.class, expected
                 + " If \"6591234567\" is an NUS Student ID, use delete --id 6591234567.");
     }
@@ -74,16 +77,39 @@ public class StudentTargetDiagnosticsTest {
         for (String command : List.of("edit 1.5 -p 81112222", "tag 1.5 -a T1", "delete 1.5")) {
             assertRejectedWithoutMutation(command, ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX);
         }
+        assertRejectedWithoutMutation("edit 0 -p 81112222", ParseException.class,
+                ParserUtil.MESSAGE_INVALID_INDEX + " If \"0\" is an NUS Student ID, use edit --target-id 0.");
+        assertRejectedWithoutMutation("tag 0 -a T1", ParseException.class,
+                ParserUtil.MESSAGE_INVALID_INDEX + " If \"0\" is an NUS Student ID, use tag --id 0.");
         assertRejectedWithoutMutation("delete 0", ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX
                 + " If \"0\" is an NUS Student ID, use delete --id 0.");
     }
 
     @Test
+    public void execute_digitLeadingIdTarget_namesTheOptionOfEachCommand() throws Exception {
+        assertRejectedWithoutMutation("edit 1ABC -p 81112222", ParseException.class,
+                ParserUtil.MESSAGE_INVALID_INDEX + " If \"1ABC\" is an NUS Student ID, use edit --target-id 1ABC.");
+        assertRejectedWithoutMutation("tag 1ABC -a T1", ParseException.class,
+                ParserUtil.MESSAGE_INVALID_INDEX + " If \"1ABC\" is an NUS Student ID, use tag --id 1ABC.");
+        assertRejectedWithoutMutation("delete 1ABC", ParseException.class,
+                ParserUtil.MESSAGE_INVALID_INDEX + " If \"1ABC\" is an NUS Student ID, use delete --id 1ABC.");
+    }
+
+    @Test
     public void execute_numericIdHiddenByFilter_suggestsExplicitIdWithoutLosingLeadingZeros() throws Exception {
         model.updateFilteredStudentList(student -> false);
+        String outOfRange = "There is no student at index \"001234\" in the displayed list (0 students). "
+                + "Use list to show all students. ";
+        assertRejectedWithoutMutation("edit 001234 -p 81112222", CommandException.class,
+                outOfRange + "If \"001234\" is an NUS Student ID, use edit --target-id 001234.");
+        assertRejectedWithoutMutation("tag 001234 -a T1", CommandException.class,
+                outOfRange + "If \"001234\" is an NUS Student ID, use tag --id 001234.");
         assertRejectedWithoutMutation("delete 001234", CommandException.class,
-                "There is no student at index \"001234\" in the displayed list (0 students). "
-                + "Use list to show all students. If \"001234\" is an NUS Student ID, use delete --id 001234.");
+                outOfRange + "If \"001234\" is an NUS Student ID, use delete --id 001234.");
+        logic.execute("edit --target-id 001234 -p 81112222");
+        logic.execute("tag --id 001234 -a T1");
+        Student reached = new StudentBuilder(first).withPhone("81112222").withTags("T1").build();
+        assertEquals(List.of(reached, second), storage.readStudentBook().orElseThrow().getStudentList());
         logic.execute("delete --id 001234");
         assertEquals(List.of(second), storage.readStudentBook().orElseThrow().getStudentList());
         assertEquals(List.of(), model.getFilteredStudentList());

@@ -33,6 +33,22 @@ public class CommandTokenizerTest {
     }
 
     @Test
+    public void tokenize_autocorrectedDashes_openAnOptionLikeAHyphen() throws Exception {
+        for (String dash : List.of("\u2010", "\u2011", "\u2012", "\u2013", "\u2014", "\u2015", "\u2212")) {
+            assertEquals(List.of("-p", "91234567"), valuesOf(dash + "p 91234567"));
+            assertEquals(List.of("--follow-up"), valuesOf(dash + dash + "follow-up"));
+            assertEquals(List.of("-t=Lab 3"), valuesOf(dash + "t=\"Lab 3\""));
+        }
+    }
+
+    @Test
+    public void tokenize_dashInsideOrQuoted_staysInTheValue() throws Exception {
+        assertEquals(List.of("Jean\u2013Luc"), valuesOf("Jean\u2013Luc"));
+        assertEquals(List.of("9123\u20134567"), valuesOf("9123\u20134567"));
+        assertEquals(List.of(new Token("\u2013Mystery", true, true)), tokenize("\"\u2013Mystery\""));
+    }
+
+    @Test
     public void tokenize_supportedQuotes_canBeEscapedOrLeftUnclosed() throws Exception {
         for (String quote : List.of("\"", "“", "”", "＂")) {
             assertEquals(List.of("a" + quote + "b", "-t"), valuesOf("a\\" + quote + "b -t"));

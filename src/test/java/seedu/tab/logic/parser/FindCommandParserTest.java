@@ -34,6 +34,19 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_unqualifiedTermAfterAnOption_readsLikeOneBeforeTheOptions() {
+        // find takes no term at the front, so the reply that names its own grammar is the one
+        // that applies wherever the bare term sits
+        for (String input : List.of("-n alex yeoh", "-t lab tutorial", "-n 'Jason Tan'")) {
+            assertParseFailure(parser, input, FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
+        }
+        assertParseSuccess(parser, "-n alex -n yeoh", new FindCommand(new DetailsContainsKeywordsPredicate(
+                Map.of(Field.NAME, List.of("alex", "yeoh")))));
+        assertParseSuccess(parser, "-n \"alex yeoh\"", new FindCommand(new DetailsContainsKeywordsPredicate(
+                Map.of(Field.NAME, List.of("alex yeoh")))));
+    }
+
+    @Test
     public void parse_validArgs_returnsFindCommand() {
         FindCommand expected = new FindCommand(new DetailsContainsKeywordsPredicate(
                 Map.of(Field.NAME, List.of("Jason", "Tan"), Field.TAG, List.of("Lab"))));
@@ -62,7 +75,7 @@ public class FindCommandParserTest {
         FindCommand literalQuotes = new FindCommand(new DetailsContainsKeywordsPredicate(
                 Map.of(Field.NAME, List.of("'Jason'"))));
         assertParseSuccess(parser, "-n 'Jason'", literalQuotes);
-        assertParseFailure(parser, "-n 'Jason Tan'", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "Tan'"));
+        assertParseFailure(parser, "-n 'Jason Tan'", FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
     }
 
     @Test
@@ -107,8 +120,9 @@ public class FindCommandParserTest {
             assertParseFailure(parser, input, MESSAGE_EMPTY_KEYWORD);
         }
         assertParseFailure(parser, "--unknown friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"));
-        assertParseFailure(parser, "-T friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-T"));
-        assertParseFailure(parser, "-t lab tutorial", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "tutorial"));
+        assertParseFailure(parser, "-T friend", "There is no -T option. Did you mean -t?");
+        // a term after the options is the same mistake as one before them, so it reads the same
+        assertParseFailure(parser, "-t lab tutorial", FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
         assertParseFailure(parser, "Jason -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
         assertParseFailure(parser, "\"\" -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
         assertParseFailure(parser, "-t \"Lab", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
@@ -144,7 +158,7 @@ public class FindCommandParserTest {
             assertParseFailure(parser, input, Messages.getErrorMessageForDuplicateFlags("-f"));
         }
         assertParseFailure(parser, "-nf --no-follow-up", Messages.getErrorMessageForDuplicateFlags("-nf"));
-        assertParseFailure(parser, "-f true", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "true"));
+        assertParseFailure(parser, "-f true", String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-f"));
         assertParseFailure(parser, "-nf=none", String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-nf"));
         assertParseFailure(parser, "-f -n", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-n NAME"));
     }

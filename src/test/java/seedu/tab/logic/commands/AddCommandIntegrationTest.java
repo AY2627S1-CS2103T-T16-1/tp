@@ -132,6 +132,33 @@ public class AddCommandIntegrationTest {
         assertEquals(List.of("Alice Tan", "Carl Ong"), displayedNames());
     }
 
+    @Test
+    public void execute_dotlessEmailDomain_addsStudentAndWarns() throws Exception {
+        model = new ModelManager(new StudentBook(), new UserPrefs());
+
+        assertEquals("New student added: Tan; Email: john@gmail"
+                + "\n\nWARNING: Possibly incomplete email: john@gmail has no dot in its domain.\n"
+                + "Check whether a part such as .com or .nus.edu is missing; the address is saved as entered.",
+                executeCommand("add Tan -e john@gmail"));
+        assertEquals("john@gmail",
+                model.getStudentBook().getStudentList().get(0).getEmail().orElseThrow().getValue());
+    }
+
+    @Test
+    public void execute_dottedEmailDomain_addsStudentWithoutWarning() throws Exception {
+        model = new ModelManager(new StudentBook(), new UserPrefs());
+
+        assertEquals("New student added: Ng; Email: john@gmail.com",
+                executeCommand("add Ng -e john@gmail.com"));
+    }
+
+    @Test
+    public void execute_noEmail_addsStudentWithoutWarning() throws Exception {
+        model = new ModelManager(new StudentBook(), new UserPrefs());
+
+        assertEquals("New student added: Lee; Phone: 91110001", executeCommand("add Lee -p 91110001"));
+    }
+
     private void setUpTutorialSearch() throws Exception {
         model = new ModelManager(new StudentBook(), new UserPrefs());
         executeCommand("add Alice Tan -p 91110001 -t T1");
@@ -166,7 +193,7 @@ public class AddCommandIntegrationTest {
 
         assertCommandSuccess(new AddCommand(sameName), model,
                 new CommandResult(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(sameName))
-                        + "\n\nWARNING: Possible duplicate student: Alice Pauline has the same name (aLiCe pAuLiNe)."
+                        + "\n\nWARNING: Possible duplicate student: Alice Pauline has the same name."
                         + "\nReview the records and delete duplicates only if they are the same person.", sameName),
                 expectedModel);
     }
@@ -182,7 +209,7 @@ public class AddCommandIntegrationTest {
 
         assertCommandSuccess(new AddCommand(second), model,
                 new CommandResult(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(second))
-                        + "\n\nWARNING: Possible duplicate student: Tan Wei Ming has the same name (Tan Wei Ming)."
+                        + "\n\nWARNING: Possible duplicate student: Tan Wei Ming has the same name."
                         + "\nReview the records and delete duplicates only if they are the same person.", second),
                 expectedModel);
     }
@@ -216,7 +243,7 @@ public class AddCommandIntegrationTest {
         assertCommandSuccess(new AddCommand(matchingEmail), model,
                 new CommandResult(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(matchingEmail))
                         + "\n\nWARNING: Possible duplicate student: " + studentInList.getName()
-                        + " has the same email (ALICE@EXAMPLE.COM)."
+                        + " has the same email."
                         + "\nReview the records and delete duplicates only if they are the same person."
                         + "\nSearch cleared to show the new student.", matchingEmail),
                 expectedModel);

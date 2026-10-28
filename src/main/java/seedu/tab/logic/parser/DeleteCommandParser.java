@@ -14,7 +14,6 @@ import seedu.tab.logic.commands.DeleteCommand;
 import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.CommandTokenizer.Token;
 import seedu.tab.logic.parser.exceptions.ParseException;
-import seedu.tab.model.student.NusStudentId;
 
 /**
  * Parses input arguments and creates a new DeleteCommand object
@@ -83,11 +82,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
         try {
             return ParserUtil.parseStudentTarget(token.value(), DeleteCommand.MESSAGE_USAGE);
         } catch (ParseException e) {
-            if (NusStudentId.isValidNusStudentId(token.value())) {
-                throw new ParseException(e.getMessage() + " "
-                        + Messages.getIdTargetHint(DeleteCommand.COMMAND_WORD, token.value()), e);
-            }
-            throw e;
+            throw ParserUtil.withIdTargetHint(e, token.value(), DeleteCommand.ID_TARGET_COMMAND);
         }
     }
 
@@ -126,14 +121,17 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
     }
 
     /**
-     * Reports the tokens left after the index. The recovery hint names {@code delete} rather
-     * than the one {@code edit} and {@code tag} use, because those commands take field values
-     * and {@code delete} takes none: telling a user to put the value after an option suggests
-     * a command delete cannot run.
+     * Reports the tokens left after the target, naming the target by the form it was read as
+     * rather than by the index form alone, so that a user who typed a name is not told they
+     * typed an index. The recovery hint names {@code delete} rather than the one {@code edit}
+     * and {@code tag} use, because those commands take field values and {@code delete} takes
+     * none: telling a user to put the value after an option suggests a command delete cannot
+     * run.
      */
     private static String formatExtraneousValueMessage(List<Token> tokens) {
         List<Token> values = tokens.subList(1, tokens.size());
-        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX_ONLY, DeleteCommand.FIELD_INDEX,
+        return String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET_ONLY,
+                ParserUtil.getTargetFieldName(tokens.getFirst().value(), DeleteCommand.FIELD_INDEX),
                 Messages.shorten(String.join(" ", values.stream().map(Token::value).toList())),
                 DeleteCommand.COMMAND_WORD);
     }

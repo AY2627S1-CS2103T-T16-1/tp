@@ -1,6 +1,8 @@
 package seedu.tab.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.parser.CliFlags.FLAG_ADD_TAG;
 import static seedu.tab.logic.parser.CliFlags.FLAG_EMAIL;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
@@ -13,6 +15,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -177,7 +180,7 @@ public class FlagTokenizerTest {
 
     @Test
     public void tokenize_loneHyphenAfterTheFlagsBegan_belongsToNoOption() {
-        assertThrows(ParseException.class, String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "-"), () ->
+        assertThrows(ParseException.class, Messages.getErrorMessageForValueAfterFlags("-", true), () ->
                 parse("Jean -t T1 -"));
     }
 
@@ -187,6 +190,32 @@ public class FlagTokenizerTest {
         FlagArgumentMap parsed = FlagTokenizer.tokenize(" John -e a@b.com",
                 FLAG_EMAIL, new CliFlag("-e", "MAIL"));
         assertEquals(Optional.of("a@b.com"), parsed.getValue(FLAG_EMAIL));
+    }
+
+    @Test
+    public void tokenize_capitalizedKnownOption_suggestsSupportedLowercaseMarker() {
+        for (CliFlag flag : List.of(FLAG_PHONE, FLAG_EMAIL, FLAG_NAME, FLAG_TAG, FLAG_FOLLOW_UP,
+                FLAG_NO_FOLLOW_UP, FLAG_NUS_STUDENT_ID, FLAG_ADD_TAG, FLAG_REMOVE_TAG)) {
+            for (String marker : flag.getMarkers()) {
+                String capitalized = marker.toUpperCase(Locale.ROOT);
+                String expected = "There is no " + capitalized + " option. Did you mean " + marker + "?";
+                for (String suffix : List.of(" value", "=value", "=\"\"")) {
+                    UnknownFlagException failure = org.junit.jupiter.api.Assertions.assertThrows(
+                            UnknownFlagException.class, () -> FlagTokenizer.tokenize(capitalized + suffix, flag));
+                    assertEquals(expected, failure.getMessage());
+                    assertEquals(capitalized, failure.getMarker());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void tokenize_capitalizedUnsupportedOption_doesNotSuggestOtherCommandsOptions() {
+        for (String input : List.of("-N Alex", "--Name=Alex", "--UNKNOWN=value")) {
+            String marker = input.split("[ =]")[0];
+            assertThrows(UnknownFlagException.class, "There is no " + marker + " option.", () ->
+                    FlagTokenizer.tokenize(input, FLAG_PHONE));
+        }
     }
 
     @Test
@@ -265,8 +294,20 @@ public class FlagTokenizerTest {
     public void tokenize_valueAfterTheFlagsBegan_saysItBelongsToNoOption() {
         // a value once the options have begun belongs to nothing, whatever was meant by it
         assertThrows(ParseException.class,
-                String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "Kumaran"), () ->
+                Messages.getErrorMessageForValueAfterFlags("Kumaran", true), () ->
                     parse("Ravi -t T1 Kumaran"));
+        assertFalse(Messages.getErrorMessageForValueAfterFlags("Kumaran", true)
+                .contains(Messages.MESSAGE_PREAMBLE_BEFORE_OPTIONS));
+    }
+
+    @Test
+    public void tokenize_valueAfterTheFlagsWithoutAPreamble_offersTheFrontOfTheCommand() {
+        // nothing was given before the options, so the front of the command is still free
+        assertThrows(ParseException.class,
+                Messages.getErrorMessageForValueAfterFlags("Ravi", false), () ->
+                    parse("-t T1 Ravi"));
+        assertTrue(Messages.getErrorMessageForValueAfterFlags("Ravi", false)
+                .contains(Messages.MESSAGE_PREAMBLE_BEFORE_OPTIONS));
     }
 
     @Test
@@ -331,9 +372,9 @@ public class FlagTokenizerTest {
     }
 
     @Test
-    public void tokenize_separateValueAfterMarkerOnlyFlag_saysItBelongsToNoOption() {
+    public void tokenize_separateValueAfterMarkerOnlyFlag_saysFlagTakesNoValue() {
         assertThrows(ParseException.class,
-                String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "true"), () ->
+                String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "--follow-up"), () ->
                     parse("John --follow-up true"));
     }
 
