@@ -51,8 +51,8 @@ public class DotlessEmailDomainWarningTest {
 
         String feedback = LikelyDuplicateWarning.appendTo(SUCCESS_MESSAGE, added, List.of(existing));
 
-        assertEquals(SUCCESS_MESSAGE + "\n\nWARNING: Possible duplicate student: Lee has the same email "
-                + "(john@gmail).\nReview the records and delete duplicates only if they are the same person."
+        assertEquals(SUCCESS_MESSAGE + "\n\nWARNING: Possible duplicate student: Lee has the same email."
+                + "\nReview the records and delete duplicates only if they are the same person."
                 + "\n\nWARNING: Possibly incomplete email: john@gmail has no dot in its domain.\n"
                 + "Check whether a part such as .com or .nus.edu is missing; the address is saved as entered.",
                 DotlessEmailDomainWarning.appendTo(feedback, added));

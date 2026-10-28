@@ -132,7 +132,7 @@ public class CommandDispatchAndPersistenceTest {
         CommandResult result = logic.execute(AddCommand.COMMAND_WORD + " Mary-Jane -p 87654321");
 
         assertTrue(result.getFeedbackToUser().contains(
-                "WARNING: Possible duplicate student: Mary Jane has the same name (Mary-Jane)."));
+                "WARNING: Possible duplicate student: Mary Jane has the same name."));
 
         assertEquals("Mary Jane", model.getFilteredStudentList().get(0).getName().getFullName());
         assertEquals("Mary-Jane", model.getFilteredStudentList().get(1).getName().getFullName());
