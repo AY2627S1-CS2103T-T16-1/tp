@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 
+import seedu.tab.commons.core.DataLoadingErrorMessage;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.commons.exceptions.IllegalValueException;
@@ -212,9 +213,18 @@ public class JsonStudentBookStorage {
         return mappingException.getPath().stream()
                 .filter(reference -> reference.getIndex() >= 0)
                 .findFirst()
-                .map(reference -> new DataLoadingException(String.format(Locale.ROOT,
-                        MESSAGE_STUDENT_CONTEXT, reference.getIndex() + 1, failure.getMessage()), failure))
+                .map(reference -> addStudentRecordNumber(failure, reference.getIndex() + 1))
                 .orElse(failure);
+    }
+
+    /**
+     * Returns {@code failure} with {@code recordNumber} named in its explanation, leaving the
+     * part of the file it quotes as it is.
+     */
+    private static DataLoadingException addStudentRecordNumber(DataLoadingException failure, int recordNumber) {
+        DataLoadingErrorMessage errorMessage = failure.getErrorMessage();
+        return new DataLoadingException(errorMessage.withDescription(String.format(Locale.ROOT,
+                MESSAGE_STUDENT_CONTEXT, recordNumber, errorMessage.description())), failure);
     }
 
     /** Writes the book through a delegate that tests can override to simulate a write failure. */
