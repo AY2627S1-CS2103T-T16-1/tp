@@ -1,31 +1,26 @@
 @startuml
 !include style.puml
-skinparam ActivityFontSize 15
-skinparam ArrowFontSize 12
+skinparam defaultFontSize 16
+skinparam ArrowFontStyle plain
+skinparam activityBackgroundColor LOGIC_COLOR_T1
+skinparam activityBorderColor #555555
+skinparam arrowColor #555555
 
 start
-:Fold the typed word to lower case;
-
-if (Any command word opens with it?) then ([yes])
-    :Take every command word it opens;
-else ([no])
-    :Keep the command words within
-    an edit of a differing first letter,
-    or two of a matching one;
-    if (Any kept?) then ([no])
-        :Suggest nothing;
-        stop
-    else ([yes])
-        :Take those at the smallest
-        edit distance;
-    endif
+:Fold the typed word with Locale.ROOT;
+:Find command words starting with it;
+if () then ([prefix matches exist])
+  :Use prefix matches as suggestions;
+else ([no prefix matches])
+  :Find candidates within two edits for the
+  same initial character, or one otherwise;
+  :Keep candidates at the smallest distance
+  (none if there are no candidates);
 endif
-
-if (More than three taken?) then ([yes])
-    :Suggest nothing;
-    stop
-else ([no])
-    :Name them in alphabetical order;
-    stop
+if () then ([more than three suggestions])
+  :Return no suggestions;
+else ([at most three suggestions])
+  :Return suggestions in command-list order;
 endif
+stop
 @enduml

@@ -1,45 +1,36 @@
 @startuml
 !include style.puml
+skinparam ArrowFontStyle plain
+skinparam defaultFontSize 16
 
-actor User
-participant "LogicManager" as LogicManager LOGIC_COLOR
-participant "StudentBookParser" as SBP LOGIC_COLOR
-participant "AddCommandParser" as Parser LOGIC_COLOR
-participant "CommandTokenizer" as Tokenizer LOGIC_COLOR
-participant "FlagTokenizer" as FlagTokenizer LOGIC_COLOR
-participant "ParserUtil" as ParserUtil LOGIC_COLOR
+participant ":AddCommandParser" as parser LOGIC_COLOR
+participant "FlagTokenizer" as flags LOGIC_COLOR
+participant "CommandTokenizer" as tokens LOGIC_COLOR
+participant "c:AddCommand" as command LOGIC_COLOR
 
-User -> LogicManager : execute("add John Doe -p 98765432 -e johnd@example.com")
-activate LogicManager
-
-LogicManager -> SBP : parseCommand(command)
-activate SBP
-
-SBP -> Parser : parse(arguments)
-activate Parser
-
-Parser -> Tokenizer : tokenize(command)
-activate Tokenizer
-Tokenizer --> Parser : List<Token>
-deactivate Tokenizer
-
-Parser -> FlagTokenizer : tokenize(tokens)
-activate FlagTokenizer
-FlagTokenizer --> Parser : FlagArgumentMap
-deactivate FlagTokenizer
-
-Parser -> ParserUtil : parseName/parsePhone/parseEmail/parseNusStudentId
-activate ParserUtil
-ParserUtil --> Parser : validated values
-deactivate ParserUtil
-
-Parser --> SBP : AddCommand
-deactivate Parser
-
-SBP --> LogicManager : AddCommand
-deactivate SBP
-
-LogicManager --> User : CommandResult
-deactivate LogicManager
+[-> parser : parse(args)
+activate parser
+parser -> flags : tokenize(args, ...)
+activate flags
+flags -> tokens : tokenize(args)
+activate tokens
+tokens --> flags : tokens with quoted boundaries
+deactivate tokens
+note over flags : Assign options to values
+flags --> parser : arguments:FlagArgumentMap
+deactivate flags
+note over parser : Check required input and repeated options
+note over parser
+  Validate fields through ParserUtil;
+  collect errors through ParseProblems.
+  Stop on errors; otherwise construct Student.
+end note
+create command
+parser -> command : AddCommand(student)
+activate command
+command --> parser
+deactivate command
+[<-- parser : command
+deactivate parser
 @enduml
 
