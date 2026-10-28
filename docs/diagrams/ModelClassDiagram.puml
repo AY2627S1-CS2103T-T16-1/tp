@@ -1,13 +1,13 @@
 @startuml
 !include style.puml
-!pragma layout smetana
 skinparam classBackgroundColor MODEL_COLOR_T1
 skinparam classFontColor #222222
 skinparam classBorderColor #555555
 skinparam arrowColor #555555
 skinparam ArrowFontStyle plain
-skinparam nodesep 30
-skinparam ranksep 40
+skinparam linetype ortho
+skinparam nodesep 65
+skinparam ranksep 45
 
 class ModelManager
 class StudentBook
@@ -22,20 +22,28 @@ class NusStudentId
 class Tag
 class FollowUpFlag
 
-ModelManager *--> "1" StudentBook
-ModelManager *--> "1" UserPrefs
-ModelManager *--> "1" FilteredStudents
-StudentBook *--> "1" UniqueStudentList
+' Keep multiplicities beside arrowheads without masking the association lines.
+ModelManager *--> "1   " StudentBook
+ModelManager *--> "1   " UserPrefs
+ModelManager *--> "1   " FilteredStudents
+StudentBook *--> "1   " UniqueStudentList
 note right of FilteredStudents
   Views the observable student list
   exposed by StudentBook.
 end note
-UniqueStudentList --> "0..*" Student : records
-Student --> "1" Name
-Student --> "0..1" Phone
-Student --> "0..1" Email
-Student --> "0..1" NusStudentId
-Student --> "0..*" Tag : general tags
-Student --> "0..1" FollowUpFlag : pending follow-up
+UniqueStudentList --> "0..*   " Student : records
+Student --> "1   " Name
+Student --> "0..1   " Phone
+Student --> "0..1   " Email
+Student --> "0..1   " NusStudentId
+Student --> "0..*   " Tag : general tags
+Student --> "0..1   " FollowUpFlag : pending follow-up
 FollowUpFlag --|> Tag
+
+' Keep value classes in one row so association ends remain vertical.
+Name -[hidden]right-> Phone
+Phone -[hidden]right-> Email
+Email -[hidden]right-> NusStudentId
+NusStudentId -[hidden]right-> Tag
+Tag -[hidden]right-> FollowUpFlag
 @enduml
