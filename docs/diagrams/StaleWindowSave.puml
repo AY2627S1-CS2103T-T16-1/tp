@@ -8,20 +8,20 @@ skinparam arrowColor #555555
 
 start
 :Resolve data target and sibling lock path;
-if (Save lock acquired?) then (yes)
+if () then ([lock acquired])
   :Reload and validate disk book;
-  if (Disk book matches remembered baseline?) then (yes)
+  if () then ([disk book matches baseline])
     :Carry forward current disk comment;
     :Serialize and atomically replace file;
     :Remember successfully saved book;
     :Release lock;
     stop
-  else (no)
+  else ([else])
     :Release lock;
     :Report stale data;
     stop
   endif
-else (no)
+else ([else])
   :Report lock failure or busy save;
   stop
 endif
