@@ -1,37 +1,33 @@
 @startuml
 !include style.puml
-skinparam arrowThickness 1.1
-skinparam arrowColor STORAGE_COLOR
-skinparam classBackgroundColor STORAGE_COLOR
+skinparam classBackgroundColor STORAGE_COLOR_T1
+skinparam classFontColor #222222
+skinparam classStereotypeFontColor #222222
+skinparam classBorderColor #555555
+skinparam arrowColor #555555
+skinparam ArrowFontStyle plain
+skinparam nodesep 45
+skinparam ranksep 40
 
-package Storage as StoragePackage {
-
-Class "<<interface>>\nStorage" as Storage
-Class StorageManager
-
-package "UserPrefs Storage" #F4F6F6{
-Class JsonUserPrefsStorage
-}
-
-package "StudentBook Storage" #F4F6F6{
-Class JsonStudentBookStorage
-Class JsonSerializableStudentBook
-Class JsonAdaptedStudent
-Class JsonAdaptedTag
-}
-
-}
-
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Storage
+interface Storage <<interface>>
+class StorageManager
+class JsonUserPrefsStorage
+class JsonStudentBookStorage
+class JsonSerializableStudentBook
+class JsonAdaptedStudent
+class JsonAdaptedTag
 
 StorageManager .up.|> Storage
-StorageManager -down-> "1" JsonUserPrefsStorage
-StorageManager -down-> "1" JsonStudentBookStorage
+StorageManager --> "1" JsonUserPrefsStorage
+StorageManager --> "1" JsonStudentBookStorage
+JsonStudentBookStorage ..> JsonSerializableStudentBook : reads / writes
+JsonSerializableStudentBook --> "0..*" JsonAdaptedStudent
+JsonAdaptedStudent --> "0..*" JsonAdaptedTag
 
-JsonStudentBookStorage ..> JsonSerializableStudentBook
-JsonSerializableStudentBook --> "*" JsonAdaptedStudent
-JsonAdaptedStudent --> "*" JsonAdaptedTag
-
+note left of JsonAdaptedStudent
+  Adapters convert JSON data
+  to validated model values.
+  Model classes are omitted.
+end note
 @enduml
 

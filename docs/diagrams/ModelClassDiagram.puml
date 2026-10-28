@@ -1,69 +1,49 @@
 @startuml
 !include style.puml
-' Orthogonal routing keeps each association on its own vertical, and the leading
-' newline in every multiplicity lifts the text clear of the line it labels.
+skinparam classBackgroundColor MODEL_COLOR_T1
+skinparam classFontColor #222222
+skinparam classBorderColor #555555
+skinparam arrowColor #555555
+skinparam ArrowFontStyle plain
+skinparam genericDisplay old
 skinparam linetype ortho
-skinparam nodesep 20
-skinparam ranksep 30
-skinparam arrowThickness 1.1
-skinparam arrowColor MODEL_COLOR
-skinparam classBackgroundColor MODEL_COLOR
+skinparam nodesep 65
+skinparam ranksep 45
 
-Package Model as ModelPackage <<Rectangle>>{
-Class "<<interface>>\nReadOnlyStudentBook" as ReadOnlyStudentBook
-Class "<<interface>>\nReadOnlyUserPrefs" as ReadOnlyUserPrefs
-Class "<<interface>>\nModel" as Model
-Class StudentBook
-Class ModelManager
-Class UserPrefs
+class ModelManager
+class StudentBook
+class UserPrefs
+class UniqueStudentList
+class "FilteredList<Student>" as FilteredStudents
+class Student
+class Name
+class Phone
+class Email
+class NusStudentId
+class Tag
+class FollowUpFlag
 
-Class UniqueStudentList
-Class Student
-Class Email
-Class Name
-Class NusStudentId
-Class Phone
-Class Tag
-Class FollowUpFlag
-
-Class I #FFFFFF
-}
-
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Model
-
-StudentBook .up.|> ReadOnlyStudentBook
-
-ModelManager .up.|> Model
-Model .right.> ReadOnlyUserPrefs
-Model .left.> ReadOnlyStudentBook
-ModelManager -left-> "1" StudentBook
-ModelManager -right-> "1" UserPrefs
-UserPrefs .up.|> ReadOnlyUserPrefs
-
-StudentBook *--> "\n1" UniqueStudentList
-UniqueStudentList --> "\n~* all" Student
-Student *--> Name
-Student *--> "\n0..1" Phone
-Student *--> "\n0..1" Email
-Student *--> "\n0..1" NusStudentId
-Student *--> "\n*" Tag
-Student *--> "\n0..1" FollowUpFlag
-FollowUpFlag --|> Tag
-
-note right of Student
-  isSameStudent compares records by
-  NUS Student ID only; a missing ID
-  does not establish identity
+' Keep multiplicities beside arrowheads without masking the association lines.
+ModelManager *--> "1   " StudentBook
+ModelManager *-right-> "1   " UserPrefs
+ModelManager *--> "1   " FilteredStudents
+StudentBook *--> "1   " UniqueStudentList
+note right of FilteredStudents
+  Views the observable student list
+  exposed by StudentBook.
 end note
+UniqueStudentList --> "0..*   " Student : records
+Student --> "1   " Name
+Student --> "0..1   " Phone
+Student --> "0..1   " Email
+Student --> "0..1   " NusStudentId
+Student --> "0..*   " Tag : general tags
+Student --> "0..1   " FollowUpFlag
+FollowUpFlag -up-|> Tag
 
-Student -[hidden]up--> I
-UniqueStudentList -[hidden]right-> I
-
+' Keep value classes in one row so association ends remain vertical.
 Name -[hidden]right-> Phone
 Phone -[hidden]right-> Email
 Email -[hidden]right-> NusStudentId
-
-ModelManager --> "\n~* filtered" Student
+NusStudentId -[hidden]right-> Tag
 @enduml
-

@@ -1,39 +1,33 @@
 @startuml
-!include <office/Concepts/globe_internet>
-!include <office/Concepts/documents>
-!include <office/Users/user>
 !include style.puml
+!pragma layout smetana
+skinparam defaultFontSize 16
+skinparam packageFontColor #222222
+skinparam arrowColor #555555
+skinparam ArrowFontStyle plain
+skinparam nodesep 45
+skinparam ranksep 40
 
-Package " "<<Rectangle>>{
-    Class UI UI_COLOR
-    Class Logic LOGIC_COLOR
-    Class Storage STORAGE_COLOR
-    Class Model MODEL_COLOR
-    Class Main #grey
-    Class Commons LOGIC_COLOR_T2
-}
+package Main #EEEEEE
+package UI UI_COLOR_T1
+package Logic LOGIC_COLOR_T1
+package Storage STORAGE_COLOR_T1
+package Model MODEL_COLOR_T1
+package Commons #EEEEEE
 
-Class "<$user>" as User MODEL_COLOR_T2
-Class "<$documents>" as File UI_COLOR_T1
+Main ..> UI
+Main ..> Logic
+Main ..> Storage
+Main ..> Model
+UI ..> Logic
+UI ..> Model
+Logic ..> Model
+Logic ..> Storage
+Storage ..> Model
 
-
-
-
-
-
-
-UI -[#green]> Logic
-UI -right[#green]-> Model
-Logic -[#blue]-> Storage
-Logic -down[#blue]-> Model
-Main -[#grey]-> UI
-Main -[#grey]-> Logic
-Main -[#grey]-> Storage
-Main -up[#grey]-> Model
-Main -down[hidden]-> Commons
-
-Storage -up[STORAGE_COLOR].> Model
-Storage .right[STORAGE_COLOR].>File
-User ..> UI
+Main -[hidden]right-> Commons
+note right of Commons
+  Shared utilities used
+  across the components
+end note
 @enduml
-
