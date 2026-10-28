@@ -265,6 +265,14 @@ public class TagCommandParserTest {
     }
 
     @Test
+    public void parse_followUpLikeTagsWithPeriod_throwsParseException() {
+        // Tags that look like the follow-up marker with trailing punctuation should be rejected
+        assertParseFailure(parser, "1 -a \"Needs follow-up.\"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
+        assertParseFailure(parser, "1 -a \"Needs follow-up!\"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
+        assertParseFailure(parser, "1 -a \"Needs follow-up?\"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
+    }
+
+    @Test
     public void parse_indexAfterTheOptions_pointsToTheFrontOfTheCommand() {
         assertFailureWithGuidance("-a Lab 1", Messages.getErrorMessageForValueAfterFlags("1", false));
         assertParseSuccess(parser, "1 -a Lab",

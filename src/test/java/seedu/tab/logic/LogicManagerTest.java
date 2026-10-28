@@ -52,7 +52,7 @@ import seedu.tab.model.UserPrefs;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
-import seedu.tab.model.tag.Tag;
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.storage.JsonStudentBookStorage;
 import seedu.tab.storage.JsonUserPrefsStorage;
 import seedu.tab.storage.StorageManager;
@@ -410,26 +410,32 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_followUpLikeTags_warnsAndSavesTagsWithoutFlagging() throws Exception {
-        String advice = "\" looks like the follow-up marker. To flag the student, use --follow-up.";
-        assertEquals("New student added: Marker Test; Tags: [Needs follow up]"
-                + "\n\nNOTE: \"Needs follow up" + advice,
-                logic.execute("add Marker Test -t \"Needs follow up\" -t \"NEEDS FOLLOW UP\"").getFeedbackToUser());
-        assertEquals("Edited student: Marker Test; Tags: [Needs followup]"
-                + "\n\nNOTE: \"Needs followup" + advice,
-                logic.execute("edit 1 -t \"Needs followup\"").getFeedbackToUser());
-        assertEquals("Added tag [Needs follow-up.]: Marker Test; Tags: [Needs follow-up.][Needs followup]"
-                + "\n\nNOTE: \"Needs follow-up." + advice,
-                logic.execute("tag 1 -a \"Needs follow-up.\"").getFeedbackToUser());
+    public void execute_followUpLikeTags_rejectedAsReserved() throws Exception {
+        logic.execute("add Marker Test");
+        // All these spellings are now rejected as they read like the follow-up marker
+        String rejectionMsg = FollowUpFlag.MESSAGE_RESERVED + " Use --follow-up to mark the student.";
+        assertParseException("add Marker Test2 -t \"Needs follow up\"", rejectionMsg);
+        assertParseException("add Marker Test2 -t \"NEEDS FOLLOW UP\"", rejectionMsg);
+        assertParseException("edit 1 -t \"Needs followup\"", rejectionMsg);
+        assertParseException("tag 1 -a \"Needs follow\uff0dup\"", rejectionMsg);
+        assertParseException("tag 1 -a \"Needs follow\u2015up\"", rejectionMsg);
+        assertParseException("tag 1 -a \"Needs follow-up;\"", rejectionMsg);
+        // Regular tags still work
         assertFalse(logic.execute("edit 1 -p 123").getFeedbackToUser().contains("NOTE:"));
-        assertFalse(logic.execute("tag 1 -r \"Needs follow-up.\"").getFeedbackToUser().contains("NOTE:"));
+        // The student should not have any follow-up-like tags
         Student saved = model.getStudentBook().getStudentList().getFirst();
         assertFalse(saved.isFlagged());
-        assertEquals(Set.of(new Tag("Needs followup")), saved.getTags());
+        assertEquals(Set.of(), saved.getTags());
         Path path = temporaryFolder.resolve("studentBook.json");
         assertEquals(model.getStudentBook(), new JsonStudentBookStorage(path).readStudentBook().orElseThrow());
         logic.execute("find -f");
         assertTrue(model.getFilteredStudentList().isEmpty());
+    }
+
+    private void assertParseFailure(Logic logic, String input, String expectedMessage) throws Exception {
+        CommandResult result = logic.execute(input);
+        assertTrue(result.getFeedbackToUser().contains(expectedMessage),
+                "Expected to contain: " + expectedMessage + "\nActual: " + result.getFeedbackToUser());
     }
 
     @Test

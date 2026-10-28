@@ -890,6 +890,9 @@ well as the same normalized name. `ParserUtil.parseTagToAdd` and
 a card cannot show the same label as a tag and as the marker whether the value
 arrives from a command or from a hand-edited file. A file written before the
 rule stops loading, with an error naming the record and the field to correct.
+The comparison folds Unicode dash punctuation and the minus sign to a hyphen,
+treats spaces as separators, ignores trailing Unicode punctuation, and compares
+both separated and collapsed labels. Longer labels remain ordinary tags.
 `Tag` itself still accepts the name, so removal reads it as an ordinary tag and
 `TagCommand` keeps explaining that the marker is what a flagged student carries. `Student` holds an optional `FollowUpFlag` and
 exposes it through `getFlag()`; `isFlagged()` preserves the existing boolean
@@ -1197,7 +1200,9 @@ without refusing tags that may be intentional. `AddCommand` checks all new tags,
 `EditCommand` checks only tags absent from the old record, and `TagCommand`
 checks additions. Removing tags or editing unrelated details does not repeat the
 note. The tag text and follow-up flag are unchanged by the warning; parser
-validation still refuses the reserved marker itself.
+validation first refuses the reserved marker and its separator or trailing-punctuation
+variants. Other punctuation within the label, such as `Needs_follow_up`, can still
+be saved with an advisory note.
 
 ### Finding students
 
@@ -2303,14 +2308,18 @@ testers are expected to do more *exploratory* testing.
 1. Recognizing follow-up-like tags without changing follow-up status
 
    1. Prerequisites: Clear the book and confirm with `yes`.
-   1. Test case: `add Marker Test -t "Needs follow up"`, then
-      `edit 1 -t "Needs followup"`, then `tag 1 -a "Needs follow-up."`.<br>
+   1. Test case: `add Marker Test -t "Needs_follow_up"`, then
+      `edit 1 -t "Needs.followup"`, then `tag 1 -a "Needs:follow-up"`.<br>
       Expected: Each succeeds and appends a note naming the entered tag and
       advising `--follow-up`. The tags retain their spelling; no follow-up
       marker appears. `find -f` shows no students. Run `list` afterward.
-   1. Test case: `edit 1 -p 123`, then `tag 1 -r "Needs follow-up."`.<br>
+   1. Test case: `edit 1 -p 123`, then `tag 1 -r "Needs:follow-up"`.<br>
       Expected: Both succeed without repeating the note. Restart TAB: the
-      remaining `Needs followup` tag is saved and the student is still unflagged.
+      remaining `Needs.followup` tag is saved and the student is still unflagged.
+   1. Test case: `tag 1 -a "Needs follow up"`, then `edit 1 -t "Needs followup"`,
+      then `tag 1 -a "Needs follow－up"`, then `tag 1 -a "Needs follow-up…"`.<br>
+      Expected: Each is refused with the reserved-label error pointing to
+      `--follow-up`. The student's tags and saved file remain unchanged.
 
 ### Adding and removing a tag
 
@@ -3220,6 +3229,11 @@ testers are expected to do more *exploratory* testing.
       keeping the first spelling of each. The reserved label refuses the file,
       pointing at `"flag"`; `"Needs follow-up soon"` is accepted, only the
       label itself being reserved.
+   1. Test case: With TAB closed, set a student's `tags` to `["Needs follow－up"]`,
+      then try `["Needs follow-up;"]` on a later run.<br>
+      Expected: Each refuses the file with the reserved-label error naming the
+      record and `tags`. The file remains unchanged; remove the tag and use
+      `"flag": true` to record follow-up status.
 
 1. Refusing a stale second window's save
 
