@@ -1158,10 +1158,9 @@ The commands collect the warnings before mutation and set them off from the
 success message with a blank line. Matches group by field under one labeled
 `WARNING: Possible duplicate student` line, each naming at most two students and
 summarizing the rest as `N others`, so a shared placeholder cannot fill the
-result box. The review advice appears once, after every matching field. A phone
-warning omits the parenthetical value, because matched records can store the
-same digits with different formatting and no one spelling would represent them
-all.
+result box. The review advice appears once, after every matching field. Warnings
+omit parenthetical values: matching names, emails, and phones may have different
+spellings or formatting, so no one value would represent every matched record.
 
 `EditCommand` compares only name, phone, or email values that differ from the
 selected record. It excludes the selected `Student` instance but still uses
@@ -2629,10 +2628,14 @@ testers are expected to do more *exploratory* testing.
       then `add "  aLeX   yEoH  " -p 81112222 -e other@example.com`, then
       `add Bernice Yu -p "+65 (9123)-4567" -e bernice@example.com`.<br>
       Expected: The first warns about nothing. The second is saved and names
-      the matching `name`, case and repeated spaces not preventing the match.
+      the matching `name`, case and repeated spaces not preventing the match,
+      without attributing the new spelling to Alex.
       The third names the matching `phone`, the digit sequences matching
       despite punctuation, and reads `Alex Yeoh has the same phone.` without
       quoting either number. Restarting keeps both numbers as entered.
+   1. Test case: `add Email Match -e alex@example.com`.<br>
+      Expected: The student is saved and the warning reads `Alex Yeoh has the
+      same email.` without attributing the lowercase spelling to Alex.
    1. Test case: Clear the book, add four students named `Student One` through
       `Student Four` each with phone `000`, then `add Student Five -p 000`.<br>
       Expected: Student Five is saved, one warning naming two of them and

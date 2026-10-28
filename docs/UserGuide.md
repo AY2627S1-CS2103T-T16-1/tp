@@ -413,7 +413,7 @@ One warning line is shown for each matching field. It names up to two other
 students, then counts any further matches. For example:
 
 ```
-WARNING: Possible duplicate student: Alex Yeoh has the same email (alex@example.com).
+WARNING: Possible duplicate student: Alex Yeoh has the same email.
 Review the records and delete duplicates only if they are the same person.
 ```
 
@@ -427,8 +427,8 @@ names is insignificant. Phone numbers match when their complete digit sequences
 match, ignoring spaces and other non-digit characters; equivalent Unicode
 decimal digits also match. For example, `9123-4567`, `91234567`, and
 `９１２３４５６７` prompt the same phone warning. Entered phone formatting is
-preserved. Phone warnings omit the number because the matching records may
-format it differently. The review advice appears once after all matching fields.
+preserved. Warnings omit field values because matching records may use different
+spelling, capitalization, accents, or phone formatting. The review advice appears once after all matching fields.
 
 The warning is only a hint. It does not prove that two records describe the
 same person, and it does not find misspelled names, email aliases, or phone

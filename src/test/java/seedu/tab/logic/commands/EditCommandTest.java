@@ -461,8 +461,7 @@ public class EditCommandTest {
 
         assertCommandSuccess(command, model,
                 String.format(EditCommand.MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(edited))
-                        + "\n\nWARNING: Possible duplicate student: " + firstStudent.getName() + " has the same name ("
-                        + edited.getName() + ")."
+                        + "\n\nWARNING: Possible duplicate student: " + firstStudent.getName() + " has the same name."
                         + "\nReview the records and delete duplicates only if they are the same person.",
                 expectedModel);
     }

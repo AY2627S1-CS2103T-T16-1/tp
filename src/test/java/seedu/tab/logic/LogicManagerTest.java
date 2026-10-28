@@ -437,7 +437,7 @@ public class LogicManagerTest {
         logic.execute("add Amy -p 123");
         String control = Character.toString(1);
         assertEquals("New student added: Amy; Phone: 789; Tags: [Lab]\n\n"
-                + "WARNING: Possible duplicate student: Amy has the same name (Amy).\n"
+                + "WARNING: Possible duplicate student: Amy has the same name.\n"
                 + "Review the records and delete duplicates only if they are the same person.",
                 logic.execute("ad" + control + "d Am" + control + "y -p 789 -t La" + control
                         + "b -t Lab").getFeedbackToUser());
