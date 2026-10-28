@@ -5,13 +5,14 @@ skinparam ArrowFontStyle plain
 skinparam activityBackgroundColor STORAGE_COLOR_T1
 skinparam activityBorderColor #555555
 skinparam arrowColor #555555
+skinparam conditionStyle InsideDiamond
 
 start
 :Resolve data target and sibling lock path;
 :Try to acquire the save lock;
-if () then ([lock acquired])
+if (\n  Lock acquired?  \n) then ([lock acquired])
   :Reload and validate disk book;
-  if () then ([disk book matches baseline])
+  if (\n  Disk book matches baseline?  \n) then ([disk book matches baseline])
     :Carry forward current disk comment;
     :Serialize and atomically replace file;
     :Remember successfully saved book;
