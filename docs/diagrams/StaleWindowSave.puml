@@ -8,6 +8,7 @@ skinparam arrowColor #555555
 
 start
 :Resolve data target and sibling lock path;
+:Try to acquire the save lock;
 if () then ([lock acquired])
   :Reload and validate disk book;
   if () then ([disk book matches baseline])
@@ -16,12 +17,12 @@ if () then ([lock acquired])
     :Remember successfully saved book;
     :Release lock;
     stop
-  else ([else])
+  else ([disk book differs from baseline])
     :Release lock;
     :Report stale data;
     stop
   endif
-else ([else])
+else ([lock not acquired])
   :Report lock failure or busy save;
   stop
 endif

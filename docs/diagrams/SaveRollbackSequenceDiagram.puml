@@ -35,14 +35,11 @@ else student book changed
     Safe disk save
     (activity below)
   end ref
+  storage --> logic : saved / IOException
+  deactivate storage
   alt save succeeds
-    storage --> logic
-    deactivate storage
     [<-- logic : result
   else IOException
-    activate storage
-    storage --> logic : save failure
-    deactivate storage
     logic -> model : setStudentBook(snapshot)
     activate model
     model --> logic
