@@ -114,6 +114,14 @@ text remains one command; inspect it before pressing Enter.
   quote marks as part of a value, put a backslash before it, as in `\“`.
   Single quotation marks and apostrophes remain literal characters.
 
+* A word opening with a dash your editor wrote for a hyphen — such as the en
+  dash `–` or em dash `—` that "smart dashes" produce — opens an option, so a
+  command pasted from a document behaves like a typed one. `add Amy Lim –p
+  91234567` records the phone number rather than storing it in the name. Each
+  dash stands for one hyphen, so `—phone` reads as `-phone` and is refused by
+  name. A dash inside a word, as in `Jean–Luc`, stays part of the value; to
+  keep one at the start of a value, quote it, as in `add "–Mystery"`.
+
 * If a non-repeatable option is given twice, TAB names the repeated option
   and asks you to give it only once. For example, repeating `-f` reports
   `Options given more than once: -f. Give each listed option only once.`
@@ -364,9 +372,21 @@ at either end. Dots may separate non-empty groups; leading, trailing and
 consecutive dots are refused. For example, `mei__tan@hotmail.com` and
 `sean.o'brien@example.com` are accepted and stored as entered. Addresses that
 require a quoted local part (such as one containing spaces) are unsupported.
-The domain uses letters and digits with internal hyphens, separated by dots;
-its final label must have at least two characters. If an address starts with
-`-`, wrap the whole address in double quotes so it is read as a value.
+The domain uses ASCII letters and digits with internal hyphens, separated by
+dots; its final label must have at least two characters. A domain with no dot
+at all, such as `john@gmail`, is a valid host name, so TAB saves it and warns
+you instead of refusing it:
+
+```
+WARNING: Possibly incomplete email: john@gmail has no dot in its domain.
+Check whether a part such as .com or .nus.edu is missing; the address is saved as entered.
+```
+
+The warning appears after `add`, and after an `edit` that sets the address. A
+student address nearly always ends in something like `.com` or `.nus.edu`, so
+the warning catches a forgotten ending while you still remember the student.
+If an address starts with `-`, wrap the whole address in double quotes so it
+is read as a value.
 
 <box type="tip" seamless>
 
@@ -397,7 +417,9 @@ Review the records and delete duplicates only if they are the same person.
 
 Names and emails are compared without regard to letter case. Names also ignore
 Latin accents and straight/curly apostrophe differences: `José` matches `Jose`,
-and `O’Brien` matches `O'Brien`. Repeated, leading, and trailing whitespace in
+and `O’Brien` matches `O'Brien`. A hyphen is compared as a space, so
+`Mary-Jane` matches `Mary Jane`; longer dashes such as an en dash are compared
+as themselves. Repeated, leading, and trailing whitespace in
 names is insignificant. Phone numbers match when their complete digit sequences
 match, ignoring spaces and other non-digit characters; equivalent Unicode
 decimal digits also match. For example, `9123-4567`, `91234567`, and
@@ -851,6 +873,10 @@ Provide at least one field term or one follow-up status option. Every search ter
 * Name searches ignore Latin accents and straight/curly apostrophe differences:
   `find -n nguyen` matches `Nguyễn Văn An`, `find -n jose` matches `José Rivera`,
   and `find -n O'Brien` matches `Sean O’Brien`. The stored spelling stays unchanged.
+* Name searches also compare a hyphen as a space, so `find -n "Mary Jane"` matches
+  `Mary-Jane Tan` and `find -n Mary-Jane` matches `Mary Jane Tan`. A longer dash, such
+  as an en dash, is compared as itself, and hyphens stay significant in tags and
+  other fields.
 * Unicode case variants match in names and tags: `find -n σ` matches `ΝΙΚΟΣ`,
   and `find -t οσ` matches tag `ΟΣ`, consistent with adding/removing that tag.
   Accents and apostrophes remain significant in tags and other fields.
@@ -1022,6 +1048,14 @@ If TAB cannot open `data/tab.json` or the folder holding it, it reports that
 at the next run instead of opening the main window. It never treats a file it
 cannot read as a first launch, so your records are not replaced by sample
 students. Restore your permission to the file and the folder, then restart TAB.
+
+`data/tab.json` may be a symbolic link, which is one way to keep your records
+in a synced folder. TAB follows the link and saves through it, leaving the link
+itself in place, and creates the file at the other end on the first save if it
+is not there yet. If the link points into a folder that does not exist, TAB
+reports that at startup and names the missing target, because it cannot tell
+where you meant the records to go. Create the folder, or point the link
+somewhere else, then restart TAB.
 
 Save the file as **UTF-8**, with or without a leading byte order mark (BOM).
 TAB accepts both forms and preserves accented letters and other Unicode text.

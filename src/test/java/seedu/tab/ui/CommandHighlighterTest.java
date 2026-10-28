@@ -57,6 +57,14 @@ public class CommandHighlighterTest {
     }
 
     @Test
+    public void highlight_autocorrectedDash_colorsTheWordAsAnOption() {
+        // the parser reads \u2013p as -p, so the box has to show it as an option too
+        assertEquals(List.of(COMMAND_WORD, VALUE, OPTION, VALUE),
+                kindsOf("add John \u2013p 98765432"));
+        assertEquals(List.of(COMMAND_WORD, VALUE, OPTION), kindsOf("edit 1 \u2013\u2013follow-up"));
+    }
+
+    @Test
     public void highlight_quotedValue_isAValueEvenWhenItOpensWithTheOptionMarker() {
         // the quotes are what separate the value "-Ahmad" from the option -p
         assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE, OPTION, VALUE),

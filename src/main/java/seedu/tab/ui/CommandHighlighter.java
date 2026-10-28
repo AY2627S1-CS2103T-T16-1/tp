@@ -128,7 +128,7 @@ public class CommandHighlighter {
      * written that way is left whole rather than split in the wrong place.
      */
     private static int findAttachedMarkerEnd(String command, int start) {
-        if (command.charAt(start) != OPTION_MARKER.charAt(0)) {
+        if (!CommandTokenizer.isOptionMarker(command.charAt(start))) {
             return NOT_FOUND;
         }
         for (int index = start + 1; index < command.length()
@@ -187,8 +187,8 @@ public class CommandHighlighter {
         if (wasQuoted) {
             return Kind.QUOTED_VALUE;
         }
-        if (!isAttachedValue && word.startsWith(OPTION_MARKER)
-                && word.length() > OPTION_MARKER.length()) {
+        if (!isAttachedValue && word.length() > OPTION_MARKER.length()
+                && CommandTokenizer.isOptionMarker(word.charAt(0))) {
             return Kind.OPTION;
         }
         return Kind.VALUE;
