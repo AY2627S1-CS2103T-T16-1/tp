@@ -372,9 +372,21 @@ at either end. Dots may separate non-empty groups; leading, trailing and
 consecutive dots are refused. For example, `mei__tan@hotmail.com` and
 `sean.o'brien@example.com` are accepted and stored as entered. Addresses that
 require a quoted local part (such as one containing spaces) are unsupported.
-The domain uses letters and digits with internal hyphens, separated by dots;
-its final label must have at least two characters. If an address starts with
-`-`, wrap the whole address in double quotes so it is read as a value.
+The domain uses ASCII letters and digits with internal hyphens, separated by
+dots; its final label must have at least two characters. A domain with no dot
+at all, such as `john@gmail`, is a valid host name, so TAB saves it and warns
+you instead of refusing it:
+
+```
+WARNING: Possibly incomplete email: john@gmail has no dot in its domain.
+Check whether a part such as .com or .nus.edu is missing; the address is saved as entered.
+```
+
+The warning appears after `add`, and after an `edit` that sets the address. A
+student address nearly always ends in something like `.com` or `.nus.edu`, so
+the warning catches a forgotten ending while you still remember the student.
+If an address starts with `-`, wrap the whole address in double quotes so it
+is read as a value.
 
 <box type="tip" seamless>
 
@@ -1026,6 +1038,14 @@ If TAB cannot open `data/tab.json` or the folder holding it, it reports that
 at the next run instead of opening the main window. It never treats a file it
 cannot read as a first launch, so your records are not replaced by sample
 students. Restore your permission to the file and the folder, then restart TAB.
+
+`data/tab.json` may be a symbolic link, which is one way to keep your records
+in a synced folder. TAB follows the link and saves through it, leaving the link
+itself in place, and creates the file at the other end on the first save if it
+is not there yet. If the link points into a folder that does not exist, TAB
+reports that at startup and names the missing target, because it cannot tell
+where you meant the records to go. Create the folder, or point the link
+somewhere else, then restart TAB.
 
 Save the file as **UTF-8**, with or without a leading byte order mark (BOM).
 TAB accepts both forms and preserves accented letters and other Unicode text.

@@ -61,11 +61,20 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_dotlessEmailDomain_preservesAddress() throws Exception {
+        // the warning the commands show is advisory, so a stored single-label domain still loads
+        for (String address : List.of("john@gmail", "e1234567@nus", "a@localhost")) {
+            JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, address, VALID_TAGS, false);
+            assertEquals(address, student.toModelType().getEmail().orElseThrow().getValue());
+        }
+    }
+
+    @Test
     public void toModelType_consecutiveEmailDots_throwsIllegalValueException() {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, "mei..tan@example.com", VALID_TAGS, false);
         String expectedMessage = "Email \"mei..tan@example.com\" is not valid: "
-                + "the part before the @ may hold letters, digits and !#$%&'*+/=?^_`{|}~-"
+                + "the part before the @ may hold ASCII letters, digits and !#$%&'*+/=?^_`{|}~-"
                 + ", with dots allowed only between non-empty groups";
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
