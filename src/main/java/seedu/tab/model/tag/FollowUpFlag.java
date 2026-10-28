@@ -2,7 +2,6 @@ package seedu.tab.model.tag;
 
 import static java.util.Objects.requireNonNull;
 
-import java.text.Normalizer;
 import java.util.regex.Pattern;
 
 import seedu.tab.commons.util.StringUtil;
@@ -13,11 +12,10 @@ import seedu.tab.commons.util.StringUtil;
 public class FollowUpFlag extends Tag {
     public static final String FOLLOW_UP_NAME = "Needs follow-up";
 
-    // Unicode hyphens and dashes that look like a hyphen to a reader
-    private static final Pattern HYPHEN_OR_DASH =
-            Pattern.compile("[\\u002D\\u2010\\u2011\\u2012\\u2013\\u2014\\u2212]");
-    // Trailing punctuation that should be ignored for comparison
-    private static final Pattern TRAILING_PUNCTUATION = Pattern.compile("[.!?]+$");
+    private static final Pattern HYPHEN_OR_DASH = Pattern.compile("[\\p{Pd}\\u2212]");
+    private static final Pattern TRAILING_PUNCTUATION = Pattern.compile("\\p{P}+$");
+    private static final String NORMALIZED_MARKER = normalizeForFollowUpComparison(FOLLOW_UP_NAME);
+    private static final String COLLAPSED_MARKER = collapseForComparison(NORMALIZED_MARKER);
 
     /**
      * Explains why this label names no tag. Each entry point appends the remedy that suits it,
@@ -47,39 +45,26 @@ public class FollowUpFlag extends Tag {
     public static boolean isFollowUpName(String name) {
         requireNonNull(name);
         String normalizedName = normalizeForFollowUpComparison(name);
-        String normalizedMarker = normalizeForFollowUpComparison(FOLLOW_UP_NAME);
-        // Compare both the hyphenated form and the fully collapsed form
-        // This catches "Needs follow-up" vs "Needs follow up" vs "Needs followup"
-        return normalizedMarker.equalsIgnoreCase(normalizedName)
-                || collapseForComparison(normalizedMarker).equalsIgnoreCase(collapseForComparison(normalizedName));
+        return NORMALIZED_MARKER.equalsIgnoreCase(normalizedName)
+                || COLLAPSED_MARKER.equalsIgnoreCase(collapseForComparison(normalizedName));
     }
 
     /**
-     * Normalizes a tag name for follow-up comparison by:
-     * 1. Stripping format characters and normalizing whitespace (via normalizeFieldValue)
-     * 2. Mapping Unicode hyphens and dashes to ASCII hyphen
-     * 3. Treating spaces as hyphens
-     * 4. Removing trailing punctuation
-     * 5. Normalizing to NFC form
-     * 6. For comparison, also creates a fully collapsed form without any hyphens/spaces
+     * Returns the label with equivalent separators and no trailing punctuation, so pasted
+     * typography does not disguise the reserved marker.
      */
     private static String normalizeForFollowUpComparison(String name) {
         String normalized = StringUtil.normalizeFieldValue(name);
-        // Map all hyphen/dash variants to ASCII hyphen
         normalized = HYPHEN_OR_DASH.matcher(normalized).replaceAll("-");
-        // Treat spaces as hyphens for comparison
         normalized = normalized.replace(' ', '-');
-        // Remove trailing punctuation
-        normalized = TRAILING_PUNCTUATION.matcher(normalized).replaceAll("");
-        return Normalizer.normalize(normalized, Normalizer.Form.NFC);
+        return TRAILING_PUNCTUATION.matcher(normalized).replaceAll("");
     }
 
     /**
-     * Creates a fully collapsed form for comparison - removes all hyphens and spaces.
-     * This catches variants like "Needs followup" (no separator) vs "Needs follow-up".
+     * Returns the label without separators, so an omitted hyphen cannot disguise the marker.
      */
     private static String collapseForComparison(String normalized) {
-        return normalized.replace("-", "").replace(" ", "");
+        return normalized.replace("-", "");
     }
 
 }

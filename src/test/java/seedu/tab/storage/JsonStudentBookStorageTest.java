@@ -730,6 +730,22 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readStudentBook_nearFollowUpLabels_reportsFieldAndPreservesFile() throws Exception {
+        String template = Files.readString(TEST_DATA_FOLDER.resolve("reservedTagStudentBook.json"));
+        Path path = testFolder.resolve("nearFollowUpTag.json");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        for (String spelling : List.of("Needs follow\uff0dup", "Needs follow\u2015up",
+                "Needs follow-up,", "Needs follow-up;", "Needs follow-up:", "Needs follow-up\u2026")) {
+            byte[] bytes = template.replace("Needs follow-up", spelling).getBytes(StandardCharsets.UTF_8);
+            Files.write(path, bytes);
+            assertThrows(DataLoadingException.class,
+                    "Student record 1 (\"Flagged One\"): " + JsonAdaptedTag.MESSAGE_RESERVED_TAG,
+                    storage::readStudentBook);
+            assertArrayEquals(bytes, Files.readAllBytes(path));
+        }
+    }
+
+    @Test
     public void readStudentBook_reservedFollowUpTagInAnotherCase_isRefusedToo() {
         // the rule folds case and spacing, so a file cannot slip the label past by shouting it
         String expectedMessage = "Student record 1 (\"Flagged Two\"): " + JsonAdaptedTag.MESSAGE_RESERVED_TAG;

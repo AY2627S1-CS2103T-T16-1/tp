@@ -417,6 +417,9 @@ public class LogicManagerTest {
         assertParseException("add Marker Test2 -t \"Needs follow up\"", rejectionMsg);
         assertParseException("add Marker Test2 -t \"NEEDS FOLLOW UP\"", rejectionMsg);
         assertParseException("edit 1 -t \"Needs followup\"", rejectionMsg);
+        assertParseException("tag 1 -a \"Needs follow\uff0dup\"", rejectionMsg);
+        assertParseException("tag 1 -a \"Needs follow\u2015up\"", rejectionMsg);
+        assertParseException("tag 1 -a \"Needs follow-up;\"", rejectionMsg);
         // Regular tags still work
         assertFalse(logic.execute("edit 1 -p 123").getFeedbackToUser().contains("NOTE:"));
         // The student should not have any follow-up-like tags

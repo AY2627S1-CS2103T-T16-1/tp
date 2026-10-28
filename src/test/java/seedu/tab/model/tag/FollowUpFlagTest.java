@@ -47,6 +47,8 @@ public class FollowUpFlagTest {
         assertTrue(FollowUpFlag.isFollowUpName("Needs follow\u2010up")); // U+2010
         assertTrue(FollowUpFlag.isFollowUpName("Needs follow\u2011up")); // U+2011
         assertTrue(FollowUpFlag.isFollowUpName("Needs follow\u2013up")); // U+2013 en dash
+        assertTrue(FollowUpFlag.isFollowUpName("Needs follow\u2015up"));
+        assertTrue(FollowUpFlag.isFollowUpName("Needs follow\uff0dup"));
     }
 
     @Test
@@ -59,6 +61,11 @@ public class FollowUpFlagTest {
         assertTrue(FollowUpFlag.isFollowUpName("Needs follow-up."));
         assertTrue(FollowUpFlag.isFollowUpName("Needs follow-up!"));
         assertTrue(FollowUpFlag.isFollowUpName("Needs follow-up?"));
+        assertTrue(FollowUpFlag.isFollowUpName("Needs follow-up,"));
+        assertTrue(FollowUpFlag.isFollowUpName("Needs follow-up;"));
+        assertTrue(FollowUpFlag.isFollowUpName("Needs follow-up:"));
+        assertTrue(FollowUpFlag.isFollowUpName("Needs follow-up\u2026"));
+        assertTrue(FollowUpFlag.isFollowUpName("Needs follow-up\uff0c"));
     }
 
     @Test
@@ -71,6 +78,8 @@ public class FollowUpFlagTest {
         assertFalse(FollowUpFlag.isFollowUpName("Needs follow-up soon"));
         assertFalse(FollowUpFlag.isFollowUpName("Follow-up"));
         assertFalse(FollowUpFlag.isFollowUpName("needs follow up now"));
+        assertFalse(FollowUpFlag.isFollowUpName("Needs_follow_up"));
+        assertFalse(FollowUpFlag.isFollowUpName("Needs follow-up soon."));
     }
 
 }
