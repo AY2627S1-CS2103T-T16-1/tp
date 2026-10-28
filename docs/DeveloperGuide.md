@@ -132,6 +132,10 @@ Structural errors are reported first: an unclosed quote or unknown option makes 
 
 Unknown command words are never executed as guesses. `CommandWords` first looks for command prefixes, then uses edit distance to find likely corrections. Suggestions help recover from a typo without risking an unintended destructive command. Add a new command to both dispatch and `COMMAND_WORDS`; `CommandWordsTest` checks that they agree.
 
+The activity diagram shows the selection policy in `CommandWords.suggestFor()`. Prefix matches take precedence; otherwise only the nearest candidates within the edit allowance survive. More than three suggestions are suppressed. The edit distance supports adjacent transpositions, so a swapped pair of letters counts as one edit.
+
+<puml src="diagrams/CommandWordSuggestion.puml" alt="Selecting command-prefix or nearest-edit suggestions and limiting their number" />
+
 ### Student values and duplicate detection
 
 `StringUtil.normalizeFieldValue()` removes invisible format characters except the joiner and non-joiner needed by some scripts, removes non-whitespace control characters, collapses Unicode whitespace, trims the ends, and composes text to Unicode NFC. Field constructors use this shared representation so command input and loaded data follow the same storage rules.
