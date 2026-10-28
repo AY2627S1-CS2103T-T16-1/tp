@@ -493,12 +493,26 @@ These are product acceptance targets. Timing and capacity targets require measur
 1. **Runtime:** Run on Windows, Linux, and macOS with Java 25 and the matching JavaFX runtime described in the UG. Plain-JDK Apple Silicon setups using the bundled Intel JavaFX natives require an x64 JDK under Rosetta; the documented native JDK+FX setup is an alternative.
 1. **Portability:** Distribute one executable JAR of at most 100 MB, usable from a writable folder without an installer or administrator privileges.
 1. **Keyboard access:** Make every student-management operation and in-app help available through the keyboard.
-1. **Typing efficiency:** Allow a practiced typist to complete representative add, find, edit, tag, and delete tasks faster than the equivalent mouse-driven workflow. Record the task sequence and comparison when evaluating this target.
+1. **Typing efficiency:** For a practiced typist, the median completion time for the task sequence below must be lower in TAB than in the defined mouse-driven LibreOffice Calc baseline. Both workflows must produce the same final student data without unresolved errors.
 1. **Capacity and responsiveness:** Support 1,000 student records, with typical add, edit, delete, tag, list, and find commands updating the GUI within 100 ms and startup ready for input within 2 seconds. Measure on a local writable disk and record hardware, runtime, dataset, and repeated timings.
 1. **Display:** Keep the interface readable at 1920×1080 with 100% and 125% scaling, and usable at 1280×720 with scaling up to 150%, using scrolling where necessary.
 1. **Data locality:** Perform student-management operations offline and store student data locally without transmitting it to a network service.
 1. **Single-user integrity:** Preserve existing saved records when loading fails or a command cannot save, and reject a stale cooperating TAB window's write rather than overwrite newer records. Concurrent edits are not merged.
 1. **Editable data:** Accept correctly edited UTF-8 JSON, retain supported optional fields and the file description, and report malformed data without silently dropping invalid values.
+
+#### Typing efficiency evaluation
+
+Use a disposable book containing 100 students named `Student 0001` through `Student 0100`, with IDs `S0001` through `S0100`, phones `81230001` through `81230100`, and tag `T1`. Prepare a Calc sheet with the same data in Name, ID, Phone, Email, and Tags columns (A–E). Enable column filters over `A1:E102`, including the header and the empty row for the added student. Keep email empty, store IDs and phones as text, and separate tags with semicolons in the Tags column. Record the Calc version, TAB version, operating system, hardware, and display settings.
+
+| Task | TAB workflow | Calc baseline |
+| --- | --- | --- |
+| Add a student | `add Student 0101 --id S0101 -p 81230101 -t T1` | Click the next empty row and enter the same values. |
+| Find one student | `find -i S0050` | Use the ID column's filter dropdown to display only `S0050`. |
+| Change that student's phone | `edit --target-id S0050 -p 91234567` | Click the matching phone cell and replace its value. |
+| Add a group tag | `tag --id S0050 -a "Lab 3"` | Edit the matching Tags cell to contain `T1; Lab 3`. |
+| Delete the added student | `list`, then `delete --id S0101` | Clear the filter using its dropdown, select the `S0101` row, and delete it through the row menu. |
+
+Use the same participant for both workflows, after three untimed practice runs of each. In Calc, use the mouse for navigation, filters, and menus; the keyboard is available for entering cell values. In TAB, use its command box. Time five runs of each complete sequence, alternating the starting application between pairs and resetting the data before each run. Start with the application open and ready for input; stop after the deletion result is visible. Include correction time and verify the final records. Compare the two medians; this defines the acceptance test, not a measured performance claim.
 
 ### Glossary
 
@@ -516,7 +530,20 @@ These are product acceptance targets. Timing and capacity targets require measur
 | Snapshot | A copy of the student book retained before a command so a failed save can restore it. |
 | Save baseline | The last loaded or successfully saved book remembered by a storage instance for stale-write checks. |
 | Stale window | A TAB session whose remembered book differs from the student records now saved on disk. |
-| Archive (future) | Historical student records retained separately from the active book in a proposed feature. |
+
+## Appendix: Effort
+
+TAB builds on AB3's layered JavaFX application, command/parser pattern, observable model, JSON storage, and test utilities. The architectural skeleton is reused; the main implementation work adapts that skeleton to a teaching assistant's student-management workflow. TAB still has one primary record type, so its added difficulty lies in behavior across layers rather than a larger entity model.
+
+| Area | Work beyond AB3 and its main challenge |
+| --- | --- |
+| Student records and identity | Optional contact details and NUS Student IDs, ID-based targeting, follow-up status, and incremental tags require parsers, model invariants, persistence, and displays to agree. Hard ID conflicts must stay distinct from advisory contact matches. |
+| Input and search | Positional names, quoted values, option aliases, Unicode normalization, combined field filters, and typo suggestions broaden accepted input. The challenge is preserving legitimate names and values while giving precise diagnostics for plausible mistakes. |
+| Persistence and recovery | Save snapshots, rollback, disk baselines, file locks, and atomic replacement protect records when writes fail or another TAB window saves first. Validation must also preserve AB3's support for correctly hand-edited data files. |
+| Keyboard workflow and presentation | Command history, in-window help, student reveal, and a summary of the filtered list connect command results to observable JavaFX views. UI state must remain coherent after searches, record replacement, and failed saves. |
+| Verification and documentation | Parser, command, model, storage, and UI-helper tests cover these behaviors; the manual-testing appendix covers interactions and platform checks. The UG and this guide document the same input rules, recovery paths, and implementation boundaries. |
+
+The work spans implementation, automated tests, manual verification, and documentation rather than a package rename alone. The implementation sections explain the resulting mechanisms and their limits: possible-duplicate detection is advisory, concurrent changes are rejected rather than merged, and timing targets still require measurement. Individual contribution evidence belongs in the team members' project portfolio pages and the repository history.
 
 ## Appendix: Instructions for Manual Testing
 
@@ -607,7 +634,7 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
 1. Try `tag --id 1ABC -a "Needs follow-up"`, then `tag --id 1ABC -r "Needs follow-up"`.
    * Expected: Addition is rejected as a reserved marker. Removal explains that follow-up is separate and suggests the edit command that clears it.
 1. Enter `tag --id 1ABC -a "Needs follow-up soon"`.
-   * Expected: A normal tag is added and the existing flag remains set. Then try `tag --id 1ABC -a "Needs_follow_up"`: it succeeds with an advisory note that this spelling does not set follow-up status.
+   * Expected: A normal tag is added and the existing flag remains set. Then try `tag --id 1ABC -a "Needs_follow_up"`: it is stored as a general tag with an advisory note that this spelling does not set follow-up status. Alice's existing follow-up remains set.
 
 ### Deleting with displayed and ID targets
 
