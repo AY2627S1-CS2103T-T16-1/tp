@@ -6,13 +6,13 @@
 
 # TAB Developer Guide
 
-TAB (Teaching Assistant's Book) is an offline desktop application for teaching assistants to manage student details, groups, and pending follow-ups through typed commands. This guide explains its architecture and the implementation decisions a developer needs to understand before changing it. Command syntax and field constraints are documented in the [User Guide](UserGuide.md).
+TAB (Teaching Assistant's Book) is an offline desktop application for teaching assistants to manage student details, groups, and pending follow-ups through typed commands. This guide explains its architecture and the implementation decisions behind it. Command syntax and field constraints are documented in the [User Guide](UserGuide.md).
 
 <page-nav-print />
 
 ## Acknowledgements
 
-* TAB is built on [AddressBook-Level3 (AB3)](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org). Its layered architecture, command/parser structure, JavaFX UI framework, JSON storage infrastructure, test utilities, and documentation form the starting point for TAB. This guide adapts the organization and explanations of the [AB3 Developer Guide](https://se-education.org/addressbook-level3/DeveloperGuide.html) to TAB's student model and behavior.
+* TAB builds on the layered architecture, command/parser structure, JavaFX UI, JSON storage, test utilities, and documentation of [AddressBook-Level3 (AB3)](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org). This guide adapts the organization and explanations of the [AB3 Developer Guide](https://se-education.org/addressbook-level3/DeveloperGuide.html) to TAB's student model and behavior.
 * [JavaFX](https://openjfx.io/) supplies the controls, FXML loader, observable collections, and graphics used by the desktop interface. [Jackson](https://github.com/FasterXML/jackson) handles JSON conversion through `JsonUtil`, and [JUnit 5](https://junit.org/junit5/) supports automated testing.
 * Email local-part validation in `Email` uses the dot-atom character and dot-placement rules from [RFC 5322, section 3.2.3](https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3). No implementation code was copied.
 * `StringUtil.computeEditDistance` implements the recurrence for [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance) to suggest mistyped command words. The algorithmic idea is reused in that method; the implementation was written for TAB.
@@ -21,7 +21,7 @@ TAB (Teaching Assistant's Book) is an offline desktop application for teaching a
 
 ## Setting up and getting started
 
-Use [Setting up and getting started](SettingUp.md) for IDE setup, and the [User Guide quick start](UserGuide.md#quick-start) for the Java and JavaFX runtime combinations supported by the packaged app. The source targets Java 25. `seedu.tab.Main` launches the JavaFX application, `MainApp`.
+Use [Setting up and getting started](SettingUp.md) for IDE setup, and the [User Guide quick start](UserGuide.md#quick-start) for the supported Java/JavaFX runtimes. The source targets Java 25. `seedu.tab.Main` launches the JavaFX application, `MainApp`.
 
 From the repository root:
 
@@ -33,7 +33,7 @@ From the repository root:
 
 These commands launch TAB, run the tests and Checkstyle checks, and build `build/libs/tab.jar`, respectively. See [Testing](Testing.md) for test selection and [Documentation](Documentation.md) for the MarkBind preview workflow.
 
-When packaged, TAB resolves `data/tab.json` and `preferences.json` relative to the JAR's directory through `AppUtil.getApplicationDirectory()`. Development runs use the working directory. Use a separate writable folder for manual testing so that test commands cannot affect real student records.
+When packaged, TAB resolves `data/tab.json` and `preferences.json` relative to the JAR's directory through `AppUtil.getApplicationDirectory()`. Development runs use the working directory. Run manual tests in a separate writable folder so they cannot touch real records.
 
 ## Design
 
@@ -55,7 +55,7 @@ The sequence diagram shows how these components cooperate for a successful `dele
 
 <puml src="diagrams/ArchitectureSequenceDiagram.puml" alt="Successful deletion flowing through UI, Logic, Model, and Storage" />
 
-`MainApp.init()` reads preferences, constructs storage, loads the student book into `ModelManager`, and connects `LogicManager` and `UiManager`. A missing student file produces sample students. An unreadable student file produces a startup error that prevents the normal window from opening. This distinction protects existing records from being replaced by an empty or sample book.
+`MainApp.init()` reads preferences, constructs storage, loads the student book into `ModelManager`, and connects `LogicManager` and `UiManager`. A missing student file produces sample students. An unreadable student file produces a startup error that prevents the normal window from opening. This keeps existing records from being replaced by an empty or sample book.
 
 On exit, `MainWindow` passes the window bounds to Logic, and `MainApp.stop()` saves preferences. Student changes are saved during command execution, as described in [Saving changes safely](#saving-changes-safely).
 
@@ -79,11 +79,11 @@ The partial class diagram shows this structure using `delete` as the representat
 
 <puml src="diagrams/LogicClassDiagram.puml" alt="Logic API, command and parser hierarchies, and command results" />
 
-The sequence diagram traces a successful `delete 1` through Logic. Target resolution is summarized as a lookup in the displayed list, and the shared save procedure is shown as a reference to [Saving changes safely](#saving-changes-safely). Tokenization and value validation remain inside the command parser. Descriptive messages summarize list access and snapshot creation.
+The sequence diagram traces a successful `delete 1` through Logic. Target resolution is summarized as a lookup in the displayed list, and the shared save procedure is shown as a reference to [Saving changes safely](#saving-changes-safely). Tokenization and value validation remain inside the command parser.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing and executing delete 1 through Logic" />
 
-Commands check their execution preconditions before changing the model. For example, a target outside the displayed list raises `CommandException` before deletion. Logic snapshots the book and filter before executing an ordinary command, then saves only if the resulting student book differs from the snapshot.
+Commands check their execution preconditions before changing the model. For example, a target outside the displayed list raises `CommandException` before deletion. Logic snapshots the book and filter before executing an ordinary command. It saves only if the resulting book differs from the snapshot.
 
 ### Model component
 
@@ -93,7 +93,7 @@ The partial class diagram separates ownership of the book from references to imm
 
 <puml src="diagrams/ModelClassDiagram.puml" alt="Student book ownership, filtered view, and immutable student values" />
 
-Only a student's name is mandatory. Phone, email, NUS Student ID, and follow-up flag are represented with `Optional`; general tags form a set. Updating a record constructs a replacement `Student` and replaces the old entry, allowing observable-list listeners to refresh the UI.
+Only a student's name is mandatory. Phone, email, NUS Student ID, and follow-up flag are represented with `Optional`; general tags form a set. Updating a record builds a replacement `Student` and swaps it in, so observable-list listeners refresh the UI.
 
 `Student.isSameStudent()` compares two present NUS Student IDs. A missing ID cannot establish identity. `Student.equals()` compares every field, including tags and follow-up state; it is used to detect unchanged records and books. Keep these two meanings separate when adding commands or storage validation.
 
@@ -126,9 +126,15 @@ The sequence diagram follows successful argument parsing for `add`. `FlagTokeniz
 
 <puml src="diagrams/CommandArgumentParsing.puml" alt="Add argument parsing, tokenizer delegation, validation, and command construction" />
 
-The command-specific parser determines which options exist and which may repeat. For example, `add` and `edit` allow repeated `-t`, while `find` allows repeated field selectors because each adds a condition. A no-argument command such as `list` rejects extra text. Option spellings remain case-sensitive, with a lowercase suggestion when the command supports that spelling.
+The command-specific parser determines which options exist and which may repeat:
 
-Structural errors are reported first: an unclosed quote or unknown option makes field boundaries uncertain. Once the structure is valid, `add` and `edit` collect independent field errors through `ParseProblems`, allowing the user to correct several invalid values together. `ValueMessages` and `Messages` format field-specific reasons and shorten long values for readable feedback.
+* `add` and `edit` allow repeated `-t` options.
+* `find` allows repeated field selectors because each adds a condition.
+* No-argument commands such as `list` reject extra text.
+
+Option spellings remain case-sensitive, with a lowercase suggestion when the command supports that spelling.
+
+Structural errors are reported first: an unclosed quote or unknown option makes field boundaries uncertain. Once the structure is valid, `add` and `edit` collect independent field errors through `ParseProblems`, so several invalid values can be corrected at once. `ValueMessages` and `Messages` format field-specific reasons and shorten long values for readable feedback.
 
 Unknown command words are never executed as guesses. `CommandWords` first looks for command prefixes, then uses edit distance to find likely corrections. Suggestions help recover from a typo without risking an unintended destructive command. Add a new command to both dispatch and `COMMAND_WORDS`; `CommandWordsTest` checks that they agree.
 
@@ -138,9 +144,15 @@ The activity diagram shows the selection policy in `CommandWords.suggestFor()`. 
 
 ### Student values and duplicate detection
 
-`StringUtil.normalizeFieldValue()` removes invisible format characters except the joiner and non-joiner needed by some scripts, removes non-whitespace control characters, collapses Unicode whitespace, trims the ends, and composes text to Unicode NFC. Field constructors use this shared representation so command input and loaded data follow the same storage rules.
+`StringUtil.normalizeFieldValue()` normalizes field text in this order:
 
-The activity diagram shows the normalization order. The joiner exceptions preserve meaningful script characters while direction marks and zero-width spaces are removed.
+1. Remove invisible format characters, keeping the zero-width joiner (ZWJ) and non-joiner (ZWNJ) needed by some scripts.
+1. Remove non-whitespace control characters.
+1. Collapse Unicode whitespace to ASCII spaces.
+1. Trim leading and trailing whitespace.
+1. Compose text to Unicode NFC.
+
+Field constructors use this shared representation so command input and loaded data follow the same storage rules. The activity diagram shows this sequence; the joiner exceptions preserve meaningful script characters while direction marks and zero-width spaces are removed.
 
 <puml src="diagrams/NormalizeFieldValue.puml" alt="Field normalization preserving joiners and removing other format and control characters" />
 
@@ -154,7 +166,7 @@ The activity diagram shows the normalization order. The joiner exceptions preser
 
 ID collisions and possible duplicates have different consequences. `StudentIdValidation` blocks `add` or `edit` when the requested ID belongs to another record, and `UniqueStudentList` enforces the same invariant at the model boundary. Without a shared present ID, students may coexist even when all their other details match.
 
-`LikelyDuplicateWarning` appends advice when another record has a matching normalized name, digit sequence for a phone, or case-insensitive email. An edit checks only changed values and excludes the record being edited. These warnings allow the operation to succeed because matching contact details do not prove identity. The detector does not find every spelling variation or infer that two different ID values belong to one person.
+`LikelyDuplicateWarning` appends advice when another record has a matching normalized name, digit sequence for a phone, or case-insensitive email. An edit checks only changed values and excludes the record being edited. These warnings do not block the operation because matching contact details do not prove identity. The detector misses some spelling variants and cannot tell that two different IDs belong to one person.
 
 The activity diagram isolates the duplicate checks in `AddCommand.execute()`: a shared present ID blocks addition, while matching contact details only add advice. Other advisories, filter handling, and saving are omitted; passing these checks continues through the rest of the add operation.
 
@@ -216,7 +228,7 @@ The state diagram shows how subsequent submissions are handled. Replies are trim
 
 On confirmation, Logic drops the pending request, snapshots the book and filter, and calls `executeConfirmed()`. Saving then follows the same procedure as another mutation. A failed save restores the records and filter, but the user must issue `clear` again to request another confirmation. The pending request is session state and is never persisted.
 
-Keeping the pending request in Logic makes the confirmation protocol testable without JavaFX. `CommandBox` queries `Logic.isAwaitingConfirmation()` so an empty submission cancels a request and confirmation replies stay out of reusable command history.
+Keeping the pending request in Logic makes the confirmation protocol testable without JavaFX. `CommandBox` queries `Logic.isAwaitingConfirmation()`, so an empty submission cancels a pending request and confirmation replies stay out of command history.
 
 ### Saving changes safely
 
@@ -226,17 +238,24 @@ The sequence diagram shows the shared execution path. Clear confirmation enters 
 
 <puml src="diagrams/SaveRollbackSequenceDiagram.puml" alt="Saving changed student data and restoring the model after an I/O failure" />
 
-If saving throws `IOException`, Logic restores the book and predicate before reporting `CommandException`. A command's success result reaches the UI only after a required save succeeds. Read-only commands, unchanged edits, clear prompts, cancellations, and invalid replies do not write student data.
+If saving throws `IOException`, Logic restores the book and predicate before reporting `CommandException`. A success result reaches the UI only after the required save succeeds. Read-only commands, unchanged edits, clear prompts, cancellations, and invalid replies do not write student data.
 
 `JsonStudentBookStorage` remembers the last book loaded or successfully saved for each normalized path. During saving it acquires a nonblocking file lock, reloads the disk book, and compares student records against that baseline. The following activity diagram focuses on this disk-side procedure.
 
 <puml src="diagrams/StaleWindowSave.puml" alt="Locking, checking for stale student data, and replacing the saved file" />
 
-The lock lives beside the resolved data file, normally as `data/.tab.json.lock`; resolving the target also coordinates windows using symbolic links. A busy lock, changed records, or a file that cannot be validated causes the save to fail with recovery guidance. The lock file remains after release; its existence does not mean a window holds the lock.
+The lock lives beside the resolved data file, normally as `data/.tab.json.lock`. For an existing data file, Storage follows symbolic links before choosing the lock path, so windows accessing the same file through different links share one lock. A busy lock, changed records, or a file that cannot be validated causes the save to fail with recovery guidance. The lock file remains after release; its existence does not mean a window holds the lock.
 
-The comparison uses validated student-book content. Formatting-only edits and changes to the top-level `_comment` do not count as changed student records. The latest disk comment is carried into the replacement file. This check protects cooperating TAB windows from overwriting each other's records; external text editors do not participate in its locking protocol, so users must close TAB before hand-editing.
+The comparison uses validated book content. Formatting-only edits and changes to the top-level `_comment` do not count as changed student records. The latest disk comment is carried into the replacement file. This check stops cooperating TAB windows from overwriting each other's records. External text editors do not take part in the locking protocol, so close TAB before hand-editing.
 
-After validation, `JsonUtil` serializes the book and delegates replacement to `FileUtil.writeToFile()`. It writes UTF-8 to a temporary sibling, preserves existing POSIX permissions where supported, flushes the new file, and uses an atomic move to replace the target. On an I/O failure, it attempts to remove the temporary file and propagates the error. If atomic replacement is unsupported, saving fails rather than falling back to truncating the existing file.
+After validation, `JsonUtil` serializes the book and delegates replacement to `FileUtil.writeToFile()`, which:
+
+1. Creates a temporary file beside the target.
+1. Copies existing POSIX permissions where supported.
+1. Writes UTF-8 content and flushes the temporary file to disk.
+1. Uses an atomic move to replace the target.
+
+On an I/O failure, it attempts to remove the temporary file and propagates the error. If atomic replacement is unsupported, saving fails rather than falling back to truncating the existing file.
 
 These safeguards support local single-user work; they do not merge concurrent edits.
 
@@ -258,7 +277,7 @@ Saving omits absent optional details and a false flag, preserving a compact, edi
 
 `MainApp` passes a student-data loading error to `UiManager`, which shows a repair dialog instead of the main window. The unreadable file remains untouched. A genuinely missing file is treated as first use and supplies sample students; these are written only after a command changes the book.
 
-Preferences have a different recovery policy because they contain window settings rather than student records. Missing or unreadable preferences fall back to defaults and are rewritten when possible. A preference-save failure logs the file and reason while allowing the session or shutdown to continue.
+Preferences have a different recovery policy because they contain window settings rather than student records. Missing or unreadable preferences fall back to defaults and are rewritten when possible. A failed preference save logs the file and reason but does not block the session or shutdown.
 
 ### Supporting keyboard work
 
@@ -268,7 +287,14 @@ Preferences have a different recovery policy because they contain window setting
 
 `MainWindow` defines a cyclic Tab order through commands, student list, tag summary, and visible result. `HelpPage` has keyboard paging and returns focus to the draft. `ResultDisplay` shows the latest reply and collapses when empty. These choices keep regular student-management tasks available without a pointing device.
 
-Card layout adapts to the available width. `CardHeadline` shares room between the name and tags, `CardName` shortens names through `UiText` without splitting user-perceived characters, and `TagRow` keeps fitting chips on one row and summarizes hidden tags in an overflow chip. `ContactRow` wraps optional contact details, while absent labels are unmanaged so they leave no empty gaps. Tooltips retain full values when a card shortens them.
+Card layout adapts to the available width through these helpers:
+
+* `CardHeadline` shares room between the name and tags.
+* `CardName` shortens names through `UiText` without splitting user-perceived characters.
+* `TagRow` keeps fitting chips on one row and summarizes hidden tags in an overflow chip.
+* `ContactRow` wraps optional contact details; absent labels are unmanaged so they leave no empty gaps.
+
+Tooltips retain full values when a card shortens them.
 
 `WindowBounds` restores saved geometry onto an available screen and clamps oversized windows to its usable area. `UiFonts` selects fonts suitable for the platform, and `UiText` supplies safe display shortening. Keep layout-only helpers in UI; normalization that affects stored or searched values belongs in Commons or Model.
 
@@ -279,7 +305,7 @@ Card layout adapts to the available width. `CardHeadline` shares room between th
 * [Testing](Testing.md) explains JUnit and JavaFX test execution. Reuse `StudentBuilder` and the other fixtures in `src/test/java/seedu/tab/testutil/` when adding tests.
 * [DevOps](DevOps.md) describes the build and CI setup. Run `./gradlew check` before submitting a change.
 
-Useful regression entry points include `CommandDispatchAndPersistenceTest` for command-to-file behavior, `ClearConfirmationTest` for the confirmation protocol, `LogicManagerTest` for save rollback, and `JsonStudentBookStorageConcurrencyTest` for stale saves and locks. Parser/model tests cover normalization and validation; UI tests exercise focus, layout, and list updates. The manual paths below complement these automated checks.
+Useful regression entry points include `CommandDispatchAndPersistenceTest` for command-to-file behavior, `ClearConfirmationTest` for the confirmation protocol, `LogicManagerTest` for save rollback, and `JsonStudentBookStorageConcurrencyTest` for stale saves and locks. Parser/model tests cover normalization and validation; UI tests exercise focus, layout, and list updates.
 
 ## Appendix: Requirements
 
