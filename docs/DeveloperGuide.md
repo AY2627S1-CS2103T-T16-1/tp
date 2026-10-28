@@ -1370,8 +1370,11 @@ stale confirmation active, and it lives only in memory, so restarting TAB cannot
 confirm a previous request. The prompt and the replies both travel through the
 existing result area and command field, with no mouse or dialog.
 `MainWindow` supplies `Logic.isAwaitingConfirmation` to `CommandBox`, which
-submits an empty Enter only during confirmation; otherwise an empty Enter
-keeps its existing no-op behavior. Each `Logic` implementation must supply
+submits a blank Enter only during confirmation, where a blank reply cancels
+the pending clear; otherwise Enter on a blank line does nothing. Blank is what
+`StringUtil.isBlankInput` calls blank — nothing, whitespace, or only the
+invisible characters a paste carries — so a stray space before Enter is
+ignored the way an empty line is rather than answered with the `help` usage. Each `Logic` implementation must supply
 this state explicitly so a default cannot silently suppress cancellation.
 
 ### \[Proposed\] Data archiving
