@@ -127,7 +127,6 @@ public class TagCommandParserTest {
         }
         assertFailureWithGuidance("1 -a -p 123", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-a TAG"));
         assertFailureWithGuidance("1 --adds T1", "There is no --adds option.");
-        assertFailureWithGuidance("1 -a Lab 3", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "3"));
         assertFailureWithGuidance("1 -a \"Lab 3", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
     }
 
@@ -226,7 +225,7 @@ public class TagCommandParserTest {
         }
         assertFailureWithGuidance("1 -r -p 123", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-r TAG"));
         assertFailureWithGuidance("1 --removes T1", "There is no --removes option.");
-        assertFailureWithGuidance("1 -r Lab 3", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "3"));
+        assertFailureWithGuidance("1 -r Lab 3", Messages.getErrorMessageForValueAfterFlags("3", true));
         assertFailureWithGuidance("1 -r \"Lab 3", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
         for (String marker : List.of("-R", "--REMOVE")) {
             assertFailureWithGuidance("1 " + marker + " T1", String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker));
@@ -243,6 +242,21 @@ public class TagCommandParserTest {
                         "Options -a/--add and -r/--remove cannot be used together.");
             }
         }
+    }
+
+    @Test
+    public void parse_twoWordTagAfterAnIndex_pointsToQuotesRatherThanTheFront() {
+        // the index already stands before the options, so only the quotes advice can be followed
+        assertFailureWithGuidance("1 -a Lab 3", Messages.getErrorMessageForValueAfterFlags("3", true));
+        assertParseSuccess(parser, "1 -a \"Lab 3\"",
+                new TagCommand(StudentTarget.byIndex(INDEX_FIRST_STUDENT, "1"), new Tag("Lab 3"), Action.ADD));
+    }
+
+    @Test
+    public void parse_indexAfterTheOptions_pointsToTheFrontOfTheCommand() {
+        assertFailureWithGuidance("-a Lab 1", Messages.getErrorMessageForValueAfterFlags("1", false));
+        assertParseSuccess(parser, "1 -a Lab",
+                new TagCommand(StudentTarget.byIndex(INDEX_FIRST_STUDENT, "1"), new Tag("Lab"), Action.ADD));
     }
 
     private void assertFailureWithGuidance(String input, String problem) {
