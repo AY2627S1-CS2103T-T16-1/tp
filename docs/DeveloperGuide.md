@@ -101,6 +101,10 @@ Only a student's name is mandatory. Phone, email, NUS Student ID, and follow-up 
 
 `StorageManager` delegates student data to `JsonStudentBookStorage` and preferences to `JsonUserPrefsStorage`. `JsonSerializableStudentBook`, `JsonAdaptedStudent`, and `JsonAdaptedTag` translate between JSON-friendly data and validated model values. Storage therefore depends on Model, while Model has no dependency on Storage, Logic, or UI.
 
+The class diagram shows the API implementation, its two delegates, and the student-data adapters. Model classes and file-access helpers are omitted to focus on Storage's structure.
+
+<puml src="diagrams/StorageClassDiagram.puml" alt="Storage API implementation, JSON delegates, and student-data adapters" />
+
 There are two layers of validation. Custom deserializers check JSON types, such as a string for `email` and a Boolean for `flag`. Adapter conversion then applies the model's field rules and checks repeated student IDs. The entire book must load successfully before it is exposed to the normal UI.
 
 The [data contract](#loading-and-preserving-the-data-contract) and [save procedure](#saving-changes-safely) below explain how this separation supports hand-edited files without silently discarding malformed data.
