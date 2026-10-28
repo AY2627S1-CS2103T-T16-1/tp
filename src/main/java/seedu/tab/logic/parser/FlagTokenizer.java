@@ -16,6 +16,7 @@ import seedu.tab.logic.Messages;
 import seedu.tab.logic.parser.CommandTokenizer.Token;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.logic.parser.exceptions.UnknownFlagException;
+import seedu.tab.logic.parser.exceptions.ValueAfterFlagsException;
 
 /**
  * Reads the arguments of a command as a preamble followed by flagged fields, the way a shell
@@ -112,10 +113,9 @@ public class FlagTokenizer {
             readAttachedFlag(token, attached, flagsByMarker, parsed);
             return index + 1;
         }
-        CliFlag flag = getFlag(token, flagsByMarker);
+        CliFlag flag = getFlag(token, flagsByMarker, parsed);
         if (!flag.isValueRequired()) {
-            parsed.put(flag, token.value(), "");
-            return index + 1;
+            return readPresenceFlag(tokens, index, flag, parsed);
         }
         if (index + 1 >= tokens.size() || isOption(tokens.get(index + 1))) {
             throw new ParseException(String.format(
@@ -123,6 +123,21 @@ public class FlagTokenizer {
         }
         parsed.put(flag, token.value(), tokens.get(index + 1).value());
         return index + 2;
+    }
+
+    /**
+     * Records the presence-only flag at {@code index} and returns the index after it. A value
+     * written after such a flag belongs to no option at all, and naming the flag that takes
+     * none points at the token to drop rather than at a place to move it to.
+     */
+    private static int readPresenceFlag(List<Token> tokens, int index, CliFlag flag,
+            FlagArgumentMap parsed) throws ParseException {
+        Token token = tokens.get(index);
+        if (index + 1 < tokens.size() && !isOption(tokens.get(index + 1))) {
+            throw new ParseException(String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, token.value()));
+        }
+        parsed.put(flag, token.value(), "");
+        return index + 1;
     }
 
     /**
@@ -141,10 +156,16 @@ public class FlagTokenizer {
         parsed.put(flag, attached.marker(), attached.value());
     }
 
-    /** Returns the known flag named by {@code token}. */
-    private static CliFlag getFlag(Token token, Map<String, CliFlag> flagsByMarker) throws ParseException {
+    /**
+     * Returns the known flag named by {@code token}. A token naming none is reported as a value
+     * belonging to no option, and the preamble read into {@code parsed} says whether the front
+     * of the command is still free for it.
+     */
+    private static CliFlag getFlag(Token token, Map<String, CliFlag> flagsByMarker,
+            FlagArgumentMap parsed) throws ParseException {
         if (!isOption(token)) {
-            throw new ParseException(String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, token.value()));
+            throw new ValueAfterFlagsException(Messages.getErrorMessageForValueAfterFlags(
+                    token.value(), !parsed.getPreamble().isEmpty()));
         }
 
         return getFlag(token.value(), flagsByMarker);

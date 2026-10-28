@@ -59,16 +59,15 @@ public final class StudentTarget {
      * displays, an NUS Student ID among every student the book holds. NusStudentId normalizes
      * its value, so a case variant of an ID names the same student.
      *
+     * @param model Holds the displayed list and the book the target is looked up in.
+     * @param idTargetCommand The command form that addresses a student by their NUS Student
+     *     ID, which a numeric target the book holds as an ID is pointed at.
      * @throws CommandException if no student matches the target.
      */
-    public Student resolve(Model model) throws CommandException {
-        return resolve(model, null);
-    }
-
-    /** Resolves a target, optionally naming a command that supports explicit ID targeting. */
-    public Student resolve(Model model, String idCommandWord) throws CommandException {
+    public Student resolve(Model model, String idTargetCommand) throws CommandException {
+        requireNonNull(idTargetCommand);
         if (index != null) {
-            return resolveIndex(model, idCommandWord);
+            return resolveIndex(model, idTargetCommand);
         }
         return resolveNusStudentId(model.getStudentBook().getStudentList());
     }
@@ -89,15 +88,15 @@ public final class StudentTarget {
      *
      * @throws CommandException if the position is past the end of the displayed list.
      */
-    private Student resolveIndex(Model model, String idCommandWord) throws CommandException {
+    private Student resolveIndex(Model model, String idTargetCommand) throws CommandException {
         List<Student> displayedStudents = model.getFilteredStudentList();
         if (index.getZeroBased() >= displayedStudents.size()) {
             String message = Messages.getErrorMessageForInvalidIndex(indexInput, displayedStudents.size());
-            boolean isStoredId = idCommandWord != null && model.getStudentBook().getStudentList().stream()
+            boolean isStoredId = model.getStudentBook().getStudentList().stream()
                     .anyMatch(student -> student.getNusStudentId()
                             .filter(id -> id.getValue().equals(indexInput)).isPresent());
             if (isStoredId) {
-                message += " " + Messages.getIdTargetHint(idCommandWord, indexInput);
+                message += " " + Messages.getIdTargetHint(idTargetCommand, indexInput);
             }
             throw new CommandException(message);
         }

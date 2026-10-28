@@ -11,6 +11,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Path;
 import javafx.scene.text.TextFlow;
+import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.commands.CommandResult;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.exceptions.ParseException;
@@ -85,7 +86,7 @@ public class CommandBox extends UiPart<Region> {
     private void handleCommandEntered() {
         String commandText = commandTextField.getText();
         boolean isConfirmationReply = isAwaitingConfirmation.getAsBoolean();
-        if (commandText.isEmpty() && !isConfirmationReply) {
+        if (StringUtil.isBlankInput(commandText) && !isConfirmationReply) {
             return;
         }
 

@@ -2,7 +2,6 @@ package seedu.tab.logic;
 
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
-import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 
 import java.util.Comparator;
 import java.util.List;
@@ -42,9 +41,10 @@ public class Messages {
     public static final String MESSAGE_FLAG_WITHOUT_VALUE =
             "%1$s needs a value after it. A value opening with a hyphen goes in double quotes.";
     public static final String MESSAGE_VALUE_AFTER_FLAGS =
-            "\"%1$s\" does not belong to any option. If the command takes a name or index without an option, "
-            + "put it before all options. Options that take a value take one token, "
+            "\"%1$s\" does not belong to any option. Options that take a value take one token, "
             + "and a value holding spaces goes in double quotes.";
+    public static final String MESSAGE_PREAMBLE_BEFORE_OPTIONS =
+            "If the command takes a name or index without an option, put it before all options.";
     public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP.getMarkerWithAliases()
             + " and " + FLAG_NO_FOLLOW_UP.getMarkerWithAliases() + " cannot be used together. Choose one.";
 
@@ -56,10 +56,14 @@ public class Messages {
                 displayedCount, StringUtil.getPluralSuffix(displayedCount));
     }
 
-    /** Returns the explicit ID form when a numeric target may have been intended as an ID. */
-    public static String getIdTargetHint(String commandWord, String value) {
-        return "If \"" + value + "\" is an NUS Student ID, use " + commandWord
-                + " " + FLAG_NUS_STUDENT_ID + " " + value + ".";
+    /**
+     * Returns the explicit ID form when a target may have been intended as an ID. The command
+     * supplies {@code idTargetCommand} itself, because the option that names an ID target
+     * differs between commands: {@code edit} spells it {@code --target-id}, its {@code --id}
+     * being the field it sets.
+     */
+    public static String getIdTargetHint(String idTargetCommand, String value) {
+        return "If \"" + value + "\" is an NUS Student ID, use " + idTargetCommand + " " + value + ".";
     }
 
     /**
@@ -83,6 +87,17 @@ public class Messages {
         assert missingFields.length > 0;
 
         return String.format(MESSAGE_MISSING_FIELDS, String.join(", ", missingFields));
+    }
+
+    /**
+     * Returns an error message naming the value that follows the options and belongs to none
+     * of them. The placement hint is offered only when nothing precedes the options, because a
+     * command that already read a value there refuses a second one, so moving the value to the
+     * front would earn the user another refusal.
+     */
+    public static String getErrorMessageForValueAfterFlags(String value, boolean hasPreamble) {
+        String message = String.format(MESSAGE_VALUE_AFTER_FLAGS, value);
+        return hasPreamble ? message : message + " " + MESSAGE_PREAMBLE_BEFORE_OPTIONS;
     }
 
     /**
