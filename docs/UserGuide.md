@@ -578,7 +578,7 @@ For example, an ID containing punctuation is rejected specifically:
 
 ```
 > add John Doe -p 98765432 --id A0123-456X
-NUS Student ID "A0123-456X" is not valid: a NUS Student ID can only contain ASCII letters and digits
+NUS Student ID "A0123-456X" is not valid: an NUS Student ID can only contain ASCII letters and digits
 ```
 
 ### Listing all students: `list`
@@ -728,7 +728,7 @@ details, including follow-up status.
 
 Format: `tag TARGET -a TAG`
 
-* `TARGET` is a positive index in the displayed list, a NUS Student ID starting
+* `TARGET` is a positive index in the displayed list, an NUS Student ID starting
   with a letter, or `--id NUS_STUDENT_ID` (alias `-i`). An ID is matched
   case-insensitively across the whole student book, even when the current
   search hides that student. IDs starting with a digit need `--id` or `-i`;
