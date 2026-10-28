@@ -140,6 +140,10 @@ The activity diagram shows the selection policy in `CommandWords.suggestFor()`. 
 
 `StringUtil.normalizeFieldValue()` removes invisible format characters except the joiner and non-joiner needed by some scripts, removes non-whitespace control characters, collapses Unicode whitespace, trims the ends, and composes text to Unicode NFC. Field constructors use this shared representation so command input and loaded data follow the same storage rules.
 
+The activity diagram shows the normalization order. The joiner exceptions preserve meaningful script characters while direction marks and zero-width spaces are removed.
+
+<puml src="diagrams/NormalizeFieldValue.puml" alt="Field normalization preserving joiners and removing other format and control characters" />
+
 | Value | Model rule and comparison behavior |
 | --- | --- |
 | `Name` | Requires a Unicode letter or number; preserves punctuation and script. Search and possible-duplicate warnings use a separate comparison key that ignores case, Latin accents/modifiers, curly apostrophe variants, and selected hyphen/space differences. Stored spelling is preserved. |
@@ -151,6 +155,10 @@ The activity diagram shows the selection policy in `CommandWords.suggestFor()`. 
 ID collisions and possible duplicates have different consequences. `StudentIdValidation` blocks `add` or `edit` when the requested ID belongs to another record, and `UniqueStudentList` enforces the same invariant at the model boundary. Without a shared present ID, students may coexist even when all their other details match.
 
 `LikelyDuplicateWarning` appends advice when another record has a matching normalized name, digit sequence for a phone, or case-insensitive email. An edit checks only changed values and excludes the record being edited. These warnings allow the operation to succeed because matching contact details do not prove identity. The detector does not find every spelling variation or infer that two different ID values belong to one person.
+
+The activity diagram isolates the duplicate checks in `AddCommand.execute()`: a shared present ID blocks addition, while matching contact details only add advice. Other advisories, filter handling, and saving are omitted; passing these checks continues through the rest of the add operation.
+
+<puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Blocking ID collisions while allowing additions with possible-duplicate warnings" />
 
 ### Selecting and editing students
 

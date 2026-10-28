@@ -1,21 +1,23 @@
 @startuml
 !include style.puml
-skinparam ActivityFontSize 15
-skinparam ArrowFontSize 12
+skinparam defaultFontSize 16
+skinparam ArrowFontStyle plain
+skinparam activityBackgroundColor MODEL_COLOR_T1
+skinparam activityBorderColor #555555
+skinparam arrowColor #555555
 
 start
-:Find a student with the same
-NUS Student ID;
-if (A student with that NUS Student ID exists?) then ([yes])
-    :Reject the addition, naming the ID
-    and existing student;
-    stop
-else ([no])
-    :Build feedback and append warnings
-    for matching name, phone or email;
-    :Add the student to the model;
-    :Return command result with feedback;
-    stop
+:Check the new student's optional ID
+against existing students;
+if () then ([present ID already used])
+  :Reject addition with ID conflict message;
+  stop
+else ([ID absent or unused])
+  :Prepare success feedback;
+  :Append advice for matching
+  name, phone or email;
+  :Continue addition;
+  stop
 endif
 @enduml
 
