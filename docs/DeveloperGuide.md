@@ -122,6 +122,10 @@ TAB uses a positional name or target followed by options. For example, `add Ravi
 | Assign options | `FlagTokenizer`, `CliFlag`, `CliFlags`, `FlagArgumentMap` | Map aliases to the same option, accept separate or `=`-attached values, and distinguish value-taking options from presence-only selectors. |
 | Validate meaning | Command-specific parsers, `ParserUtil`, `ParseProblems` | Validate targets and fields, reject inappropriate repetition, and construct a command only after validation succeeds. |
 
+The sequence diagram follows successful argument parsing for `add`. `FlagTokenizer` calls `CommandTokenizer` before assigning options; the parser then validates values and constructs the command. The tokenizer lifelines denote classes with static helpers. Notes summarize field validation and student construction; command execution and saving are outside this diagram.
+
+<puml src="diagrams/CommandArgumentParsing.puml" alt="Add argument parsing, tokenizer delegation, validation, and command construction" />
+
 The command-specific parser determines which options exist and which may repeat. For example, `add` and `edit` allow repeated `-t`, while `find` allows repeated field selectors because each adds a condition. A no-argument command such as `list` rejects extra text. Option spellings remain case-sensitive, with a lowercase suggestion when the command supports that spelling.
 
 Structural errors are reported first: an unclosed quote or unknown option makes field boundaries uncertain. Once the structure is valid, `add` and `edit` collect independent field errors through `ParseProblems`, allowing the user to correct several invalid values together. `ValueMessages` and `Messages` format field-specific reasons and shorten long values for readable feedback.
