@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.BreakIterator;
 import java.text.Normalizer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -17,6 +18,14 @@ public class StringUtil {
     /** Why {@link #holdsLetterOrNumber(String)} turned a value down, phrased for the user. */
     public static final String REASON_NO_LETTER_OR_NUMBER = "it holds no letter or number";
 
+    // The Unicode name of a Latin letter that is one base letter carrying a modifier, such as
+    // LATIN SMALL LETTER D WITH STROKE for đ. The base letter has to be a single letter, and the
+    // modifier must name no second letter, so that the pattern passes over the letters whose name
+    // spells out two of them: ǅ is LATIN CAPITAL LETTER D WITH SMALL LETTER Z WITH CARON, and
+    // taking D alone from it would lose the z a reader sees.
+    private static final Pattern LETTER_WITH_MODIFIER =
+            Pattern.compile("LATIN (?:CAPITAL|SMALL) LETTER ([A-Z]) WITH (?!.*LETTER).+");
+
     // almost every Unicode format character (category Cf), except the joiner and non-joiner a
     // script needs to shape a word. A few of them do draw something — the Arabic end-of-ayah
     // sign and the characters that tag a Scotland flag — but none is likely in a class list,
@@ -25,6 +34,10 @@ public class StringUtil {
     private static final Pattern INVISIBLE = Pattern.compile("(?U)[\\p{Cf}\\p{Cc}&&[^\\u200C\\u200D\\s]]");
     private static final Pattern WHITESPACE = Pattern.compile("(?U)\\s+");
     private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
+    // The three characters a reader sees as the hyphen on the keyboard: the ASCII hyphen-minus,
+    // the typographic hyphen and the non-breaking hyphen. The longer dashes are left out,
+    // because a reader can tell them apart from a hyphen and so chooses between them.
+    private static final Pattern HYPHEN = Pattern.compile("[\\u002D\\u2010\\u2011]");
 
     private StringUtil() {} // this class only holds the helpers
 
@@ -123,16 +136,23 @@ public class StringUtil {
     }
 
     /**
-     * Returns a comparison key for a name, ignoring case, Latin accents and curly apostrophes.
-     * The stored name is left unchanged. Marks belonging to other scripts are retained because
-     * they may represent separate vowels rather than optional accents.
+     * Returns a comparison key for a name, ignoring case, Latin accents, curly apostrophes and
+     * the difference between a hyphen and a space. The stored name is left unchanged. Marks
+     * belonging to other scripts are retained because they may represent separate vowels rather
+     * than optional accents.
+     *
+     * <p>A hyphen reads as a space because two lists of the same class routinely disagree on it:
+     * a sign-up sheet carries {@code Mary-Jane} where the official roll carries {@code Mary Jane}.
+     * Whitespace runs are then reduced the way a stored value reduces them, so a hyphen that
+     * already has spaces around it does not leave a gap the other spelling cannot match.
      */
     public static String normalizeNameForComparison(String name) {
         requireNonNull(name);
         String decomposed = Normalizer.normalize(name, Normalizer.Form.NFD);
+        String withBaseLetters = stripLetterModifiers(decomposed);
         StringBuilder result = new StringBuilder();
         boolean isLatin = false;
-        for (int codePoint : decomposed.codePoints().toArray()) {
+        for (int codePoint : withBaseLetters.codePoints().toArray()) {
             int type = Character.getType(codePoint);
             boolean isMark = type == Character.NON_SPACING_MARK || type == Character.COMBINING_SPACING_MARK
                     || type == Character.ENCLOSING_MARK;
@@ -143,7 +163,8 @@ public class StringUtil {
                 result.appendCodePoint(codePoint == '’' || codePoint == '‘' ? '\'' : codePoint);
             }
         }
-        return foldCase(result.toString());
+        String hyphensAsSpaces = HYPHEN.matcher(result.toString()).replaceAll(" ");
+        return foldCase(WHITESPACE.matcher(hyphensAsSpaces).replaceAll(" "));
     }
 
     private static String foldCase(String value) {
@@ -153,6 +174,46 @@ public class StringUtil {
         value.codePoints().forEach(codePoint ->
                 result.appendCodePoint(Character.toLowerCase(Character.toUpperCase(codePoint))));
         return result.toString();
+    }
+
+    /**
+     * Returns {@code value} with every Latin letter that carries a stroke, a slash, a bar, a hook
+     * or another modifier replaced by the letter underneath it, so that {@code Đặng} reads as
+     * {@code Dang} and {@code Søren} as {@code Soren} when names are compared.
+     *
+     * <p>Canonical decomposition alone cannot reach these letters. An accented letter such as
+     * {@code é} splits into a base letter and a mark that the caller then drops, but {@code Đ},
+     * {@code Ł} and {@code Ø} are single code points that no decomposition takes apart, so their
+     * stroke survives every step and a reader typing {@code dang} finds nobody.
+     *
+     * <p>Which letter lies underneath comes from the Unicode name rather than a list written
+     * here, because Unicode already answers the question for every such letter and never
+     * renames one. The name has to describe one base letter plus a modifier, which keeps the
+     * mapping one letter to one letter and leaves out the letters that stand on their own:
+     * {@code Æ}, {@code Œ}, {@code ß}, {@code Ð} and {@code Þ} name no base letter, and a reader
+     * spells each of them with two keys, so expanding one would be transliteration rather than
+     * a comparison key.
+     */
+    private static String stripLetterModifiers(String value) {
+        StringBuilder result = new StringBuilder();
+        for (int codePoint : value.codePoints().toArray()) {
+            result.appendCodePoint(findBaseLetter(codePoint));
+        }
+        return result.toString();
+    }
+
+    /**
+     * Returns the letter underneath {@code codePoint} when Unicode names it as a base letter
+     * carrying a modifier, and {@code codePoint} itself otherwise. The letter comes back in
+     * capital form, as Unicode names spell it; the caller folds case afterwards.
+     */
+    private static int findBaseLetter(int codePoint) {
+        String name = Character.getName(codePoint);
+        if (name == null) {
+            return codePoint;
+        }
+        Matcher named = LETTER_WITH_MODIFIER.matcher(name);
+        return named.matches() ? named.group(1).codePointAt(0) : codePoint;
     }
 
     /**
@@ -230,6 +291,23 @@ public class StringUtil {
     public static String stripFormatCharacters(String raw) {
         requireNonNull(raw);
         return INVISIBLE.matcher(raw).replaceAll("");
+    }
+
+    /**
+     * Returns true if {@code text} holds nothing a command could be read from: nothing at all,
+     * only whitespace, or only the invisible characters a paste carries. The command box asks
+     * this before submitting, so a stray space before Enter is ignored the way an empty line
+     * is rather than answered as a mistyped command.
+     */
+    public static boolean isBlankInput(String text) {
+        requireNonNull(text);
+        String visible = stripFormatCharacters(text);
+        for (int index = 0; index < visible.length(); index++) {
+            if (!isWhitespace(visible.charAt(index))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

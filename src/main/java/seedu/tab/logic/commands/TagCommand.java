@@ -36,6 +36,8 @@ public class TagCommand extends Command {
     public static final String COMMAND_WORD = "tag";
     public static final String FIELD_INDEX = "INDEX";
     public static final String FIELD_TARGET = "INDEX or NUS_STUDENT_ID";
+    /** The command form that addresses a student by their NUS Student ID. */
+    public static final String ID_TARGET_COMMAND = COMMAND_WORD + " " + FLAG_NUS_STUDENT_ID;
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Adds or removes one tag by displayed index or NUS Student ID, preserving all other fields.\n"
             + "Parameters: " + FIELD_TARGET + ", or " + FLAG_NUS_STUDENT_ID.getLabel()
@@ -99,7 +101,7 @@ public class TagCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        Student student = target.resolve(model);
+        Student student = target.resolve(model, ID_TARGET_COMMAND);
         Optional<Tag> existingTag = student.getTags().stream()
                 .filter(this::matchesTag)
                 .min(Comparator.comparing(existing -> existing.getTagName()));
@@ -114,8 +116,10 @@ public class TagCommand extends Command {
         model.setStudent(student, updatedStudent);
         String message = action == Action.ADD ? MESSAGE_ADD_SUCCESS : MESSAGE_REMOVE_SUCCESS;
         Tag changedTag = action == Action.ADD ? tag : existingTag.orElseThrow();
-        return new CommandResult(String.format(message, Messages.shorten(changedTag.getTagName()),
-                Messages.format(updatedStudent)));
+        String feedback = String.format(message, Messages.shorten(changedTag.getTagName()),
+                Messages.format(updatedStudent));
+        return new CommandResult(action == Action.ADD
+                ? FollowUpTagWarning.appendTo(feedback, List.of(tag)) : feedback);
     }
 
     /**

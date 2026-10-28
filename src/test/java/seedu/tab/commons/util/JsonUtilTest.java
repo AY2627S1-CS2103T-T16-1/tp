@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Optional;
@@ -36,6 +38,42 @@ public class JsonUtilTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void readJsonFile_linkToMissingFolder_reportsInsteadOfReadingAsFirstRun() throws Exception {
+        Path link = testFolder.resolve("tab.json");
+        createSymbolicLinkOrSkip(link, Path.of("missing-folder", "tab.json"));
+
+        DataLoadingException exception = assertThrows(DataLoadingException.class, () ->
+                JsonUtil.readJsonFile(link, SerializableTestClass.class));
+
+        assertTrue(exception.getMessage().contains("that folder does not exist"));
+        assertInstanceOf(NoSuchFileException.class, exception.getCause());
+    }
+
+    @Test
+    public void readJsonFile_linkToMissingFileInExistingFolder_readsAsFirstRun() throws Exception {
+        Path link = testFolder.resolve("tab.json");
+        createSymbolicLinkOrSkip(link, Path.of("not-saved-yet.json"));
+
+        assertEquals(Optional.empty(), JsonUtil.readJsonFile(link, SerializableTestClass.class));
+    }
+
+    @Test
+    public void readJsonFile_missingFile_readsAsFirstRun() throws Exception {
+        assertEquals(Optional.empty(),
+                JsonUtil.readJsonFile(testFolder.resolve("absent.json"), SerializableTestClass.class));
+    }
+
+    private void createSymbolicLinkOrSkip(Path link, Path target) {
+        try {
+            Files.createSymbolicLink(link, target);
+        } catch (UnsupportedOperationException | FileSystemException exception) {
+            Assumptions.assumeTrue(false, "Symbolic links are unavailable: " + exception.getMessage());
+        } catch (IOException exception) {
+            throw new AssertionError("The symbolic link should be created.", exception);
+        }
+    }
 
     @Test
     public void fromJsonString_trailingValue_reportsExactReasonAndLocation() {

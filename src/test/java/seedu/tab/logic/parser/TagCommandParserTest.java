@@ -25,7 +25,8 @@ public class TagCommandParserTest {
         for (String index : List.of("2147483648", "999999999999999999999")) {
             for (String action : List.of("-a", "-r", "--remove")) {
                 assertParseFailure(parser, index + " " + action + " T1",
-                        String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, index));
+                        String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, index) + " "
+                                + Messages.getIdTargetHint(TagCommand.ID_TARGET_COMMAND, index));
             }
         }
     }
@@ -96,10 +97,12 @@ public class TagCommandParserTest {
 
     @Test
     public void parse_invalidIndex_reportsIndex() {
-        for (String index : List.of("0", "1.5")) {
-            assertParseFailure(parser, index + " -a T1", ParserUtil.MESSAGE_INVALID_INDEX);
-        }
+        assertParseFailure(parser, "1.5 -a T1", ParserUtil.MESSAGE_INVALID_INDEX);
         assertParseFailure(parser, "\"-1\" -a T1", ParserUtil.MESSAGE_INVALID_INDEX);
+
+        // a target that would be a valid ID also names the option that selects one
+        assertParseFailure(parser, "0 -a T1", invalidIndexWithIdHint("0"));
+        assertParseFailure(parser, "1ABC -a T1", invalidIndexWithIdHint("1ABC"));
         assertParseSuccess(parser, "2147483647 -a T1",
                 new TagCommand(Index.fromOneBased(Integer.MAX_VALUE), new Tag("T1")));
     }
@@ -112,7 +115,7 @@ public class TagCommandParserTest {
                             "it holds no letter or number"));
         }
         assertParseFailure(parser, "0 -a \"\"",
-                ParserUtil.MESSAGE_INVALID_INDEX + "\nTag \"\" is not valid: it holds no letter or number");
+                invalidIndexWithIdHint("0") + "\nTag \"\" is not valid: it holds no letter or number");
     }
 
     @Test
@@ -127,7 +130,6 @@ public class TagCommandParserTest {
         }
         assertFailureWithGuidance("1 -a -p 123", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-a TAG"));
         assertFailureWithGuidance("1 --adds T1", "There is no --adds option.");
-        assertFailureWithGuidance("1 -a Lab 3", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "3"));
         assertFailureWithGuidance("1 -a \"Lab 3", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
     }
 
@@ -152,11 +154,21 @@ public class TagCommandParserTest {
     @Test
     public void parse_unflaggedTag_reportsUnexpectedValueAndActionGuidance() {
         for (String value : List.of("lab4", "Lab 3", "组 1")) {
-            assertFailureWithGuidance("1 " + value, String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX,
+            assertFailureWithGuidance("1 " + value, String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET,
                     "INDEX", value) + "\nMissing required field(s): -a TAG or -r TAG");
         }
         assertParseFailure(parser, "1 extra -a T1",
-                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, "INDEX", "extra"));
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET, "INDEX", "extra"));
+    }
+
+    @Test
+    public void parse_unflaggedValueAfterIdTarget_namesTheIdForm() {
+        // a letter-leading target is an NUS Student ID, so a user who typed a name is not
+        // told the first word they typed is an index
+        for (String target : List.of("Alex", "A01234567X")) {
+            assertParseFailure(parser, target + " Yeoh -a T1", String.format(
+                    ParserUtil.MESSAGE_VALUE_AFTER_TARGET, ParserUtil.FIELD_NUS_STUDENT_ID, "Yeoh"));
+        }
     }
 
     @Test
@@ -186,9 +198,8 @@ public class TagCommandParserTest {
     @Test
     public void parse_removeInvalidIndexOrTag_reportsSpecificProblems() {
         for (String marker : List.of("-r", "--remove")) {
-            for (String index : List.of("0", "1.5")) {
-                assertParseFailure(parser, index + " " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX);
-            }
+            assertParseFailure(parser, "1.5 " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX);
+            assertParseFailure(parser, "0 " + marker + " T1", invalidIndexWithIdHint("0"));
             assertFailureWithGuidance("-1 " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX
                     + "\n" + String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-1"));
             assertParseSuccess(parser, "2147483647 " + marker + " T1",
@@ -201,7 +212,7 @@ public class TagCommandParserTest {
             }
         }
         assertParseFailure(parser, "0 -r \"\"",
-                ParserUtil.MESSAGE_INVALID_INDEX + "\nTag \"\" is not valid: it holds no letter or number");
+                invalidIndexWithIdHint("0") + "\nTag \"\" is not valid: it holds no letter or number");
     }
 
     @Test
@@ -216,7 +227,7 @@ public class TagCommandParserTest {
         }
         assertFailureWithGuidance("1 -r -p 123", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-r TAG"));
         assertFailureWithGuidance("1 --removes T1", "There is no --removes option.");
-        assertFailureWithGuidance("1 -r Lab 3", String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "3"));
+        assertFailureWithGuidance("1 -r Lab 3", Messages.getErrorMessageForValueAfterFlags("3", true));
         assertFailureWithGuidance("1 -r \"Lab 3", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
         for (String marker : List.of("-R", "--REMOVE")) {
             assertFailureWithGuidance("1 " + marker + " T1", String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker));
@@ -235,7 +246,28 @@ public class TagCommandParserTest {
         }
     }
 
+    @Test
+    public void parse_twoWordTagAfterAnIndex_pointsToQuotesRatherThanTheFront() {
+        // the index already stands before the options, so only the quotes advice can be followed
+        assertFailureWithGuidance("1 -a Lab 3", Messages.getErrorMessageForValueAfterFlags("3", true));
+        assertParseSuccess(parser, "1 -a \"Lab 3\"",
+                new TagCommand(StudentTarget.byIndex(INDEX_FIRST_STUDENT, "1"), new Tag("Lab 3"), Action.ADD));
+    }
+
+    @Test
+    public void parse_indexAfterTheOptions_pointsToTheFrontOfTheCommand() {
+        assertFailureWithGuidance("-a Lab 1", Messages.getErrorMessageForValueAfterFlags("1", false));
+        assertParseSuccess(parser, "1 -a Lab",
+                new TagCommand(StudentTarget.byIndex(INDEX_FIRST_STUDENT, "1"), new Tag("Lab"), Action.ADD));
+    }
+
     private void assertFailureWithGuidance(String input, String problem) {
         assertParseFailure(parser, input, problem + "\n" + TagCommand.MESSAGE_ACTION_GUIDANCE);
+    }
+
+    /** The reply {@code tag} gives for a target it cannot use that would be a valid ID. */
+    private static String invalidIndexWithIdHint(String value) {
+        return ParserUtil.MESSAGE_INVALID_INDEX + " "
+                + Messages.getIdTargetHint(TagCommand.ID_TARGET_COMMAND, value);
     }
 }
