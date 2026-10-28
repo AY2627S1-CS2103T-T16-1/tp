@@ -203,7 +203,8 @@ public class JsonParseErrorFormatterTest {
                 + "  1 | {\n"
                 + "> 2 | // a note\n"
                 + "  3 | }";
-        assertEquals(expectedMessage, JsonParseErrorFormatter.format(exception, "{\n// a note\n}"));
+        assertEquals(expectedMessage,
+                JsonParseErrorFormatter.format(exception, "{\n// a note\n}").toDisplayText());
     }
 
     @Test
@@ -216,7 +217,7 @@ public class JsonParseErrorFormatterTest {
             assertEquals("The data is not in the expected JSON format: The file holds no data."
                             + " Restore your backup, or delete the file and restart TAB"
                             + " to start again from the sample students.",
-                    JsonParseErrorFormatter.format(exception, jsonSource));
+                    JsonParseErrorFormatter.format(exception, jsonSource).toDisplayText());
         }
     }
 
