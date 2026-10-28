@@ -151,7 +151,8 @@ public class LogicManagerTest {
         }
         String missingIdMessage = String.format(Messages.MESSAGE_NO_STUDENT_WITH_NUS_ID, "9999");
         assertThrows(CommandException.class, missingIdMessage, () -> logic.execute("edit --target-id 9999 -nf"));
-        String invalidIndexMessage = Messages.getErrorMessageForInvalidIndex("001234", 1);
+        String invalidIndexMessage = Messages.getErrorMessageForInvalidIndex("001234", 1)
+                + " " + Messages.getIdTargetHint(EditCommand.ID_TARGET_COMMAND, "001234");
         assertThrows(CommandException.class, invalidIndexMessage, () -> logic.execute("edit 001234 -nf"));
         String duplicateMessage = String.format(Messages.MESSAGE_DUPLICATE_STUDENT, "A1234", "Other Student");
         assertThrows(CommandException.class, duplicateMessage, () -> logic.execute("edit --target-id 001234 -i A1234"));

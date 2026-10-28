@@ -2,7 +2,6 @@ package seedu.tab.logic;
 
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
-import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 
 import java.util.Comparator;
 import java.util.List;
@@ -57,10 +56,14 @@ public class Messages {
                 displayedCount, StringUtil.getPluralSuffix(displayedCount));
     }
 
-    /** Returns the explicit ID form when a numeric target may have been intended as an ID. */
-    public static String getIdTargetHint(String commandWord, String value) {
-        return "If \"" + value + "\" is an NUS Student ID, use " + commandWord
-                + " " + FLAG_NUS_STUDENT_ID + " " + value + ".";
+    /**
+     * Returns the explicit ID form when a target may have been intended as an ID. The command
+     * supplies {@code idTargetCommand} itself, because the option that names an ID target
+     * differs between commands: {@code edit} spells it {@code --target-id}, its {@code --id}
+     * being the field it sets.
+     */
+    public static String getIdTargetHint(String idTargetCommand, String value) {
+        return "If \"" + value + "\" is an NUS Student ID, use " + idTargetCommand + " " + value + ".";
     }
 
     /**

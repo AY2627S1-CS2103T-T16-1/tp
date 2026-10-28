@@ -109,7 +109,8 @@ public class TagCommandIntegrationTest {
         model.updateFilteredStudentList(shown -> false);
 
         assertFailureWithoutMutation("tag 1234 -a T2", CommandException.class,
-                Messages.getErrorMessageForInvalidIndex("1234", 0));
+                Messages.getErrorMessageForInvalidIndex("1234", 0) + " "
+                        + Messages.getIdTargetHint(TagCommand.ID_TARGET_COMMAND, "1234"));
         logic.execute("tag -i 1234 -a T2");
         Student expected = new StudentBuilder(numericIdStudent).withTags("T1", "Lab 3", "T2").build();
         assertEquals(List.of(otherStudent, expected), storage.readStudentBook().orElseThrow().getStudentList());
@@ -193,8 +194,9 @@ public class TagCommandIntegrationTest {
         Map<String, String> errors = Map.of(
                 "tag 1 -t T2", "There is no -t option.\n" + TagCommand.MESSAGE_ACTION_GUIDANCE,
                 "tag 1 --tag T2", "There is no --tag option.\n" + TagCommand.MESSAGE_ACTION_GUIDANCE,
-                "tag 0 -a T2", "Index must be a positive integer.",
-                "tag 2147483648 -a T2", String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, "2147483648"),
+                "tag 0 -a T2", tagIndexWithIdHint("Index must be a positive integer.", "0"),
+                "tag 2147483648 -a T2", tagIndexWithIdHint(
+                        String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, "2147483648"), "2147483648"),
                 "tag 1 -a \"\"", "Tag \"\" is not valid: it holds no letter or number",
                 "tag 1 -a \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
                 "tag 1 -a T2 --add T3", "Options given more than once: -a. Give each listed option only once.",
@@ -249,12 +251,15 @@ public class TagCommandIntegrationTest {
 
     @Test
     public void execute_invalidEditIndex_reportsReasonWithoutMutation() throws Exception {
-        for (String target : List.of("0", "1.5", "+1", "\"-1\"")) {
+        for (String target : List.of("1.5", "+1", "\"-1\"")) {
             assertFailureWithoutMutation("edit " + target + " -p 91234567", ParseException.class,
                     ParserUtil.MESSAGE_INVALID_INDEX);
         }
+        String zeroWithIdHint = ParserUtil.MESSAGE_INVALID_INDEX + " "
+                + Messages.getIdTargetHint(EditCommand.ID_TARGET_COMMAND, "0");
+        assertFailureWithoutMutation("edit 0 -p 91234567", ParseException.class, zeroWithIdHint);
         assertFailureWithoutMutation("edit 0", ParseException.class,
-                ParserUtil.MESSAGE_INVALID_INDEX + "\n" + EditCommand.MESSAGE_NOT_EDITED);
+                zeroWithIdHint + "\n" + EditCommand.MESSAGE_NOT_EDITED);
     }
 
     @Test
@@ -322,9 +327,10 @@ public class TagCommandIntegrationTest {
     public void execute_removeInvalidInput_preservesModelDisplayAndSavedBytes() throws Exception {
         String hint = "\n" + TagCommand.MESSAGE_ACTION_GUIDANCE;
         Map<String, String> errors = Map.of(
-                "tag 0 -r T1", "Index must be a positive integer.",
+                "tag 0 -r T1", tagIndexWithIdHint("Index must be a positive integer.", "0"),
                 "tag -1 -r T1", "Index must be a positive integer.\nThere is no -1 option." + hint,
-                "tag 2147483648 --remove T1", String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, "2147483648"),
+                "tag 2147483648 --remove T1", tagIndexWithIdHint(
+                        String.format(ParserUtil.MESSAGE_INDEX_TOO_LARGE, "2147483648"), "2147483648"),
                 "tag 1 -r \"\"", "Tag \"\" is not valid: it holds no letter or number",
                 "tag 1 -r \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
                 "tag 1 -r", "-r TAG needs a value after it. "
@@ -445,5 +451,10 @@ public class TagCommandIntegrationTest {
         }
         assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
         assertEquals(0, saveCount);
+    }
+
+    /** The reply {@code tag} gives for a target it cannot use that would be a valid ID. */
+    private static String tagIndexWithIdHint(String reason, String value) {
+        return reason + " " + Messages.getIdTargetHint(TagCommand.ID_TARGET_COMMAND, value);
     }
 }

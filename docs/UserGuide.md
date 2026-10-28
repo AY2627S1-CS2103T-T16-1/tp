@@ -628,6 +628,10 @@ done to it beyond the quotes any value with spaces takes:
   such an ID explicitly. Here `--id` always sets the student's ID rather than choosing who to edit.
   A zero or non-integer index reports `Index must be a positive integer.`
   without the full usage block; any invalid field values are reported alongside it.
+  A refused target that reads as an NUS Student ID, such as `1ABC`, and a number
+  past the end of the list that a student holds as an ID both name the
+  `--target-id` form that reaches that student, as in
+  `edit --target-id 1ABC -p 91234567`.
   The current search stays active after editing, so the index keeps referring to
   the same student when you repeat a command, as long as that student still
   matches the search. An edit that removes a matching detail, such as renaming
@@ -734,6 +738,9 @@ Format: `tag TARGET -a TAG`
   case-insensitively across the whole student book, even when the current
   search hides that student. IDs starting with a digit need `--id` or `-i`;
   a bare number always means a displayed index. The current search stays active.
+  A refused target that reads as an NUS Student ID, such as `1ABC`, and a number
+  past the end of the list that a student holds as an ID both name the
+  `--id` form that reaches that student, as in `tag --id 1ABC -a T1`.
 * Give exactly one target. Mixing an index or plain ID with `--id`, or
   repeating the ID option, is refused without changing or saving any record.
 * `-a` selects addition; `--add` is its long alias. Supply exactly one tag per command; repeat the

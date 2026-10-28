@@ -203,7 +203,7 @@ public class DeleteCommandParserTest {
     /** The reply {@code delete} gives for a target that reads as an unusable index. */
     private static String invalidIndexWithIdHint(String value) {
         return ParserUtil.MESSAGE_INVALID_INDEX + " "
-                + Messages.getIdTargetHint(DeleteCommand.COMMAND_WORD, value);
+                + Messages.getIdTargetHint(DeleteCommand.ID_TARGET_COMMAND, value);
     }
 
     /** The reply {@code delete} gives for the value it found after a target read as an index. */

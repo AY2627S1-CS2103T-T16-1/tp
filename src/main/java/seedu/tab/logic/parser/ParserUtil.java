@@ -183,6 +183,28 @@ public class ParserUtil {
     }
 
     /**
+     * Returns {@code failure} with the ID form of {@code idTargetCommand} after it when
+     * {@code target} holds a valid NUS Student ID, because a digit-leading ID is refused as an
+     * index and plausibly was meant as an ID. Any other refusal is returned as it is, so the
+     * recovery is offered only where it leads to the student.
+     *
+     * @param failure Why the target was refused.
+     * @param target The one token the User gave as the target.
+     * @param idTargetCommand The command form that addresses a student by their NUS Student ID.
+     */
+    public static ParseException withIdTargetHint(ParseException failure, String target,
+            String idTargetCommand) {
+        requireNonNull(failure);
+        requireNonNull(target);
+        requireNonNull(idTargetCommand);
+        if (!NusStudentId.isValidNusStudentId(target)) {
+            return failure;
+        }
+        return new ParseException(failure.getMessage() + " "
+                + Messages.getIdTargetHint(idTargetCommand, target), failure);
+    }
+
+    /**
      * Parses a {@code String name} into a {@code Name}.
      * Leading and trailing whitespaces will be trimmed.
      *
