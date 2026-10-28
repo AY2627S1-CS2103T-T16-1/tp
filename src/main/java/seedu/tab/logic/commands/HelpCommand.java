@@ -38,7 +38,7 @@ public class HelpCommand extends Command {
             "        [" + FLAG_TAG.getLabel() + "]... [" + FLAG_FOLLOW_UP.getLabel() + "]",
             "",
             "  " + EditCommand.COMMAND_WORD + " — Edit a student",
-            "    " + EditCommand.COMMAND_WORD + " " + EditCommand.FIELD_INDEX
+            "    " + EditCommand.COMMAND_WORD + " TARGET"
                     + " [" + FLAG_NAME.getLabel() + "] [" + FLAG_PHONE.getLabel() + "]",
             "         [" + FLAG_EMAIL.getLabel() + "] [" + FLAG_NUS_STUDENT_ID.getLabel() + "]",
             "         [" + FLAG_TAG.getLabel() + "]...",
@@ -96,6 +96,7 @@ public class HelpCommand extends Command {
             "  [ ]       Optional argument",
             "  ...       Repeatable argument",
             "  INDEX     Positive number in the displayed list",
+            "  TARGET    An INDEX, an ID, or --target-id",
             "  Wrapped syntax lines form one command.",
             "",
             "OPTION ALIASES",
@@ -116,6 +117,7 @@ public class HelpCommand extends Command {
             "",
             "EDITING OPTIONAL FIELDS",
             "",
+            "  -p \"\"      Clear phone number",
             "  -e \"\"      Clear email",
             "  --id \"\"    Clear NUS Student ID",
             "  -t \"\"      Clear all tags",

@@ -385,14 +385,18 @@
     -fx-spacing: 10;
 }
 
-.data-loading-error-file-caption {
+.data-loading-error-file-caption,
+.data-loading-error-excerpt-caption {
     -fx-font-size: 10px;
     -fx-font-weight: bold;
     -fx-padding: 2 0 0 0;
     -fx-text-fill: -tab-text-muted;
 }
 
-.data-loading-error-file {
+/* the path and the quoted part of the file are both read character by character, so they
+   share one box: a monospaced one, in which the quotation's columns line up */
+.data-loading-error-file,
+.data-loading-error-excerpt {
     -fx-background-color: -tab-bg-sunken;
     -fx-background-radius: 6;
     -fx-border-color: -tab-border;
@@ -403,7 +407,14 @@
     /* thirteen plus the one-pixel border above matches the fourteen the message box below
        insets its text by, so the two read as one column */
     -fx-padding: 9 13 9 13;
+}
+
+.data-loading-error-file {
     -fx-text-fill: -tab-accent;
+}
+
+.data-loading-error-excerpt {
+    -fx-text-fill: -tab-text;
 }
 
 .data-loading-error-detail {

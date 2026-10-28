@@ -49,6 +49,23 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_autocorrectedDashes_readFieldsRatherThanTheName() {
+        Student expected = new StudentBuilder().withName("Casey Low").withPhone("91234567")
+                .withEmail("casey@example.com").withoutNusStudentId().withTags().build();
+        for (String dash : java.util.List.of("\u2013", "\u2014", "\u2212")) {
+            assertParseSuccess(parser, " Casey Low " + dash + "p 91234567 "
+                    + dash + "e casey@example.com", new AddCommand(expected));
+        }
+    }
+
+    @Test
+    public void parse_dashWithinAName_staysPartOfTheName() {
+        Student expected = new StudentBuilder().withName("Jean\u2013Luc Picard").withPhone("91234567")
+                .withoutEmail().withoutNusStudentId().withTags().build();
+        assertParseSuccess(parser, " Jean\u2013Luc Picard -p 91234567", new AddCommand(expected));
+    }
+
+    @Test
     public void parse_caseVariantTags_keepsFirstSpelling() {
         Student expected = new StudentBuilder().withName("Casey Low").withPhone("91234567")
                 .withoutEmail().withTags("Lab 3", "Σ", "T1").build();
@@ -310,7 +327,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_nameOption_explainsNamePlacement() {
-        for (String marker : new String[] {"-n", "--name"}) {
+        for (String marker : new String[] {"-n", "--name", "-N", "--NAME", "--Name"}) {
             String expected = String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker)
                     + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE;
             for (String value : new String[] {" \"Betsy Crowe\"", "=\"Betsy Crowe\"", "", "=", "=\"\""}) {
@@ -359,12 +376,25 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_valueAfterTheFlagsBegan_saysItBelongsToNoOption() {
-        // the name needs no quotes, but it does have to be given before the options
+        // a name already stands before the options, so moving the second word there is no fix
         assertParseFailure(parser, " Ravi" + PHONE_BOB + " Kumaran",
-                String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "Kumaran"));
+                Messages.getErrorMessageForValueAfterFlags("Kumaran", true));
+        assertParseSuccess(parser, " \"Ravi Kumaran\"" + PHONE_BOB,
+                new AddCommand(new StudentBuilder().withName("Ravi Kumaran")
+                        .withPhone(VALID_PHONE_BOB).withoutEmail().build()));
 
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + FOLLOW_UP + " true",
-                String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "true"));
+                String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "--follow-up"));
+    }
+
+    @Test
+    public void parse_nameAfterTheFlagsBegan_pointsToTheFrontOfTheCommand() {
+        // nothing stands before the options yet, so the name belongs at the front
+        assertParseFailure(parser, PHONE_BOB + " Ravi",
+                Messages.getErrorMessageForValueAfterFlags("Ravi", false));
+        assertParseSuccess(parser, " Ravi" + PHONE_BOB,
+                new AddCommand(new StudentBuilder().withName("Ravi")
+                        .withPhone(VALID_PHONE_BOB).withoutEmail().build()));
     }
 
     @Test

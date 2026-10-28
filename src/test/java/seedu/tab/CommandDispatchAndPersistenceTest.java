@@ -126,6 +126,25 @@ public class CommandDispatchAndPersistenceTest {
     }
 
     @Test
+    public void execute_addHyphenatedName_warnsAndKeepsBothSpellings() throws Exception {
+        logic.execute(AddCommand.COMMAND_WORD + " \"Mary Jane\" -p 98765432");
+
+        CommandResult result = logic.execute(AddCommand.COMMAND_WORD + " Mary-Jane -p 87654321");
+
+        assertTrue(result.getFeedbackToUser().contains(
+                "WARNING: Possible duplicate student: Mary Jane has the same name (Mary-Jane)."));
+
+        assertEquals("Mary Jane", model.getFilteredStudentList().get(0).getName().getFullName());
+        assertEquals("Mary-Jane", model.getFilteredStudentList().get(1).getName().getFullName());
+
+        ReadOnlyStudentBook saved = storage.readStudentBook().orElseThrow();
+        assertEquals("Mary-Jane", saved.getStudentList().get(1).getName().getFullName());
+
+        logic.execute(FindCommand.COMMAND_WORD + " -n \"mary jane\"");
+        assertEquals(2, model.getFilteredStudentList().size());
+    }
+
+    @Test
     public void execute_exitCommand_returnsExitSignal() throws Exception {
         CommandResult result = logic.execute(ExitCommand.COMMAND_WORD);
         assertTrue(result.isExitRequested());

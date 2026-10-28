@@ -2,6 +2,7 @@ package seedu.tab.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -27,6 +28,9 @@ import seedu.tab.storage.Storage;
 public class LogicManager implements Logic {
     public static final String FILE_OPS_ERROR_FORMAT =
             "Could not save data due to the following error: %s. No changes were made.";
+
+    public static final String FILE_OPS_MISSING_FILE_ERROR_FORMAT =
+            "Could not save data to file %s because %s. No changes were made.";
 
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
             "Could not save data to file %s due to insufficient permissions to write to the file or the folder. "
@@ -139,8 +143,21 @@ public class LogicManager implements Logic {
             if (e instanceof AccessDeniedException) {
                 throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
             }
+            if (e instanceof NoSuchFileException missingFile) {
+                throw new CommandException(String.format(FILE_OPS_MISSING_FILE_ERROR_FORMAT,
+                        missingFile.getFile(), describeMissingFile(missingFile)), e);
+            }
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, e.getMessage()), e);
         }
+    }
+
+    /**
+     * Returns why a save found no file to write, which the exception carries as its reason when
+     * one was given and otherwise only as the missing path.
+     */
+    private static String describeMissingFile(NoSuchFileException exception) {
+        String reason = exception.getReason();
+        return reason == null ? "it does not exist" : reason;
     }
 
     @Override

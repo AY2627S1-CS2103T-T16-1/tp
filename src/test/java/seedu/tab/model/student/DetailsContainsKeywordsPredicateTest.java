@@ -29,6 +29,21 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_hyphenatedName_matchesTheSameNameSpelledWithSpaces() {
+        Student hyphenated = new StudentBuilder().withName("Mary-Jane Tan").build();
+        Student spaced = new StudentBuilder().withName("Mary Jane Tan").build();
+        for (String keyword : List.of("Mary Jane", "Mary-Jane", "mary jane")) {
+            assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of(keyword))).test(hyphenated));
+            assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of(keyword))).test(spaced));
+        }
+        // a longer dash remains a character of its own, and a tag keeps its hyphen literal
+        assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Mary–Jane")))
+                .test(hyphenated));
+        Student tagged = new StudentBuilder().withName("Casey Low").withTags("needs-followup").build();
+        assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.TAG, List.of("needs followup"))).test(tagged));
+    }
+
+    @Test
     public void test_longPhoneTerms_returnsPromptlyWithoutBroadeningMatches() {
         Student student = new StudentBuilder().withPhone("9123-4567").build();
         List<String> keywords = List.of("9".repeat(50_000) + "!", "９".repeat(50_000) + "!",
@@ -40,6 +55,25 @@ public class DetailsContainsKeywordsPredicateTest {
             }
         });
         assertEquals("9123-4567", student.getPhone().orElseThrow().getValue());
+    }
+
+    @Test
+    public void test_latinLetterWithModifier_matchesBaseLetterEitherWay() {
+        String[][] cases = {
+            {"Đặng Thị Mai", "dang"},
+            {"Dang Thi Mai", "đặng"},
+            {"Łukasz Nowak", "lukasz"},
+            {"Lukasz Nowak", "Łukasz"},
+            {"Søren Kierkegaard", "soren"},
+            {"Soren Kierkegaard", "Søren"}
+        };
+        for (String[] pair : cases) {
+            String storedName = pair[0];
+            Student student = new StudentBuilder().withName(storedName).build();
+            assertTrue(new DetailsContainsKeywordsPredicate(
+                    Map.of(Field.NAME, List.of(pair[1]))).test(student));
+            assertEquals(storedName, student.getName().getFullName());
+        }
     }
 
     @Test

@@ -7,8 +7,10 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import seedu.tab.commons.exceptions.IllegalValueException;
 import seedu.tab.commons.util.ValueMessages;
@@ -19,6 +21,9 @@ import seedu.tab.model.student.Student;
 /**
  * An Immutable StudentBook that is serializable to JSON format.
  */
+// A book without a description leaves the key out rather than writing null, so that a file
+// saved by TAB stays as plain as one written before the description was supported.
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonRootName(value = "studentbook")
 class JsonSerializableStudentBook {
 
@@ -33,33 +38,42 @@ class JsonSerializableStudentBook {
     private static final String RECORD_DESCRIPTION = "Student record %d";
     private static final String NAMED_RECORD_DESCRIPTION = "Student record %d (\"%s\")";
 
+    @JsonProperty(COMMENT_FIELD)
+    private final String comment;
     private final List<JsonAdaptedStudent> students;
 
     /**
-     * Constructs a {@code JsonSerializableStudentBook} with the given students.
+     * Constructs a {@code JsonSerializableStudentBook} with the given description and students.
      */
     @JsonCreator
-    public JsonSerializableStudentBook(@JsonProperty("students") List<JsonAdaptedStudent> students) {
+    public JsonSerializableStudentBook(
+            @JsonProperty(COMMENT_FIELD) @JsonDeserialize(using = JsonCommentDeserializer.class) String comment,
+            @JsonProperty("students") List<JsonAdaptedStudent> students) {
+        this.comment = comment;
         this.students = students == null ? null : new ArrayList<>(students);
     }
 
     /**
-     * Converts a given {@code ReadOnlyStudentBook} into this class for Jackson use.
+     * Converts a given {@code ReadOnlyStudentBook} into this class for Jackson use, keeping the
+     * description the saved file carries.
      *
      * @param source future changes to this will not affect the created {@code JsonSerializableStudentBook}.
+     * @param comment description to write back, or null when the file has none.
      */
-    public JsonSerializableStudentBook(ReadOnlyStudentBook source) {
+    public JsonSerializableStudentBook(ReadOnlyStudentBook source, String comment) {
+        this.comment = comment;
         students = source.getStudentList().stream().map(JsonAdaptedStudent::new).collect(Collectors.toList());
     }
 
     /** Rejects unknown top-level keys instead of silently dropping their contents. */
     @JsonAnySetter
     public void rejectUnknownField(String field, Object value) {
-        // Existing hand-editable fixtures use this key for a file description.
-        if (field.equals(COMMENT_FIELD)) {
-            return;
-        }
         throw new IllegalArgumentException(String.format(MESSAGE_UNKNOWN_FIELD, ValueMessages.shorten(field)));
+    }
+
+    /** Returns the description the file carries, or null when it has none. */
+    String getComment() {
+        return comment;
     }
 
     /**

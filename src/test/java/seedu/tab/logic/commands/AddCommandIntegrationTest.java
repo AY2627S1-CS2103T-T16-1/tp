@@ -132,6 +132,33 @@ public class AddCommandIntegrationTest {
         assertEquals(List.of("Alice Tan", "Carl Ong"), displayedNames());
     }
 
+    @Test
+    public void execute_dotlessEmailDomain_addsStudentAndWarns() throws Exception {
+        model = new ModelManager(new StudentBook(), new UserPrefs());
+
+        assertEquals("New student added: Tan; Email: john@gmail"
+                + "\n\nWARNING: Possibly incomplete email: john@gmail has no dot in its domain.\n"
+                + "Check whether a part such as .com or .nus.edu is missing; the address is saved as entered.",
+                executeCommand("add Tan -e john@gmail"));
+        assertEquals("john@gmail",
+                model.getStudentBook().getStudentList().get(0).getEmail().orElseThrow().getValue());
+    }
+
+    @Test
+    public void execute_dottedEmailDomain_addsStudentWithoutWarning() throws Exception {
+        model = new ModelManager(new StudentBook(), new UserPrefs());
+
+        assertEquals("New student added: Ng; Email: john@gmail.com",
+                executeCommand("add Ng -e john@gmail.com"));
+    }
+
+    @Test
+    public void execute_noEmail_addsStudentWithoutWarning() throws Exception {
+        model = new ModelManager(new StudentBook(), new UserPrefs());
+
+        assertEquals("New student added: Lee; Phone: 91110001", executeCommand("add Lee -p 91110001"));
+    }
+
     private void setUpTutorialSearch() throws Exception {
         model = new ModelManager(new StudentBook(), new UserPrefs());
         executeCommand("add Alice Tan -p 91110001 -t T1");

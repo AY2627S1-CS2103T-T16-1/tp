@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import seedu.tab.commons.core.DataLoadingErrorMessage;
+
 /**
  * Turns a failure to read a JSON file into an explanation a person can act on.
  */
@@ -21,6 +23,12 @@ class JsonParseErrorFormatter {
     private static final String JSON_ERROR_ELLIPSIS = "...";
     private static final String JSON_ERROR_LINE_SEPARATOR_PATTERN = "\\r\\n|\\r|\\n";
     private static final String JSON_ERROR_SOURCE_MARKER = "[Source:";
+    private static final String JSON_ERROR_COMMENT_MARKER = "Feature 'ALLOW_COMMENTS'";
+    private static final String JSON_ERROR_NO_CONTENT_MARKER = "No content to map";
+    private static final String MESSAGE_COMMENTS_NOT_ALLOWED = "A JSON file cannot hold comments."
+            + " Remove this one, or move its text into the optional top-level \"_comment\" field.";
+    private static final String MESSAGE_FILE_HAS_NO_DATA = "The file holds no data."
+            + " Restore your backup, or delete the file and restart TAB to start again from the sample students.";
     private static final String JSON_ERROR_SOURCE_LOCATION_PREFIX = "; line: ";
     private static final Pattern JSON_ERROR_SOURCE_LOCATION_PATTERN =
             Pattern.compile("; line: (\\d+), column: (\\d+)\\]");
@@ -34,14 +42,13 @@ class JsonParseErrorFormatter {
      * @param exception The parsing failure to explain.
      * @param jsonSource the JSON text that failed to parse, or null when it is unavailable.
      */
-    static String format(JsonProcessingException exception, String jsonSource) {
+    static DataLoadingErrorMessage format(JsonProcessingException exception, String jsonSource) {
         JsonProcessingException detailedException = JsonUtil.getDetailedJsonProcessingException(exception);
         JsonLocation location = detailedException.getLocation();
         String message = "The data is not in the expected JSON format"
                 + getJsonLocationMessage(location, jsonSource) + ": "
                 + getConciseJsonErrorMessage(detailedException);
-        String sourceExcerpt = getJsonSourceExcerpt(jsonSource, location);
-        return sourceExcerpt.isEmpty() ? message : message + "\nAffected source:\n" + sourceExcerpt;
+        return new DataLoadingErrorMessage(message, getJsonSourceExcerpt(jsonSource, location));
     }
 
     /**
@@ -60,7 +67,7 @@ class JsonParseErrorFormatter {
     }
 
     private static String getJsonLocationMessage(JsonLocation location, String jsonSource) {
-        if (location == null || location.getLineNr() < 1) {
+        if (location == null || location.getLineNr() < 1 || isBlankSource(jsonSource)) {
             return "";
         }
         if (location.getColumnNr() < 1) {
@@ -88,6 +95,11 @@ class JsonParseErrorFormatter {
             return "The parser did not provide further details.";
         }
 
+        Optional<String> plainMessage = getPlainJsonErrorMessage(originalMessage);
+        if (plainMessage.isPresent()) {
+            return plainMessage.get();
+        }
+
         int sourceMarkerIndex = originalMessage.indexOf(JSON_ERROR_SOURCE_MARKER);
         if (sourceMarkerIndex < 0) {
             return originalMessage.strip();
@@ -100,6 +112,20 @@ class JsonParseErrorFormatter {
 
         int sourceContextIndex = getJsonSourceContextStart(originalMessage, sourceMarkerIndex);
         return originalMessage.substring(0, sourceContextIndex).strip();
+    }
+
+    /**
+     * Returns a plainly worded explanation of the parser complaints whose own wording names
+     * Java types or parser features the reader of a data file has no use for.
+     */
+    private static Optional<String> getPlainJsonErrorMessage(String originalMessage) {
+        if (originalMessage.contains(JSON_ERROR_COMMENT_MARKER)) {
+            return Optional.of(MESSAGE_COMMENTS_NOT_ALLOWED);
+        }
+        if (originalMessage.contains(JSON_ERROR_NO_CONTENT_MARKER)) {
+            return Optional.of(MESSAGE_FILE_HAS_NO_DATA);
+        }
+        return Optional.empty();
     }
 
     private static Optional<String> replaceJsonSourceWithLocation(String originalMessage, int sourceMarkerIndex) {
@@ -137,7 +163,7 @@ class JsonParseErrorFormatter {
     }
 
     private static String getJsonSourceExcerpt(String jsonSource, JsonLocation location) {
-        if (jsonSource == null || location == null || location.getLineNr() < 1) {
+        if (jsonSource == null || isBlankSource(jsonSource) || location == null || location.getLineNr() < 1) {
             return "";
         }
 
@@ -156,6 +182,14 @@ class JsonParseErrorFormatter {
                 affectedLineIndex + JSON_ERROR_CONTEXT_LINE_COUNT);
         return formatJsonSourceLines(sourceLines, firstLineIndex, lastLineIndex,
                 affectedLineIndex, affectedColumn);
+    }
+
+    /**
+     * Returns whether the file held no JSON at all, leaving no position to report and
+     * nothing worth quoting back to the reader.
+     */
+    private static boolean isBlankSource(String jsonSource) {
+        return jsonSource != null && jsonSource.isBlank();
     }
 
     private static String[] splitJsonSourceIntoLines(String jsonSource) {

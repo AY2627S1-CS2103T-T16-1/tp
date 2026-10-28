@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
+import seedu.tab.commons.core.DataLoadingErrorMessage;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.commons.util.AppUtil;
@@ -46,7 +47,7 @@ public class MainApp extends Application {
     protected Model model;
     private final Path userPrefsFilePath;
     private final Path studentBookFilePath;
-    private Optional<String> studentBookLoadingError = Optional.empty();
+    private Optional<DataLoadingErrorMessage> studentBookLoadingError = Optional.empty();
 
     /**
      * Creates the application using the default saved-data paths.
@@ -99,14 +100,14 @@ public class MainApp extends Application {
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getStudentBookFilePath() + " could not be loaded."
                     + " The normal UI will not be started. " + e.getMessage());
-            studentBookLoadingError = Optional.of(e.getMessage());
+            studentBookLoadingError = Optional.of(e.getErrorMessage());
             initialData = new StudentBook();
         }
 
         return new ModelManager(initialData, userPrefs);
     }
 
-    Optional<String> getStudentBookLoadingError() {
+    Optional<DataLoadingErrorMessage> getStudentBookLoadingError() {
         return studentBookLoadingError;
     }
 
