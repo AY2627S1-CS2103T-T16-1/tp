@@ -216,7 +216,7 @@ The sequence diagram traces execution of `tag 1 -a T1` when the displayed studen
 
 Follow-up is a separate status. `Student` holds an optional `FollowUpFlag`, a specialized `Tag` used for its display label, outside the general tag set. The `-f` option on `add` starts a flagged record; on `edit`, `-f` sets the status and `-nf` clears it. The shared selector parser rejects repeated or conflicting status options. `find -f` and `find -nf` use the same status as a filter.
 
-The exact label `Needs follow-up` is reserved, ignoring case and normalized spacing. Commands reject it as a new general tag, and storage asks users to represent it with `"flag": true`. Related labels remain valid tags; `FollowUpTagWarning` explains that labels resembling the marker do not set follow-up status. Keeping status separate prevents a student from displaying and counting the same marker twice.
+The exact label `Needs follow-up` is reserved. Commands reject it as a new general tag, and storage asks users to represent it with `"flag": true`. The comparison folds Unicode dash punctuation and the minus sign to a hyphen, treats spaces as separators, and ignores trailing punctuation, comparing both the separated and collapsed forms, so separator and dash variants such as `Needs follow up` and `Needs followup` are rejected too. Labels differing only by other punctuation, such as `Needs_follow_up`, remain valid tags; `FollowUpTagWarning` notes that they do not set follow-up status. Keeping status separate prevents a student from displaying and counting the same marker twice.
 
 ### Confirming a clear
 

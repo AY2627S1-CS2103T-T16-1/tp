@@ -446,7 +446,8 @@ spaces, hyphens and any script, so `Lab 3`, `needs-followup` and
 `AY2627 Sem 1 CS2103T T16` are all valid. The one name a tag cannot take is
 `Needs follow-up`, which labels the follow-up marker; use `--follow-up` for
 that. Names built around it, such as `Needs follow-up soon`, are ordinary tags.
-Similar spellings such as `Needs follow up` are saved with an advisory note; see
+Separator variants such as `Needs follow up` and `Needs followup` are also
+reserved. Other similar spellings such as `Needs_follow_up` are saved with an advisory note; see
 [Adding one tag](#adding-one-tag-tag).
 </box>
 
@@ -691,7 +692,8 @@ done to it beyond the quotes any value with spaces takes:
   student is not compared with its own earlier record.
 * `Needs follow-up` names the follow-up marker rather than a tag, so `-t` refuses
   it whatever its case or spacing and points you to `--follow-up`. Newly added
-  tags that resemble the marker, such as `Needs followup`, are saved with a note.
+  tags with other punctuation, such as `Needs_follow_up`, are saved with a note.
+  Separator variants such as `Needs followup` are also reserved.
 * When editing tags, all of the student's existing tags are removed; adding tags is not cumulative.
   To add one tag while keeping existing tags, use [the `tag` command](#adding-one-tag-tag).
 * To remove all of a student's tags, give `-t` an empty value: `-t ""` or
@@ -762,9 +764,12 @@ Format: `tag TARGET -a TAG`
   it is refused whatever its case or spacing, with a reply pointing to
   `--follow-up`. A card would otherwise show the same label twice, once as a
   tag and once as the marker.
-  Similar spellings such as `Needs follow up`, `Needs followup`, and `Needs follow-up.`
-  are saved as ordinary tags with a note pointing to `--follow-up`. This also applies
-  to new tags supplied with `add` or `edit`. The note does not flag the student;
+  Spaces, Unicode hyphens or dashes, omitted separators, and trailing punctuation
+  do not bypass this rule: `Needs follow up`, `Needs followup`, `Needs follow－up`,
+  and `Needs follow-up,` are refused too. Other punctuation within the label,
+  such as `Needs_follow_up`, is saved as an ordinary tag with a note pointing to
+  `--follow-up`. These rules also apply to tags supplied with `add` or `edit`.
+  The note does not flag the student;
   `find -f` matches only students whose follow-up flag is set.
 * Leading and trailing whitespace is removed and runs of whitespace become
   one space. Tags retain their letter case. When checking whether the student
@@ -1148,7 +1153,9 @@ unchanged so that you can correct the value and restart.
 names no tag. A record whose `tags` list holds it, in any letter case or
 surrounding spacing, stops loading with an error naming the student record and
 the field to correct. Remove the entry from `tags` and set `"flag": true`
-instead. A file written before this rule needs that one edit before it loads. A
+instead. This also applies to separator variants such as `Needs follow up`,
+`Needs followup`, Unicode hyphens or dashes, and trailing punctuation such as
+`Needs follow-up…`. A file written before this rule needs that edit before it loads. A
 name built around the label, such as `Needs follow-up soon`, stays an ordinary
 tag.
 
