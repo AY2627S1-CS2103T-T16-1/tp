@@ -408,4 +408,17 @@ public class FlagTokenizerTest {
         }
     }
 
+    @Test
+    public void tokenize_loneAliasFlag_reportsMissingValueWithAlias() throws Exception {
+        // standalone -i should report -i in the message, not --id
+        String missingValueMsg = "-i NUS_STUDENT_ID needs a value after it. "
+                + "A value opening with a hyphen goes in double quotes.";
+        assertThrows(ParseException.class, missingValueMsg, () ->
+                FlagTokenizer.tokenize("-i", FLAG_NUS_STUDENT_ID));
+        String missingValueMsgId = "--id NUS_STUDENT_ID needs a value after it. "
+                + "A value opening with a hyphen goes in double quotes.";
+        assertThrows(ParseException.class, missingValueMsgId, () ->
+                FlagTokenizer.tokenize("--id", FLAG_NUS_STUDENT_ID));
+    }
+
 }
