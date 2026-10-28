@@ -201,6 +201,15 @@ public class Email {
         return MESSAGE_INVALID_DOMAIN;
     }
 
+    /**
+     * Returns true if the domain is a single label, such as {@code john@gmail}. Such an address
+     * is valid, because a host name needs no dot, but a student address always has one, so this
+     * reports an address worth a second look rather than one to refuse.
+     */
+    public boolean hasDotlessDomain() {
+        return value.indexOf('.', value.indexOf('@')) < 0;
+    }
+
     public String getValue() {
         return value;
     }
