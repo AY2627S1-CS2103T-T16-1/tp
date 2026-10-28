@@ -31,6 +31,7 @@ run {
 }
 
 test {
+    inputs.file('docs/UserGuide.md')
     useJUnitPlatform()
     // Focus tests simulate window activation without depending on the desktop window manager.
     if (file("${System.getProperty('java.home')}/jmods/javafx.graphics.jmod").exists()) {

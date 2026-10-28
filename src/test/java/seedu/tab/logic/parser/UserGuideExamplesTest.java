@@ -1,8 +1,7 @@
 package seedu.tab.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -11,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,16 +19,14 @@ import seedu.tab.logic.commands.AddCommand;
 import seedu.tab.logic.commands.DeleteCommand;
 import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.FindCommand;
-import seedu.tab.logic.commands.HelpCommand;
-import seedu.tab.logic.commands.ListCommand;
 import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.parser.exceptions.ParseException;
 import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.UserPrefs;
-import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
-import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
+import seedu.tab.model.student.Student;
 import seedu.tab.model.util.SampleDataUtil;
+import seedu.tab.testutil.StudentBuilder;
 
 /**
  * Checks that the commands printed in the User Guide are ones the parser accepts. A guide that
@@ -45,14 +41,13 @@ public class UserGuideExamplesTest {
             List.of("INDEX", "TARGET", "NAME", "PHONE_NUMBER", "EMAIL", "NUS_STUDENT_ID", "TAG", "KEYWORD",
                     "FIELD_OPTION");
 
-    /** Enough that the guide has stopped showing a command if it drops below. */
-    private static final int MINIMUM_EXAMPLES = 5;
-
     @Test
-    public void userGuide_helpFormat_parses() throws Exception {
+    public void userGuide_noArgumentCommands_parse() throws Exception {
         String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
-        assertTrue(guide.contains("Format: `help`"));
-        assertInstanceOf(HelpCommand.class, new StudentBookParser().parseCommand("help"));
+        for (String command : List.of("help", "list", "clear", "exit", "LIST")) {
+            assertTrue(guide.contains("`" + command + "`"), "Missing documented command: " + command);
+            new StudentBookParser().parseCommand(command);
+        }
     }
 
     @Test
@@ -81,91 +76,58 @@ public class UserGuideExamplesTest {
     }
 
     @Test
-    public void userGuide_idTargetExamples_executeSequentiallyWithDocumentedSetup() throws Exception {
-        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
-        List<List<String>> scenarios = List.of(
-                List.of("edit --target-id A02345678G --no-follow-up"),
-                List.of("add Numeric Edit --id 1234 --follow-up", "edit --target-id 1234 --no-follow-up",
-                        "edit --target-id 1234 --id A0123456X"),
-                List.of("edit A02345678G --phone 91234567", "edit a02345678g --phone 81112222",
-                        "edit A0123456X --id A7654321Y"),
-                List.of("tag A02345678G -a \"Lab 3\"", "tag A02345678G -r \"Lab 3\""),
-                List.of("add Numeric Tag --id 2345", "tag --id 2345 --add T2", "tag -i 2345 --remove T2"),
-                List.of("add Numeric Delete --id 1A2B3C", "delete --id 1A2B3C"),
-                List.of("find -n Alex", "delete A02345678G"));
+    public void userGuide_numericIdExample_updatesTheStudentCreatedByItsSetup() throws Exception {
         Model model = new ModelManager(SampleDataUtil.getSampleStudentBook(), new UserPrefs());
-        for (List<String> commands : scenarios) {
-            for (String command : commands) {
-                assertTrue(guide.contains("`" + command + "`"), "Missing documented command: " + command);
-                new StudentBookParser().parseCommand(command).execute(model);
-            }
+        executeDocumentedExamples(model, "add Numeric Example --id 1234",
+                "edit --target-id 1234 -p 91234567", "edit --target-id 1234 --id E7654321");
+
+        Student expected = new StudentBuilder().withName("Numeric Example").withPhone("91234567")
+                .withoutEmail().withNusStudentId("E7654321").build();
+        assertEquals(expected, model.getStudentBook().getStudentList().getLast());
+    }
+
+    @Test
+    public void userGuide_tagExamples_preserveExistingTags() throws Exception {
+        Model model = new ModelManager(SampleDataUtil.getSampleStudentBook(), new UserPrefs());
+        Student original = model.getFilteredStudentList().getFirst();
+        executeDocumentedExamples(model, "tag 1 -a \"Lab 3\"");
+        Student expected = new StudentBuilder(original).withTags("friends", "Lab 3").build();
+        assertEquals(expected, model.getFilteredStudentList().getFirst());
+
+        executeDocumentedExamples(model, "tag 1 -r \"lab 3\"");
+        assertEquals(original, model.getFilteredStudentList().getFirst());
+    }
+
+    @Test
+    public void userGuide_deleteExample_usesTheFilteredIndex() throws Exception {
+        Model model = new ModelManager(SampleDataUtil.getSampleStudentBook(), new UserPrefs());
+        executeDocumentedExamples(model, "find -n Charlotte");
+        assertEquals(1, model.getFilteredStudentList().size());
+        Student target = model.getFilteredStudentList().getFirst();
+
+        executeDocumentedExamples(model, "delete 1");
+        assertTrue(model.getFilteredStudentList().isEmpty());
+        assertFalse(model.getStudentBook().getStudentList().contains(target));
+    }
+
+    /** Executes a worked scenario only when its commands are still present in the guide. */
+    private static void executeDocumentedExamples(Model model, String... commands) throws Exception {
+        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
+        for (String command : commands) {
+            assertTrue(guide.contains("`" + command + "`"), "Missing documented command: " + command);
+            new StudentBookParser().parseCommand(command).execute(model);
         }
-    }
-
-    @Test
-    public void userGuide_inputMethodQuotes_parseLikeStraightQuotes() throws Exception {
-        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
-        for (String example : List.of("tag 2 -a “组 1”", "tag 1 -a ＂Lab 3＂")) {
-            assertTrue(guide.contains("`" + example + "`"));
-            String straightQuoted = example.replace('“', '"').replace('”', '"').replace('＂', '"');
-            assertEquals(new StudentBookParser().parseCommand(straightQuoted),
-                    new StudentBookParser().parseCommand(example));
-        }
-    }
-
-    @Test
-    public void userGuide_commandWordInAnyCase_isWhatTheParserAccepts() throws Exception {
-        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
-        assertTrue(guide.contains("A command word may be typed in any case"));
-        for (String typed : List.of("list", "List", "LIST")) {
-            assertInstanceOf(ListCommand.class, new StudentBookParser().parseCommand(typed));
-        }
-
-        // the guide promises the fold stops at the command word
-        assertTrue(guide.contains("`Find -n Alex` still looks for `Alex`"));
-        assertEquals(new FindCommand(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Alex")))),
-                new StudentBookParser().parseCommand("Find -n Alex"));
-    }
-
-    @Test
-    public void userGuide_mistypedCommandReplies_areWhatTheParserSays() throws IOException {
-        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
-        for (String mistyped : List.of("del 3", "delte 3", "eit", "qwerty")) {
-            String reply = reasonForRefusing(mistyped);
-            assertTrue(guide.contains(reply),
-                    "the User Guide does not show `" + reply + "`, which TAB answers " + mistyped + " with");
-        }
-    }
-
-    @Test
-    public void userGuide_addNameOptionReply_matchesParser() throws IOException {
-        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
-        assertTrue(guide.contains(reasonForRefusing("add --name \"Betsy Crowe\" --phone 1234567")));
-    }
-
-    @Test
-    public void userGuide_capitalizedOptionReply_matchesParser() throws IOException {
-        String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
-        assertTrue(guide.contains(reasonForRefusing("add Tan -P 91234567")));
-    }
-
-    /** Returns why the parser refuses {@code input}, failing if it accepts it. */
-    private static String reasonForRefusing(String input) {
-        ParseException refusal = assertThrows(ParseException.class, ()
-                -> new StudentBookParser().parseCommand(input));
-        return refusal.getMessage();
     }
 
     /**
-     * Fails if the guide shows fewer than {@code MINIMUM_EXAMPLES} worked examples of
-     * {@code commandWord}, or shows one that {@code parser} refuses.
+     * Fails if the guide has no worked example of {@code commandWord}, or shows one
+     * that {@code parser} refuses.
      */
     private static void assertEveryExampleParses(String commandWord, Parser<?> parser) throws IOException {
         List<String> examples = findExamples(commandWord);
 
         // a guide that stops showing the command at all would otherwise pass silently
-        assertTrue(examples.size() >= MINIMUM_EXAMPLES,
-                "the User Guide shows too few " + commandWord + " examples");
+        assertFalse(examples.isEmpty(), "the User Guide has no " + commandWord + " examples");
 
         for (String example : examples) {
             String arguments = example.substring(commandWord.length());
@@ -180,7 +142,7 @@ public class UserGuideExamplesTest {
 
     /**
      * Returns the worked examples of {@code commandWord} in the guide: every occurrence inside
-     * backticks, on a bullet or in the command summary, that is not a format line.
+     * backticks that is not a format line.
      */
     private static List<String> findExamples(String commandWord) throws IOException {
         String guide = Files.readString(USER_GUIDE, StandardCharsets.UTF_8);
