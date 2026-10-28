@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import seedu.tab.commons.core.DataLoadingErrorMessage;
+
 /**
  * Turns a failure to read a JSON file into an explanation a person can act on.
  */
@@ -40,14 +42,13 @@ class JsonParseErrorFormatter {
      * @param exception The parsing failure to explain.
      * @param jsonSource the JSON text that failed to parse, or null when it is unavailable.
      */
-    static String format(JsonProcessingException exception, String jsonSource) {
+    static DataLoadingErrorMessage format(JsonProcessingException exception, String jsonSource) {
         JsonProcessingException detailedException = JsonUtil.getDetailedJsonProcessingException(exception);
         JsonLocation location = detailedException.getLocation();
         String message = "The data is not in the expected JSON format"
                 + getJsonLocationMessage(location, jsonSource) + ": "
                 + getConciseJsonErrorMessage(detailedException);
-        String sourceExcerpt = getJsonSourceExcerpt(jsonSource, location);
-        return sourceExcerpt.isEmpty() ? message : message + "\nAffected source:\n" + sourceExcerpt;
+        return new DataLoadingErrorMessage(message, getJsonSourceExcerpt(jsonSource, location));
     }
 
     /**

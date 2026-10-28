@@ -36,6 +36,7 @@ import seedu.tab.testutil.StudentBuilder;
 
 public class JsonStudentBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonStudentBookStorageTest");
+    private static final String DESCRIPTION = "CS2103T T16 tutorial students, backup in Dropbox";
 
     @TempDir
     public Path testFolder;
@@ -46,7 +47,7 @@ public class JsonStudentBookStorageTest {
         StudentBook original = getTypicalStudentBook();
         JsonStudentBookStorage failingStorage = new JsonStudentBookStorage(path) {
             @Override
-            void writeStudentBook(ReadOnlyStudentBook book, Path destination) throws IOException {
+            void writeStudentBook(ReadOnlyStudentBook book, Path destination, String comment) throws IOException {
                 throw new IOException("No space left on device");
             }
         };
@@ -499,6 +500,98 @@ public class JsonStudentBookStorageTest {
     }
 
     @Test
+    public void readAndSaveStudentBook_fileDescription_keepsDescriptionAheadOfRecords() throws Exception {
+        Path path = testFolder.resolve("described.json");
+        Files.writeString(path, "{\"_comment\":\"" + DESCRIPTION + "\",\"students\":[{\"name\":\"Bernice Yu\","
+                + "\"phone\":\"99272758\"}]}");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        StudentBook loaded = new StudentBook(storage.readStudentBook().orElseThrow());
+        loaded.addStudent(HOON);
+
+        storage.saveStudentBook(loaded);
+
+        String saved = Files.readString(path);
+        assertTrue(saved.contains("\"_comment\" : \"" + DESCRIPTION + "\""), saved);
+        assertTrue(saved.indexOf("_comment") < saved.indexOf("students"), saved);
+        assertEquals(loaded, new JsonStudentBookStorage(path).readStudentBook().orElseThrow());
+    }
+
+    @Test
+    public void saveStudentBook_fileWithoutDescription_addsNoDescription() throws Exception {
+        Path path = testFolder.resolve("undescribed.json");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        storage.saveStudentBook(getTypicalStudentBook());
+        assertFalse(Files.readString(path).contains("_comment"));
+
+        storage.readStudentBook();
+        storage.saveStudentBook(new StudentBook());
+
+        assertFalse(Files.readString(path).contains("_comment"));
+    }
+
+    @Test
+    public void saveStudentBook_describedFileClearedOfRecords_keepsDescription() throws Exception {
+        Path path = testFolder.resolve("cleared.json");
+        Files.writeString(path, "{\"_comment\":\"" + DESCRIPTION + "\",\"students\":[{\"name\":\"Bernice Yu\","
+                + "\"phone\":\"99272758\"}]}");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        storage.readStudentBook();
+
+        storage.saveStudentBook(new StudentBook());
+
+        String saved = Files.readString(path);
+        assertTrue(saved.contains(DESCRIPTION), saved);
+        assertEquals(new StudentBook(), new JsonStudentBookStorage(path).readStudentBook().orElseThrow());
+    }
+
+    @Test
+    public void saveStudentBook_descriptionEditedAfterLoading_keepsEditedDescription() throws Exception {
+        Path path = testFolder.resolve("edited-description.json");
+        String students = "\"students\":[{\"name\":\"Bernice Yu\",\"phone\":\"99272758\"}]}";
+        Files.writeString(path, "{\"_comment\":\"" + DESCRIPTION + "\"," + students);
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        ReadOnlyStudentBook loaded = storage.readStudentBook().orElseThrow();
+        Files.writeString(path, "{\"_comment\":\"Second semester list\"," + students);
+
+        storage.saveStudentBook(loaded);
+
+        String saved = Files.readString(path);
+        assertTrue(saved.contains("Second semester list"), saved);
+        assertFalse(saved.contains(DESCRIPTION), saved);
+    }
+
+    @Test
+    public void readAndSaveStudentBook_nullDescription_loadsWithoutDescription() throws Exception {
+        Path path = testFolder.resolve("null-description.json");
+        Files.writeString(path, "{\"_comment\":null,\"students\":[{\"name\":\"Bernice Yu\",\"phone\":\"99272758\"}]}");
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
+        ReadOnlyStudentBook loaded = storage.readStudentBook().orElseThrow();
+
+        storage.saveStudentBook(loaded);
+
+        assertFalse(Files.readString(path).contains("_comment"));
+    }
+
+    @Test
+    public void readStudentBook_nonStringDescription_reportsFieldAndPreservesBytes() throws Exception {
+        for (String value : List.of("5", "1.5", "true", "false", "{}", "[]")) {
+            Path path = testFolder.resolve("invalid-description.json");
+            String json = "{\"_comment\":" + value + ",\"students\":[]}";
+            byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+            Files.write(path, bytes);
+
+            DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                    DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
+
+            String shownValue = value.equals("{}") ? "an object" : value.equals("[]") ? "an array" : value;
+            assertTrue(exception.getMessage().contains("Invalid _comment value " + shownValue
+                    + ". Use a JSON string such as \"_comment\": \"My tutorial group\", or remove the key."),
+                    exception.getMessage());
+            assertArrayEquals(bytes, Files.readAllBytes(path));
+        }
+    }
+
+    @Test
     public void readStudentBook_nullFilePath_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> readStudentBook(null));
     }
@@ -621,7 +714,8 @@ public class JsonStudentBookStorageTest {
     @Test
     public void readStudentBook_invalidNusStudentIdStudentBook_throwDataLoadingException() {
         String expectedMessage = "Student record 1 (\"Student With Invalid NUS Student ID\"): "
-                + NusStudentId.MESSAGE_CONSTRAINTS;
+                + "NUS Student ID \"A0123-456X\" is not valid: "
+                + NusStudentId.MESSAGE_NON_ALPHANUMERIC;
 
         assertThrows(DataLoadingException.class, expectedMessage, () ->
                 readStudentBook("invalidNusStudentIdStudentBook.json"));

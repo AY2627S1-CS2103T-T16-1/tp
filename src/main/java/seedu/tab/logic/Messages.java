@@ -42,9 +42,10 @@ public class Messages {
     public static final String MESSAGE_FLAG_WITHOUT_VALUE =
             "%1$s needs a value after it. A value opening with a hyphen goes in double quotes.";
     public static final String MESSAGE_VALUE_AFTER_FLAGS =
-            "\"%1$s\" does not belong to any option. If the command takes a name or index without an option, "
-            + "put it before all options. Options that take a value take one token, "
+            "\"%1$s\" does not belong to any option. Options that take a value take one token, "
             + "and a value holding spaces goes in double quotes.";
+    public static final String MESSAGE_PREAMBLE_BEFORE_OPTIONS =
+            "If the command takes a name or index without an option, put it before all options.";
     public static final String MESSAGE_CONFLICTING_FOLLOW_UP = "Options " + FLAG_FOLLOW_UP.getMarkerWithAliases()
             + " and " + FLAG_NO_FOLLOW_UP.getMarkerWithAliases() + " cannot be used together. Choose one.";
 
@@ -83,6 +84,17 @@ public class Messages {
         assert missingFields.length > 0;
 
         return String.format(MESSAGE_MISSING_FIELDS, String.join(", ", missingFields));
+    }
+
+    /**
+     * Returns an error message naming the value that follows the options and belongs to none
+     * of them. The placement hint is offered only when nothing precedes the options, because a
+     * command that already read a value there refuses a second one, so moving the value to the
+     * front would earn the user another refusal.
+     */
+    public static String getErrorMessageForValueAfterFlags(String value, boolean hasPreamble) {
+        String message = String.format(MESSAGE_VALUE_AFTER_FLAGS, value);
+        return hasPreamble ? message : message + " " + MESSAGE_PREAMBLE_BEFORE_OPTIONS;
     }
 
     /**

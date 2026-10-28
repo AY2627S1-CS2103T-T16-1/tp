@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import seedu.tab.commons.core.DataLoadingErrorMessage;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.exceptions.DataLoadingException;
 import seedu.tab.commons.exceptions.IllegalValueException;
@@ -58,10 +59,24 @@ public class JsonUtil {
             Path filePath, Class<T> classOfObjectToDeserialize) throws DataLoadingException {
         requireNonNull(filePath);
         if (Files.notExists(filePath)) {
+            requireFirstRun(filePath);
             return Optional.empty();
         }
         logger.info("JSON file " + filePath + " found.");
         return Optional.of(deserializeDocument(readJsonSource(filePath), filePath, classOfObjectToDeserialize));
+    }
+
+    /**
+     * Confirms that a missing {@code filePath} stands for a first run rather than for records
+     * behind a symbolic link whose target cannot be reached.
+     */
+    private static void requireFirstRun(Path filePath) throws DataLoadingException {
+        try {
+            FileUtil.requireResolvableLink(filePath);
+        } catch (IOException e) {
+            logger.warning("Cannot resolve JSON file " + filePath + ": " + e);
+            throw new DataLoadingException(JsonParseErrorFormatter.formatIoError(e), e);
+        }
     }
 
     private static String readJsonSource(Path filePath) throws DataLoadingException {
@@ -83,8 +98,8 @@ public class JsonUtil {
             }
             return value;
         } catch (JsonProcessingException e) {
-            String errorMessage = JsonParseErrorFormatter.format(e, jsonSource);
-            logger.warning("Error parsing JSON file " + filePath + ": " + errorMessage);
+            DataLoadingErrorMessage errorMessage = JsonParseErrorFormatter.format(e, jsonSource);
+            logger.warning("Error parsing JSON file " + filePath + ": " + errorMessage.toDisplayText());
             throw new DataLoadingException(errorMessage, e);
         } catch (IOException e) {
             logger.warning("Error processing JSON file " + filePath + ": " + e);
