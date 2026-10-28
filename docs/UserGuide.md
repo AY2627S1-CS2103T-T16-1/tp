@@ -36,7 +36,7 @@ TAB is a **desktop application for teaching assistants to manage student records
 
 If you use a plain JDK on an Apple Silicon Mac, choose an x64 JDK and run it under Rosetta because TAB's bundled JavaFX libraries target Intel Macs. The course's native JDK+FX setup does not need Rosetta.
 
-## Using commands
+## General reference
 
 ### Command format
 
@@ -67,11 +67,11 @@ The built-in `help` reference covers additional syntax, including `OPTION=VALUE`
 
 ### Student fields
 
-These rules apply to both `add` and `edit`.
+The field options below are used by `add`, `edit` and `find`.
 
 | Field | Options | Accepted values |
 | --- | --- | --- |
-| Name | Comes first in `add`, `-n` or `--name` in `edit` and `find` | At least one letter or number in any script, with punctuation allowed |
+| Name | `add`: first argument, no flag needed<br> `edit`, `find`: `-n` or `--name` | At least one letter or number in any script, with punctuation allowed |
 | Phone | `-p`, `--phone` | At least three digits, with formatting, extensions and notes allowed |
 | Email | `-e`, `--email` | ASCII address such as `sean.o'brien@example.com`, up to 254 characters |
 | NUS Student ID | `--id`, `-i` | 1 to 32 ASCII letters or digits, stored in uppercase |
@@ -80,35 +80,44 @@ These rules apply to both `add` and `edit`.
 
 * Spaces at the ends of values are removed, and repeated spaces become one space.
 * Tags differing only in case or extra spaces are treated as the same tag.
-* `Needs follow-up` is reserved for the flag, while similar tags such as `Needs follow up` are saved with a reminder and do not set the flag.
+* `Needs follow-up` is reserved for the flag, while similar tags such as `Needs follow up` are saved with a warning and do not set the flag.
 * NUS Student IDs must be unique across the book, ignoring case.
 * Matching names, phones or emails produce possible-duplicate warnings after saving an addition or edit.
-* A warning does not prove that records describe the same student, and differences such as misspellings or an added phone country code may go undetected.
-* An email domain without a dot, such as `john@gmail`, is saved with a warning to check for a missing ending.
+* Users are encouraged to exercise their own discretion regarding duplicate warnings. You can ignore them if you know that the records describe different students.
 
 ### Choosing a student
 
-`edit`, `tag` and `delete` accept one student target.
+`edit`, `tag` and `delete` accept one student target. This can be specified by the displayed index or NUS student ID.
 
 | Target | Meaning | Example |
 | --- | --- | --- |
-| Displayed index | Position in the current list, starting at 1 | `edit 1 -p 91234567` |
+| Displayed index | Position in the **currently displayed list**, starting at 1 | `edit 1 -p 91234567` |
 | NUS Student ID | ID beginning with a letter, matched across the whole book regardless of case | `edit A01234567X -p 91234567` |
 | Explicit ID option | Any ID, including one beginning with a digit | `edit --target-id A01234567X -p 91234567` |
 
-With the sample data, after `find -n Charlotte`, Charlotte is displayed as student `1`, so `delete 1` would delete Charlotte. Running `list` restores the whole book, where that same index may select someone else.
+* Targeting by index uses currently displayed index. <br>
+  For example: after `find -n Charlotte`, Charlotte is displayed as student `1`, so `delete 1` would delete Charlotte. Subsequently, running `list` will then show the whole book, where index `1` may refer to someone else.
 
-Use `--target-id ID` with `edit`, or `--id ID` with `tag` and `delete`, to select an ID explicitly. For example, first run `add Numeric Example --id 1234`, then `edit --target-id 1234 -p 91234567`.
+* Selecting a student by ID requires the complete ID. <br>
+  For example `A0123` cannot target the student with ID `A01234567X`.
 
-With `edit`, `--id` changes the ID instead of selecting a student. For example, `edit --target-id 1234 --id E7654321` changes the ID created above.
+* Use `--target-id ID` with `edit` to select an ID explicitly, including one beginning with a digit.
 
-Edits and tag changes keep the active search, so students may disappear when they no longer match. Check the displayed indices after each change, or use an ID target to avoid selecting a different student.
+* With `edit`, `--id` changes the student's ID, so `--target-id` is used for selecting students instead.
+
+For example, first run `add Numeric Example --id 1234`, then `edit --target-id 1234 -p 91234567` to update that student. To change their ID, run `edit --target-id 1234 --id E7654321`.
+
+**TIP**: `delete`, `edit` and `tag` keep the currently active search and filter, so students may disappear when they no longer match. To prevent errors, you may want to check the displayed indices after each change, or use NUS Student ID as the target to avoid selecting a different student.
 
 ## Features
 
 ### Viewing help with `help`
 
-`help` opens a command reference inside TAB, showing syntax, option aliases and quoting rules. You can also open it with `F1` or the Help menu without submitting your draft command.
+Opens a command reference inside TAB, showing syntax, option aliases and quoting rules.
+
+Format: `help`
+
+You can also open it with `F1` or by clicking the Help menu.
 
 | Key | Action in help |
 | --- | --- |
@@ -121,13 +130,13 @@ Edits and tag changes keep the active search, so students may disappear when the
 | `c` | Copy the User Guide link |
 | `q`, `Esc` | Return to commands |
 
-Press these keys directly without submitting another command.
 
 ### Adding a student with `add`
 
 Adds a student to the student book.
 
 **Format** `add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
+
 
 * Only the name is required.
 * Students start without a follow-up flag unless you supply `--follow-up`.
@@ -152,11 +161,9 @@ Edits an existing student selected by [displayed index or NUS Student ID](#choos
 
 * Supply at least one change, using the [student field rules](#student-fields).
 * Omitted fields stay unchanged.
-* The name cannot be cleared.
 * Use `-p ""`, `-e ""` or `--id ""` to clear an optional detail.
-* Supplied tags **replace all existing tags**, while `-t ""` alone clears every tag.
-* Use `tag` instead to change one tag while keeping the others.
-* Use `--follow-up` or `-f` to set the flag, or `--no-follow-up` or `-nf` to clear it, without combining them.
+* Supplied tags **replace all existing tags**. Using `-t ""` alone will also clear every tag. To change one tag while keeping the others, consider using the `tag` command instead.
+* Use `--follow-up` or `-f` to set the flag, or `--no-follow-up` or `-nf` to clear it.
 
 Examples
 
@@ -166,12 +173,12 @@ Examples
 
 ### Adding or removing a tag with `tag`
 
-Adds or removes **one** tag for a [selected student](#choosing-a-student), keeping their other tags and details.
+Adds or removes **one** tag for an existing student selected by [displayed index or NUS Student ID](#choosing-a-student).
 
 **Format** `tag TARGET -a TAG` or `tag TARGET -r TAG`
 
 * You may use `--add` in place of `-a`, or `--remove` in place of `-r`.
-* Adding an existing tag or removing an absent tag leaves the student record unchanged.
+* Other tags and details will remain unchanged.
 
 Examples
 
@@ -187,14 +194,17 @@ Searches the whole book using the [student field options](#student-fields).
 
 * Supply at least one field term or follow-up option.
 * Each term needs a field option, such as `-n` for names or `-e` for emails.
-* Matching ignores case and accepts partial values.<br>
-  For example, `john` matches `Johnathan`.
-* **Every condition must match**, including repeated options for the same field.
-* Double quotes group a phrase that must occur within one field value or one tag.
-* Name searches ignore Latin accents, strokes and apostrophe styles, so `dang` matches `Đặng`.
-* Name searches treat hyphens as spaces, so `"Mary Jane"` matches `Mary-Jane`, while other fields keep these distinctions.
-* Phone searches match digits across formatting, so `91234567` matches `+65 9123 4567`.
-* Use `-f` for students with the follow-up flag, or `-nf` for students without it, but do not combine them.
+* The matching ignores case and accepts partial values <br>
+  For example,  `john` matches `Johnathan`.
+* **Every condition must match**, including repeated options for the same field (an `AND` search).
+* To search an entire phrase, use double quotes.
+* Name searches ignore Latin accents, strokes and apostrophe styles. <br>
+  For example, `dang` matches `Đặng`.
+* Name searches treat hyphens as spaces, but other fields do not. <br>
+  For example, `find -n "Mary Jane"` matches the name `Mary-Jane`, but `find -t "Mary Jane"` does not match the tag `Mary-Jane`.
+* Phone searches match digits across formatting. <br>
+  For example, `91234567` matches `+65 9123 4567`.
+* Use `-f` for students with the follow-up flag, or `-nf` for students without it. `-f` and `-nf` cannot be used together.
 
 Examples
 
@@ -204,7 +214,7 @@ Examples
 
 ### Deleting a student with `delete`
 
-Deletes one student immediately, with no undo command, using the [student target rules](#choosing-a-student).
+Deletes one student immediately, with no undo command. The student to delete is selected by [displayed index or NUS Student ID](#choosing-a-student).
 
 **Format** `delete INDEX` or `delete NUS_STUDENT_ID` or `delete --id NUS_STUDENT_ID`
 
@@ -243,17 +253,15 @@ Closes TAB.
 
 | Key | Action outside help |
 | --- | --- |
-| `Up`, `Down` in the command box | Recall submitted commands and return to your draft |
+| `Up`, `Down` in the command box | Access previously submitted commands |
 | `Tab`, `Shift`+`Tab` | Move forward or backward through the command box, student list, tag summary and visible reply |
 | Arrow keys, `Page Up`, `Page Down`, `Home`, `End` | Navigate the focused list or reply |
 
-Command history lasts until TAB closes, and recalled commands run when you press `Enter`.
+Command history lasts until TAB closes.
 
 ### Saving and editing data
 
-TAB automatically saves student changes in `data/tab.json` under its home folder. The status bar shows the data file's path.
-
-If saving fails, TAB reports the problem and restores the records from before the command.
+TAB automatically saves student changes in `data/tab.json` under its home folder. The status bar shows the data file's path, and a failed save restores the records from before the command.
 
 Use one TAB window per data file when editing. If another window has saved changes, restart the older window to load them before retrying.
 
@@ -265,7 +273,7 @@ Advanced users can edit the JSON file after closing every TAB window and making 
 | `tags` | Array of strings, such as `["Lab 3", "T1"]` |
 | `flag` | Boolean `true` or `false` |
 
-If a file is invalid or unreadable, TAB reports the problem and leaves it unchanged without opening the main window. Repair the file or restore your backup before restarting.
+If a file is invalid or unreadable, TAB reports the problem and leaves it unchanged without opening the main window. Repair the file before restarting.
 
 ## FAQ
 
