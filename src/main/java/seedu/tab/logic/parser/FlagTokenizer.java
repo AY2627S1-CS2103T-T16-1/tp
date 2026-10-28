@@ -55,7 +55,11 @@ public class FlagTokenizer {
      * @throws ParseException if the index looks like an invalid option or tokenization fails.
      */
     public static FlagArgumentMap tokenizeWithIndex(String arguments, CliFlag... knownFlags) throws ParseException {
-        List<Token> tokens = CommandTokenizer.tokenize(arguments);
+        return tokenizeWithIndexTokens(CommandTokenizer.tokenize(arguments), knownFlags);
+    }
+
+    /** Reads already split tokens while retaining the shared invalid-index diagnostics. */
+    static FlagArgumentMap tokenizeWithIndexTokens(List<Token> tokens, CliFlag... knownFlags) throws ParseException {
         if (!tokens.isEmpty()) {
             Token first = tokens.getFirst();
             if (!first.isQuoted() && NEGATIVE_INDEX_PATTERN.matcher(first.value()).matches()) {
