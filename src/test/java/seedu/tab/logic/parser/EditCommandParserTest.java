@@ -249,7 +249,20 @@ public class EditCommandParserTest {
         // a name is marked by an option here rather than given before them, so it takes one
         // token and needs quotes, exactly as a tag does
         assertParseFailure(parser, "1 " + FLAG_NAME + " Amy Bee",
-                String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "Bee"));
+                Messages.getErrorMessageForValueAfterFlags("Bee", true));
+        assertParseSuccess(parser, "1 " + FLAG_NAME + " \"Amy Bee\"",
+                new EditCommand(INDEX_FIRST_STUDENT,
+                        new EditStudentDescriptorBuilder().withName("Amy Bee").build()));
+    }
+
+    @Test
+    public void parse_indexAfterTheOptions_pointsToTheFrontOfTheCommand() {
+        // no target stands before the options yet, so the index belongs at the front
+        assertParseFailure(parser, FLAG_NAME + " Amy 1",
+                Messages.getErrorMessageForValueAfterFlags("1", false));
+        assertParseSuccess(parser, "1 " + FLAG_NAME + " Amy",
+                new EditCommand(INDEX_FIRST_STUDENT,
+                        new EditStudentDescriptorBuilder().withName("Amy").build()));
     }
 
     @Test
@@ -410,9 +423,9 @@ public class EditCommandParserTest {
     public void parse_noFollowUpWithValueOrRepeated_failure() {
         for (String value : new String[] {"false", "true", "\"\"", "\"   \""}) {
             assertParseFailure(parser, "1 --no-follow-up " + value,
-                    String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, value.replace("\"", "")));
+                    String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "--no-follow-up"));
             assertParseFailure(parser, "1 -nf " + value,
-                    String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, value.replace("\"", "")));
+                    String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-nf"));
         }
         assertParseFailure(parser, "1 --no-follow-up --no-follow-up",
                 Messages.getErrorMessageForDuplicateFlags("--no-follow-up"));
@@ -429,9 +442,12 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_followUpWithValue_saysItBelongsToNoOption() {
+    public void parse_followUpWithValue_saysTheOptionTakesNone() {
         assertParseFailure(parser, "1" + FOLLOW_UP + " true",
-                String.format(Messages.MESSAGE_VALUE_AFTER_FLAGS, "true"));
+                String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "--follow-up"));
+        assertParseSuccess(parser, "1" + FOLLOW_UP,
+                new EditCommand(INDEX_FIRST_STUDENT,
+                        new EditStudentDescriptorBuilder().withFlag(true).build()));
     }
 
     @Test
@@ -477,7 +493,12 @@ public class EditCommandParserTest {
 
         // a token before the options that is not part of the target
         assertParseFailure(parser, "1 some random string" + FLAG_NAME_AMY,
-                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, "INDEX", "some random string"));
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET, "INDEX", "some random string"));
+
+        // the target a user typing a name gives is read as an NUS Student ID, so the words
+        // after it are reported against that form rather than against the index form
+        assertParseFailure(parser, "Alex Yeoh" + FLAG_NAME_AMY,
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET, ParserUtil.FIELD_NUS_STUDENT_ID, "Yeoh"));
 
         // an unquoted negative number is invalid as both an index and an option
         assertParseFailure(parser, "-5" + FLAG_NAME_AMY,

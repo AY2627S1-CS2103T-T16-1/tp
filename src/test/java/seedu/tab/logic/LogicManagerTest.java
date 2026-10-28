@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
@@ -58,6 +59,11 @@ import seedu.tab.testutil.StudentBuilder;
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
     private static final IOException DUMMY_AD_EXCEPTION = new AccessDeniedException("dummy access denied exception");
+    private static final NoSuchFileException DUMMY_MISSING_FILE_EXCEPTION =
+            new NoSuchFileException("data/tab.json", null, "it is a link to cloud/tab.json, and that folder "
+                    + "does not exist");
+    private static final NoSuchFileException DUMMY_MISSING_FILE_WITHOUT_REASON =
+            new NoSuchFileException("data/tab.json");
 
     @TempDir
     public Path temporaryFolder;
@@ -233,7 +239,8 @@ public class LogicManagerTest {
         }
         String savedJson = Files.readString(storage.getStudentBookFilePath());
         assertParseException("edit 1 -e mei..tan@example.com",
-                "Email \"mei..tan@example.com\" is not valid: the part before the @ may hold letters, digits and "
+                "Email \"mei..tan@example.com\" is not valid: "
+                + "the part before the @ may hold ASCII letters, digits and "
                 + "!#$%&'*+/=?^_`{|}~-, with dots allowed only between non-empty groups");
         assertEquals(List.of(student), model.getStudentBook().getStudentList());
         assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
@@ -281,6 +288,10 @@ public class LogicManagerTest {
             {"Sean O’Brien", "O'Brien"},
             {"Mary O'Neil", "O’Neil"},
             {"Nguyễn Văn An", "nguyen"},
+            {"Đặng Thị Mai", "dang"},
+            {"Dang Thi Mai", "đặng"},
+            {"Łukasz Nowak", "lukasz"},
+            {"Søren Kierkegaard", "soren"},
             {"José Rivera", "jose"},
             {"Jose Rivera", "José"},
             {"José Rivera", "Jose\u0301"},
@@ -527,18 +538,16 @@ public class LogicManagerTest {
         List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
         Path dataPath = temporaryFolder.resolve("studentBook.json");
         String savedJson = Files.readString(dataPath);
-        String unexpectedValueMessage = "\"%1$s\" does not belong to any option. "
-                + "If the command takes a name or index without an option, put it before all options. "
-                + "Options that take a value take one token, and a value holding spaces goes in double quotes.";
+        // find takes no term before its options, so a term after them reads the same way
         for (var entry : Map.of(
                 "find Jason -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
                 "find Jason", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
                 "find -t \"\"", FindCommandParser.MESSAGE_EMPTY_KEYWORD,
                 "find --unknown friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"),
-                "find -t lab tutorial", String.format(unexpectedValueMessage, "tutorial"),
-                "find -n Jason Tan", String.format(unexpectedValueMessage, "Tan"),
-                "find -n 'Jason Tan'", String.format(unexpectedValueMessage, "Tan'"),
-                "find -f true", String.format(unexpectedValueMessage, "true"),
+                "find -t lab tutorial", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
+                "find -n Jason Tan", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
+                "find -n 'Jason Tan'", FindCommandParser.MESSAGE_UNQUALIFIED_TERM,
+                "find -f true", String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-f"),
                 "find -t", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-t TAG")).entrySet()) {
             assertThrows(ParseException.class, entry.getValue(), () -> logic.execute(entry.getKey()));
             assertEquals(filtered, model.getFilteredStudentList());
@@ -965,6 +974,20 @@ public class LogicManagerTest {
     public void execute_storageThrowsIoException_throwsCommandException() {
         assertCommandFailureForExceptionFromStorage(DUMMY_IO_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()));
+    }
+
+    @Test
+    public void execute_storageThrowsMissingFileException_reportsTheReason() {
+        assertCommandFailureForExceptionFromStorage(DUMMY_MISSING_FILE_EXCEPTION,
+                String.format(LogicManager.FILE_OPS_MISSING_FILE_ERROR_FORMAT,
+                        DUMMY_MISSING_FILE_EXCEPTION.getFile(), DUMMY_MISSING_FILE_EXCEPTION.getReason()));
+    }
+
+    @Test
+    public void execute_storageThrowsMissingFileWithoutReason_reportsThatItIsAbsent() {
+        assertCommandFailureForExceptionFromStorage(DUMMY_MISSING_FILE_WITHOUT_REASON,
+                String.format(LogicManager.FILE_OPS_MISSING_FILE_ERROR_FORMAT,
+                        DUMMY_MISSING_FILE_WITHOUT_REASON.getFile(), "it does not exist"));
     }
 
     @Test

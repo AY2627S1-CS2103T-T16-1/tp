@@ -19,6 +19,7 @@ import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.parser.CommandTokenizer.Token;
 import seedu.tab.logic.parser.exceptions.ParseException;
+import seedu.tab.logic.parser.exceptions.ValueAfterFlagsException;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 
@@ -51,13 +52,26 @@ public class FindCommandParser implements Parser<FindCommand> {
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
 
-        FlagArgumentMap arguments = FlagTokenizer.tokenizeTokens(tokens, FLAG_NAME, FLAG_NUS_STUDENT_ID,
-                FLAG_PHONE, FLAG_EMAIL, FLAG_TAG, FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
+        FlagArgumentMap arguments = tokenizeTerms(tokens);
         if (!arguments.getPreamble().isEmpty() || tokens.getFirst().beginsQuoted()) {
             throw new ParseException(MESSAGE_UNQUALIFIED_TERM);
         }
         Optional<Boolean> followUp = ParserUtil.parseFollowUpSelector(arguments);
         return new FindCommand(new DetailsContainsKeywordsPredicate(parseFieldKeywords(arguments), followUp));
+    }
+
+    /**
+     * Reads the search terms, answering a term that qualifies no field with the reply find
+     * already gives for one. The shared reply points at the front of the command, where find
+     * takes nothing, while a term after the options is the same mistake as one before them.
+     */
+    private static FlagArgumentMap tokenizeTerms(List<Token> tokens) throws ParseException {
+        try {
+            return FlagTokenizer.tokenizeTokens(tokens, FLAG_NAME, FLAG_NUS_STUDENT_ID,
+                    FLAG_PHONE, FLAG_EMAIL, FLAG_TAG, FLAG_FOLLOW_UP, FLAG_NO_FOLLOW_UP);
+        } catch (ValueAfterFlagsException e) {
+            throw new ParseException(MESSAGE_UNQUALIFIED_TERM, e);
+        }
     }
 
     /** Reads all required terms for each selected field. */

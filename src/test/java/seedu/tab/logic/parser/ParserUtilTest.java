@@ -185,10 +185,27 @@ public class ParserUtilTest {
         assertThrows(ParseException.class,
                 "Unexpected value after STUDENT_TARGET: \"Alex\". Put field values after an option.", () ->
                 ParserUtil.parseRequiredStudentTarget("1 Alex", "STUDENT_TARGET", "STUDENT_TARGET"));
-        assertThrows(ParseException.class,
-                "Unexpected value after STUDENT_TARGET: \"Alex\". Put field values after an option.", () ->
-                ParserUtil.parseRequiredStudentTarget(VALID_NUS_STUDENT_ID + " Alex", "STUDENT_TARGET",
-                        "STUDENT_TARGET"));
+    }
+
+    @Test
+    public void parseRequiredStudentTarget_extraValueAfterId_namesTheIdForm() {
+        // a target opening with a letter is an NUS Student ID rather than an index
+        for (String target : List.of(VALID_NUS_STUDENT_ID, "Alex")) {
+            assertThrows(ParseException.class,
+                    "Unexpected value after NUS_STUDENT_ID: \"Yeoh\". Put field values after an option.", () ->
+                    ParserUtil.parseRequiredStudentTarget(target + " Yeoh", "STUDENT_TARGET", "STUDENT_TARGET"));
+        }
+    }
+
+    @Test
+    public void getTargetFieldName_eitherTargetForm_namesTheFormRead() {
+        for (String target : List.of("Alex", "A01234567X", "  a01234567x  ")) {
+            assertEquals(ParserUtil.FIELD_NUS_STUDENT_ID, ParserUtil.getTargetFieldName(target, "INDEX"));
+        }
+        // an empty target names no form of its own, and every other target reads as an index
+        for (String target : List.of("1", "0", "-1", "1.5", "1ABC", "!@#", "", "   ")) {
+            assertEquals("INDEX", ParserUtil.getTargetFieldName(target, "INDEX"));
+        }
     }
 
     @Test

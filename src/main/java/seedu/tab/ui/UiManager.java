@@ -1,6 +1,7 @@
 package seedu.tab.ui;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -15,6 +16,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import seedu.tab.commons.core.DataLoadingErrorMessage;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.commons.util.AppUtil;
 import seedu.tab.commons.util.StringUtil;
@@ -39,7 +41,7 @@ public class UiManager implements Ui {
 
     private Logic logic;
     private Path dataFilePath;
-    private final Optional<String> studentBookLoadingError;
+    private final Optional<DataLoadingErrorMessage> studentBookLoadingError;
     private MainWindow mainWindow;
 
     /**
@@ -54,7 +56,7 @@ public class UiManager implements Ui {
      * Creates a {@code UiManager} that reports {@code studentBookLoadingError} instead of opening
      * the main window when the saved student book could not be read.
      */
-    public UiManager(Logic logic, Path dataFilePath, Optional<String> studentBookLoadingError) {
+    public UiManager(Logic logic, Path dataFilePath, Optional<DataLoadingErrorMessage> studentBookLoadingError) {
         this.logic = logic;
         this.dataFilePath = dataFilePath;
         this.studentBookLoadingError = studentBookLoadingError;
@@ -120,14 +122,14 @@ public class UiManager implements Ui {
     /**
      * Shows the startup data error before the main window can expose incomplete records.
      */
-    void showDataLoadingErrorDialogAndWait(String error) {
+    void showDataLoadingErrorDialogAndWait(DataLoadingErrorMessage error) {
         createDataLoadingErrorAlert(error).showAndWait();
     }
 
     /**
      * Creates a data-loading alert with the file location and recovery instructions.
      */
-    Alert createDataLoadingErrorAlert(String error) {
+    Alert createDataLoadingErrorAlert(DataLoadingErrorMessage error) {
         Alert alert = createAlert(null, Alert.AlertType.ERROR,
                 DATA_LOADING_ERROR_TITLE, DATA_LOADING_ERROR_HEADER);
         DialogPane dialogPane = alert.getDialogPane();
@@ -150,23 +152,42 @@ public class UiManager implements Ui {
     /**
      * Builds the file, error and recovery sections of the startup alert.
      */
-    private VBox createDataLoadingErrorContent(String error) {
+    private VBox createDataLoadingErrorContent(DataLoadingErrorMessage error) {
         Label fileCaption = createWrappingLabel(DATA_LOADING_ERROR_FILE_LABEL,
                 "data-loading-error-file-caption");
         Label filePath = createWrappingLabel(dataFilePath.toString(), "data-loading-error-file");
         filePath.setId("dataLoadingErrorFile");
 
-        Label errorDetail = createWrappingLabel(error, "data-loading-error-detail");
+        Label errorDetail = createWrappingLabel(error.description(), "data-loading-error-detail");
         errorDetail.setId("dataLoadingErrorDetail");
 
         Label recovery = createWrappingLabel(DATA_LOADING_ERROR_RECOVERY,
                 "data-loading-error-recovery");
         recovery.setId("dataLoadingErrorRecovery");
 
-        VBox content = new VBox(fileCaption, filePath, errorDetail, recovery);
+        VBox content = new VBox(fileCaption, filePath, errorDetail);
+        content.getChildren().addAll(createSourceExcerptLabels(error));
+        content.getChildren().add(recovery);
         content.getStyleClass().add("data-loading-error-content");
         content.setMinHeight(Region.USE_PREF_SIZE);
         return content;
+    }
+
+    /**
+     * Returns the caption and the quoted part of the data file, or nothing where the failure
+     * quotes none. The quotation is a listing of its own rather than more of the message above
+     * it, because its line numbers and separators only line up in a monospaced font.
+     */
+    private static List<Label> createSourceExcerptLabels(DataLoadingErrorMessage error) {
+        if (!error.hasSourceExcerpt()) {
+            return List.of();
+        }
+
+        Label caption = createWrappingLabel(DataLoadingErrorMessage.SOURCE_EXCERPT_CAPTION,
+                "data-loading-error-excerpt-caption");
+        Label excerpt = createWrappingLabel(error.sourceExcerpt(), "data-loading-error-excerpt");
+        excerpt.setId("dataLoadingErrorExcerpt");
+        return List.of(caption, excerpt);
     }
 
     /**
