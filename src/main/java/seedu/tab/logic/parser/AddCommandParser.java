@@ -7,6 +7,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_PHONE;
 import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -71,7 +72,7 @@ public class AddCommandParser implements Parser<AddCommand> {
             return FlagTokenizer.tokenize(
                     args, FLAG_PHONE, FLAG_EMAIL, FLAG_NUS_STUDENT_ID, FLAG_TAG, FLAG_FOLLOW_UP);
         } catch (UnknownFlagException e) {
-            if (FLAG_NAME.getMarkers().contains(e.getMarker())) {
+            if (FLAG_NAME.getMarkers().contains(e.getMarker().toLowerCase(Locale.ROOT))) {
                 throw new ParseException(e.getMessage() + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE, e);
             }
             throw e;

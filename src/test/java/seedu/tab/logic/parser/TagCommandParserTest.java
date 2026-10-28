@@ -5,6 +5,7 @@ import static seedu.tab.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.tab.testutil.TypicalIndexes.INDEX_FIRST_STUDENT;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -134,8 +135,16 @@ public class TagCommandParserTest {
     }
 
     @Test
+    public void parse_capitalizedAddOption_suggestsLowercaseWithGuidance() {
+        for (String marker : List.of("-A", "--ADD")) {
+            assertFailureWithGuidance("1 " + marker + " T1",
+                    "There is no " + marker + " option. Did you mean " + marker.toLowerCase(Locale.ROOT) + "?");
+        }
+    }
+
+    @Test
     public void parse_nonAddOptions_rejected() {
-        for (String marker : List.of("-t", "--tag", "-A", "--ADD")) {
+        for (String marker : List.of("-t", "--tag")) {
             assertFailureWithGuidance("1 " + marker + " T1",
                     String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker));
         }
@@ -230,7 +239,8 @@ public class TagCommandParserTest {
         assertFailureWithGuidance("1 -r Lab 3", Messages.getErrorMessageForValueAfterFlags("3", true));
         assertFailureWithGuidance("1 -r \"Lab 3", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
         for (String marker : List.of("-R", "--REMOVE")) {
-            assertFailureWithGuidance("1 " + marker + " T1", String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker));
+            assertFailureWithGuidance("1 " + marker + " T1",
+                    "There is no " + marker + " option. Did you mean " + marker.toLowerCase(Locale.ROOT) + "?");
         }
     }
 

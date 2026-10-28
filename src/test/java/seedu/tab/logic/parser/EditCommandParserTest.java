@@ -86,7 +86,7 @@ public class EditCommandParserTest {
         }
         assertParseFailure(parser, "--target-id \"1234 -nf", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
         assertParseFailure(parser, "--TARGET-ID 1234 -nf",
-                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--TARGET-ID"));
+                "There is no --TARGET-ID option. Did you mean --target-id?");
     }
 
     @Test
@@ -438,7 +438,7 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1 --follow-up -f",
                 Messages.getErrorMessageForDuplicateFlags("--follow-up"));
         assertParseFailure(parser, "1 --NO-FOLLOW-UP",
-                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--NO-FOLLOW-UP"));
+                "There is no --NO-FOLLOW-UP option. Did you mean --no-follow-up?");
     }
 
     @Test

@@ -651,7 +651,7 @@ on its own; and non-blank values are still validated, so every problem is
 reported without tags being discarded silently.
 
 `add` keeps its name before the options. If the tokenizer refuses `-n` or
-`--name`, `AddCommandParser` adds a placement hint to the error, and a missing
+`--name` in any letter case, `AddCommandParser` adds a placement hint to the error, and a missing
 name gets the same hint, so a User who knows `edit`'s name option recovers at
 once.
 
@@ -661,7 +661,10 @@ once under each alias — each leave it unclear which field a value belongs to,
 so each is refused on its own rather than collected with the field errors. An
 unknown option names its marker without echoing an attached value, and a
 missing value and a token belonging to no option are each reported for what
-they are.
+they are. A capitalized marker gets a lowercase suggestion only if that marker
+is supported by the command. `FlagTokenizer` uses `Locale.ROOT` for this check
+and retains the original marker in `UnknownFlagException`. Both separated and
+attached options share this check; option values are never folded or echoed.
 
 The following sequence diagram shows how a command's arguments are parsed
 in two passes:
@@ -2533,6 +2536,18 @@ testers are expected to do more *exploratory* testing.
       Expected: Nothing is saved. A missing value names `--phone PHONE`, an
       unknown option names `--unknown`, and the mistyped marker is named
       without its value.
+
+1. Recovering from capitalized options
+
+   1. Test cases: `add Tan -P 91234567`, `add Tan --Phone=91234567`,
+      `find -N alex`, and `edit 1 -T T1`.<br>
+      Expected: Each is refused with `There is no OPTION option. Did you mean
+      LOWERCASE?`, substituting the typed and supported lowercase spellings.
+      Records, the displayed list, and the saved file stay unchanged.
+   1. Test case: `add Tan -N Alex`.<br>
+      Expected: No lowercase option is suggested because `add` does not take
+      a name option. Instead, the reply explains that the name comes first,
+      without an option; the same guidance appears for `--NAME`.
 
 1. Joining option values with an equals sign
 

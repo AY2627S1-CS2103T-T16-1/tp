@@ -120,7 +120,7 @@ public class FindCommandParserTest {
             assertParseFailure(parser, input, MESSAGE_EMPTY_KEYWORD);
         }
         assertParseFailure(parser, "--unknown friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"));
-        assertParseFailure(parser, "-T friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-T"));
+        assertParseFailure(parser, "-T friend", "There is no -T option. Did you mean -t?");
         // a term after the options is the same mistake as one before them, so it reads the same
         assertParseFailure(parser, "-t lab tutorial", FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
         assertParseFailure(parser, "Jason -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM);

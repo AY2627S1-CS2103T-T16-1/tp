@@ -15,6 +15,7 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_TAG;
 import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -189,6 +190,32 @@ public class FlagTokenizerTest {
         FlagArgumentMap parsed = FlagTokenizer.tokenize(" John -e a@b.com",
                 FLAG_EMAIL, new CliFlag("-e", "MAIL"));
         assertEquals(Optional.of("a@b.com"), parsed.getValue(FLAG_EMAIL));
+    }
+
+    @Test
+    public void tokenize_capitalizedKnownOption_suggestsSupportedLowercaseMarker() {
+        for (CliFlag flag : List.of(FLAG_PHONE, FLAG_EMAIL, FLAG_NAME, FLAG_TAG, FLAG_FOLLOW_UP,
+                FLAG_NO_FOLLOW_UP, FLAG_NUS_STUDENT_ID, FLAG_ADD_TAG, FLAG_REMOVE_TAG)) {
+            for (String marker : flag.getMarkers()) {
+                String capitalized = marker.toUpperCase(Locale.ROOT);
+                String expected = "There is no " + capitalized + " option. Did you mean " + marker + "?";
+                for (String suffix : List.of(" value", "=value", "=\"\"")) {
+                    UnknownFlagException failure = org.junit.jupiter.api.Assertions.assertThrows(
+                            UnknownFlagException.class, () -> FlagTokenizer.tokenize(capitalized + suffix, flag));
+                    assertEquals(expected, failure.getMessage());
+                    assertEquals(capitalized, failure.getMarker());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void tokenize_capitalizedUnsupportedOption_doesNotSuggestOtherCommandsOptions() {
+        for (String input : List.of("-N Alex", "--Name=Alex", "--UNKNOWN=value")) {
+            String marker = input.split("[ =]")[0];
+            assertThrows(UnknownFlagException.class, "There is no " + marker + " option.", () ->
+                    FlagTokenizer.tokenize(input, FLAG_PHONE));
+        }
     }
 
     @Test

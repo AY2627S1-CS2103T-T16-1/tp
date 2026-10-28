@@ -6,6 +6,7 @@ import static seedu.tab.logic.parser.CommandTokenizer.VALUE_SEPARATOR;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -144,7 +145,7 @@ public class FlagTokenizer {
      */
     private static void readAttachedFlag(Token token, AttachedOption attached, Map<String, CliFlag> flagsByMarker,
             FlagArgumentMap parsed) throws ParseException {
-        CliFlag flag = getAttachedFlag(attached, flagsByMarker);
+        CliFlag flag = getFlag(attached.marker(), flagsByMarker);
         if (!flag.isValueRequired()) {
             throw new ParseException(String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, attached.marker()));
         }
@@ -167,9 +168,15 @@ public class FlagTokenizer {
                     token.value(), !parsed.getPreamble().isEmpty()));
         }
 
-        CliFlag flag = flagsByMarker.get(token.value());
+        return getFlag(token.value(), flagsByMarker);
+    }
+
+    /** Returns the known flag, suggesting a lowercase spelling only if this command supports it. */
+    private static CliFlag getFlag(String marker, Map<String, CliFlag> flagsByMarker) throws ParseException {
+        CliFlag flag = flagsByMarker.get(marker);
         if (flag == null) {
-            throw new UnknownFlagException(token.value());
+            String lowercase = marker.toLowerCase(Locale.ROOT);
+            throw new UnknownFlagException(marker, flagsByMarker.containsKey(lowercase) ? lowercase : null);
         }
         return flag;
     }
@@ -206,15 +213,5 @@ public class FlagTokenizer {
         int separator = token.value().indexOf(VALUE_SEPARATOR);
         String marker = token.value().substring(0, separator);
         return new AttachedOption(marker, token.value().substring(separator + 1));
-    }
-
-    /** Returns the known flag named by an attached option. */
-    private static CliFlag getAttachedFlag(AttachedOption option, Map<String, CliFlag> flagsByMarker)
-            throws ParseException {
-        CliFlag flag = flagsByMarker.get(option.marker());
-        if (flag == null) {
-            throw new UnknownFlagException(option.marker());
-        }
-        return flag;
     }
 }

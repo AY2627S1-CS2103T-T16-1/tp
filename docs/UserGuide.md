@@ -78,7 +78,9 @@ text remains one command; inspect it before pressing Enter.
 * A command word may be typed in any case, so `list`, `List` and `LIST` all
   list your students. Only the first word is read this way: the rest of the
   command keeps the capitals you typed, so `Find -n Alex` still looks for `Alex`.
-  Option spellings are case-sensitive, so `-P` is not the `-p` option.
+  Option spellings are case-sensitive. With `add`, `edit`, `find`, and `tag`,
+  capitalizing a supported option produces a lowercase suggestion, for example:
+  `There is no -P option. Did you mean -p?` The command is refused until you correct it.
 
 * Items in square brackets are optional.<br>
   For example, `NAME [-t TAG]` can be used as `John Doe -t friend` or as `John Doe`.
@@ -485,7 +487,8 @@ least one letter or number, in any writing system.
 `add Ravi s/o Kumaran -p 91234567` needs no quotes at all. Slashes, hyphens and
 apostrophes are ordinary characters here.
 
-If you use a name option from `edit`, TAB explains where to put the name:
+If you use a name option from `edit`, including capitalized forms such as `-N` or
+`--NAME`, TAB explains where to put the name:
 
 ```text
 add --name "Betsy Crowe" --phone 1234567

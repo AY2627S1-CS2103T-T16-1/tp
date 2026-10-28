@@ -20,6 +20,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -373,6 +374,10 @@ public class LogicManagerTest {
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--name"),
                 "add --phone 1234567 -n=\"Betsy Crowe\"",
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-n"),
+                "add -N \"Betsy Crowe\" --phone 1234567",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-N"),
+                "add --NAME=\"Betsy Crowe\" --phone 1234567",
+                String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--NAME"),
                 "add -p 1234567", Messages.getErrorMessageForMissingFields(AddCommand.FIELD_NAME)).entrySet()) {
             assertThrows(ParseException.class, entry.getValue() + "\n" + AddCommand.MESSAGE_NAME_GUIDANCE, ()
                     -> logic.execute(entry.getKey()));
@@ -384,6 +389,24 @@ public class LogicManagerTest {
         assertEquals(2, model.getStudentBook().getStudentList().size());
         assertEquals(model.getStudentBook().getStudentList(),
                 new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_capitalizedOption_refusesWithoutChangingSavedOrFilteredState() throws Exception {
+        logic.execute("add Existing -p 12345678");
+        logic.execute("find -n Nobody");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        String savedJson = Files.readString(dataPath);
+        for (var entry : Map.of("add Tan -P 91234567", "-P", "add Tan -E tan@x.com", "-E",
+                "find -N alex", "-N", "edit 1 -T T1", "-T", "add Tan --Phone=91234567", "--Phone").entrySet()) {
+            String marker = entry.getValue();
+            assertThrows(ParseException.class, "There is no " + marker + " option. Did you mean "
+                    + marker.toLowerCase(Locale.ROOT) + "?", () -> logic.execute(entry.getKey()));
+            assertEquals(students, model.getStudentBook().getStudentList());
+            assertTrue(model.getFilteredStudentList().isEmpty());
+            assertEquals(savedJson, Files.readString(dataPath));
+        }
     }
 
     @Test
