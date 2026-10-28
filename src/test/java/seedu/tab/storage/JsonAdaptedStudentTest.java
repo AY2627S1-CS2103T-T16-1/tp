@@ -61,11 +61,20 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_dotlessEmailDomain_preservesAddress() throws Exception {
+        // the warning the commands show is advisory, so a stored single-label domain still loads
+        for (String address : List.of("john@gmail", "e1234567@nus", "a@localhost")) {
+            JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, address, VALID_TAGS, false);
+            assertEquals(address, student.toModelType().getEmail().orElseThrow().getValue());
+        }
+    }
+
+    @Test
     public void toModelType_consecutiveEmailDots_throwsIllegalValueException() {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, "mei..tan@example.com", VALID_TAGS, false);
         String expectedMessage = "Email \"mei..tan@example.com\" is not valid: "
-                + "the part before the @ may hold letters, digits and !#$%&'*+/=?^_`{|}~-"
+                + "the part before the @ may hold ASCII letters, digits and !#$%&'*+/=?^_`{|}~-"
                 + ", with dots allowed only between non-empty groups";
         assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
@@ -265,7 +274,39 @@ public class JsonAdaptedStudentTest {
     public void toModelType_invalidNusStudentId_throwsIllegalValueExceptionNamingField() {
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, INVALID_NUS_STUDENT_ID, VALID_TAGS, false);
-        assertThrows(IllegalValueException.class, NusStudentId.MESSAGE_CONSTRAINTS, student::toModelType);
+        String expectedMessage = "NUS Student ID \"A0123-456X\" is not valid: "
+                + "an NUS Student ID can only contain ASCII letters and digits";
+
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
+    public void toModelType_digitLeadingNusStudentId_throwsIllegalValueExceptionNamingValue() {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, "0123-456X", VALID_TAGS, false);
+        String expectedMessage = "NUS Student ID \"0123-456X\" is not valid: "
+                + "an NUS Student ID can only contain ASCII letters and digits";
+
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
+    public void toModelType_nusStudentIdWithPastedEmail_throwsIllegalValueExceptionNamingValue() {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, "A0234567Y e0234567@u.nus.edu", VALID_TAGS, false);
+        String expectedMessage = "NUS Student ID \"A0234567Y e0234567@u.nus.edu\" is not valid: "
+                + "an NUS Student ID can only contain ASCII letters and digits";
+
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
+    }
+
+    @Test
+    public void toModelType_blankNusStudentId_throwsIllegalValueExceptionGivingTheEmptyReason() {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(
+                VALID_NAME, VALID_PHONE, VALID_EMAIL, "   ", VALID_TAGS, false);
+        String expectedMessage = "NUS Student ID \"\" is not valid: an NUS Student ID cannot be empty";
+
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
 
     @Test
@@ -273,8 +314,10 @@ public class JsonAdaptedStudentTest {
         String tooLong = "A".repeat(NusStudentId.MAX_LENGTH + 1);
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, tooLong, VALID_TAGS, false);
+        String expectedMessage = "NUS Student ID \"" + tooLong + "\" is not valid: "
+                + "an NUS Student ID may hold at most " + NusStudentId.MAX_LENGTH + " characters";
 
-        assertThrows(IllegalValueException.class, NusStudentId.MESSAGE_CONSTRAINTS, student::toModelType);
+        assertThrows(IllegalValueException.class, expectedMessage, student::toModelType);
     }
 
     @Test

@@ -49,6 +49,23 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_autocorrectedDashes_readFieldsRatherThanTheName() {
+        Student expected = new StudentBuilder().withName("Casey Low").withPhone("91234567")
+                .withEmail("casey@example.com").withoutNusStudentId().withTags().build();
+        for (String dash : java.util.List.of("\u2013", "\u2014", "\u2212")) {
+            assertParseSuccess(parser, " Casey Low " + dash + "p 91234567 "
+                    + dash + "e casey@example.com", new AddCommand(expected));
+        }
+    }
+
+    @Test
+    public void parse_dashWithinAName_staysPartOfTheName() {
+        Student expected = new StudentBuilder().withName("Jean\u2013Luc Picard").withPhone("91234567")
+                .withoutEmail().withoutNusStudentId().withTags().build();
+        assertParseSuccess(parser, " Jean\u2013Luc Picard -p 91234567", new AddCommand(expected));
+    }
+
+    @Test
     public void parse_caseVariantTags_keepsFirstSpelling() {
         Student expected = new StudentBuilder().withName("Casey Low").withPhone("91234567")
                 .withoutEmail().withTags("Lab 3", "Σ", "T1").build();

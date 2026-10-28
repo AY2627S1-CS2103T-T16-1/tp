@@ -151,11 +151,21 @@ public class TagCommandParserTest {
     @Test
     public void parse_unflaggedTag_reportsUnexpectedValueAndActionGuidance() {
         for (String value : List.of("lab4", "Lab 3", "组 1")) {
-            assertFailureWithGuidance("1 " + value, String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX,
+            assertFailureWithGuidance("1 " + value, String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET,
                     "INDEX", value) + "\nMissing required field(s): -a TAG or -r TAG");
         }
         assertParseFailure(parser, "1 extra -a T1",
-                String.format(ParserUtil.MESSAGE_VALUE_AFTER_INDEX, "INDEX", "extra"));
+                String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET, "INDEX", "extra"));
+    }
+
+    @Test
+    public void parse_unflaggedValueAfterIdTarget_namesTheIdForm() {
+        // a letter-leading target is an NUS Student ID, so a user who typed a name is not
+        // told the first word they typed is an index
+        for (String target : List.of("Alex", "A01234567X")) {
+            assertParseFailure(parser, target + " Yeoh -a T1", String.format(
+                    ParserUtil.MESSAGE_VALUE_AFTER_TARGET, ParserUtil.FIELD_NUS_STUDENT_ID, "Yeoh"));
+        }
     }
 
     @Test
