@@ -1155,6 +1155,17 @@ All of this is advisory: these comparisons never feed `isSameStudent` or the
 storage duplicate check, so they cannot reject or discard a legitimate shared
 detail.
 
+`DotlessEmailDomainWarning` follows the same contract for a different doubt.
+An email whose domain is a single label, such as `john@gmail`, is a valid host
+name, yet on a student roster it is nearly always a forgotten `.com` or
+`.nus.edu`. `Email.hasDotlessDomain` reports one, and `AddCommand` and
+`EditCommand` append its warning as a second block after any duplicate block,
+so the two read as separate concerns. `EditCommand` passes the selected record
+as well, so an address the student already holds carries no warning and an
+unrelated edit does not repeat an acknowledged one. Email validation is
+untouched, so such an address is still entered, stored, loaded and compared as
+it always was.
+
 ### Finding students
 
 `FindCommandParser` uses `FlagTokenizer` and the existing `CliFlags` aliases for
@@ -2515,6 +2526,21 @@ testers are expected to do more *exploratory* testing.
       `Student Four` each with phone `000`, then `add Student Five -p 000`.<br>
       Expected: Student Five is saved, one warning naming two of them and
       saying two others match, with the review advice appearing once.
+
+1. Warning about an email whose domain has no dot
+
+   1. Test case: From an empty book, `add Tan -e john@gmail`, then
+      `add Ng -e john@gmail.com`, then `add Lee -e john@gmail.c`.<br>
+      Expected: Tan is saved and warned about, the warning naming the address
+      and suggesting a missing part such as `.com`. Ng is saved without a
+      warning. Lee is refused, the two-character rule on the final label being
+      validation rather than a warning.
+   1. Test case: Continuing above, `list`, note Tan's index, then
+      `edit INDEX -t T1`, then `edit INDEX -e tan@nus`.<br>
+      Expected: The tag edit shows no warning, the address being one the
+      student already holds. The address edit warns again, naming `tan@nus`.
+      Restarting TAB keeps the address as entered.
+
 ### Editing a student
 
 1. Editing a name that AB3's prefixes made impossible to type

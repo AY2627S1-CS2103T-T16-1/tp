@@ -238,7 +238,8 @@ public class LogicManagerTest {
         }
         String savedJson = Files.readString(storage.getStudentBookFilePath());
         assertParseException("edit 1 -e mei..tan@example.com",
-                "Email \"mei..tan@example.com\" is not valid: the part before the @ may hold letters, digits and "
+                "Email \"mei..tan@example.com\" is not valid: "
+                + "the part before the @ may hold ASCII letters, digits and "
                 + "!#$%&'*+/=?^_`{|}~-, with dots allowed only between non-empty groups");
         assertEquals(List.of(student), model.getStudentBook().getStudentList());
         assertEquals(savedJson, Files.readString(storage.getStudentBookFilePath()));
