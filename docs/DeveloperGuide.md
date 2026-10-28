@@ -1187,6 +1187,16 @@ unrelated edit does not repeat an acknowledged one. Email validation is
 untouched, so such an address is still entered, stored, loaded and compared as
 it always was.
 
+### Warning about tags that resemble the follow-up marker
+
+`FollowUpTagWarning` adds advisory notes when a tag reads like `Needs follow-up`
+after ignoring case, punctuation, and spaces. This catches likely typing mistakes
+without refusing tags that may be intentional. `AddCommand` checks all new tags,
+`EditCommand` checks only tags absent from the old record, and `TagCommand`
+checks additions. Removing tags or editing unrelated details does not repeat the
+note. The tag text and follow-up flag are unchanged by the warning; parser
+validation still refuses the reserved marker itself.
+
 ### Finding students
 
 `FindCommandParser` uses `FlagTokenizer` and the existing `CliFlags` aliases for
@@ -2288,6 +2298,18 @@ testers are expected to do more *exploratory* testing.
       relaunch.<br>
       Expected: The error identifies that record and its invalid `flag` value,
       the main window does not open, and the file is left unchanged.
+1. Recognizing follow-up-like tags without changing follow-up status
+
+   1. Prerequisites: Clear the book and confirm with `yes`.
+   1. Test case: `add Marker Test -t "Needs follow up"`, then
+      `edit 1 -t "Needs followup"`, then `tag 1 -a "Needs follow-up."`.<br>
+      Expected: Each succeeds and appends a note naming the entered tag and
+      advising `--follow-up`. The tags retain their spelling; no follow-up
+      marker appears. `find -f` shows no students. Run `list` afterward.
+   1. Test case: `edit 1 -p 123`, then `tag 1 -r "Needs follow-up."`.<br>
+      Expected: Both succeed without repeating the note. Restart TAB: the
+      remaining `Needs followup` tag is saved and the student is still unflagged.
+
 ### Adding and removing a tag
 
 1. Preserving the student's other details and persisting the change
