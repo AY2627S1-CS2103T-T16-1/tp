@@ -74,7 +74,7 @@ The field options below are used by `add`, `edit` and `find`.
 | Field | Options | Accepted values |
 | --- | --- | --- |
 | Name | `add`: first argument, no flag needed<br> `edit`, `find`: `-n` or `--name` | At least one letter or number in any script, with punctuation allowed |
-| Phone | `-p`, `--phone` | At least three digits, with formatting  (extensions and notes allowed) |
+| Phone | `-p`, `--phone` | At least three digits (formatting, extensions and notes allowed) |
 | Email | `-e`, `--email` | ASCII address such as `sean.o'brien@example.com`, up to 254 characters |
 | NUS Student ID | `--id`, `-i` | 1 to 32 ASCII letters or digits, stored in uppercase |
 | Tag | `-t`, `--tag` | At least one letter or number in any script |
@@ -97,13 +97,12 @@ The field options below are used by `add`, `edit` and `find`.
 | NUS Student ID | ID beginning with a letter, matched across the whole book regardless of case | `edit A01234567X -p 91234567` |
 | Explicit ID option | Any ID, including one beginning with a digit | `edit --target-id A01234567X -p 91234567` |
 
-*
-  For example: after `find -n Charlotte`, Charlotte is displayed as student `1`, so `delete 1` would delete Charlotte. Subsequently, running `list` will then show the whole book, where index `1` may refer to someone else.
+* For example: after `find -n Charlotte`, Charlotte is displayed as student `1`, so `delete 1` would delete Charlotte. Subsequently, running `list` will then show the whole book, where index `1` may refer to someone else.
 
 * Selecting a student by ID requires the complete ID. <br>
   For example `A0123` cannot target the student with ID `A01234567X`.
 
-* For `edit`, as `--id` is used to editing the student's ID, `--target-id` is used for explictly selecting the student by NUS Student ID (including one beginning with a digit) instead.
+* For `edit`, as `--id` is used to edit the student's ID, `--target-id` is used for explicitly selecting the student by NUS Student ID (including one beginning with a digit) instead.
 
 For example:
 1. Run `add Numeric Example --id 1234` to add a student with ID `1234`.
@@ -185,7 +184,7 @@ Adds or removes **one** tag for an existing student selected by [displayed index
 **Format** `tag TARGET -a TAG` or `tag TARGET -r TAG`
 
 * You may use `--add` in place of `-a`, or `--remove` in place of `-r`.
-* Other tags and details remains unchanged.
+* Other tags and details remain unchanged.
 
 Examples
 
