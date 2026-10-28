@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.tab.commons.core.DataLoadingErrorMessage;
 import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.model.Model;
@@ -56,11 +57,12 @@ public class MainAppTest {
         return (Model) method.invoke(mainApp, storage, userPrefs);
     }
 
-    private Optional<String> getUiManagerLoadingError(MainApp initializedApp) throws Exception {
+    private Optional<DataLoadingErrorMessage> getUiManagerLoadingError(MainApp initializedApp) throws Exception {
         var field = UiManager.class.getDeclaredField("studentBookLoadingError");
         field.setAccessible(true);
         @SuppressWarnings("unchecked")
-        Optional<String> loadingError = (Optional<String>) field.get(initializedApp.ui);
+        Optional<DataLoadingErrorMessage> loadingError =
+                (Optional<DataLoadingErrorMessage>) field.get(initializedApp.ui);
         return loadingError;
     }
 
@@ -73,7 +75,7 @@ public class MainAppTest {
             MainApp initializedApp = new MainApp(testFolder.resolve("prefs.json"), path);
 
             initializedApp.init();
-            String error = getUiManagerLoadingError(initializedApp).orElseThrow();
+            String error = getUiManagerLoadingError(initializedApp).orElseThrow().toDisplayText();
             assertTrue(error.contains(json.contains("\n") ? "Expected a single JSON value" : "Duplicate field"));
             assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());
             initializedApp.stop();
@@ -91,7 +93,7 @@ public class MainAppTest {
 
         initializedApp.init();
 
-        String error = getUiManagerLoadingError(initializedApp).orElseThrow();
+        String error = getUiManagerLoadingError(initializedApp).orElseThrow().toDisplayText();
         assertTrue(error.startsWith("Student record 1: "), error);
         assertTrue(error.contains("Invalid flag value 2. Use JSON true, false or null for the follow-up flag."));
         assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());
@@ -109,7 +111,8 @@ public class MainAppTest {
 
         initializedApp.init();
         assertEquals("The file is not valid UTF-8. Reopen it with its original encoding and save it as UTF-8,"
-                + " then restart TAB.", getUiManagerLoadingError(initializedApp).orElseThrow());
+                + " then restart TAB.",
+                getUiManagerLoadingError(initializedApp).orElseThrow().description());
         assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());
         initializedApp.stop();
         assertArrayEquals(bytes, Files.readAllBytes(path));
@@ -125,9 +128,9 @@ public class MainAppTest {
         MainApp initializedApp = new MainApp(testFolder.resolve("prefs.json"), path);
 
         initializedApp.init();
-        assertTrue(getUiManagerLoadingError(initializedApp).orElseThrow().contains("Student record 1: "));
-        assertTrue(getUiManagerLoadingError(initializedApp).orElseThrow()
-                .contains("Unknown field \"nusStudentID\" in student \"Bernice Yu\""));
+        String error = getUiManagerLoadingError(initializedApp).orElseThrow().description();
+        assertTrue(error.contains("Student record 1: "));
+        assertTrue(error.contains("Unknown field \"nusStudentID\" in student \"Bernice Yu\""));
         assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());
         initializedApp.stop();
         assertEquals(json, Files.readString(path));
@@ -168,7 +171,7 @@ public class MainAppTest {
 
         Model model = initModelManager(storage, new UserPrefs());
         assertTrue(model.getStudentBook().getStudentList().isEmpty());
-        assertTrue(mainApp.getStudentBookLoadingError().orElseThrow()
+        assertTrue(mainApp.getStudentBookLoadingError().orElseThrow().description()
                 .contains("The data is not in the expected JSON format"));
         assertEquals(originalContents, Files.readString(corruptedFilePath));
     }
@@ -193,7 +196,8 @@ public class MainAppTest {
 
         assertTrue(model.getStudentBook().getStudentList().isEmpty());
         assertEquals("Student record 1 (\"Ravi\"): Phone \"12\" is not valid: "
-                + "a phone number needs at least 3 digits", mainApp.getStudentBookLoadingError().orElseThrow());
+                + "a phone number needs at least 3 digits",
+                mainApp.getStudentBookLoadingError().orElseThrow().description());
         assertEquals(originalContents, Files.readString(invalidFilePath));
     }
 
@@ -206,7 +210,7 @@ public class MainAppTest {
         initializedApp.init();
 
         assertEquals("The JSON document must not be null.",
-                getUiManagerLoadingError(initializedApp).orElseThrow());
+                getUiManagerLoadingError(initializedApp).orElseThrow().description());
         assertTrue(initializedApp.model.getStudentBook().getStudentList().isEmpty());
         assertEquals("null", Files.readString(studentsPath));
     }

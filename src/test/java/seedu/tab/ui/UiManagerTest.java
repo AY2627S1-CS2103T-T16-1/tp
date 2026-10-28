@@ -30,9 +30,11 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import seedu.tab.commons.core.DataLoadingErrorMessage;
 import seedu.tab.commons.core.GuiSettings;
 import seedu.tab.commons.core.LogsCenter;
 import seedu.tab.logic.Logic;
@@ -43,6 +45,12 @@ public class UiManagerTest {
 
     private static final Path DATA_FILE_PATH = Paths.get("data", "tab.json");
     private static final String BROKEN_WINDOW_MESSAGE = "the window settings could not be read";
+    private static final DataLoadingErrorMessage PARSE_ERROR = new DataLoadingErrorMessage(
+            "The data is not in the expected JSON format at line 4, column 6: Unexpected character",
+            """
+              3 |     "name": "Yun"
+            > 4 |     "phone": "09"
+              5 |   },""");
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -51,7 +59,8 @@ public class UiManagerTest {
 
     @Test
     public void start_dataLoadingError_showsErrorInsteadOfStartingMainWindow() throws Exception {
-        String error = "Student record 2 has an invalid Phone field.";
+        DataLoadingErrorMessage error =
+                DataLoadingErrorMessage.of("Student record 2 has an invalid Phone field.");
 
         StartOutcome outcome = FxToolkit.onFxThread(() -> {
             Stage stage = new Stage();
@@ -114,7 +123,7 @@ public class UiManagerTest {
     public void showDataLoadingErrorDialogAndWait_dialogDismissed_returns() throws Exception {
         boolean isOwnAlertClosed = FxToolkit.onFxThread(() -> {
             AutoClosingUiManager uiManager = new AutoClosingUiManager();
-            uiManager.showDataLoadingErrorDialogAndWait("Invalid data");
+            uiManager.showDataLoadingErrorDialogAndWait(DataLoadingErrorMessage.of("Invalid data"));
             return !uiManager.alert.isShowing();
         });
 
@@ -215,7 +224,8 @@ public class UiManagerTest {
 
     @Test
     public void createDataLoadingErrorAlert_boxedContent_startsItsTextAtOneOffset() throws Exception {
-        String error = "TAB does not have permission to read this file or the folder holding it.";
+        DataLoadingErrorMessage error = DataLoadingErrorMessage.of(
+                "TAB does not have permission to read this file or the folder holding it.");
         UiManager uiManager = new UiManager(null, DATA_FILE_PATH, Optional.of(error));
 
         double[] textStarts = FxToolkit.onFxThread(() -> {
@@ -240,6 +250,46 @@ public class UiManagerTest {
                 "both boxes should start their text at the same offset");
     }
 
+    @Test
+    public void createDataLoadingErrorAlert_sourceExcerpt_isListedInItsOwnMonospacedBox() throws Exception {
+        UiManager uiManager = new UiManager(null, DATA_FILE_PATH, Optional.of(PARSE_ERROR));
+
+        ExcerptDetails details = FxToolkit.onFxThread(() -> {
+            Alert alert = uiManager.createDataLoadingErrorAlert(PARSE_ERROR);
+            DialogPane dialogPane = alert.getDialogPane();
+            try {
+                alert.show();
+                dialogPane.applyCss();
+                dialogPane.layout();
+                Label detail = (Label) dialogPane.getContent().lookup("#dataLoadingErrorDetail");
+                Label excerpt = (Label) dialogPane.getContent().lookup("#dataLoadingErrorExcerpt");
+                Label file = (Label) dialogPane.getContent().lookup("#dataLoadingErrorFile");
+                return new ExcerptDetails(detail.getText(), excerpt.getText(),
+                        excerpt.getStyleClass().contains("data-loading-error-excerpt"),
+                        excerpt.getFont().getFamily(), file.getFont().getFamily(),
+                        textWidth("iiii", excerpt.getFont()), textWidth("WWWW", excerpt.getFont()));
+            } finally {
+                alert.close();
+            }
+        });
+
+        assertEquals(PARSE_ERROR.description(), details.detailText,
+                "the explanation should be shown without the listing");
+        assertEquals(PARSE_ERROR.sourceExcerpt(), details.excerptText);
+        assertTrue(details.hasExcerptStyle);
+        assertEquals(details.fileFontFamily, details.excerptFontFamily,
+                "the listing should be written in the font the data file path is written in");
+        assertEquals(details.narrowGlyphsWidth, details.wideGlyphsWidth, 0.5,
+                "every character of the listing should be the same width, or its columns cannot line up");
+    }
+
+    /** Returns the width {@code text} is drawn in at {@code font}. */
+    private static double textWidth(String text, Font font) {
+        Text measured = new Text(text);
+        measured.setFont(font);
+        return measured.getLayoutBounds().getWidth();
+    }
+
     /** Returns the scene x at which the control's drawn text begins. */
     private static double renderedTextStart(DialogPane dialogPane, String id) {
         Node control = dialogPane.lookup(id);
@@ -249,13 +299,7 @@ public class UiManagerTest {
 
     @Test
     public void createDataLoadingErrorAlert_usesTabThemeAndActionableContent() throws Exception {
-        String error = """
-                The data is not in the expected JSON format at line 4, column 6: Unexpected character
-                Affected source:
-                  3 |     "name": "Yun"
-                > 4 |     "phone": "09"
-                  5 |   },
-                """;
+        DataLoadingErrorMessage error = PARSE_ERROR;
         UiManager uiManager = new UiManager(null, DATA_FILE_PATH, Optional.of(error));
 
         AlertDetails details = FxToolkit.onFxThread(() -> {
@@ -288,7 +332,7 @@ public class UiManagerTest {
         assertEquals(UiManager.DATA_LOADING_ERROR_HEADER, details.header);
         assertTrue(details.hasTabStyle);
         assertEquals(DATA_FILE_PATH.toString(), details.fileText);
-        assertEquals(error, details.errorText);
+        assertEquals(error.description(), details.errorText);
         assertTrue(details.isErrorWrapped);
         assertEquals(Region.USE_PREF_SIZE, details.errorMinHeight);
         assertTrue(details.errorHeight >= details.errorPreferredHeight - 0.5,
@@ -303,9 +347,13 @@ public class UiManagerTest {
         assertTrue(details.hasGraphic);
     }
 
-    private record StartOutcome(boolean wasDataLoadingErrorShown, String shownError,
+    private record StartOutcome(boolean wasDataLoadingErrorShown, DataLoadingErrorMessage shownError,
                                 boolean wasMainWindowBuilt, boolean wasIconSet,
                                 boolean isAnyWindowShowing) {}
+
+    private record ExcerptDetails(String detailText, String excerptText, boolean hasExcerptStyle,
+                                  String excerptFontFamily, String fileFontFamily,
+                                  double narrowGlyphsWidth, double wideGlyphsWidth) {}
 
     private record FatalErrorDetails(boolean wasAlertCreated, boolean isOwnedByPrimaryStage,
                                      boolean isAlertOwnerPrimaryStage, boolean wasAlertClosed,
@@ -392,11 +440,11 @@ public class UiManagerTest {
         private Alert alert;
 
         AutoClosingUiManager() {
-            super(null, DATA_FILE_PATH, Optional.of("Invalid data"));
+            super(null, DATA_FILE_PATH, Optional.of(DataLoadingErrorMessage.of("Invalid data")));
         }
 
         @Override
-        Alert createDataLoadingErrorAlert(String error) {
+        Alert createDataLoadingErrorAlert(DataLoadingErrorMessage error) {
             alert = super.createDataLoadingErrorAlert(error);
             Platform.runLater(alert::close);
             return alert;
@@ -410,14 +458,14 @@ public class UiManagerTest {
      */
     private static class UiManagerStub extends UiManager {
         private boolean wasDataLoadingErrorShown;
-        private String shownError;
+        private DataLoadingErrorMessage shownError;
 
-        UiManagerStub(String error) {
+        UiManagerStub(DataLoadingErrorMessage error) {
             super(new LogicStub(), DATA_FILE_PATH, Optional.of(error));
         }
 
         @Override
-        void showDataLoadingErrorDialogAndWait(String error) {
+        void showDataLoadingErrorDialogAndWait(DataLoadingErrorMessage error) {
             wasDataLoadingErrorShown = true;
             shownError = error;
         }
