@@ -468,8 +468,12 @@ student may carry the same tag under lowercases to itself.
 
 `FileUtil.writeToFile` protects an existing JSON file from a partial save. It
 resolves an existing symbolic link to its destination, so replacing the saved
-data leaves the link in place, and rejects an unresolvable link without
-replacing it or creating its missing target. It also refuses a destination that
+data leaves the link in place. A link whose target is not there yet is followed
+too, so a link set up before its file receives the first save, and only a link
+pointing into a folder that does not exist is refused — no save can create that
+folder without guessing where the records were meant to live. Startup applies
+the same rule through `FileUtil.requireResolvableLink`, so such a link is
+reported rather than read as a first run. It also refuses a destination that
 is not writable, and copies an existing file's POSIX permissions to its
 replacement. The new contents are written and forced to a temporary file beside
 the real destination before an atomic move replaces it. Keeping both files in
@@ -598,6 +602,15 @@ keep it literally. A backslash escapes a quote or another backslash, and
 before anything else stays in the value, so nothing the User typed disappears
 unasked. Each token records whether a quote took part in it, which is the only
 thing separating the value `-Ahmad` from the option `-e`.
+
+A token opening with a dash an editor writes for a typed hyphen — U+2010 to
+U+2015 and the minus sign U+2212 — opens an option, for the same reason the
+quote styles are interchangeable: a pasted command is read the way it was
+typed. `CommandTokenizer#isOptionMarker` shares that rule with the highlighter,
+so the box and the parser agree on which word is an option, and a token that
+opens with a quote keeps the dash it was given. One dash stands for one
+hyphen, so an em dash autocorrected from `--` reaches the parser as `-phone`
+and is refused by name rather than stored in a field.
 
 An option where a value was expected is read as the option before it having
 been left empty: `add John -p 123 -t -e` reports that `-t` needs a value rather
@@ -1151,6 +1164,17 @@ All of this is advisory: these comparisons never feed `isSameStudent` or the
 storage duplicate check, so they cannot reject or discard a legitimate shared
 detail.
 
+`DotlessEmailDomainWarning` follows the same contract for a different doubt.
+An email whose domain is a single label, such as `john@gmail`, is a valid host
+name, yet on a student roster it is nearly always a forgotten `.com` or
+`.nus.edu`. `Email.hasDotlessDomain` reports one, and `AddCommand` and
+`EditCommand` append its warning as a second block after any duplicate block,
+so the two read as separate concerns. `EditCommand` passes the selected record
+as well, so an address the student already holds carries no warning and an
+unrelated edit does not repeat an acknowledged one. Email validation is
+untouched, so such an address is still entered, stored, loaded and compared as
+it always was.
+
 ### Finding students
 
 `FindCommandParser` uses `FlagTokenizer` and the existing `CliFlags` aliases for
@@ -1346,8 +1370,11 @@ stale confirmation active, and it lives only in memory, so restarting TAB cannot
 confirm a previous request. The prompt and the replies both travel through the
 existing result area and command field, with no mouse or dialog.
 `MainWindow` supplies `Logic.isAwaitingConfirmation` to `CommandBox`, which
-submits an empty Enter only during confirmation; otherwise an empty Enter
-keeps its existing no-op behavior. Each `Logic` implementation must supply
+submits a blank Enter only during confirmation, where a blank reply cancels
+the pending clear; otherwise Enter on a blank line does nothing. Blank is what
+`StringUtil.isBlankInput` calls blank — nothing, whitespace, or only the
+invisible characters a paste carries — so a stray space before Enter is
+ignored the way an empty line is rather than answered with the `help` usage. Each `Logic` implementation must supply
 this state explicitly so a default cannot silently suppress cancellation.
 
 ### \[Proposed\] Data archiving
@@ -2512,6 +2539,21 @@ testers are expected to do more *exploratory* testing.
       `Student Four` each with phone `000`, then `add Student Five -p 000`.<br>
       Expected: Student Five is saved, one warning naming two of them and
       saying two others match, with the review advice appearing once.
+
+1. Warning about an email whose domain has no dot
+
+   1. Test case: From an empty book, `add Tan -e john@gmail`, then
+      `add Ng -e john@gmail.com`, then `add Lee -e john@gmail.c`.<br>
+      Expected: Tan is saved and warned about, the warning naming the address
+      and suggesting a missing part such as `.com`. Ng is saved without a
+      warning. Lee is refused, the two-character rule on the final label being
+      validation rather than a warning.
+   1. Test case: Continuing above, `list`, note Tan's index, then
+      `edit INDEX -t T1`, then `edit INDEX -e tan@nus`.<br>
+      Expected: The tag edit shows no warning, the address being one the
+      student already holds. The address edit warns again, naming `tan@nus`.
+      Restarting TAB keeps the address as entered.
+
 ### Editing a student
 
 1. Editing a name that AB3's prefixes made impossible to type

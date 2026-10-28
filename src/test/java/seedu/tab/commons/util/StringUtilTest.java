@@ -6,11 +6,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.testutil.Assert.assertThrows;
 
 import java.io.FileNotFoundException;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
 public class StringUtilTest {
+
+    @Test
+    public void isBlankInput_nothingToReadACommandFrom_returnsTrue() {
+        for (String blank : List.of("", " ", "\t", "   ", "\u3000", "\u200b", " \u200b\t ", "\u00a0")) {
+            assertTrue(StringUtil.isBlankInput(blank), "should be blank: " + blank);
+        }
+    }
+
+    @Test
+    public void isBlankInput_anythingVisible_returnsFalse() {
+        for (String input : List.of("list", " list ", "\u200blist", "-", ".", "\u200b.")) {
+            assertFalse(StringUtil.isBlankInput(input), "should not be blank: " + input);
+        }
+    }
 
     @Test
     public void containsIgnoreCase_unicodeCaseVariants_returnsTrue() {

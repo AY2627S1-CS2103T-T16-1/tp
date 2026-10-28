@@ -58,10 +58,24 @@ public class JsonUtil {
             Path filePath, Class<T> classOfObjectToDeserialize) throws DataLoadingException {
         requireNonNull(filePath);
         if (Files.notExists(filePath)) {
+            requireFirstRun(filePath);
             return Optional.empty();
         }
         logger.info("JSON file " + filePath + " found.");
         return Optional.of(deserializeDocument(readJsonSource(filePath), filePath, classOfObjectToDeserialize));
+    }
+
+    /**
+     * Confirms that a missing {@code filePath} stands for a first run rather than for records
+     * behind a symbolic link whose target cannot be reached.
+     */
+    private static void requireFirstRun(Path filePath) throws DataLoadingException {
+        try {
+            FileUtil.requireResolvableLink(filePath);
+        } catch (IOException e) {
+            logger.warning("Cannot resolve JSON file " + filePath + ": " + e);
+            throw new DataLoadingException(JsonParseErrorFormatter.formatIoError(e), e);
+        }
     }
 
     private static String readJsonSource(Path filePath) throws DataLoadingException {

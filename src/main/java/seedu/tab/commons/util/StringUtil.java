@@ -233,6 +233,23 @@ public class StringUtil {
     }
 
     /**
+     * Returns true if {@code text} holds nothing a command could be read from: nothing at all,
+     * only whitespace, or only the invisible characters a paste carries. The command box asks
+     * this before submitting, so a stray space before Enter is ignored the way an empty line
+     * is rather than answered as a mistyped command.
+     */
+    public static boolean isBlankInput(String text) {
+        requireNonNull(text);
+        String visible = stripFormatCharacters(text);
+        for (int index = 0; index < visible.length(); index++) {
+            if (!isWhitespace(visible.charAt(index))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Returns {@code raw} in the form a stored field holds: without invisible format
      * and non-whitespace control characters that would let two identical-looking values differ, with every run of
      * whitespace reduced to one ASCII space, the ends trimmed, and the result composed to
