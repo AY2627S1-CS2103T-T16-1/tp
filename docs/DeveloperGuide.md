@@ -2253,8 +2253,8 @@ testers are expected to do more *exploratory* testing.
 
 1. Preserving the student's other details and persisting the change
 
-   1. Prerequisites: Add `add Tag Test -p 91234567 -e tag@example.com
-      --id A01234567X -t T1 --follow-up` as one line, then `find -n "Tag Test"`.
+   1. Prerequisites: Add `add Tag Test -p 99887766 -e tag@example.com
+      --id A09999999Z -t T1 --follow-up` as one line, then `find -n "Tag Test"`.
    1. Test case: `tag 1 --add "Lab 3"`, then `tag 1 --remove "  LAB   3  "`.<br>
       Expected: The replies start `Added tag [Lab 3]:` and `Removed tag
       [Lab 3]:`. Only that tag comes and goes, `T1`, the contact details and
@@ -2435,9 +2435,9 @@ testers are expected to do more *exploratory* testing.
 
 1. Reading every tag that fits
 
-   1. Test case: Add `add Alex Yeoh -p 87438807 -t T01 -t "Lab 3" -t W5
+   1. Test case: Add `add Alvin Yeo -p 86543210 -t T01 -t "Lab 3" -t W5
       -t consult`, widen to about 1400 px, then add
-      `add Irfan Ibrahim -p 92492021 -t "CS2103T Tutorial W09"
+      `add Imran Ibrahim -p 86543211 -t "CS2103T Tutorial W09"
       -t "CS2103T Tutorial W10"` and narrow and widen repeatedly.<br>
       Expected: All four chips appear alphabetically with no count when there
       is room. Chips that fit appear in full, hidden ones are counted and
@@ -2619,7 +2619,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Repeating an edit after a search
 
-   1. Prerequisites: Add `add Alex Yeoh -p 87438807`, `add John Doe -p 98765432`
+   1. Prerequisites: Add `add Mary Chen -p 86543212`, `add John Doe -p 98765432`
       and `add John Smith -p 91112222`, then run `find -n john`.
    1. Test case: Run `edit 1 --follow-up` twice, then `edit 1 -n Jack` followed
       by `edit 1 -p 91112233`.<br>
