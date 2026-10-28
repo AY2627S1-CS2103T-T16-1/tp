@@ -2,6 +2,7 @@
 !include style.puml
 skinparam ArrowFontStyle plain
 skinparam defaultFontSize 16
+skinparam sequenceReferenceBackgroundColor white
 
 participant ":LogicManager" as logic LOGIC_COLOR
 participant ":StudentBookParser" as dispatcher LOGIC_COLOR
@@ -14,11 +15,17 @@ activate logic
 logic -> dispatcher : parseCommand("delete 1")
 activate dispatcher
 create parser
-dispatcher -> parser : «create»
+dispatcher -> parser : DeleteCommandParser()
+activate parser
+parser --> dispatcher
+deactivate parser
 dispatcher -> parser : parse(" 1")
 activate parser
 create command
-parser -> command : «create»
+parser -> command : DeleteCommand(target)
+activate command
+command --> parser
+deactivate command
 parser --> dispatcher : command
 deactivate parser
 dispatcher --> logic : command

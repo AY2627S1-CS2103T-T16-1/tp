@@ -2,6 +2,7 @@
 !include style.puml
 skinparam ArrowFontStyle plain
 skinparam defaultFontSize 16
+skinparam sequenceReferenceBackgroundColor white
 
 participant ":LogicManager" as logic LOGIC_COLOR
 participant "c:Command" as command LOGIC_COLOR
@@ -36,9 +37,12 @@ else student book changed
   end ref
   alt save succeeds
     storage --> logic
+    deactivate storage
     [<-- logic : result
   else IOException
+    activate storage
     storage --> logic : save failure
+    deactivate storage
     logic -> model : setStudentBook(snapshot)
     activate model
     model --> logic
@@ -49,7 +53,6 @@ else student book changed
     deactivate model
     [<-- logic : CommandException
   end
-  deactivate storage
 end
 deactivate logic
 @enduml
