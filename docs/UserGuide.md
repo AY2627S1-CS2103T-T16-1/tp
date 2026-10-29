@@ -84,7 +84,7 @@ The field options below are used by `add`, `edit` and `find`.
 * Tags differing only in case or extra spaces are treated as the same tag.
 * The tag `Needs follow-up` is reserved for the follow-up flag, as are its spacing, hyphen and trailing-punctuation variants such as `Needs follow up`. A tag differing by other punctuation, such as `Needs_follow_up`, is saved with a warning instead and does not set the flag.
 * NUS Student IDs must be unique across the book, ignoring case.
-* After you `add` or `edit` a student, a matching name, phone or email raises a possible-duplicate warning. Names are matched as `find` matches them, so case, Latin accents, apostrophe styles and hyphen, dash and space differences do not hide a duplicate.
+* After you `add` or `edit` a student, a possible-duplicate warning may be raised if the result has a matching name, phone or email. Names are matched the way [`find`](#locating-students-with-find) matches them.
 * For duplicate warnings, you can exercise your own judgement and ignore them if you know that the records describe different students.
 
 ### Choosing a student
