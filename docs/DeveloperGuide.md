@@ -158,7 +158,7 @@ Field constructors use this shared representation so command input and loaded da
 
 | Value | Model rule and comparison behavior |
 | --- | --- |
-| `Name` | Requires a Unicode letter or number; preserves punctuation and script. Search and possible-duplicate warnings use a separate comparison key that ignores case, Latin accents/modifiers, curly apostrophe variants, and selected hyphen/space differences. Stored spelling is preserved. |
+| `Name` | Requires a Unicode letter or number; preserves punctuation and script. Search and possible-duplicate warnings use a separate comparison key that ignores case, Latin accents/modifiers, curly apostrophe variants, and dash/space differences. Every character Unicode calls a dash, and the minus sign, reads as a space, while a dash-shaped letter such as the katakana prolonged sound mark stays significant. Stored spelling is preserved. |
 | `Phone` | Requires at least three decimal digits and preserves formatting. `getDigits()` removes other characters and converts Unicode decimal digits to ASCII for numeric search and possible-duplicate warnings. |
 | `Email` | Checks TAB's supported `local-part@domain` form. Commands and storage enforce a 254-character limit. A valid address with a dotless domain is accepted with a warning when added or changed. |
 | `NusStudentId` | Accepts 1–32 ASCII letters/digits and stores uppercase using `Locale.ROOT`. It is the sole identity key. |
@@ -629,6 +629,8 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
    * Expected: No students match because Alice has no email. The displayed total and follow-up count are zero, with no tag rows.
 1. Try `find Alice`, `find -t Lab 3`, `find -f -nf`, and `find -n ""`.
    * Expected: Each explains the invalid query and preserves the previous results and saved records.
+1. Enter `add "Mary–Jane Tan"` with an en dash, then `find -n "Mary Jane"`, then `add "Mary Jane Tan"`.
+   * Expected: The first record keeps its en dash in the card and the data file, the search finds it, and the second `add` reports a possible duplicate.
 1. Enter `list`.
    * Expected: Every added student returns. Tag groups are ordered by count, alphabetically on ties, and the follow-up count is separate from tag groups.
 
