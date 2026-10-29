@@ -126,6 +126,6 @@ final class LikelyDuplicateWarning {
         }
         String firstTwoNames = firstName + ", " + matchingStudents.get(1).getName();
         return firstTwoNames + " and " + remainingStudents + " other"
-                + (remainingStudents == 1 ? "" : "s");
+                + StringUtil.getPluralSuffix(remainingStudents);
     }
 }
