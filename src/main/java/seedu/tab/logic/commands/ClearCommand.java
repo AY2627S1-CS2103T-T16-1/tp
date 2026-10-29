@@ -16,7 +16,10 @@ import seedu.tab.model.StudentBook;
 public class ClearCommand extends Command {
 
     public static final String COMMAND_WORD = "clear";
-    public static final String MESSAGE_CONFIRMATION = "Clear all %1$d student%2$s? This cannot be undone. [y/N]";
+    public static final String MESSAGE_CONFIRMATION = "Clear all %1$d students? This cannot be undone. [y/N]";
+    // A single student reads as the only one rather than as a count, so it needs its own sentence.
+    public static final String MESSAGE_CONFIRMATION_ONLY_STUDENT =
+            "Clear the only student? This cannot be undone. [y/N]";
     public static final String MESSAGE_CANCELLED = "Clear cancelled. No student records were changed.";
     public static final String MESSAGE_EMPTY = "The student book is already empty. Nothing to clear.";
     public static final String MESSAGE_INVALID_REPLY = "Invalid reply. Enter y/yes or n/no (Enter cancels).";
@@ -31,9 +34,13 @@ public class ClearCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         int studentCount = model.getStudentBook().getStudentList().size();
-        return new CommandResult(studentCount == 0 ? MESSAGE_EMPTY
-                : String.format(Locale.ROOT, MESSAGE_CONFIRMATION, studentCount,
-                        StringUtil.getPluralSuffix(studentCount)));
+        if (studentCount == 0) {
+            return new CommandResult(MESSAGE_EMPTY);
+        }
+        if (studentCount == 1) {
+            return new CommandResult(MESSAGE_CONFIRMATION_ONLY_STUDENT);
+        }
+        return new CommandResult(String.format(Locale.ROOT, MESSAGE_CONFIRMATION, studentCount));
     }
 
     /**
