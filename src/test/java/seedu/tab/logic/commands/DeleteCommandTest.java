@@ -233,6 +233,12 @@ public class DeleteCommandTest {
     }
 
     @Test
+    public void constructor_nullTarget_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new DeleteCommand((StudentTarget) null));
+        assertThrows(NullPointerException.class, () -> new DeleteCommand((Index) null));
+    }
+
+    @Test
     public void execute_validIndexLastStudentUnfilteredList_success() {
         Index lastIndex = Index.fromOneBased(model.getFilteredStudentList().size());
         Student studentToDelete = model.getFilteredStudentList().get(lastIndex.getZeroBased());
