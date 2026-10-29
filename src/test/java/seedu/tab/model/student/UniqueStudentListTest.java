@@ -8,6 +8,7 @@ import static seedu.tab.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.tab.testutil.Assert.assertThrows;
 import static seedu.tab.testutil.TypicalStudents.ALICE;
 import static seedu.tab.testutil.TypicalStudents.BOB;
+import static seedu.tab.testutil.TypicalStudents.CARL;
 
 import java.util.List;
 
@@ -222,6 +223,24 @@ public class UniqueStudentListTest {
     public void setStudents_listWithDuplicateStudents_throwsDuplicateStudentException() {
         List<Student> listWithDuplicateStudents = List.of(ALICE, ALICE);
         assertThrows(DuplicateStudentException.class, () -> uniqueStudentList.setStudents(listWithDuplicateStudents));
+    }
+
+    @Test
+    public void setStudents_duplicateReplacement_preservesExistingStudents() {
+        uniqueStudentList.add(BOB);
+        uniqueStudentList.add(CARL);
+        Student sameIdDifferentDetails = new StudentBuilder(ALICE).withName("Alice Tan").build();
+        List<List<Student>> invalidReplacements = List.of(
+                List.of(ALICE, ALICE), List.of(ALICE, sameIdDifferentDetails));
+
+        for (List<Student> replacement : invalidReplacements) {
+            assertThrows(DuplicateStudentException.class, () -> uniqueStudentList.setStudents(replacement));
+
+            List<Student> remainingStudents = uniqueStudentList.asUnmodifiableObservableList();
+            assertEquals(List.of(BOB, CARL), remainingStudents);
+            assertSame(BOB, remainingStudents.get(0));
+            assertSame(CARL, remainingStudents.get(1));
+        }
     }
 
     @Test

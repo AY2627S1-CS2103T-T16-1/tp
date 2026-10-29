@@ -172,12 +172,15 @@ public class StringUtilTest {
         assertFalse(StringUtil.isNonZeroUnsignedInteger(" 10 ")); // Leading/trailing spaces
         assertFalse(StringUtil.isNonZeroUnsignedInteger("1 0")); // Spaces in the middle
 
-        // EP: number larger than Integer.MAX_VALUE
-        assertFalse(StringUtil.isNonZeroUnsignedInteger(Long.toString(Integer.MAX_VALUE + 1)));
-
         // EP: valid numbers, should return true
         assertTrue(StringUtil.isNonZeroUnsignedInteger("1")); // Boundary value
         assertTrue(StringUtil.isNonZeroUnsignedInteger("10"));
+    }
+
+    @Test
+    public void isNonZeroUnsignedInteger_upperBoundary_acceptsMaximumAndRejectsNextInteger() {
+        assertTrue(StringUtil.isNonZeroUnsignedInteger("2147483647"));
+        assertFalse(StringUtil.isNonZeroUnsignedInteger("2147483648"));
     }
 
 
@@ -207,7 +210,6 @@ public class StringUtilTest {
 
         // Matches part of a word
         assertTrue(StringUtil.containsIgnoreCase("Hans", "Han")); // Partial match
-        assertTrue(StringUtil.containsIgnoreCase("Hans Bo", "bo")); // Case insensitive partial
         assertTrue(StringUtil.containsIgnoreCase("12345678", "345")); // Numeric partial
 
         // Full word match
@@ -219,6 +221,13 @@ public class StringUtilTest {
         assertTrue(StringUtil.containsIgnoreCase("Hans Bo", "hans"));
         assertTrue(StringUtil.containsIgnoreCase("Hans Bo", "BO"));
         assertTrue(StringUtil.containsIgnoreCase("HANS BO", "ha"));
+    }
+
+    @Test
+    public void containsIgnoreCase_nonMatchingNonblankInputs_returnsFalse() {
+        assertFalse(StringUtil.containsIgnoreCase("Hans Bo", "Carl")); // Unrelated text
+        assertFalse(StringUtil.containsIgnoreCase("Hans", "Hans Bo")); // Keyword longer than sentence
+        assertFalse(StringUtil.containsIgnoreCase("Hans", "Hanz")); // One differing character
     }
 
     //---------------- Tests for getDetails --------------------------------------
