@@ -111,7 +111,8 @@ public class EditCommandParser implements Parser<EditCommand> {
             Optional<Boolean> followUp) {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
 
-        descriptor.setName(problems.collectIfPresent(arguments.getValue(FLAG_NAME), ParserUtil::parseName));
+        problems.collectIfPresent(arguments.getValue(FLAG_NAME), ParserUtil::parseName)
+                .ifPresent(descriptor::setName);
         arguments.getValue(FLAG_PHONE).ifPresent(value -> parseClearableField(problems, value,
                 ParserUtil::parsePhone, descriptor::clearPhone, descriptor::setPhone));
         arguments.getValue(FLAG_EMAIL).ifPresent(value -> parseClearableField(problems, value,

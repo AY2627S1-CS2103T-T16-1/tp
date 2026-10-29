@@ -35,7 +35,7 @@ public class TagCommandParser implements Parser<TagCommand> {
         ParseProblems.ValueParser<Tag> readTag = actionFlag.equals(FLAG_REMOVE_TAG)
                 ? ParserUtil::parseTag
                 : ParserUtil::parseTagToAdd;
-        Tag tag = problems.collectIfPresent(arguments.getValue(actionFlag), readTag);
+        Tag tag = problems.collectIfPresent(arguments.getValue(actionFlag), readTag).orElse(null);
         problems.throwIfAny();
         return new TagCommand(target, tag, actionFlag.equals(FLAG_REMOVE_TAG) ? Action.REMOVE : Action.ADD);
     }

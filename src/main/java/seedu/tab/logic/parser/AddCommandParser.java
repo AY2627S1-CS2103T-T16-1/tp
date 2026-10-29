@@ -50,12 +50,12 @@ public class AddCommandParser implements Parser<AddCommand> {
         }
 
         Name name = parseName(problems, arguments.getPreamble());
-        Optional<Phone> phone = Optional.ofNullable(
-                problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone));
-        Optional<Email> email = Optional.ofNullable(
-                problems.collectIfPresent(arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail));
-        Optional<NusStudentId> nusStudentId = Optional.ofNullable(
-                problems.collectIfPresent(arguments.getValue(FLAG_NUS_STUDENT_ID), ParserUtil::parseNusStudentId));
+        Optional<Phone> phone = problems.collectIfPresent(
+                arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone);
+        Optional<Email> email = problems.collectIfPresent(
+                arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail);
+        Optional<NusStudentId> nusStudentId = problems.collectIfPresent(
+                arguments.getValue(FLAG_NUS_STUDENT_ID), ParserUtil::parseNusStudentId);
         Set<Tag> tags = ParserUtil.parseTags(arguments.getAllValues(FLAG_TAG), problems);
 
         problems.throwIfAny();

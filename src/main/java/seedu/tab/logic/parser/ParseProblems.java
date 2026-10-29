@@ -42,15 +42,13 @@ public class ParseProblems {
     }
 
     /**
-     * Parses {@code value} if it was given, recording why if it is rejected. A field the command
-     * left out yields null without a complaint, because an optional field is entitled to be
-     * absent and a required one is reported separately.
+     * Parses {@code value} if it was given, recording why if it is rejected, and returns what
+     * the field holds. A field the command left out yields nothing without a complaint, because
+     * an optional field is entitled to be absent and a required one is reported separately. A
+     * field whose value is rejected yields nothing as well, its reason having been recorded.
      */
-    public <T> T collectIfPresent(Optional<String> value, ValueParser<T> parser) {
-        if (value.isEmpty()) {
-            return null;
-        }
-        return collect(() -> parser.parse(value.get()));
+    public <T> Optional<T> collectIfPresent(Optional<String> value, ValueParser<T> parser) {
+        return value.map(given -> collect(() -> parser.parse(given)));
     }
 
     /**
