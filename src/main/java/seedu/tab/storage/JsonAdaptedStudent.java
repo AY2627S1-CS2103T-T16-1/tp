@@ -38,17 +38,27 @@ class JsonAdaptedStudent {
     private static final String MESSAGE_EMAIL_TOO_LONG =
             "%s field is too long: it holds %d characters, but an email may hold at most %d";
 
+    private static final String NAME_FIELD = "name";
+    private static final String PHONE_FIELD = "phone";
+    private static final String EMAIL_FIELD = "email";
+    private static final String NUS_STUDENT_ID_FIELD = "nusStudentId";
+    private static final String TAGS_FIELD = "tags";
+    private static final String FLAG_FIELD = "flag";
     private static final String LEGACY_ADDRESS_FIELD = "address";
+
+    /** The keys a saved record may hold, listed for a reader correcting a misspelt one. */
+    private static final String EXPECTED_FIELDS = String.join(", ", NAME_FIELD, PHONE_FIELD, EMAIL_FIELD,
+            NUS_STUDENT_ID_FIELD, TAGS_FIELD, FLAG_FIELD);
     private static final String MESSAGE_UNKNOWN_FIELD = "Unknown field \"%s\" in %s. Check its spelling. "
-            + "Expected: name, phone, email, nusStudentId, tags, flag."
-            + " The legacy address field is also accepted and ignored.";
+            + "Expected: " + EXPECTED_FIELDS + "."
+            + " The legacy " + LEGACY_ADDRESS_FIELD + " field is also accepted and ignored.";
 
     private final String name;
     private final String phone;
     private final String email;
     private final String nusStudentId;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
-    @JsonProperty("flag")
+    @JsonProperty(FLAG_FIELD)
     private final Boolean isFlagged;
 
     /**
@@ -56,13 +66,13 @@ class JsonAdaptedStudent {
      */
     @JsonCreator
     public JsonAdaptedStudent(
-            @JsonProperty("name") @JsonDeserialize(using = JsonTextFieldDeserializer.class) String name,
-            @JsonProperty("phone") @JsonDeserialize(using = JsonTextFieldDeserializer.class) String phone,
-            @JsonProperty("email") @JsonDeserialize(using = JsonTextFieldDeserializer.class) String email,
-            @JsonProperty("nusStudentId")
+            @JsonProperty(NAME_FIELD) @JsonDeserialize(using = JsonTextFieldDeserializer.class) String name,
+            @JsonProperty(PHONE_FIELD) @JsonDeserialize(using = JsonTextFieldDeserializer.class) String phone,
+            @JsonProperty(EMAIL_FIELD) @JsonDeserialize(using = JsonTextFieldDeserializer.class) String email,
+            @JsonProperty(NUS_STUDENT_ID_FIELD)
             @JsonDeserialize(using = JsonTextFieldDeserializer.class) String nusStudentId,
-            @JsonProperty("tags") @JsonDeserialize(using = JsonTagsDeserializer.class) List<JsonAdaptedTag> tags,
-            @JsonProperty("flag") @JsonDeserialize(using = JsonFollowUpFlagDeserializer.class) Boolean isFlagged) {
+            @JsonProperty(TAGS_FIELD) @JsonDeserialize(using = JsonTagsDeserializer.class) List<JsonAdaptedTag> tags,
+            @JsonProperty(FLAG_FIELD) @JsonDeserialize(using = JsonFollowUpFlagDeserializer.class) Boolean isFlagged) {
         this.name = name;
         this.phone = phone;
         this.email = email;
