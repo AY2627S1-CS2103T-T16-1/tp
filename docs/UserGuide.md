@@ -84,7 +84,7 @@ The field options below are used by `add`, `edit` and `find`.
 * Tags differing only in case or extra spaces are treated as the same tag.
 * The tag `Needs follow-up` is reserved for the follow-up flag, as are its spacing, hyphen and trailing-punctuation variants such as `Needs follow up`. A tag differing by other punctuation, such as `Needs_follow_up`, is saved with a warning instead and does not set the flag.
 * NUS Student IDs must be unique across the book, ignoring case.
-* After you `add` or `edit` a student, a matching name, phone or email raises a possible-duplicate warning.
+* After you `add` or `edit` a student, a matching name, phone or email raises a possible-duplicate warning. Names are matched as `find` matches them, so case, Latin accents, apostrophe styles and hyphen, dash and space differences do not hide a duplicate.
 * For duplicate warnings, you can exercise your own judgement and ignore them if you know that the records describe different students.
 
 ### Choosing a student
@@ -206,8 +206,8 @@ Searches the whole book using the [student field options](#student-fields).
 * To search an entire phrase, use double quotes.
 * Name searches ignore Latin accents, strokes and apostrophe styles. <br>
   For example, `dang` matches `Đặng`.
-* Name searches treat hyphens as spaces, but other fields do not. <br>
-  For example, `find -n "Mary Jane"` matches the name `Mary-Jane`, but `find -t "Mary Jane"` does not match the tag `Mary-Jane`.
+* Name searches treat hyphens and the longer dashes as spaces, but other fields do not. <br>
+  For example, `find -n "Mary Jane"` matches the names `Mary-Jane` and `Mary–Jane`, but `find -t "Mary Jane"` does not match the tag `Mary-Jane`.
 * Phone searches match digits across formatting. <br>
   For example, `91234567` matches `+65 9123 4567`.
 * Use `-f` for students with the follow-up flag, or `-nf` for students without it. `-f` and `-nf` cannot be used together.

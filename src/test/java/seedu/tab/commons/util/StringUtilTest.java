@@ -54,21 +54,26 @@ public class StringUtilTest {
     }
 
     @Test
-    public void normalizeNameForComparison_hyphens_matchSpace() {
-        // the ASCII hyphen, the typographic hyphen and the non-breaking hyphen all read as one
-        for (String name : new String[] {"Mary-Jane", "Mary - Jane", "Mary‐Jane", "Mary‑Jane"}) {
-            assertEquals("mary jane", StringUtil.normalizeNameForComparison(name));
+    public void normalizeNameForComparison_dashes_matchSpace() {
+        // every dash Unicode names, plus the minus sign it files under symbols, reads as one
+        String[] dashes = {"-", " - ", "‐", "‑", "‒", "–", "—", "―",
+            "−", "⸺", "－", "﹘", "゠", "־", "֊", "⸗"};
+        for (String dash : dashes) {
+            assertEquals("mary jane", StringUtil.normalizeNameForComparison("Mary" + dash + "Jane"),
+                    "should read as a space: " + dash);
         }
         assertEquals("charlotte oliveiro", StringUtil.normalizeNameForComparison("Charlotte-Oliveiro"));
         assertEquals("charlotte oliveiro", StringUtil.normalizeNameForComparison("Charlotte Oliveiro"));
     }
 
     @Test
-    public void normalizeNameForComparison_longerDashes_keepsThemDistinct() {
-        // a reader can tell an en dash, an em dash and a minus sign from a hyphen, so each stands
-        for (String name : new String[] {"Mary–Jane", "Mary—Jane", "Mary−Jane"}) {
-            assertFalse(StringUtil.normalizeNameForComparison(name)
-                    .equals(StringUtil.normalizeNameForComparison("Mary Jane")));
+    public void normalizeNameForComparison_dashShapedNonPunctuation_keepsItDistinct() {
+        // the prolonged sound mark of ラーメン is a letter, the box-drawing stroke a symbol and the
+        // underscore a connector, so none of them is the dash a second roster would write
+        for (String name : new String[] {"MaryーJane", "MaryｰJane", "Mary─Jane",
+            "Mary_Jane"}) {
+            assertNotEquals("mary jane", StringUtil.normalizeNameForComparison(name),
+                    "should stay distinct: " + name);
         }
     }
 

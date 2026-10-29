@@ -34,10 +34,13 @@ public class StringUtil {
     private static final Pattern INVISIBLE = Pattern.compile("(?U)[\\p{Cf}\\p{Cc}&&[^\\u200C\\u200D\\s]]");
     private static final Pattern WHITESPACE = Pattern.compile("(?U)\\s+");
     private static final Pattern HAS_LETTER_OR_NUMBER = Pattern.compile("[\\p{L}\\p{N}]");
-    // The three characters a reader sees as the hyphen on the keyboard: the ASCII hyphen-minus,
-    // the typographic hyphen and the non-breaking hyphen. The longer dashes are left out,
-    // because a reader can tell them apart from a hyphen and so chooses between them.
-    private static final Pattern HYPHEN = Pattern.compile("[\\u002D\\u2010\\u2011]");
+    // Every character Unicode calls a dash, together with the minus sign, which it files under
+    // mathematical symbols instead. Which dash a name list carries is the choice of whatever
+    // wrote it rather than of the reader: a word processor turns a typed hyphen into an en dash,
+    // and a roll exported from one spells Mary–Jane where a sign-up sheet spells Mary-Jane. The
+    // prolonged sound mark of ラーメン is a letter to Unicode and stays, as does any other
+    // dash-shaped character that is not punctuation. FollowUpFlag folds the same set.
+    private static final Pattern HYPHEN_OR_DASH = Pattern.compile("[\\p{Pd}\\u2212]");
 
     private StringUtil() {} // this class only holds the helpers
 
@@ -137,14 +140,15 @@ public class StringUtil {
 
     /**
      * Returns a comparison key for a name, ignoring case, Latin accents, curly apostrophes and
-     * the difference between a hyphen and a space. The stored name is left unchanged. Marks
+     * the difference between a dash and a space. The stored name is left unchanged. Marks
      * belonging to other scripts are retained because they may represent separate vowels rather
      * than optional accents.
      *
-     * <p>A hyphen reads as a space because two lists of the same class routinely disagree on it:
-     * a sign-up sheet carries {@code Mary-Jane} where the official roll carries {@code Mary Jane}.
-     * Whitespace runs are then reduced the way a stored value reduces them, so a hyphen that
-     * already has spaces around it does not leave a gap the other spelling cannot match.
+     * <p>A dash reads as a space because two lists of the same class routinely disagree on it:
+     * a sign-up sheet carries {@code Mary-Jane}, the official roll carries {@code Mary Jane}, and
+     * a roll typed in a word processor carries {@code Mary–Jane}. Whitespace runs are then
+     * reduced the way a stored value reduces them, so a dash that already has spaces around it
+     * does not leave a gap the other spelling cannot match.
      */
     public static String normalizeNameForComparison(String name) {
         requireNonNull(name);
@@ -163,8 +167,8 @@ public class StringUtil {
                 result.appendCodePoint(codePoint == '’' || codePoint == '‘' ? '\'' : codePoint);
             }
         }
-        String hyphensAsSpaces = HYPHEN.matcher(result.toString()).replaceAll(" ");
-        return foldCase(WHITESPACE.matcher(hyphensAsSpaces).replaceAll(" "));
+        String dashesAsSpaces = HYPHEN_OR_DASH.matcher(result.toString()).replaceAll(" ");
+        return foldCase(WHITESPACE.matcher(dashesAsSpaces).replaceAll(" "));
     }
 
     private static String foldCase(String value) {

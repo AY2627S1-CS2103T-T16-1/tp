@@ -29,16 +29,24 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
-    public void test_hyphenatedName_matchesTheSameNameSpelledWithSpaces() {
-        Student hyphenated = new StudentBuilder().withName("Mary-Jane Tan").build();
-        Student spaced = new StudentBuilder().withName("Mary Jane Tan").build();
-        for (String keyword : List.of("Mary Jane", "Mary-Jane", "mary jane")) {
-            assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of(keyword))).test(hyphenated));
-            assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of(keyword))).test(spaced));
+    public void test_dashedName_matchesTheSameNameSpelledWithSpaces() {
+        List<Student> students = List.of(
+                new StudentBuilder().withName("Mary-Jane Tan").build(),
+                new StudentBuilder().withName("Mary–Jane Tan").build(),
+                new StudentBuilder().withName("Mary—Jane Tan").build(),
+                new StudentBuilder().withName("Mary−Jane Tan").build(),
+                new StudentBuilder().withName("Mary Jane Tan").build());
+        for (String keyword : List.of("Mary Jane", "Mary-Jane", "mary jane", "Mary–Jane",
+                "Mary—Jane", "Mary−Jane")) {
+            Map<Field, List<String>> conditions = Map.of(Field.NAME, List.of(keyword));
+            for (Student student : students) {
+                assertTrue(new DetailsContainsKeywordsPredicate(conditions).test(student),
+                        keyword + " should match " + student.getName().getFullName());
+            }
         }
-        // a longer dash remains a character of its own, and a tag keeps its hyphen literal
-        assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Mary–Jane")))
-                .test(hyphenated));
+        // a prolonged sound mark is a letter rather than a dash, and a tag keeps its hyphen literal
+        assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Mary Jane")))
+                .test(new StudentBuilder().withName("MaryーJane Tan").build()));
         Student tagged = new StudentBuilder().withName("Casey Low").withTags("needs-followup").build();
         assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.TAG, List.of("needs followup"))).test(tagged));
     }
