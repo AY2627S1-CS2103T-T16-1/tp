@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,10 +100,11 @@ public class FlagTokenizer {
     }
 
     /**
-     * Reads each flag from {@code index} onwards, together with its value when it takes one.
+     * Reads each flag from {@code firstFlag} onwards, together with its value when it takes one.
      */
-    private static void readFlags(List<Token> tokens, int index, Map<String, CliFlag> flagsByMarker,
+    private static void readFlags(List<Token> tokens, int firstFlag, Map<String, CliFlag> flagsByMarker,
             FlagArgumentMap parsed) throws ParseException {
+        int index = firstFlag;
         while (index < tokens.size()) {
             index = readFlag(tokens, index, flagsByMarker, parsed);
         }
@@ -112,9 +114,9 @@ public class FlagTokenizer {
     private static int readFlag(List<Token> tokens, int index, Map<String, CliFlag> flagsByMarker,
             FlagArgumentMap parsed) throws ParseException {
         Token token = tokens.get(index);
-        AttachedOption attached = getAttachedOption(token);
-        if (attached != null) {
-            readAttachedFlag(token, attached, flagsByMarker, parsed);
+        Optional<AttachedOption> attached = getAttachedOption(token);
+        if (attached.isPresent()) {
+            readAttachedFlag(token, attached.get(), flagsByMarker, parsed);
             return index + 1;
         }
         CliFlag flag = getFlag(token, flagsByMarker, parsed);
@@ -209,13 +211,13 @@ public class FlagTokenizer {
     }
 
     /** Returns the option marker and value joined in {@code token}, if any. */
-    private static AttachedOption getAttachedOption(Token token) {
+    private static Optional<AttachedOption> getAttachedOption(Token token) {
         if (!isAttachedOption(token)) {
-            return null;
+            return Optional.empty();
         }
 
         int separator = token.value().indexOf(VALUE_SEPARATOR);
         String marker = token.value().substring(0, separator);
-        return new AttachedOption(marker, token.value().substring(separator + 1));
+        return Optional.of(new AttachedOption(marker, token.value().substring(separator + 1)));
     }
 }
