@@ -21,11 +21,7 @@ public class CliFlag {
      * @param primaryMarker The characters that mark the option, such as {@code -f}.
      */
     public CliFlag(String primaryMarker) {
-        requireNonNull(primaryMarker);
-        this.primaryMarker = primaryMarker;
-        this.aliases = List.of();
-        this.fieldName = null;
-        this.isValueRequired = false;
+        this(primaryMarker, List.of());
     }
 
     /**
