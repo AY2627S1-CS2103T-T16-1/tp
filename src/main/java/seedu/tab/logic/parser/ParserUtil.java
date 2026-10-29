@@ -131,9 +131,9 @@ public class ParserUtil {
 
     /**
      * Returns how the target in {@code target} is named, so that a diagnostic about the
-     * words after it describes the form the target was read as. A target opening with a
-     * letter is an NUS Student ID, the way {@link #parseStudentTarget} reads it, and every
-     * other target is named by {@code indexFieldName}.
+     * words after it describes the form the target was read as. A target {@link #isIdTarget
+     * read as an NUS Student ID} is named as one, and every other target is named by
+     * {@code indexFieldName}.
      *
      * @param target The one token the User gave as the target, which may be empty.
      * @param indexFieldName How the calling command names a target read as an index.
@@ -141,17 +141,25 @@ public class ParserUtil {
     public static String getTargetFieldName(String target, String indexFieldName) {
         requireNonNull(target);
         requireNonNull(indexFieldName);
-        String trimmedTarget = target.trim();
-        boolean isNusStudentId = !trimmedTarget.isEmpty() && Character.isLetter(trimmedTarget.charAt(0));
-        return isNusStudentId ? FIELD_NUS_STUDENT_ID : indexFieldName;
+        return isIdTarget(target.trim()) ? FIELD_NUS_STUDENT_ID : indexFieldName;
+    }
+
+    /**
+     * Returns true if {@code target} addresses a student by their NUS Student ID rather than by
+     * the position the student holds in the displayed list. An index is all digits and a natural
+     * NUS Student ID opens with a letter, so the leading character tells the two apart; an
+     * all-digit ID is the exception, and needs an explicit ID option to be selected as an ID.
+     *
+     * @param target The one token the User gave as the target, which may be empty.
+     */
+    static boolean isIdTarget(String target) {
+        return !target.isEmpty() && Character.isLetter(target.charAt(0));
     }
 
     /**
      * Parses {@code target} as the address of one student: a target opening with a letter is
      * an NUS Student ID, and any other target is the index shown in the displayed student
-     * list. An index is all digits and a natural NUS Student ID opens with a letter, so the
-     * two shapes are read apart without ever mistaking one for the other; an all-digit ID is
-     * the exception, and needs an explicit ID option to be selected as an ID.
+     * list, as {@link #isIdTarget} tells the two shapes apart.
      *
      * <p>An NUS Student ID that is not a valid one keeps the reason it was refused, so the
      * User is told which value was rejected and why. Oversized positive indices retain their
@@ -176,7 +184,7 @@ public class ParserUtil {
 
     /** Returns a non-blank target while retaining the field-specific validation reason. */
     private static StudentTarget parseNonBlankStudentTarget(String target) throws ParseException {
-        if (Character.isLetter(target.charAt(0))) {
+        if (isIdTarget(target)) {
             return StudentTarget.byNusStudentId(parseNusStudentId(target));
         }
         return StudentTarget.byIndex(parseIndex(target), target);

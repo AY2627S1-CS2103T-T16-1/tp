@@ -53,7 +53,7 @@ public class TagCommandParser implements Parser<TagCommand> {
         if (preamble.isEmpty()) {
             throw new ParseException(Messages.getErrorMessageForMissingFields(TagCommand.FIELD_TARGET));
         }
-        if (Character.isLetter(preamble.charAt(0))) {
+        if (ParserUtil.isIdTarget(preamble)) {
             return ParserUtil.parseRequiredStudentTarget(preamble, TagCommand.FIELD_TARGET,
                     TagCommand.FIELD_INDEX);
         }
