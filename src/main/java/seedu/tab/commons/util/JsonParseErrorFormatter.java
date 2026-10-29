@@ -78,8 +78,8 @@ class JsonParseErrorFormatter {
             String[] sourceLines = splitJsonSourceIntoLines(jsonSource);
             int lineIndex = location.getLineNr() - 1;
             if (lineIndex >= sourceLines.length
-                    || lineIndex == sourceLines.length - 1
-                    && location.getColumnNr() > sourceLines[lineIndex].length() + 1) {
+                    || (lineIndex == sourceLines.length - 1
+                            && location.getColumnNr() > sourceLines[lineIndex].length() + 1)) {
                 return " at the end of the file";
             }
             if (location.getColumnNr() > sourceLines[lineIndex].length() + 1) {

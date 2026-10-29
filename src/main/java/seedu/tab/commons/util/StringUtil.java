@@ -164,11 +164,19 @@ public class StringUtil {
                 isLatin = Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.LATIN;
             }
             if (!isMark || !isLatin) {
-                result.appendCodePoint(codePoint == '’' || codePoint == '‘' ? '\'' : codePoint);
+                result.appendCodePoint(straightenQuote(codePoint));
             }
         }
         String dashesAsSpaces = HYPHEN_OR_DASH.matcher(result.toString()).replaceAll(" ");
         return foldCase(WHITESPACE.matcher(dashesAsSpaces).replaceAll(" "));
+    }
+
+    /**
+     * Returns {@code codePoint} with a curly apostrophe read as the straight one, so that
+     * {@code O’Brien} typed in a word processor matches {@code O'Brien} typed in TAB.
+     */
+    private static int straightenQuote(int codePoint) {
+        return codePoint == '’' || codePoint == '‘' ? '\'' : codePoint;
     }
 
     private static String foldCase(String value) {
@@ -341,6 +349,9 @@ public class StringUtil {
      * Returns true if {@code s} holds at least one character that Unicode calls a letter or a
      * number. Logographic scripts such as Chinese count: Han characters are letters to Unicode,
      * even though a reader would not call them letters.
+     *
+     * <p>This reads {@code s} as it stands. A raw value a person typed goes through
+     * {@link #holdsLetterOrNumber(String)}, which normalizes it first.
      */
     public static boolean hasLetterOrNumber(String s) {
         requireNonNull(s);
@@ -352,6 +363,10 @@ public class StringUtil {
      * the rule a stored field value has to meet, shared so that two fields asking it cannot
      * drift apart. A value of punctuation alone, such as "!!!", survives normalization and is
      * turned down all the same.
+     *
+     * <p>This is the question a field asks of what a person typed, so it calls
+     * {@link #normalizeFieldValue(String)} first and judges the value in the form the field
+     * stores. {@link #hasLetterOrNumber(String)} answers for a string as it stands.
      */
     public static boolean holdsLetterOrNumber(String value) {
         requireNonNull(value);
