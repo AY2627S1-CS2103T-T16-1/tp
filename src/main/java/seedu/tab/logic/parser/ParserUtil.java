@@ -245,8 +245,8 @@ public class ParserUtil {
     public static Email parseEmail(String email) throws ParseException {
         requireNonNull(email);
         String normalizedEmail = StringUtil.normalizeFieldValue(email);
-        // the length is examined first, because Email.isValidEmail exhausts the stack on a long
-        // enough address: an address the User typed has to clear the limit before being matched
+        // Email.isValidEmail judges the shape alone, so an address the User typed has to clear
+        // the entry limit as well before it is accepted
         if (!Email.isWithinLengthLimit(normalizedEmail) || !Email.isValidEmail(normalizedEmail)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(
                     Email.FIELD_NAME, normalizedEmail, Email.getFailureReason(normalizedEmail)));
