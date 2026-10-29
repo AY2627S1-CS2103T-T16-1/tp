@@ -81,7 +81,8 @@ public class EditCommand extends Command {
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_UNCHANGED = "Student already has the requested details. No changes made.";
     public static final String MESSAGE_MULTIPLE_TARGETS =
-            "Give one student target: an index, a letter-leading NUS Student ID, or --target-id NUS_STUDENT_ID.";
+            "Give one student target: an index, a letter-leading NUS Student ID, or "
+                    + FLAG_TARGET_ID.getLabel() + ".";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
 
     private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
