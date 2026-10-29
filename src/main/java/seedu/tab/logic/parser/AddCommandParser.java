@@ -31,7 +31,7 @@ public class AddCommandParser implements Parser<AddCommand> {
      * Parses the given {@code String} of arguments in the context of the AddCommand
      * and returns an AddCommand object for execution.
      *
-     * Once the shape of the command is settled, every field is examined before the command is
+     * <p>Once the shape of the command is settled, every field is examined before the command is
      * refused, so that a user who mistyped two of them is told about both at once. The shape is
      * settled first: an unclosed quote, an unknown flag, or a single-valued flag given twice
      * leaves it unclear which field a value belongs to, so any of them is refused on its own.

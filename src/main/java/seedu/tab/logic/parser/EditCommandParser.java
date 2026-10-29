@@ -34,7 +34,7 @@ public class EditCommandParser implements Parser<EditCommand> {
      * Parses the given {@code String} of arguments in the context of the EditCommand
      * and returns an EditCommand object for execution.
      *
-     * The command is read the way {@code add} reads its own: once the shape is settled, every
+     * <p>The command is read the way {@code add} reads its own: once the shape is settled, every
      * field is examined before the command is refused, so that a user who mistyped the target
      * and a field is told about both at once. The shape is settled first, because an unclosed
      * quote, an unknown option, or a single-valued option given twice leaves it unclear which

@@ -13,7 +13,7 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  * Collects everything wrong with one command, so that a user who mistyped two fields is told
  * about both at once rather than discovering the second after correcting the first.
  *
- * A parser records each problem as it goes, then calls {@link #throwIfAny()} once. A step that
+ * <p>A parser records each problem as it goes, then calls {@link #throwIfAny()} once. A step that
  * fails yields {@code null}, which is safe because nothing reads the results until every step
  * has run and {@link #throwIfAny()} has decided whether to stop.
  */
