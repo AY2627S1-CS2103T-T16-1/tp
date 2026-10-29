@@ -59,24 +59,10 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
         if (idValue.isPresent()) {
             target = StudentTarget.byNusStudentId(ParserUtil.parseNusStudentId(idValue.get()));
         } else {
-            target = parsePreambleTarget(preamble);
+            target = ParserUtil.parsePreambleTarget(preamble, DeleteCommand.ID_TARGET_COMMAND,
+                    value -> ParserUtil.parseStudentTarget(value, DeleteCommand.MESSAGE_USAGE));
         }
         return new DeleteCommand(target);
-    }
-
-    /**
-     * Returns the target the preamble names, offering {@code --id} when the value
-     * refused as an index holds an NUS Student ID: a target starting with a digit reads as an
-     * index, so the User who meant such an ID has no other way to reach their student.
-     *
-     * @throws ParseException if {@code preamble} does not name a student.
-     */
-    private static StudentTarget parsePreambleTarget(String preamble) throws ParseException {
-        try {
-            return ParserUtil.parseStudentTarget(preamble, DeleteCommand.MESSAGE_USAGE);
-        } catch (ParseException e) {
-            throw ParserUtil.withIdTargetHint(e, preamble, DeleteCommand.ID_TARGET_COMMAND);
-        }
     }
 
     /**

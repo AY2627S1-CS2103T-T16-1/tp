@@ -76,21 +76,10 @@ public class EditCommandParser implements Parser<EditCommand> {
             return StudentTarget.byNusStudentId(ParserUtil.parseNusStudentId(
                     arguments.getValue(FLAG_TARGET_ID).orElseThrow()));
         }
-        return readPreambleTarget(arguments.getPreamble().trim());
-    }
-
-    /**
-     * Returns the target the preamble names, offering {@code --target-id} when the value
-     * refused as an index holds an NUS Student ID: a target starting with a digit reads as an
-     * index, so the User who meant such an ID has no other way to reach their student.
-     */
-    private static StudentTarget readPreambleTarget(String preamble) throws ParseException {
-        try {
-            return ParserUtil.parseRequiredStudentTarget(preamble,
-                    EditCommand.FIELD_TARGET, EditCommand.FIELD_INDEX);
-        } catch (ParseException e) {
-            throw ParserUtil.withIdTargetHint(e, preamble, EditCommand.ID_TARGET_COMMAND);
-        }
+        return ParserUtil.parsePreambleTarget(arguments.getPreamble().trim(),
+                EditCommand.ID_TARGET_COMMAND,
+                value -> ParserUtil.parseRequiredStudentTarget(value, EditCommand.FIELD_TARGET,
+                        EditCommand.FIELD_INDEX));
     }
 
     /**

@@ -57,21 +57,9 @@ public class TagCommandParser implements Parser<TagCommand> {
             return ParserUtil.parseRequiredStudentTarget(preamble, TagCommand.FIELD_TARGET,
                     TagCommand.FIELD_INDEX);
         }
-        return readIndexTarget(preamble);
-    }
-
-    /**
-     * Returns the target the numeric preamble names, offering {@code --id} when the value
-     * refused as an index holds an NUS Student ID: a target starting with a digit reads as an
-     * index, so the User who meant such an ID has no other way to reach their student.
-     */
-    private static StudentTarget readIndexTarget(String preamble) throws ParseException {
-        try {
-            return StudentTarget.byIndex(ParserUtil.parseRequiredIndex(preamble, TagCommand.FIELD_INDEX),
-                    preamble);
-        } catch (ParseException e) {
-            throw ParserUtil.withIdTargetHint(e, preamble, TagCommand.ID_TARGET_COMMAND);
-        }
+        return ParserUtil.parsePreambleTarget(preamble, TagCommand.ID_TARGET_COMMAND,
+                value -> StudentTarget.byIndex(
+                        ParserUtil.parseRequiredIndex(value, TagCommand.FIELD_INDEX), value));
     }
 
     /** Adds command-specific guidance when the arguments cannot be read as options. */

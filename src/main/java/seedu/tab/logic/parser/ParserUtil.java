@@ -191,6 +191,26 @@ public class ParserUtil {
     }
 
     /**
+     * Returns the target {@code preamble} names, as {@code readTarget} reads it, offering the ID
+     * form of {@code idTargetCommand} when a value refused as an index holds an NUS Student ID: a
+     * target opening with a digit reads as an index, so the User who meant such an ID has no
+     * other way to reach their student.
+     *
+     * @param preamble The text the User gave before the command's first option.
+     * @param idTargetCommand The command form that addresses a student by their NUS Student ID.
+     * @param readTarget How the calling command reads its own preamble as a target.
+     * @throws ParseException if {@code preamble} does not name a student.
+     */
+    public static StudentTarget parsePreambleTarget(String preamble, String idTargetCommand,
+            ParseProblems.ValueParser<StudentTarget> readTarget) throws ParseException {
+        try {
+            return readTarget.parse(preamble);
+        } catch (ParseException e) {
+            throw withIdTargetHint(e, preamble, idTargetCommand);
+        }
+    }
+
+    /**
      * Returns {@code failure} with the ID form of {@code idTargetCommand} after it when
      * {@code target} holds a valid NUS Student ID, because a digit-leading ID is refused as an
      * index and plausibly was meant as an ID. Any other refusal is returned as it is, so the
@@ -200,7 +220,7 @@ public class ParserUtil {
      * @param target The one token the User gave as the target.
      * @param idTargetCommand The command form that addresses a student by their NUS Student ID.
      */
-    public static ParseException withIdTargetHint(ParseException failure, String target,
+    private static ParseException withIdTargetHint(ParseException failure, String target,
             String idTargetCommand) {
         requireNonNull(failure);
         requireNonNull(target);
