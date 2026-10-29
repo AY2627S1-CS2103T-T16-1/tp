@@ -682,7 +682,7 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
 1. Enter `clear` and reply ` YeS `.
    * Expected: All students are cleared and the empty book survives a restart. Another `clear` reports that the book is already empty without starting a confirmation.
 1. Add `add Pending Probe`, enter `clear`, close the window without replying, and restart.
-   * Expected: Pending Probe remains and no confirmation is pending.
+   * Expected: The prompt for a one-student book reads `Clear the only student?` rather than counting the student. Pending Probe remains and no confirmation is pending.
 
 ### Command entry, history, and long values
 

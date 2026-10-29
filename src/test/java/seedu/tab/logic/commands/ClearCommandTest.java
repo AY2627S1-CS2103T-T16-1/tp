@@ -10,6 +10,7 @@ import seedu.tab.model.Model;
 import seedu.tab.model.ModelManager;
 import seedu.tab.model.StudentBook;
 import seedu.tab.model.UserPrefs;
+import seedu.tab.testutil.StudentBuilder;
 
 public class ClearCommandTest {
 
@@ -22,13 +23,24 @@ public class ClearCommandTest {
     }
 
     @Test
+    public void execute_singleStudentBook_requestsConfirmationForOnlyStudent() {
+        Model model = new ModelManager();
+        model.addStudent(new StudentBuilder().build());
+        Model expectedModel = new ModelManager(model.getStudentBook(), new UserPrefs());
+
+        assertCommandSuccess(new ClearCommand(), model,
+                "Clear the only student? This cannot be undone. [y/N]", expectedModel);
+    }
+
+    @Test
     public void execute_nonEmptyStudentBook_requestsConfirmation() {
         Model model = new ModelManager(getTypicalStudentBook(), new UserPrefs());
         Model expectedModel = new ModelManager(getTypicalStudentBook(), new UserPrefs());
         model.updateFilteredStudentList(student -> false);
         expectedModel.updateFilteredStudentList(student -> false);
-        String prompt = String.format(ClearCommand.MESSAGE_CONFIRMATION,
-                model.getStudentBook().getStudentList().size(), "s");
+        int studentCount = model.getStudentBook().getStudentList().size();
+        String prompt = "Clear all " + studentCount + " students? This cannot be undone. [y/N]";
+
         assertCommandSuccess(new ClearCommand(), model, prompt, expectedModel);
     }
 

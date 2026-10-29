@@ -51,14 +51,23 @@ public class LocaleConsistencyTest {
                 assertEquals("Listed " + total + ".", parser.parseCommand("list").execute(model).getFeedbackToUser());
                 assertEquals("Found " + total + ".",
                         parser.parseCommand("find -n Priya").execute(model).getFeedbackToUser());
-                assertEquals(count == 0 ? "The student book is already empty. Nothing to clear."
-                        : "Clear all " + total + "? This cannot be undone. [y/N]",
+                assertEquals(expectedClearPrompt(count, total),
                         parser.parseCommand("clear").execute(model).getFeedbackToUser());
                 assertEquals(count, model.getStudentBook().getStudentList().size());
                 assertEquals(total, SummaryPanel.describeTotal(count));
             }
             assertMalformedRecords();
         });
+    }
+
+    private static String expectedClearPrompt(int count, String total) {
+        if (count == 0) {
+            return "The student book is already empty. Nothing to clear.";
+        }
+        if (count == 1) {
+            return "Clear the only student? This cannot be undone. [y/N]";
+        }
+        return "Clear all " + total + "? This cannot be undone. [y/N]";
     }
 
     private void assertMalformedRecords() throws Exception {
