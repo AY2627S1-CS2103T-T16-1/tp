@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -11,6 +12,9 @@ import java.util.stream.Stream;
  * Utility methods related to Collections
  */
 public class CollectionUtil {
+
+    /** What {@link #indexOfSame(List, Object)} answers when the list holds no such element. */
+    public static final int NOT_FOUND = -1;
 
     private CollectionUtil() {} // this class only holds helpers
 
@@ -37,5 +41,20 @@ public class CollectionUtil {
      */
     public static boolean isAnyNonNull(Object... items) {
         return items != null && Arrays.stream(items).anyMatch(Objects::nonNull);
+    }
+
+    /**
+     * Returns the position of the element that is {@code target} itself, or {@value #NOT_FOUND}
+     * when no element is. Identity rather than equality is what callers tracking one object
+     * through a list need: two students may be equal while only one of them is the one on hand.
+     */
+    public static int indexOfSame(List<?> items, Object target) {
+        requireNonNull(items);
+        for (int index = 0; index < items.size(); index++) {
+            if (items.get(index) == target) {
+                return index;
+            }
+        }
+        return NOT_FOUND;
     }
 }

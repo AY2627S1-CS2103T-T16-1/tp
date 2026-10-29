@@ -1,5 +1,8 @@
 package seedu.tab.ui;
 
+import static seedu.tab.commons.util.CollectionUtil.NOT_FOUND;
+import static seedu.tab.commons.util.CollectionUtil.indexOfSame;
+
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -41,8 +44,8 @@ public class StudentListPanel extends UiPart<Region> {
 
     /** Scrolls the list so that {@code student}'s card is in view, if the list still holds it. */
     private void scrollListTo(Student student) {
-        int index = findReferenceIndex(student);
-        if (index < 0) {
+        int index = indexOfSame(studentListView.getItems(), student);
+        if (index == NOT_FOUND) {
             return;
         }
         VirtualFlow<?> flow = (VirtualFlow<?>) studentListView.lookup(".virtual-flow");
@@ -77,18 +80,6 @@ public class StudentListPanel extends UiPart<Region> {
             }
             scene.removePostLayoutPulseListener(this);
         }
-    }
-
-    /**
-     * Returns the position of this exact student object, or -1 if it has left the displayed list.
-     */
-    private int findReferenceIndex(Student student) {
-        for (int index = 0; index < studentListView.getItems().size(); index++) {
-            if (studentListView.getItems().get(index) == student) {
-                return index;
-            }
-        }
-        return -1;
     }
 
     /**
