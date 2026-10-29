@@ -10,8 +10,6 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import seedu.tab.commons.util.ValueMessages;
-
 /**
  * Reads saved tags with field-specific diagnostics instead of Jackson type errors.
  */
@@ -41,14 +39,7 @@ class JsonTagsDeserializer extends JsonDeserializer<List<JsonAdaptedTag>> {
      */
     private static JsonMappingException createInvalidValueException(JsonParser parser, String field, String reason)
             throws IOException {
-        String value = switch (parser.getCurrentToken()) {
-            case START_OBJECT -> "an object";
-            case START_ARRAY -> "an array";
-            default -> ValueMessages.shorten(parser.getText());
-        };
-        if (parser.getCurrentToken() == JsonToken.VALUE_STRING) {
-            value = "\"" + value + "\"";
-        }
+        String value = JsonValueDescription.describeQuoted(parser);
         return JsonMappingException.from(parser, String.format(MESSAGE_INVALID_VALUE, field, value, reason));
     }
 }
