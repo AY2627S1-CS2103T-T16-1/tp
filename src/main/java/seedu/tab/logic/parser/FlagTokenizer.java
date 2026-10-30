@@ -212,10 +212,12 @@ public class FlagTokenizer {
         return List.of(lowercase, longForm, longForm.toLowerCase(Locale.ROOT));
     }
 
-    /** Returns true if {@code marker} is a single dash before more than one character. */
+    /**
+     * Returns true if {@code marker} is a single dash before more than one character. Only a
+     * token opening with a dash reaches here, so not opening with two is opening with one.
+     */
     private static boolean isWordAfterOneDash(String marker) {
-        return marker.startsWith(OPTION_MARKER)
-                && !marker.startsWith(LONG_OPTION_MARKER)
+        return !marker.startsWith(LONG_OPTION_MARKER)
                 && marker.length() > OPTION_MARKER.length() + 1;
     }
 
