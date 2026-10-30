@@ -261,7 +261,7 @@ public class JsonUtilTest {
         String errorMessage = readMalformedJsonAndGetMessage("singleLine.json", jsonSource);
 
         assertTrue(errorMessage.contains("at line 1, column 531"));
-        assertTrue(errorMessage.contains("> 1 | ..."));
+        assertTrue(errorMessage.contains("> 1 | …"));
         assertTrue(errorMessage.contains("\"name\":\"Alice\" \"phone\":\"91234567\"}"));
         assertFalse(errorMessage.contains(padding));
         assertTrue(errorMessage.length() < jsonSource.length());
@@ -284,7 +284,7 @@ public class JsonUtilTest {
                 .findFirst()
                 .orElseThrow();
         String displayedSource = contextLine.substring(contextLine.indexOf("| ") + 2);
-        assertTrue(displayedSource.endsWith("..."));
+        assertTrue(displayedSource.endsWith("…"));
         assertTrue(displayedSource.length() <= 160);
         assertFalse(errorMessage.contains(padding));
         assertTrue(errorMessage.contains("> 3 |   \"name\": \"Alice\""));

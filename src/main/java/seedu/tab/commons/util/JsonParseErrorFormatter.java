@@ -3,6 +3,7 @@ package seedu.tab.commons.util;
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
 import java.nio.file.AccessDeniedException;
+import java.text.BreakIterator;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -20,7 +21,9 @@ class JsonParseErrorFormatter {
 
     private static final int JSON_ERROR_CONTEXT_LINE_COUNT = 1;
     private static final int JSON_ERROR_MAX_LINE_LENGTH = 160;
-    private static final String JSON_ERROR_ELLIPSIS = "...";
+    private static final String JSON_ERROR_ELLIPSIS = "…";
+    private static final int JSON_ERROR_ELLIPSIS_LENGTH =
+            JSON_ERROR_ELLIPSIS.codePointCount(0, JSON_ERROR_ELLIPSIS.length());
     private static final String JSON_ERROR_LINE_SEPARATOR_PATTERN = "\\r\\n|\\r|\\n";
     private static final String JSON_ERROR_SOURCE_MARKER = "[Source:";
     private static final String JSON_ERROR_COMMENT_MARKER = "Feature 'ALLOW_COMMENTS'";
@@ -214,23 +217,85 @@ class JsonParseErrorFormatter {
         return excerpt.toString();
     }
 
+    /**
+     * Returns as much of {@code sourceLine} as an excerpt line is allowed to show: the part
+     * around {@code affectedColumn} when the line is the affected one, its opening otherwise,
+     * with each end that something was dropped from marked.
+     *
+     * <p>The allowance is counted in characters as a reader counts them, and every cut falls
+     * where one character ends and the next begins. Cutting at a stored index would halve an
+     * emoji or separate a letter from its accent, leaving the excerpt showing a character no
+     * font can draw.
+     */
     private static String truncateJsonSourceLine(String sourceLine, int affectedColumn,
                                                  boolean isAffectedLine) {
-        if (sourceLine.length() <= JSON_ERROR_MAX_LINE_LENGTH) {
+        String withinAllowance = StringUtil.getFirstCharacters(sourceLine, JSON_ERROR_MAX_LINE_LENGTH);
+        if (withinAllowance.equals(sourceLine)) {
             return sourceLine;
         }
         if (!isAffectedLine) {
-            return sourceLine.substring(0, JSON_ERROR_MAX_LINE_LENGTH - JSON_ERROR_ELLIPSIS.length())
-                    + JSON_ERROR_ELLIPSIS;
+            return StringUtil.getFirstCharacters(sourceLine,
+                    JSON_ERROR_MAX_LINE_LENGTH - JSON_ERROR_ELLIPSIS_LENGTH) + JSON_ERROR_ELLIPSIS;
         }
+        return cropAroundAffectedColumn(sourceLine, affectedColumn);
+    }
 
-        int windowLength = JSON_ERROR_MAX_LINE_LENGTH - 2 * JSON_ERROR_ELLIPSIS.length();
-        int affectedIndex = Math.max(0, Math.min(affectedColumn - 1, sourceLine.length() - 1));
-        int windowStart = Math.max(0, Math.min(affectedIndex - windowLength / 2,
-                sourceLine.length() - windowLength));
-        int windowEnd = Math.min(sourceLine.length(), windowStart + windowLength);
+    /**
+     * Returns the stretch of {@code sourceLine} that surrounds {@code affectedColumn}, widened to
+     * the whole allowance when the column sits too near an end for the mistake to be centred.
+     *
+     * <p>Both ends of the window are found by reading the whole line, because where one character
+     * ends and the next begins depends on what comes before it. The two halves of a flag are each
+     * a character in their own right when read on their own, so a reading that starts inside a
+     * flag pairs every half after it with the wrong partner and reports ends that lie inside a
+     * character. The column Jackson reports counts in stored units and may itself land inside a
+     * character, so it is moved back to the start of the character holding it before it is used.
+     */
+    private static String cropAroundAffectedColumn(String sourceLine, int affectedColumn) {
+        int windowLength = JSON_ERROR_MAX_LINE_LENGTH - 2 * JSON_ERROR_ELLIPSIS_LENGTH;
+        BreakIterator characters = BreakIterator.getCharacterInstance();
+        characters.setText(sourceLine);
+
+        int reportedIndex = Math.max(0, Math.min(affectedColumn - 1, sourceLine.length()));
+        int affectedIndex = characters.isBoundary(reportedIndex)
+                ? reportedIndex
+                : characters.preceding(reportedIndex);
+        // A mistake near the start of the line has little before it to show, so the width that
+        // leaves unused goes to the text after the mistake rather than staying empty.
+        int windowEnd = Math.max(skipCharactersForward(characters, affectedIndex, windowLength / 2),
+                skipCharactersForward(characters, 0, windowLength));
+        int windowStart = skipCharactersBackward(characters, windowEnd, windowLength);
+
         String leadingEllipsis = windowStart == 0 ? "" : JSON_ERROR_ELLIPSIS;
         String trailingEllipsis = windowEnd == sourceLine.length() ? "" : JSON_ERROR_ELLIPSIS;
         return leadingEllipsis + sourceLine.substring(windowStart, windowEnd) + trailingEllipsis;
+    }
+
+    /**
+     * Returns where the character {@code count} places after {@code from} begins, or the end of
+     * the line {@code characters} reads when it holds fewer characters than that.
+     */
+    private static int skipCharactersForward(BreakIterator characters, int from, int count) {
+        int index = from;
+        for (int skipped = 0; skipped < count; skipped++) {
+            int next = characters.following(index);
+            if (next == BreakIterator.DONE) {
+                return index;
+            }
+            index = next;
+        }
+        return index;
+    }
+
+    /**
+     * Returns where the character {@code count} places before {@code from} begins, or the start of
+     * the line {@code characters} reads when fewer characters than that lie behind {@code from}.
+     */
+    private static int skipCharactersBackward(BreakIterator characters, int from, int count) {
+        int index = from;
+        for (int skipped = 0; skipped < count; skipped++) {
+            index = Math.max(0, characters.preceding(index));
+        }
+        return index;
     }
 }
