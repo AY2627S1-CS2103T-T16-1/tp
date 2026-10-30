@@ -22,17 +22,20 @@ import seedu.tab.commons.core.DataLoadingErrorMessage;
  */
 public class JsonParseErrorFormatterTest {
 
-    private static final String GRINNING_FACE = "😀";
-    private static final String ACCENTED_E = "é";
+    private static final String GRINNING_FACE = "\uD83D\uDE00";
+    private static final String SINGAPORE_FLAG = "\uD83C\uDDF8\uD83C\uDDEC";
+    private static final String FAMILY = "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67";
+    private static final String ACCENTED_E = "e\u0301";
+    private static final String ELLIPSIS = "\u2026";
     private static final int LONG_LINE_CHARACTER_COUNT = 200;
     private static final int EXCERPT_MAX_CHARACTER_COUNT = 160;
-    private static final String ELLIPSES_ONLY = "[.…]*";
 
-    // The columns to crop a 200-character line at: its first and its last, together with the
-    // ones Jackson reports in the middle. Each of 200, 399 and 400 falls inside a character of
-    // a line whose characters take two of the units Jackson counts in, so a crop made at the
-    // reported column alone would break one in half.
-    private static final int[] CROP_COLUMNS = {1, 200, 201, 399, 400};
+    // Characters a reader sees as one but Jackson reports several columns for. Each is repeated
+    // into a line too long to quote whole, so that wherever the crop lands it lands inside one
+    // of them unless the crop reads the line the way a reader reads it.
+    private static final String[] MULTI_COLUMN_CHARACTERS = {
+        GRINNING_FACE, SINGAPORE_FLAG, FAMILY, ACCENTED_E,
+    };
 
     @Test
     public void format_regionalDefaults_keepAsciiLocations() {
@@ -194,58 +197,70 @@ public class JsonParseErrorFormatterTest {
     public void format_croppedLine_marksTheCropWithOneEllipsisCharacter() {
         String excerptLine = getAffectedExcerptLine("x".repeat(500), 250);
 
-        assertTrue(excerptLine.startsWith("…"));
-        assertTrue(excerptLine.endsWith("…"));
+        assertTrue(excerptLine.startsWith(ELLIPSIS));
+        assertTrue(excerptLine.endsWith(ELLIPSIS));
         assertFalse(excerptLine.contains("..."));
         assertEquals(EXCERPT_MAX_CHARACTER_COUNT, countCharacters(excerptLine));
     }
 
     @Test
-    public void format_astralCharactersAtCropPoint_keepsWholeCharacters() {
-        String sourceLine = GRINNING_FACE.repeat(LONG_LINE_CHARACTER_COUNT);
+    public void format_longAffectedLine_cropsBetweenCharactersAtEveryColumn() {
+        for (String character : MULTI_COLUMN_CHARACTERS) {
+            String sourceLine = character.repeat(LONG_LINE_CHARACTER_COUNT);
 
-        for (int column : CROP_COLUMNS) {
-            assertWholeCharacters(getAffectedExcerptLine(sourceLine, column), GRINNING_FACE);
+            for (int column = 1; column <= sourceLine.length() + 1; column++) {
+                assertWholeCharactersOf(getAffectedExcerptLine(sourceLine, column), sourceLine);
+            }
         }
     }
 
     @Test
-    public void format_combiningMarkAtCropPoint_keepsWholeCharacters() {
-        String sourceLine = ACCENTED_E.repeat(LONG_LINE_CHARACTER_COUNT);
+    public void format_flagHalfwayThroughCropPoint_keepsWholeCharacters() {
+        String sourceLine = SINGAPORE_FLAG.repeat(LONG_LINE_CHARACTER_COUNT);
+        // A flag is two halves that each read as a character on their own, so a crop that starts
+        // reading the line at this column pairs every half after it with the wrong neighbour and
+        // puts its own end inside a flag.
+        int halfwayThroughAFlag = 399;
 
-        for (int column : CROP_COLUMNS) {
-            assertWholeCharacters(getAffectedExcerptLine(sourceLine, column), ACCENTED_E);
-        }
+        assertWholeCharactersOf(getAffectedExcerptLine(sourceLine, halfwayThroughAFlag), sourceLine);
     }
 
     @Test
-    public void format_astralCharactersInContextLine_keepsWholeCharacters() {
-        String jsonSource = GRINNING_FACE.repeat(LONG_LINE_CHARACTER_COUNT) + "\nsecond";
-        JsonLocation location = new JsonLocation("hidden source", -1, -1, 2, 1);
-        JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
+    public void format_longContextLine_cropsBetweenCharacters() {
+        for (String character : MULTI_COLUMN_CHARACTERS) {
+            String sourceLine = character.repeat(LONG_LINE_CHARACTER_COUNT);
+            JsonLocation location = new JsonLocation("hidden source", -1, -1, 2, 1);
+            JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
 
-        String excerpt = JsonParseErrorFormatter.format(exception, jsonSource).sourceExcerpt();
+            String excerpt = JsonParseErrorFormatter
+                    .format(exception, sourceLine + "\nsecond").sourceExcerpt();
 
-        assertWholeCharacters(getExcerptLine(excerpt, "  1 | "), GRINNING_FACE);
+            assertWholeCharactersOf(getExcerptLine(excerpt, "  1 | "), sourceLine);
+        }
     }
 
     @Test
     public void format_longAffectedLine_marksOnlyTheEndsItCropped() {
-        String sourceLine = GRINNING_FACE.repeat(LONG_LINE_CHARACTER_COUNT);
-        int middleColumn = LONG_LINE_CHARACTER_COUNT + 1;
-        int lastColumn = 2 * LONG_LINE_CHARACTER_COUNT;
+        for (String character : MULTI_COLUMN_CHARACTERS) {
+            String sourceLine = character.repeat(LONG_LINE_CHARACTER_COUNT);
+            int lastColumn = sourceLine.length();
+            int middleColumn = lastColumn / 2 + 1;
 
-        String fromStart = getAffectedExcerptLine(sourceLine, 1);
-        assertTrue(fromStart.startsWith(GRINNING_FACE));
-        assertFalse(fromStart.endsWith(GRINNING_FACE));
+            String fromStart = getAffectedExcerptLine(sourceLine, 1);
+            assertFalse(fromStart.startsWith(ELLIPSIS));
+            assertTrue(fromStart.endsWith(ELLIPSIS));
+            assertWholeCharactersOf(fromStart, sourceLine);
 
-        String aroundMiddle = getAffectedExcerptLine(sourceLine, middleColumn);
-        assertFalse(aroundMiddle.startsWith(GRINNING_FACE));
-        assertFalse(aroundMiddle.endsWith(GRINNING_FACE));
+            String aroundMiddle = getAffectedExcerptLine(sourceLine, middleColumn);
+            assertTrue(aroundMiddle.startsWith(ELLIPSIS));
+            assertTrue(aroundMiddle.endsWith(ELLIPSIS));
+            assertWholeCharactersOf(aroundMiddle, sourceLine);
 
-        String toEnd = getAffectedExcerptLine(sourceLine, lastColumn);
-        assertFalse(toEnd.startsWith(GRINNING_FACE));
-        assertTrue(toEnd.endsWith(GRINNING_FACE));
+            String toEnd = getAffectedExcerptLine(sourceLine, lastColumn);
+            assertTrue(toEnd.startsWith(ELLIPSIS));
+            assertFalse(toEnd.endsWith(ELLIPSIS));
+            assertWholeCharactersOf(toEnd, sourceLine);
+        }
     }
 
     @Test
@@ -341,13 +356,21 @@ public class JsonParseErrorFormatterTest {
     }
 
     /**
-     * Asserts that {@code excerptLine} holds whole copies of {@code character} and nothing but
-     * the ellipses marking where text was dropped, and that it stays within the width an
-     * excerpt line is allowed.
+     * Asserts that the part of {@code excerptLine} quoted from {@code sourceLine} begins and ends
+     * where {@code sourceLine} has one character end and the next begin, that the line as shown
+     * carries no half of a stored pair, and that it stays within the width an excerpt line is
+     * allowed.
      */
-    private void assertWholeCharacters(String excerptLine, String character) {
+    private void assertWholeCharactersOf(String excerptLine, String sourceLine) {
+        String window = excerptLine.replace(ELLIPSIS, "");
+        int windowStart = sourceLine.indexOf(window);
+        assertTrue(windowStart >= 0, excerptLine);
+
+        BreakIterator characters = BreakIterator.getCharacterInstance();
+        characters.setText(sourceLine);
+        assertTrue(characters.isBoundary(windowStart), excerptLine);
+        assertTrue(characters.isBoundary(windowStart + window.length()), excerptLine);
         assertEquals(0, countUnpairedSurrogates(excerptLine), excerptLine);
-        assertTrue(excerptLine.replace(character, "").matches(ELLIPSES_ONLY), excerptLine);
         assertTrue(countCharacters(excerptLine) <= EXCERPT_MAX_CHARACTER_COUNT, excerptLine);
     }
 
