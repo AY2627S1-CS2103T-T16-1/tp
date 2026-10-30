@@ -31,7 +31,7 @@ public class AddCommandParser implements Parser<AddCommand> {
      * Parses the given {@code String} of arguments in the context of the AddCommand
      * and returns an AddCommand object for execution.
      *
-     * Once the shape of the command is settled, every field is examined before the command is
+     * <p>Once the shape of the command is settled, every field is examined before the command is
      * refused, so that a user who mistyped two of them is told about both at once. The shape is
      * settled first: an unclosed quote, an unknown flag, or a single-valued flag given twice
      * leaves it unclear which field a value belongs to, so any of them is refused on its own.
@@ -50,12 +50,12 @@ public class AddCommandParser implements Parser<AddCommand> {
         }
 
         Name name = parseName(problems, arguments.getPreamble());
-        Optional<Phone> phone = Optional.ofNullable(
-                problems.collectIfPresent(arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone));
-        Optional<Email> email = Optional.ofNullable(
-                problems.collectIfPresent(arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail));
-        Optional<NusStudentId> nusStudentId = Optional.ofNullable(
-                problems.collectIfPresent(arguments.getValue(FLAG_NUS_STUDENT_ID), ParserUtil::parseNusStudentId));
+        Optional<Phone> phone = problems.collectIfPresent(
+                arguments.getValue(FLAG_PHONE), ParserUtil::parsePhone);
+        Optional<Email> email = problems.collectIfPresent(
+                arguments.getValue(FLAG_EMAIL), ParserUtil::parseEmail);
+        Optional<NusStudentId> nusStudentId = problems.collectIfPresent(
+                arguments.getValue(FLAG_NUS_STUDENT_ID), ParserUtil::parseNusStudentId);
         Set<Tag> tags = ParserUtil.parseTags(arguments.getAllValues(FLAG_TAG), problems);
 
         problems.throwIfAny();

@@ -34,7 +34,7 @@ public class EditCommandParser implements Parser<EditCommand> {
      * Parses the given {@code String} of arguments in the context of the EditCommand
      * and returns an EditCommand object for execution.
      *
-     * The command is read the way {@code add} reads its own: once the shape is settled, every
+     * <p>The command is read the way {@code add} reads its own: once the shape is settled, every
      * field is examined before the command is refused, so that a user who mistyped the target
      * and a field is told about both at once. The shape is settled first, because an unclosed
      * quote, an unknown option, or a single-valued option given twice leaves it unclear which
@@ -76,21 +76,10 @@ public class EditCommandParser implements Parser<EditCommand> {
             return StudentTarget.byNusStudentId(ParserUtil.parseNusStudentId(
                     arguments.getValue(FLAG_TARGET_ID).orElseThrow()));
         }
-        return readPreambleTarget(arguments.getPreamble().trim());
-    }
-
-    /**
-     * Returns the target the preamble names, offering {@code --target-id} when the value
-     * refused as an index holds an NUS Student ID: a target starting with a digit reads as an
-     * index, so the User who meant such an ID has no other way to reach their student.
-     */
-    private static StudentTarget readPreambleTarget(String preamble) throws ParseException {
-        try {
-            return ParserUtil.parseRequiredStudentTarget(preamble,
-                    EditCommand.FIELD_TARGET, EditCommand.FIELD_INDEX);
-        } catch (ParseException e) {
-            throw ParserUtil.withIdTargetHint(e, preamble, EditCommand.ID_TARGET_COMMAND);
-        }
+        return ParserUtil.parsePreambleTarget(arguments.getPreamble().trim(),
+                EditCommand.ID_TARGET_COMMAND,
+                value -> ParserUtil.parseRequiredStudentTarget(value, EditCommand.FIELD_TARGET,
+                        EditCommand.FIELD_INDEX));
     }
 
     /**
@@ -111,7 +100,8 @@ public class EditCommandParser implements Parser<EditCommand> {
             Optional<Boolean> followUp) {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
 
-        descriptor.setName(problems.collectIfPresent(arguments.getValue(FLAG_NAME), ParserUtil::parseName));
+        problems.collectIfPresent(arguments.getValue(FLAG_NAME), ParserUtil::parseName)
+                .ifPresent(descriptor::setName);
         arguments.getValue(FLAG_PHONE).ifPresent(value -> parseClearableField(problems, value,
                 ParserUtil::parsePhone, descriptor::clearPhone, descriptor::setPhone));
         arguments.getValue(FLAG_EMAIL).ifPresent(value -> parseClearableField(problems, value,
