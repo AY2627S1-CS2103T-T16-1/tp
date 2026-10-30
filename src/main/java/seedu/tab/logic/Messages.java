@@ -119,8 +119,8 @@ public class Messages {
     /**
      * Returns feedback naming the word that is no command of TAB's and the commands it was
      * likely meant to be. Every equally likely command is named, because choosing between
-     * them is the User's to make. They are shown rather than run, so that a wrong reading
-     * costs the User nothing but the retyping they were facing anyway.
+     * them is the user's to make. They are shown rather than run, so that a wrong reading
+     * costs the user nothing but the retyping they were facing anyway.
      */
     public static String getErrorMessageForMistypedCommand(String commandWord, List<String> suggestions) {
         assert !suggestions.isEmpty();
