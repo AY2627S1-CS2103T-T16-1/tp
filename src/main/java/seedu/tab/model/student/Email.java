@@ -62,6 +62,8 @@ public class Email {
             "the part before the @ may hold ASCII letters, digits and " + SPECIAL_CHARACTERS
                     + ", with dots allowed only between non-empty groups";
     private static final String MESSAGE_EMPTY_DOMAIN = "there is nothing after the @";
+    private static final String MESSAGE_EMPTY_DOMAIN_LABEL =
+            "the domain may not begin or end with a dot, or hold two dots in a row";
     private static final String MESSAGE_SHORT_LAST_LABEL = "the last part of the domain needs at least %d characters";
     private static final String MESSAGE_INVALID_DOMAIN =
             "the domain may hold ASCII letters and digits in labels separated by dots, "
@@ -200,11 +202,24 @@ public class Email {
         if (domain.isEmpty()) {
             return MESSAGE_EMPTY_DOMAIN;
         }
+        if (hasEmptyDomainLabel(domain)) {
+            return MESSAGE_EMPTY_DOMAIN_LABEL;
+        }
         String lastLabel = domain.substring(domain.lastIndexOf('.') + 1);
         if (lastLabel.length() < MINIMUM_LAST_LABEL_LENGTH) {
             return String.format(Locale.ROOT, MESSAGE_SHORT_LAST_LABEL, MINIMUM_LAST_LABEL_LENGTH);
         }
         return MESSAGE_INVALID_DOMAIN;
+    }
+
+    /**
+     * Returns true if a dot in {@code domain} has no label on one of its sides. The trailing-dot
+     * case has to be named before the last label is measured: a reader of {@code eve@example.com.}
+     * sees {@code com} as the last part, so being told it is too short sends them hunting for a
+     * fault that is not there.
+     */
+    private static boolean hasEmptyDomainLabel(String domain) {
+        return domain.startsWith(".") || domain.endsWith(".") || domain.contains("..");
     }
 
     /**
