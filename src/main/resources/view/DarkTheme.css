@@ -10,7 +10,7 @@
     -tab-bg-sunken: #101216;       /* the sidebar, and the well the command line sits in */
     -tab-surface: #232830;         /* a card: lighter than the window, not darker */
     -tab-surface-raised: #2a303a;  /* a surface lifted above its neighbours */
-    -tab-surface-selected: #262e38;/* the row the User is on */
+    -tab-surface-selected: #262e38;/* the row the user is on */
     -tab-border: #22262d;          /* a divider, and the edge of a surface */
     -tab-text: #f2f5f7;            /* a student's name, and ordinary text */
     -tab-text-muted: #a6b9c8;      /* a secondary detail under a name */
@@ -22,7 +22,7 @@
     -tab-value: #c3d0dc;           /* a plain value on the command line */
     -tab-chip-bg: #2a3945;         /* a tag chip */
     -tab-chip-text: #8cc7e5;
-    -tab-selected-text: rgba(104, 196, 238, 0.36); /* the run of a command the User has selected */
+    -tab-selected-text: rgba(104, 196, 238, 0.36); /* the run of a command the user has selected */
     -tab-shadow: #000000;             /* the well a sunken surface sits in */
     -tab-danger: #ff9090;          /* a refused command */
 }
@@ -145,7 +145,7 @@
     -fx-background-color: transparent;
 }
 
-/* the row the User is on keeps the same rounded shape as every other card, with an accent
+/* the row the user is on keeps the same rounded shape as every other card, with an accent
    showing down its left edge. Two layers, because a one-sided border squares the corners. */
 .list-cell:filled:selected #cardPane {
     -fx-background-color: -tab-accent, -tab-surface-selected;
@@ -763,14 +763,14 @@
 /* the selected run of a command, drawn here because the field's own highlight sits at an
    offset of its own and broke into fragments behind the coloured copy */
 .command-selection {
-    /* the colour the row the User is on is drawn in is a shade off the line behind it, which
+    /* the colour the row the user is on is drawn in is a shade off the line behind it, which
        says nothing about a run of text: selecting the whole command looked no different from
        not selecting it. This reads as a selection while leaving the command on top of it
        legible. */
     -fx-fill: -tab-selected-text;
 }
 
-/* a refused command is marked on the copy, which is what the User is reading */
+/* a refused command is marked on the copy, which is what the user is reading */
 .command-error .command-token {
     -fx-fill: -tab-danger;
 }
@@ -795,7 +795,7 @@
 }
 
 /* the reference is coloured the way the command box colours the same syntax, so that a
-   marker the User reads about here is the colour they then see themselves typing */
+   marker the user reads about here is the colour they then see themselves typing */
 .help-token {
     -fx-font-family: "Monospaced";
     -fx-font-size: 13px;

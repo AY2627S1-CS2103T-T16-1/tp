@@ -39,7 +39,7 @@ public class HelpTextTest {
 
     @Test
     public void color_wholeReference_keepsEveryCharacter() throws Exception {
-        // the pager measures the block by its lines, and the User reads it: coloring must not
+        // the pager measures the block by its lines, and the user reads it: coloring must not
         // add, drop or reorder so much as a space
         assertEquals(HelpCommand.SHOWING_HELP_MESSAGE, joined(HelpCommand.SHOWING_HELP_MESSAGE));
     }

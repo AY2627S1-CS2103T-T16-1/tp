@@ -106,7 +106,7 @@ public class CliFlag {
 
     /**
      * Returns {@code marker} together with this value-taking flag's field name. This lets
-     * feedback quote the spelling the User supplied rather than replacing an alias with the
+     * feedback quote the spelling the user supplied rather than replacing an alias with the
      * primary marker.
      */
     String getLabel(String marker) {

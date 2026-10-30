@@ -151,7 +151,7 @@ public class CommandWordsTest {
     @Test
     public void suggestFor_equallyNearWords_namesEveryOneOfThem() {
         // dropping the second letter of either leaves a word one edit from both, and which of
-        // the two was meant is the User's to say rather than ours to pick
+        // the two was meant is the user's to say rather than ours to pick
         assertEquals(List.of("edit", "exit"), CommandWords.suggestFor("eit"));
         assertEquals(List.of("edit", "exit"), CommandWords.suggestFor("ewit"));
     }
