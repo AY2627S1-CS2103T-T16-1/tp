@@ -6,7 +6,7 @@
 
 # TAB User Guide
 
-TAB is a **desktop application for teaching assistants to manage student records through typed commands**. You can keep contact details, group students with tags and track who needs follow-up in one graphical window.
+TAB (Teaching Assistant's Book) is a **desktop application for teaching assistants to manage student records through typed commands**. You can keep contact details, group students with tags and track who needs follow-up in one graphical window.
 
 <!-- Adapted from the inherited AddressBook-Level3 User Guide by SE-EDU. -->
 <!-- https://github.com/NUS-CS2103-AY2627-S1/tp/blob/master/docs/UserGuide.md -->
@@ -217,7 +217,7 @@ Searches the whole book using the [student field options](#student-fields).
 * To search an entire phrase, use double quotes.
 * Name searches ignore Latin accents, strokes and apostrophe styles. <br>
   For example, `dang` matches `Đặng`.
-* Name searches treat hyphens and the longer dashes as spaces, but other fields do not. <br>
+* Name searches treat hyphens and the longer dashes as spaces, because the same name may be punctuated differently from one roster to the next. Other fields, such as tags, do not. <br>
   For example, `find -n "Mary Jane"` matches the names `Mary-Jane` and `Mary–Jane`, but `find -t "Mary Jane"` does not match the tag `Mary-Jane`.
 * Phone searches match digits across formatting. <br>
   For example, `91234567` matches `+65 9123 4567`.
@@ -308,7 +308,7 @@ Install TAB there, then copy `data/tab.json` into the new home folder's `data` f
 
 Check that TAB's home folder is writable and has free disk space, then retry the command.
 
-If the error names `data/.tab.json.lock`, close all TAB windows and restore write access to that file before restarting. TAB uses it to coordinate saves between windows, so leave it in place.
+TAB uses a lock file, `data/.tab.json.lock`, to coordinate saves between windows. When an error names it, close all TAB windows and restore write access to that file before restarting. Leave the file in place.
 
 ## Command summary
 
