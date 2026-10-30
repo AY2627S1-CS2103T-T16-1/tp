@@ -23,6 +23,13 @@ public class Phone {
     private static final Pattern NON_DIGIT = Pattern.compile("\\P{Nd}");
     private static final int MINIMUM_DIGITS = 3;
     private static final int DECIMAL_RADIX = 10;
+    /**
+     * How many digits the shorter of two numbers needs before being the tail of the longer one
+     * counts as the same number. Seven is the shortest complete subscriber number that dialling
+     * plans in common use assign, so a shorter tail belongs to an extension or a service code,
+     * which numbers reaching different people routinely share.
+     */
+    private static final int MINIMUM_SHARED_TAIL_DIGITS = 7;
     private final String value;
 
     /**
@@ -64,6 +71,33 @@ public class Phone {
                 .map(codePoint -> Character.digit(codePoint, DECIMAL_RADIX) + '0')
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
+    }
+
+    /**
+     * Returns true if this number and {@code otherPhone} are likely the same number written
+     * differently, which a duplicate warning treats as evidence of one person held twice.
+     * A country code written in front of a number leaves the digits that identify the subscriber
+     * untouched at the end, so the shorter number being the tail of the longer one covers both
+     * {@code +65 8743 8807} and {@code 0065 8743 8807} against {@code 8743 8807} without naming
+     * any one country. The shorter number has to carry at least seven digits of its own, or a
+     * short number would match the great many longer ones that happen to end with it.
+     *
+     * <p>Digits at the end are a different matter, because they reach a different endpoint. An
+     * extension such as {@code 8743 8807 ext 12} therefore does not match {@code 8743 8807}, and
+     * neither does a number that merely begins the same way, such as {@code 8743 8807 1}.
+     */
+    public boolean isLikelySameNumber(Phone otherPhone) {
+        requireNonNull(otherPhone);
+        String digits = getDigits();
+        String otherDigits = otherPhone.getDigits();
+        if (digits.equals(otherDigits)) {
+            return true;
+        }
+        boolean isThisShorter = digits.length() < otherDigits.length();
+        String shorterDigits = isThisShorter ? digits : otherDigits;
+        String longerDigits = isThisShorter ? otherDigits : digits;
+        return shorterDigits.length() >= MINIMUM_SHARED_TAIL_DIGITS
+                && longerDigits.endsWith(shorterDigits);
     }
 
     /**

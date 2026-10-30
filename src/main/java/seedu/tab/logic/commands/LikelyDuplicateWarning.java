@@ -118,7 +118,7 @@ final class LikelyDuplicateWarning {
 
     private static boolean hasMatchingPhone(Student first, Student second) {
         return first.getPhone().flatMap(phone -> second.getPhone()
-                .filter(otherPhone -> phone.getDigits().equals(otherPhone.getDigits()))).isPresent();
+                .filter(phone::isLikelySameNumber)).isPresent();
     }
 
     private static boolean hasMatchingEmail(Student first, Student second) {
