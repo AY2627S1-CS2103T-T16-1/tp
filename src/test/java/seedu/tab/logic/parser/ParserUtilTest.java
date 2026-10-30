@@ -400,4 +400,13 @@ public class ParserUtilTest {
         assertThrows(ParseException.class, ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG, () ->
                 ParserUtil.parseTagToAdd("Needs follow up"));
     }
+
+    @Test
+    public void parseTagToAdd_givenFlagCommand_refusalNamesThatCommand() {
+        assertThrows(ParseException.class,
+                ParserUtil.getFollowUpIsNotATagMessage("edit 7 --follow-up"), () ->
+                        ParserUtil.parseTagToAdd(FollowUpFlag.FOLLOW_UP_NAME, "edit 7 --follow-up"));
+        assertEquals(FollowUpFlag.MESSAGE_RESERVED + " Use edit 7 --follow-up to mark the student.",
+                ParserUtil.getFollowUpIsNotATagMessage("edit 7 --follow-up"));
+    }
 }

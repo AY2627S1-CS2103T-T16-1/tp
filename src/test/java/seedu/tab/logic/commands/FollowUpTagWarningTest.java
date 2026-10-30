@@ -41,4 +41,12 @@ public class FollowUpTagWarningTest {
         assertEquals("Saved.\n\nNOTE: \"Needs follow up" + advice + "\nNOTE: \"Needs followup" + advice,
                 FollowUpTagWarning.appendTo("Saved.", List.of(new Tag("Needs followup"), new Tag("Needs follow up"))));
     }
+
+    @Test
+    public void appendTo_givenFlagCommand_namesThatCommandRatherThanTheOption() {
+        assertEquals("Saved.\n\nNOTE: \"Needs_follow_up\" looks like the follow-up marker. "
+                + "To flag the student, use edit 1 --follow-up.",
+                FollowUpTagWarning.appendTo("Saved.", List.of(new Tag("Needs_follow_up")),
+                        "edit 1 --follow-up"));
+    }
 }
