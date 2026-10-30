@@ -45,8 +45,10 @@ public class Email {
     // https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3
     private static final String LOCAL_ATOM_REGEX = "[a-zA-Z0-9" + SPECIAL_CHARACTERS + "]+";
     private static final String LOCAL_PART_REGEX = "^" + LOCAL_ATOM_REGEX + "(\\." + LOCAL_ATOM_REGEX + ")*";
+    // A label may hold a run of hyphens, which is what an IDNA A-label such as xn--bcher-kva
+    // needs: https://www.rfc-editor.org/rfc/rfc5890.html#section-2.3.2.1
     private static final String DOMAIN_PART_REGEX = ALPHANUMERIC_NO_UNDERSCORE
-            + "(-" + ALPHANUMERIC_NO_UNDERSCORE + ")*";
+            + "(-+" + ALPHANUMERIC_NO_UNDERSCORE + ")*";
     private static final int MINIMUM_LAST_LABEL_LENGTH = 2;
     private static final String DOMAIN_LAST_PART_REGEX =
             "(" + DOMAIN_PART_REGEX + "){" + MINIMUM_LAST_LABEL_LENGTH + ",}$";
@@ -62,6 +64,8 @@ public class Email {
             "the part before the @ may hold ASCII letters, digits and " + SPECIAL_CHARACTERS
                     + ", with dots allowed only between non-empty groups";
     private static final String MESSAGE_EMPTY_DOMAIN = "there is nothing after the @";
+    private static final String MESSAGE_EMPTY_DOMAIN_LABEL =
+            "the domain may not begin or end with a dot, or hold two dots in a row";
     private static final String MESSAGE_SHORT_LAST_LABEL = "the last part of the domain needs at least %d characters";
     private static final String MESSAGE_INVALID_DOMAIN =
             "the domain may hold ASCII letters and digits in labels separated by dots, "
@@ -119,17 +123,19 @@ public class Email {
         return hasAdjacentAlphanumericCharacters(labels[labels.length - 1]);
     }
 
+    /**
+     * Returns true if {@code label} obeys the letter-digit-hyphen rule: it is non-empty, holds
+     * only ASCII letters, digits and hyphens, and neither begins nor ends with a hyphen. A run
+     * of hyphens inside the label is left to stand, because an A-label carries one.
+     */
     private static boolean isValidDomainLabel(String label) {
         if (label.isEmpty() || label.charAt(0) == '-' || label.charAt(label.length() - 1) == '-') {
             return false;
         }
-        boolean wasHyphen = false;
         for (char character : label.toCharArray()) {
-            boolean isHyphen = character == '-';
-            if ((!isHyphen && !isAsciiAlphanumeric(character)) || (isHyphen && wasHyphen)) {
+            if (character != '-' && !isAsciiAlphanumeric(character)) {
                 return false;
             }
-            wasHyphen = isHyphen;
         }
         return true;
     }
@@ -200,11 +206,24 @@ public class Email {
         if (domain.isEmpty()) {
             return MESSAGE_EMPTY_DOMAIN;
         }
+        if (hasEmptyDomainLabel(domain)) {
+            return MESSAGE_EMPTY_DOMAIN_LABEL;
+        }
         String lastLabel = domain.substring(domain.lastIndexOf('.') + 1);
         if (lastLabel.length() < MINIMUM_LAST_LABEL_LENGTH) {
             return String.format(Locale.ROOT, MESSAGE_SHORT_LAST_LABEL, MINIMUM_LAST_LABEL_LENGTH);
         }
         return MESSAGE_INVALID_DOMAIN;
+    }
+
+    /**
+     * Returns true if a dot in {@code domain} has no label on one of its sides. The trailing-dot
+     * case has to be named before the last label is measured: a reader of {@code eve@example.com.}
+     * sees {@code com} as the last part, so being told it is too short sends them hunting for a
+     * fault that is not there.
+     */
+    private static boolean hasEmptyDomainLabel(String domain) {
+        return domain.startsWith(".") || domain.endsWith(".") || domain.contains("..");
     }
 
     /**

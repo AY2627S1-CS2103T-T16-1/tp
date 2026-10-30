@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -13,8 +15,11 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.tab.commons.core.DataLoadingErrorMessage;
 import seedu.tab.commons.core.LogsCenter;
@@ -35,9 +40,22 @@ public class UiManager implements Ui {
             "Repair or replace it, then restart TAB.";
     static final String DATA_LOADING_ERROR_CLOSE = "Close TAB";
     static final String FATAL_ERROR_TITLE = "Fatal error during initializing";
+    /**
+     * The least room the message is ever given, in pixels: about three lines of it, which is
+     * enough to read where the trouble is and to see that there is more to scroll to. A screen
+     * so short that the dialog's own parts leave less than this gets this anyway, since a
+     * heading and a close button over no message at all would say nothing.
+     */
+    static final double MIN_MESSAGE_HEIGHT = 48;
 
     private static final Logger logger = LogsCenter.getLogger(UiManager.class);
     private static final String ICON_APPLICATION = "/images/tab_32.png";
+    /**
+     * The share of the screen the startup error dialog may fill. What is left over covers the
+     * frame the desktop draws around the dialog and the shadow under it, neither of which the
+     * dialog can measure before the desktop has put it on screen.
+     */
+    private static final double MAX_DIALOG_SCREEN_HEIGHT_SHARE = 0.9;
 
     private Logic logic;
     private Path dataFilePath;
@@ -135,7 +153,7 @@ public class UiManager implements Ui {
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStyleClass().add("data-loading-error-dialog");
         dialogPane.setMinHeight(Region.USE_PREF_SIZE);
-        dialogPane.setContent(createDataLoadingErrorContent(error));
+        dialogPane.setContent(createScrollingContent(dialogPane, createDataLoadingErrorContent(error)));
 
         Label icon = new Label("!");
         icon.getStyleClass().add("data-loading-error-icon");
@@ -147,6 +165,58 @@ public class UiManager implements Ui {
         ButtonBar.setButtonUniformSize(closeButton, false);
         closeButton.setMinWidth(Region.USE_PREF_SIZE);
         return alert;
+    }
+
+    /**
+     * Returns the tallest the startup error dialog may be, measured against the screen it opens
+     * on so that the cap follows the display's own resolution and scaling.
+     */
+    static double maxDialogHeight() {
+        return Screen.getPrimary().getVisualBounds().getHeight() * MAX_DIALOG_SCREEN_HEIGHT_SHARE;
+    }
+
+    /**
+     * Returns {@code message} in a container that scrolls it vertically. The container holds the
+     * message to the dialog's width, so a diagnostic too long for the screen stays wrapped and
+     * is only ever scrolled down through, never sideways.
+     *
+     * <p>The container asks for no more height than the screen leaves beside the heading and the
+     * close button, which is what keeps those two on the display: a diagnostic longer than that
+     * is reached by scrolling rather than by the dialog growing past the edge of the screen. One
+     * that fits asks for its own height, and the dialog is sized as it is for any other message.
+     */
+    private static ScrollPane createScrollingContent(DialogPane dialogPane, VBox message) {
+        ScrollPane scroller = new ScrollPane(message) {
+            @Override
+            protected double computePrefHeight(double width) {
+                return Math.min(super.computePrefHeight(width), roomForMessage(dialogPane, this, width));
+            }
+        };
+        scroller.getStyleClass().add("data-loading-error-scroll");
+        scroller.setFitToWidth(true);
+        scroller.setHbarPolicy(ScrollBarPolicy.NEVER);
+        scroller.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+        return scroller;
+    }
+
+    /**
+     * Returns the height the screen leaves the dialog for its message, once everything the
+     * dialog draws around the message at {@code width} has taken the height it needs.
+     *
+     * <p>A screen too short for even {@code MIN_MESSAGE_HEIGHT} beside those parts is given that
+     * much anyway. The dialog is then taller than the share of the screen it may fill, because a
+     * dialog shrunk any further would show the heading and the close button over nothing at all.
+     */
+    private static double roomForMessage(DialogPane dialogPane, Node message, double width) {
+        double surround = dialogPane.getChildrenUnmodifiable().stream()
+                .filter(child -> child != message && child.isManaged())
+                .mapToDouble(child -> child.prefHeight(width))
+                .sum();
+        Insets insets = dialogPane.getInsets();
+        double left = maxDialogHeight() - surround - insets.getTop() - insets.getBottom();
+        // the dialog is drawn on whole pixels, and a part pixel it is asked for is one it rounds
+        // up to: the room is taken down to a whole pixel so that rounding cannot pass the cap
+        return Math.max(MIN_MESSAGE_HEIGHT, Math.floor(left));
     }
 
     /**
@@ -169,7 +239,6 @@ public class UiManager implements Ui {
         content.getChildren().addAll(createSourceExcerptLabels(error));
         content.getChildren().add(recovery);
         content.getStyleClass().add("data-loading-error-content");
-        content.setMinHeight(Region.USE_PREF_SIZE);
         return content;
     }
 
