@@ -289,16 +289,12 @@ class JsonParseErrorFormatter {
 
     /**
      * Returns where the character {@code count} places before {@code from} begins, or the start of
-     * the line {@code characters} reads when it holds fewer characters than that.
+     * the line {@code characters} reads when fewer characters than that lie behind {@code from}.
      */
     private static int skipCharactersBackward(BreakIterator characters, int from, int count) {
         int index = from;
         for (int skipped = 0; skipped < count; skipped++) {
-            int previous = characters.preceding(index);
-            if (previous == BreakIterator.DONE) {
-                return index;
-            }
-            index = previous;
+            index = Math.max(0, characters.preceding(index));
         }
         return index;
     }

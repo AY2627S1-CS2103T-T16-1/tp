@@ -250,16 +250,19 @@ public class JsonParseErrorFormatterTest {
             assertFalse(fromStart.startsWith(ELLIPSIS));
             assertTrue(fromStart.endsWith(ELLIPSIS));
             assertWholeCharactersOf(fromStart, sourceLine);
+            assertFullWidthQuoted(fromStart);
 
             String aroundMiddle = getAffectedExcerptLine(sourceLine, middleColumn);
             assertTrue(aroundMiddle.startsWith(ELLIPSIS));
             assertTrue(aroundMiddle.endsWith(ELLIPSIS));
             assertWholeCharactersOf(aroundMiddle, sourceLine);
+            assertFullWidthQuoted(aroundMiddle);
 
             String toEnd = getAffectedExcerptLine(sourceLine, lastColumn);
             assertTrue(toEnd.startsWith(ELLIPSIS));
             assertFalse(toEnd.endsWith(ELLIPSIS));
             assertWholeCharactersOf(toEnd, sourceLine);
+            assertFullWidthQuoted(toEnd);
         }
     }
 
@@ -372,6 +375,17 @@ public class JsonParseErrorFormatterTest {
         assertTrue(characters.isBoundary(windowStart + window.length()), excerptLine);
         assertEquals(0, countUnpairedSurrogates(excerptLine), excerptLine);
         assertTrue(countCharacters(excerptLine) <= EXCERPT_MAX_CHARACTER_COUNT, excerptLine);
+    }
+
+    /**
+     * Asserts that {@code excerptLine} quotes as much of its line as it is allowed to: the whole
+     * allowance, less the one character each ellipsis spends. A mistake reported near an end of
+     * the line has little to show on that side, and the width that leaves unused belongs to the
+     * other side rather than to nobody.
+     */
+    private void assertFullWidthQuoted(String excerptLine) {
+        assertEquals(EXCERPT_MAX_CHARACTER_COUNT - 2 * ELLIPSIS.length(),
+                countCharacters(excerptLine.replace(ELLIPSIS, "")), excerptLine);
     }
 
     private int countUnpairedSurrogates(String value) {
