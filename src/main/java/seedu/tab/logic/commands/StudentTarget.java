@@ -17,7 +17,7 @@ import seedu.tab.model.student.Student;
 /**
  * The address of a single student as a command reads it: either a position in the displayed
  * student list, or an NUS Student ID held anywhere in the book. The parser builds a target
- * from what the User typed, and the command resolves it when it runs, so an NUS Student ID
+ * from what the user typed, and the command resolves it when it runs, so an NUS Student ID
  * names its student even while a search is hiding them.
  */
 public final class StudentTarget {

@@ -229,7 +229,7 @@ public class CommandHighlighterTest {
 
     @Test
     public void highlight_everyCommand_breaksWhereTheParserDoes() throws Exception {
-        // the coloring tells the User where one token ends and the next begins, so it has to
+        // the coloring tells the user where one token ends and the next begins, so it has to
         // break a command in the same places the parser does: the command word at the first
         // separator, and the arguments after it the way the tokenizer splits them
         for (String command : List.of("list", "add John -p 123", "add \"Siti Nur-Aisyah\"",

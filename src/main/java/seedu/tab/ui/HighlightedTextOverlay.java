@@ -24,7 +24,7 @@ import javafx.util.Duration;
  *
  * <p>A {@code TextField} cannot color its own content, so the colors are painted as a
  * separate copy of the line, and the field is left to do everything else: it keeps every key
- * the User presses, it decides where a click lands, and it scrolls a command longer than the
+ * the user presses, it decides where a click lands, and it scrolls a command longer than the
  * line by rules of its own. The copy, the caret and the selection are all drawn wherever the
  * field has put its own text, which is the one thing they have to agree with.
  *
@@ -79,7 +79,7 @@ public class HighlightedTextOverlay {
     /**
      * Repaints the colored text behind the field so that it reads as what was typed.
      *
-     * <p>The field keeps every key the User presses and decides where a click lands; only its
+     * <p>The field keeps every key the user presses and decides where a click lands; only its
      * own text is transparent, so what is read is the colored copy underneath, and the caret
      * and the selection are drawn here to go with it. A command longer than the line scrolls
      * the copy the way the field scrolls its own text, so the colors hold however long the

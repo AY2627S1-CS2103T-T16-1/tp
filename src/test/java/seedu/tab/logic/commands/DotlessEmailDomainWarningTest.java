@@ -69,7 +69,7 @@ public class DotlessEmailDomainWarningTest {
 
     @Test
     public void appendChangedEmailTo_unchangedDotlessDomain_doesNotWarn() {
-        // an edit of another field must not repeat a warning the User has already seen
+        // an edit of another field must not repeat a warning the user has already seen
         Student original = new StudentBuilder().withName("Tan").withEmail("john@gmail").build();
         Student edited = new StudentBuilder().withName("Tan").withEmail("john@gmail").withTags("T1").build();
 
