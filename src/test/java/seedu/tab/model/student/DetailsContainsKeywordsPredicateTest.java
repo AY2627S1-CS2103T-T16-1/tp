@@ -77,6 +77,21 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_hangulSyllableInName_matchesOnlyTheSameSyllable() {
+        Student lee = new StudentBuilder().withName("이서연").build();
+        for (String keyword : List.of("이", "이서", "이서연")) {
+            assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of(keyword))).test(lee),
+                    keyword + " should match 이서연");
+        }
+        // 임 and 김 are written with the letters of 이 and 기 plus one more, so neither surname
+        // may answer a search for the other
+        assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("이")))
+                .test(new StudentBuilder().withName("임지수").build()));
+        assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("기")))
+                .test(new StudentBuilder().withName("김민준").build()));
+    }
+
+    @Test
     public void test_longPhoneTerms_returnsPromptlyWithoutBroadeningMatches() {
         Student student = new StudentBuilder().withPhone("9123-4567").build();
         List<String> keywords = List.of("9".repeat(50_000) + "!", "９".repeat(50_000) + "!",

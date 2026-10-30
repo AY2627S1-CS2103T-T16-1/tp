@@ -158,6 +158,12 @@ public class StringUtil {
      * a roll typed in a word processor carries {@code Mary–Jane}. Whitespace runs are then
      * reduced the way a stored value reduces them, so a dash that already has spaces around it
      * does not leave a gap the other spelling cannot match.
+     *
+     * <p>The key is composed back to NFC last. Decomposing is what sets a Latin accent apart from
+     * its letter so it can be dropped, but it also splits a Hangul syllable into the letters it is
+     * written from, and those are letters rather than marks, so nothing drops them again. 이 would
+     * stay as the two letters that open 임, and a search for the one surname would find the other.
+     * Composing cannot bring back a mark already dropped, so the accents stay folded.
      */
     public static String normalizeNameForComparison(String name) {
         requireNonNull(name);
@@ -177,7 +183,8 @@ public class StringUtil {
             }
         }
         String dashesAsSpaces = HYPHEN_OR_DASH.matcher(result.toString()).replaceAll(" ");
-        return foldCase(WHITESPACE.matcher(dashesAsSpaces).replaceAll(" "));
+        String spaced = WHITESPACE.matcher(dashesAsSpaces).replaceAll(" ");
+        return Normalizer.normalize(foldCase(spaced), Normalizer.Form.NFC);
     }
 
     /**
