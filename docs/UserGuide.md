@@ -62,6 +62,9 @@ TAB follows common CLI conventions for options and quoted values, using short op
 * Put values containing spaces or beginning with a hyphen in double quotes.<br>
   For example, `tag 1 -a "Lab 3"` adds one tag containing a space.
 
+* Separate an option from its quoted value with a space or `=`.<br>
+  For example, `-t "Lab 3"` and `-t="Lab 3"` work; `-t"Lab 3"` is rejected as an unknown option.
+
 * Command words ignore case, but option names are case-sensitive.<br>
   For example, `LIST` works, but `-P` does not replace `-p`.
 

@@ -40,6 +40,7 @@ import seedu.tab.logic.commands.ExitCommand;
 import seedu.tab.logic.commands.FindCommand;
 import seedu.tab.logic.commands.HelpCommand;
 import seedu.tab.logic.commands.ListCommand;
+import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.commands.exceptions.CommandException;
 import seedu.tab.logic.parser.CommandTokenizer;
 import seedu.tab.logic.parser.FindCommandParser;
@@ -80,6 +81,45 @@ public class LogicManagerTest {
         JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"));
         StorageManager storage = new StorageManager(studentBookStorage, userPrefsStorage);
         logic = new LogicManager(model, storage);
+    }
+
+    @Test
+    public void execute_gluedQuotedOptions_preservesRecordsFilterAndSavedFile() throws Exception {
+        logic.execute("add Existing Student -t T1");
+        logic.execute("find -n Nobody");
+        List<Student> students = List.copyOf(model.getStudentBook().getStudentList());
+        Predicate<? super Student> filter = model.getFilteredStudentPredicate();
+        Path dataPath = temporaryFolder.resolve("studentBook.json");
+        String savedJson = Files.readString(dataPath);
+        Map<String, String> failures = Map.of(
+                "add Amy Lim -t\"Lab 3\"", "There is no -tLab 3 option.",
+                "add Ben Ong --phone\"+65 9123 4567\"", "There is no --phone+65 9123 4567 option.",
+                "edit 1 -t\"Lab 3\"", "There is no -tLab 3 option.",
+                "tag 1 -a\"Lab 3\"", "There is no -aLab 3 option.\n" + TagCommand.MESSAGE_ACTION_GUIDANCE);
+        for (var failure : failures.entrySet()) {
+            assertThrows(ParseException.class, failure.getValue(), () -> logic.execute(failure.getKey()));
+            assertEquals(students, model.getStudentBook().getStudentList());
+            assertTrue(model.getFilteredStudentList().isEmpty());
+            assertSame(filter, model.getFilteredStudentPredicate());
+            assertEquals(savedJson, Files.readString(dataPath));
+        }
+        assertEquals(students, new JsonStudentBookStorage(dataPath).readStudentBook().orElseThrow().getStudentList());
+    }
+
+    @Test
+    public void execute_correctlySeparatedQuotedOptions_preservesFieldsAfterReload() throws Exception {
+        for (String separator : List.of(" ", "=")) {
+            logic.execute("add Amy Lim -t" + separator + "\"Lab 3\"");
+            logic.execute("add Ben Ong --phone" + separator + "\"+65 9123 4567\"");
+        }
+        Student amy = new StudentBuilder().withName("Amy Lim").withoutPhone().withoutEmail()
+                .withTags("Lab 3").build();
+        Student ben = new StudentBuilder().withName("Ben Ong").withPhone("+65 9123 4567").withoutEmail()
+                .withTags().build();
+        List<Student> expected = List.of(amy, ben, amy, ben);
+        assertEquals(expected, model.getStudentBook().getStudentList());
+        JsonStudentBookStorage storage = new JsonStudentBookStorage(temporaryFolder.resolve("studentBook.json"));
+        assertEquals(expected, storage.readStudentBook().orElseThrow().getStudentList());
     }
 
     @Test
