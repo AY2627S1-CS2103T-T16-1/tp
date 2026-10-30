@@ -77,11 +77,11 @@ public class CollectionUtilTest {
 
     @Test
     public void isAnyNonNull() {
-        // Empty varargs, all-null elements, and a null array contain no non-null object.
+        // empty varargs, all-null elements, and a null array: no non-null object
         assertFalse(CollectionUtil.isAnyNonNull());
         assertFalse(CollectionUtil.isAnyNonNull((Object) null));
         assertFalse(CollectionUtil.isAnyNonNull((Object[]) null));
-        // At least one non-null object: true for both all-non-null and mixed arguments.
+        // at least one non-null object: true for both all-non-null and mixed arguments
         assertTrue(CollectionUtil.isAnyNonNull(new Object()));
         assertTrue(CollectionUtil.isAnyNonNull(new Object(), null));
     }
@@ -101,10 +101,10 @@ public class CollectionUtilTest {
     public void indexOfSame_noSuchObject_returnsNotFound() {
         List<List<String>> items = Arrays.asList(new ArrayList<>(), new ArrayList<>());
 
-        // Equal value but absent reference: not found in a non-empty list.
+        // equal value but absent reference: not found in a non-empty list
         assertEquals(CollectionUtil.NOT_FOUND, CollectionUtil.indexOfSame(items, new ArrayList<String>()),
                 "an element equal to the target is not the target");
-        // Absent null target and empty list are separate not-found representatives.
+        // absent null target and empty list: separate not-found representatives
         assertEquals(CollectionUtil.NOT_FOUND, CollectionUtil.indexOfSame(items, null));
         assertEquals(CollectionUtil.NOT_FOUND, CollectionUtil.indexOfSame(Collections.emptyList(), "ham"));
     }
