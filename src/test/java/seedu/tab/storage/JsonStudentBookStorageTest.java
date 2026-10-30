@@ -200,9 +200,7 @@ public class JsonStudentBookStorageTest {
                     DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
 
             assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
-            // the flag is the one field whose diagnostic quotes the opening bracket rather than
-            // naming an object or an array, as describeJsonValue has every other field do
-            String shownValue = value.equals("[]") ? "[" : value.equals("{}") ? "{" : value;
+            String shownValue = describeJsonValue(value);
             assertTrue(exception.getMessage().contains("Invalid flag value " + shownValue
                     + ". Use JSON true, false or null for the follow-up flag."), exception.getMessage());
             assertArrayEquals(bytes, Files.readAllBytes(path));
@@ -231,7 +229,7 @@ public class JsonStudentBookStorageTest {
     public void readStudentBook_structuredTextField_reportsFieldAndPreservesBytes() throws Exception {
         for (String field : List.of("name", "phone", "email", "nusStudentId")) {
             assertInvalidTextFieldPreservesFile(field, "[\"first\",\"second\"]",
-                    field + " must be a single text value, not a list.");
+                    field + " must be a single text value, not an array.");
             assertInvalidTextFieldPreservesFile(field, "{\"home\":\"first\"}",
                     field + " must be a single text value, not an object.");
         }
@@ -607,10 +605,11 @@ public class JsonStudentBookStorageTest {
      * the file holds a whole object or array there.
      */
     private static String describeJsonValue(String value) {
-        if (value.equals("{}")) {
-            return "an object";
-        }
-        return value.equals("[]") ? "an array" : value;
+        return switch (value) {
+            case "{}" -> "an object";
+            case "[]" -> "an array";
+            default -> value;
+        };
     }
 
     private Path addToTestDataPathIfNotNull(String prefsFileInTestDataFolder) {
