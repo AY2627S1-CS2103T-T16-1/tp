@@ -31,6 +31,7 @@ import seedu.tab.logic.parser.exceptions.ValueAfterFlagsException;
  */
 public class FlagTokenizer {
     private static final Pattern NEGATIVE_INDEX_PATTERN = Pattern.compile("-[0-9]+(?:\\.[0-9]+)?");
+    private static final String LONG_OPTION_MARKER = OPTION_MARKER.repeat(2);
 
 
     private record AttachedOption(String marker, String value) {}
@@ -177,14 +178,45 @@ public class FlagTokenizer {
         return getFlag(token.value(), flagsByMarker);
     }
 
-    /** Returns the known flag, suggesting a lowercase spelling only if this command supports it. */
+    /** Returns the known flag, suggesting a near spelling only if this command supports it. */
     private static CliFlag getFlag(String marker, Map<String, CliFlag> flagsByMarker) throws ParseException {
         CliFlag flag = flagsByMarker.get(marker);
         if (flag == null) {
-            String lowercase = marker.toLowerCase(Locale.ROOT);
-            throw new UnknownFlagException(marker, flagsByMarker.containsKey(lowercase) ? lowercase : null);
+            throw new UnknownFlagException(marker, getSuggestion(marker, flagsByMarker));
         }
         return flag;
+    }
+
+    /**
+     * Returns the option of this command that {@code marker} is nearest to, or null when none of
+     * its near spellings is one, so that a guess at another command's option is never offered.
+     */
+    private static String getSuggestion(String marker, Map<String, CliFlag> flagsByMarker) {
+        return getNearSpellings(marker).stream()
+                .filter(flagsByMarker::containsKey)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Returns the spellings {@code marker} may stand for, nearest first. One dash before a word
+     * is what an autocorrected {@code --} leaves behind, so the long option of that word counts
+     * as a near spelling of it.
+     */
+    private static List<String> getNearSpellings(String marker) {
+        String lowercase = marker.toLowerCase(Locale.ROOT);
+        if (!isWordAfterOneDash(marker)) {
+            return List.of(lowercase);
+        }
+        String longForm = LONG_OPTION_MARKER + marker.substring(OPTION_MARKER.length());
+        return List.of(lowercase, longForm, longForm.toLowerCase(Locale.ROOT));
+    }
+
+    /** Returns true if {@code marker} is a single dash before more than one character. */
+    private static boolean isWordAfterOneDash(String marker) {
+        return marker.startsWith(OPTION_MARKER)
+                && !marker.startsWith(LONG_OPTION_MARKER)
+                && marker.length() > OPTION_MARKER.length() + 1;
     }
 
     /**
