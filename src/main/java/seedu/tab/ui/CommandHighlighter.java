@@ -179,12 +179,11 @@ public class CommandHighlighter {
     }
 
     /**
-     * Returns the part {@code word} plays. A quoted word is always a value, which is how a
-     * value opening with the option marker is told from an option, and so is a word the parser
-     * has already read as the value of the option before it.
+     * Returns the part {@code word} plays. A leading option marker takes precedence over
+     * later quotes, except in an equals-attached value.
      */
     private static Kind determineKind(String word, boolean wasQuoted, boolean isAttachedValue) {
-        if (wasQuoted) {
+        if (wasQuoted && (isAttachedValue || !CommandTokenizer.isOptionMarker(word.charAt(0)))) {
             return Kind.QUOTED_VALUE;
         }
         if (!isAttachedValue && word.length() > OPTION_MARKER.length()

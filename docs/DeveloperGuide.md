@@ -697,7 +697,7 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
 1. Enter `add Quote Probe --phone="9123 4567" --tag="Lab 5"`, then try `edit 1 -P 81234567` and `add Broken -t "Lab`.
    * Expected: Attached values are accepted; the capital option suggests `-p`; the unclosed quote is reported without changing records.
 1. Enter `add Amy Lim -t"Lab 3"`, then `add Ben Ong --phone"+65 9123 4567"`.
-   * Expected: `There is no -tLab 3 option.` and `There is no --phone+65 9123 4567 option.` respectively. Neither command adds a student or changes saved data. Repeat with a space or `=` before the opening quote; both corrected forms record the field and leave the name unchanged.
+   * Expected: Before submission, each glued option/value token has option coloring rather than quoted-value coloring. After submission, `There is no -tLab 3 option.` and `There is no --phone+65 9123 4567 option.` respectively. Neither command adds a student or changes saved data. Repeat with a space or `=` before the opening quote; both corrected forms record the field and leave the name unchanged.
 1. Paste `add “Paste Probe” –p “8123 4567” –t “Lab 6”`, then paste a command containing tab/newline separators before pressing Enter.
    * Expected: Curly quotes and a pasted option dash are recognized. Separators become spaces in one command, and the line's color follows its structure.
 1. Paste `add Dash Probe —phone 91234567`, where `—phone` carries the single em dash an editor writes for `--`, then `add Dash Probe —Phone 91234567`.
