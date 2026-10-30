@@ -662,9 +662,9 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
 1. Enter `edit --target-id 1ABC -f`, then `find -f`.
    * Expected: Alice appears with the follow-up label. Restarting preserves her status.
 1. Try `tag --id 1ABC -a "Needs follow-up"`, then `tag --id 1ABC -r "Needs follow-up"`.
-   * Expected: Addition is rejected as a reserved marker. Removal explains that follow-up is separate and suggests the edit command that clears it.
+   * Expected: Addition is rejected as a reserved marker and suggests the edit command that sets the flag on Alice. Removal explains that follow-up is separate and suggests the edit command that clears it.
 1. Enter `tag --id 1ABC -a "Needs follow-up soon"`.
-   * Expected: A normal tag is added and the existing flag remains set. Then try `tag --id 1ABC -a "Needs_follow_up"`: it is stored as a general tag with an advisory note that this spelling does not set follow-up status. Alice's existing follow-up remains set.
+   * Expected: A normal tag is added and the existing flag remains set. Then try `tag --id 1ABC -a "Needs_follow_up"`: it is stored as a general tag with an advisory note that this spelling does not set follow-up status, and the note names the edit command that does. Alice's existing follow-up remains set.
 
 ### Deleting with displayed and ID targets
 

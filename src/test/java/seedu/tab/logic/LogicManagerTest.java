@@ -414,12 +414,15 @@ public class LogicManagerTest {
         logic.execute("add Marker Test");
         // All these spellings are now rejected as they read like the follow-up marker
         String rejectionMsg = FollowUpFlag.MESSAGE_RESERVED + " Use --follow-up to mark the student.";
+        // tag takes no follow-up option, so its refusal names the edit command that does
+        String tagRejectionMsg = FollowUpFlag.MESSAGE_RESERVED
+                + " Use edit 1 --follow-up to mark the student.";
         assertParseException("add Marker Test2 -t \"Needs follow up\"", rejectionMsg);
         assertParseException("add Marker Test2 -t \"NEEDS FOLLOW UP\"", rejectionMsg);
         assertParseException("edit 1 -t \"Needs followup\"", rejectionMsg);
-        assertParseException("tag 1 -a \"Needs follow\uff0dup\"", rejectionMsg);
-        assertParseException("tag 1 -a \"Needs follow\u2015up\"", rejectionMsg);
-        assertParseException("tag 1 -a \"Needs follow-up;\"", rejectionMsg);
+        assertParseException("tag 1 -a \"Needs follow\uff0dup\"", tagRejectionMsg);
+        assertParseException("tag 1 -a \"Needs follow\u2015up\"", tagRejectionMsg);
+        assertParseException("tag 1 -a \"Needs follow-up;\"", tagRejectionMsg);
         // Regular tags still work
         assertFalse(logic.execute("edit 1 -p 123").getFeedbackToUser().contains("NOTE:"));
         // The student should not have any follow-up-like tags

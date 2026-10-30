@@ -79,7 +79,7 @@ public class TagCommandIntegrationTest {
 
         assertFailureWithoutMutation("tag 2 -r \"Needs follow-up\"", CommandException.class,
                 "This student does not have tag [Needs follow-up]. No changes made.\n"
-                        + String.format(TagCommand.MESSAGE_FOLLOW_UP_FLAG_HINT, 2));
+                        + String.format(TagCommand.MESSAGE_FOLLOW_UP_FLAG_HINT, "edit 2"));
     }
 
     @Test
@@ -132,7 +132,8 @@ public class TagCommandIntegrationTest {
         model.updateFilteredStudentList(shown -> false);
         assertFailureWithoutMutation("tag A01234567X -r \"Needs follow-up\"", CommandException.class,
                 "This student does not have tag [Needs follow-up]. No changes made.\n"
-                        + String.format(TagCommand.MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT, "A01234567X"));
+                        + String.format(TagCommand.MESSAGE_FOLLOW_UP_FLAG_HINT,
+                                "edit --target-id A01234567X"));
     }
 
     @Test
@@ -200,8 +201,10 @@ public class TagCommandIntegrationTest {
                 "tag 1 -a \"\"", "Tag \"\" is not valid: it holds no letter or number",
                 "tag 1 -a \"---\"", "Tag \"---\" is not valid: it holds no letter or number",
                 "tag 1 -a T2 --add T3", "Options given more than once: -a. Give each listed option only once.",
-                "tag 1 -a \"Needs follow-up\"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG,
-                "tag 1 -a \"  nEEds   follow-up \"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
+                "tag 1 -a \"Needs follow-up\"",
+                ParserUtil.getFollowUpIsNotATagMessage("edit 1 --follow-up"),
+                "tag 1 -a \"  nEEds   follow-up \"",
+                ParserUtil.getFollowUpIsNotATagMessage("edit 1 --follow-up"));
         for (Map.Entry<String, String> error : errors.entrySet()) {
             assertFailureWithoutMutation(error.getKey(), ParseException.class, error.getValue());
         }
@@ -378,7 +381,7 @@ public class TagCommandIntegrationTest {
             throws Exception {
         // the card draws the label beside the name, so reaching for tag to take it off is a
         // fair guess, and saying only that the student has no such tag leaves it drawn there
-        String hint = "\n" + String.format(TagCommand.MESSAGE_FOLLOW_UP_FLAG_HINT, 1);
+        String hint = "\n" + String.format(TagCommand.MESSAGE_FOLLOW_UP_FLAG_HINT, "edit 1");
         assertTrue(hint.endsWith("edit 1 --no-follow-up."), "the hint should name the command: " + hint);
         Map<String, String> spellings = Map.of("Needs follow-up", "Needs follow-up",
                 "needs follow-up", "needs follow-up", "  NEEDS   follow-up ", "NEEDS follow-up");
@@ -386,6 +389,17 @@ public class TagCommandIntegrationTest {
             assertFailureWithoutMutation("tag 1 -r \"" + spelling.getKey() + "\"", CommandException.class,
                     "This student does not have tag [" + spelling.getValue() + "]. No changes made." + hint);
         }
+    }
+
+    @Test
+    public void execute_addFollowUpLikeTag_notesTheEditCommandThatFlagsTheStudent() throws Exception {
+        // tag takes no follow-up option, so a note naming one would fail once it was followed
+        assertTrue(logic.execute("tag 1 -a Needs_follow_up").getFeedbackToUser()
+                .endsWith("NOTE: \"Needs_follow_up\" looks like the follow-up marker. "
+                        + "To flag the student, use edit 1 --follow-up."));
+        model.updateFilteredStudentList(shown -> false);
+        assertTrue(logic.execute("tag --id A01234567X -a Needs.follow.up").getFeedbackToUser()
+                .endsWith("To flag the student, use edit --target-id A01234567X --follow-up."));
     }
 
     @Test
