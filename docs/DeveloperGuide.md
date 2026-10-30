@@ -246,7 +246,7 @@ If saving throws `IOException`, Logic restores the book and predicate before rep
 
 <puml src="diagrams/StaleWindowSave.puml" alt="Locking, checking for stale student data, and replacing the saved file" />
 
-The lock lives beside the resolved data file, normally as `data/.tab.json.lock`. For an existing data file, Storage follows symbolic links before choosing the lock path, so windows accessing the same file through different links share one lock. A busy lock, changed records, or a file that cannot be validated causes the save to fail with recovery guidance. The lock file remains after release; its existence does not mean a window holds the lock.
+The lock lives beside the data file, normally as `data/.tab.json.lock`. A busy lock, changed records, or a file that cannot be validated causes the save to fail with recovery guidance. The lock file remains after release; its existence does not mean a window holds the lock.
 
 The comparison uses validated book content. Formatting-only edits and changes to the top-level `_comment` do not count as changed student records. The latest disk comment is carried into the replacement file. This check stops cooperating TAB windows from overwriting each other's records. External text editors do not take part in the locking protocol, so close TAB before hand-editing.
 
@@ -725,8 +725,6 @@ First rerun the shared test-record setup so the file contains three students wit
    * Expected: Invalid UTF-8 is rejected with encoding guidance; both supported UTF-8 forms preserve the accent.
 1. Move the valid file elsewhere and start TAB, then close TAB and restore it. Separately, make the file/folder unreadable through the OS permissions UI and start TAB.
    * Expected: A genuinely missing file shows sample students. An unreadable file gives a loading error instead of sample data. Restore permissions after the test.
-1. On macOS/Linux, close TAB, move `data/tab.json` to `tab-real.json` beside the JAR, and create a relative symbolic link with `ln -s ../tab-real.json data/tab.json`. Start TAB and enter `add Link Probe`, then close it.
-   * Expected: `tab-real.json` contains the new student and `data/tab.json` remains a symbolic link. Replace the link with one pointing into a nonexistent folder and relaunch: startup reports the missing target folder without opening the normal window. Restore the original regular data file before further tests.
 1. With TAB closed, replace `preferences.json` with `null`, then restart.
    * Expected: Default window settings are used and preferences are rewritten when writable. Student data is unaffected.
 
