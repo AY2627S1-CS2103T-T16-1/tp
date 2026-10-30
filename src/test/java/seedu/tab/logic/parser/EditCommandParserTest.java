@@ -317,7 +317,7 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_mistypedEmailClear_reportsSpecificProblem() {
-        // Missing value is rejected; clearing requires an explicit quoted empty string.
+        // Missing value is rejected; clearing accepts an explicit quoted empty or whitespace-only value.
         for (String input : List.of("1 -e", "1 -e ", "1 -e\u00A0", "1 -e -p 91234567")) {
             assertParseFailure(parser, input,
                     String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
@@ -345,7 +345,7 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_mistypedPhoneClear_reportsSpecificProblem() {
-        // Missing value is rejected; clearing requires an explicit quoted empty string.
+        // Missing value is rejected; clearing accepts an explicit quoted empty or whitespace-only value.
         for (String input : List.of("1 -p", "1 -p ", "1 -p\u00A0", "1 -p -e a@b.com")) {
             assertParseFailure(parser, input,
                     String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_PHONE.getLabel()));
