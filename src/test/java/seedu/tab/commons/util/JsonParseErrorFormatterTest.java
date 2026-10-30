@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.charset.MalformedInputException;
 import java.nio.file.AccessDeniedException;
+import java.text.BreakIterator;
 import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,18 @@ import seedu.tab.commons.core.DataLoadingErrorMessage;
  * Tests the explanations given for a data file that cannot be read.
  */
 public class JsonParseErrorFormatterTest {
+
+    private static final String GRINNING_FACE = "😀";
+    private static final String ACCENTED_E = "é";
+    private static final int LONG_LINE_CHARACTER_COUNT = 200;
+    private static final int EXCERPT_MAX_CHARACTER_COUNT = 160;
+    private static final String ELLIPSES_ONLY = "[.…]*";
+
+    // The columns to crop a 200-character line at: its first and its last, together with the
+    // ones Jackson reports in the middle. Each of 200, 399 and 400 falls inside a character of
+    // a line whose characters take two of the units Jackson counts in, so a crop made at the
+    // reported column alone would break one in half.
+    private static final int[] CROP_COLUMNS = {1, 200, 201, 399, 400};
 
     @Test
     public void format_regionalDefaults_keepAsciiLocations() {
@@ -178,6 +191,54 @@ public class JsonParseErrorFormatterTest {
     }
 
     @Test
+    public void format_astralCharactersAtCropPoint_keepsWholeCharacters() {
+        String sourceLine = GRINNING_FACE.repeat(LONG_LINE_CHARACTER_COUNT);
+
+        for (int column : CROP_COLUMNS) {
+            assertWholeCharacters(getAffectedExcerptLine(sourceLine, column), GRINNING_FACE);
+        }
+    }
+
+    @Test
+    public void format_combiningMarkAtCropPoint_keepsWholeCharacters() {
+        String sourceLine = ACCENTED_E.repeat(LONG_LINE_CHARACTER_COUNT);
+
+        for (int column : CROP_COLUMNS) {
+            assertWholeCharacters(getAffectedExcerptLine(sourceLine, column), ACCENTED_E);
+        }
+    }
+
+    @Test
+    public void format_astralCharactersInContextLine_keepsWholeCharacters() {
+        String jsonSource = GRINNING_FACE.repeat(LONG_LINE_CHARACTER_COUNT) + "\nsecond";
+        JsonLocation location = new JsonLocation("hidden source", -1, -1, 2, 1);
+        JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
+
+        String excerpt = JsonParseErrorFormatter.format(exception, jsonSource).sourceExcerpt();
+
+        assertWholeCharacters(getExcerptLine(excerpt, "  1 | "), GRINNING_FACE);
+    }
+
+    @Test
+    public void format_longAffectedLine_marksOnlyTheEndsItCropped() {
+        String sourceLine = GRINNING_FACE.repeat(LONG_LINE_CHARACTER_COUNT);
+        int middleColumn = LONG_LINE_CHARACTER_COUNT + 1;
+        int lastColumn = 2 * LONG_LINE_CHARACTER_COUNT;
+
+        String fromStart = getAffectedExcerptLine(sourceLine, 1);
+        assertTrue(fromStart.startsWith(GRINNING_FACE));
+        assertFalse(fromStart.endsWith(GRINNING_FACE));
+
+        String aroundMiddle = getAffectedExcerptLine(sourceLine, middleColumn);
+        assertFalse(aroundMiddle.startsWith(GRINNING_FACE));
+        assertFalse(aroundMiddle.endsWith(GRINNING_FACE));
+
+        String toEnd = getAffectedExcerptLine(sourceLine, lastColumn);
+        assertFalse(toEnd.startsWith(GRINNING_FACE));
+        assertTrue(toEnd.endsWith(GRINNING_FACE));
+    }
+
+    @Test
     public void format_twoDigitLines_alignsSeparators() {
         String jsonSource = String.join("\n", "one", "two", "three", "four", "five",
                 "six", "seven", "eight", "nine", "ten");
@@ -248,6 +309,61 @@ public class JsonParseErrorFormatterTest {
 
     private JsonProcessingException createJsonProcessingException(String message, JsonLocation location) {
         return new JsonProcessingException(message, location) {};
+    }
+
+    /**
+     * Returns the only excerpt line of a one-line {@code sourceLine} reported as faulty at
+     * {@code affectedColumn}, without the marker and line number in front of it.
+     */
+    private String getAffectedExcerptLine(String sourceLine, int affectedColumn) {
+        JsonLocation location = new JsonLocation("hidden source", -1, -1, 1, affectedColumn);
+        JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
+
+        return getExcerptLine(JsonParseErrorFormatter.format(exception, sourceLine).sourceExcerpt(), "> 1 | ");
+    }
+
+    private String getExcerptLine(String excerpt, String prefix) {
+        String excerptLine = excerpt.lines()
+                .filter(line -> line.startsWith(prefix))
+                .findFirst()
+                .orElseThrow();
+        return excerptLine.substring(prefix.length());
+    }
+
+    /**
+     * Asserts that {@code excerptLine} holds whole copies of {@code character} and nothing but
+     * the ellipses marking where text was dropped, and that it stays within the width an
+     * excerpt line is allowed.
+     */
+    private void assertWholeCharacters(String excerptLine, String character) {
+        assertEquals(0, countUnpairedSurrogates(excerptLine), excerptLine);
+        assertTrue(excerptLine.replace(character, "").matches(ELLIPSES_ONLY), excerptLine);
+        assertTrue(countCharacters(excerptLine) <= EXCERPT_MAX_CHARACTER_COUNT, excerptLine);
+    }
+
+    private int countUnpairedSurrogates(String value) {
+        int unpaired = 0;
+        for (int index = 0; index < value.length(); index++) {
+            char unit = value.charAt(index);
+            boolean isPairedHigh = Character.isHighSurrogate(unit)
+                    && index + 1 < value.length() && Character.isLowSurrogate(value.charAt(index + 1));
+            if (isPairedHigh) {
+                index++;
+            } else if (Character.isHighSurrogate(unit) || Character.isLowSurrogate(unit)) {
+                unpaired++;
+            }
+        }
+        return unpaired;
+    }
+
+    private int countCharacters(String value) {
+        BreakIterator characters = BreakIterator.getCharacterInstance();
+        characters.setText(value);
+        int count = 0;
+        while (characters.next() != BreakIterator.DONE) {
+            count++;
+        }
+        return count;
     }
 
     private void assertConciseJsonMessage(String originalMessage, String conciseMessage) {

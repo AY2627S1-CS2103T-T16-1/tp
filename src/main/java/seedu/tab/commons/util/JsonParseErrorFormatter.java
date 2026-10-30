@@ -21,6 +21,8 @@ class JsonParseErrorFormatter {
     private static final int JSON_ERROR_CONTEXT_LINE_COUNT = 1;
     private static final int JSON_ERROR_MAX_LINE_LENGTH = 160;
     private static final String JSON_ERROR_ELLIPSIS = "...";
+    private static final int JSON_ERROR_ELLIPSIS_LENGTH =
+            JSON_ERROR_ELLIPSIS.codePointCount(0, JSON_ERROR_ELLIPSIS.length());
     private static final String JSON_ERROR_LINE_SEPARATOR_PATTERN = "\\r\\n|\\r|\\n";
     private static final String JSON_ERROR_SOURCE_MARKER = "[Source:";
     private static final String JSON_ERROR_COMMENT_MARKER = "Feature 'ALLOW_COMMENTS'";
@@ -214,23 +216,51 @@ class JsonParseErrorFormatter {
         return excerpt.toString();
     }
 
+    /**
+     * Returns as much of {@code sourceLine} as an excerpt line is allowed to show: the part
+     * around {@code affectedColumn} when the line is the affected one, its opening otherwise,
+     * with each end that something was dropped from marked.
+     *
+     * <p>The allowance is counted in characters as a reader counts them, and every cut falls
+     * where one character ends and the next begins. Cutting at a stored index would halve an
+     * emoji or separate a letter from its accent, leaving the excerpt showing a character no
+     * font can draw.
+     */
     private static String truncateJsonSourceLine(String sourceLine, int affectedColumn,
                                                  boolean isAffectedLine) {
-        if (sourceLine.length() <= JSON_ERROR_MAX_LINE_LENGTH) {
+        String withinAllowance = StringUtil.getFirstCharacters(sourceLine, JSON_ERROR_MAX_LINE_LENGTH);
+        if (withinAllowance.equals(sourceLine)) {
             return sourceLine;
         }
         if (!isAffectedLine) {
-            return sourceLine.substring(0, JSON_ERROR_MAX_LINE_LENGTH - JSON_ERROR_ELLIPSIS.length())
-                    + JSON_ERROR_ELLIPSIS;
+            return StringUtil.getFirstCharacters(sourceLine,
+                    JSON_ERROR_MAX_LINE_LENGTH - JSON_ERROR_ELLIPSIS_LENGTH) + JSON_ERROR_ELLIPSIS;
+        }
+        return cropAroundAffectedColumn(sourceLine, affectedColumn);
+    }
+
+    /**
+     * Returns the stretch of {@code sourceLine} that surrounds {@code affectedColumn}, widened to
+     * the whole allowance when the column sits too near an end for the mistake to be centred.
+     */
+    private static String cropAroundAffectedColumn(String sourceLine, int affectedColumn) {
+        int windowLength = JSON_ERROR_MAX_LINE_LENGTH - 2 * JSON_ERROR_ELLIPSIS_LENGTH;
+        int affectedIndex = Math.max(0, Math.min(affectedColumn - 1, sourceLine.length()));
+        String beforeColumn = sourceLine.substring(0, affectedIndex);
+        String fromColumn = sourceLine.substring(affectedIndex);
+        String throughWindowEnd = beforeColumn
+                + StringUtil.getFirstCharacters(fromColumn, windowLength / 2);
+
+        // A mistake near the start of the line has little before it to show, so the width that
+        // leaves unused goes to the text after the mistake rather than staying empty.
+        String lineOpening = StringUtil.getFirstCharacters(sourceLine, windowLength);
+        if (lineOpening.length() > throughWindowEnd.length()) {
+            throughWindowEnd = lineOpening;
         }
 
-        int windowLength = JSON_ERROR_MAX_LINE_LENGTH - 2 * JSON_ERROR_ELLIPSIS.length();
-        int affectedIndex = Math.max(0, Math.min(affectedColumn - 1, sourceLine.length() - 1));
-        int windowStart = Math.max(0, Math.min(affectedIndex - windowLength / 2,
-                sourceLine.length() - windowLength));
-        int windowEnd = Math.min(sourceLine.length(), windowStart + windowLength);
-        String leadingEllipsis = windowStart == 0 ? "" : JSON_ERROR_ELLIPSIS;
-        String trailingEllipsis = windowEnd == sourceLine.length() ? "" : JSON_ERROR_ELLIPSIS;
-        return leadingEllipsis + sourceLine.substring(windowStart, windowEnd) + trailingEllipsis;
+        String window = StringUtil.getLastCharacters(throughWindowEnd, windowLength);
+        String leadingEllipsis = window.equals(throughWindowEnd) ? "" : JSON_ERROR_ELLIPSIS;
+        String trailingEllipsis = throughWindowEnd.equals(sourceLine) ? "" : JSON_ERROR_ELLIPSIS;
+        return leadingEllipsis + window + trailingEllipsis;
     }
 }
