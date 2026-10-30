@@ -4,6 +4,7 @@ import static seedu.tab.commons.util.CollectionUtil.NOT_FOUND;
 import static seedu.tab.commons.util.CollectionUtil.indexOfSame;
 
 import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
@@ -24,6 +25,9 @@ public class StudentListPanel extends UiPart<Region> {
     @FXML
     private ListView<Student> studentListView;
 
+    /** The index width the cards on screen were built for, so a rebuild is rare. */
+    private String builtForWidestIndex = "";
+
     /**
      * Creates a {@code StudentListPanel} with the given {@code ObservableList}.
      */
@@ -31,6 +35,23 @@ public class StudentListPanel extends UiPart<Region> {
         super(FXML);
         studentListView.setItems(studentList);
         studentListView.setCellFactory(listView -> new StudentListViewCell());
+        studentList.addListener((ListChangeListener<Student>) change -> rebuildOnWiderIndex());
+    }
+
+    /**
+     * Rebuilds the cards when the list's largest index gains or loses a digit, so the room
+     * every card holds for its index follows the list it sits in. A cell keeps its card while
+     * its own student is unchanged, so the cards already on screen would otherwise keep the
+     * column the list had when they were built, and the list would read ragged until the
+     * student under each of them changed.
+     */
+    private void rebuildOnWiderIndex() {
+        String widestIndex = StudentCard.widestIndex(studentListView.getItems().size());
+        if (widestIndex.equals(builtForWidestIndex)) {
+            return;
+        }
+        builtForWidestIndex = widestIndex;
+        studentListView.refresh();
     }
 
     /**
@@ -92,7 +113,7 @@ public class StudentListPanel extends UiPart<Region> {
      * really has run out of room.
      */
     private Region createCard(Student student, int displayedIndex) {
-        Region card = new StudentCard(student, displayedIndex).getRoot();
+        Region card = new StudentCard(student, displayedIndex, studentListView.getItems().size()).getRoot();
         card.maxWidthProperty().bind(studentListView.widthProperty().subtract(SCROLL_BAR_ALLOWANCE));
         return card;
     }
