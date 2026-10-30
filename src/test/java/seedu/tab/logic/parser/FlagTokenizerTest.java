@@ -219,6 +219,58 @@ public class FlagTokenizerTest {
     }
 
     @Test
+    public void tokenize_emDashedKnownOption_suggestsSupportedLongMarker() {
+        // an editor turns the -- of --phone into one em dash, which reaches the parser as one dash
+        assertThrows(UnknownFlagException.class, "There is no -phone option. Did you mean --phone?", () ->
+                FlagTokenizer.tokenize("Bob \u2014phone 91234567", FLAG_PHONE));
+        assertThrows(UnknownFlagException.class, "There is no -name option. Did you mean --name?", () ->
+                FlagTokenizer.tokenize("\u2014name Alex", FLAG_NAME));
+        assertThrows(UnknownFlagException.class, "There is no -id option. Did you mean --id?", () ->
+                FlagTokenizer.tokenize("\u2014id A01234567X", FLAG_NUS_STUDENT_ID));
+        assertThrows(UnknownFlagException.class, "There is no -tag option. Did you mean --tag?", () ->
+                FlagTokenizer.tokenize("Bob \u2014tag=\"Lab 3\"", FLAG_TAG));
+        assertThrows(UnknownFlagException.class,
+                "There is no -no-follow-up option. Did you mean --no-follow-up?", () ->
+                    FlagTokenizer.tokenize("Bob \u2014no-follow-up", FLAG_NO_FOLLOW_UP));
+    }
+
+    @Test
+    public void tokenize_emDashedCapitalizedKnownOption_foldsBothTheCaseAndTheDashes() {
+        assertThrows(UnknownFlagException.class, "There is no -Phone option. Did you mean --phone?", () ->
+                FlagTokenizer.tokenize("Bob \u2014Phone 91234567", FLAG_PHONE));
+        assertThrows(UnknownFlagException.class, "There is no -NAME option. Did you mean --name?", () ->
+                FlagTokenizer.tokenize("\u2014NAME Alex", FLAG_NAME));
+    }
+
+    @Test
+    public void tokenize_oneLetterAfterOneDash_isNotReadAsALongOption() {
+        // a short option is a dash before one letter, so -n must not be offered the long --n
+        CliFlag longOnly = new CliFlag("--n", "N");
+        assertThrows(UnknownFlagException.class, "There is no -n option.", () ->
+                FlagTokenizer.tokenize("-n Alex", longOnly));
+        assertThrows(UnknownFlagException.class, "There is no -N option.", () ->
+                FlagTokenizer.tokenize("-N Alex", longOnly));
+    }
+
+    @Test
+    public void tokenize_emDashedOptionOfAnotherCommand_suggestsNothing() {
+        for (String input : List.of("\u2014name Alex", "\u2014id=A01234567X", "\u2014no-follow-up")) {
+            String marker = input.split("[ =]")[0].replace("\u2014", "-");
+            assertThrows(UnknownFlagException.class, "There is no " + marker + " option.", () ->
+                    FlagTokenizer.tokenize(input, FLAG_PHONE));
+        }
+    }
+
+    @Test
+    public void tokenize_unsupportedWordAfterOneDash_suggestsNothing() {
+        for (String input : List.of("-unknown value", "\u2014unknown value", "\u2014phon=1", "--phon=1")) {
+            String marker = input.split("[ =]")[0].replace("\u2014", "-");
+            assertThrows(UnknownFlagException.class, "There is no " + marker + " option.", () ->
+                    FlagTokenizer.tokenize(input, FLAG_PHONE, FLAG_NAME, FLAG_NUS_STUDENT_ID));
+        }
+    }
+
+    @Test
     public void tokenize_unknownFlag_saysThereIsNoSuchOption() {
         assertThrows(ParseException.class, String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-z"), () ->
                 parse("John -z something"));
