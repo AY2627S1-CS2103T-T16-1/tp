@@ -1,7 +1,5 @@
 package seedu.tab.ui;
 
-import java.util.Comparator;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
@@ -13,6 +11,7 @@ import seedu.tab.model.student.Email;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Phone;
 import seedu.tab.model.student.Student;
+import seedu.tab.model.tag.Tag;
 
 /**
  * A UI component that displays information of a {@code Student}.
@@ -63,8 +62,8 @@ public class StudentCard extends UiPart<Region> {
         }
         clipToItsOwnBox(details);
         tags.setTags(student.getTags().stream()
+                .sorted(Tag.DISPLAY_ORDER)
                 .map(tag -> tag.getTagName())
-                .sorted(String.CASE_INSENSITIVE_ORDER.thenComparing(Comparator.naturalOrder()))
                 .toList());
     }
 

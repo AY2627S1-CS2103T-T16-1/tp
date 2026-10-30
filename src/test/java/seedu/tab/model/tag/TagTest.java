@@ -80,4 +80,27 @@ public class TagTest {
         assertEquals(tag, new Tag("Lab 3"));
     }
 
+    @Test
+    public void displayOrder_namesDifferingInCase_ignoresCase() {
+        assertTrue(Tag.DISPLAY_ORDER.compare(new Tag("apple"), new Tag("Banana")) < 0);
+        assertTrue(Tag.DISPLAY_ORDER.compare(new Tag("Zebra"), new Tag("apple")) > 0);
+
+        // digits sort before letters, so a numbered tag leads
+        assertTrue(Tag.DISPLAY_ORDER.compare(new Tag("1lab"), new Tag("apple")) < 0);
+    }
+
+    @Test
+    public void displayOrder_namesAlikeButForCase_ordersByTheExactName() {
+        assertTrue(Tag.DISPLAY_ORDER.compare(new Tag("Lab 3"), new Tag("lab 3")) < 0);
+        assertTrue(Tag.DISPLAY_ORDER.compare(new Tag("lab 3"), new Tag("Lab 3")) > 0);
+    }
+
+    @Test
+    public void displayOrder_sameName_comparesEqual() {
+        Tag tag = new Tag("Lab 3");
+
+        assertEquals(0, Tag.DISPLAY_ORDER.compare(tag, tag));
+        assertEquals(0, Tag.DISPLAY_ORDER.compare(tag, new Tag("Lab 3")));
+    }
+
 }
