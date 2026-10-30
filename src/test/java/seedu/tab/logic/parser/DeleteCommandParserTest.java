@@ -180,8 +180,10 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_invalidNusStudentId_throwsParseException() {
+        // Letter-leading target with a disallowed symbol: invalid ID format.
         assertParseFailure(parser, "A0123-456", Messages.getErrorMessageForInvalidValue(
                 NusStudentId.FIELD_NAME, "A0123-456", NusStudentId.MESSAGE_NON_ALPHANUMERIC));
+        // Alphanumeric target at MAX_LENGTH + 1: first rejected ID length.
         String tooLong = "A" + "1".repeat(NusStudentId.MAX_LENGTH);
         assertParseFailure(parser, tooLong, Messages.getErrorMessageForInvalidValue(
                 NusStudentId.FIELD_NAME, tooLong, NusStudentId.MESSAGE_TOO_LONG));

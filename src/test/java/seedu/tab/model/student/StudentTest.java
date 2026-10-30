@@ -82,6 +82,7 @@ public class StudentTest {
 
     @Test
     public void equalsAndHashCode_optionalDetailCombinations_preserveValueSemantics() {
+        // Optional detail states: neither, email only, ID only, and both remain distinct values.
         Student neither = new StudentBuilder(ALICE).withoutEmail().withoutNusStudentId().build();
         Student emailOnly = new StudentBuilder(ALICE).withoutNusStudentId().build();
         Student idOnly = new StudentBuilder(ALICE).withoutEmail().build();

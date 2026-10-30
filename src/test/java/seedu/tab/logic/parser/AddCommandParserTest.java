@@ -198,20 +198,20 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_invalidValue_failure() {
-        // invalid name
+        // Nonblank name without a letter or number: rejected.
         assertParseFailure(parser, INVALID_NAME + PHONE_BOB + EMAIL_BOB + TAG_HUSBAND,
                 Messages.getErrorMessageForInvalidValue(Name.FIELD_NAME, "---", Name.getFailureReason("---")));
 
-        // invalid phone
+        // Two-digit phone: first rejected boundary below the three-digit minimum.
         assertParseFailure(parser, NAME_BOB + INVALID_PHONE + EMAIL_BOB + TAG_HUSBAND,
                 Messages.getErrorMessageForInvalidValue(Phone.FIELD_NAME, "12", Phone.getFailureReason("12")));
 
-        // invalid email
+        // Email without an @ separator: rejected.
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + INVALID_EMAIL + TAG_HUSBAND,
                 Messages.getErrorMessageForInvalidValue(Email.FIELD_NAME, "bob!yahoo",
                         Email.getFailureReason("bob!yahoo")));
 
-        // invalid tag
+        // Nonblank tag without a letter or number: rejected.
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + EMAIL_BOB + INVALID_TAG + TAG_FRIEND,
                 Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, "---", Tag.getFailureReason("---")));
 
@@ -219,7 +219,7 @@ public class AddCommandParserTest {
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + EMAIL_BOB + FOLLOW_UP_AS_TAG,
                 ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
 
-        // invalid NUS Student ID
+        // ID containing punctuation: rejected even when the name and phone are valid.
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + INVALID_NUS_STUDENT_ID,
                 Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, "A0123-456",
                         NusStudentId.getFailureReason("A0123-456")));

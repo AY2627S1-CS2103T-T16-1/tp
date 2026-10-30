@@ -278,7 +278,9 @@ public class FileUtilTest {
     @Test
     public void readFromFile_validUtf8_preservesTextAndRemovesOnlyLeadingBom() throws Exception {
         Path file = testFolder.resolve("utf8.txt");
+        // Valid contents: empty, whitespace, Unicode, and an interior BOM that must remain literal.
         for (String text : new String[] {"", " ", "José 王小明 😀", "a\uFEFFb"}) {
+            // Both BOM-free and leading-BOM files are accepted; only the leading BOM is removed.
             for (String prefix : new String[] {"", "\uFEFF"}) {
                 Files.writeString(file, prefix + text);
                 assertEquals(text, FileUtil.readFromFile(file));

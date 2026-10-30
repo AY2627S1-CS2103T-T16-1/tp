@@ -38,6 +38,7 @@ public class CommandHighlighterTest {
 
     @Test
     public void highlight_everyCommand_coversEveryCharacter() {
+        // Empty/blank, valid, and malformed unfinished commands must all preserve the exact typed text.
         for (String command : List.of("", "   ", "list", "add John -p 123",
                 "edit 1 -n \"Ravi s/o Kumaran\" --follow-up", "add \"unclosed -p 1",
                 "add Dwayne \\\"The Rock\\\" Johnson -p 1")) {
@@ -86,7 +87,9 @@ public class CommandHighlighterTest {
                 assertEquals(command, rejoined(command));
                 assertEquals(CommandTokenizer.tokenize(command.substring(4)).size(), argumentTokensOf(command));
             }
+            // Escaped quote is literal; it must not start quoted highlighting.
             assertEquals(List.of(COMMAND_WORD, VALUE, OPTION), kindsOf("add a\\" + opening + "b -f"));
+            // Unclosed whole or partial quotes remain highlightable while the user is typing.
             assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("add " + opening + "Unclosed value"));
             assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("add --ta" + opening + "g=x"));
         }

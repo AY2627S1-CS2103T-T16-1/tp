@@ -19,6 +19,7 @@ public class JsonTextFieldDeserializerTest {
 
     @Test
     public void deserialize_structuredValueWithoutProperty_describesFieldGenerically() throws Exception {
+        // Array and object are rejected container partitions; neither can stand in for a text value.
         for (String json : List.of("[\"first\"]", "{\"home\":\"first\"}")) {
             String foundValue = json.startsWith("[") ? "an array" : "an object";
             JsonDeserializer<String> deserializer = new JsonTextFieldDeserializer().createContextual(null, null);

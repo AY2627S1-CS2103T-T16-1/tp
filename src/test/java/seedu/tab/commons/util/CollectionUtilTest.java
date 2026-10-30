@@ -17,10 +17,10 @@ import org.junit.jupiter.api.Test;
 public class CollectionUtilTest {
     @Test
     public void requireAllNonNullVarargs() {
-        // no arguments
+        // empty argument list: accepted at the zero-element boundary
         assertNullPointerExceptionNotThrown();
 
-        // any non-empty argument list
+        // non-empty argument list with no null elements: accepted, including an empty string
         assertNullPointerExceptionNotThrown(new Object(), new Object());
         assertNullPointerExceptionNotThrown("test");
         assertNullPointerExceptionNotThrown("");
@@ -63,7 +63,7 @@ public class CollectionUtilTest {
         // null reference
         assertNullPointerExceptionThrown((Collection<Object>) null);
 
-        // empty list
+        // empty list: accepted at the zero-element boundary
         assertNullPointerExceptionNotThrown(Collections.emptyList());
 
         // list with all non-null elements
@@ -77,9 +77,11 @@ public class CollectionUtilTest {
 
     @Test
     public void isAnyNonNull() {
+        // empty varargs, all-null elements, and a null array: no non-null object
         assertFalse(CollectionUtil.isAnyNonNull());
         assertFalse(CollectionUtil.isAnyNonNull((Object) null));
         assertFalse(CollectionUtil.isAnyNonNull((Object[]) null));
+        // at least one non-null object: true for both all-non-null and mixed arguments
         assertTrue(CollectionUtil.isAnyNonNull(new Object()));
         assertTrue(CollectionUtil.isAnyNonNull(new Object(), null));
     }
@@ -99,8 +101,10 @@ public class CollectionUtilTest {
     public void indexOfSame_noSuchObject_returnsNotFound() {
         List<List<String>> items = Arrays.asList(new ArrayList<>(), new ArrayList<>());
 
+        // equal value but absent reference: not found in a non-empty list
         assertEquals(CollectionUtil.NOT_FOUND, CollectionUtil.indexOfSame(items, new ArrayList<String>()),
                 "an element equal to the target is not the target");
+        // absent null target and empty list: separate not-found representatives
         assertEquals(CollectionUtil.NOT_FOUND, CollectionUtil.indexOfSame(items, null));
         assertEquals(CollectionUtil.NOT_FOUND, CollectionUtil.indexOfSame(Collections.emptyList(), "ham"));
     }

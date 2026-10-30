@@ -14,6 +14,7 @@ public class LikelyDuplicateWarningTest {
 
     @Test
     public void appendTo_equivalentNames_warnsWithoutChangingSpelling() {
+        // Equivalent comparison keys warn: apostrophe variants, Latin accents/modifiers, case, and dashes.
         String[][] cases = {
             {"Sean O’Brien", "Sean O'Brien"},
             {"Mary O'Neil", "Mary O’Neil"},

@@ -42,12 +42,15 @@ public class FlagTokenizerTest {
 
     @Test
     public void tokenizeWithIndex_nonNegativePreamble_usesNormalFlagRules() throws Exception {
+        // Absent preamble, positive index, and quoted negative text tokenize without index validation.
         assertEquals("", FlagTokenizer.tokenizeWithIndex("", FLAG_PHONE).getPreamble());
         assertEquals("", FlagTokenizer.tokenizeWithIndex("-p 123", FLAG_PHONE).getPreamble());
         assertEquals("1", FlagTokenizer.tokenizeWithIndex("1 -p 123", FLAG_PHONE).getPreamble());
         assertEquals("-1", FlagTokenizer.tokenizeWithIndex("\"-1\" -p 123", FLAG_PHONE).getPreamble());
+        // Unquoted unknown option: reject as an option rather than treating it as an index.
         assertThrows(ParseException.class, "There is no -x option.", () ->
                 FlagTokenizer.tokenizeWithIndex("-x -p 123", FLAG_PHONE));
+        // Option-looking value after -p: report the missing value before interpreting the negative token.
         assertThrows(ParseException.class, String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-p PHONE"), () ->
                 FlagTokenizer.tokenizeWithIndex("1 -p -1", FLAG_PHONE));
     }

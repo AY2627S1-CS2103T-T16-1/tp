@@ -22,10 +22,13 @@ public class CommandTokenizerTest {
     public void tokenize_supportedQuotePairs_groupValuesAndPreserveTokenMetadata() throws Exception {
         for (String opening : List.of("\"", "“", "”", "＂")) {
             for (String closing : List.of("\"", "“", "”", "＂")) {
+                // Whole quoted token: leading hyphen remains a value; following plain option is separate.
                 assertEquals(List.of(new Token("-组 1", true, true), new Token("-a", false, false)),
                         tokenize(opening + "-组 1" + closing + " -a"));
+                // Quote after equals: one token, quoted but not beginning with a quote.
                 assertEquals(List.of(new Token("--tag=Lab 3", true, false)),
                         tokenize("--tag=" + opening + "Lab 3" + closing));
+                // Empty and whitespace-only quoted values remain tokens, unlike blank unquoted input.
                 assertEquals(List.of(new Token("", true, true)), tokenize(opening + closing));
                 assertEquals(List.of("  "), valuesOf(opening + "  " + closing));
             }
@@ -53,9 +56,11 @@ public class CommandTokenizerTest {
         for (String quote : List.of("\"", "“", "”", "＂")) {
             assertEquals(List.of("a" + quote + "b", "-t"), valuesOf("a\\" + quote + "b -t"));
             assertEquals(List.of("a" + quote + " b"), valuesOf("“a\\" + quote + " b”"));
+            // Opening quote without a closing quote is rejected, even after equals.
             assertThrows(ParseException.class, CommandTokenizer.MESSAGE_UNCLOSED_QUOTE, () ->
                     tokenize("--tag=" + quote + "组 1"));
         }
+        // Apostrophes and single curly quotes are ordinary characters, so spaces still split tokens.
         assertEquals(List.of("O'Connor", "‘组", "1’"), valuesOf("O'Connor ‘组 1’"));
     }
 

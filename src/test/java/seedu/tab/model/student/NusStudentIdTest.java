@@ -28,16 +28,21 @@ public class NusStudentIdTest {
     public void isValidNusStudentId() {
         assertThrows(NullPointerException.class, () -> NusStudentId.isValidNusStudentId(null));
 
+        // Empty value: rejected at the lower length boundary.
         assertFalse(NusStudentId.isValidNusStudentId(""));
+        // Non-alphanumeric values: rejected regardless of symbol position.
         assertFalse(NusStudentId.isValidNusStudentId("A0123-456X"));
         assertFalse(NusStudentId.isValidNusStudentId("A0123_456X"));
         assertFalse(NusStudentId.isValidNusStudentId("A0123!456X"));
         assertFalse(NusStudentId.isValidNusStudentId("?1234567X"));
+        // Overlong alphanumeric value: first rejected length above the maximum.
         assertFalse(NusStudentId.isValidNusStudentId("A".repeat(NusStudentId.MAX_LENGTH + 1)));
 
+        // Ordinary alphanumeric IDs, including lowercase, are accepted.
         assertTrue(NusStudentId.isValidNusStudentId("A01234567X"));
         assertTrue(NusStudentId.isValidNusStudentId("E0123456"));
         assertTrue(NusStudentId.isValidNusStudentId("a76543210y"));
+        // Accepted length boundaries: one character and MAX_LENGTH characters.
         assertTrue(NusStudentId.isValidNusStudentId("A"));
         assertTrue(NusStudentId.isValidNusStudentId("1"));
         assertTrue(NusStudentId.isValidNusStudentId("A".repeat(NusStudentId.MAX_LENGTH)));
@@ -78,8 +83,10 @@ public class NusStudentIdTest {
     public void equals() {
         NusStudentId nusStudentId = new NusStudentId("A01234567X");
 
+        // Same normalized value and same reference compare equal.
         assertTrue(nusStudentId.equals(new NusStudentId("a01234567x")));
         assertTrue(nusStudentId.equals(nusStudentId));
+        // Null, another type, and a different normalized ID compare unequal.
         assertFalse(nusStudentId.equals(null));
         assertFalse(nusStudentId.equals("A01234567X"));
         assertFalse(nusStudentId.equals(new NusStudentId("A76543210Y")));
