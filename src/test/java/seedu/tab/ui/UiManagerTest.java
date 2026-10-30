@@ -3,6 +3,7 @@ package seedu.tab.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -30,8 +32,8 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
@@ -364,18 +366,25 @@ public class UiManagerTest {
             return measureScrolling(new UiManager(null, DATA_FILE_PATH, Optional.of(error)), error);
         });
 
-        assertTrue(details.dialogHeight <= UiManager.maxDialogHeight() + details.dialogBorderHeight
-                        + MEASUREMENT_TOLERANCE,
-                "the dialog should be no taller than the share of the screen it may fill");
-        assertTrue(details.dialogHeight < Screen.getPrimary().getVisualBounds().getHeight(),
-                "the dialog should leave the screen room for the frame drawn around it");
-        assertTrue(details.hasScrollBar, "the diagnostic should be given a bar to scroll it by");
+        // the dialog cannot be made shorter than the parts it draws around its message, its
+        // border, and the least room a message is ever given, however short the screen is
+        double irreducibleHeight = details.dialogHeight - details.viewportHeight
+                + UiManager.MIN_MESSAGE_HEIGHT + details.dialogBorderHeight;
+        assertTrue(details.dialogHeight
+                        <= Math.max(details.screenCapHeight, irreducibleHeight) + MEASUREMENT_TOLERANCE,
+                "the dialog should be no taller than the share of the screen it may fill, unless it"
+                        + " cannot be made that short; " + details);
+        assertTrue(details.dialogHeight <= Math.max(details.screenHeight, irreducibleHeight),
+                "the dialog should fit the usable screen unless it cannot be made that short; "
+                        + details);
+        assertTrue(details.hasScrollBar, "the diagnostic should be given a bar to scroll it by; " + details);
         assertTrue(details.isFitToWidth,
-                "the diagnostic should wrap to the dialog rather than scroll sideways");
+                "the diagnostic should wrap to the dialog rather than scroll sideways; " + details);
         assertTrue(details.contentHeight > details.viewportHeight,
-                "this message should be too long for the capped dialog, or the test proves nothing");
+                "this message should be too long for the capped dialog, or the test proves nothing; "
+                        + details);
         assertTrue(details.lastLineBottom <= details.viewportHeight + MEASUREMENT_TOLERANCE,
-                "scrolling to the end should bring the last line of the diagnostic into view");
+                "scrolling to the end should bring the last line of the diagnostic into view; " + details);
     }
 
     @Test
@@ -384,11 +393,18 @@ public class UiManagerTest {
 
         ScrollDetails details = FxToolkit.onFxThread(() -> measureScrolling(uiManager, PARSE_ERROR));
 
-        assertFalse(details.hasScrollBar, "a message this short should be read without a scroll bar");
+        // the dialog's own parts take what the message does not, so this is the height the whole
+        // dialog would want; a screen that cannot give it that has nothing to say about a message
+        // being shown whole, since every message is scrolled on such a screen
+        double wantedHeight = details.dialogHeight - details.viewportHeight + details.contentPreferredHeight;
+        assumeTrue(wantedHeight <= details.screenCapHeight,
+                "the screen is too short to show even a short message whole; " + details);
+        assertFalse(details.hasScrollBar,
+                "a message this short should be read without a scroll bar; " + details);
         assertTrue(details.viewportHeight >= details.contentHeight - MEASUREMENT_TOLERANCE,
-                "a message this short should be shown whole");
+                "a message this short should be shown whole; " + details);
         assertEquals(details.contentPreferredHeight, details.contentHeight, MEASUREMENT_TOLERANCE,
-                "a message this short should be given the room it asks for, and no more");
+                "a message this short should be given the room it asks for, and no more; " + details);
     }
 
     /**
@@ -420,17 +436,26 @@ public class UiManagerTest {
                     .getMaxY();
             double borderHeight = dialogPane.getInsets().getTop() + dialogPane.getInsets().getBottom();
             return new ScrollDetails(dialogPane.getHeight(), borderHeight,
+                    Screen.getPrimary().getVisualBounds().getHeight(), UiManager.maxDialogHeight(),
                     scroller.getViewportBounds().getHeight(), content.getHeight(),
                     content.prefHeight(content.getWidth()), lastLineBottom, scroller.isFitToWidth(),
-                    scroller.getVbarPolicy() != ScrollBarPolicy.NEVER);
+                    isVerticalScrollBarShown(scroller));
         } finally {
             alert.close();
         }
     }
 
-    private record ScrollDetails(double dialogHeight, double dialogBorderHeight, double viewportHeight,
-                                 double contentHeight, double contentPreferredHeight,
-                                 double lastLineBottom, boolean isFitToWidth, boolean hasScrollBar) {}
+    /** Returns whether {@code scroller} has a vertical scroll bar on display. */
+    private static boolean isVerticalScrollBarShown(ScrollPane scroller) {
+        return scroller.lookupAll(".scroll-bar").stream()
+                .anyMatch(node -> node instanceof ScrollBar bar
+                        && bar.getOrientation() == Orientation.VERTICAL && bar.isVisible());
+    }
+
+    private record ScrollDetails(double dialogHeight, double dialogBorderHeight, double screenHeight,
+                                 double screenCapHeight, double viewportHeight, double contentHeight,
+                                 double contentPreferredHeight, double lastLineBottom,
+                                 boolean isFitToWidth, boolean hasScrollBar) {}
 
     private record StartOutcome(boolean wasDataLoadingErrorShown, DataLoadingErrorMessage shownError,
                                 boolean wasMainWindowBuilt, boolean wasIconSet,

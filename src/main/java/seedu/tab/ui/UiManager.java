@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -38,6 +40,13 @@ public class UiManager implements Ui {
             "Repair or replace it, then restart TAB.";
     static final String DATA_LOADING_ERROR_CLOSE = "Close TAB";
     static final String FATAL_ERROR_TITLE = "Fatal error during initializing";
+    /**
+     * The least room the message is ever given, in pixels: about three lines of it, which is
+     * enough to read where the trouble is and to see that there is more to scroll to. A screen
+     * so short that the dialog's own parts leave less than this gets this anyway, since a
+     * heading and a close button over no message at all would say nothing.
+     */
+    static final double MIN_MESSAGE_HEIGHT = 48;
 
     private static final Logger logger = LogsCenter.getLogger(UiManager.class);
     private static final String ICON_APPLICATION = "/images/tab_32.png";
@@ -144,8 +153,7 @@ public class UiManager implements Ui {
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStyleClass().add("data-loading-error-dialog");
         dialogPane.setMinHeight(Region.USE_PREF_SIZE);
-        ScrollPane content = createScrollingContent(createDataLoadingErrorContent(error));
-        dialogPane.setContent(content);
+        dialogPane.setContent(createScrollingContent(dialogPane, createDataLoadingErrorContent(error)));
 
         Label icon = new Label("!");
         icon.getStyleClass().add("data-loading-error-icon");
@@ -156,7 +164,6 @@ public class UiManager implements Ui {
         closeButton.setText(DATA_LOADING_ERROR_CLOSE);
         ButtonBar.setButtonUniformSize(closeButton, false);
         closeButton.setMinWidth(Region.USE_PREF_SIZE);
-        fitDialogToScreen(dialogPane, content);
         return alert;
     }
 
@@ -169,38 +176,45 @@ public class UiManager implements Ui {
     }
 
     /**
-     * Holds the dialog within the screen it opens on by giving the diagnostic less room than it
-     * asks for, where the screen has less to give. The part that does not fit is then reached by
-     * scrolling, rather than drawn past the edge of the display, which is where the heading and
-     * the close button would otherwise be pushed. A diagnostic that already fits is left to size
-     * the dialog itself.
-     */
-    private static void fitDialogToScreen(DialogPane dialogPane, ScrollPane content) {
-        dialogPane.applyCss();
-        double width = dialogPane.prefWidth(-1);
-        double overflow = dialogPane.prefHeight(width) - maxDialogHeight();
-        if (overflow > 0) {
-            content.setPrefHeight(content.prefHeight(width) - overflow);
-            content.setVbarPolicy(ScrollBarPolicy.ALWAYS);
-        }
-    }
-
-    /**
-     * Returns {@code content} in a container that can scroll it vertically. The container holds
-     * the content to the dialog's width, so a diagnostic too long for the screen stays wrapped
-     * and only has to be scrolled down through, never sideways.
+     * Returns {@code message} in a container that scrolls it vertically. The container holds the
+     * message to the dialog's width, so a diagnostic too long for the screen stays wrapped and
+     * is only ever scrolled down through, never sideways.
      *
-     * <p>It starts with no scroll bar, and is given one where the screen turns out to be too
-     * short for the diagnostic. A bar that comes and goes on its own would narrow the text as it
-     * appeared, which rewraps the text and so changes the very height that called for the bar.
+     * <p>The container asks for no more height than the screen leaves beside the heading and the
+     * close button, which is what keeps those two on the display: a diagnostic longer than that
+     * is reached by scrolling rather than by the dialog growing past the edge of the screen. One
+     * that fits asks for its own height, and the dialog is sized as it is for any other message.
      */
-    private static ScrollPane createScrollingContent(VBox content) {
-        ScrollPane scroller = new ScrollPane(content);
+    private static ScrollPane createScrollingContent(DialogPane dialogPane, VBox message) {
+        ScrollPane scroller = new ScrollPane(message) {
+            @Override
+            protected double computePrefHeight(double width) {
+                return Math.min(super.computePrefHeight(width), roomForMessage(dialogPane, this, width));
+            }
+        };
         scroller.getStyleClass().add("data-loading-error-scroll");
         scroller.setFitToWidth(true);
         scroller.setHbarPolicy(ScrollBarPolicy.NEVER);
-        scroller.setVbarPolicy(ScrollBarPolicy.NEVER);
+        scroller.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
         return scroller;
+    }
+
+    /**
+     * Returns the height the screen leaves the dialog for its message, once everything the
+     * dialog draws around the message at {@code width} has taken the height it needs.
+     *
+     * <p>A screen too short for even {@code MIN_MESSAGE_HEIGHT} beside those parts is given that
+     * much anyway. The dialog is then taller than the share of the screen it may fill, because a
+     * dialog shrunk any further would show the heading and the close button over nothing at all.
+     */
+    private static double roomForMessage(DialogPane dialogPane, Node message, double width) {
+        double surround = dialogPane.getChildrenUnmodifiable().stream()
+                .filter(child -> child != message && child.isManaged())
+                .mapToDouble(child -> child.prefHeight(width))
+                .sum();
+        Insets insets = dialogPane.getInsets();
+        double left = maxDialogHeight() - surround - insets.getTop() - insets.getBottom();
+        return Math.max(MIN_MESSAGE_HEIGHT, left);
     }
 
     /**
