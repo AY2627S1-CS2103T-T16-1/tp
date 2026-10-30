@@ -200,9 +200,7 @@ public class JsonStudentBookStorageTest {
                     DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
 
             assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
-            // the flag is the one field whose diagnostic quotes the opening bracket rather than
-            // naming an object or an array, as describeJsonValue has every other field do
-            String shownValue = value.equals("[]") ? "[" : value.equals("{}") ? "{" : value;
+            String shownValue = describeJsonValue(value);
             assertTrue(exception.getMessage().contains("Invalid flag value " + shownValue
                     + ". Use JSON true, false or null for the follow-up flag."), exception.getMessage());
             assertArrayEquals(bytes, Files.readAllBytes(path));
