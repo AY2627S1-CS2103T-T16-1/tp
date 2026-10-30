@@ -478,7 +478,6 @@ public class MainWindowTest {
         }
     }
 
-    /** Returns {@link #SNAP_ALLOWANCE_DEVICE_PIXELS} in the logical pixels of {@code scale}. */
     @Test
     public void geometrySlack_usableAreaThatSnapsUp_acceptsTheRoundedWindowButNotARealOverflow() {
         // Measured on a 1920x1200 display at 125% scaling, its usable area reduced by a 65 pixel
@@ -500,6 +499,7 @@ public class MainWindowTest {
                 "a real overflow must not be hidden by the snapping slack");
     }
 
+    /** Returns {@link #SNAP_ALLOWANCE_DEVICE_PIXELS} in the logical pixels of {@code scale}. */
     private static double snapAllowance(double scale) {
         return SNAP_ALLOWANCE_DEVICE_PIXELS / scale;
     }
