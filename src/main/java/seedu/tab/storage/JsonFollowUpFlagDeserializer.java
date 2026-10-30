@@ -8,8 +8,6 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import seedu.tab.commons.util.ValueMessages;
-
 /**
  * Reads a follow-up flag without silently converting numbers or strings to booleans.
  */
@@ -25,11 +23,7 @@ class JsonFollowUpFlagDeserializer extends JsonDeserializer<Boolean> {
         if (parser.getCurrentToken() == JsonToken.VALUE_FALSE) {
             return false;
         }
-        String value = ValueMessages.shorten(parser.getText());
-        if (parser.getCurrentToken() == JsonToken.VALUE_STRING) {
-            value = "\"" + value + "\"";
-        }
         throw JsonMappingException.from(parser,
-                String.format(MESSAGE_INVALID_FLAG, value));
+                String.format(MESSAGE_INVALID_FLAG, JsonValueDescription.describeQuoted(parser)));
     }
 }

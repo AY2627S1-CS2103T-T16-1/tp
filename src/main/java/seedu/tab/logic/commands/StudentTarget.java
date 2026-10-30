@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import seedu.tab.commons.core.index.Index;
 import seedu.tab.commons.util.ToStringBuilder;
@@ -90,17 +91,32 @@ public final class StudentTarget {
      */
     private Student resolveIndex(Model model, String idTargetCommand) throws CommandException {
         List<Student> displayedStudents = model.getFilteredStudentList();
-        if (index.getZeroBased() >= displayedStudents.size()) {
-            String message = Messages.getErrorMessageForInvalidIndex(indexInput, displayedStudents.size());
-            boolean isStoredId = model.getStudentBook().getStudentList().stream()
-                    .anyMatch(student -> student.getNusStudentId()
-                            .filter(id -> id.getValue().equals(indexInput)).isPresent());
-            if (isStoredId) {
-                message += " " + Messages.getIdTargetHint(idTargetCommand, indexInput);
-            }
-            throw new CommandException(message);
+        int displayedCount = displayedStudents.size();
+        if (index.getZeroBased() < displayedCount) {
+            return displayedStudents.get(index.getZeroBased());
         }
-        return displayedStudents.get(index.getZeroBased());
+        throw new CommandException(formatInvalidIndexMessage(model, idTargetCommand, displayedCount));
+    }
+
+    /**
+     * Returns the reply for a position the displayed list of {@code displayedCount} students
+     * does not reach. A numeric input the book holds as an NUS Student ID also names the
+     * command form that reads it as one, which is the likelier target.
+     */
+    private String formatInvalidIndexMessage(Model model, String idTargetCommand, int displayedCount) {
+        String message = Messages.getErrorMessageForInvalidIndex(indexInput, displayedCount);
+        if (!isStoredNusStudentId(model)) {
+            return message;
+        }
+        return message + " " + Messages.getIdTargetHint(idTargetCommand, indexInput);
+    }
+
+    /** Returns whether a student in the book holds this target's input as their NUS Student ID. */
+    private boolean isStoredNusStudentId(Model model) {
+        return model.getStudentBook().getStudentList().stream()
+                .map(Student::getNusStudentId)
+                .flatMap(Optional::stream)
+                .anyMatch(id -> id.getValue().equals(indexInput));
     }
 
     /**
