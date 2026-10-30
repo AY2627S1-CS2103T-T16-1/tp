@@ -1,6 +1,8 @@
 package seedu.tab.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.tab.commons.util.CollectionUtil.NOT_FOUND;
+import static seedu.tab.commons.util.CollectionUtil.indexOfSame;
 import static seedu.tab.commons.util.CollectionUtil.requireAllNonNull;
 import static seedu.tab.logic.parser.CliFlags.FLAG_ADD_TAG;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
@@ -153,13 +155,12 @@ public class TagCommand extends Command {
         if (!student.isFlagged() || !FollowUpFlag.isFollowUpName(tag.getTagName())) {
             return absent;
         }
-        for (int index = 0; index < displayedStudents.size(); index++) {
-            if (displayedStudents.get(index) == student) {
-                return absent + "\n" + String.format(Locale.ROOT, MESSAGE_FOLLOW_UP_FLAG_HINT, index + 1);
-            }
+        int displayedIndex = indexOfSame(displayedStudents, student);
+        if (displayedIndex == NOT_FOUND) {
+            return absent + "\n" + String.format(MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT,
+                    student.getNusStudentId().orElseThrow().getValue());
         }
-        return absent + "\n" + String.format(MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT,
-                student.getNusStudentId().orElseThrow().getValue());
+        return absent + "\n" + String.format(Locale.ROOT, MESSAGE_FOLLOW_UP_FLAG_HINT, displayedIndex + 1);
     }
 
     /** Returns whether a stored tag denotes the requested tag, ignoring case. */
