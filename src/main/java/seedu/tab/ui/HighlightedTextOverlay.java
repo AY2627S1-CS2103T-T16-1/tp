@@ -78,12 +78,6 @@ public class HighlightedTextOverlay {
 
     /**
      * Repaints the colored text behind the field so that it reads as what was typed.
-     *
-     * <p>The field keeps every key the user presses and decides where a click lands; only its
-     * own text is transparent, so what is read is the colored copy underneath, and the caret
-     * and the selection are drawn here to go with it. A command longer than the line scrolls
-     * the copy the way the field scrolls its own text, so the colors hold however long the
-     * command is.
      */
     public void recolor(String typed) {
         highlighted.getChildren().clear();
@@ -111,11 +105,8 @@ public class HighlightedTextOverlay {
     /**
      * Lays the colored copy out on one line, where the field is drawing its own text.
      *
-     * <p>A TextFlow wraps at the width it is given, which would turn a long command into
-     * several lines and grow the box. It is sized to its content instead and the lane around
-     * it is clipped, so the copy runs off the edge the way the field's own text does. Which
-     * part of a long command is in view is the field's to decide, and the copy is drawn
-     * wherever the field has decided rather than scrolled by any rule of its own.
+     * <p>A TextFlow wraps at its assigned width, so the copy is sized to its content
+     * and clipped by the lane to keep long commands on one line.
      */
     public void refresh() {
         followTheFieldsText();
@@ -152,10 +143,6 @@ public class HighlightedTextOverlay {
         double caretAt = getCaretPosition();
         matchCaretToTheLine();
 
-        // where the field is drawing its own text, which is the one thing the copy has to
-        // agree with: the field decides which character a click lands on, and it scrolls by
-        // rules of its own that differ between typing, deleting, cutting and undoing. Every
-        // attempt to work them out again here has been wrong in some case or other.
         double drawnFrom = getFieldTextOffset();
         double middle = lane.getHeight() / 2;
         showSelection(drawnFrom, middle);
@@ -177,15 +164,8 @@ public class HighlightedTextOverlay {
     }
 
     /**
-     * Returns where the field draws its own text, in the lane's own terms.
-     *
-     * <p>The field and the lane sit on each other, so the copy belongs wherever the field's
-     * text is. Asking the field means the two can never drift: it insets its text by half a
-     * caret and it re-scrolls on rules of its own, which differ between typing, deleting and
-     * cutting and between JavaFX releases, and none of that has to be worked out again here.
-     *
-     * <p>Before the field has a skin there is nothing to ask, so the copy falls back to the
-     * inset the field will use.
+     * Returns the field text's offset in lane coordinates, falling back to a half-caret
+     * inset before the field has a skin.
      */
     private double getFieldTextOffset() {
         Text drawn = findFieldText();
@@ -206,16 +186,9 @@ public class HighlightedTextOverlay {
     }
 
     /**
-     * Follows the node the field draws its own text in, from the moment it has one.
-     *
-     * <p>The field's skin moves that node on its own account, after a delete, a replace or a
-     * change of width, and long after the caret and the text it was told about have settled.
-     * Nothing else says that it has, so the copy would be left where the command used to be
-     * drawn and a click would land on the character the command used to have there.
-     *
-     * <p>The node arrives with the skin rather than with the box, which is why it is looked
-     * for on each pass rather than once in the constructor. A field draws in the one node
-     * for as long as it keeps that skin, so there is never a second one to move to.
+     * Observes text-node movement and caret shaping, including skin updates after text and
+     * caret events settle. Looks for the node on each refresh because the skin may arrive
+     * after construction; attaches listeners only when the node changes.
      */
     private void followTheFieldsText() {
         Text drawn = findFieldText();
