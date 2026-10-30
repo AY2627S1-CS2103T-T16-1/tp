@@ -21,11 +21,7 @@ public class CliFlag {
      * @param primaryMarker The characters that mark the option, such as {@code -f}.
      */
     public CliFlag(String primaryMarker) {
-        requireNonNull(primaryMarker);
-        this.primaryMarker = primaryMarker;
-        this.aliases = List.of();
-        this.fieldName = null;
-        this.isValueRequired = false;
+        this(primaryMarker, List.of());
     }
 
     /**
@@ -102,7 +98,7 @@ public class CliFlag {
 
     /**
      * Returns the flag together with the name of the field it takes, such as {@code -e EMAIL}.
-     * Two flags are still equal when their characters match, whatever they are named.
+     * A presence-only flag has no field to name, and returns its marker alone.
      */
     public String getLabel() {
         return isValueRequired ? primaryMarker + " " + fieldName : primaryMarker;
@@ -129,6 +125,10 @@ public class CliFlag {
         return primaryMarker.hashCode();
     }
 
+    /**
+     * Returns true if {@code other} marks the same option. The primary marker decides that on
+     * its own, so two flags are equal when their characters match, whatever they are named.
+     */
     @Override
     public boolean equals(Object other) {
         if (other == this) {

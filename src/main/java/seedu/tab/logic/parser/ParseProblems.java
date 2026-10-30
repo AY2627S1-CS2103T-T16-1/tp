@@ -13,7 +13,7 @@ import seedu.tab.logic.parser.exceptions.ParseException;
  * Collects everything wrong with one command, so that a user who mistyped two fields is told
  * about both at once rather than discovering the second after correcting the first.
  *
- * A parser records each problem as it goes, then calls {@link #throwIfAny()} once. A step that
+ * <p>A parser records each problem as it goes, then calls {@link #throwIfAny()} once. A step that
  * fails yields {@code null}, which is safe because nothing reads the results until every step
  * has run and {@link #throwIfAny()} has decided whether to stop.
  */
@@ -42,15 +42,13 @@ public class ParseProblems {
     }
 
     /**
-     * Parses {@code value} if it was given, recording why if it is rejected. A field the command
-     * left out yields null without a complaint, because an optional field is entitled to be
-     * absent and a required one is reported separately.
+     * Parses {@code value} if it was given, recording why if it is rejected, and returns what
+     * the field holds. A field the command left out yields nothing without a complaint, because
+     * an optional field is entitled to be absent and a required one is reported separately. A
+     * field whose value is rejected yields nothing as well, its reason having been recorded.
      */
-    public <T> T collectIfPresent(Optional<String> value, ValueParser<T> parser) {
-        if (value.isEmpty()) {
-            return null;
-        }
-        return collect(() -> parser.parse(value.get()));
+    public <T> Optional<T> collectIfPresent(Optional<String> value, ValueParser<T> parser) {
+        return value.map(given -> collect(() -> parser.parse(given)));
     }
 
     /**
