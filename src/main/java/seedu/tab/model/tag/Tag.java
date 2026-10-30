@@ -3,6 +3,8 @@ package seedu.tab.model.tag;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.commons.util.AppUtil.checkArgument;
 
+import java.util.Comparator;
+
 import seedu.tab.commons.util.StringUtil;
 
 /**
@@ -16,6 +18,16 @@ public class Tag {
 
     public static final String MESSAGE_CONSTRAINTS =
             "Tags should contain at least one letter or number, in any writing system";
+
+    /**
+     * Orders tags alphabetically whatever their case, and breaks a tie between names that
+     * differ only in case by the name itself, so that the order is total and the same every
+     * time. The command reply and the student card both list a student's tags, and the two
+     * disagreeing would read as a mistake, so both take their order from here.
+     */
+    public static final Comparator<Tag> DISPLAY_ORDER =
+            Comparator.comparing(Tag::getTagName, String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(Tag::getTagName);
 
     private final String tagName;
 
