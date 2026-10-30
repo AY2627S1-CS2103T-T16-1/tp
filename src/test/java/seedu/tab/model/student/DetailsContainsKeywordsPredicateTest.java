@@ -33,7 +33,7 @@ public class DetailsContainsKeywordsPredicateTest {
         // a surname pasted with any of these and typed with any other has to meet, whichever side
         // of the search it lands on: the straight apostrophe, the two curly quotation marks, the
         // fullwidth apostrophe, the prime, and the three modifier letters
-        String[] apostrophes = {"'", "‘", "’", "＇", "′", "ʼ", "ʻ", "ʹ"};
+        String[] apostrophes = {"'", "\u2018", "\u2019", "\uff07", "\u2032", "\u02bc", "\u02bb", "\u02b9"};
         for (String stored : apostrophes) {
             Student student = new StudentBuilder().withName("D" + stored + "Souza").build();
             for (String typed : apostrophes) {
@@ -43,7 +43,7 @@ public class DetailsContainsKeywordsPredicateTest {
             }
         }
         // the grave and the acute are accents rather than apostrophes, and stay distinct
-        for (String accent : new String[] {"`", "´"}) {
+        for (String accent : new String[] {"`", "\u00b4"}) {
             Student student = new StudentBuilder().withName("D" + accent + "Souza").build();
             assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("D'Souza")))
                     .test(student));

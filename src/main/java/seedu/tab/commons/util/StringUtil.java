@@ -49,7 +49,7 @@ public class StringUtil {
     // for the soft sign in Tatʹyana. Unicode files those three as letters, and in their own
     // orthographies they are letters; a reader at an ASCII keyboard still has one key for all of
     // them, and this builds a comparison key while the stored spelling stands untouched.
-    private static final String APOSTROPHE_VARIANTS = "‘’＇′ʼʻʹ";
+    private static final String APOSTROPHE_VARIANTS = "\u2018\u2019\uff07\u2032\u02bc\u02bb\u02b9";
 
     private StringUtil() {} // this class only holds the helpers
 

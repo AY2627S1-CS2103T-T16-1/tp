@@ -51,7 +51,7 @@ public class StringUtilTest {
     public void normalizeNameForComparison_apostropheVariants_matchStraightApostrophe() {
         // the curly quotation marks, the fullwidth apostrophe, the prime, and the three modifier
         // letters a roster of transliterated names carries
-        String[] apostrophes = {"'", "‘", "’", "＇", "′", "ʼ", "ʻ", "ʹ"};
+        String[] apostrophes = {"'", "\u2018", "\u2019", "\uff07", "\u2032", "\u02bc", "\u02bb", "\u02b9"};
         for (String apostrophe : apostrophes) {
             assertEquals("sean o'brien", StringUtil.normalizeNameForComparison("Sean O" + apostrophe + "Brien"),
                     "should read as an apostrophe: " + apostrophe);
@@ -64,7 +64,7 @@ public class StringUtilTest {
     public void normalizeNameForComparison_spacingAccent_keepsItDistinct() {
         // the grave and the acute mark the letter beside them rather than stand between two, so
         // neither is the apostrophe a second roster would write
-        for (String accent : new String[] {"`", "´"}) {
+        for (String accent : new String[] {"`", "\u00b4"}) {
             assertNotEquals("d'souza", StringUtil.normalizeNameForComparison("D" + accent + "Souza"),
                     "should stay distinct: " + accent);
         }
