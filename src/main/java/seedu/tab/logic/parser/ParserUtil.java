@@ -135,7 +135,7 @@ public class ParserUtil {
      * read as an NUS Student ID} is named as one, and every other target is named by
      * {@code indexFieldName}.
      *
-     * @param target The one token the User gave as the target, which may be empty.
+     * @param target The one token the user gave as the target, which may be empty.
      * @param indexFieldName How the calling command names a target read as an index.
      */
     public static String getTargetFieldName(String target, String indexFieldName) {
@@ -150,7 +150,7 @@ public class ParserUtil {
      * NUS Student ID opens with a letter, so the leading character tells the two apart; an
      * all-digit ID is the exception, and needs an explicit ID option to be selected as an ID.
      *
-     * @param target The one token the User gave as the target, which may be empty.
+     * @param target The one token the user gave as the target, which may be empty.
      */
     static boolean isIdTarget(String target) {
         return !target.isEmpty() && Character.isLetter(target.charAt(0));
@@ -167,7 +167,7 @@ public class ParserUtil {
      * positive-integer reason rather than the full command usage. A target given as no value
      * at all names no field to explain, so that one is reported through {@code usage}.
      *
-     * @param target The one token the User gave as the target.
+     * @param target The one token the user gave as the target.
      * @param usage What the calling command shows when no target is given.
      * @throws ParseException if {@code target} is blank, opens with a letter without holding
      *     a valid NUS Student ID, or is otherwise not a positive integer.
@@ -193,10 +193,10 @@ public class ParserUtil {
     /**
      * Returns the target {@code preamble} names, as {@code readTarget} reads it, offering the ID
      * form of {@code idTargetCommand} when a value refused as an index holds an NUS Student ID: a
-     * target opening with a digit reads as an index, so the User who meant such an ID has no
+     * target opening with a digit reads as an index, so the user who meant such an ID has no
      * other way to reach their student.
      *
-     * @param preamble The text the User gave before the command's first option.
+     * @param preamble The text the user gave before the command's first option.
      * @param idTargetCommand The command form that addresses a student by their NUS Student ID.
      * @param readTarget How the calling command reads its own preamble as a target.
      * @throws ParseException if {@code preamble} does not name a student.
@@ -217,7 +217,7 @@ public class ParserUtil {
      * recovery is offered only where it leads to the student.
      *
      * @param failure Why the target was refused.
-     * @param target The one token the User gave as the target.
+     * @param target The one token the user gave as the target.
      * @param idTargetCommand The command form that addresses a student by their NUS Student ID.
      */
     private static ParseException withIdTargetHint(ParseException failure, String target,
@@ -273,7 +273,7 @@ public class ParserUtil {
     public static Email parseEmail(String email) throws ParseException {
         requireNonNull(email);
         String normalizedEmail = StringUtil.normalizeFieldValue(email);
-        // Email.isValidEmail judges the shape alone, so an address the User typed has to clear
+        // Email.isValidEmail judges the shape alone, so an address the user typed has to clear
         // the entry limit as well before it is accepted
         if (!Email.isWithinLengthLimit(normalizedEmail) || !Email.isValidEmail(normalizedEmail)) {
             throw new ParseException(Messages.getErrorMessageForInvalidValue(

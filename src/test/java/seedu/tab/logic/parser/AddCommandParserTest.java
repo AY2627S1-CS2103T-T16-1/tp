@@ -242,7 +242,7 @@ public class AddCommandParserTest {
     @Test
     public void parse_emailLongEnoughToOverflowTheStack_isRejectedWithTheOtherFieldsStillChecked() {
         // a pasted address used to crash the command with StackOverflowError, which no parser
-        // catches, so the User saw no message at all
+        // catches, so the user saw no message at all
         String overflowing = "a.".repeat(5000) + "a@example.com";
         // the fields are reported in the order the format lists them, not the order they were given
         String expected = Messages.getErrorMessageForInvalidValue(Phone.FIELD_NAME, "12",
@@ -418,7 +418,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_emailAndIdPastedWithInvisibleMarks_areStoredWithoutThem() {
-        // the marks draw nothing, so an error quoting the value would leave the User unable to
+        // the marks draw nothing, so an error quoting the value would leave the user unable to
         // see what to fix; both fields are normalized as names, phones and tags already are
         Student expected = new StudentBuilder().withName("John Doe").withPhone(VALID_PHONE_BOB)
                 .withEmail(VALID_EMAIL_BOB).withNusStudentId(VALID_NUS_STUDENT_ID_BOB).withTags().build();

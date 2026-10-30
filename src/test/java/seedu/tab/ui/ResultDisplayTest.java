@@ -126,7 +126,7 @@ public class ResultDisplayTest {
         ResultDisplay display = showing(String.join("\n", Collections.nCopies(40, "line")));
         TextArea area = areaOf(display);
 
-        assertFalse(area.isEditable(), "the reply is not something the User edits");
+        assertFalse(area.isEditable(), "the reply is not something the user edits");
         assertTrue(area.isWrapText());
         assertEquals(40, area.getText().lines().count(), "every line must still be there to scroll to");
     }

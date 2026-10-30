@@ -106,9 +106,9 @@ public class StudentBookParser {
     }
 
     /**
-     * Returns what to tell the User about a word that is no command, naming the word they
+     * Returns what to tell the user about a word that is no command, naming the word they
      * typed and the commands it was likely meant to be. Those are only ever named: running
-     * one would act on a word the User never typed, and a word two edits from {@code delete}
+     * one would act on a word the user never typed, and a word two edits from {@code delete}
      * is a guess even when it is the only guess going.
      */
     private static String describeUnknownCommand(String commandWord) {

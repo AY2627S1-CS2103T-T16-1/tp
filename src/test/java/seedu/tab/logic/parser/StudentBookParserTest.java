@@ -445,7 +445,7 @@ public class StudentBookParserTest {
     @Test
     public void parseCommand_wordOpeningUnlikeEveryNearCommand_pointsToHelp() {
         // "dlt" is two edits from "edit" and nothing else is within reach, which says more
-        // about the arithmetic than about what the User meant
+        // about the arithmetic than about what the user meant
         assertThrows(ParseException.class, Messages.getErrorMessageForUnknownCommand("dlt"), ()
             -> parser.parseCommand("dlt 3"));
     }
