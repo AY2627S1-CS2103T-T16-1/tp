@@ -17,6 +17,11 @@ public class LikelyDuplicateWarningTest {
         String[][] cases = {
             {"Sean O’Brien", "Sean O'Brien"},
             {"Mary O'Neil", "Mary O’Neil"},
+            {"DʼSouza", "D'Souza"},
+            {"D'Souza", "DʼSouza"},
+            {"Hawaiʻi Lee", "Hawai'i Lee"},
+            {"Tatʹyana Ivanova", "Tat'yana Ivanova"},
+            {"D＇Souza", "D′Souza"},
             {"José Rivera", "JOSE RIVERA"},
             {"Nguyễn Văn An", "nguyen van an"},
             {"Đặng Thị Mai", "Dang Thi Mai"},

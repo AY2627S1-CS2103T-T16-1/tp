@@ -41,6 +41,15 @@ public class StringUtil {
     // prolonged sound mark of ラーメン is a letter to Unicode and stays, as does any other
     // dash-shaped character that is not punctuation. FollowUpFlag folds the same set.
     private static final Pattern HYPHEN_OR_DASH = Pattern.compile("[\\p{Pd}\\u2212]");
+    // The characters a name list puts where a reader sees an apostrophe, each read as the straight
+    // one when names are compared: the two curly quotation marks a word processor substitutes, the
+    // fullwidth apostrophe a CJK keyboard produces, the prime a spreadsheet leaves behind, and the
+    // three modifier letters that a roll of transliterated names carries — the modifier apostrophe
+    // of DʼSouza, the turned comma that is the okina of Hawaiʻi, and the modifier prime that stands
+    // for the soft sign in Tatʹyana. Unicode files those three as letters, and in their own
+    // orthographies they are letters; a reader at an ASCII keyboard still has one key for all of
+    // them, and this builds a comparison key while the stored spelling stands untouched.
+    private static final String APOSTROPHE_VARIANTS = "‘’＇′ʼʻʹ";
 
     private StringUtil() {} // this class only holds the helpers
 
@@ -139,10 +148,10 @@ public class StringUtil {
     }
 
     /**
-     * Returns a comparison key for a name, ignoring case, Latin accents, curly apostrophes and
-     * the difference between a dash and a space. The stored name is left unchanged. Marks
-     * belonging to other scripts are retained because they may represent separate vowels rather
-     * than optional accents.
+     * Returns a comparison key for a name, ignoring case, Latin accents, the style of an
+     * apostrophe and the difference between a dash and a space. The stored name is left unchanged.
+     * Marks belonging to other scripts are retained because they may represent separate vowels
+     * rather than optional accents.
      *
      * <p>A dash reads as a space because two lists of the same class routinely disagree on it:
      * a sign-up sheet carries {@code Mary-Jane}, the official roll carries {@code Mary Jane}, and
@@ -164,7 +173,7 @@ public class StringUtil {
                 isLatin = Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.LATIN;
             }
             if (!isMark || !isLatin) {
-                result.appendCodePoint(straightenQuote(codePoint));
+                result.appendCodePoint(straightenApostrophe(codePoint));
             }
         }
         String dashesAsSpaces = HYPHEN_OR_DASH.matcher(result.toString()).replaceAll(" ");
@@ -172,11 +181,17 @@ public class StringUtil {
     }
 
     /**
-     * Returns {@code codePoint} with a curly apostrophe read as the straight one, so that
-     * {@code O’Brien} typed in a word processor matches {@code O'Brien} typed in TAB.
+     * Returns {@code codePoint} with any character a name list uses for an apostrophe read as the
+     * straight one, so that {@code O’Brien} typed in a word processor and {@code DʼSouza} pasted
+     * from a roster both match the {@code O'Brien} and {@code D'Souza} a reader types in TAB.
+     *
+     * <p>The grave accent and the acute accent are left as they are, even though a keyboard
+     * without an apostrophe key produces them. Both mark the letter beside them rather than stand
+     * between two letters, which is how this method already treats the accents it strips, and a
+     * name spelled with one is far more likely to want that reading than an apostrophe.
      */
-    private static int straightenQuote(int codePoint) {
-        return codePoint == '’' || codePoint == '‘' ? '\'' : codePoint;
+    private static int straightenApostrophe(int codePoint) {
+        return APOSTROPHE_VARIANTS.indexOf(codePoint) >= 0 ? '\'' : codePoint;
     }
 
     private static String foldCase(String value) {

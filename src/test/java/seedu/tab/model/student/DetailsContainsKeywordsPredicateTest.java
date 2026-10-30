@@ -29,6 +29,28 @@ public class DetailsContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_apostropheVariantInName_matchesEveryOtherApostropheStyle() {
+        // a surname pasted with any of these and typed with any other has to meet, whichever side
+        // of the search it lands on: the straight apostrophe, the two curly quotation marks, the
+        // fullwidth apostrophe, the prime, and the three modifier letters
+        String[] apostrophes = {"'", "‘", "’", "＇", "′", "ʼ", "ʻ", "ʹ"};
+        for (String stored : apostrophes) {
+            Student student = new StudentBuilder().withName("D" + stored + "Souza").build();
+            for (String typed : apostrophes) {
+                Map<Field, List<String>> conditions = Map.of(Field.NAME, List.of("D" + typed + "Souza"));
+                assertTrue(new DetailsContainsKeywordsPredicate(conditions).test(student),
+                        "D" + typed + "Souza should match D" + stored + "Souza");
+            }
+        }
+        // the grave and the acute are accents rather than apostrophes, and stay distinct
+        for (String accent : new String[] {"`", "´"}) {
+            Student student = new StudentBuilder().withName("D" + accent + "Souza").build();
+            assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("D'Souza")))
+                    .test(student));
+        }
+    }
+
+    @Test
     public void test_dashedName_matchesTheSameNameSpelledWithSpaces() {
         List<Student> students = List.of(
                 new StudentBuilder().withName("Mary-Jane Tan").build(),
