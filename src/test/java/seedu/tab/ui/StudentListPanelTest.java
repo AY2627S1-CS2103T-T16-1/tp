@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.ui.FxToolkit.onFxThread;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -266,7 +267,7 @@ public class StudentListPanelTest {
             ObservableList<Student> students = FXCollections.observableArrayList();
             for (int index = 1; index <= listSize; index++) {
                 students.add(new StudentBuilder().withName(LONG_NAME)
-                        .withNusStudentId(String.format("A%07dX", index)).build());
+                        .withNusStudentId(String.format(Locale.ROOT, "A%07dX", index)).build());
             }
             StudentListPanel panel = new StudentListPanel(students);
             Region root = panel.getRoot();
