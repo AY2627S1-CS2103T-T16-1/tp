@@ -13,7 +13,9 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -57,13 +59,37 @@ public class JsonUtil {
      */
     public static <T> Optional<T> readJsonFile(
             Path filePath, Class<T> classOfObjectToDeserialize) throws DataLoadingException {
+        return readJsonFile(filePath, classOfObjectToDeserialize, null);
+    }
+
+    private static <T> Optional<T> readJsonFile(Path filePath, Class<T> classOfObjectToDeserialize,
+            String messageForNonObject) throws DataLoadingException {
         requireNonNull(filePath);
         if (Files.notExists(filePath)) {
             requireFirstRun(filePath);
             return Optional.empty();
         }
         logger.info("JSON file " + filePath + " found.");
-        return Optional.of(deserializeDocument(readJsonSource(filePath), filePath, classOfObjectToDeserialize));
+        return Optional.of(deserializeDocument(readJsonSource(filePath), filePath, classOfObjectToDeserialize,
+                messageForNonObject));
+    }
+
+    /**
+     * Returns the JSON object from the given file as {@link #readJsonFile(Path, Class)} does,
+     * reporting {@code messageForNonObject} when the document's outermost value is not a JSON
+     * object. A caller whose file has a shape of its own to describe reports it this way rather
+     * than leaving the mismatch to Jackson, whose explanation names Java classes and parser
+     * tokens.
+     *
+     * @param filePath cannot be null.
+     * @param classOfObjectToDeserialize JSON file has to correspond to the structure in the class given here.
+     * @param messageForNonObject what the file should hold, cannot be null.
+     * @throws DataLoadingException if loading of the JSON file failed or the document is null.
+     */
+    public static <T> Optional<T> readJsonObjectFile(Path filePath, Class<T> classOfObjectToDeserialize,
+            String messageForNonObject) throws DataLoadingException {
+        requireNonNull(messageForNonObject);
+        return readJsonFile(filePath, classOfObjectToDeserialize, messageForNonObject);
     }
 
     /**
@@ -88,10 +114,10 @@ public class JsonUtil {
         }
     }
 
-    private static <T> T deserializeDocument(String jsonSource, Path filePath, Class<T> targetClass)
-            throws DataLoadingException {
+    private static <T> T deserializeDocument(String jsonSource, Path filePath, Class<T> targetClass,
+            String messageForNonObject) throws DataLoadingException {
         try {
-            T value = fromJsonString(jsonSource, targetClass);
+            T value = fromJsonString(jsonSource, targetClass, messageForNonObject);
             if (value == null) {
                 IllegalValueException cause = new IllegalValueException(MESSAGE_NULL_DOCUMENT);
                 throw new DataLoadingException(cause.getMessage(), cause);
@@ -145,14 +171,38 @@ public class JsonUtil {
      * @return The instance of T with the specified values in the JSON string.
      */
     public static <T> T fromJsonString(String json, Class<T> instanceClass) throws IOException {
+        return fromJsonString(json, instanceClass, null);
+    }
+
+    private static <T> T fromJsonString(String json, Class<T> instanceClass, String messageForNonObject)
+            throws IOException {
         try (JsonParser parser = objectMapper.getFactory().createParser(json)) {
-            T value = readJsonValue(parser, instanceClass);
+            T value = readRootValue(parser, instanceClass, messageForNonObject);
             if (parser.nextToken() != null) {
                 throw new JsonParseException(parser,
                         "Expected a single JSON value; remove content after the document.", parser.getTokenLocation());
             }
             return value;
         }
+    }
+
+    /**
+     * Returns the document's outermost value, turning it down with {@code messageForNonObject}
+     * when the caller requires an object and the document holds something else.
+     *
+     * <p>A document that holds nothing at all, and one that holds an explicit null, keep the
+     * explanations they already have: neither is a shape the caller can describe usefully.
+     */
+    private static <T> T readRootValue(JsonParser parser, Class<T> instanceClass, String messageForNonObject)
+            throws IOException {
+        if (messageForNonObject == null) {
+            return readJsonValue(parser, instanceClass);
+        }
+        JsonToken rootToken = parser.nextToken();
+        if (rootToken != null && rootToken != JsonToken.START_OBJECT && rootToken != JsonToken.VALUE_NULL) {
+            throw JsonMappingException.from(parser, messageForNonObject);
+        }
+        return readJsonValue(parser, instanceClass);
     }
 
     private static <T> T readJsonValue(JsonParser parser, Class<T> instanceClass) throws IOException {

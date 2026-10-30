@@ -31,6 +31,10 @@ class JsonSerializableStudentBook {
             "NUS Student ID %1$s is already used by student record %2$d (\"%3$s\").";
     public static final String MESSAGE_MISSING_STUDENT_LIST = "Student list is missing.";
 
+    /** What the reader of a file whose outermost value is not a student book is told to write. */
+    static final String MESSAGE_EXPECTED_STUDENT_BOOK = "The saved data must be a JSON object holding a students"
+            + " array, such as {\"students\": [{\"name\": \"Alex Yeoh\"}]}.";
+
     private static final String STUDENTS_FIELD = "students";
     private static final String COMMENT_FIELD = "_comment";
     private static final String MESSAGE_UNKNOWN_FIELD = "Unknown field \"%s\" in the student book. "

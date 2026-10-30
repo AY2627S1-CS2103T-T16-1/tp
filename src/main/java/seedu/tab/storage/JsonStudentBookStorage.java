@@ -207,7 +207,8 @@ public class JsonStudentBookStorage {
      */
     private Optional<JsonSerializableStudentBook> readJsonStudentBook(Path filePath) throws DataLoadingException {
         try {
-            return JsonUtil.readJsonFile(filePath, JsonSerializableStudentBook.class);
+            return JsonUtil.readJsonObjectFile(filePath, JsonSerializableStudentBook.class,
+                    JsonSerializableStudentBook.MESSAGE_EXPECTED_STUDENT_BOOK);
         } catch (DataLoadingException e) {
             throw addStudentRecordContext(e);
         }
