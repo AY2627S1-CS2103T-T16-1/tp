@@ -214,7 +214,7 @@ Searches the whole book using the [student field options](#student-fields).
 * To search an entire phrase, use double quotes.
 * Name searches ignore Latin accents, strokes and apostrophe styles. <br>
   For example, `dang` matches `Đặng`.
-* Name searches treat hyphens and the longer dashes as spaces, because rosters punctuate the same name in different ways. Other fields do not, so a tag matches only as it was written. <br>
+* Name searches treat hyphens and the longer dashes as spaces, because the same name may be punctuated differently from one roster to the next. Other fields, such as tags, do not. <br>
   For example, `find -n "Mary Jane"` matches the names `Mary-Jane` and `Mary–Jane`, but `find -t "Mary Jane"` does not match the tag `Mary-Jane`.
 * Phone searches match digits across formatting. <br>
   For example, `91234567` matches `+65 9123 4567`.
@@ -305,7 +305,7 @@ Install TAB there, then copy `data/tab.json` into the new home folder's `data` f
 
 Check that TAB's home folder is writable and has free disk space, then retry the command.
 
-TAB coordinates saves between windows through a lock file, `data/.tab.json.lock`. When an error names it, close all TAB windows and restore write access to that file before restarting. Leave the file in place.
+TAB uses a lock file, `data/.tab.json.lock`, to coordinate saves between windows. When an error names it, close all TAB windows and restore write access to that file before restarting. Leave the file in place.
 
 ## Command summary
 
