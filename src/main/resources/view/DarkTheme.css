@@ -380,6 +380,18 @@
     -fx-text-fill: -tab-danger;
 }
 
+/* the diagnostic scrolls when the screen is too short for it, but it is a message rather than
+   a control, so the container it scrolls in is not drawn */
+.data-loading-error-scroll,
+.data-loading-error-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.data-loading-error-scroll {
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+}
+
 .data-loading-error-content {
     -fx-padding: 0 24 12 24;
     -fx-spacing: 10;
