@@ -175,6 +175,32 @@ public class EmailTest {
     }
 
     @Test
+    public void getFailureReason_dotWithAnEmptyLabelBesideIt_namesTheDot() {
+        // a full stop carried over from the end of a sentence is an everyday paste slip, and
+        // the last part the reader sees is "com", so a short-last-label answer misdirects them
+        assertFalse(Email.isValidEmail("eve@example.com."));
+        assertEquals("the domain may not begin or end with a dot, or hold two dots in a row",
+                Email.getFailureReason("eve@example.com."));
+
+        assertFalse(Email.isValidEmail("eve@.example.com"));
+        assertEquals("the domain may not begin or end with a dot, or hold two dots in a row",
+                Email.getFailureReason("eve@.example.com"));
+
+        assertFalse(Email.isValidEmail("eve@example..com"));
+        assertEquals("the domain may not begin or end with a dot, or hold two dots in a row",
+                Email.getFailureReason("eve@example..com"));
+    }
+
+    @Test
+    public void getFailureReason_genuinelyShortLastLabel_keepsTheShortLabelAnswer() {
+        assertEquals("the last part of the domain needs at least 2 characters",
+                Email.getFailureReason("a@example.c"));
+        assertEquals("the last part of the domain needs at least 2 characters",
+                Email.getFailureReason("a@x"));
+        assertTrue(Email.isValidEmail("a@example.co")); // the boundary just above it
+    }
+
+    @Test
     public void getFailureReason_accentedLetters_saysOnlyAsciiLettersAreAccepted() {
         assertFalse(Email.isValidEmail("josé@example.com"));
         assertEquals("the part before the @ may hold ASCII letters, digits and !#$%&'*+/=?^_`{|}~-"
