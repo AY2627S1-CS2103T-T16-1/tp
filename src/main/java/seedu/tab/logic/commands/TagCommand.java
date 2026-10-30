@@ -5,6 +5,7 @@ import static seedu.tab.commons.util.CollectionUtil.NOT_FOUND;
 import static seedu.tab.commons.util.CollectionUtil.indexOfSame;
 import static seedu.tab.commons.util.CollectionUtil.requireAllNonNull;
 import static seedu.tab.logic.parser.CliFlags.FLAG_ADD_TAG;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_REMOVE_TAG;
@@ -13,7 +14,6 @@ import static seedu.tab.logic.parser.CliFlags.FLAG_TARGET_ID;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -59,10 +59,7 @@ public class TagCommand extends Command {
     public static final String MESSAGE_NOT_PRESENT = "This student does not have tag [%1$s]. No changes made.";
     public static final String MESSAGE_FOLLOW_UP_FLAG_HINT =
             "This student is flagged for follow-up, which is not a tag. To clear the flag, use "
-                    + EditCommand.COMMAND_WORD + " %1$d " + FLAG_NO_FOLLOW_UP + ".";
-    public static final String MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT =
-            "This student is flagged for follow-up, which is not a tag. To clear the flag, use "
-                    + EditCommand.COMMAND_WORD + " " + FLAG_TARGET_ID + " %1$s " + FLAG_NO_FOLLOW_UP + ".";
+                    + "%1$s " + FLAG_NO_FOLLOW_UP + ".";
     public static final String MESSAGE_MULTIPLE_TARGETS =
             "Give one student target: an index, a letter-leading NUS Student ID, or "
                     + FLAG_NUS_STUDENT_ID.getLabel() + ".";
@@ -119,10 +116,13 @@ public class TagCommand extends Command {
             throw new CommandException(String.format(MESSAGE_ALREADY_PRESENT,
                     Messages.shorten(existingTag.get().getTagName())));
         }
+        // the student is read off the displayed list, which the replacement below may re-filter
+        String flagCommand = editCommandFor(student, model.getFilteredStudentList())
+                + " " + FLAG_FOLLOW_UP;
         Student updatedStudent = withTagAdded(student);
         model.setStudent(student, updatedStudent);
         return new CommandResult(FollowUpTagWarning.appendTo(
-                formatSuccess(MESSAGE_ADD_SUCCESS, tag, updatedStudent), List.of(tag)));
+                formatSuccess(MESSAGE_ADD_SUCCESS, tag, updatedStudent), List.of(tag), flagCommand));
     }
 
     /** Removes the requested tag, or reports that the student carries no such tag. */
@@ -155,12 +155,23 @@ public class TagCommand extends Command {
         if (!student.isFlagged() || !FollowUpFlag.isFollowUpName(tag.getTagName())) {
             return absent;
         }
+        return absent + "\n" + String.format(MESSAGE_FOLLOW_UP_FLAG_HINT,
+                editCommandFor(student, displayedStudents));
+    }
+
+    /**
+     * Returns the {@code edit} command that reaches {@code student}: their position in
+     * {@code displayedStudents} where the list shows them, and their NUS Student ID where a
+     * search is hiding them. A student reached by index is on the displayed list and a student
+     * reached by ID holds one, so one of the two always names them.
+     */
+    private static String editCommandFor(Student student, List<Student> displayedStudents) {
         int displayedIndex = indexOfSame(displayedStudents, student);
         if (displayedIndex == NOT_FOUND) {
-            return absent + "\n" + String.format(MESSAGE_HIDDEN_FOLLOW_UP_FLAG_HINT,
-                    student.getNusStudentId().orElseThrow().getValue());
+            return EditCommand.COMMAND_WORD + " " + FLAG_TARGET_ID + " "
+                    + student.getNusStudentId().orElseThrow().getValue();
         }
-        return absent + "\n" + String.format(Locale.ROOT, MESSAGE_FOLLOW_UP_FLAG_HINT, displayedIndex + 1);
+        return EditCommand.COMMAND_WORD + " " + (displayedIndex + 1);
     }
 
     /** Returns whether a stored tag denotes the requested tag, ignoring case. */

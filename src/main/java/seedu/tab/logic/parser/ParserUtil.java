@@ -37,7 +37,7 @@ public class ParserUtil {
             "Unexpected value after %1$s: \"%2$s\". %3$s accepts one index or NUS Student ID "
                     + "and nothing else.";
     public static final String MESSAGE_FOLLOW_UP_IS_NOT_A_TAG =
-            FollowUpFlag.MESSAGE_RESERVED + " Use " + FLAG_FOLLOW_UP.getLabel() + " to mark the student.";
+            getFollowUpIsNotATagMessage(FLAG_FOLLOW_UP.getLabel());
 
     /** How a target read as an NUS Student ID is named, as the usage messages name it. */
     public static final String FIELD_NUS_STUDENT_ID = "NUS_STUDENT_ID";
@@ -45,6 +45,18 @@ public class ParserUtil {
     private static final Pattern TARGET_SEPARATOR_PATTERN = Pattern.compile("(?U)\\s+");
 
     private ParserUtil() {} // this class only holds helpers
+
+    /**
+     * Returns the refusal of the follow-up label as a tag, pointing at {@code flagCommand} as the
+     * way to mark the student instead.
+     *
+     * @param flagCommand What the user types to flag the student. It varies with the command being
+     *     refused, because only some commands take the follow-up option themselves.
+     */
+    public static String getFollowUpIsNotATagMessage(String flagCommand) {
+        requireNonNull(flagCommand);
+        return FollowUpFlag.MESSAGE_RESERVED + " Use " + flagCommand + " to mark the student.";
+    }
 
     /**
      * Returns the optional follow-up selector, rejecting repeated or conflicting options.
@@ -337,9 +349,22 @@ public class ParserUtil {
      * @throws ParseException if the given {@code tag} is invalid or names the follow-up flag.
      */
     public static Tag parseTagToAdd(String tag) throws ParseException {
+        return parseTagToAdd(tag, FLAG_FOLLOW_UP.getLabel());
+    }
+
+    /**
+     * Parses a {@code String tag} into a {@code Tag} a student can be given, as
+     * {@link #parseTagToAdd(String)} does, naming {@code flagCommand} as the way to mark the
+     * student when the label is the reserved one. A command that does not take the follow-up
+     * option itself names the command that does, so that the remedy offered can be typed as it
+     * stands.
+     *
+     * @throws ParseException if the given {@code tag} is invalid or names the follow-up flag.
+     */
+    public static Tag parseTagToAdd(String tag, String flagCommand) throws ParseException {
         Tag parsed = parseTag(tag);
         if (FollowUpFlag.isFollowUpName(parsed.getTagName())) {
-            throw new ParseException(MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
+            throw new ParseException(getFollowUpIsNotATagMessage(flagCommand));
         }
         return parsed;
     }
