@@ -84,12 +84,83 @@ public class LikelyDuplicateWarningTest {
     public void appendTo_differentFullPhoneDigits_doesNotWarn() {
         Student existing = new StudentBuilder().withName("Alice Tan").withPhone("9123-4567")
                 .withoutEmail().build();
-        for (String phone : List.of("+65 91234567", "91234567 ext 21", "91234568", "9123456")) {
+        for (String phone : List.of("91234567 ext 21", "91234568", "9123456", "91234567 1")) {
             Student changed = new StudentBuilder().withName("Alicia Tan").withPhone(phone).withoutEmail().build();
 
             assertEquals(SUCCESS_MESSAGE, LikelyDuplicateWarning.appendTo(
                     SUCCESS_MESSAGE, changed, List.of(existing)));
         }
+    }
+
+    @Test
+    public void appendTo_sameNumberBehindACountryCode_warns() {
+        Student existing = new StudentBuilder().withName("Alex Yeoh").withPhone("87438807")
+                .withoutEmail().build();
+        for (String phone : List.of("+65 8743 8807", "0065 8743 8807", "+65-8743-8807", "6587438807")) {
+            Student changed = new StudentBuilder().withName("Benjamin Lim").withPhone(phone).withoutEmail().build();
+
+            assertEquals(SUCCESS_MESSAGE + "\n\nWARNING: Possible duplicate student: Alex Yeoh "
+                    + "has the same phone.\n"
+                    + "Review the records and delete duplicates only if they are the same person.",
+                    LikelyDuplicateWarning.appendTo(SUCCESS_MESSAGE, changed, List.of(existing)));
+        }
+    }
+
+    @Test
+    public void appendTo_localNumberBehindAStoredCountryCode_warns() {
+        Student existing = new StudentBuilder().withName("Alex Yeoh").withPhone("+65 8743 8807")
+                .withoutEmail().build();
+        for (String phone : List.of("87438807", "8743-8807", "8743 8807")) {
+            Student changed = new StudentBuilder().withName("Benjamin Lim").withPhone(phone).withoutEmail().build();
+
+            assertEquals(SUCCESS_MESSAGE + "\n\nWARNING: Possible duplicate student: Alex Yeoh "
+                    + "has the same phone.\n"
+                    + "Review the records and delete duplicates only if they are the same person.",
+                    LikelyDuplicateWarning.appendTo(SUCCESS_MESSAGE, changed, List.of(existing)));
+        }
+    }
+
+    @Test
+    public void appendTo_differentNumbersSharingATail_doesNotWarn() {
+        // a shared tail is only evidence of one number when the whole of the shorter number is it
+        Student existing = new StudentBuilder().withName("Alice Tan").withPhone("61234567")
+                .withoutEmail().build();
+        for (String phone : List.of("71234567", "+65 71234567", "+65 81234567")) {
+            Student changed = new StudentBuilder().withName("Alicia Tan").withPhone(phone).withoutEmail().build();
+
+            assertEquals(SUCCESS_MESSAGE, LikelyDuplicateWarning.appendTo(
+                    SUCCESS_MESSAGE, changed, List.of(existing)));
+        }
+    }
+
+    @Test
+    public void appendTo_shortNumberEndingALongerOne_doesNotWarn() {
+        // a tail of a few digits is shared by numbers that reach different people
+        Student existing = new StudentBuilder().withName("Alice Tan").withPhone("4567")
+                .withoutEmail().build();
+        Student changed = new StudentBuilder().withName("Alicia Tan").withPhone("+65 9123 4567")
+                .withoutEmail().build();
+
+        assertEquals(SUCCESS_MESSAGE, LikelyDuplicateWarning.appendTo(
+                SUCCESS_MESSAGE, changed, List.of(existing)));
+        assertEquals(SUCCESS_MESSAGE, LikelyDuplicateWarning.appendTo(
+                SUCCESS_MESSAGE, existing, List.of(changed)));
+    }
+
+    @Test
+    public void appendChangedFieldsTo_editToACountryCodeFormat_warns() {
+        Student original = new StudentBuilder().withName("Benjamin Lim").withPhone("91112222")
+                .withoutEmail().build();
+        Student changed = new StudentBuilder(original).withPhone("+65 8743 8807").build();
+        Student matching = new StudentBuilder().withName("Alex Yeoh").withPhone("87438807")
+                .withoutEmail().build();
+
+        String expected = SUCCESS_MESSAGE
+                + "\n\nWARNING: Possible duplicate student: Alex Yeoh has the same phone."
+                + "\nReview the records and delete duplicates only if they are the same person.";
+
+        assertEquals(expected, LikelyDuplicateWarning.appendChangedFieldsTo(
+                SUCCESS_MESSAGE, original, changed, List.of(original, matching)));
     }
 
     @Test

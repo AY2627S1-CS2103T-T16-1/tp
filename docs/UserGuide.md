@@ -91,6 +91,7 @@ The field options below are used by `add`, `edit` and `find`.
 * The tag `Needs follow-up` is reserved for the follow-up flag, as are its spacing, hyphen and trailing-punctuation variants such as `Needs follow up`. A tag differing by other punctuation, such as `Needs_follow_up`, is saved with a warning instead and does not set the flag.
 * NUS Student IDs must be unique across the book, ignoring case.
 * After you `add` or `edit` a student, a possible-duplicate warning may be raised if the result has a matching name, phone or email.
+* Two phones match however they are punctuated, and also when one is the other behind a country code, such as `8743 8807` and `+65 8743 8807`. Digits at the end reach somewhere else, so `8743 8807 ext 12` raises no warning against `8743 8807`, and a number of fewer than seven digits matches only a number written the same way.
 * For duplicate warnings, you can exercise your own judgement and ignore them if you know that the records describe different students.
 
 ### Choosing a student
