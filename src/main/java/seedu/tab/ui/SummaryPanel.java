@@ -6,6 +6,7 @@ import static seedu.tab.model.util.StudentSummary.countFlagged;
 import java.util.List;
 import java.util.Locale;
 
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -53,7 +54,7 @@ public class SummaryPanel extends UiPart<Region> {
     public SummaryPanel(ObservableList<Student> students) {
         super(FXML);
         tagScroll.addEventFilter(KeyEvent.KEY_PRESSED, this::handlePageKeyPressed);
-        students.addListener((javafx.collections.ListChangeListener<Student>) change -> summarize(students));
+        students.addListener((ListChangeListener<Student>) change -> summarize(students));
         tagScroll.viewportBoundsProperty().addListener((unused, previous, viewport) ->
                 reserveScrollBarWidth(viewport.getWidth()));
         summarize(students);

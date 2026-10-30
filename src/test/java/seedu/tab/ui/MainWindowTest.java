@@ -29,6 +29,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
@@ -104,6 +105,15 @@ public class MainWindowTest {
             window.fillInnerParts();
             return window;
         });
+    }
+
+    @Test
+    public void mainWindow_whenLoaded_carriesAnIconThatDecodes() throws Exception {
+        MainWindow window = filledWindow();
+
+        Image icon = onFxThread(() -> window.getPrimaryStage().getIcons().get(0));
+
+        assertFalse(icon.isError(), "a window icon that fails to load leaves the title bar blank");
     }
 
     @Test

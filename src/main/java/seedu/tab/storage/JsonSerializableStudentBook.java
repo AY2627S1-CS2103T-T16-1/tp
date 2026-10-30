@@ -31,9 +31,10 @@ class JsonSerializableStudentBook {
             "NUS Student ID %1$s is already used by student record %2$d (\"%3$s\").";
     public static final String MESSAGE_MISSING_STUDENT_LIST = "Student list is missing.";
 
+    private static final String STUDENTS_FIELD = "students";
     private static final String COMMENT_FIELD = "_comment";
     private static final String MESSAGE_UNKNOWN_FIELD = "Unknown field \"%s\" in the student book. "
-            + "Expected top-level fields: students, _comment (optional description).";
+            + "Expected top-level fields: " + STUDENTS_FIELD + ", " + COMMENT_FIELD + " (optional description).";
     private static final String MESSAGE_MISSING_RECORD = "Student record %d is missing.";
     private static final String RECORD_DESCRIPTION = "Student record %d";
     private static final String NAMED_RECORD_DESCRIPTION = "Student record %d (\"%s\")";
@@ -48,7 +49,7 @@ class JsonSerializableStudentBook {
     @JsonCreator
     public JsonSerializableStudentBook(
             @JsonProperty(COMMENT_FIELD) @JsonDeserialize(using = JsonCommentDeserializer.class) String comment,
-            @JsonProperty("students") List<JsonAdaptedStudent> students) {
+            @JsonProperty(STUDENTS_FIELD) List<JsonAdaptedStudent> students) {
         this.comment = comment;
         this.students = students == null ? null : new ArrayList<>(students);
     }

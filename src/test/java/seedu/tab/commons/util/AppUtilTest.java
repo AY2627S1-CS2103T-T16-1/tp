@@ -1,6 +1,7 @@
 package seedu.tab.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static seedu.tab.testutil.Assert.assertThrows;
 
@@ -10,6 +11,8 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import javafx.scene.image.Image;
 
 public class AppUtilTest {
 
@@ -50,7 +53,10 @@ public class AppUtilTest {
 
     @Test
     public void getImage_existingImage() {
-        assertNotNull(AppUtil.getImage("/images/address_book_32.png"));
+        Image icon = AppUtil.getImage("/images/tab_32.png");
+
+        assertNotNull(icon);
+        assertFalse(icon.isError(), "the application icon has to decode, or no icon is drawn");
     }
 
     @Test

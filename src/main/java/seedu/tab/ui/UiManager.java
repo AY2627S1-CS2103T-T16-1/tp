@@ -37,7 +37,7 @@ public class UiManager implements Ui {
     static final String FATAL_ERROR_TITLE = "Fatal error during initializing";
 
     private static final Logger logger = LogsCenter.getLogger(UiManager.class);
-    private static final String ICON_APPLICATION = "/images/address_book_32.png";
+    private static final String ICON_APPLICATION = "/images/tab_32.png";
 
     private Logic logic;
     private Path dataFilePath;

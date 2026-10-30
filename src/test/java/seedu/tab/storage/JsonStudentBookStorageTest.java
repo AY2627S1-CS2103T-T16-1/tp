@@ -200,6 +200,8 @@ public class JsonStudentBookStorageTest {
                     DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
 
             assertTrue(exception.getMessage().startsWith("Student record 2: "), exception.getMessage());
+            // the flag is the one field whose diagnostic quotes the opening bracket rather than
+            // naming an object or an array, as describeJsonValue has every other field do
             String shownValue = value.equals("[]") ? "[" : value.equals("{}") ? "{" : value;
             assertTrue(exception.getMessage().contains("Invalid flag value " + shownValue
                     + ". Use JSON true, false or null for the follow-up flag."), exception.getMessage());
@@ -210,7 +212,7 @@ public class JsonStudentBookStorageTest {
     @Test
     public void readStudentBook_nonArrayTags_reportsFieldAndPreservesBytes() throws Exception {
         for (String value : List.of("\"friends\"", "5", "true", "false", "{}")) {
-            String shownValue = value.equals("{}") ? "an object" : value;
+            String shownValue = describeJsonValue(value);
             assertInvalidTagsPreservesFile(value, "Invalid tags value: " + shownValue
                     + ". Use a JSON array of tag strings, such as [\"Lab 3\"].");
         }
@@ -219,7 +221,7 @@ public class JsonStudentBookStorageTest {
     @Test
     public void readStudentBook_nonStringTag_reportsEntryAndPreservesBytes() throws Exception {
         for (String value : List.of("5", "1.5", "true", "false", "null", "{}", "[]")) {
-            String shownValue = value.equals("{}") ? "an object" : value.equals("[]") ? "an array" : value;
+            String shownValue = describeJsonValue(value);
             assertInvalidTagsPreservesFile("[\"Lab 3\"," + value + "]", "Invalid tags entry 2 value: " + shownValue
                     + ". Each tag must be a JSON string, such as \"Lab 3\".");
         }
@@ -583,7 +585,7 @@ public class JsonStudentBookStorageTest {
             DataLoadingException exception = org.junit.jupiter.api.Assertions.assertThrows(
                     DataLoadingException.class, () -> new JsonStudentBookStorage(path).readStudentBook());
 
-            String shownValue = value.equals("{}") ? "an object" : value.equals("[]") ? "an array" : value;
+            String shownValue = describeJsonValue(value);
             assertTrue(exception.getMessage().contains("Invalid _comment value " + shownValue
                     + ". Use a JSON string such as \"_comment\": \"My tutorial group\", or remove the key."),
                     exception.getMessage());
@@ -596,8 +598,19 @@ public class JsonStudentBookStorageTest {
         assertThrows(NullPointerException.class, () -> readStudentBook(null));
     }
 
-    private java.util.Optional<ReadOnlyStudentBook> readStudentBook(String filePath) throws Exception {
+    private Optional<ReadOnlyStudentBook> readStudentBook(String filePath) throws Exception {
         return new JsonStudentBookStorage(Paths.get(filePath)).readStudentBook(addToTestDataPathIfNotNull(filePath));
+    }
+
+    /**
+     * Returns how a diagnostic names the JSON {@code value}, which is the value itself unless
+     * the file holds a whole object or array there.
+     */
+    private static String describeJsonValue(String value) {
+        if (value.equals("{}")) {
+            return "an object";
+        }
+        return value.equals("[]") ? "an array" : value;
     }
 
     private Path addToTestDataPathIfNotNull(String prefsFileInTestDataFolder) {

@@ -1,10 +1,12 @@
 package seedu.tab.commons.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.commons.util.CollectionUtil.requireAllNonNull;
 import static seedu.tab.testutil.Assert.assertThrows;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,6 +82,32 @@ public class CollectionUtilTest {
         assertFalse(CollectionUtil.isAnyNonNull((Object[]) null));
         assertTrue(CollectionUtil.isAnyNonNull(new Object()));
         assertTrue(CollectionUtil.isAnyNonNull(new Object(), null));
+    }
+
+    @Test
+    public void indexOfSame_listHoldsTheObject_returnsItsPosition() {
+        List<String> first = new ArrayList<>();
+        List<String> second = new ArrayList<>();
+        List<List<String>> items = Arrays.asList(first, second);
+
+        assertEquals(first, second, "the two are equal, so only identity tells them apart");
+        assertEquals(0, CollectionUtil.indexOfSame(items, first));
+        assertEquals(1, CollectionUtil.indexOfSame(items, second));
+    }
+
+    @Test
+    public void indexOfSame_noSuchObject_returnsNotFound() {
+        List<List<String>> items = Arrays.asList(new ArrayList<>(), new ArrayList<>());
+
+        assertEquals(CollectionUtil.NOT_FOUND, CollectionUtil.indexOfSame(items, new ArrayList<String>()),
+                "an element equal to the target is not the target");
+        assertEquals(CollectionUtil.NOT_FOUND, CollectionUtil.indexOfSame(items, null));
+        assertEquals(CollectionUtil.NOT_FOUND, CollectionUtil.indexOfSame(Collections.emptyList(), "ham"));
+    }
+
+    @Test
+    public void indexOfSame_nullList_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> CollectionUtil.indexOfSame(null, "ham"));
     }
 
     /**

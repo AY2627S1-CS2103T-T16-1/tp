@@ -45,6 +45,8 @@ public class JsonStudentBookStorage {
             + " Wait for it to finish and retry; if the data changed, restart this window first";
     private static final String MESSAGE_STUDENT_CONTEXT = "Student record %d: %s";
 
+    /** A leading dot keeps the lock beside the data file without showing up next to it. */
+    private static final String SAVE_LOCK_PREFIX = ".";
     private static final String SAVE_LOCK_SUFFIX = ".lock";
 
     private static final Logger logger = LogsCenter.getLogger(JsonStudentBookStorage.class);
@@ -130,7 +132,7 @@ public class JsonStudentBookStorage {
         createDataDirectory(absolutePath.getParent());
         Path target = Files.exists(absolutePath) ? absolutePath.toRealPath()
                 : absolutePath.getParent().toRealPath().resolve(absolutePath.getFileName());
-        Path lockPath = target.resolveSibling("." + target.getFileName() + SAVE_LOCK_SUFFIX);
+        Path lockPath = target.resolveSibling(SAVE_LOCK_PREFIX + target.getFileName() + SAVE_LOCK_SUFFIX);
         try (FileChannel channel = openSaveLock(lockPath);
                 FileLock lock = channel.tryLock()) {
             if (lock == null) {
@@ -163,6 +165,8 @@ public class JsonStudentBookStorage {
         try {
             return FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
         } catch (AccessDeniedException e) {
+            // the caller reads this type to tell a permission problem from any other save failure,
+            // and so names the permission in its reply; wrapping it would hide that
             throw e;
         } catch (IOException e) {
             throw new IOException(String.format(MESSAGE_LOCK_UNWRITABLE, lockPath, e.getMessage()), e);

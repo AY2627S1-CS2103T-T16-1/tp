@@ -55,7 +55,9 @@ public class NusStudentId {
     }
 
     /**
-     * Returns why {@code test} does not hold an NUS Student ID, or an empty string when it is valid.
+     * Returns why {@code test} does not hold an NUS Student ID, or an empty string when it is
+     * valid. {@link #isValidNusStudentId(String)} asks exactly that, which is why a valid ID
+     * has an empty answer here while the other fields leave theirs unspecified.
      */
     public static String getFailureReason(String test) {
         requireNonNull(test);

@@ -1,6 +1,8 @@
 package seedu.tab.model.student;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.tab.commons.util.CollectionUtil.NOT_FOUND;
+import static seedu.tab.commons.util.CollectionUtil.indexOfSame;
 import static seedu.tab.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Iterator;
@@ -23,8 +25,6 @@ import seedu.tab.model.student.exceptions.StudentNotFoundException;
  * @see Student#isSameStudent(Student)
  */
 public class UniqueStudentList implements Iterable<Student> {
-
-    private static final int NOT_FOUND = -1;
 
     private final ObservableList<Student> internalList = FXCollections.observableArrayList();
     private final ObservableList<Student> internalUnmodifiableList =
@@ -58,7 +58,7 @@ public class UniqueStudentList implements Iterable<Student> {
     public void setStudent(Student target, Student editedStudent) {
         requireAllNonNull(target, editedStudent);
 
-        int index = findReferenceIndex(target);
+        int index = indexOfSame(internalList, target);
         if (index == NOT_FOUND) {
             throw new StudentNotFoundException();
         }
@@ -76,7 +76,7 @@ public class UniqueStudentList implements Iterable<Student> {
      */
     public void remove(Student toRemove) {
         requireNonNull(toRemove);
-        int index = findReferenceIndex(toRemove);
+        int index = indexOfSame(internalList, toRemove);
         if (index == NOT_FOUND) {
             throw new StudentNotFoundException();
         }
@@ -149,14 +149,5 @@ public class UniqueStudentList implements Iterable<Student> {
             }
         }
         return true;
-    }
-
-    private int findReferenceIndex(Student target) {
-        for (int index = 0; index < internalList.size(); index++) {
-            if (internalList.get(index) == target) {
-                return index;
-            }
-        }
-        return NOT_FOUND;
     }
 }

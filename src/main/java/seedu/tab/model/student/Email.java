@@ -40,7 +40,6 @@ public class Email {
             + "    - end with a domain label at least 2 characters long\n"
             + "    - have each domain label start and end with alphanumeric characters\n"
             + "    - have each domain label consist of alphanumeric characters, separated only by hyphens, if any.";
-    // alphanumeric and special characters
     private static final String ALPHANUMERIC_NO_UNDERSCORE = "[^\\W_]+"; // alphanumeric characters except underscore
     // Implements the dot-atom syntax in RFC 5322 section 3.2.3:
     // https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3
@@ -141,8 +140,10 @@ public class Email {
     }
 
     /**
-     * Preserves the final-label rule in the existing regex: two alphanumeric groups must fit.
-     * A validated label can split into two such groups only at adjacent alphanumeric characters.
+     * Preserves the final-label rule in {@link #VALIDATION_REGEX}: the last label has to hold
+     * {@code MINIMUM_LAST_LABEL_LENGTH} alphanumeric groups, which is two. A validated label
+     * can split into two such groups only at adjacent alphanumeric characters, so that is what
+     * this looks for.
      */
     private static boolean hasAdjacentAlphanumericCharacters(String label) {
         for (int index = 1; index < label.length(); index++) {
@@ -154,8 +155,8 @@ public class Email {
     }
 
     /**
-     * Returns true if {@code test} is short enough to be entered as an address, and so short
-     * enough for {@link #isValidEmail(String)} to examine safely.
+     * Returns true if {@code test} is short enough to be entered as an address. Format is checked
+     * separately, so a stored address already past this limit keeps its format contract.
      */
     public static boolean isWithinLengthLimit(String test) {
         requireNonNull(test);
@@ -183,6 +184,7 @@ public class Email {
         return localFailure == null ? getDomainFailure(normalizedTest.substring(separator + 1)) : localFailure;
     }
 
+    /** Returns why {@code localPart} is no local part, or null when it is one. */
     private static String getLocalPartFailure(String localPart) {
         if (localPart.isEmpty()) {
             return MESSAGE_EMPTY_LOCAL_PART;
@@ -190,6 +192,10 @@ public class Email {
         return isValidLocalPart(localPart) ? null : MESSAGE_INVALID_LOCAL_PART;
     }
 
+    /**
+     * Returns why {@code domain} is no domain. It is reached only once the local part has passed,
+     * so some reason always applies and the answer is never null.
+     */
     private static String getDomainFailure(String domain) {
         if (domain.isEmpty()) {
             return MESSAGE_EMPTY_DOMAIN;

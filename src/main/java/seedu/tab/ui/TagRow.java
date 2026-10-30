@@ -104,8 +104,8 @@ public class TagRow extends Region {
         }
         // enough for the start of one tag and a count of the others, since a row showing
         // one chip and no count says nothing about the tags it left out
-        double forACount = tagNames.size() > 1 ? measureOverflowWidth(1) + SPACING : 0;
-        return Math.min(computePrefWidth(height), computeRecognizableChipWidth() + forACount);
+        double widthForCount = tagNames.size() > 1 ? measureOverflowWidth(1) + SPACING : 0;
+        return Math.min(computePrefWidth(height), computeRecognizableChipWidth() + widthForCount);
     }
 
     /** Returns the width needed to show the total count when every tag is hidden. */
@@ -164,8 +164,8 @@ public class TagRow extends Region {
         }
 
         double countWidth = measureOverflowWidth(1);
-        double forTheChip = getWidth() - countWidth - SPACING;
-        if (forTheChip < computeRecognizableChipWidth()) {
+        double widthForChip = getWidth() - countWidth - SPACING;
+        if (widthForChip < computeRecognizableChipWidth()) {
             // what is left of the chip would be an ellipsis and little else, which names no
             // tag, so the row says how many there are instead
             describeTheRest(0);
@@ -173,9 +173,9 @@ public class TagRow extends Region {
             return;
         }
 
-        place(chips.get(0), 0, forTheChip);
+        place(chips.get(0), 0, widthForChip);
         describeTheRest(1);
-        place(overflow, forTheChip + SPACING, countWidth);
+        place(overflow, widthForChip + SPACING, countWidth);
     }
 
     /**
