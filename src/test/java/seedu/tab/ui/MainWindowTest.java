@@ -49,6 +49,20 @@ public class MainWindowTest {
     private static final String FIVE_LINE_REPLY =
             "Siti Nur-Aisyah\nAlex Yeoh\nBernice Yu\nDavid Li\nRoy Balakrishnan";
     private static final long GEOMETRY_TIMEOUT_SECONDS = 10;
+
+    /** The height the window may not shrink below, as {@code MainWindow.fxml} sets it. */
+    private static final double MINIMUM_WINDOW_HEIGHT = 400;
+
+    /**
+     * The slack a geometry assertion allows, counted in device pixels rather than logical ones.
+     * A window's position and its size each snap to the device-pixel grid, and a usable area
+     * reduced by desktop panels need not be a whole number of device pixels: on a 1920x1200
+     * display at 125% the usable width of 1470 logical pixels is 1837.5 device pixels, so the
+     * toolkit rounds the window up to the next whole one and the scene's own snapping adds
+     * another. Three covers the position, the size and the scene, and stays far below any real
+     * failure.
+     */
+    private static final int SNAP_ALLOWANCE_DEVICE_PIXELS = 3;
     private static final Path DATA_FILE = Paths.get("data", "tab.json");
 
     @BeforeAll
@@ -364,15 +378,25 @@ public class MainWindowTest {
                 Bounds content = stage.getScene().getRoot().localToScreen(
                         stage.getScene().getRoot().getBoundsInLocal());
                 assertNotNull(content, "the restored scene must be visible on a screen");
+                double scaleX = Screen.getPrimary().getOutputScaleX();
+                double scaleY = Screen.getPrimary().getOutputScaleY();
                 String geometry = "content=" + content + ", display=" + display
-                        + ", stage=" + stage.getWidth() + "x" + stage.getHeight();
+                        + ", stage=" + stage.getWidth() + "x" + stage.getHeight()
+                        + ", scale=" + scaleX + "x" + scaleY
+                        + ", slack=" + snapAllowance(scaleX) + "x" + snapAllowance(scaleY);
                 // Window managers may include invisible frame shadows in the stage origin.
-                assertTrue(content.getMinX() >= display.getMinX(), "left edge: " + geometry);
-                assertTrue(content.getMinY() >= display.getMinY(), "top edge: " + geometry);
-                assertTrue(content.getMaxX() <= display.getMaxX() + 1, "right edge: " + geometry);
-                assertTrue(content.getMaxY() <= display.getMaxY() + 1, "bottom edge: " + geometry);
-                assertTrue(stage.getWidth() <= display.getWidth() + 1, "window width: " + geometry);
-                assertTrue(stage.getHeight() <= display.getHeight() + 1, "window height: " + geometry);
+                assertTrue(isBeyondStart(content.getMinX(), display.getMinX(), scaleX),
+                        "left edge: " + geometry);
+                assertTrue(isBeyondStart(content.getMinY(), display.getMinY(), scaleY),
+                        "top edge: " + geometry);
+                assertTrue(isWithinLimit(content.getMaxX(), display.getMaxX(), scaleX),
+                        "right edge: " + geometry);
+                assertTrue(isWithinLimit(content.getMaxY(), display.getMaxY(), scaleY),
+                        "bottom edge: " + geometry);
+                assertTrue(isWithinLimit(stage.getWidth(), display.getWidth(), scaleX),
+                        "window width: " + geometry);
+                assertTrue(isWithinLimit(stage.getHeight(), display.getHeight(), scaleY),
+                        "window height: " + geometry);
             }, GEOMETRY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } finally {
             onFxThread(() -> {
@@ -422,7 +446,10 @@ public class MainWindowTest {
 
     private static void assertCompactStudentView(MainWindow window) {
         Stage stage = window.getPrimaryStage();
-        assertTrue(stage.getHeight() <= 401, "the minimum height prevents resizing to fit");
+        double heightScale = Screen.getPrimary().getOutputScaleY();
+        assertTrue(isWithinLimit(stage.getHeight(), MINIMUM_WINDOW_HEIGHT, heightScale),
+                "the minimum height prevents resizing to fit: height=" + stage.getHeight()
+                        + ", scale=" + heightScale);
         Region root = (Region) stage.getScene().getRoot();
         assertInside(root, root.lookup("#commandTextField"));
         assertInside(root, root.lookup("#resultDisplay"));
@@ -451,11 +478,50 @@ public class MainWindowTest {
         }
     }
 
+    @Test
+    public void geometrySlack_usableAreaThatSnapsUp_acceptsTheRoundedWindowButNotARealOverflow() {
+        // Measured on a 1920x1200 display at 125% scaling, its usable area reduced by a 65 pixel
+        // dock and a 32 pixel panel. 1470 logical pixels of usable width is 1837.5 device pixels,
+        // so the toolkit rounds the window up to 1838 and the scene snaps to 1839. Neither is the
+        // product failing to fit, and no window manager runs under a plain Xvfb to reproduce it.
+        double scale = 1.25;
+        double usableMaxX = 1535.0;
+        double usableWidth = 1470.0;
+        assertTrue(isWithinLimit(1536.8000717163086, usableMaxX, scale),
+                "the scene snapped up by device pixels and still fits");
+        assertTrue(isWithinLimit(1470.4000244140625, usableWidth, scale),
+                "the window snapped up by a device pixel and still fits");
+        assertTrue(isBeyondStart(65.5999984741211, 65.0, scale),
+                "the scene snapped right by a device pixel and still starts inside");
+        // A window that genuinely overflows must still fail. The startup dialog in #626 stood
+        // 87 pixels past the screen before it was capped, which no snapping slack may absorb.
+        assertFalse(isWithinLimit(usableMaxX + 87, usableMaxX, scale),
+                "a real overflow must not be hidden by the snapping slack");
+    }
+
+    /** Returns {@link #SNAP_ALLOWANCE_DEVICE_PIXELS} in the logical pixels of {@code scale}. */
+    private static double snapAllowance(double scale) {
+        return SNAP_ALLOWANCE_DEVICE_PIXELS / scale;
+    }
+
+    /** Returns whether {@code edge} reaches no further than {@code limit}, allowing for snapping. */
+    private static boolean isWithinLimit(double edge, double limit, double scale) {
+        return edge <= limit + snapAllowance(scale);
+    }
+
+    /** Returns whether {@code edge} starts no earlier than {@code limit}, allowing for snapping. */
+    private static boolean isBeyondStart(double edge, double limit, double scale) {
+        return edge >= limit - snapAllowance(scale);
+    }
+
     private static void assertInside(Node container, Node child) {
         Bounds outer = container.localToScene(container.getLayoutBounds());
         Bounds inner = child.localToScene(child.getLayoutBounds());
-        assertTrue(inner.getMinY() >= outer.getMinY() - 1, child + " extends above its container");
-        assertTrue(inner.getMaxY() <= outer.getMaxY() + 1, child + " extends below its container");
+        double scale = Screen.getPrimary().getOutputScaleY();
+        assertTrue(isBeyondStart(inner.getMinY(), outer.getMinY(), scale),
+                child + " extends above its container, at scale " + scale);
+        assertTrue(isWithinLimit(inner.getMaxY(), outer.getMaxY(), scale),
+                child + " extends below its container, at scale " + scale);
         assertTrue(inner.getHeight() > 0, child + " has no visible height");
     }
 
