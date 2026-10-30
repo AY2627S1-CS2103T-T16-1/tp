@@ -13,8 +13,11 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.tab.commons.core.DataLoadingErrorMessage;
 import seedu.tab.commons.core.LogsCenter;
@@ -38,6 +41,12 @@ public class UiManager implements Ui {
 
     private static final Logger logger = LogsCenter.getLogger(UiManager.class);
     private static final String ICON_APPLICATION = "/images/tab_32.png";
+    /**
+     * The share of the screen the startup error dialog may fill. What is left over covers the
+     * frame the desktop draws around the dialog and the shadow under it, neither of which the
+     * dialog can measure before the desktop has put it on screen.
+     */
+    private static final double MAX_DIALOG_SCREEN_HEIGHT_SHARE = 0.9;
 
     private Logic logic;
     private Path dataFilePath;
@@ -135,7 +144,8 @@ public class UiManager implements Ui {
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStyleClass().add("data-loading-error-dialog");
         dialogPane.setMinHeight(Region.USE_PREF_SIZE);
-        dialogPane.setContent(createDataLoadingErrorContent(error));
+        ScrollPane content = createScrollingContent(createDataLoadingErrorContent(error));
+        dialogPane.setContent(content);
 
         Label icon = new Label("!");
         icon.getStyleClass().add("data-loading-error-icon");
@@ -146,7 +156,51 @@ public class UiManager implements Ui {
         closeButton.setText(DATA_LOADING_ERROR_CLOSE);
         ButtonBar.setButtonUniformSize(closeButton, false);
         closeButton.setMinWidth(Region.USE_PREF_SIZE);
+        fitDialogToScreen(dialogPane, content);
         return alert;
+    }
+
+    /**
+     * Returns the tallest the startup error dialog may be, measured against the screen it opens
+     * on so that the cap follows the display's own resolution and scaling.
+     */
+    static double maxDialogHeight() {
+        return Screen.getPrimary().getVisualBounds().getHeight() * MAX_DIALOG_SCREEN_HEIGHT_SHARE;
+    }
+
+    /**
+     * Holds the dialog within the screen it opens on by giving the diagnostic less room than it
+     * asks for, where the screen has less to give. The part that does not fit is then reached by
+     * scrolling, rather than drawn past the edge of the display, which is where the heading and
+     * the close button would otherwise be pushed. A diagnostic that already fits is left to size
+     * the dialog itself.
+     */
+    private static void fitDialogToScreen(DialogPane dialogPane, ScrollPane content) {
+        dialogPane.applyCss();
+        double width = dialogPane.prefWidth(-1);
+        double overflow = dialogPane.prefHeight(width) - maxDialogHeight();
+        if (overflow > 0) {
+            content.setPrefHeight(content.prefHeight(width) - overflow);
+            content.setVbarPolicy(ScrollBarPolicy.ALWAYS);
+        }
+    }
+
+    /**
+     * Returns {@code content} in a container that can scroll it vertically. The container holds
+     * the content to the dialog's width, so a diagnostic too long for the screen stays wrapped
+     * and only has to be scrolled down through, never sideways.
+     *
+     * <p>It starts with no scroll bar, and is given one where the screen turns out to be too
+     * short for the diagnostic. A bar that comes and goes on its own would narrow the text as it
+     * appeared, which rewraps the text and so changes the very height that called for the bar.
+     */
+    private static ScrollPane createScrollingContent(VBox content) {
+        ScrollPane scroller = new ScrollPane(content);
+        scroller.getStyleClass().add("data-loading-error-scroll");
+        scroller.setFitToWidth(true);
+        scroller.setHbarPolicy(ScrollBarPolicy.NEVER);
+        scroller.setVbarPolicy(ScrollBarPolicy.NEVER);
+        return scroller;
     }
 
     /**
@@ -169,7 +223,6 @@ public class UiManager implements Ui {
         content.getChildren().addAll(createSourceExcerptLabels(error));
         content.getChildren().add(recovery);
         content.getStyleClass().add("data-loading-error-content");
-        content.setMinHeight(Region.USE_PREF_SIZE);
         return content;
     }
 
