@@ -53,7 +53,8 @@ class JsonSerializableStudentBook {
     @JsonCreator
     public JsonSerializableStudentBook(
             @JsonProperty(COMMENT_FIELD) @JsonDeserialize(using = JsonCommentDeserializer.class) String comment,
-            @JsonProperty(STUDENTS_FIELD) List<JsonAdaptedStudent> students) {
+            @JsonProperty(STUDENTS_FIELD)
+            @JsonDeserialize(using = JsonStudentListDeserializer.class) List<JsonAdaptedStudent> students) {
         this.comment = comment;
         this.students = students == null ? null : new ArrayList<>(students);
     }

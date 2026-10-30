@@ -50,6 +50,44 @@ public class JsonStudentBookStructureTest {
     }
 
     @Test
+    public void readStudentBook_studentListIsNotArray_namesStudentsFieldAndItsShape() throws Exception {
+        DataLoadingException exception = assertReadFails("{\n  \"students\" : { \"name\" : \"Bob\" }\n}\n");
+
+        assertTrue(exception.getMessage().contains("Invalid students value: an object."
+                + " Use a JSON array of student records, such as [{\"name\": \"Alex Yeoh\"}]."),
+                exception.getMessage());
+        assertLocationIsShown(exception, "at line 2, column 16");
+    }
+
+    @Test
+    public void readStudentBook_studentListIsText_namesStudentsFieldAndItsShape() throws Exception {
+        DataLoadingException exception = assertReadFails("{\n  \"students\" : \"Bob\"\n}\n");
+
+        assertTrue(exception.getMessage().contains("Invalid students value: \"Bob\"."
+                + " Use a JSON array of student records, such as [{\"name\": \"Alex Yeoh\"}]."),
+                exception.getMessage());
+    }
+
+    @Test
+    public void readStudentBook_studentListEntryIsNotObject_namesEntryAndItsShape() throws Exception {
+        DataLoadingException exception = assertReadFails("{\n  \"students\" : [ \"Bob\" ]\n}\n");
+
+        assertTrue(exception.getMessage().contains("Invalid students entry 1 value: \"Bob\"."
+                + " Each student record must be a JSON object, such as {\"name\": \"Alex Yeoh\"}."),
+                exception.getMessage());
+        assertLocationIsShown(exception, "at line 2, column 18");
+    }
+
+    @Test
+    public void readStudentBook_laterStudentListEntryIsNotObject_namesThatEntry() throws Exception {
+        DataLoadingException exception =
+                assertReadFails("{\n  \"students\" : [ { \"name\" : \"Bob\" }, 5 ]\n}\n");
+
+        assertTrue(exception.getMessage().contains("Invalid students entry 2 value: 5."),
+                exception.getMessage());
+    }
+
+    @Test
     public void readStudentBook_validFile_loadsEveryRecord() throws Exception {
         Path path = testFolder.resolve("tab.json");
         byte[] bytes = VALID_BOOK.getBytes(StandardCharsets.UTF_8);
@@ -60,6 +98,21 @@ public class JsonStudentBookStructureTest {
         assertEquals(List.of("Alex Yeoh", "Bernice Yu"),
                 book.getStudentList().stream().map(student -> student.getName().getFullName()).toList());
         assertArrayEquals(bytes, Files.readAllBytes(path));
+    }
+
+    @Test
+    public void readStudentBook_fieldMistakeInRecord_keepsRecordNumberAndFieldDiagnostic() throws Exception {
+        DataLoadingException tagsFailure =
+                assertReadFails("{\n  \"students\" : [ { \"name\" : \"Bob\", \"tags\" : \"friends\" } ]\n}\n");
+        DataLoadingException emailFailure = assertReadFails("{\n  \"students\" : [ { \"name\" : \"Bob\","
+                + " \"email\" : [ \"bob@example.com\" ] } ]\n}\n");
+
+        assertTrue(tagsFailure.getMessage().startsWith("Student record 1: "), tagsFailure.getMessage());
+        assertTrue(tagsFailure.getMessage().contains("Invalid tags value: \"friends\"."
+                + " Use a JSON array of tag strings, such as [\"Lab 3\"]."), tagsFailure.getMessage());
+        assertTrue(emailFailure.getMessage().startsWith("Student record 1: "), emailFailure.getMessage());
+        assertTrue(emailFailure.getMessage().contains("email must be a single text value, not an array."),
+                emailFailure.getMessage());
     }
 
     @Test
