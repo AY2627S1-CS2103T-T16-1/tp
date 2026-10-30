@@ -80,9 +80,12 @@ public class WindowBoundsTest {
 
     @Test
     public void restore_oversizedOrUndersizedDimensions_fitsUsableArea() {
+        // Above display size: clamp both dimensions to the usable area.
         assertBounds(new GuiSettings(1.0E9, 1.0E9, 99999, 99999), DISPLAYS, PRIMARY);
+        // Positive dimensions below the minimum: expand to the application minimum.
         assertBounds(new GuiSettings(1, 1, 100, 100), DISPLAYS,
                 new Rectangle2D(100, 100, MIN_WIDTH, MIN_HEIGHT));
+        // Display below minimum height, then below both minima: usable area takes precedence.
         Rectangle2D scaledDisplay = new Rectangle2D(0, 20, 853, 440);
         assertBounds(new GuiSettings(), List.of(scaledDisplay), new Rectangle2D(56.5, 20, 740, 440));
         Rectangle2D tinyDisplay = new Rectangle2D(20, 20, 400, 300);
@@ -91,6 +94,7 @@ public class WindowBoundsTest {
 
     @Test
     public void restore_invalidDimensions_usesDefaults() {
+        // Nonpositive (0 is the boundary) and nonfinite dimensions use the default size.
         for (double dimension : new double[] {0, -1, Double.NaN, Double.POSITIVE_INFINITY,
             Double.NEGATIVE_INFINITY}) {
             assertBounds(new GuiSettings(dimension, dimension, 100, 100), DISPLAYS,

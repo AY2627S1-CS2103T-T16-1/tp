@@ -20,10 +20,13 @@ public class DetailsContainsKeywordsPredicateTest {
     @Test
     public void test_equivalentNames_doesNotBroadenOtherFieldsOrRemovePunctuation() {
         Student student = new StudentBuilder().withName("Sean O’Brien").withTags("José", "O’Brien").build();
+        // Name-only accent/apostrophe folding does not apply to tags: these terms do not match.
         for (String keyword : List.of("Jose", "O'Brien")) {
             assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.TAG, List.of(keyword))).test(student));
         }
+        // Removing punctuation entirely differs from normalizing its style: no name match.
         assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Obrien"))).test(student));
+        // Non-Latin vowel marks remain significant: the altered name does not match.
         Student otherScript = new StudentBuilder().withName("किरण").build();
         assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("करण"))).test(otherScript));
     }
@@ -140,13 +143,13 @@ public class DetailsContainsKeywordsPredicateTest {
         // null -> returns false
         assertFalse(firstPredicate.equals(null));
 
-        // different student -> returns false
+        // Different term lists -> returns false
         assertFalse(firstPredicate.equals(secondPredicate));
     }
 
     @Test
     public void test_keywordInName_returnsTrue() {
-        // Full name match
+        // First word of a longer name matches; a full-name equality check would miss it.
         DetailsContainsKeywordsPredicate predicate =
                 new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("Alice")));
         assertTrue(predicate.test(new StudentBuilder().withName("Alice Bob").build()));
@@ -190,6 +193,7 @@ public class DetailsContainsKeywordsPredicateTest {
                 assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
                         phone + " should match " + keyword);
             }
+            // Different digit values, punctuation without digits, and unrelated literal text do not match.
             for (String keyword : List.of("91234568", "９１２３４５６８", "９１２３ ４５６８", "---", "missing9123")) {
                 assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
                         phone + " should not match " + keyword);
@@ -227,9 +231,11 @@ public class DetailsContainsKeywordsPredicateTest {
     @Test
     public void test_spacedPhoneTerms_preservesLiteralAndNonmatchingTerms() {
         Student student = new StudentBuilder().withPhone("91234567 ext 21").build();
+        // Wrong digits, nonmatching literal annotations, and punctuation-only terms do not match.
         for (String keyword : List.of("9123 4568", "ext 22", "ext 2 1", "x 21", " + ( ) - . ")) {
             assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student));
         }
+        // Literal annotation match is case-insensitive; literal punctuation can also match stored text.
         assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of("EXT 21"))).test(student));
         Student punctuated = new StudentBuilder().withPhone("9123 - 4567").build();
         assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(" - "))).test(punctuated));
@@ -336,12 +342,15 @@ public class DetailsContainsKeywordsPredicateTest {
     public void test_repeatedTagTerms_matchSameOrDifferentTags() {
         DetailsContainsKeywordsPredicate predicate = new DetailsContainsKeywordsPredicate(
                 Map.of(Field.NAME, List.of("jason"), Field.TAG, List.of("LAB", "tutorial")));
+        // All conditions satisfied: tag terms may match within one tag or across different tags.
         assertTrue(predicate.test(new StudentBuilder().withName("Jason Lim").withTags("lab tutorial").build()));
         assertTrue(predicate.test(new StudentBuilder().withName("Jason Zhou")
                 .withTags("lab 5", "tutorial 3").build()));
+        // Rejected matches: a missing tag term, a missing name term, or no tags.
         assertFalse(predicate.test(new StudentBuilder().withName("Jason Tan").withTags("lab").build()));
         assertFalse(predicate.test(new StudentBuilder().withName("Alice").withTags("lab tutorial").build()));
         assertFalse(predicate.test(new StudentBuilder().withName("Jason").withTags().build()));
+        // One phrase must occur within a single tag; separate matching fragments do not suffice.
         DetailsContainsKeywordsPredicate phrase =
                 new DetailsContainsKeywordsPredicate(Map.of(Field.TAG, List.of("lab tutorial")));
         assertFalse(phrase.test(new StudentBuilder().withTags("lab", "tutorial").build()));
@@ -358,6 +367,7 @@ public class DetailsContainsKeywordsPredicateTest {
         assertTrue(new DetailsContainsKeywordsPredicate(matchingTerms).test(student));
         for (var entry : matchingTerms.entrySet()) {
             assertTrue(new DetailsContainsKeywordsPredicate(Map.of(entry.getKey(), entry.getValue())).test(student));
+            // One missing term makes the whole selected-field condition fail.
             assertFalse(new DetailsContainsKeywordsPredicate(Map.of(entry.getKey(),
                     List.of(entry.getValue().getFirst(), "missing"))).test(student));
         }
@@ -409,6 +419,7 @@ public class DetailsContainsKeywordsPredicateTest {
                     Map.of(Field.NAME, List.of("jason"), Field.TAG, List.of("lab")), Optional.of(isFlagged));
             assertEquals(isFlagged, combined.test(flagged));
             assertEquals(!isFlagged, combined.test(unflagged));
+            // Satisfying the requested status cannot compensate for a missing field term.
             assertFalse(combined.test(new StudentBuilder(flagged).withName("Alice").build()));
         }
     }

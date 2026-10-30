@@ -52,14 +52,14 @@ public class EmailTest {
         assertFalse(Email.isValidEmail("peterjack@example.com.")); // domain name ends with a period
         assertFalse(Email.isValidEmail("peterjack@-example.com")); // domain name starts with a hyphen
         assertFalse(Email.isValidEmail("peterjack@example.com-")); // domain name ends with a hyphen
-        assertFalse(Email.isValidEmail("peterjack@example.c")); // top level domain has less than two chars
+        assertFalse(Email.isValidEmail("peterjack@example.c")); // one-character final label: rejected boundary
 
         // valid email
         assertTrue(Email.isValidEmail("PeterJack_1190@example.com")); // underscore in local part
         assertTrue(Email.isValidEmail("PeterJack.1190@example.com")); // period in local part
         assertTrue(Email.isValidEmail("PeterJack+1190@example.com")); // '+' symbol in local part
         assertTrue(Email.isValidEmail("PeterJack-1190@example.com")); // hyphen in local part
-        assertTrue(Email.isValidEmail("a@bc")); // minimal
+        assertTrue(Email.isValidEmail("a@bc")); // minimum local and domain lengths
         assertTrue(Email.isValidEmail("test@localhost")); // alphabets only
         assertTrue(Email.isValidEmail("123@145")); // numeric local part and domain name
         assertTrue(Email.isValidEmail("a1+be.d@example1.com")); // mixture of alphanumeric and special characters
@@ -218,7 +218,9 @@ public class EmailTest {
         String address = local + "@example.com";
         assertTrue(Email.isValidEmail(address));
         assertEquals(address, new Email(address).getValue());
+        // Final label without adjacent alphanumeric characters is rejected, even when very long.
         assertFalse(Email.isValidEmail("a@" + "a-".repeat(5000) + "a"));
+        // Long valid single-label and multi-label domains remain accepted.
         assertTrue(Email.isValidEmail("a@" + "a-".repeat(5000) + "ab"));
         assertTrue(Email.isValidEmail("a@" + "a.".repeat(5000) + "com"));
     }
@@ -241,9 +243,11 @@ public class EmailTest {
 
     @Test
     public void isValidEmail_domainCharacterBounds_acceptsOnlyAsciiLettersAndDigits() {
+        // Accepted boundaries of the ASCII lowercase, uppercase and digit ranges.
         for (String character : List.of("a", "z", "A", "Z", "0", "9")) {
             assertTrue(Email.isValidEmail("student@" + character + "a"), character);
         }
+        // Characters adjacent to those ranges, and non-ASCII letters, are rejected.
         for (String character : List.of("/", ":", "[", "`", "{", "é")) {
             assertFalse(Email.isValidEmail("student@" + character + "a"), character);
         }

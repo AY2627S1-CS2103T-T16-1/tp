@@ -126,6 +126,7 @@ public class StudentSummaryTest {
                 tagged("Ann Lee", false, "T1", "t1"),
                 tagged("Ben Tan", false, "T1"));
 
+        // Repeated spellings on one student count once; the same tag on another student adds one.
         assertEquals(Map.of("T1", 2), StudentSummary.countByTag(students));
     }
 

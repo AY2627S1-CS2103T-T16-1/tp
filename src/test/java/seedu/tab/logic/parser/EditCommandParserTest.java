@@ -62,6 +62,7 @@ public class EditCommandParserTest {
     @Test
     public void parse_explicitIdTarget_acceptsAnyValidIdAndOptionOrder() {
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withFlag(false).build();
+        // Explicit IDs accept letters or digits first; zero, leading zeros, and length 32 are valid.
         for (String id : List.of("a01234567x", "1abc", "001234", "0", "9".repeat(32))) {
             EditCommand expected = new EditCommand(StudentTarget.byNusStudentId(new NusStudentId(id)), descriptor);
             assertParseSuccess(parser, "--target-id " + id + " --no-follow-up", expected);
@@ -75,11 +76,13 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_invalidExplicitIdTarget_reportsValueAndReason() {
+        // Rejected ID values: blank, punctuation, non-ASCII, and first overlong length 33.
         for (String id : List.of("", " ", "A-1", "王", "a".repeat(33))) {
             assertParseFailure(parser, "--target-id \"" + id + "\" -nf",
                     Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, id.trim(),
                             NusStudentId.getFailureReason(id.trim())));
         }
+        // Missing ID token: no value, empty unquoted attachment, or another option in its position.
         for (String input : List.of("--target-id", "--target-id=", "--target-id -nf")) {
             assertParseFailure(parser, input, String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE,
                     "--target-id NUS_STUDENT_ID"));
@@ -94,8 +97,10 @@ public class EditCommandParserTest {
         for (String target : List.of("1", "A1234")) {
             assertParseFailure(parser, target + " --target-id 1234 -nf", EditCommand.MESSAGE_MULTIPLE_TARGETS);
         }
+        // Repeated explicit target is a duplicate option, even when both values match.
         assertParseFailure(parser, "--target-id 1234 --target-id=1234 -nf",
                 Messages.getErrorMessageForDuplicateFlags("--target-id"));
+        // Valid target with no changes: rejected as an empty edit.
         assertParseFailure(parser, "--target-id 1234", EditCommand.MESSAGE_NOT_EDITED);
     }
 
@@ -312,12 +317,15 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_mistypedEmailClear_reportsSpecificProblem() {
+        // Missing value is rejected; clearing accepts an explicit quoted empty or whitespace-only value.
         for (String input : List.of("1 -e", "1 -e ", "1 -e\u00A0", "1 -e -p 91234567")) {
             assertParseFailure(parser, input,
                     String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_EMAIL.getLabel()));
         }
+        // Clear plus replacement: rejected duplicate option, rather than choosing either value.
         assertParseFailure(parser, "1 -e \"\" -e a@b.com",
                 Messages.getErrorMessageForDuplicateFlags("-e"));
+        // Valid email clear with an invalid empty name: report only the name failure.
         assertParseFailure(parser, "1 -n \"\" -e \"\"",
                 Messages.getErrorMessageForInvalidValue("Name", "", Name.getFailureReason("")));
     }
@@ -337,12 +345,15 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_mistypedPhoneClear_reportsSpecificProblem() {
+        // Missing value is rejected; clearing accepts an explicit quoted empty or whitespace-only value.
         for (String input : List.of("1 -p", "1 -p ", "1 -p\u00A0", "1 -p -e a@b.com")) {
             assertParseFailure(parser, input,
                     String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_PHONE.getLabel()));
         }
+        // Clear plus replacement: rejected duplicate option, rather than choosing either value.
         assertParseFailure(parser, "1 -p \"\" -p 91234567",
                 Messages.getErrorMessageForDuplicateFlags("-p"));
+        // Valid phone clear with an invalid empty name: report only the name failure.
         assertParseFailure(parser, "1 -n \"\" -p \"\"",
                 Messages.getErrorMessageForInvalidValue("Name", "", Name.getFailureReason("")));
     }
@@ -421,12 +432,14 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_noFollowUpWithValueOrRepeated_failure() {
+        // Marker-only status selectors reject supplied values, even quoted empty or whitespace-only ones.
         for (String value : new String[] {"false", "true", "\"\"", "\"   \""}) {
             assertParseFailure(parser, "1 --no-follow-up " + value,
                     String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "--no-follow-up"));
             assertParseFailure(parser, "1 -nf " + value,
                     String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-nf"));
         }
+        // Repeated status selector: reject duplicates across identical and mixed aliases.
         assertParseFailure(parser, "1 --no-follow-up --no-follow-up",
                 Messages.getErrorMessageForDuplicateFlags("--no-follow-up"));
         assertParseFailure(parser, "1 -nf -nf",
@@ -437,6 +450,7 @@ public class EditCommandParserTest {
                 Messages.getErrorMessageForDuplicateFlags("-nf"));
         assertParseFailure(parser, "1 --follow-up -f",
                 Messages.getErrorMessageForDuplicateFlags("--follow-up"));
+        // Case mismatch is an unknown option with a lowercase suggestion.
         assertParseFailure(parser, "1 --NO-FOLLOW-UP",
                 "There is no --NO-FOLLOW-UP option. Did you mean --no-follow-up?");
     }

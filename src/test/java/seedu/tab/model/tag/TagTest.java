@@ -45,8 +45,10 @@ public class TagTest {
 
     @Test
     public void isValidTagName_carriesNoIdentity_returnsFalse() {
+        // Empty and whitespace-only values are rejected after normalization.
         assertFalse(Tag.isValidTagName("")); // empty
         assertFalse(Tag.isValidTagName("   ")); // spaces only
+        // Nonblank punctuation still supplies no letter or number and is rejected.
         assertFalse(Tag.isValidTagName("---")); // punctuation only
     }
 
@@ -76,6 +78,7 @@ public class TagTest {
 
         assertFalse(tag.equals(new Tag("Lab 4")));
         assertFalse(tag.equals("Lab 3"));
+        // Case variants remain distinct for Tag.equals, unlike case-insensitive command matching.
         assertFalse(tag.equals(new Tag("lab 3")));
         assertEquals(tag, new Tag("Lab 3"));
     }

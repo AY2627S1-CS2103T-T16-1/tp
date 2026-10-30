@@ -22,9 +22,11 @@ public class CommandHistoryTest {
         history.add("find Tan");
         assertEquals("find Tan", history.recallPrevious("add 陈"));
         assertEquals("list", history.recallPrevious("find Tan"));
+        // At the oldest-entry boundary: another Previous preserves the edited text.
         assertEquals("edited oldest", history.recallPrevious("edited oldest"));
         assertEquals("find Tan", history.recallNext("edited oldest"));
         assertEquals("add 陈", history.recallNext("find Tan"));
+        // Past the newest-entry boundary: Next preserves the current draft.
         assertEquals("new draft", history.recallNext("new draft"));
     }
 

@@ -23,6 +23,7 @@ public class TagCommandParserTest {
 
     @Test
     public void parse_oversizedIndex_explainsBound() {
+        // Above supported index range: first rejected boundary and a larger overflow representative.
         for (String index : List.of("2147483648", "999999999999999999999")) {
             for (String action : List.of("-a", "-r", "--remove")) {
                 assertParseFailure(parser, index + " " + action + " T1",
@@ -34,6 +35,7 @@ public class TagCommandParserTest {
 
     @Test
     public void parse_studentIdTargets_acceptsPlainAndExplicitForms() {
+        // Implicit IDs must start with a letter; 32 characters is the upper accepted length.
         for (String id : List.of("abc", "A01234567X", "a01234567x", "Z".repeat(32))) {
             StudentTarget target = StudentTarget.byNusStudentId(new NusStudentId(id));
             assertParseSuccess(parser, "\u00a0" + id + " -a \"Lab 3\"",
@@ -42,6 +44,7 @@ public class TagCommandParserTest {
                     new TagCommand(target, new Tag("T1"), Action.ADD));
             assertParseSuccess(parser, id + " --remove=T1", new TagCommand(target, new Tag("T1"), Action.REMOVE));
         }
+        // Explicit IDs also accept digit-leading and all-digit values, including zero and length 32.
         for (String marker : List.of("--id", "-i")) {
             for (String id : List.of("A01234567X", "1abc", "1234", "0", "9".repeat(32))) {
                 StudentTarget target = StudentTarget.byNusStudentId(new NusStudentId(id));
@@ -55,11 +58,13 @@ public class TagCommandParserTest {
 
     @Test
     public void parse_invalidStudentId_reportsValueAndReason() {
+        // Rejected IDs: empty, whitespace-only, punctuation, non-ASCII, and first overlong length 33.
         for (String id : List.of("", " ", "A-1", "王", "a".repeat(33))) {
             assertParseFailure(parser, "--id \"" + id + "\" -a T1",
                     Messages.getErrorMessageForInvalidValue(NusStudentId.FIELD_NAME, id.trim(),
                             NusStudentId.getFailureReason(id.trim())));
         }
+        // Absent ID value is a syntax error, distinct from an explicitly supplied invalid value.
         assertFailureWithGuidance("--id -a T1", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE,
                 "--id NUS_STUDENT_ID"));
     }
@@ -110,11 +115,13 @@ public class TagCommandParserTest {
 
     @Test
     public void parse_invalidTag_reportsValueAndReason() {
+        // Rejected tags: empty/whitespace-only or nonblank without any letter or number.
         for (String value : List.of("", "   ", "\u00a0\u3000", "---", "🙂")) {
             assertParseFailure(parser, "1 -a \"" + value + "\"",
                     Messages.getErrorMessageForInvalidValue(Tag.FIELD_NAME, value.trim(),
                             "it holds no letter or number"));
         }
+        // Invalid index and invalid tag: both independent value failures are reported.
         assertParseFailure(parser, "0 -a \"\"",
                 invalidIndexWithIdHint("0") + "\nTag \"\" is not valid: it holds no letter or number");
     }
@@ -207,12 +214,15 @@ public class TagCommandParserTest {
     @Test
     public void parse_removeInvalidIndexOrTag_reportsSpecificProblems() {
         for (String marker : List.of("-r", "--remove")) {
+            // Non-integer, zero at the rejected lower boundary, and unquoted negative target.
             assertParseFailure(parser, "1.5 " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX);
             assertParseFailure(parser, "0 " + marker + " T1", invalidIndexWithIdHint("0"));
             assertFailureWithGuidance("-1 " + marker + " T1", ParserUtil.MESSAGE_INVALID_INDEX
                     + "\n" + String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-1"));
+            // Upper supported index is syntactically accepted; list bounds are checked during execution.
             assertParseSuccess(parser, "2147483647 " + marker + " T1",
                     new TagCommand(Index.fromOneBased(Integer.MAX_VALUE), new Tag("T1"), Action.REMOVE));
+            // Missing target differs from the invalid target forms above.
             assertParseFailure(parser, marker + " T1", "Missing required field(s): INDEX or NUS_STUDENT_ID");
             for (String value : List.of("", "   ", "\u00a0\u3000", "---", "🙂")) {
                 assertParseFailure(parser, "1 " + marker + " \"" + value + "\"",
