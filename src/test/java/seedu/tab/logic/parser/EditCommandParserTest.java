@@ -487,9 +487,20 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "--id A01234567X -p 91234567", expectedMessage);
         assertParseFailure(parser, "-i A01234567X -p 91234567", expectedMessage);
 
-        // an ID opening with a digit, and a value that is no valid ID, are explained the same way
+        // an ID opening with a digit is explained the same way. Both of these are valid IDs,
+        // since the field takes 1 to 32 ASCII letters or digits in any order
         assertParseFailure(parser, "--id 1234 -p 91234567", expectedMessage);
         assertParseFailure(parser, "--id 1A2B3C -p 81112222", expectedMessage);
+    }
+
+    @Test
+    public void parse_missingTargetWithUnusableIdField_pointsAtTargetIdAndNamesTheValue() {
+        // a value no ID could hold still points at the option the user wanted, and keeps the
+        // field's own reason beside it, so neither problem hides the other
+        assertParseFailure(parser, "--id A1!B -p 91234567",
+                EditCommand.MESSAGE_ID_FIELD_IS_NOT_TARGET + "\n"
+                        + "NUS Student ID \"A1!B\" is not valid: "
+                        + "an NUS Student ID can only contain ASCII letters and digits");
     }
 
     @Test
