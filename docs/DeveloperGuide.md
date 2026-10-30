@@ -709,6 +709,8 @@ First rerun the shared test-record setup so the file contains three students wit
    * Expected: Missing details load as absent, the missing flag means unflagged, tags merge to `t1` and `Lab 3`, and the next save retains the description and omits absent details.
 1. Try each malformed edit separately: `"phone": "12"`; `"email": ["a@b.com"]`; `"flag": "true"`; `"tags": [null]`; `"nusStudentId": ""`; or rename `nusStudentId` to `nusStudentID`.
    * Expected: Startup identifies the record and offending field/type or value. The main window does not open and the file is unchanged.
+1. Try each misshapen structure separately: replace the whole file with just its list of students, `[ { "name": "Bob" } ]`; give `students` an object instead of an array; or put `"Bob"` in place of one student record.
+   * Expected: Startup says the file must be a JSON object holding a `students` array, then names the `students` field, then the offending entry, each with a line/column and excerpt. The main window does not open and the file is unchanged.
 1. Give two students the same NUS Student ID with different letter case. Separately, put `Needs follow-up` into a general tag array.
    * Expected: The first identifies the duplicate ID and records. The second asks for the separate `flag` representation. Neither file is partially loaded or rewritten.
 1. Remove a comma from valid JSON. Then try a repeated `name` key, a second JSON object after the book, and an empty file, restoring the backup each time.
