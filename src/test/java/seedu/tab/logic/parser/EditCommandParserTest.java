@@ -359,6 +359,41 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_quotedUnicodeSpaceValue_clearsEveryClearableField() {
+        // a CJK input method types the full-width space and a paste carries the non-breaking
+        // space; the user sees nothing between the quotes, so each asks for the detail to go
+        for (String blank : List.of("\u3000", "\u00a0")) {
+            String quoted = " \"" + blank + "\"";
+            assertParseSuccess(parser, "1 -p" + quoted, new EditCommand(INDEX_FIRST_STUDENT,
+                    new EditStudentDescriptorBuilder().withoutPhone().build()));
+            assertParseSuccess(parser, "1 -e" + quoted, new EditCommand(INDEX_FIRST_STUDENT,
+                    new EditStudentDescriptorBuilder().withoutEmail().build()));
+            assertParseSuccess(parser, "1 --id" + quoted, new EditCommand(INDEX_FIRST_STUDENT,
+                    new EditStudentDescriptorBuilder().withoutNusStudentId().build()));
+            assertParseSuccess(parser, "1 -t" + quoted, new EditCommand(INDEX_FIRST_STUDENT,
+                    new EditStudentDescriptorBuilder().withTags().build()));
+        }
+    }
+
+    @Test
+    public void parse_valuesHoldingMoreThanSpaces_areSetRatherThanCleared() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder()
+                .withPhone("+65 9123 4567").withEmail(VALID_EMAIL_AMY)
+                .withNusStudentId(VALID_NUS_STUDENT_ID_AMY).build();
+        // the digits are kept out of the escape so that it reads as one full-width space
+        String spacedPhone = "+65 9123\u3000" + "4567";
+        assertParseSuccess(parser, "1 -p \"" + spacedPhone + "\" -e " + VALID_EMAIL_AMY
+                        + " --id " + VALID_NUS_STUDENT_ID_AMY,
+                new EditCommand(INDEX_FIRST_STUDENT, descriptor));
+    }
+
+    @Test
+    public void parse_invalidValueHoldingNoSpace_keepsItsOwnFailureReason() {
+        assertParseFailure(parser, "1 -p abc",
+                Messages.getErrorMessageForInvalidValue("Phone", "abc", Phone.getFailureReason("abc")));
+    }
+
+    @Test
     public void parse_resetTags_success() {
         Index targetIndex = INDEX_THIRD_STUDENT;
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withTags().build();
