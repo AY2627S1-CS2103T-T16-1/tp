@@ -250,6 +250,28 @@ public class EmailTest {
     }
 
     @Test
+    public void isValidEmail_adjacentHyphensInsideADomainLabel_isAccepted() {
+        // xn-- marks an IDNA A-label, so these are plain ASCII domains a student may really hold
+        assertTrue(Email.isValidEmail("student@xn--bcher-kva.de"));
+        assertEquals("student@xn--bcher-kva.de", new Email("student@xn--bcher-kva.de").getValue());
+        assertTrue(Email.isValidEmail("a@foo--bar.com"));
+        assertTrue(Email.isValidEmail("a@xn--80akhbyknj4f"));
+        assertTrue(Email.isValidEmail("a@foo---bar.com"));
+        assertTrue(Email.isValidEmail("a@xn--p1ai.xn--p1ai"));
+    }
+
+    @Test
+    public void isValidEmail_hyphensAtTheEdgeOfADomainLabel_isRejected() {
+        assertFalse(Email.isValidEmail("a@-foo.com")); // leading hyphen
+        assertFalse(Email.isValidEmail("a@foo-.com")); // trailing hyphen
+        assertFalse(Email.isValidEmail("a@foo.-bar")); // leading hyphen in the last label
+        assertFalse(Email.isValidEmail("a@foo..com")); // empty label
+        assertFalse(Email.isValidEmail("a@foo--bar.c_m")); // non-letter-digit-hyphen character
+        assertFalse(Email.isValidEmail("a@foo--bar.cé")); // non-ASCII letter
+        assertTrue(Email.isValidEmail("student@example.com")); // the plain case is untouched
+    }
+
+    @Test
     public void hasDotlessDomain_singleLabelDomain_returnsTrue() {
         for (String address : List.of("john@gmail", "e1234567@nus", "a@localhost", "john@my-host")) {
             assertTrue(new Email(address).hasDotlessDomain(), address);
