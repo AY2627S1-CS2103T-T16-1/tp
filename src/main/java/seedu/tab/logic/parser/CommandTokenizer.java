@@ -98,7 +98,8 @@ public class CommandTokenizer {
         private final List<Token> tokens = new ArrayList<>();
         private final StringBuilder value = new StringBuilder();
         private int index;
-        private boolean isQuoted;
+        // a quote has been opened and not yet closed, so whitespace does not end the token
+        private boolean isInsideQuote;
         private boolean wasQuoted;
         private boolean beganQuoted;
         // Empty quotes form a token even when the buffer contains no characters.
@@ -112,7 +113,7 @@ public class CommandTokenizer {
             while (index < arguments.length()) {
                 readCharacter();
             }
-            if (isQuoted) {
+            if (isInsideQuote) {
                 throw new ParseException(MESSAGE_UNCLOSED_QUOTE);
             }
             finishToken();
@@ -123,10 +124,11 @@ public class CommandTokenizer {
             char current = arguments.charAt(index);
             if (current == ESCAPE && index + 1 < arguments.length()
                     && isEscapable(arguments.charAt(index + 1))) {
-                append(arguments.charAt(++index));
+                index++;
+                append(arguments.charAt(index));
             } else if (isQuote(current)) {
                 acceptQuote();
-            } else if (!isQuoted && StringUtil.isWhitespace(current)) {
+            } else if (!isInsideQuote && StringUtil.isWhitespace(current)) {
                 finishToken();
             } else {
                 append(current);
@@ -143,7 +145,7 @@ public class CommandTokenizer {
             if (!hasToken) {
                 beganQuoted = true;
             }
-            isQuoted = !isQuoted;
+            isInsideQuote = !isInsideQuote;
             wasQuoted = true;
             hasToken = true;
         }

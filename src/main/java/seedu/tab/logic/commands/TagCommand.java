@@ -105,21 +105,39 @@ public class TagCommand extends Command {
         Optional<Tag> existingTag = student.getTags().stream()
                 .filter(this::matchesTag)
                 .min(Comparator.comparing(existing -> existing.getTagName()));
-        if (action == Action.ADD && existingTag.isPresent()) {
+        return action == Action.ADD
+                ? addTag(model, student, existingTag)
+                : removeTag(model, student, existingTag);
+    }
+
+    /** Adds the requested tag, or reports the spelling the student already carries. */
+    private CommandResult addTag(Model model, Student student, Optional<Tag> existingTag)
+            throws CommandException {
+        if (existingTag.isPresent()) {
             throw new CommandException(String.format(MESSAGE_ALREADY_PRESENT,
                     Messages.shorten(existingTag.get().getTagName())));
         }
-        if (action == Action.REMOVE && existingTag.isEmpty()) {
+        Student updatedStudent = withTagAdded(student);
+        model.setStudent(student, updatedStudent);
+        return new CommandResult(FollowUpTagWarning.appendTo(
+                formatSuccess(MESSAGE_ADD_SUCCESS, tag, updatedStudent), List.of(tag)));
+    }
+
+    /** Removes the requested tag, or reports that the student carries no such tag. */
+    private CommandResult removeTag(Model model, Student student, Optional<Tag> existingTag)
+            throws CommandException {
+        if (existingTag.isEmpty()) {
             throw new CommandException(formatAbsentTagMessage(student, model.getFilteredStudentList()));
         }
-        Student updatedStudent = createUpdatedStudent(student);
+        Student updatedStudent = withTagRemoved(student);
         model.setStudent(student, updatedStudent);
-        String message = action == Action.ADD ? MESSAGE_ADD_SUCCESS : MESSAGE_REMOVE_SUCCESS;
-        Tag changedTag = action == Action.ADD ? tag : existingTag.orElseThrow();
-        String feedback = String.format(message, Messages.shorten(changedTag.getTagName()),
+        return new CommandResult(formatSuccess(MESSAGE_REMOVE_SUCCESS, existingTag.orElseThrow(), updatedStudent));
+    }
+
+    /** Returns the reply naming {@code changedTag} and the student as they now stand. */
+    private static String formatSuccess(String message, Tag changedTag, Student updatedStudent) {
+        return String.format(message, Messages.shorten(changedTag.getTagName()),
                 Messages.format(updatedStudent));
-        return new CommandResult(action == Action.ADD
-                ? FollowUpTagWarning.appendTo(feedback, List.of(tag)) : feedback);
     }
 
     /**
@@ -149,14 +167,22 @@ public class TagCommand extends Command {
         return existing.getTagName().equalsIgnoreCase(tag.getTagName());
     }
 
-    /** Returns a replacement student with only the requested tag changed. */
-    private Student createUpdatedStudent(Student student) {
+    /** Returns a replacement student also carrying the requested tag. */
+    private Student withTagAdded(Student student) {
         Set<Tag> updatedTags = new HashSet<>(student.getTags());
-        if (action == Action.ADD) {
-            updatedTags.add(tag);
-        } else {
-            updatedTags.removeIf(this::matchesTag);
-        }
+        updatedTags.add(tag);
+        return replaceTags(student, updatedTags);
+    }
+
+    /** Returns a replacement student without any spelling of the requested tag. */
+    private Student withTagRemoved(Student student) {
+        Set<Tag> updatedTags = new HashSet<>(student.getTags());
+        updatedTags.removeIf(this::matchesTag);
+        return replaceTags(student, updatedTags);
+    }
+
+    /** Returns a replacement student carrying {@code updatedTags} and every other field as it was. */
+    private static Student replaceTags(Student student, Set<Tag> updatedTags) {
         return new Student(student.getName(), student.getPhone(), student.getEmail(),
                 student.getNusStudentId(), updatedTags, student.isFlagged());
     }

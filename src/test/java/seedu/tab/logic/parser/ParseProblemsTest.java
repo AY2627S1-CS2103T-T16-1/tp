@@ -54,10 +54,10 @@ public class ParseProblemsTest {
     }
 
     @Test
-    public void collectIfPresent_valueAbsent_returnsNullAndRecordsNothing() throws ParseException {
+    public void collectIfPresent_valueAbsent_returnsNothingAndRecordsNothing() throws ParseException {
         ParseProblems problems = new ParseProblems();
 
-        assertNull(problems.collectIfPresent(Optional.empty(), value -> value));
+        assertEquals(Optional.empty(), problems.collectIfPresent(Optional.empty(), value -> value));
         // an optional field is entitled to be absent, and a required one is reported elsewhere
         problems.throwIfAny();
     }
@@ -66,15 +66,15 @@ public class ParseProblemsTest {
     public void collectIfPresent_valueAccepted_returnsIt() throws ParseException {
         ParseProblems problems = new ParseProblems();
 
-        assertEquals("AMY", problems.collectIfPresent(Optional.of("amy"), String::toUpperCase));
+        assertEquals(Optional.of("AMY"), problems.collectIfPresent(Optional.of("amy"), String::toUpperCase));
         problems.throwIfAny();
     }
 
     @Test
-    public void collectIfPresent_valueRejected_returnsNullAndRecordsWhy() {
+    public void collectIfPresent_valueRejected_returnsNothingAndRecordsWhy() {
         ParseProblems problems = new ParseProblems();
 
-        assertNull(problems.collectIfPresent(Optional.of("12"), value -> {
+        assertEquals(Optional.empty(), problems.collectIfPresent(Optional.of("12"), value -> {
             throw new ParseException("too short");
         }));
 

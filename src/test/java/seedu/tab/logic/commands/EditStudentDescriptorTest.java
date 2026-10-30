@@ -170,7 +170,7 @@ public class EditStudentDescriptorTest {
                 + editStudentDescriptor.isEmailEdited() + ", nusStudentId="
                 + editStudentDescriptor.getNusStudentId() + ", isNusStudentIdEdited="
                 + editStudentDescriptor.isNusStudentIdEdited() + ", tags="
-                + editStudentDescriptor.getTags().orElse(null) + ", isFlagged="
+                + editStudentDescriptor.getTags().orElse(null) + ", requestedFollowUp="
                 + editStudentDescriptor.getFlagged().orElse(null) + "}";
         assertEquals(expected, editStudentDescriptor.toString());
     }

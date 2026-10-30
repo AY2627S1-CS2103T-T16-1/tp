@@ -81,7 +81,8 @@ public class EditCommand extends Command {
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_UNCHANGED = "Student already has the requested details. No changes made.";
     public static final String MESSAGE_MULTIPLE_TARGETS =
-            "Give one student target: an index, a letter-leading NUS Student ID, or --target-id NUS_STUDENT_ID.";
+            "Give one student target: an index, a letter-leading NUS Student ID, or "
+                    + FLAG_TARGET_ID.getLabel() + ".";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
 
     private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
@@ -198,7 +199,8 @@ public class EditCommand extends Command {
         private final OptionalFieldEdit<Email> emailEdit;
         private final OptionalFieldEdit<NusStudentId> nusStudentIdEdit;
         private Set<Tag> tags;
-        private Boolean isFlagged;
+        /** The follow-up state the edit asks for, or null when the edit leaves it alone. */
+        private Boolean requestedFollowUp;
 
         /**
          * Constructs an empty descriptor whose optional fields have not been edited.
@@ -220,7 +222,7 @@ public class EditCommand extends Command {
             nusStudentIdEdit = new OptionalFieldEdit<>(toCopy.nusStudentIdEdit);
             setName(toCopy.name);
             setTags(toCopy.tags);
-            isFlagged = toCopy.isFlagged;
+            requestedFollowUp = toCopy.requestedFollowUp;
         }
 
         public void setName(Name name) {
@@ -321,14 +323,14 @@ public class EditCommand extends Command {
         }
 
         public void setFlagged(boolean isFlagged) {
-            this.isFlagged = isFlagged;
+            requestedFollowUp = isFlagged;
         }
 
         /**
          * Returns the requested follow-up state, or empty if it should remain unchanged.
          */
         public Optional<Boolean> getFlagged() {
-            return Optional.ofNullable(isFlagged);
+            return Optional.ofNullable(requestedFollowUp);
         }
 
         @Override
@@ -347,14 +349,14 @@ public class EditCommand extends Command {
                     && emailEdit.hasSameStateAs(otherEditStudentDescriptor.emailEdit)
                     && nusStudentIdEdit.hasSameStateAs(otherEditStudentDescriptor.nusStudentIdEdit)
                     && Objects.equals(tags, otherEditStudentDescriptor.tags)
-                    && Objects.equals(isFlagged, otherEditStudentDescriptor.isFlagged);
+                    && Objects.equals(requestedFollowUp, otherEditStudentDescriptor.requestedFollowUp);
         }
 
         @Override
         public int hashCode() {
             return Objects.hash(name, phoneEdit.isEdited(), phoneEdit.getValue(),
                     emailEdit.isEdited(), emailEdit.getValue(),
-                    nusStudentIdEdit.isEdited(), nusStudentIdEdit.getValue(), tags, isFlagged);
+                    nusStudentIdEdit.isEdited(), nusStudentIdEdit.getValue(), tags, requestedFollowUp);
         }
 
         @Override
@@ -368,7 +370,7 @@ public class EditCommand extends Command {
                     .add("nusStudentId", nusStudentIdEdit.getValue())
                     .add("isNusStudentIdEdited", nusStudentIdEdit.isEdited())
                     .add("tags", tags)
-                    .add("isFlagged", isFlagged)
+                    .add("requestedFollowUp", requestedFollowUp)
                     .toString();
         }
 

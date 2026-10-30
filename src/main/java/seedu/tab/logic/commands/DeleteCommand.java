@@ -56,7 +56,7 @@ public class DeleteCommand extends Command {
      * Creates a command deleting the student identified by the target.
      */
     public DeleteCommand(StudentTarget target) {
-        this.target = target;
+        this.target = requireNonNull(target);
     }
 
     @Override

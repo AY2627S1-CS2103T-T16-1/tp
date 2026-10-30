@@ -35,7 +35,7 @@ public class TagCommandParser implements Parser<TagCommand> {
         ParseProblems.ValueParser<Tag> readTag = actionFlag.equals(FLAG_REMOVE_TAG)
                 ? ParserUtil::parseTag
                 : ParserUtil::parseTagToAdd;
-        Tag tag = problems.collectIfPresent(arguments.getValue(actionFlag), readTag);
+        Tag tag = problems.collectIfPresent(arguments.getValue(actionFlag), readTag).orElse(null);
         problems.throwIfAny();
         return new TagCommand(target, tag, actionFlag.equals(FLAG_REMOVE_TAG) ? Action.REMOVE : Action.ADD);
     }
@@ -53,25 +53,13 @@ public class TagCommandParser implements Parser<TagCommand> {
         if (preamble.isEmpty()) {
             throw new ParseException(Messages.getErrorMessageForMissingFields(TagCommand.FIELD_TARGET));
         }
-        if (Character.isLetter(preamble.charAt(0))) {
+        if (ParserUtil.isIdTarget(preamble)) {
             return ParserUtil.parseRequiredStudentTarget(preamble, TagCommand.FIELD_TARGET,
                     TagCommand.FIELD_INDEX);
         }
-        return readIndexTarget(preamble);
-    }
-
-    /**
-     * Returns the target the numeric preamble names, offering {@code --id} when the value
-     * refused as an index holds an NUS Student ID: a target starting with a digit reads as an
-     * index, so the User who meant such an ID has no other way to reach their student.
-     */
-    private static StudentTarget readIndexTarget(String preamble) throws ParseException {
-        try {
-            return StudentTarget.byIndex(ParserUtil.parseRequiredIndex(preamble, TagCommand.FIELD_INDEX),
-                    preamble);
-        } catch (ParseException e) {
-            throw ParserUtil.withIdTargetHint(e, preamble, TagCommand.ID_TARGET_COMMAND);
-        }
+        return ParserUtil.parsePreambleTarget(preamble, TagCommand.ID_TARGET_COMMAND,
+                value -> StudentTarget.byIndex(
+                        ParserUtil.parseRequiredIndex(value, TagCommand.FIELD_INDEX), value));
     }
 
     /** Adds command-specific guidance when the arguments cannot be read as options. */
