@@ -54,6 +54,9 @@ public class UiManagerTest {
     private static final String BROKEN_WINDOW_MESSAGE = "the window settings could not be read";
     // layout arithmetic lands a fraction of a pixel out, which no reader of the dialog can see
     private static final double MEASUREMENT_TOLERANCE = 0.5;
+    // the dialog is laid out on whole pixels, so it can stand a pixel above a cap that is not a
+    // whole number of them. Anything above that is the dialog failing to keep to the cap
+    private static final double PIXEL_SNAP_ALLOWANCE = 1;
     // no line of the dialog's text is drawn in as few pixels as this, so one line per ten pixels
     // of screen height is more text than any screen the test may run on can show at once
     private static final int MIN_TEXT_LINE_HEIGHT = 10;
@@ -371,7 +374,7 @@ public class UiManagerTest {
         double irreducibleHeight = details.dialogHeight - details.viewportHeight
                 + UiManager.MIN_MESSAGE_HEIGHT + details.dialogBorderHeight;
         assertTrue(details.dialogHeight
-                        <= Math.max(details.screenCapHeight, irreducibleHeight) + MEASUREMENT_TOLERANCE,
+                        <= Math.max(details.screenCapHeight, irreducibleHeight) + PIXEL_SNAP_ALLOWANCE,
                 "the dialog should be no taller than the share of the screen it may fill, unless it"
                         + " cannot be made that short; " + details);
         assertTrue(details.dialogHeight <= Math.max(details.screenHeight, irreducibleHeight),

@@ -214,7 +214,9 @@ public class UiManager implements Ui {
                 .sum();
         Insets insets = dialogPane.getInsets();
         double left = maxDialogHeight() - surround - insets.getTop() - insets.getBottom();
-        return Math.max(MIN_MESSAGE_HEIGHT, left);
+        // the dialog is drawn on whole pixels, and a part pixel it is asked for is one it rounds
+        // up to: the room is taken down to a whole pixel so that rounding cannot pass the cap
+        return Math.max(MIN_MESSAGE_HEIGHT, Math.floor(left));
     }
 
     /**
