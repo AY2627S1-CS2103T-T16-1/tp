@@ -569,7 +569,6 @@
 .card-index {
     -fx-text-fill: -tab-text-muted;
     -fx-font-size: 12px;
-    -fx-min-width: 22;
     -fx-alignment: center-right;
     -fx-padding: 3 0 0 0;
 }
