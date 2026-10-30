@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 
 /**
  * Reads a saved text field, naming the field and its rule instead of letting a Jackson
- * type error reach the reader when the value is a list or an object.
+ * type error reach the reader when the value is an array or an object.
  */
 class JsonTextFieldDeserializer extends JsonDeserializer<String> implements ContextualDeserializer {
     private static final String MESSAGE_EXPECTED_TEXT = "%s must be a single text value, not %s.";
@@ -37,16 +37,14 @@ class JsonTextFieldDeserializer extends JsonDeserializer<String> implements Cont
     @Override
     public String deserialize(JsonParser parser, DeserializationContext context) throws IOException {
         JsonToken token = parser.getCurrentToken();
-        if (token == JsonToken.START_ARRAY) {
-            throw createExpectedTextException(parser, "a list");
-        }
-        if (token == JsonToken.START_OBJECT) {
-            throw createExpectedTextException(parser, "an object");
+        if (token == JsonToken.START_ARRAY || token == JsonToken.START_OBJECT) {
+            throw createExpectedTextException(parser);
         }
         return parser.getValueAsString();
     }
 
-    private JsonMappingException createExpectedTextException(JsonParser parser, String foundValue) {
+    private JsonMappingException createExpectedTextException(JsonParser parser) throws IOException {
+        String foundValue = JsonValueDescription.describe(parser);
         return JsonMappingException.from(parser, String.format(MESSAGE_EXPECTED_TEXT, fieldName, foundValue));
     }
 }

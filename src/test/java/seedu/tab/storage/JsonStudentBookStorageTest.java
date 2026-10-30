@@ -229,7 +229,7 @@ public class JsonStudentBookStorageTest {
     public void readStudentBook_structuredTextField_reportsFieldAndPreservesBytes() throws Exception {
         for (String field : List.of("name", "phone", "email", "nusStudentId")) {
             assertInvalidTextFieldPreservesFile(field, "[\"first\",\"second\"]",
-                    field + " must be a single text value, not a list.");
+                    field + " must be a single text value, not an array.");
             assertInvalidTextFieldPreservesFile(field, "{\"home\":\"first\"}",
                     field + " must be a single text value, not an object.");
         }
@@ -605,10 +605,11 @@ public class JsonStudentBookStorageTest {
      * the file holds a whole object or array there.
      */
     private static String describeJsonValue(String value) {
-        if (value.equals("{}")) {
-            return "an object";
-        }
-        return value.equals("[]") ? "an array" : value;
+        return switch (value) {
+            case "{}" -> "an object";
+            case "[]" -> "an array";
+            default -> value;
+        };
     }
 
     private Path addToTestDataPathIfNotNull(String prefsFileInTestDataFolder) {

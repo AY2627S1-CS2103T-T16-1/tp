@@ -20,7 +20,7 @@ public class JsonTextFieldDeserializerTest {
     @Test
     public void deserialize_structuredValueWithoutProperty_describesFieldGenerically() throws Exception {
         for (String json : List.of("[\"first\"]", "{\"home\":\"first\"}")) {
-            String foundValue = json.startsWith("[") ? "a list" : "an object";
+            String foundValue = json.startsWith("[") ? "an array" : "an object";
             JsonDeserializer<String> deserializer = new JsonTextFieldDeserializer().createContextual(null, null);
             try (JsonParser parser = new ObjectMapper().getFactory().createParser(json)) {
                 parser.nextToken();
