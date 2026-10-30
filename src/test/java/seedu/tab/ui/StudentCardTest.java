@@ -24,6 +24,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Region;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import seedu.tab.model.student.NusStudentId;
 import seedu.tab.model.student.Student;
@@ -48,6 +49,14 @@ public class StudentCardTest {
      */
     private static final double NARROWEST_SHARE = 0.2;
     private static final double ONE_PIXEL = 1;
+    /** Layout settles widths to a fraction of a pixel, so widths are compared this loosely. */
+    private static final double ROUNDING_SLACK = 0.5;
+    /**
+     * Indices from across a list of the thousand records the Developer Guide asks the product
+     * to hold: the last position of each digit count, and the last positions a user can name
+     * in an {@code edit}, {@code tag} or {@code delete}.
+     */
+    private static final List<Integer> INDICES_ACROSS_A_FULL_LIST = List.of(9, 99, 998, 999, 1000);
     /** A character Java stores in two, as the Developer Guide's own example of one does. */
     private static final String BEYOND_THE_BASIC_PLANE = "\uD842\uDFB7";
 
@@ -417,6 +426,61 @@ public class StudentCardTest {
         assertTrue(field.getMaxX() <= container.getMaxX() + 0.5,
                 "the " + fieldName + " ends at " + field.getMaxX()
                         + ", past the details container's " + container.getMaxX());
+    }
+
+    @Test
+    public void constructor_narrowCardLateInTheList_drawsTheWholeIndex() throws Exception {
+        // the index is what a user types into edit, tag and delete, so a card crowded with a
+        // long name, several tags and a follow-up marker still has to show it in full
+        Student student = new StudentBuilder().withName("Siti Nur-Aisyah Binte Abdullah Rahman")
+                .withPhone("+65 9123 4567").withEmail("siti.nuraisyah.binte.ahmad@u.nus.edu")
+                .withTags("Tutorial 1", "Lab 3", "Project Team 2").withFlag(true).build();
+
+        for (int index : INDICES_ACROSS_A_FULL_LIST) {
+            assertIndexReadable(student, index);
+        }
+    }
+
+    /**
+     * Verifies that a card drawn at the narrowest width the window allows shows the whole of
+     * {@code index}, and keeps the student's own details inside the card while doing so.
+     */
+    private static void assertIndexReadable(Student student, int index) throws Exception {
+        onFxThread(() -> {
+            Region root = (Region) new StudentCard(student, index).getRoot();
+            styledScene(root, NARROWEST_CARD_WIDTH, 120);
+            Label id = (Label) root.lookup("#id");
+            String whole = String.valueOf(index);
+
+            assertEquals(whole, drawnTextOf(id), "the card drew the index of record " + whole
+                    + " as " + drawnTextOf(id));
+            double wanted = textWidth(whole, id.getFont());
+            assertTrue(id.getWidth() >= wanted - ROUNDING_SLACK, "the index of record " + whole
+                    + " was given " + id.getWidth() + " of the " + wanted + " its digits need");
+
+            assertDetailsInsideCard(root);
+            return null;
+        });
+    }
+
+    /** Verifies that the name and the contacts of a laid-out card are drawn inside it. */
+    private static void assertDetailsInsideCard(Region root) {
+        Region details = (Region) root.lookup("#details");
+        Bounds cardBounds = root.localToScene(root.getBoundsInLocal());
+        Bounds detailsBounds = details.localToScene(details.getBoundsInLocal());
+        assertHorizontallyInside(cardBounds, detailsBounds, "details");
+
+        for (String field : List.of("#name", "#phone", "#email")) {
+            Node shown = root.lookup(field);
+            assertHorizontallyInside(detailsBounds, shown.localToScene(shown.getBoundsInLocal()), field);
+        }
+    }
+
+    /** Returns the room {@code text} asks for in {@code font}, which is what the card draws it in. */
+    private static double textWidth(String text, Font font) {
+        Text measured = new Text(text);
+        measured.setFont(font);
+        return measured.getLayoutBounds().getWidth();
     }
 
     @Test
