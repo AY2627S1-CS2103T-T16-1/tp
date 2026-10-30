@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.tab.model.tag.FollowUpFlag;
 import seedu.tab.model.tag.Tag;
 
 public class FollowUpTagWarningTest {
@@ -18,6 +19,13 @@ public class FollowUpTagWarningTest {
                     + "\" looks like the follow-up marker. To flag the student, use --follow-up.",
                     FollowUpTagWarning.appendTo("Saved.", List.of(tag)));
         }
+    }
+
+    @Test
+    public void appendTo_markerItself_namesTheLabelAndTheFlagThatSetsIt() {
+        assertEquals("Saved.\n\nNOTE: \"Needs follow-up\" looks like the follow-up marker. "
+                + "To flag the student, use --follow-up.",
+                FollowUpTagWarning.appendTo("Saved.", List.of(new Tag(FollowUpFlag.FOLLOW_UP_NAME))));
     }
 
     @Test

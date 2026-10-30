@@ -39,56 +39,81 @@ final class LikelyDuplicateWarning {
         return appendWarnings(successMessage, changedStudent, existingStudents, originalStudent);
     }
 
+    /**
+     * Returns {@code successMessage} with a warning for each field of {@code changedStudent} that
+     * another record holds. A null {@code originalStudent} names a student being added, so every
+     * field is new; an edit instead carries the record as it stands, whose own fields are no
+     * evidence of a duplicate.
+     */
     private static String appendWarnings(String successMessage, Student changedStudent,
-            Iterable<Student> existingStudents, Student studentToExclude) {
+            Iterable<Student> existingStudents, Student originalStudent) {
         requireNonNull(successMessage);
         requireNonNull(changedStudent);
         requireNonNull(existingStudents);
 
-        List<Student> matchingNames = new ArrayList<>();
-        List<Student> matchingPhones = new ArrayList<>();
-        List<Student> matchingEmails = new ArrayList<>();
-        for (Student existingStudent : existingStudents) {
-            if (existingStudent == studentToExclude) {
-                continue;
-            }
-            addMatches(matchingNames, matchingPhones, matchingEmails,
-                    changedStudent, existingStudent, studentToExclude);
-        }
-        List<String> warnings = formatWarnings(matchingNames, matchingPhones, matchingEmails);
+        List<String> warnings = collectWarnings(changedStudent, existingStudents, originalStudent);
         return warnings.isEmpty()
                 ? successMessage
                 : successMessage + "\n\n" + String.join("\n", warnings) + "\n" + MESSAGE_ADVICE;
     }
 
-    private static void addMatches(List<Student> matchingNames, List<Student> matchingPhones,
-            List<Student> matchingEmails, Student changedStudent, Student existingStudent, Student originalStudent) {
-        if (isChanged(changedStudent.getName(), originalStudent == null ? null : originalStudent.getName())
-                && StringUtil.normalizeNameForComparison(changedStudent.getName().getFullName())
-                        .equals(StringUtil.normalizeNameForComparison(existingStudent.getName().getFullName()))) {
-            matchingNames.add(existingStudent);
-        }
-        if (isChanged(changedStudent.getPhone(), originalStudent == null ? null : originalStudent.getPhone())
-                && hasMatchingPhone(changedStudent, existingStudent)) {
-            matchingPhones.add(existingStudent);
-        }
-        if (isChanged(changedStudent.getEmail(), originalStudent == null ? null : originalStudent.getEmail())
-                && hasMatchingEmail(changedStudent, existingStudent)) {
-            matchingEmails.add(existingStudent);
-        }
-    }
-
-    private static List<String> formatWarnings(List<Student> matchingNames,
-            List<Student> matchingPhones, List<Student> matchingEmails) {
+    private static List<String> collectWarnings(Student changedStudent,
+            Iterable<Student> existingStudents, Student originalStudent) {
+        List<Student> otherStudents = listOtherStudents(existingStudents, originalStudent);
         List<String> warnings = new ArrayList<>();
-        addWarning(warnings, matchingNames, Name.FIELD_NAME);
-        addWarning(warnings, matchingPhones, Phone.FIELD_NAME);
-        addWarning(warnings, matchingEmails, Email.FIELD_NAME);
+        addWarning(warnings, findNameMatches(changedStudent, originalStudent, otherStudents), Name.FIELD_NAME);
+        addWarning(warnings, findPhoneMatches(changedStudent, originalStudent, otherStudents), Phone.FIELD_NAME);
+        addWarning(warnings, findEmailMatches(changedStudent, originalStudent, otherStudents), Email.FIELD_NAME);
         return warnings;
     }
 
-    private static boolean isChanged(Object changedValue, Object originalValue) {
-        return originalValue == null || !changedValue.equals(originalValue);
+    /** Returns every existing student apart from the record being edited, in display order. */
+    private static List<Student> listOtherStudents(Iterable<Student> existingStudents, Student originalStudent) {
+        List<Student> otherStudents = new ArrayList<>();
+        for (Student existingStudent : existingStudents) {
+            if (existingStudent != originalStudent) {
+                otherStudents.add(existingStudent);
+            }
+        }
+        return otherStudents;
+    }
+
+    /** Returns the students holding the changed student's name, or none when the name stands. */
+    private static List<Student> findNameMatches(Student changedStudent, Student originalStudent,
+            List<Student> otherStudents) {
+        if (originalStudent != null && changedStudent.getName().equals(originalStudent.getName())) {
+            return List.of();
+        }
+        return otherStudents.stream()
+                .filter(existingStudent -> hasMatchingName(changedStudent, existingStudent))
+                .toList();
+    }
+
+    /** Returns the students holding the changed student's phone, or none when the phone stands. */
+    private static List<Student> findPhoneMatches(Student changedStudent, Student originalStudent,
+            List<Student> otherStudents) {
+        if (originalStudent != null && changedStudent.getPhone().equals(originalStudent.getPhone())) {
+            return List.of();
+        }
+        return otherStudents.stream()
+                .filter(existingStudent -> hasMatchingPhone(changedStudent, existingStudent))
+                .toList();
+    }
+
+    /** Returns the students holding the changed student's email, or none when the email stands. */
+    private static List<Student> findEmailMatches(Student changedStudent, Student originalStudent,
+            List<Student> otherStudents) {
+        if (originalStudent != null && changedStudent.getEmail().equals(originalStudent.getEmail())) {
+            return List.of();
+        }
+        return otherStudents.stream()
+                .filter(existingStudent -> hasMatchingEmail(changedStudent, existingStudent))
+                .toList();
+    }
+
+    private static boolean hasMatchingName(Student first, Student second) {
+        return StringUtil.normalizeNameForComparison(first.getName().getFullName())
+                .equals(StringUtil.normalizeNameForComparison(second.getName().getFullName()));
     }
 
     private static boolean hasMatchingPhone(Student first, Student second) {
@@ -126,6 +151,6 @@ final class LikelyDuplicateWarning {
         }
         String firstTwoNames = firstName + ", " + matchingStudents.get(1).getName();
         return firstTwoNames + " and " + remainingStudents + " other"
-                + (remainingStudents == 1 ? "" : "s");
+                + StringUtil.getPluralSuffix(remainingStudents);
     }
 }
