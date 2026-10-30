@@ -207,7 +207,7 @@ public class ResultDisplayTest {
 
     @Test
     public void setFeedbackToUser_theFirstReplyAfterLaunch_takesOneRow() throws Exception {
-        // the reply a User sees first, on a display that has said nothing before: the area
+        // the reply a user sees first, on a display that has said nothing before: the area
         // had no skin to measure when it was built, and was left several rows too tall
         ResultDisplay display = displayAt(740);
         say(display, "Listed all students.");

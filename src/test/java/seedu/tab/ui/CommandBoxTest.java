@@ -701,7 +701,7 @@ public class CommandBoxTest {
 
         pressEnter(box);
 
-        // Enter on an empty line is how a User checks they have one, not a command
+        // Enter on an empty line is how a user checks they have one, not a command
         assertEquals(List.of(), ran);
     }
 

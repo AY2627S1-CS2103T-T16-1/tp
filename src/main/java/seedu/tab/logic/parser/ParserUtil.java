@@ -162,7 +162,7 @@ public class ParserUtil {
      * list, as {@link #isIdTarget} tells the two shapes apart.
      *
      * <p>An NUS Student ID that is not a valid one keeps the reason it was refused, so the
-     * User is told which value was rejected and why. Oversized positive indices retain their
+     * user is told which value was rejected and why. Oversized positive indices retain their
      * bounded-index diagnostic, and an index that is not a positive integer keeps the concise
      * positive-integer reason rather than the full command usage. A target given as no value
      * at all names no field to explain, so that one is reported through {@code usage}.
