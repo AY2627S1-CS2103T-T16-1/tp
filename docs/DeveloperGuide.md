@@ -118,7 +118,7 @@ TAB uses a positional name or target followed by options. For example, `add Ravi
 | Stage | Classes | Decision |
 | --- | --- | --- |
 | Identify the command | `StudentBookParser`, `CommandWords` | Strip invisible format/control characters as defined by `StringUtil`, split on Unicode whitespace, and fold only the command word with `Locale.ROOT`. |
-| Split arguments | `CommandTokenizer` | Preserve quoted token boundaries and explicit empty values; support double quotes and pasted curly/full-width variants. Apostrophes are literal. Backslashes escape quotes and backslashes. |
+| Split arguments | `CommandTokenizer` | Preserve quoted token boundaries and explicit empty values; support double quotes and pasted curly/full-width variants. Apostrophes are literal. Backslashes escape quotes and backslashes. An unquoted token opening with a dash that an editor wrote for a typed hyphen (U+2010 to U+2015, or the minus sign U+2212) opens an option, one dash standing for one hyphen. |
 | Assign options | `FlagTokenizer`, `CliFlag`, `CliFlags`, `FlagArgumentMap` | Map aliases to the same option, accept separate or `=`-attached values, and distinguish value-taking options from presence-only selectors. |
 | Validate meaning | Command-specific parsers, `ParserUtil`, `ParseProblems` | Validate targets and fields, reject inappropriate repetition, and construct a command only after validation succeeds. |
 
@@ -132,7 +132,7 @@ The command-specific parser determines which options exist and which may repeat:
 * `find` allows repeated field selectors because each adds a condition.
 * No-argument commands such as `list` reject extra text.
 
-Option spellings remain case-sensitive, with a lowercase suggestion when the command supports that spelling.
+Option spellings remain case-sensitive. A rejected spelling is offered the nearest one the command supports: its lowercase, the double-dash form of a word written after a single dash, or both. An em dash autocorrected from `--` leaves one dash before a word, so `—phone` is refused by name and offered `--phone`.
 
 Structural errors are reported first: an unclosed quote or unknown option makes field boundaries uncertain. Once the structure is valid, `add` and `edit` collect independent field errors through `ParseProblems`, so several invalid values can be corrected at once. `ValueMessages` and `Messages` format field-specific reasons and shorten long values for readable feedback.
 
@@ -694,6 +694,8 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
    * Expected: Attached values are accepted; the capital option suggests `-p`; the unclosed quote is reported without changing records.
 1. Paste `add “Paste Probe” –p “8123 4567” –t “Lab 6”`, then paste a command containing tab/newline separators before pressing Enter.
    * Expected: Curly quotes and a pasted option dash are recognized. Separators become spaces in one command, and the line's color follows its structure.
+1. Paste `add Dash Probe —phone 91234567`, where `—phone` carries the single em dash an editor writes for `--`, then `add Dash Probe —Phone 91234567`.
+   * Expected: Both are refused as `-phone` and `-Phone`, each suggesting `--phone`, and no student is added.
 1. Enter `list` twice, then `clear` and reply `no`. Type an unsent draft, press Up repeatedly through accepted and rejected submissions, then Down to the newest position.
    * Expected: Recall changes the input without executing it; the draft returns after the newest command. The two consecutive `list` submissions occupy one history entry, and the `no` reply is absent. Restarting clears history.
 1. Add a student with a long accented name and a long tag, then narrow the window. For a reproducible value, use `add José José José José José José José José José José José José José José José José -t "A very long tutorial group name used to check wrapping" -p "+65 9123 4567 extension 1234567890"`.

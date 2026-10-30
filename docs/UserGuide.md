@@ -65,7 +65,13 @@ TAB follows common CLI conventions for options and quoted values, using short op
 * Command words ignore case, but option names are case-sensitive.<br>
   For example, `LIST` works, but `-P` does not replace `-p`.
 
-The built-in `help` reference covers additional syntax, including `OPTION=VALUE` and escaping quotation marks. TAB suggests corrections for mistyped commands or capitalized options, but you must correct and resubmit them.
+* A dash your editor wrote for a typed hyphen opens an option, and each dash stands for one `-`.<br>
+  For example, `add Amy Lim –p 91234567` records the phone number, but one em dash before `phone` reads as `-phone`, which is refused with `Did you mean --phone?`
+
+* A dash within a value stays part of it, and quoting keeps one at the start.<br>
+  For example, `add Jean–Luc Picard` keeps the dash in the name, and `add "–Mystery"` names a student `–Mystery`.
+
+The built-in `help` reference covers additional syntax, including `OPTION=VALUE` and escaping quotation marks. TAB suggests corrections for mistyped commands, and for options given with the wrong case or the wrong number of dashes, but you must correct and resubmit them.
 
 ### Student fields
 
