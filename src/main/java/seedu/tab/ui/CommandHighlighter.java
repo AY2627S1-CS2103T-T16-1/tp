@@ -13,7 +13,7 @@ import seedu.tab.logic.parser.CommandTokenizer;
 
 /**
  * Splits a command into the runs of text that are colored differently, so that the command
- * word, the options and the values are told apart as the User types.
+ * word, the options and the values are told apart as the user types.
  *
  * <p>This is only about appearance. It never rejects anything: a command is colored while it
  * is still half-typed, so an unclosed quote or an unknown word is ordinary here and is left to
@@ -41,7 +41,7 @@ public class CommandHighlighter {
     /**
      * One run of text and the part it plays.
      *
-     * @param text What the User typed, exactly, so that joining every span returns the command.
+     * @param text What the user typed, exactly, so that joining every span returns the command.
      * @param kind How it should be colored.
      */
     public record Span(String text, Kind kind) {}

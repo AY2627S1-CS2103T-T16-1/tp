@@ -27,7 +27,7 @@ how it read at `FINE`. The following commands also log their effects:
 `tag`, `list`, `exit` and `help` have no separate effect entries.
 `LogicManager` still logs their command text.
 
-An entry counts records and names the index the User saw rather than writing the
-student out. The command text in the log already holds whatever the User typed,
+An entry counts records and names the index the user saw rather than writing the
+student out. The command text in the log already holds whatever the user typed,
 and repeating a name or an address in the entries after it puts more of someone's
 details in the file for nothing.

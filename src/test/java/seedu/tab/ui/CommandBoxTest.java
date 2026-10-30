@@ -701,7 +701,7 @@ public class CommandBoxTest {
 
         pressEnter(box);
 
-        // Enter on an empty line is how a User checks they have one, not a command
+        // Enter on an empty line is how a user checks they have one, not a command
         assertEquals(List.of(), ran);
     }
 
@@ -739,12 +739,12 @@ public class CommandBoxTest {
 
         pressEnter(box);
 
-        // what was typed stays, so the User can correct it rather than type it again
+        // what was typed stays, so the user can correct it rather than type it again
         assertEquals("add", onFxThread(() -> ((TextField) box.getRoot()
                 .lookup("#commandTextField")).getText()));
         assertTrue(styleClassesOf(box, "#commandTextField").contains(CommandBox.ERROR_STYLE_CLASS));
         assertTrue(styleClassesOf(box, "#highlighted").contains("command-error"),
-                "the copy the User reads is the one that has to turn red");
+                "the copy the user reads is the one that has to turn red");
     }
 
     @Test
@@ -910,13 +910,13 @@ public class CommandBoxTest {
             assertTrue(band.isVisible(), "selecting the command should draw a band behind it");
             Color behind = backgroundOf(root);
             Color over = (Color) band.getFill();
-            // the band is translucent, so what the User sees is it over the line behind it
+            // the band is translucent, so what the user sees is it over the line behind it
             Color seen = behind.interpolate(over, over.getOpacity());
             return contrastBetween(seen, behind);
         });
 
         assertTrue(contrast >= 2.0,
-                "a selection the User cannot make out is no selection: contrast was " + contrast);
+                "a selection the user cannot make out is no selection: contrast was " + contrast);
     }
 
     @Test
@@ -1006,7 +1006,7 @@ public class CommandBoxTest {
         assertTrue(adrift.isEmpty(), "the copy left the field's own text: " + adrift);
     }
 
-    /** Does to {@code field} what the User would, by the name of the edit. */
+    /** Does to {@code field} what the user would, by the name of the edit. */
     private static void applyEdit(TextField field, String edit) {
         if (edit.equals("type")) {
             field.appendText("!");
@@ -1079,7 +1079,7 @@ public class CommandBoxTest {
      * Leaves a command longer than the line in the state {@code edit} names, laid out.
      *
      * <p>The field's skin re-scrolls its text after the edit it was given, so the line only
-     * reaches the state the User would see it in once that layout has run.
+     * reaches the state the user would see it in once that layout has run.
      */
     private static void putTheLineIn(String edit, double width, Region root,
             TextField field, TextFieldSkin skin) {
@@ -1146,7 +1146,7 @@ public class CommandBoxTest {
     @Test
     public void click_afterAnEditOrAResize_landsOnTheCharacterUnderThePointer() throws Exception {
         // the field decides which character a click lands on, from where it draws its own
-        // text, while the User aims at the copy. The two have to read a point alike
+        // text, while the user aims at the copy. The two have to read a point alike
         List<String> misread = complaintsIn((root, field, skin) -> {
             TextFlow copy = (TextFlow) root.lookup("#highlighted");
             StringBuilder wrong = new StringBuilder();

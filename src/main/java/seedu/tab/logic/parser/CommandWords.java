@@ -81,7 +81,7 @@ public class CommandWords {
      * them would dress a guess up as help; naming them all says what is known.
      *
      * <p>A suggestion is only ever reported back. None of them is acted on, because acting on
-     * a guess would remove a student the User never named.
+     * a guess would remove a student the user never named.
      */
     public static List<String> suggestFor(String typedWord) {
         String typed = foldCase(typedWord);
@@ -93,7 +93,7 @@ public class CommandWords {
     /**
      * Returns {@code typedWord} in the case the command words are written in, so that a word
      * reaches the same command and the same suggestions whichever case it was typed in. The
-     * fold ignores the User's locale, which in a Turkish one would turn {@code LIST} into a
+     * fold ignores the user's locale, which in a Turkish one would turn {@code LIST} into a
      * word TAB answers to in neither place.
      */
     public static String foldCase(String typedWord) {

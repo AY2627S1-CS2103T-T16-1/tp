@@ -22,7 +22,7 @@ import seedu.tab.logic.parser.exceptions.ParseException;
 public class CommandBox extends UiPart<Region> {
 
     public static final String ERROR_STYLE_CLASS = "error";
-    /** Marks the colored copy, which is the text the User actually sees. */
+    /** Marks the colored copy, which is the text the user actually sees. */
     private static final String COPY_ERROR_STYLE_CLASS = "command-error";
     private static final String FXML = "CommandBox.fxml";
 
@@ -30,7 +30,7 @@ public class CommandBox extends UiPart<Region> {
     private final CommandExecutor commandExecutor;
     private final BooleanSupplier isAwaitingConfirmation;
 
-    /** Paints what the User reads, since a text field cannot color its own content. */
+    /** Paints what the user reads, since a text field cannot color its own content. */
     private final HighlightedTextOverlay overlay;
 
     @FXML
@@ -68,7 +68,7 @@ public class CommandBox extends UiPart<Region> {
         overlay = new HighlightedTextOverlay(commandTextField, highlighted, caret, lane, selection);
         commandTextField.textProperty().addListener((unused, old, typed) -> overlay.recolor(typed));
         overlay.recolor(commandTextField.getText());
-        // every task is meant to be reachable from the keyboard alone, so the line the User
+        // every task is meant to be reachable from the keyboard alone, so the line the user
         // types into is where the caret starts rather than somewhere they have to click
         Platform.runLater(commandTextField::requestFocus);
     }

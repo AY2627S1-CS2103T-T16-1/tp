@@ -12,7 +12,7 @@ import seedu.tab.logic.parser.CommandWords;
  *
  * <p>The reference is one block of text holding section headings, command names, syntax lines
  * and prose. Drawn in a single fill it reads as a wall, and the same syntax the command box
- * colors as the User types it goes flat the moment they look it up. The classes handed out
+ * colors as the user types it goes flat the moment they look it up. The classes handed out
  * here are the command box's own, so a marker is the same color in both places.
  */
 final class HelpText {
@@ -25,7 +25,7 @@ final class HelpText {
     private static final String PLACEHOLDER_STYLE_CLASS = "help-placeholder";
 
     /**
-     * A value the User fills in, such as NAME or NUS_STUDENT_ID. Three characters at the least,
+     * A value the user fills in, such as NAME or NUS_STUDENT_ID. Three characters at the least,
      * so that "an ID instead of an index" reads as the sentence it is rather than as a field.
      */
     private static final Pattern PLACEHOLDER = Pattern.compile("[A-Z][A-Z0-9_]{2,}");
@@ -88,7 +88,7 @@ final class HelpText {
 
     /**
      * Adds {@code word} under the class its core asks for, leaving the brackets and
-     * punctuation around it plain so that an optional field reads as one the User may leave out
+     * punctuation around it plain so that an optional field reads as one the user may leave out
      * rather than as part of the marker.
      */
     private static void addWord(List<Text> spans, String word, boolean isFirstWord) {
