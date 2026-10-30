@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.commands.AddCommand;
@@ -54,6 +53,9 @@ public class CommandWords {
 
     /** How many equally likely words are worth naming before a list of them stops being help. */
     private static final int MAX_SUGGESTIONS = 3;
+
+    /** A command word a typed word may stand for, with how far the typed word is from it. */
+    private record Candidate(String word, int editsFromTyped) {}
 
     private CommandWords() {} // this class only holds the words and the matching
 
@@ -115,18 +117,18 @@ public class CommandWords {
      * mistyping of one, or an empty list when none of them is.
      */
     private static List<String> findNearestWords(String typed) {
-        List<Map.Entry<String, Integer>> candidates = COMMAND_WORDS.stream()
+        List<Candidate> candidates = COMMAND_WORDS.stream()
                 .filter(word -> Math.abs(word.length() - typed.length()) <= MAX_EDITS)
-                .map(word -> Map.entry(word, StringUtil.computeEditDistance(typed, word)))
-                .filter(candidate -> isLikelyAttemptAt(candidate.getKey(), typed, candidate.getValue()))
+                .map(word -> new Candidate(word, StringUtil.computeEditDistance(typed, word)))
+                .filter(candidate -> isLikelyAttemptAt(candidate.word(), typed, candidate.editsFromTyped()))
                 .toList();
         if (candidates.isEmpty()) {
             return List.of();
         }
-        int nearestDistance = candidates.stream().mapToInt(Map.Entry::getValue).min().orElseThrow();
+        int nearestDistance = candidates.stream().mapToInt(Candidate::editsFromTyped).min().orElseThrow();
         return candidates.stream()
-                .filter(candidate -> candidate.getValue() == nearestDistance)
-                .map(Map.Entry::getKey)
+                .filter(candidate -> candidate.editsFromTyped() == nearestDistance)
+                .map(Candidate::word)
                 .toList();
     }
 
