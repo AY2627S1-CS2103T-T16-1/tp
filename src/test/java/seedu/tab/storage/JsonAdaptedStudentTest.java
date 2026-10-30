@@ -190,6 +190,7 @@ public class JsonAdaptedStudentTest {
 
     @Test
     public void toModelType_worstCaseEmailAtStorageLimit_stillLoads() {
+        // Upper accepted storage length: structurally valid address at the email limit.
         String atLimit = repeatedLocalPartEmail(Email.MAX_LENGTH);
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, atLimit, VALID_TAGS, false);
@@ -208,6 +209,7 @@ public class JsonAdaptedStudentTest {
 
     @Test
     public void toModelType_emailOverStorageLimit_throwsIllegalValueExceptionWithoutOverflowing() {
+        // First rejected storage length; format is valid so only the length diagnostic applies.
         String overLimit = repeatedLocalPartEmail(Email.MAX_LENGTH + 1);
         JsonAdaptedStudent student =
                 new JsonAdaptedStudent(VALID_NAME, VALID_PHONE, overLimit, VALID_TAGS, false);
@@ -311,6 +313,7 @@ public class JsonAdaptedStudentTest {
 
     @Test
     public void toModelType_tooLongNusStudentId_throwsIllegalValueExceptionNamingField() {
+        // First rejected ID length above the maximum, with otherwise valid alphanumeric content.
         String tooLong = "A".repeat(NusStudentId.MAX_LENGTH + 1);
         JsonAdaptedStudent student = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, tooLong, VALID_TAGS, false);
@@ -393,6 +396,7 @@ public class JsonAdaptedStudentTest {
 
     @Test
     public void toModelType_falseOrNullFlag_buildsUnflaggedStudent() throws Exception {
+        // Explicit false and absent/null flag share the unflagged partition.
         JsonAdaptedStudent falseFlag = new JsonAdaptedStudent(
                 VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_TAGS, false);
         JsonAdaptedStudent nullFlag = new JsonAdaptedStudent(

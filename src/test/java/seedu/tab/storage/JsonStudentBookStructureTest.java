@@ -40,6 +40,7 @@ public class JsonStudentBookStructureTest {
 
     @Test
     public void readStudentBook_rootIsBareValue_namesExpectedStudentBookShape() throws Exception {
+        // Scalar roots (text, number, Boolean) are rejected just as array roots are.
         for (String json : List.of("\"Bob\"\n", "42\n", "true\n")) {
             DataLoadingException exception = assertReadFails(json);
 
@@ -102,6 +103,7 @@ public class JsonStudentBookStructureTest {
 
     @Test
     public void readStudentBook_fieldMistakeInRecord_keepsRecordNumberAndFieldDiagnostic() throws Exception {
+        // Malformed field shapes within a valid record: scalar tags versus an array-valued text field.
         DataLoadingException tagsFailure =
                 assertReadFails("{\n  \"students\" : [ { \"name\" : \"Bob\", \"tags\" : \"friends\" } ]\n}\n");
         DataLoadingException emailFailure = assertReadFails("{\n  \"students\" : [ { \"name\" : \"Bob\","
@@ -117,6 +119,7 @@ public class JsonStudentBookStructureTest {
 
     @Test
     public void readStudentBook_studentListMissingOrNull_reportsMissingStudentList() throws Exception {
+        // Absent students key (with or without metadata) and explicit null both report a missing list.
         for (String json : List.of("{}\n", "{ \"_comment\" : \"CS2103T T16\" }\n", "{ \"students\" : null }\n")) {
             DataLoadingException exception = assertReadFails(json);
 

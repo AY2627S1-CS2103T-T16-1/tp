@@ -68,6 +68,7 @@ public class ClearConfirmationTest {
 
     @Test
     public void execute_clearAndCancel_preservesDisplayAndJsonBytes() throws Exception {
+        // Cancellation partition: empty/blank or normalized n/no; case and invisible marks do not alter it.
         for (String reply : List.of("", " ", "\t\n", "\u00A0\u3000", "n", "N", " \tn\u00A0\u3000",
                 "no", "nO", "No", "NO", " \tno\u00A0\u3000", "n\u200e", "n\u200bo",
                 "\u200e", "\u200b", "\u200e \u00a0\u200b", "\u202aNO\u202c")) {
@@ -79,6 +80,7 @@ public class ClearConfirmationTest {
             assertFalse(logic.isAwaitingConfirmation());
             assertUnchanged();
         }
+        // Outside confirmation state, a reply word is an unknown command rather than consent.
         assertThrows(ParseException.class, Messages.getErrorMessageForUnknownCommand("yes"), () ->
                 logic.execute("yes"));
         assertUnchanged();
@@ -87,6 +89,7 @@ public class ClearConfirmationTest {
     @Test
     public void execute_invalidReplies_keepsConfirmationPendingWithoutWriting() throws Exception {
         logic.execute("clear");
+        // Invalid replies include near spellings, quoted words, punctuation, joiners, and ordinary commands.
         for (String reply : List.of("yellow", "YESPLEASE", "yep", "yeah", "yess", "yes no", "\"yes\"", "\"y\"",
                 "yes!", "nope", "never", "nothing", "nonsense", "no!", "n o", "n\u200co", "y\u200des",
                 "y\u200ces", "y\u200e es", "yes\u200b!", "\u200eyellow\u200b",
@@ -139,6 +142,7 @@ public class ClearConfirmationTest {
 
     @Test
     public void execute_yesReplyVariants_clearsHiddenRecordsAndPersistsOnce() throws Exception {
+        // Confirmation partition: normalized y/yes, including case variants and surrounding whitespace.
         for (String reply : List.of("y", "Y", " \tY\u00A0\u3000", "yes", "yeS", "yEs", "yES",
                 "Yes", "YeS", "YEs", "YES", " \tyes\u00A0\u3000", "y\u200e", "y\u200bes",
                 "\u202aYeS\u202c", "\u200e \u00a0y\u200b \u200e")) {

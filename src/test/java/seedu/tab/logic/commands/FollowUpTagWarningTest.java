@@ -30,7 +30,9 @@ public class FollowUpTagWarningTest {
 
     @Test
     public void appendTo_emptyOrUnrelatedTags_returnsSuccessMessage() {
+        // Empty tag collection: zero candidates, so no advice.
         assertEquals("Saved.", FollowUpTagWarning.appendTo("Saved.", List.of()));
+        // Non-empty collection of unrelated labels: still no advice.
         assertEquals("Saved.", FollowUpTagWarning.appendTo("Saved.", List.of(
                 new Tag("Needs follow-up soon"), new Tag("follow up"), new Tag("Lab 3"))));
     }

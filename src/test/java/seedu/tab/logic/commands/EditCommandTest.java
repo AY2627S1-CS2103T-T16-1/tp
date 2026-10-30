@@ -552,6 +552,7 @@ public class EditCommandTest {
 
     @Test
     public void execute_invalidStudentIndexUnfilteredList_failure() {
+        // First index beyond the displayed list: parsing succeeds but execution must reject the target.
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredStudentList().size() + 1);
         EditStudentDescriptor descriptor = new EditStudentDescriptorBuilder().withName(VALID_NAME_BOB).build();
         EditCommand editCommand = new EditCommand(outOfBoundIndex, descriptor);

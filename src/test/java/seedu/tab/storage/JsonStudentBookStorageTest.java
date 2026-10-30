@@ -62,6 +62,7 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readStudentBook_trailingContent_reportsLocationAndPreservesBytes() throws Exception {
+        // Trailing second JSON value or malformed trailing text: reject without rewriting the file.
         for (String suffix : List.of("{}", "[]", "null", "true", "42", "\"extra\"", ", {}", "extra")) {
             String json = "{\"students\":[]}\n" + suffix + "\n";
             Path path = testFolder.resolve("trailing.json");
@@ -79,6 +80,7 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readStudentBook_duplicateKeys_reportsKeyAndPreservesBytes() throws Exception {
+        // Repeated key in one object: rejected at the book level or within a student record.
         for (String json : List.of("{\"students\":[],\"students\":[]}",
                 "{\"students\":[{\"name\":\"Alex\",\"phone\":\"91112222\",\"phone\":\"87438807\"}]}")) {
             Path path = testFolder.resolve("duplicate.json");
@@ -188,6 +190,7 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readStudentBook_nonBooleanFlag_reportsRecordAndPreservesBytes() throws Exception {
+        // Non-Boolean flag types are rejected: numbers, quoted text (even Boolean-looking), and containers.
         for (String value : List.of("0", "1", "2", "-1", "1.5", "1e3", "999999999999999999999999",
                 "\"true\"", "\"false\"", "\"\"", "[]", "{}")) {
             String json = "{\"students\":[{\"name\":\"Before\",\"phone\":\"81111111\"},"
@@ -209,6 +212,7 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readStudentBook_nonArrayTags_reportsFieldAndPreservesBytes() throws Exception {
+        // Tags field with a scalar or object instead of an array: rejected.
         for (String value : List.of("\"friends\"", "5", "true", "false", "{}")) {
             String shownValue = describeJsonValue(value);
             assertInvalidTagsPreservesFile(value, "Invalid tags value: " + shownValue
@@ -218,6 +222,7 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readStudentBook_nonStringTag_reportsEntryAndPreservesBytes() throws Exception {
+        // Non-string tag entries, including null and nested containers: reject the entire read.
         for (String value : List.of("5", "1.5", "true", "false", "null", "{}", "[]")) {
             String shownValue = describeJsonValue(value);
             assertInvalidTagsPreservesFile("[\"Lab 3\"," + value + "]", "Invalid tags entry 2 value: " + shownValue
@@ -228,6 +233,7 @@ public class JsonStudentBookStorageTest {
     @Test
     public void readStudentBook_structuredTextField_reportsFieldAndPreservesBytes() throws Exception {
         for (String field : List.of("name", "phone", "email", "nusStudentId")) {
+            // Array and object values are distinct rejected container shapes for every text field.
             assertInvalidTextFieldPreservesFile(field, "[\"first\",\"second\"]",
                     field + " must be a single text value, not an array.");
             assertInvalidTextFieldPreservesFile(field, "{\"home\":\"first\"}",
@@ -257,6 +263,7 @@ public class JsonStudentBookStorageTest {
     @Test
     public void readStudentBook_fileWithoutJson_reportsMissingDataWithoutSource() throws Exception {
         Path path = testFolder.resolve("empty.json");
+        // Existing file with no JSON: empty and whitespace-only contents both fail, unlike a missing file.
         for (String content : List.of("", "   \n  \n")) {
             Files.writeString(path, content);
 
@@ -305,6 +312,7 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readAndSaveStudentBook_validTagRepresentations_preservesTags() throws Exception {
+        // Missing, null, and empty tags mean no tags; a non-empty string array preserves its values.
         for (String field : List.of("", ",\"tags\":null", ",\"tags\":[]", ",\"tags\":[\"Lab 3\",\"组 1\"]")) {
             Path path = testFolder.resolve("valid-tags.json");
             String json = "{\"students\":[{\"name\":\"Alice Tan\",\"phone\":\"91234567\"" + field + "}]}";
@@ -325,6 +333,7 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readAndSaveStudentBook_documentedFlagValues_preservesStatus() throws Exception {
+        // Missing, null, and false mean unflagged; only JSON true sets the flag.
         for (String field : List.of("", ",\"flag\":null", ",\"flag\":false", ",\"flag\":true")) {
             Path path = testFolder.resolve("valid-flag.json");
             String json = "{\"students\":[{\"name\":\"Alice Tan\",\"phone\":\"91234567\"" + field + "}]}";
@@ -349,6 +358,7 @@ public class JsonStudentBookStorageTest {
         JsonStudentBookStorage storage = new JsonStudentBookStorage(path);
         storage.saveStudentBook(expected);
         String json = Files.readString(path);
+        // Accepted UTF-8 encodings with and without a leading BOM load identically without rewriting.
         for (String prefix : new String[] {"", "\uFEFF"}) {
             Files.writeString(path, prefix + json, StandardCharsets.UTF_8);
             ReadOnlyStudentBook loaded = storage.readStudentBook().orElseThrow();
@@ -574,6 +584,7 @@ public class JsonStudentBookStorageTest {
 
     @Test
     public void readStudentBook_nonStringDescription_reportsFieldAndPreservesBytes() throws Exception {
+        // Non-string comment types: numeric, Boolean, object, and array values are rejected.
         for (String value : List.of("5", "1.5", "true", "false", "{}", "[]")) {
             Path path = testFolder.resolve("invalid-description.json");
             String json = "{\"_comment\":" + value + ",\"students\":[]}";
