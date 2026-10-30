@@ -49,6 +49,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseRequiredIndex_invalidInput_throwsParseException() {
+        // Rejected forms: whitespace-only, zero at the lower boundary, negative, and non-integer text.
         for (String index : List.of(" ", "0", "-1", "abc")) {
             assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
                     ParserUtil.parseRequiredIndex(index, "STUDENT_INDEX"));
@@ -63,11 +64,13 @@ public class ParserUtilTest {
 
     @Test
     public void parseRequiredIndex_extraValue_reportsValueWithoutMisidentifyingIndex() {
+        // Valid index followed by an extra token: reject the surplus value for each separator.
         for (String separator : List.of(" ", "\t", "\u00a0")) {
             assertThrows(ParseException.class,
                     "Unexpected value after STUDENT_INDEX: \"Alex\". Put field values after an option.", () ->
                     ParserUtil.parseRequiredIndex("1" + separator + "Alex", "STUDENT_INDEX"));
         }
+        // Invalid index plus extra token: report the index failure first.
         assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
                 ParserUtil.parseRequiredIndex("0 Alex", "STUDENT_INDEX"));
     }
@@ -92,6 +95,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseIndex_largestIndex_isAccepted() throws Exception {
+        // Upper accepted boundary of the supported index range.
         assertEquals(Index.fromOneBased(Integer.MAX_VALUE),
                 ParserUtil.parseIndex(String.valueOf(Integer.MAX_VALUE)));
     }
@@ -106,10 +110,10 @@ public class ParserUtilTest {
 
     @Test
     public void parseIndex_validInput_success() throws Exception {
-        // No whitespaces
+        // Lower accepted boundary: 1 is the smallest positive index.
         assertEquals(INDEX_FIRST_STUDENT, ParserUtil.parseIndex("1"));
 
-        // Leading and trailing whitespaces
+        // Surrounding whitespace is accepted and trimmed, preserving the same index.
         assertEquals(INDEX_FIRST_STUDENT, ParserUtil.parseIndex("  1  "));
     }
 
@@ -174,8 +178,10 @@ public class ParserUtilTest {
 
     @Test
     public void parseRequiredStudentTarget_indexOrId_returnsTarget() throws Exception {
+        // Digit-leading positive target: interpreted as an index.
         assertEquals(StudentTarget.byIndex(INDEX_FIRST_STUDENT),
                 ParserUtil.parseRequiredStudentTarget("1", "STUDENT_TARGET", "STUDENT_TARGET"));
+        // Letter-leading alphanumeric target: interpreted as an ID.
         assertEquals(StudentTarget.byNusStudentId(new NusStudentId(VALID_NUS_STUDENT_ID)),
                 ParserUtil.parseRequiredStudentTarget(VALID_NUS_STUDENT_ID, "STUDENT_TARGET", "STUDENT_TARGET"));
     }
@@ -199,6 +205,7 @@ public class ParserUtilTest {
 
     @Test
     public void getTargetFieldName_eitherTargetForm_namesTheFormRead() {
+        // Letter-leading targets name the ID field, including normalized lowercase input.
         for (String target : List.of("Alex", "A01234567X", "  a01234567x  ")) {
             assertEquals(ParserUtil.FIELD_NUS_STUDENT_ID, ParserUtil.getTargetFieldName(target, "INDEX"));
         }

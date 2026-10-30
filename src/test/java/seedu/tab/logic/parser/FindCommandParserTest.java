@@ -40,6 +40,7 @@ public class FindCommandParserTest {
         for (String input : List.of("-n alex yeoh", "-t lab tutorial", "-n 'Jason Tan'")) {
             assertParseFailure(parser, input, FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
         }
+        // Accepted alternatives: separate field terms or one double-quoted phrase.
         assertParseSuccess(parser, "-n alex -n yeoh", new FindCommand(new DetailsContainsKeywordsPredicate(
                 Map.of(Field.NAME, List.of("alex", "yeoh")))));
         assertParseSuccess(parser, "-n \"alex yeoh\"", new FindCommand(new DetailsContainsKeywordsPredicate(
@@ -72,6 +73,7 @@ public class FindCommandParserTest {
                 Map.of(Field.NAME, List.of("O'Brien"))));
         assertParseSuccess(parser, "-n O'Brien", expected);
         assertParseSuccess(parser, "-n \"O'Brien\"", expected);
+        // Single quotes remain literal keyword characters; they do not group whitespace.
         FindCommand literalQuotes = new FindCommand(new DetailsContainsKeywordsPredicate(
                 Map.of(Field.NAME, List.of("'Jason'"))));
         assertParseSuccess(parser, "-n 'Jason'", literalQuotes);
@@ -112,19 +114,23 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_invalidFieldSyntax_reportsSpecificProblem() {
+        // Missing option value: end of input, next option, or empty attached value.
         for (String input : List.of("-t", "-t -n Jason", "--tag=")) {
             assertParseFailure(parser, input, String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE,
                     CliFlags.FLAG_TAG.getLabel(input.startsWith("--") ? "--tag" : "-t")));
         }
+        // Explicit values normalizing to empty: reject as empty keywords rather than missing values.
         for (String input : List.of("-t \"\"", "-t \"   \"", "--tag=\"\"", "-n \"\u200b\"")) {
             assertParseFailure(parser, input, MESSAGE_EMPTY_KEYWORD);
         }
+        // Unknown marker is rejected; a known marker with different case also gets a suggestion.
         assertParseFailure(parser, "--unknown friend", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--unknown"));
         assertParseFailure(parser, "-T friend", "There is no -T option. Did you mean -t?");
         // a term after the options is the same mistake as one before them, so it reads the same
         assertParseFailure(parser, "-t lab tutorial", FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
         assertParseFailure(parser, "Jason -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
         assertParseFailure(parser, "\"\" -t lab", FindCommandParser.MESSAGE_UNQUALIFIED_TERM);
+        // Unclosed double quote: lexical failure before field parsing.
         assertParseFailure(parser, "-t \"Lab", CommandTokenizer.MESSAGE_UNCLOSED_QUOTE);
     }
 
@@ -151,15 +157,19 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_invalidStatusSelectors_reportsSpecificProblem() {
+        // Opposite status selectors conflict, irrespective of alias or position.
         for (String input : List.of("-f -nf", "--no-follow-up --follow-up", "-nf -n Jason -f")) {
             assertParseFailure(parser, input, Messages.MESSAGE_CONFLICTING_FOLLOW_UP);
         }
+        // Repeated selector, including mixed aliases, is a duplicate rather than a conflict.
         for (String input : List.of("-f -f", "-f --follow-up")) {
             assertParseFailure(parser, input, Messages.getErrorMessageForDuplicateFlags("-f"));
         }
         assertParseFailure(parser, "-nf --no-follow-up", Messages.getErrorMessageForDuplicateFlags("-nf"));
+        // Status selectors reject both separate and attached values.
         assertParseFailure(parser, "-f true", String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-f"));
         assertParseFailure(parser, "-nf=none", String.format(Messages.MESSAGE_FLAG_TAKES_NO_VALUE, "-nf"));
+        // Valid status selector followed by a field selector with no value: field-value failure.
         assertParseFailure(parser, "-f -n", String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, "-n NAME"));
     }
 
