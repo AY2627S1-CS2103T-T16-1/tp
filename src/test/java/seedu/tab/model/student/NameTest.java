@@ -25,10 +25,12 @@ public class NameTest {
     public void isValidName_carriesNoIdentity_returnsFalse() {
         assertThrows(NullPointerException.class, () -> Name.isValidName(null));
 
+        // Empty and whitespace-only values normalize to no identity and are rejected.
         assertFalse(Name.isValidName("")); // empty string
         assertFalse(Name.isValidName(" ")); // spaces only
         assertFalse(Name.isValidName("\t\n\r ")); // tabs and line breaks only
         assertFalse(Name.isValidName("\u3000")); // an ideographic space only
+        // Nonblank values without a letter or number are also rejected.
         assertFalse(Name.isValidName("---")); // punctuation only
         assertFalse(Name.isValidName("^")); // a single symbol
         assertFalse(Name.isValidName("\uD83D\uDE00")); // emoji only
@@ -75,7 +77,7 @@ public class NameTest {
         assertTrue(Name.isValidName("peter the 2nd")); // letters and numbers
         assertTrue(Name.isValidName("Capital Tan")); // capital letters
         assertTrue(Name.isValidName("David Roger Jackson Ray Jr 2nd")); // long name
-        assertTrue(Name.isValidName("A")); // single character
+        assertTrue(Name.isValidName("A")); // lower boundary: one letter is enough
     }
 
     @Test

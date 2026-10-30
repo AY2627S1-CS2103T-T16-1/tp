@@ -16,10 +16,10 @@ public class IndexTest {
 
     @Test
     public void createOneBasedIndex() {
-        // invalid index
+        // below the one-based range: 0 is the first rejected lower boundary
         assertThrows(IndexOutOfBoundsException.class, () -> Index.fromOneBased(0));
 
-        // check equality using the same base
+        // accepted one-based indices: lower boundary 1 and ordinary representative 5
         assertEquals(1, Index.fromOneBased(1).getOneBased());
         assertEquals(5, Index.fromOneBased(5).getOneBased());
 
@@ -30,10 +30,10 @@ public class IndexTest {
 
     @Test
     public void createZeroBasedIndex() {
-        // invalid index
+        // below the zero-based range: -1 is the first rejected lower boundary
         assertThrows(IndexOutOfBoundsException.class, () -> Index.fromZeroBased(-1));
 
-        // check equality using the same base
+        // accepted zero-based indices: lower boundary 0 and ordinary representative 5
         assertEquals(0, Index.fromZeroBased(0).getZeroBased());
         assertEquals(5, Index.fromZeroBased(5).getZeroBased());
 

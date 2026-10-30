@@ -28,12 +28,12 @@ public class PhoneTest {
         // too few digits to be a phone number
         assertFalse(Phone.isValidPhone("")); // empty string
         assertFalse(Phone.isValidPhone(" ")); // spaces only
-        assertFalse(Phone.isValidPhone("91")); // two digits
+        assertFalse(Phone.isValidPhone("91")); // lower rejected boundary: one digit below the minimum
         assertFalse(Phone.isValidPhone("phone")); // no digits at all
         assertFalse(Phone.isValidPhone("+65")); // a country code and nothing else
 
         // valid phone numbers
-        assertTrue(Phone.isValidPhone("911")); // exactly 3 digits
+        assertTrue(Phone.isValidPhone("911")); // lower accepted boundary: exactly 3 digits
         assertTrue(Phone.isValidPhone("93121534"));
         assertTrue(Phone.isValidPhone("124293842033123")); // long phone number
 
@@ -70,6 +70,7 @@ public class PhoneTest {
 
         assertEquals("659123456721", phone.getDigits());
         assertEquals(formatted, phone.getValue());
+        // No decimal digits: normalization returns empty even though this is not a valid phone.
         assertEquals("", Phone.normalizeDigits("---"));
     }
 

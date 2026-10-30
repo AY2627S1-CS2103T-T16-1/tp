@@ -124,6 +124,7 @@ public class JsonParseErrorFormatterTest {
                 + "  1 | first\n"
                 + "> 2 | second\n"
                 + "  3 | third";
+        // Invalid columns: 0 is below the one-based range; 99 lies beyond the actual line.
         for (int column : new int[] {0, 99}) {
             JsonLocation location = new JsonLocation("hidden source", -1, -1, 2, column);
             JsonProcessingException exception = createJsonProcessingException("Invalid content", location);
@@ -135,6 +136,7 @@ public class JsonParseErrorFormatterTest {
 
     @Test
     public void format_missingParserDetails_reportsFallback() {
+        // Missing and whitespace-only parser details use the same fallback message.
         for (String originalMessage : new String[] {null, " \t "}) {
             JsonProcessingException exception = new JsonProcessingException(originalMessage) {};
 
@@ -302,6 +304,7 @@ public class JsonParseErrorFormatterTest {
         JsonProcessingException exception =
                 createJsonProcessingException("No content to map due to end-of-input", location);
 
+        // Empty and whitespace-only source provide no excerpt or meaningful location.
         for (String jsonSource : new String[] {"", " \n\t "}) {
             assertEquals("The data is not in the expected JSON format: The file holds no data."
                             + " Restore your backup, or delete the file and restart TAB"

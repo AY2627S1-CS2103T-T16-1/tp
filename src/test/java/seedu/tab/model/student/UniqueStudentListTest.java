@@ -29,6 +29,7 @@ public class UniqueStudentListTest {
 
     @Test
     public void contains_studentNotInList_returnsFalse() {
+        // Absent target in an empty list: the lower collection-size boundary.
         assertFalse(uniqueStudentList.contains(ALICE));
     }
 
@@ -59,6 +60,7 @@ public class UniqueStudentListTest {
 
     @Test
     public void add_sameNameDifferentNusStudentIds_addsBothStudents() {
+        // Same name with distinct IDs belongs to the accepted, nonduplicate partition.
         Student first = new StudentBuilder().withName("Tan Wei Ming").withNusStudentId("A01234567X").build();
         Student second = new StudentBuilder(first).withNusStudentId("A76543210Y").build();
 
@@ -70,6 +72,7 @@ public class UniqueStudentListTest {
 
     @Test
     public void add_sameNameWithoutNusStudentIds_addsBothStudents() {
+        // Missing IDs do not establish identity, even when every other field matches.
         Student first = new StudentBuilder().withName("Tan Wei Ming").withoutNusStudentId().build();
         Student second = new StudentBuilder(first).withoutNusStudentId().build();
 
@@ -152,6 +155,7 @@ public class UniqueStudentListTest {
 
         uniqueStudentList.setStudent(second, editedSecond);
 
+        // Equal-valued ID-less entries are separate records: editing the second must preserve the first.
         assertSame(first, uniqueStudentList.asUnmodifiableObservableList().get(0));
         assertSame(editedSecond, uniqueStudentList.asUnmodifiableObservableList().get(1));
     }
@@ -230,6 +234,7 @@ public class UniqueStudentListTest {
         uniqueStudentList.add(BOB);
         uniqueStudentList.add(CARL);
         Student sameIdDifferentDetails = new StudentBuilder(ALICE).withName("Alice Tan").build();
+        // Rejected replacement partition: repeated object or distinct records sharing an ID.
         List<List<Student>> invalidReplacements = List.of(
                 List.of(ALICE, ALICE), List.of(ALICE, sameIdDifferentDetails));
 
@@ -251,6 +256,7 @@ public class UniqueStudentListTest {
 
     @Test
     public void toStringMethod() {
+        // Empty and singleton lists exercise the zero-to-one size boundary.
         assertEquals("[]", uniqueStudentList.toString());
         uniqueStudentList.add(ALICE);
         assertEquals("[" + ALICE + "]", uniqueStudentList.toString());

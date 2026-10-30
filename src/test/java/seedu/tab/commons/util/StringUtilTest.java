@@ -178,35 +178,36 @@ public class StringUtilTest {
     @Test
     public void isNonZeroUnsignedInteger() {
 
-        // EP: empty strings
+        // Empty and whitespace-only strings are rejected; they contain no integer digits.
         assertFalse(StringUtil.isNonZeroUnsignedInteger("")); // Boundary value
         assertFalse(StringUtil.isNonZeroUnsignedInteger("  "));
 
-        // EP: not a number
+        // Non-numeric text is rejected.
         assertFalse(StringUtil.isNonZeroUnsignedInteger("a"));
         assertFalse(StringUtil.isNonZeroUnsignedInteger("aaa"));
 
-        // EP: zero
+        // Zero is the first rejected value below the positive range.
         assertFalse(StringUtil.isNonZeroUnsignedInteger("0"));
 
-        // EP: zero as prefix
+        // Leading zeros on a positive integer are accepted.
         assertTrue(StringUtil.isNonZeroUnsignedInteger("01"));
 
-        // EP: signed numbers
+        // Explicit signs are rejected, including a plus sign on a positive value.
         assertFalse(StringUtil.isNonZeroUnsignedInteger("-1"));
         assertFalse(StringUtil.isNonZeroUnsignedInteger("+1"));
 
-        // EP: numbers with white space
+        // Whitespace is rejected here, even though command parsers trim surrounding spaces.
         assertFalse(StringUtil.isNonZeroUnsignedInteger(" 10 ")); // Leading/trailing spaces
         assertFalse(StringUtil.isNonZeroUnsignedInteger("1 0")); // Spaces in the middle
 
-        // EP: valid numbers, should return true
+        // Supported positive integers: lower accepted boundary 1 and ordinary representative 10.
         assertTrue(StringUtil.isNonZeroUnsignedInteger("1")); // Boundary value
         assertTrue(StringUtil.isNonZeroUnsignedInteger("10"));
     }
 
     @Test
     public void isNonZeroUnsignedInteger_upperBoundary_acceptsMaximumAndRejectsNextInteger() {
+        // Upper accepted boundary and first rejected positive integer beyond the int range.
         assertTrue(StringUtil.isNonZeroUnsignedInteger("2147483647"));
         assertFalse(StringUtil.isNonZeroUnsignedInteger("2147483648"));
     }
@@ -376,9 +377,11 @@ public class StringUtilTest {
 
     @Test
     public void hasLetterOrNumber_variousCharacters_returnsExpectedResult() {
+        // At least one letter or number: accepted, including non-Latin letters.
         assertTrue(StringUtil.hasLetterOrNumber("a"));
         assertTrue(StringUtil.hasLetterOrNumber("1"));
         assertTrue(StringUtil.hasLetterOrNumber("\u9648")); // a logograph counts
+        // Empty or nonblank text without letters or numbers: rejected.
         assertFalse(StringUtil.hasLetterOrNumber(""));
         assertFalse(StringUtil.hasLetterOrNumber("---"));
         assertFalse(StringUtil.hasLetterOrNumber("\uD83D\uDE00")); // an emoji does not
