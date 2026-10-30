@@ -1,10 +1,15 @@
 package seedu.tab.logic.parser;
 
 import static seedu.tab.logic.parser.CliFlags.FLAG_ADD_TAG;
+import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
 import static seedu.tab.logic.parser.CliFlags.FLAG_REMOVE_TAG;
+import static seedu.tab.logic.parser.CliFlags.FLAG_TARGET_ID;
+
+import java.util.Optional;
 
 import seedu.tab.logic.Messages;
+import seedu.tab.logic.commands.EditCommand;
 import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.commands.TagCommand;
 import seedu.tab.logic.commands.TagCommand.Action;
@@ -34,10 +39,36 @@ public class TagCommandParser implements Parser<TagCommand> {
         // removing it stays a tag, so that TagCommand can explain the marker to the user
         ParseProblems.ValueParser<Tag> readTag = actionFlag.equals(FLAG_REMOVE_TAG)
                 ? ParserUtil::parseTag
-                : ParserUtil::parseTagToAdd;
+                : value -> ParserUtil.parseTagToAdd(value, followUpCommandFor(arguments, target));
         Tag tag = problems.collectIfPresent(arguments.getValue(actionFlag), readTag).orElse(null);
         problems.throwIfAny();
         return new TagCommand(target, tag, actionFlag.equals(FLAG_REMOVE_TAG) ? Action.REMOVE : Action.ADD);
+    }
+
+    /**
+     * Returns what the user types to flag the student this command names. The command is an
+     * {@code edit} one, because {@code tag} takes no follow-up option and advice naming one
+     * would fail as soon as it was followed.
+     *
+     * <p>The target is spelled as the user spelled it, so the remedy reaches the student they
+     * meant. An ID given to the ID option moves to the option {@code edit} selects a target
+     * with, since the plain option sets the ID field there. A target the command could not read
+     * names no student, so the remedy falls back to naming the index field.
+     *
+     * @param arguments The options and preamble the user supplied.
+     * @param target The student this command names, or null if the target was refused.
+     */
+    private static String followUpCommandFor(FlagArgumentMap arguments, StudentTarget target) {
+        Optional<String> idTarget = arguments.getValue(FLAG_NUS_STUDENT_ID);
+        String editTarget;
+        if (target == null) {
+            editTarget = TagCommand.FIELD_INDEX;
+        } else if (idTarget.isPresent()) {
+            editTarget = FLAG_TARGET_ID + " " + idTarget.orElseThrow().trim();
+        } else {
+            editTarget = arguments.getPreamble().trim();
+        }
+        return EditCommand.COMMAND_WORD + " " + editTarget + " " + FLAG_FOLLOW_UP;
     }
 
     /** Reads one target, retaining index diagnostics and using the shared parser for IDs. */

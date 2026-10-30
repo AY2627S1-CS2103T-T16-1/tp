@@ -159,7 +159,7 @@ Field constructors use this shared representation so command input and loaded da
 | Value | Model rule and comparison behavior |
 | --- | --- |
 | `Name` | Requires a Unicode letter or number; preserves punctuation and script. Search and possible-duplicate warnings use a separate comparison key that ignores case, Latin accents/modifiers, apostrophe styles, and dash/space differences. Every character Unicode calls a dash, and the minus sign, reads as a space, while a dash-shaped letter such as the katakana prolonged sound mark stays significant. The apostrophe variants a roster carries read as the straight apostrophe, the modifier letters of transliterated names among them, while the spacing grave and acute accents stay significant. Stored spelling is preserved. |
-| `Phone` | Requires at least three decimal digits and preserves formatting. `getDigits()` removes other characters and converts Unicode decimal digits to ASCII for numeric search and possible-duplicate warnings. |
+| `Phone` | Requires at least three decimal digits and preserves formatting. `getDigits()` removes other characters and converts Unicode decimal digits to ASCII for numeric search. Possible-duplicate warnings use `isLikelySameNumber`: equal digits, or the whole of the shorter number as the end of the longer, from seven digits up. A country code written in front matches by that rule, and so does an unrelated number ending in the same digits, because `0065 8743 8807` and `+60 12 8743 8807` are the same shape. Telling those apart needs a per-country numbering plan, so the warning stays advisory. |
 | `Email` | Checks TAB's supported `local-part@domain` form. Commands and storage enforce a 254-character limit. A valid address with a dotless domain is accepted with a warning when added or changed. |
 | `NusStudentId` | Accepts 1–32 ASCII letters/digits and stores uppercase using `Locale.ROOT`. It is the sole identity key. |
 | `Tag` | Requires a Unicode letter or number. Commands, storage loading, and summary grouping merge case-insensitive matches, keeping an appropriate display spelling. `Tag.equals()` itself remains case-sensitive. |
@@ -662,9 +662,9 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
 1. Enter `edit --target-id 1ABC -f`, then `find -f`.
    * Expected: Alice appears with the follow-up label. Restarting preserves her status.
 1. Try `tag --id 1ABC -a "Needs follow-up"`, then `tag --id 1ABC -r "Needs follow-up"`.
-   * Expected: Addition is rejected as a reserved marker. Removal explains that follow-up is separate and suggests the edit command that clears it.
+   * Expected: Addition is rejected as a reserved marker and suggests the edit command that sets the flag on Alice. Removal explains that follow-up is separate and suggests the edit command that clears it.
 1. Enter `tag --id 1ABC -a "Needs follow-up soon"`.
-   * Expected: A normal tag is added and the existing flag remains set. Then try `tag --id 1ABC -a "Needs_follow_up"`: it is stored as a general tag with an advisory note that this spelling does not set follow-up status. Alice's existing follow-up remains set.
+   * Expected: A normal tag is added and the existing flag remains set. Then try `tag --id 1ABC -a "Needs_follow_up"`: it is stored as a general tag with an advisory note that this spelling does not set follow-up status, and the note names the edit command that does. Alice's existing follow-up remains set.
 
 ### Deleting with displayed and ID targets
 

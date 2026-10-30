@@ -75,6 +75,58 @@ public class PhoneTest {
     }
 
     @Test
+    public void isLikelySameNumber_null_throwsNullPointerException() {
+        Phone phone = new Phone("87438807");
+
+        assertThrows(NullPointerException.class, () -> phone.isLikelySameNumber(null));
+    }
+
+    @Test
+    public void isLikelySameNumber_sameDigitsHoweverWritten_returnsTrue() {
+        Phone phone = new Phone("8743-8807");
+
+        assertTrue(phone.isLikelySameNumber(new Phone("87438807")));
+        assertTrue(phone.isLikelySameNumber(new Phone("(8743) 8807")));
+        assertTrue(phone.isLikelySameNumber(new Phone("٨٧٤٣٨٨٠٧")));
+        assertTrue(new Phone("000").isLikelySameNumber(new Phone("0 0 0")));
+    }
+
+    @Test
+    public void isLikelySameNumber_countryCodeInFront_returnsTrue() {
+        Phone local = new Phone("87438807");
+
+        for (String international : new String[] {"+65 8743 8807", "0065 8743 8807",
+            "+65-8743-8807", "6587438807", "1 8743 8807"}) {
+            assertTrue(local.isLikelySameNumber(new Phone(international)));
+            assertTrue(new Phone(international).isLikelySameNumber(local));
+        }
+    }
+
+    @Test
+    public void isLikelySameNumber_digitsAddedAtTheEnd_returnsFalse() {
+        Phone phone = new Phone("8743 8807");
+
+        assertFalse(phone.isLikelySameNumber(new Phone("8743 8807 ext 12")));
+        assertFalse(new Phone("8743 8807 ext 12").isLikelySameNumber(phone));
+        assertFalse(phone.isLikelySameNumber(new Phone("874388071")));
+    }
+
+    @Test
+    public void isLikelySameNumber_tailShorterThanAWholeNumber_returnsFalse() {
+        assertFalse(new Phone("4567").isLikelySameNumber(new Phone("+65 9123 4567")));
+        assertFalse(new Phone("+65 9123 4567").isLikelySameNumber(new Phone("4567")));
+        assertFalse(new Phone("234567").isLikelySameNumber(new Phone("91234567")));
+        assertTrue(new Phone("1234567").isLikelySameNumber(new Phone("91234567")));
+    }
+
+    @Test
+    public void isLikelySameNumber_differentNumbersSharingATail_returnsFalse() {
+        assertFalse(new Phone("61234567").isLikelySameNumber(new Phone("71234567")));
+        assertFalse(new Phone("61234567").isLikelySameNumber(new Phone("+65 81234567")));
+        assertFalse(new Phone("87438807").isLikelySameNumber(new Phone("+65 8743 8808")));
+    }
+
+    @Test
     public void equals() {
         Phone phone = new Phone("999");
 

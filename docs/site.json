@@ -2,7 +2,7 @@
   "baseUrl": "",
   "titlePrefix": "",
   "titleSuffix": "TAB",
-  "faviconPath": "images/ruihongc.png",
+  "faviconPath": "images/tab.svg",
   "style": {
     "codeTheme": "light"
   },

@@ -277,9 +277,29 @@ public class TagCommandParserTest {
     @Test
     public void parse_followUpLikeTagsWithPeriod_throwsParseException() {
         // Tags that look like the follow-up marker with trailing punctuation should be rejected
-        assertParseFailure(parser, "1 -a \"Needs follow-up.\"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
-        assertParseFailure(parser, "1 -a \"Needs follow-up!\"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
-        assertParseFailure(parser, "1 -a \"Needs follow-up?\"", ParserUtil.MESSAGE_FOLLOW_UP_IS_NOT_A_TAG);
+        String refusal = ParserUtil.getFollowUpIsNotATagMessage("edit 1 --follow-up");
+        assertParseFailure(parser, "1 -a \"Needs follow-up.\"", refusal);
+        assertParseFailure(parser, "1 -a \"Needs follow-up!\"", refusal);
+        assertParseFailure(parser, "1 -a \"Needs follow-up?\"", refusal);
+    }
+
+    @Test
+    public void parse_followUpLabelAsTag_namesAnEditCommandForTheSameStudent() {
+        // tag takes no follow-up option, so advice naming one fails as soon as it is followed
+        assertParseFailure(parser, "1 -a \"Needs follow-up\"",
+                ParserUtil.getFollowUpIsNotATagMessage("edit 1 --follow-up"));
+        assertParseFailure(parser, "A01234567X -a \"Needs follow-up\"",
+                ParserUtil.getFollowUpIsNotATagMessage("edit A01234567X --follow-up"));
+        assertParseFailure(parser, "--id 001234 -a \"Needs follow-up\"",
+                ParserUtil.getFollowUpIsNotATagMessage("edit --target-id 001234 --follow-up"));
+    }
+
+    @Test
+    public void parse_followUpLabelAsTagWithAnUnreadableTarget_namesTheIndexField() {
+        // no student is named, so the remedy names the field rather than a target that fails
+        assertParseFailure(parser, "0! -a \"Needs follow-up\"",
+                ParserUtil.MESSAGE_INVALID_INDEX + "\n"
+                        + ParserUtil.getFollowUpIsNotATagMessage("edit INDEX --follow-up"));
     }
 
     @Test
