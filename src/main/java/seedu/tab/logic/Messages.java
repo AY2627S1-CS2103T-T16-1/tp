@@ -3,7 +3,6 @@ package seedu.tab.logic;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -179,8 +178,7 @@ public class Messages {
         if (!student.getTags().isEmpty()) {
             builder.append("; Tags: ");
             student.getTags().stream()
-                    .sorted(Comparator.<Tag, String>comparing(tag -> tag.getTagName(), String.CASE_INSENSITIVE_ORDER)
-                            .thenComparing(tag -> tag.getTagName()))
+                    .sorted(Tag.DISPLAY_ORDER)
                     .forEach(builder::append);
         }
         student.getFlag().ifPresent(flag -> builder.append("; ").append(flag.getTagName()));
