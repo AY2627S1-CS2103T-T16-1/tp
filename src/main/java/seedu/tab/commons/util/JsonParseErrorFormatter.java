@@ -20,7 +20,7 @@ class JsonParseErrorFormatter {
 
     private static final int JSON_ERROR_CONTEXT_LINE_COUNT = 1;
     private static final int JSON_ERROR_MAX_LINE_LENGTH = 160;
-    private static final String JSON_ERROR_ELLIPSIS = "...";
+    private static final String JSON_ERROR_ELLIPSIS = "…";
     private static final int JSON_ERROR_ELLIPSIS_LENGTH =
             JSON_ERROR_ELLIPSIS.codePointCount(0, JSON_ERROR_ELLIPSIS.length());
     private static final String JSON_ERROR_LINE_SEPARATOR_PATTERN = "\\r\\n|\\r|\\n";

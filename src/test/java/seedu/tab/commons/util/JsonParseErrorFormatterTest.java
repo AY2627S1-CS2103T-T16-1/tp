@@ -186,8 +186,18 @@ public class JsonParseErrorFormatterTest {
 
         String expectedMessage = "The data is not in the expected JSON format at line 1, column 1: Invalid content\n"
                 + "Affected source:\n"
-                + "> 1 | " + "x".repeat(154) + "...";
+                + "> 1 | " + "x".repeat(158) + "…";
         assertEquals(expectedMessage, JsonParseErrorFormatter.format(exception, jsonSource).toDisplayText());
+    }
+
+    @Test
+    public void format_croppedLine_marksTheCropWithOneEllipsisCharacter() {
+        String excerptLine = getAffectedExcerptLine("x".repeat(500), 250);
+
+        assertTrue(excerptLine.startsWith("…"));
+        assertTrue(excerptLine.endsWith("…"));
+        assertFalse(excerptLine.contains("..."));
+        assertEquals(EXCERPT_MAX_CHARACTER_COUNT, countCharacters(excerptLine));
     }
 
     @Test
