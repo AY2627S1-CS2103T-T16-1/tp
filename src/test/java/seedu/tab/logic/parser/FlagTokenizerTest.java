@@ -131,6 +131,31 @@ public class FlagTokenizerTest {
     }
 
     @Test
+    public void tokenize_optionGluedToQuotedValue_rejectsAsUnknownOption() {
+        for (String marker : List.of("-t", "--tag", "-p", "--phone", "-f", "--unknown", "-P")) {
+            for (String quotes : List.of("\"\"", "“”", "＂＂")) {
+                String input = marker + quotes.charAt(0) + "Lab 3" + quotes.charAt(1);
+                String expected = String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker + "Lab 3");
+                assertThrows(UnknownFlagException.class, expected, () -> parse("Amy Lim " + input));
+                assertThrows(UnknownFlagException.class, expected, () -> parse("Amy Lim -p 123 " + input));
+            }
+        }
+    }
+
+    @Test
+    public void tokenize_gluedQuotedOptionInValuePosition_reportsMissingValue() {
+        assertThrows(ParseException.class,
+                String.format(Messages.MESSAGE_FLAG_WITHOUT_VALUE, FLAG_PHONE.getLabel()), () ->
+                    parse("Amy Lim -p -t\"Lab 3\""));
+    }
+
+    @Test
+    public void tokenize_tokenBeginningWithQuote_preservesLiteralOptionText() throws Exception {
+        assertEquals("-tLab 3", parse("\"-t\"Lab\" 3\"").getPreamble());
+        assertEquals(List.of("-tLab 3"), parse("Amy Lim -t \"-t\"Lab\" 3\"").getAllValues(FLAG_TAG));
+    }
+
+    @Test
     public void tokenize_fullyQuotedEqualsForm_staysInThePreamble() throws Exception {
         assertEquals("--phone=123", parse("\"--phone=123\"").getPreamble());
     }
