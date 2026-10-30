@@ -50,7 +50,10 @@ public class MainWindowTest {
             "Siti Nur-Aisyah\nAlex Yeoh\nBernice Yu\nDavid Li\nRoy Balakrishnan";
     private static final long GEOMETRY_TIMEOUT_SECONDS = 10;
 
-    /** The height the window may not shrink below, as {@code MainWindow.fxml} sets it. */
+    /**
+     * The height the window may not shrink below, as {@code MainWindow.fxml} sets it. The
+     * minimum applies to the whole window, so the scene inside it is never taller than this.
+     */
     private static final double MINIMUM_WINDOW_HEIGHT = 400;
 
     /**
@@ -447,9 +450,13 @@ public class MainWindowTest {
     private static void assertCompactStudentView(MainWindow window) {
         Stage stage = window.getPrimaryStage();
         double heightScale = Screen.getPrimary().getOutputScaleY();
-        assertTrue(isWithinLimit(stage.getHeight(), MINIMUM_WINDOW_HEIGHT, heightScale),
-                "the minimum height prevents resizing to fit: height=" + stage.getHeight()
-                        + ", scale=" + heightScale);
+        // The stage height counts the title bar a window manager draws around the scene, which
+        // under one is tens of device pixels and under a plain Xvfb is nothing. The footers below
+        // are laid out in the scene, so measure the scene and leave the frame out of it.
+        double sceneHeight = stage.getScene().getHeight();
+        assertTrue(isWithinLimit(sceneHeight, MINIMUM_WINDOW_HEIGHT, heightScale),
+                "the minimum height prevents resizing to fit: scene=" + sceneHeight
+                        + ", stage=" + stage.getHeight() + ", scale=" + heightScale);
         Region root = (Region) stage.getScene().getRoot();
         assertInside(root, root.lookup("#commandTextField"));
         assertInside(root, root.lookup("#resultDisplay"));
