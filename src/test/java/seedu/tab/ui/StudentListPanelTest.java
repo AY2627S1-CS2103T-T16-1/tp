@@ -41,6 +41,13 @@ public class StudentListPanelTest {
     private static final double ALIGNMENT_ALLOWANCE = 0.5;
     /** Tall enough that a list of ten cards lays every one of them out. */
     private static final double TALL_ENOUGH_FOR_TEN = 1200;
+    /**
+     * About the width the list has when the window is at its own minimum, where the card is
+     * short of what its contents ask for and the layout starts taking width back.
+     */
+    private static final double NARROWEST_LIST_WIDTH = 320;
+    /** A name long enough to want more width than a narrow card has. */
+    private static final String LONG_NAME = "Muhammad Haziq bin Abdul Rahman Shah";
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -240,5 +247,39 @@ public class StudentListPanelTest {
                 - min(positions);
         assertTrue(spread <= ALIGNMENT_ALLOWANCE,
                 "names start " + spread + " apart with " + listDescription + ", at " + positions);
+    }
+
+    @Test
+    public void resize_narrowCardsWithLongNames_keepEveryNameStartingAtTheSameX() throws Exception {
+        // The column is reserved with a preferred width, which a squeezed card is free to take
+        // back. Where it does, each card falls back to the width of its own index and the
+        // ragged edge returns, so the narrow widths are the ones worth pinning.
+        for (int listSize : new int[] {10, 1000}) {
+            for (double listWidth : new double[] {NARROWEST_LIST_WIDTH, 500}) {
+                assertAlignedAt(listSize, listWidth);
+            }
+        }
+    }
+
+    private static void assertAlignedAt(int listSize, double listWidth) throws Exception {
+        onFxThread(() -> {
+            ObservableList<Student> students = FXCollections.observableArrayList();
+            for (int index = 1; index <= listSize; index++) {
+                students.add(new StudentBuilder().withName(LONG_NAME)
+                        .withNusStudentId(String.format("A%07dX", index)).build());
+            }
+            StudentListPanel panel = new StudentListPanel(students);
+            Region root = panel.getRoot();
+            Scene scene = new Scene(root, listWidth, TALL_ENOUGH_FOR_TEN);
+            scene.getStylesheets().add(UiPart.class.getResource("/view/DarkTheme.css").toExternalForm());
+            root.applyCss();
+            root.layout();
+
+            List<Double> positions = nameStartPositions(root);
+            assertTrue(positions.size() >= 10,
+                    "the list should have laid out enough cards to span a digit, at " + positions.size());
+            assertAligned(positions, listSize + " students on a " + listWidth + " wide list");
+            return null;
+        });
     }
 }
