@@ -46,14 +46,14 @@ public class CardHeadline extends Pane {
     @Override
     protected void layoutChildren() {
         initializeChildren();
-        double forTheTags = tags.computeFittedWidth(computeRoomForTags());
-        double leftOver = Math.max(0, getWidth() - forTheTags - (forTheTags > 0 ? SPACING : 0));
+        double fittedTagWidth = tags.computeFittedWidth(computeRoomForTags());
+        double availableNameWidth = Math.max(0, getWidth() - fittedTagWidth - (fittedTagWidth > 0 ? SPACING : 0));
         // the name is drawn no wider than its own text, so the tags sit against the name
         // rather than out at the edge of whatever room the line happens to have
-        double forTheName = Math.min(name.prefWidth(-1), leftOver);
+        double nameWidth = Math.min(name.prefWidth(-1), availableNameWidth);
 
-        layInRow(name, 0, forTheName);
-        layInRow(tags, forTheName + SPACING, forTheTags);
+        layInRow(name, 0, nameWidth);
+        layInRow(tags, nameWidth + SPACING, fittedTagWidth);
     }
 
     /**
@@ -61,20 +61,21 @@ public class CardHeadline extends Pane {
      * room for all of itself, and enough for one chip to be read once it has not.
      */
     private double computeRoomForTags() {
-        double wanted = tags.prefWidth(-1);
-        if (wanted == 0) {
+        double preferredTagWidth = tags.prefWidth(-1);
+        if (preferredTagWidth == 0) {
             return 0;
         }
-        double spare = getWidth() - name.prefWidth(-1) - SPACING;
+        double tagWidthBesideFullName = getWidth() - name.prefWidth(-1) - SPACING;
         // enough for a chip and a count of the tags it leaves out, so that a card beside a
         // long name still says there are more rather than showing one chip and nothing else
-        double floor = Math.min(wanted, tags.minWidth(-1));
+        double minimumTagWidth = Math.min(preferredTagWidth, tags.minWidth(-1));
         // Prefer a readable name, but allow it to yield enough room for a complete
         // count across fonts. At extreme widths, keep some name letters visible.
         double countWidth = Math.min(tags.getCountWidth(),
                 Math.max(0, getWidth() - Math.ceil(name.minWidth(-1)) - SPACING));
-        double sparedForTheName = Math.max(countWidth, getWidth() - READABLE_NAME_WIDTH - SPACING);
-        return Math.clamp(spare, Math.min(floor, Math.max(0, sparedForTheName)), wanted);
+        double tagWidthAllowance = Math.max(countWidth, getWidth() - READABLE_NAME_WIDTH - SPACING);
+        double minimumTagAllocation = Math.min(minimumTagWidth, Math.max(0, tagWidthAllowance));
+        return Math.clamp(tagWidthBesideFullName, minimumTagAllocation, preferredTagWidth);
     }
 
     private void layInRow(Region child, double x, double width) {
