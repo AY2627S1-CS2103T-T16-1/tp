@@ -261,7 +261,7 @@ These safeguards support local single-user work; they do not merge concurrent ed
 
 ### Loading and preserving the data contract
 
-The top-level JSON object contains `students` and an optional `_comment` string. Each student has a required `name`, optional `phone`, `email`, `nusStudentId`, `tags`, and `flag`. The [User Guide's file-editing section](UserGuide.md#editing-the-data-file) specifies the complete format and recovery instructions.
+The top-level JSON object contains `students` and an optional `_comment` string. Each student has a required `name`, optional `phone`, `email`, `nusStudentId`, `tags`, and `flag`. The [User Guide's file-editing section](UserGuide.md#saving-and-editing-data) specifies the complete format and recovery instructions.
 
 | Saved value | Loading behavior |
 | --- | --- |
