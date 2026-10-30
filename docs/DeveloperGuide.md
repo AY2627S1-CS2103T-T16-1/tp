@@ -610,8 +610,6 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
    * Expected: An ID-conflict error; no new student, filter change, or saved-data change.
 1. Enter `add Jose O'Brien -p "+65 (9123) 4567" -e JOSE@example.com --id A61404`.
    * Expected: The record is saved with warnings for matching name, phone, and email. Its different ID permits it to coexist with José.
-1. Enter `add Local Form -p "9123 4567" --id A61405`, then `add Extension Probe -p "+65 9123 4567 ext 12" --id A61406`.
-   * Expected: The first warns of a matching phone against José, whose number holds the same digits behind `+65`. The second adds with no phone warning, because digits after a number reach a different line.
 1. Enter `add Incomplete Probe -p 12 -e missing-at`, then `add Dotless Probe -e probe@nus`.
    * Expected: The first reports both invalid fields and adds nothing. The second succeeds with a dotless-domain warning.
 1. Enter `add Siti s/o Kumaran -t 组别`, then `add Test -t t1 -t T1`.
