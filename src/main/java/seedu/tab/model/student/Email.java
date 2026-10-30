@@ -45,8 +45,10 @@ public class Email {
     // https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3
     private static final String LOCAL_ATOM_REGEX = "[a-zA-Z0-9" + SPECIAL_CHARACTERS + "]+";
     private static final String LOCAL_PART_REGEX = "^" + LOCAL_ATOM_REGEX + "(\\." + LOCAL_ATOM_REGEX + ")*";
+    // A label may hold a run of hyphens, which is what an IDNA A-label such as xn--bcher-kva
+    // needs: https://www.rfc-editor.org/rfc/rfc5890.html#section-2.3.2.1
     private static final String DOMAIN_PART_REGEX = ALPHANUMERIC_NO_UNDERSCORE
-            + "(-" + ALPHANUMERIC_NO_UNDERSCORE + ")*";
+            + "(-+" + ALPHANUMERIC_NO_UNDERSCORE + ")*";
     private static final int MINIMUM_LAST_LABEL_LENGTH = 2;
     private static final String DOMAIN_LAST_PART_REGEX =
             "(" + DOMAIN_PART_REGEX + "){" + MINIMUM_LAST_LABEL_LENGTH + ",}$";
@@ -119,17 +121,19 @@ public class Email {
         return hasAdjacentAlphanumericCharacters(labels[labels.length - 1]);
     }
 
+    /**
+     * Returns true if {@code label} obeys the letter-digit-hyphen rule: it is non-empty, holds
+     * only ASCII letters, digits and hyphens, and neither begins nor ends with a hyphen. A run
+     * of hyphens inside the label is left to stand, because an A-label carries one.
+     */
     private static boolean isValidDomainLabel(String label) {
         if (label.isEmpty() || label.charAt(0) == '-' || label.charAt(label.length() - 1) == '-') {
             return false;
         }
-        boolean wasHyphen = false;
         for (char character : label.toCharArray()) {
-            boolean isHyphen = character == '-';
-            if ((!isHyphen && !isAsciiAlphanumeric(character)) || (isHyphen && wasHyphen)) {
+            if (character != '-' && !isAsciiAlphanumeric(character)) {
                 return false;
             }
-            wasHyphen = isHyphen;
         }
         return true;
     }
