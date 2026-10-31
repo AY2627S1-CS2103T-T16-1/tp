@@ -36,7 +36,7 @@ UniqueStudentList --> "0..*   " Student : records
 Student --> "1   " Name
 Student --> "0..1   " Phone
 Student --> "0..1   " Email
-Student --> "0..1   " NusStudentId
+Student --> "0..1" NusStudentId
 Student --> "0..*   " Tag : general tags
 Student --> "0..1   " FollowUpFlag
 FollowUpFlag -up-|> Tag
