@@ -344,10 +344,6 @@ Check that TAB's home folder is writable and has free disk space, then retry the
 
 TAB uses a lock file, `data/.tab.json.lock`, to coordinate saves between windows. When an error names it, close all TAB windows and restore write access to that file before restarting. Leave the file in place.
 
-## Known issues
-
-For reported problems and their status, see the [open bug reports](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues?q=is%3Aissue%20is%3Aopen%20label%3Atype.Bug).
-
 ## Command summary
 
 For `TARGET`, see [Choosing a student](#choosing-a-student).
