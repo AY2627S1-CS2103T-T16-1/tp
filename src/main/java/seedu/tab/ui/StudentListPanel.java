@@ -78,9 +78,15 @@ public class StudentListPanel extends UiPart<Region> {
      * scene. The first pass materializes the cards, which is what gives them their real
      * heights; the second scrolls again now that those heights are known, since the first
      * aimed at the estimates the list had before any card existed.
+     *
+     * <p>A third is needed because a card is not done growing after the second: one whose
+     * contact details wrap gains a line only once it has a width to wrap against, which it
+     * gets from the scroll that revealed it. Two passes left such a card 19 pixels below the
+     * list on a 740 by 600 window, with nothing to scroll to it again. A fourth is margin, as
+     * the passes cost nothing once the list has stopped moving under them.
      */
     private final class Reveal implements Runnable {
-        private static final int PASSES = 2;
+        private static final int PASSES = 4;
 
         private final Scene scene;
         private final Student student;
