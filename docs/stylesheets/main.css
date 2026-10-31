@@ -13,6 +13,10 @@ mark {
   width: 100%;
 }
 
+.student-target-forms code {
+  white-space: nowrap;
+}
+
 /* Scrollbar */
 
 .slim-scroll::-webkit-scrollbar {
