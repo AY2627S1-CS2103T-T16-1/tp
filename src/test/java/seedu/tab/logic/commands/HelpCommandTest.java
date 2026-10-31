@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.tab.logic.commands.HelpCommand.SHOWING_HELP_MESSAGE;
+import static seedu.tab.logic.parser.CommandTokenizer.ESCAPE;
+import static seedu.tab.logic.parser.CommandTokenizer.QUOTE;
+import static seedu.tab.logic.parser.CommandTokenizer.VALUE_SEPARATOR;
 import static seedu.tab.testutil.TypicalStudents.getTypicalStudentBook;
 
 import java.util.List;
@@ -25,6 +28,8 @@ import seedu.tab.model.student.Student;
 public class HelpCommandTest {
 
     private static final String OPTIONAL_FIELD_HEADING = "EDITING OPTIONAL FIELDS";
+    private static final String INPUT_RULE_HEADING = "INPUT RULES";
+    private static final String EXAMPLE_PREFIX = "Example: ";
 
     /**
      * How to tell whether a student still holds the detail each {@code edit} option sets. A
@@ -104,12 +109,51 @@ public class HelpCommandTest {
     }
 
     @Test
+    public void summary_attachedOptionValueExample_setsTheField() throws Exception {
+        String example = inputRuleExample(String.valueOf(VALUE_SEPARATOR));
+        String attachedValue = example.substring(example.indexOf(VALUE_SEPARATOR) + 1);
+        assertEquals(attachedValue, addedBy(example).getPhone().orElseThrow().toString());
+    }
+
+    @Test
+    public void summary_escapedQuoteExample_keepsTheQuote() throws Exception {
+        String example = inputRuleExample(String.valueOf(ESCAPE) + QUOTE);
+        assertTrue(addedBy(example).getName().toString().contains(String.valueOf(QUOTE)),
+                "an escaped quote must reach the value: " + example);
+    }
+
+    @Test
     public void summary_optionalFieldBlock_namesEveryDetailEditCanClear() {
         for (Map.Entry<CliFlag, Predicate<Student>> option : DETAILS_BY_OPTION.entrySet()) {
             String clear = option.getKey() + " \"\"";
             assertEquals(clearsDetail(clear, option.getValue()), isListedAsClearing(clear),
                     OPTIONAL_FIELD_HEADING + " must name every option that empties a detail: " + clear);
         }
+    }
+
+    /**
+     * Returns the first {@code INPUT RULES} example holding {@code syntax}, without its label.
+     *
+     * @throws AssertionError if the block shows no such example.
+     */
+    private static String inputRuleExample(String syntax) {
+        return SHOWING_HELP_MESSAGE.lines()
+                .dropWhile(line -> !line.equals(INPUT_RULE_HEADING))
+                .skip(1)
+                .takeWhile(line -> line.isBlank() || line.startsWith(" "))
+                .map(String::stripLeading)
+                .filter(line -> line.startsWith(EXAMPLE_PREFIX) && line.contains(syntax))
+                .findFirst()
+                .map(line -> line.substring(EXAMPLE_PREFIX.length()))
+                .orElseThrow(() -> new AssertionError(
+                        INPUT_RULE_HEADING + " must show an example using " + syntax));
+    }
+
+    /** Returns the student that {@code example} adds to an empty student book. */
+    private static Student addedBy(String example) throws Exception {
+        Model addedModel = new ModelManager();
+        new StudentBookParser().parseCommand(example).execute(addedModel);
+        return addedModel.getFilteredStudentList().get(0);
     }
 
     /** Returns true if {@code edit 1 CLEAR} leaves the first typical student without the detail. */
