@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.tab.ui.FxToolkit.onFxThread;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -32,6 +33,22 @@ public class StudentListPanelTest {
      * binding taken out and guarded nothing.
      */
     private static final double LIST_WIDTH = 300;
+    /**
+     * How far apart two cards' names may start and still read as one column. Positions snap
+     * to the device pixel grid, so a scaled display can place two aligned names a fraction of
+     * a logical pixel apart. Half a pixel stays far below the width of a digit, which is what
+     * a ragged column costs.
+     */
+    private static final double ALIGNMENT_ALLOWANCE = 0.5;
+    /** Tall enough that a list of ten cards lays every one of them out. */
+    private static final double TALL_ENOUGH_FOR_TEN = 1200;
+    /**
+     * About the width the list has when the window is at its own minimum, where the card is
+     * short of what its contents ask for and the layout starts taking width back.
+     */
+    private static final double NARROWEST_LIST_WIDTH = 320;
+    /** A name long enough to want more width than a narrow card has. */
+    private static final String LONG_NAME = "Muhammad Haziq bin Abdul Rahman Shah";
 
     @BeforeAll
     public static void startToolkit() throws Exception {
@@ -164,5 +181,106 @@ public class StudentListPanelTest {
         });
 
         assertTrue(fits, "a card outgrew the list and would scroll it sideways");
+    }
+
+    @Test
+    public void resize_listGrowingToATwoDigitIndex_keepsEveryNameStartingAtTheSameX() throws Exception {
+        onFxThread(() -> {
+            ObservableList<Student> students = FXCollections.observableArrayList();
+            for (int index = 1; index <= 9; index++) {
+                students.add(new StudentBuilder().withName("Student " + index).build());
+            }
+            StudentListPanel panel = new StudentListPanel(students);
+            Region root = panel.getRoot();
+            Scene scene = new Scene(root, 900, TALL_ENOUGH_FOR_TEN);
+            scene.getStylesheets().add(UiPart.class.getResource("/view/DarkTheme.css").toExternalForm());
+            root.applyCss();
+            root.layout();
+
+            List<Double> single = nameStartPositions(root);
+            assertEquals(9, single.size(), "every card of the nine should have laid out a name");
+            assertAligned(single, "nine single-digit indices");
+
+            // the tenth student widens the column, and the nine cards already on screen keep
+            // their own students, so nothing rebuilds them unless the panel asks for it
+            students.add(new StudentBuilder().withName("Student 10").build());
+            root.applyCss();
+            root.layout();
+
+            List<Double> withTen = nameStartPositions(root);
+            assertEquals(10, withTen.size(), "every card of the ten should have laid out a name");
+            assertAligned(withTen, "nine single-digit indices and one double-digit index");
+            assertTrue(min(withTen) > min(single),
+                    "a two-digit index should widen the column, from " + min(single)
+                            + " to " + min(withTen));
+            return null;
+        });
+    }
+
+    @Test
+    public void widestIndex_listSizes_reserveOneDigitPerDigitOfTheSize() {
+        assertEquals("8", StudentCard.widestIndex(0));
+        assertEquals("8", StudentCard.widestIndex(1));
+        assertEquals("8", StudentCard.widestIndex(9));
+        assertEquals("88", StudentCard.widestIndex(10));
+        assertEquals("88", StudentCard.widestIndex(99));
+        assertEquals("888", StudentCard.widestIndex(100));
+        assertEquals("8888", StudentCard.widestIndex(1000));
+    }
+
+    /** Returns where each laid-out card starts its name, in scene coordinates. */
+    private static List<Double> nameStartPositions(Region root) {
+        return root.lookupAll(".list-cell").stream()
+                .filter(node -> node instanceof ListCell<?> cell && cell.getIndex() >= 0
+                        && cell.getGraphic() != null)
+                .map(node -> ((ListCell<?>) node).getGraphic().lookup("#name"))
+                .filter(name -> name != null)
+                .map(name -> name.localToScene(name.getLayoutBounds()).getMinX())
+                .toList();
+    }
+
+    private static double min(List<Double> positions) {
+        return positions.stream().mapToDouble(Double::doubleValue).min().orElseThrow();
+    }
+
+    private static void assertAligned(List<Double> positions, String listDescription) {
+        double spread = positions.stream().mapToDouble(Double::doubleValue).max().orElseThrow()
+                - min(positions);
+        assertTrue(spread <= ALIGNMENT_ALLOWANCE,
+                "names start " + spread + " apart with " + listDescription + ", at " + positions);
+    }
+
+    @Test
+    public void resize_narrowCardsWithLongNames_keepEveryNameStartingAtTheSameX() throws Exception {
+        // The column is reserved with a preferred width, which a squeezed card is free to take
+        // back. Where it does, each card falls back to the width of its own index and the
+        // ragged edge returns, so the narrow widths are the ones worth pinning.
+        for (int listSize : new int[] {10, 1000}) {
+            for (double listWidth : new double[] {NARROWEST_LIST_WIDTH, 500}) {
+                assertAlignedAt(listSize, listWidth);
+            }
+        }
+    }
+
+    private static void assertAlignedAt(int listSize, double listWidth) throws Exception {
+        onFxThread(() -> {
+            ObservableList<Student> students = FXCollections.observableArrayList();
+            for (int index = 1; index <= listSize; index++) {
+                students.add(new StudentBuilder().withName(LONG_NAME)
+                        .withNusStudentId(String.format(Locale.ROOT, "A%07dX", index)).build());
+            }
+            StudentListPanel panel = new StudentListPanel(students);
+            Region root = panel.getRoot();
+            Scene scene = new Scene(root, listWidth, TALL_ENOUGH_FOR_TEN);
+            scene.getStylesheets().add(UiPart.class.getResource("/view/DarkTheme.css").toExternalForm());
+            root.applyCss();
+            root.layout();
+
+            List<Double> positions = nameStartPositions(root);
+            assertTrue(positions.size() >= 10,
+                    "the list should have laid out enough cards to span a digit, at " + positions.size());
+            assertAligned(positions, listSize + " students on a " + listWidth + " wide list");
+            return null;
+        });
     }
 }

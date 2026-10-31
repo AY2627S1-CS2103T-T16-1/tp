@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import seedu.tab.ui.CardHeadline?>
 <?import seedu.tab.ui.CardName?>
@@ -16,12 +17,25 @@
     <Insets top="12" right="14" bottom="12" left="14" />
   </padding>
 
-  <Label fx:id="id" styleClass="card-index">
-    <minWidth>
-      <!-- Ensures that the label text is never truncated -->
-      <Region fx:constant="USE_PREF_SIZE" />
-    </minWidth>
-  </Label>
+  <!-- The invisible index behind the real one reserves the column, so the text beside it
+       starts at the same place on every card however many digits that card's own index has.
+       It is invisible rather than absent because JavaFX lays it out with the real font, at
+       whatever display scale, where measuring the text here could go stale. -->
+  <StackPane alignment="TOP_RIGHT">
+    <Label fx:id="indexWidth" styleClass="card-index" visible="false">
+      <minWidth>
+        <!-- The reserved width is held under pressure too, or a squeezed card falls back to
+             its own index and the column goes ragged where the window is narrowest -->
+        <Region fx:constant="USE_PREF_SIZE" />
+      </minWidth>
+    </Label>
+    <Label fx:id="id" styleClass="card-index">
+      <minWidth>
+        <!-- Ensures that the label text is never truncated -->
+        <Region fx:constant="USE_PREF_SIZE" />
+      </minWidth>
+    </Label>
+  </StackPane>
 
   <VBox fx:id="details" spacing="4" HBox.hgrow="ALWAYS" minWidth="0">
     <HBox alignment="CENTER_LEFT" spacing="12">

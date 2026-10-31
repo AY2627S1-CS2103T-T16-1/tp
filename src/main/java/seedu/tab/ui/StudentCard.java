@@ -35,6 +35,8 @@ public class StudentCard extends UiPart<Region> {
     @FXML
     private Label id;
     @FXML
+    private Label indexWidth;
+    @FXML
     private Label phone;
     @FXML
     private Label email;
@@ -46,12 +48,23 @@ public class StudentCard extends UiPart<Region> {
     private TagRow tags;
 
     /**
-     * Creates a {@code StudentCard} with the given {@code Student} and index to display.
+     * Creates a {@code StudentCard} with the given {@code Student} and index to display,
+     * reserving room for an index of its own width.
      */
     public StudentCard(Student student, int displayedIndex) {
+        this(student, displayedIndex, displayedIndex);
+    }
+
+    /**
+     * Creates a {@code StudentCard} with the given {@code Student} and index to display,
+     * reserving room for the widest index a list of {@code listSize} students can show so
+     * that the text beside the index starts at the same place on every card.
+     */
+    public StudentCard(Student student, int displayedIndex, int listSize) {
         super(FXML);
         this.student = student;
         id.setText(String.valueOf(displayedIndex));
+        indexWidth.setText(widestIndex(listSize));
         UiText.showToFit(name, student.getName().getFullName());
         show(phone, student.getPhone().map(Phone::toString).orElse(null));
         show(email, student.getEmail().map(Email::toString).orElse(null));
@@ -65,6 +78,16 @@ public class StudentCard extends UiPart<Region> {
                 .sorted(Tag.DISPLAY_ORDER)
                 .map(tag -> tag.getTagName())
                 .toList());
+    }
+
+    /**
+     * Returns a stand-in for the widest index a list of {@code listSize} students can show.
+     * The digits of the fonts TAB runs with share one width, so only how many of them an
+     * index has decides the column; an eight stands in for a font whose digits differ.
+     */
+    static String widestIndex(int listSize) {
+        int digits = String.valueOf(Math.max(1, listSize)).length();
+        return "8".repeat(digits);
     }
 
     /**
