@@ -212,7 +212,8 @@ Searches the whole book using the [student field options](#student-fields).
 * Supply at least one field term or follow-up option.
 * Each term needs a field option, such as `-n` for names or `-e` for emails.
 * The matching ignores case and accepts partial values. <br>
-  For example,  `john` matches `Johnathan`.
+  For example, `john` matches `Johnathan`. <br>
+  For tags, `find -t T1` also lists students tagged `T10`, `T11`, or `T12`, so this search cannot list only students tagged `T1`.
 * **Every condition must match**, including repeated options for the same field (an `AND` search).
 * To search an entire phrase, use double quotes.
 * Name searches ignore Latin accents, strokes and apostrophe styles. <br>
