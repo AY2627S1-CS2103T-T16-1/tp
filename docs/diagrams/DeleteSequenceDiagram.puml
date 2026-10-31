@@ -2,56 +2,28 @@
 !include style.puml
 skinparam ArrowFontStyle plain
 skinparam defaultFontSize 16
-skinparam sequenceReferenceBackgroundColor white
 
-participant ":LogicManager" as logic LOGIC_COLOR
 participant ":StudentBookParser" as dispatcher LOGIC_COLOR
 participant ":DeleteCommandParser" as parser LOGIC_COLOR
 participant "c:DeleteCommand" as command LOGIC_COLOR
-participant ":Model" as model MODEL_COLOR
-participant ":Storage" as storage STORAGE_COLOR
 
-[-> logic : execute("delete 1")
-activate logic
-logic -> dispatcher : parseCommand("delete 1")
+[-> dispatcher : parseCommand(\n"delete 1")
 activate dispatcher
 create parser
-dispatcher -> parser : DeleteCommandParser()
+dispatcher -> parser : new
 activate parser
 parser --> dispatcher
 deactivate parser
 dispatcher -> parser : parse(" 1")
 activate parser
 create command
-parser -> command : DeleteCommand(target)
+parser -> command : new(target)
 activate command
 command --> parser
 deactivate command
 parser --> dispatcher : command
 deactivate parser
 destroy parser
-dispatcher --> logic : command
+[<-- dispatcher : command
 deactivate dispatcher
-note over logic : Snapshot book and filter
-
-logic -> command : execute(model)
-activate command
-command -> model : read displayed list
-activate model
-model --> command : displayed students
-deactivate model
-note over command : Resolve index 1
-command -> model : deleteStudent(student)
-activate model
-model --> command
-deactivate model
-command --> logic : result
-deactivate command
-
-ref over logic, storage
-  SaveRollbackSequenceDiagram
-  (post-command save and rollback)
-end ref
-[<-- logic : result
-deactivate logic
 @enduml
