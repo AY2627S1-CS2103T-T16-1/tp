@@ -13,13 +13,13 @@ records faster than traditional spreadsheet or mouse-driven applications.
 
 ## Target Users
 
-TAB is built for university teaching assistants—such as those at the NUS School of
-Computing—who manage 150 to 250 students across multiple tutorial or lab slots each semester.
+TAB is built for university teaching assistants, such as those at the NUS School of
+Computing, who manage 150 to 250 students across multiple tutorial or lab slots each semester.
 
 ## Value Proposition
 
-* **CLI-first speed:** Perform common tasks—adding students, tagging groups, and searching
-  records—entirely from the keyboard without reaching for a mouse.
+* **CLI-first speed:** Perform common tasks (like adding students, tagging groups, and searching
+  records) entirely from the keyboard without reaching for a mouse.
 * **Flexible tagging:** Group and filter students by module, tutorial group, lab slot,
   or team to focus on the class at hand.
 * **Follow-up tracking:** Flag students who require a reply or assistance, and filter
