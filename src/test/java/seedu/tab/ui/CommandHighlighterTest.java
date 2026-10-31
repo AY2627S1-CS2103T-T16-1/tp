@@ -91,7 +91,31 @@ public class CommandHighlighterTest {
             assertEquals(List.of(COMMAND_WORD, VALUE, OPTION), kindsOf("add a\\" + opening + "b -f"));
             // Unclosed whole or partial quotes remain highlightable while the user is typing.
             assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("add " + opening + "Unclosed value"));
-            assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("add --ta" + opening + "g=x"));
+            assertEquals(List.of(COMMAND_WORD, OPTION), kindsOf("add --ta" + opening + "g=x"));
+        }
+    }
+
+    @Test
+    public void highlight_optionGluedToQuotedValue_colorsTheWholeTokenAsOption() {
+        for (String marker : List.of("-t", "--phone", "--unknown", "-P", "–t")) {
+            for (String quotes : List.of("\"\"", "“”", "＂＂")) {
+                String token = marker + quotes.charAt(0) + "Lab 3" + quotes.charAt(1);
+                String command = "add Amy Lim " + token;
+                assertEquals(new Span(token, OPTION), CommandHighlighter.highlight(command).getLast());
+                assertEquals(command, rejoined(command));
+            }
+        }
+    }
+
+    @Test
+    public void highlight_quotedLiteralAndSeparatedValues_keepQuotedStyling() {
+        for (String quotes : List.of("\"\"", "“”", "＂＂")) {
+            String value = quotes.charAt(0) + "-tLab 3" + quotes.charAt(1);
+            for (String command : List.of("add " + value, "add Amy -t " + value, "add Amy -t=" + value,
+                    "add Amy -t=-prefix" + value)) {
+                assertEquals(QUOTED_VALUE, CommandHighlighter.highlight(command).getLast().kind());
+                assertEquals(command, rejoined(command));
+            }
         }
     }
 
@@ -204,7 +228,7 @@ public class CommandHighlighterTest {
     public void highlight_markerWrittenWithQuotesOrEscapes_isLeftWhole() {
         // a quote or a backslash moves the equals sign the parser counts to, so rather than
         // split such a word in the wrong place the coloring leaves it alone
-        assertEquals(List.of(COMMAND_WORD, QUOTED_VALUE), kindsOf("add --ta\"g\"=x"));
+        assertEquals(List.of(COMMAND_WORD, OPTION), kindsOf("add --ta\"g\"=x"));
         assertEquals(List.of(COMMAND_WORD, OPTION), kindsOf("add --ta\\\\g=x"));
     }
 

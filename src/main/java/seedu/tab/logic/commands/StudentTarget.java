@@ -74,8 +74,7 @@ public final class StudentTarget {
     }
 
     /**
-     * Returns how this target is named in the log. An NUS Student ID is referred to rather
-     * than repeated, because a student's own details never reach the log.
+     * Returns a description of this target for logging, omitting the NUS Student ID value.
      */
     public String describe() {
         if (index != null) {
