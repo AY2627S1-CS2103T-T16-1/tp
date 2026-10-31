@@ -70,7 +70,8 @@
         "clear-confirmation": "Clear confirmation",
         "command-entry-history-and-long-values": "Command entry, history, and long values",
         "loading-hand-edited-data": "Loading hand-edited data",
-        "save-failures-and-stale-windows": "Save failures and stale windows"
+        "save-failures-and-stale-windows": "Save failures and stale windows",
+        "appendix-planned-enhancements": "Appendix: Planned Enhancements"
       },
       "headingKeywords": {}
     },
