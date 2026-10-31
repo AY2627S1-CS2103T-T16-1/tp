@@ -1,0 +1,39 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+skinparam defaultFontSize 16
+skinparam sequenceReferenceBackgroundColor white
+
+participant ":LogicManager" as logic LOGIC_COLOR
+participant "c:DeleteCommand" as command LOGIC_COLOR
+participant ":Model" as model MODEL_COLOR
+participant ":Storage" as storage STORAGE_COLOR
+
+[-> logic : execute(\n"delete 1")
+activate logic
+ref over logic, command
+  DeleteSequenceDiagram
+  (parse and return command c)
+end ref
+note over logic : Snapshot book\nand filter
+logic -> command : execute(model)
+activate command
+command -> model : read displayed list
+activate model
+model --> command : displayed students
+deactivate model
+note over command : Resolve index 1
+command -> model : deleteStudent(student)
+activate model
+model --> command
+deactivate model
+command --> logic : result
+deactivate command
+
+ref over logic, storage
+  SaveRollbackSequenceDiagram
+  (post-command save and rollback)
+end ref
+[<-- logic : result
+deactivate logic
+@enduml

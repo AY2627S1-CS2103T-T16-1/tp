@@ -8,29 +8,30 @@ skinparam arrowColor #555555
 skinparam conditionStyle InsideDiamond
 
 start
-:Resolve data target and sibling lock path;
+:Resolve data target\nand sibling lock path;
 :Try to acquire the save lock;
 if () then ([lock acquired])
   :Reload and validate disk book;
-  if () then ([disk book matches baseline])
-    :Carry forward current disk comment;
-    :Serialize and atomically replace file;
-    :Remember successfully saved book;
+  if () then ([matches baseline])
+    :Carry forward current\ndisk comment;
+    :Serialize and atomically\nreplace file;
+    :Remember successfully\nsaved book;
     :Release lock;
     stop
-  else ([disk book differs from baseline])
+  else ([differs from baseline])
     :Release lock;
     :Report stale data;
     stop
   endif
 else ([lock not acquired])
-  :Report lock failure or busy save;
+  :Report lock failure\nor busy save;
   stop
 endif
 
 legend bottom
   I/O or validation failure aborts the save.
   An acquired lock is released on every exit.
-  Logic restores the book and filter on save failure.
+  Logic restores the book and filter
+  on save failure.
 endlegend
 @enduml
