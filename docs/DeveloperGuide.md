@@ -132,7 +132,7 @@ The command-specific parser determines which options exist and which may repeat:
 * `find` allows repeated field selectors because each adds a condition.
 * No-argument commands such as `list` reject extra text.
 
-Option spellings remain case-sensitive. A rejected spelling is offered the nearest one the command supports: its lowercase, the double-dash form of a word written after a single dash, or both. An em dash autocorrected from `--` leaves one dash before a word, so `—phone` is refused by name and offered `--phone`.
+Option spellings remain case-sensitive. A rejected spelling is offered the nearest one the command supports: its lowercase, its name behind each dash run an option is written with, or both. The name rather than the dashes says which option was meant, so `—phone`, which is what an autocorrected `--` leaves, and `---phone` are both offered `--phone`, while `--p` and `--nf` are offered `-p` and `-nf`. A short option is as long as its command spells it, so name length decides nothing; only a name of more than one letter is offered a long spelling, since no long option is a single letter, and `-n` is never offered `--n`.
 
 Structural errors are reported first: an unclosed quote or unknown option makes field boundaries uncertain. Once the structure is valid, `add` and `edit` collect independent field errors through `ParseProblems`, so several invalid values can be corrected at once. `ValueMessages` and `Messages` format field-specific reasons and shorten long values for readable feedback.
 
