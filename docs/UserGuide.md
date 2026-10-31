@@ -62,6 +62,12 @@ TAB follows common CLI conventions for options and quoted values, using short op
 * Put values containing spaces or beginning with a hyphen in double quotes.<br>
   For example, `tag 1 -a "Lab 3"` adds one tag containing a space.
 
+* Straight (`"`), curly (`“”`) and full-width (`＂`) double quotes all group values; apostrophes stay literal.<br>
+  For example, `tag 1 -a “Lab 3”` works like `tag 1 -a "Lab 3"`.
+
+* A backslash before a double quote or another backslash keeps that character in the value.<br>
+  For example, `add "Baz \"Q\" Lee"` stores the name `Baz "Q" Lee`; `\\` stores one backslash. Before other characters, a backslash stays literal.
+
 * Separate an option from its quoted value with a space or `=`.<br>
   For example, `-t "Lab 3"` and `-t="Lab 3"` work; `-t"Lab 3"` is rejected as an unknown option.
 
@@ -74,7 +80,10 @@ TAB follows common CLI conventions for options and quoted values, using short op
 * A dash within a value stays part of it, and quoting keeps one at the start.<br>
   For example, `add Jean–Luc Picard` keeps the dash in the name, and `add "–Mystery"` names a student `–Mystery`.
 
-The built-in `help` reference covers additional syntax, including `OPTION=VALUE` and escaping quotation marks. TAB suggests corrections for mistyped commands, and for options given with the wrong case or the wrong number of dashes, but you must correct and resubmit them.
+* Repeat options only where the format allows repetition, including mixed short and long spellings. For example, `-p` and `--phone` cannot both set a phone in one command.
+* Commands without arguments (`help`, `list`, `clear`, `exit`) reject extra input.
+
+Options also accept `OPTION=VALUE`, such as `--phone=91234567`. Only the first `=` separates the option from its value. The built-in `help` reference also explains quoting and escaping. TAB suggests corrections for mistyped commands, and for options given with the wrong case or the wrong number of dashes, but you must correct and resubmit them.
 
 ### Student fields
 
@@ -84,16 +93,25 @@ The field options below are used by `add`, `edit` and `find`.
 | --- | --- | --- |
 | Name | `add`: first argument, no flag needed<br> `edit`, `find`: `-n` or `--name` | At least one letter or number in any script, with punctuation allowed |
 | Phone | `-p`, `--phone` | At least three digits (formatting, extensions and notes allowed) |
-| Email | `-e`, `--email` | ASCII address such as `sean.o'brien@example.com`, up to 254 characters |
+| Email | `-e`, `--email` | Up to 254 characters; see the email rules below |
 | NUS Student ID | `--id`, `-i` | 1 to 32 ASCII letters or digits, stored in uppercase |
-| Tag | `-t`, `--tag` | At least one letter or number in any script |
+| Tag | `-t`, `--tag` | At least one letter or number in any script; spaces, punctuation and symbols are allowed, such as `Lab 3 (Mon)` or `#urgent` |
 | Follow-up | `--follow-up`, `-f`<br> `--no-follow-up`, `-nf` | Accepts no value |
 
-* Spaces at the ends of values are removed, and repeated spaces become one space.
+Email rules:
+
+* Before `@`, use ASCII letters, digits and <code>!#$%&amp;'*+/=?^_&#96;{|}~-</code>. Dots may separate non-empty groups, as in `sean.o'brien@example.com`, but cannot begin or end this part or appear consecutively.
+* After `@`, use non-empty labels of ASCII letters and digits separated by dots, with hyphens allowed inside each label. The final label must contain at least two adjacent letters or digits.
+* Quoted local parts (such as `"john doe"@example.com`) and address literals (such as `user@[192.168.0.1]`) are unsupported.
+* A domain without a dot, such as `john@gmail`, is saved with a warning to check for a missing ending.
+
+Other field rules:
+
+* Spaces at the ends of values are removed, and repeated spaces become one space. Invisible format and non-whitespace control characters are removed; script-shaping joiners are kept.
 * Tags differing only in case or extra spaces are treated as the same tag.
 * The tag `Needs follow-up` is reserved for the follow-up flag, as are its spacing, hyphen and trailing-punctuation variants such as `Needs follow up`. A tag differing by other punctuation, such as `Needs_follow_up`, is saved with a warning instead and does not set the flag.
 * NUS Student IDs must be unique across the book, ignoring case.
-* After you `add` or `edit` a student, a possible-duplicate warning may be raised if the result has a matching name, phone or email.
+* After you `add` or `edit` a student, a possible-duplicate warning may be raised if the result has a matching name, phone or email. Names use the same equivalence rules as name searches; emails ignore case. The record is still saved.
 * Phones match whatever their punctuation, and a number also matches a longer one that ends with it, so `8743 8807` matches `+65 8743 8807`. An unrelated number ending in the same digits matches too.
 * Digits added at the end make a different number, so `8743 8807 ext 12` does not match `8743 8807`. Below seven digits, only an exact match counts.
 * For duplicate warnings, you can exercise your own judgement and ignore them if you know that the records describe different students.
@@ -106,7 +124,8 @@ The field options below are used by `add`, `edit` and `find`.
 | --- | --- | --- |
 | Displayed index | Position in the **currently displayed list**, starting at 1 | `edit 1 -p 91234567` |
 | NUS Student ID | ID beginning with a letter, matched across the whole book regardless of case | `edit A01234567X -p 91234567` |
-| Explicit ID option | Any ID, including one beginning with a digit | `edit --target-id A01234567X -p 91234567` |
+| Explicit ID option for `edit` | Any ID, including one beginning with a digit | `edit --target-id 1234 -p 91234567` |
+| Explicit ID option for `tag` and `delete` | `--id` or `-i`, including digit-leading IDs | `tag --id 1234 -a T2` or `delete --id 1234` |
 
 * For example: after `find -n Charlotte`, Charlotte is displayed as student `1`, so `delete 1` would delete Charlotte. Subsequently, running `list` will then show the whole book, where index `1` may refer to someone else.
 
@@ -118,7 +137,9 @@ The field options below are used by `add`, `edit` and `find`.
 For example:
 1. Run `add Numeric Example --id 1234` to add a student with ID `1234`.
 2. Run `edit --target-id 1234 -p 91234567` to update the student.
-3. Run `edit --target-id 1234 --id E7654321` to change their ID.
+3. Run `tag --id 1234 -a T2` to add a tag to the same student.
+4. Run `edit --target-id 1234 --id E7654321` to change their ID.
+5. Run `delete --id E7654321` to remove this example student.
 
 **TIP**: `delete`, `edit` and `tag` keep the currently active search and filter, so students may disappear when they no longer match. To avoid acting on the wrong student, you may want to check the displayed indices after each change, or use NUS Student ID as the target.
 
@@ -177,7 +198,7 @@ Edits an existing student selected by [displayed index or NUS Student ID](#choos
 **Format** `edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`
 
 * Supply at least one change, using the [student field rules](#student-fields).
-* Omitted fields stay unchanged.
+* Omitted fields stay unchanged. If every supplied value is unchanged, TAB reports no changes and leaves the records, search and saved file unchanged.
 * Use `-p ""`, `-e ""` or `--id ""` to clear an optional detail. A value holding only spaces, of any kind, clears it too.
 * Supplied tags **replace all existing tags**. Using `-t ""` alone will also clear every tag. To change one tag while keeping the others, consider using the `tag` command instead.
 * Use `--follow-up` or `-f` to set the flag, or `--no-follow-up` or `-nf` to clear it.
@@ -193,6 +214,8 @@ Examples
 Adds or removes **one** tag for an existing student selected by [displayed index or NUS Student ID](#choosing-a-student).
 
 **Format** `tag TARGET -a TAG` or `tag TARGET -r TAG`
+
+`TARGET` is a displayed index, a letter-leading ID, or `--id NUS_STUDENT_ID` (alias `-i`).
 
 * You may use `--add` in place of `-a`, or `--remove` in place of `-r`.
 * Other tags and details remain unchanged.
@@ -217,6 +240,7 @@ Searches the whole book using the [student field options](#student-fields).
 * To search an entire phrase, use double quotes.
 * Name searches ignore Latin accents, strokes and apostrophe styles. <br>
   For example, `dang` matches `Đặng`.
+* Accents and apostrophe styles remain significant in tags and other fields.
 * Name searches treat hyphens and the longer dashes as spaces, because the same name may be punctuated differently from one roster to the next. Other fields, such as tags, do not. <br>
   For example, `find -n "Mary Jane"` matches the names `Mary-Jane` and `Mary–Jane`, but `find -t "Mary Jane"` does not match the tag `Mary-Jane`.
 * Phone searches match digits across formatting. <br>
@@ -234,6 +258,8 @@ Examples
 Deletes one student immediately with no undo command. The student to delete is selected by [displayed index or NUS Student ID](#choosing-a-student).
 
 **Format** `delete TARGET`
+
+`TARGET` is a displayed index, a letter-leading ID, or `--id NUS_STUDENT_ID` (alias `-i`).
 
 Examples
 
@@ -278,7 +304,7 @@ In this example, the student summary counts three students and one follow-up fla
 | `Tab`, `Shift`+`Tab` | Move forward or backward through the command box, student list, tag list in the student summary and visible reply |
 | Arrow keys, `Page Up`, `Page Down`, `Home`, `End` | Navigate the focused list or reply |
 
-Command history lasts until TAB closes.
+Command history lasts until TAB closes. `Down` past the newest entry restores your unfinished command. Rejected commands are included; consecutive identical submissions appear once. Blank input and replies to `clear` confirmation are omitted.
 
 ### Saving and editing data
 
@@ -288,13 +314,21 @@ If a save fails, the records from before the command are restored.
 
 Use one TAB window per data file when editing. If another window has saved changes, restart the older window to load them before retrying.
 
-Advanced users can edit the JSON file after closing every TAB window and making a backup. Save as UTF-8 and preserve the existing structure and field names.
+Advanced users can edit the JSON file after closing every TAB window and making a backup. Save as UTF-8 (with or without a byte order mark) and preserve the existing structure and case-sensitive field names.
+
+The top-level object holds a `students` array and an optional `_comment` string, such as `"_comment": "Tutorial T16"`, which is preserved on saving. A missing or `null` `_comment` means no comment; other value types are rejected. JSON-style `//` or `/* */` comments are unsupported.
 
 | JSON fields | Value type |
 | --- | --- |
 | `name`, `phone`, `email`, `nusStudentId` | Text strings following the [student field rules](#student-fields) |
 | `tags` | Array of strings, such as `["Lab 3", "T1"]` |
 | `flag` | Boolean `true` or `false` |
+
+* Only `name` is required in each student record. Missing or `null` optional fields mean no value; blank phone, email and ID strings also mean no value. Empty-array `tags` means no tags; `false` `flag` means no follow-up.
+* Tags must be strings in an array. Case and spacing variants merge on loading, keeping the first normalized spelling. Reserved follow-up tags must instead be represented by `"flag": true`.
+* IDs must be unique across records, ignoring case. Names, phones and emails may be shared.
+* Keys must appear once per object. Unknown keys and extra JSON after the book object are rejected. The legacy student `address` key is accepted and ignored.
+* TAB follows a symbolic link at `data/tab.json`, keeping the link when saving. Its target folder must exist before startup.
 
 If a file is invalid or unreadable, TAB reports the problem and leaves it unchanged without opening the main window. Repair the file before restarting.
 
@@ -310,6 +344,10 @@ Check that TAB's home folder is writable and has free disk space, then retry the
 
 TAB uses a lock file, `data/.tab.json.lock`, to coordinate saves between windows. When an error names it, close all TAB windows and restore write access to that file before restarting. Leave the file in place.
 
+## Known issues
+
+* Double-clicking `tab.jar` may not launch TAB on some systems. Open a terminal in its folder and run `java -jar tab.jar` instead.
+
 ## Command summary
 
 | Action | Format or example |
@@ -317,8 +355,8 @@ TAB uses a lock file, `data/.tab.json.lock`, to coordinate saves between windows
 | Add | `add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]` |
 | List | `list` |
 | Edit | `edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]` |
-| Add a tag | `tag TARGET -a TAG` |
-| Remove a tag | `tag TARGET -r TAG` |
+| Add a tag | `tag TARGET -a TAG`, where `TARGET` may be `--id NUS_STUDENT_ID` (alias `-i`) |
+| Remove a tag | `tag TARGET -r TAG`, where `TARGET` may be `--id NUS_STUDENT_ID` (alias `-i`) |
 | Find | `find [FIELD_OPTION TERM]... [-f \| -nf]`, such as `find -n Alex -t T1` |
 | Delete | `delete TARGET`, with `--id NUS_STUDENT_ID` for digit-leading IDs |
 | Clear | `clear`, then confirm or cancel |
