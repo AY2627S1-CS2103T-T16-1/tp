@@ -6,7 +6,7 @@
 
 # TAB User Guide
 
-TAB (Teaching Assistant's Book) is a **desktop application for teaching assistants to manage student records through typed commands**. You can keep contact details, group students with tags and track who needs follow-up in one graphical window.
+TAB (Teaching Assistant's Address Book) is a **desktop application for teaching assistants to manage student records through typed commands**. You can keep contact details, group students with tags and track who needs follow-up in one graphical window.
 
 <!-- Adapted from the inherited AddressBook-Level3 User Guide by SE-EDU. -->
 <!-- https://github.com/NUS-CS2103-AY2627-S1/tp/blob/master/docs/UserGuide.md -->
