@@ -172,3 +172,7 @@ h5,
 h6 {
   color: #e46c0a;
 }
+
+code.preserve-whitespace {
+  white-space: pre;
+}

@@ -18,12 +18,12 @@ class SummaryPanel
 class HelpPage
 class StatusBarFooter
 
-MainWindow --> CommandBox
-MainWindow --> ResultDisplay
-MainWindow --> StudentListPanel
-MainWindow --> SummaryPanel
-MainWindow --> HelpPage
-MainWindow --> StatusBarFooter
+MainWindow --> "1" CommandBox
+MainWindow --> "1" ResultDisplay
+MainWindow --> "1" StudentListPanel
+MainWindow ..> SummaryPanel : creates
+MainWindow --> "1      " HelpPage
+MainWindow ..> StatusBarFooter : creates
 StudentListPanel ..> StudentCard : creates for visible cells
 
 CommandBox -[hidden]right-> ResultDisplay
