@@ -85,6 +85,15 @@ public class EditCommand extends Command {
                     + FLAG_TARGET_ID.getLabel() + ".";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
 
+    /**
+     * How a missing target is explained to a user who gave the ID field expecting it to select
+     * the student, as it does in {@code delete} and {@code tag}.
+     */
+    public static final String MESSAGE_ID_FIELD_IS_NOT_TARGET =
+            Messages.getErrorMessageForMissingFields(FIELD_TARGET) + ". "
+                    + FLAG_NUS_STUDENT_ID.getMarkerWithAliases() + " sets a new NUS Student ID; "
+                    + FLAG_TARGET_ID.getLabel() + " selects the student holding one.";
+
     private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
 
     private final StudentTarget target;

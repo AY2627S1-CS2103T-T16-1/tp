@@ -76,10 +76,22 @@ public class EditCommandParser implements Parser<EditCommand> {
             return StudentTarget.byNusStudentId(ParserUtil.parseNusStudentId(
                     arguments.getValue(FLAG_TARGET_ID).orElseThrow()));
         }
-        return ParserUtil.parsePreambleTarget(arguments.getPreamble().trim(),
-                EditCommand.ID_TARGET_COMMAND,
+        String preamble = arguments.getPreamble().trim();
+        if (preamble.isEmpty() && isIdFieldSet(arguments)) {
+            throw new ParseException(EditCommand.MESSAGE_ID_FIELD_IS_NOT_TARGET);
+        }
+        return ParserUtil.parsePreambleTarget(preamble, EditCommand.ID_TARGET_COMMAND,
                 value -> ParserUtil.parseRequiredStudentTarget(value, EditCommand.FIELD_TARGET,
                         EditCommand.FIELD_INDEX));
+    }
+
+    /**
+     * Returns true if the command asks for a new NUS Student ID, whatever the value's shape, so
+     * that a target mistyped as the ID field is explained however the ID opens. A blank value
+     * asks for the ID to be cleared, which names no student.
+     */
+    private static boolean isIdFieldSet(FlagArgumentMap arguments) {
+        return arguments.getValue(FLAG_NUS_STUDENT_ID).filter(value -> !value.isBlank()).isPresent();
     }
 
     /**
@@ -115,15 +127,22 @@ public class EditCommandParser implements Parser<EditCommand> {
         return descriptor;
     }
 
-    /** Describes an explicit clear or a validated replacement, collecting any rejected value. */
+    /**
+     * Describes an explicit clear or a validated replacement, collecting any rejected value. A
+     * value that is empty after field normalization, such as {@code -p " "}, asks for the detail
+     * to be removed, the way a blank tag asks for every tag to be removed. Normalization answers
+     * that question rather than {@code String.trim}, which keeps the full-width space a CJK input
+     * method types and the non-breaking space a paste carries, leaving a value the user sees as
+     * blank refused as too short to be a phone number.
+     */
     private static <T> void parseClearableField(ParseProblems problems, String value,
             ParseProblems.ValueParser<T> parser, Runnable clear, Consumer<T> set) {
-        String trimmedValue = value.trim();
-        if (trimmedValue.isEmpty()) {
+        String normalizedValue = StringUtil.normalizeFieldValue(value);
+        if (normalizedValue.isEmpty()) {
             clear.run();
             return;
         }
-        T parsedValue = problems.collect(() -> parser.parse(trimmedValue));
+        T parsedValue = problems.collect(() -> parser.parse(normalizedValue));
         if (parsedValue != null) {
             set.accept(parsedValue);
         }
