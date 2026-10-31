@@ -303,7 +303,7 @@ Closes TAB.
 | --- | --- |
 | Menu bar | `File` and `Help`. |
 | Command box | Where you type. Clears when a command succeeds. |
-| Reply | What TAB says back, errors included. Hidden until there is something to say. |
+| Reply | What the last command did, or why it failed. Not there until you run one. |
 | Student summary | Counts for the students shown. |
 | Student list | One card per student shown, numbered by displayed index. |
 | Status bar | The data file's path. |
