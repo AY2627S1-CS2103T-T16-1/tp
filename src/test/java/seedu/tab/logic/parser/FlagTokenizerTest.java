@@ -312,6 +312,16 @@ public class FlagTokenizerTest {
     }
 
     @Test
+    public void tokenize_dashesCarryingNoName_suggestsNothing() {
+        // dashes alone name nothing to redash, and an option of every dash run would be offered
+        // if the name they carry were not checked for first
+        for (String marker : List.of("--", "---")) {
+            assertThrows(UnknownFlagException.class, "There is no " + marker + " option.", () ->
+                    FlagTokenizer.tokenize("Bob " + marker + " 91234567", FLAG_PHONE));
+        }
+    }
+
+    @Test
     public void tokenize_unsupportedNameAtAnyDashCount_suggestsNothing() {
         // redashing a name the command does not have must not invent an option for it
         for (String input : List.of("--zzz 1", "-z 1", "---zzz 1", "-zzz 1")) {
