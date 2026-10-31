@@ -222,11 +222,11 @@ public class FlagTokenizer {
     }
 
     /**
-     * Returns true if {@code token} marks a field rather than being a value. A quoted token is
-     * always a value, which is how a value opening with the flag marker is given.
+     * Returns true if {@code token} marks a field rather than being a value. A token beginning
+     * with a quote is a value; a quote after an option marker does not hide a mistyped option.
      */
     private static boolean isFlag(Token token) {
-        return !token.isQuoted()
+        return !token.beginsQuoted()
                 && token.value().startsWith(OPTION_MARKER)
                 && token.value().length() > OPTION_MARKER.length();
     }

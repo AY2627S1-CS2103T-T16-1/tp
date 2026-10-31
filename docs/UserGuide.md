@@ -62,6 +62,9 @@ TAB follows common CLI conventions for options and quoted values, using short op
 * Put values containing spaces or beginning with a hyphen in double quotes.<br>
   For example, `tag 1 -a "Lab 3"` adds one tag containing a space.
 
+* Separate an option from its quoted value with a space or `=`.<br>
+  For example, `-t "Lab 3"` and `-t="Lab 3"` work; `-t"Lab 3"` is rejected as an unknown option.
+
 * Command words ignore case, but option names are case-sensitive.<br>
   For example, `LIST` works, but `-P` does not replace `-p`.
 
@@ -175,7 +178,7 @@ Edits an existing student selected by [displayed index or NUS Student ID](#choos
 
 * Supply at least one change, using the [student field rules](#student-fields).
 * Omitted fields stay unchanged.
-* Use `-p ""`, `-e ""` or `--id ""` to clear an optional detail.
+* Use `-p ""`, `-e ""` or `--id ""` to clear an optional detail. A value holding only spaces, of any kind, clears it too.
 * Supplied tags **replace all existing tags**. Using `-t ""` alone will also clear every tag. To change one tag while keeping the others, consider using the `tag` command instead.
 * Use `--follow-up` or `-f` to set the flag, or `--no-follow-up` or `-nf` to clear it.
 

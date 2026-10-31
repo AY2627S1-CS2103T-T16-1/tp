@@ -66,6 +66,16 @@ public class LikelyDuplicateWarningTest {
     }
 
     @Test
+    public void appendTo_hangulNamesSharingLetters_doesNotWarn() {
+        // 임지수 is written with the letters of 이 and one more, which makes it another student
+        Student existing = new StudentBuilder().withName("임지수").withoutPhone().withoutEmail().build();
+        Student changed = new StudentBuilder().withName("이서연").withoutPhone().withoutEmail().build();
+
+        assertEquals(SUCCESS_MESSAGE, LikelyDuplicateWarning.appendTo(
+                SUCCESS_MESSAGE, changed, List.of(existing)));
+    }
+
+    @Test
     public void appendTo_equivalentPhoneDigits_warnsWithoutChangingFormatting() {
         Student existing = new StudentBuilder().withName("Alice Tan").withPhone("9123-4567")
                 .withoutEmail().build();

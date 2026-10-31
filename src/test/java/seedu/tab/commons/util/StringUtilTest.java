@@ -164,6 +164,19 @@ public class StringUtilTest {
     }
 
     @Test
+    public void normalizeNameForComparison_hangulSyllable_staysWholeSyllable() {
+        // decomposition writes 이 as the two letters 임 opens with, and both are letters rather
+        // than marks, so only composing the key back keeps one syllable out of the other
+        assertEquals("이서연", StringUtil.normalizeNameForComparison("이서연"));
+        assertFalse(StringUtil.normalizeNameForComparison("임지수")
+                .contains(StringUtil.normalizeNameForComparison("이")));
+        assertFalse(StringUtil.normalizeNameForComparison("김민준")
+                .contains(StringUtil.normalizeNameForComparison("기")));
+        assertTrue(StringUtil.normalizeNameForComparison("이서연")
+                .contains(StringUtil.normalizeNameForComparison("이서")));
+    }
+
+    @Test
     public void normalizeNameForComparison_otherScriptsAndPunctuation_preservesDistinctions() {
         assertFalse(StringUtil.normalizeNameForComparison("किरण")
                 .equals(StringUtil.normalizeNameForComparison("करण")));
