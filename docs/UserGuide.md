@@ -95,7 +95,7 @@ The field options below are used by `add`, `edit` and `find`.
 | Email | `-e`, `--email` | Up to 254 characters |
 | NUS Student ID | `--id`, `-i` | 1 to 32 ASCII letters or digits, stored in uppercase |
 | Tag | `-t`, `--tag` | At least one letter or number in any script |
-| Follow-up | `--follow-up`, `-f`<br> `--no-follow-up`, `-nf` | Accepts no value |
+| Follow-up | `add`: `--follow-up` or `-f`<br> `edit`, `find`: also `--no-follow-up` or `-nf` | Accepts no value |
 
 #### Additional field rules
 
