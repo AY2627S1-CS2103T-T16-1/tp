@@ -36,14 +36,15 @@ UniqueStudentList --> "0..*   " Student : records
 Student --> "1   " Name
 Student --> "0..1   " Phone
 Student --> "0..1   " Email
-Student --> "0..1   " NusStudentId
+Student --> "0..1" NusStudentId
 Student --> "0..*   " Tag : general tags
 Student --> "0..1   " FollowUpFlag
-FollowUpFlag -up-|> Tag
+FollowUpFlag -right-|> Tag
 
 ' Keep value classes in one row so association ends remain vertical.
 Name -[hidden]right-> Phone
 Phone -[hidden]right-> Email
 Email -[hidden]right-> NusStudentId
-NusStudentId -[hidden]right-> Tag
+NusStudentId -[hidden]right-> FollowUpFlag
+FollowUpFlag -[hidden]right-> Tag
 @enduml
