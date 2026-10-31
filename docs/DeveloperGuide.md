@@ -434,7 +434,7 @@ For these use cases, the **system** is TAB and the **actor** is a teaching assis
   * 5a1. TAB removes the student from the displayed results while retaining the updated record.
   * Use case ends.
 
-Setting/clearing follow-up uses the same edit flow. For deletion, step 3 requests removal and step 4 removes the target; field replacement and ID-conflict checks do not apply. UC03 covers the tag-specific alternatives.
+Setting/clearing follow-up uses the same edit flow. UC03 covers the tag-specific alternatives, and UC06 covers deletion.
 
 #### UC03: Add or remove one tag
 
@@ -512,6 +512,29 @@ Setting/clearing follow-up uses the same edit flow. For deletion, step 3 request
   * 5a1. TAB leaves the file unchanged and reports the remaining problem.
   * Use case resumes at step 3.
 
+#### UC06: Delete a student
+
+**MSS**
+
+1. The user requests to delete a student identified by a displayed index or NUS Student ID.
+1. TAB resolves the target student.
+1. TAB removes the student and saves the updated book.
+1. TAB confirms the deletion and refreshes the filtered view and summary.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The command is invalid or the target does not exist.
+  * 2a1. TAB explains the problem without changing records or the filter.
+  * Use case resumes at step 1.
+* 2b. The user supplies an ID for a student outside the displayed results.
+  * 2b1. TAB resolves the ID against the whole book.
+  * Use case resumes at step 3.
+* 3a. Saving fails.
+  * 3a1. TAB restores the records and filter and explains recovery.
+  * Use case resumes at step 1.
+
 ### Non-functional requirements
 
 These are product acceptance targets. Timing and capacity targets require measurement on the test machine; passing unit tests alone does not establish them.
@@ -528,17 +551,9 @@ These are product acceptance targets. Timing and capacity targets require measur
 
 #### Typing efficiency evaluation
 
-Use a disposable book containing 100 students named `Student 0001` through `Student 0100`, with IDs `S0001` through `S0100`, phones `81230001` through `81230100`, and tag `T1`. Prepare a Calc sheet with the same data in Name, ID, Phone, Email, and Tags columns (A–E). Enable column filters over `A1:E102`, including the header and the empty row for the added student. Keep email empty, store IDs and phones as text, and separate tags with semicolons in the Tags column. Record the Calc version, TAB version, operating system, hardware, and display settings.
+Compare TAB with mouse-driven LibreOffice Calc using identical copies of 100 student records. Time the same sequence: add a student, find another by ID, change their phone, add a tag, and delete the added student. In Calc, use the mouse for navigation, filters, and menus, and the keyboard only for cell values. In TAB, use the command box.
 
-| Task | TAB workflow | Calc baseline |
-| --- | --- | --- |
-| Add a student | `add Student 0101 --id S0101 -p 81230101 -t T1` | Click the next empty row and enter the same values. |
-| Find one student | `find -i S0050` | Use the ID column's filter dropdown to display only `S0050`. |
-| Change that student's phone | `edit --target-id S0050 -p 91234567` | Click the matching phone cell and replace its value. |
-| Add a group tag | `tag --id S0050 -a "Lab 3"` | Edit the matching Tags cell to contain `T1; Lab 3`. |
-| Delete the added student | `list`, then `delete --id S0101` | Clear the filter using its dropdown, select the `S0101` row, and delete it through the row menu. |
-
-Use the same participant for both workflows, after three untimed practice runs of each. In Calc, use the mouse for navigation, filters, and menus; the keyboard is available for entering cell values. In TAB, use its command box. Time five runs of each complete sequence, alternating the starting application between pairs and resetting the data before each run. Start with the application open and ready for input; stop after the deletion result is visible. Include correction time and verify the final records. Compare the two medians; this defines the acceptance test, not a measured performance claim.
+Use the same practiced participant, with three untimed practice runs and five timed runs per application. Alternate application order and reset the data before each run. Start with each application ready for input and stop when the deletion result is visible. Include corrections and verify identical final records. Record application versions, hardware, runtime, and display settings. TAB passes if its median completion time is lower. This is an acceptance target, not a measured performance claim.
 
 ### Glossary
 
@@ -681,11 +696,11 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
    * Expected: The prompt counts the whole book despite the empty displayed result and warns that clearing cannot be undone. No data is written.
 1. Enter `maybe`, then `exit`.
    * Expected: Both are rejected as replies; neither executes a command. The prompt remains pending and the data is unchanged.
-1. Reply ` NO `, then enter `clear` and submit an empty line.
+1. Reply <code class="preserve-whitespace"> NO </code>, then enter `clear` and submit an empty line.
    * Expected: Each cancels, retaining the records and filter.
-1. Enter `clear` and reply ` YeS `.
+1. Enter `clear` and reply <code class="preserve-whitespace"> YeS </code>.
    * Expected: All students are cleared and the empty book survives a restart. Another `clear` reports that the book is already empty without starting a confirmation.
-1. Add `add Pending Probe`, enter `clear`, close the window without replying, and restart.
+1. Enter `add Pending Probe`, enter `clear`, close the window without replying, and restart.
    * Expected: The prompt for a one-student book reads `Clear the only student?` rather than counting the student. Pending Probe remains and no confirmation is pending.
 
 ### Command entry, history, and long values
