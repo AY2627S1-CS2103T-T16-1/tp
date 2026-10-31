@@ -25,6 +25,7 @@ TAB (Teaching Assistant's Book) is a **desktop application for teaching assistan
    and place it in a writable folder, which will be TAB's home folder.
 
 1. Open a terminal in that folder and run `java -jar tab.jar`.
+   Double-clicking `tab.jar` may not work on some systems.
    TAB opens with six sample students when no saved data exists.
 
    ![TAB showing student records and the student summary](images/Ui.png)
@@ -64,7 +65,7 @@ TAB follows common CLI conventions for options and quoted values, using short op
 
 * Curly (`“”`) and full-width (`＂`) double quotes work like straight double quotes.
 
-* Backslashes escape double quotes and other backslashes.<br>
+* Use a backslash (`\`) to escape a double quote (`\"`) or another backslash (`\\`).<br>
   For example, `add "Baz \"Q\" Lee"` stores the name `Baz "Q" Lee`.
 
 * Separate an option from its quoted value with a space or `=`.<br>
@@ -104,9 +105,11 @@ Spaces at the ends of values are removed, and repeated spaces become one space.
 
 ##### Email
 
+TAB accepts the following subset of standard email formats:
+
 * Before `@`, use ASCII letters, digits and <code>!#$%&amp;'*+/=?^_&#96;{|}~-</code>. Dots are allowed between these characters, but not at either end or consecutively; for example, `sean.o'brien@example.com`.
 * After `@`, use ASCII letters and digits, with hyphens inside each dot-separated part. The last part needs at least two adjacent letters or digits.
-* An address without a dot after `@`, such as `john@gmail`, is saved with a warning to check for a missing ending, such as `.com`.
+* An address without a dot after `@`, such as `john@gmail`, is saved because [RFC 5322's address syntax](https://www.rfc-editor.org/rfc/rfc5322.html#section-3.4.1) allows single-part domains. TAB warns in case an ending such as `.com` is missing.
 
 ##### Tags
 
@@ -343,7 +346,7 @@ TAB uses a lock file, `data/.tab.json.lock`, to coordinate saves between windows
 
 ## Known issues
 
-* Double-clicking `tab.jar` may not launch TAB on some systems. Open a terminal in its folder and run `java -jar tab.jar` instead.
+For reported problems and their status, see the [open bug reports](https://github.com/AY2627S1-CS2103T-T16-1/tp/issues?q=is%3Aissue%20is%3Aopen%20label%3Atype.Bug).
 
 ## Command summary
 
