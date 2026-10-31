@@ -86,6 +86,24 @@ public class AddStudentUiTest {
     }
 
     @Test
+    public void add_cardWhoseDetailsWrap_revealsTheWholeCard() throws Exception {
+        // a card grows after the scroll that revealed it, once its contact row has a width to
+        // wrap against. A reveal counting its passes stopped before that growth and left the
+        // bottom of the card under the edge of the list, where nothing scrolled to it again.
+        Student added = FxToolkit.onFxThread(() -> {
+            createWindow();
+            enter("add Zed Probe -p 91234567 -t T1"
+                    + " -e muhammad.haziq.bin.abdul.rahman.shah.the.second@alumni.example.edu.sg");
+            return model.getStudentBook().getStudentList().getLast();
+        });
+        try {
+            FxToolkit.awaitAssertion(() -> assertVisible(added));
+        } finally {
+            closeWindow();
+        }
+    }
+
+    @Test
     public void add_equalRecord_revealsNewCardRatherThanEarlierEqualCard() throws Exception {
         Student added = FxToolkit.onFxThread(() -> {
             createWindow();
