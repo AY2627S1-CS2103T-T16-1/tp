@@ -740,3 +740,11 @@ First rerun the shared test-record setup so the file contains three students wit
    * Expected: TAB reports that a file blocks the required data folder, leaves that file intact, and does not retain the added student. Close TAB and move the blocking file before retrying.
 1. Compare `data/tab.json` before and after `list`, `find -n Nobody`, a canceled `clear`, and an unchanged edit. Run `list` before selecting the student for that unchanged edit.
    * Expected: These operations do not rewrite student data. A successful mutation persists after restart; a rejected mutation leaves the saved book as it was.
+
+## Appendix: Planned Enhancements
+
+1. **Whole-tag matching in `find`**
+
+   **Limitation:** Tag searches use case-insensitive partial matching. For example, `find -t T1` also lists students tagged `T10`, `T11`, or `T12`, so a TA cannot use this search to list only tutorial group T1.
+
+   **Planned enhancement:** Add an exact-match option for tag terms in a future version. A tag term beginning with `=` will match an entire tag name, ignoring case. For example, `find -t =T1` will match students with a tag named `T1` or `t1`, but will not match students whose only tags are `T10`, `T11`, or `T12`. Tag terms without the `=` prefix will continue to use partial matching.
