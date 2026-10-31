@@ -2,7 +2,7 @@
 !include style.puml
 skinparam defaultFontSize 16
 skinparam ArrowFontStyle plain
-skinparam activityBackgroundColor MODEL_COLOR_T1
+skinparam activityBackgroundColor LOGIC_COLOR_T1
 skinparam activityBorderColor #555555
 skinparam arrowColor #555555
 
@@ -16,7 +16,9 @@ else ([ID absent or unused])
   :Prepare success feedback;
   :Append advice for matching
   name, phone or email;
-  :Continue addition;
+  :Add student to the model;
+  :Update filter if needed
+  and return feedback;
   stop
 endif
 @enduml
