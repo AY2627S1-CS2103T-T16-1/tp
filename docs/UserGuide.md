@@ -301,12 +301,12 @@ Closes TAB.
 
 | Part | What it holds |
 | --- | --- |
-| Menu bar | The `File` and `Help` menus. |
-| Command box | Where you type. It clears once a command succeeds. |
-| Reply | What TAB says back, errors included. It is there only when TAB has something to say, so a fresh launch shows no such area. |
-| Student summary | Counts for the students in view, described below. |
-| Student list | One card per student in view, numbered by displayed index. |
-| Status bar | The path of the data file in use. |
+| Menu bar | `File` and `Help`. |
+| Command box | Where you type. Clears when a command succeeds. |
+| Reply | What TAB says back, errors included. Hidden until there is something to say. |
+| Student summary | Counts for the students shown. |
+| Student list | One card per student shown, numbered by displayed index. |
+| Status bar | The data file's path. |
 
 ![Student summary beside cards showing a follow-up flag and hidden tags](images/cardSummary.png)
 
