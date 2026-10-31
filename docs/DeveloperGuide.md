@@ -6,7 +6,7 @@
 
 # TAB Developer Guide
 
-TAB (Teaching Assistant's Book) is an offline desktop application for teaching assistants to manage student details, groups, and pending follow-ups through typed commands. This guide explains its architecture and the implementation decisions behind it. Command syntax and field constraints are documented in the [User Guide](UserGuide.md).
+TAB (Teaching Assistant's Address Book) is an offline desktop application for teaching assistants to manage student details, groups, and pending follow-ups through typed commands. This guide explains its architecture and the implementation decisions behind it. Command syntax and field constraints are documented in the [User Guide](UserGuide.md).
 
 <page-nav-print />
 
