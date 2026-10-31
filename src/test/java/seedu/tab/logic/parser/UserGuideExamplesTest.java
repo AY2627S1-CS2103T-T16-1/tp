@@ -79,11 +79,25 @@ public class UserGuideExamplesTest {
     public void userGuide_numericIdExample_updatesTheStudentCreatedByItsSetup() throws Exception {
         Model model = new ModelManager(SampleDataUtil.getSampleStudentBook(), new UserPrefs());
         executeDocumentedExamples(model, "add Numeric Example --id 1234",
-                "edit --target-id 1234 -p 91234567", "edit --target-id 1234 --id E7654321");
+                "edit --target-id 1234 -p 91234567", "tag --id 1234 -a T2",
+                "edit --target-id 1234 --id E7654321");
 
         Student expected = new StudentBuilder().withName("Numeric Example").withPhone("91234567")
-                .withoutEmail().withNusStudentId("E7654321").build();
+                .withoutEmail().withNusStudentId("E7654321").withTags("T2").build();
         assertEquals(expected, model.getStudentBook().getStudentList().getLast());
+
+        executeDocumentedExamples(model, "delete --id E7654321");
+        assertEquals(SampleDataUtil.getSampleStudentBook(), model.getStudentBook());
+    }
+
+    @Test
+    public void userGuide_escapedQuoteExample_preservesLiteralQuotes() throws Exception {
+        Model model = new ModelManager();
+        executeDocumentedExamples(model, "add \"Baz \\\"Q\\\" Lee\"");
+
+        Student expected = new StudentBuilder().withName("Baz \"Q\" Lee").withoutPhone()
+                .withoutEmail().withoutNusStudentId().build();
+        assertEquals(expected, model.getStudentBook().getStudentList().getFirst());
     }
 
     @Test

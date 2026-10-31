@@ -132,7 +132,7 @@ The command-specific parser determines which options exist and which may repeat:
 * `find` allows repeated field selectors because each adds a condition.
 * No-argument commands such as `list` reject extra text.
 
-Option spellings remain case-sensitive. A rejected spelling is offered the nearest one the command supports: its lowercase, the double-dash form of a word written after a single dash, or both. An em dash autocorrected from `--` leaves one dash before a word, so `—phone` is refused by name and offered `--phone`.
+Option spellings remain case-sensitive. A rejected spelling is offered the nearest one the command supports: its lowercase, its name behind each dash run an option is written with, or both. The name rather than the dashes says which option was meant, so `—phone`, which is what an autocorrected `--` leaves, and `---phone` are both offered `--phone`, while `--p` and `--nf` are offered `-p` and `-nf`. A short option is as long as its command spells it, so name length decides nothing; only a name of more than one letter is offered a long spelling, since no long option is a single letter, and `-n` is never offered `--n`.
 
 Structural errors are reported first: an unclosed quote or unknown option makes field boundaries uncertain. Once the structure is valid, `add` and `edit` collect independent field errors through `ParseProblems`, so several invalid values can be corrected at once. `ValueMessages` and `Messages` format field-specific reasons and shorten long values for readable feedback.
 
@@ -753,3 +753,11 @@ First rerun the shared test-record setup so the file contains three students wit
    * Expected: TAB reports that a file blocks the required data folder, leaves that file intact, and does not retain the added student. Close TAB and move the blocking file before retrying.
 1. Compare `data/tab.json` before and after `list`, `find -n Nobody`, a canceled `clear`, and an unchanged edit. Run `list` before selecting the student for that unchanged edit.
    * Expected: These operations do not rewrite student data. A successful mutation persists after restart; a rejected mutation leaves the saved book as it was.
+
+## Appendix: Planned Enhancements
+
+1. **Whole-tag matching in `find`**
+
+   **Limitation:** Tag searches use case-insensitive partial matching. For example, `find -t T1` also lists students tagged `T10`, `T11`, or `T12`, so a TA cannot use this search to list only tutorial group T1.
+
+   **Planned enhancement:** Add an exact-match option for tag terms in a future version. A tag term beginning with `=` will match an entire tag name, ignoring case. For example, `find -t =T1` will match students with a tag named `T1` or `t1`, but will not match students whose only tags are `T10`, `T11`, or `T12`. Tag terms without the `=` prefix will continue to use partial matching.
