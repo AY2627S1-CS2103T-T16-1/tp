@@ -310,7 +310,7 @@ Closes TAB.
 
 ![Student summary beside cards showing a follow-up flag and hidden tags](images/cardSummary.png)
 
-In this example, the student summary counts three students and one follow-up flag. The first card shows the follow-up marker beside its name, while `2 more...` indicates hidden tags.
+In this example, the student summary counts three students and one follow-up flag. The first card shows the follow-up marker at the right of its top line, while `2 more...` indicates hidden tags.
 
 * The **student summary** on the left shows the displayed students' total, follow-up count and tag counts.
 * Tags differing only in case share a summary row.
