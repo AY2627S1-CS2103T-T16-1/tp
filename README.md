@@ -5,7 +5,7 @@
 
 ![Ui](docs/images/Ui.png)
 
-**TAB** (Teaching Assistant's Book) is a desktop application tailored for teaching
+**TAB** (Teaching Assistant's Address Book) is a desktop application tailored for teaching
 assistants to manage student contacts, tutorial rosters, and follow-up tasks. Optimized for
 users who prefer using Command Line Interface (CLI) for inputs while retaining the visual
 clarity of a Graphical User Interface (GUI), TAB lets fast typists navigate and update
