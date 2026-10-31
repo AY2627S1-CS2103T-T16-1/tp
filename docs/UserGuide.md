@@ -178,7 +178,7 @@ Edits an existing student selected by [displayed index or NUS Student ID](#choos
 
 * Supply at least one change, using the [student field rules](#student-fields).
 * Omitted fields stay unchanged.
-* Use `-p ""`, `-e ""` or `--id ""` to clear an optional detail.
+* Use `-p ""`, `-e ""` or `--id ""` to clear an optional detail. A value holding only spaces, of any kind, clears it too.
 * Supplied tags **replace all existing tags**. Using `-t ""` alone will also clear every tag. To change one tag while keeping the others, consider using the `tag` command instead.
 * Use `--follow-up` or `-f` to set the flag, or `--no-follow-up` or `-nf` to clear it.
 

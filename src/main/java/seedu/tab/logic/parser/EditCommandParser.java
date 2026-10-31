@@ -127,15 +127,22 @@ public class EditCommandParser implements Parser<EditCommand> {
         return descriptor;
     }
 
-    /** Describes an explicit clear or a validated replacement, collecting any rejected value. */
+    /**
+     * Describes an explicit clear or a validated replacement, collecting any rejected value. A
+     * value that is empty after field normalization, such as {@code -p " "}, asks for the detail
+     * to be removed, the way a blank tag asks for every tag to be removed. Normalization answers
+     * that question rather than {@code String.trim}, which keeps the full-width space a CJK input
+     * method types and the non-breaking space a paste carries, leaving a value the user sees as
+     * blank refused as too short to be a phone number.
+     */
     private static <T> void parseClearableField(ParseProblems problems, String value,
             ParseProblems.ValueParser<T> parser, Runnable clear, Consumer<T> set) {
-        String trimmedValue = value.trim();
-        if (trimmedValue.isEmpty()) {
+        String normalizedValue = StringUtil.normalizeFieldValue(value);
+        if (normalizedValue.isEmpty()) {
             clear.run();
             return;
         }
-        T parsedValue = problems.collect(() -> parser.parse(trimmedValue));
+        T parsedValue = problems.collect(() -> parser.parse(normalizedValue));
         if (parsedValue != null) {
             set.accept(parsedValue);
         }
