@@ -200,11 +200,11 @@ public class FlagTokenizer {
 
     /**
      * Returns the spellings {@code marker} may stand for, nearest first: its own lowercase,
-     * then its name behind the dashes that name belongs behind, and that spelling's lowercase.
+     * then its name behind each dash run an option is written with, and those lowercase.
      *
-     * <p>An option is one dash before a letter or two before a word, so the name itself decides
-     * the run, and a name typed behind the wrong one still says which option was meant. A word
-     * processor turns a typed {@code --} into one dash, and a key held down leaves three.
+     * <p>The name rather than the dashes says which option was meant, so a name typed behind
+     * the wrong run is still offered the run its command spells it with. A word processor
+     * turns a typed {@code --} into one dash, and a key held down leaves three.
      */
     private static List<String> getNearSpellings(String marker) {
         String lowercase = marker.toLowerCase(Locale.ROOT);
@@ -212,19 +212,28 @@ public class FlagTokenizer {
         if (name.isEmpty()) {
             return List.of(lowercase);
         }
-        String properlyDashed = dashesFor(name) + name;
-        if (properlyDashed.equals(marker)) {
-            return List.of(lowercase);
+        List<String> spellings = new ArrayList<>();
+        spellings.add(lowercase);
+        for (String redashed : optionSpellingsOf(name)) {
+            if (!redashed.equals(marker)) {
+                spellings.add(redashed);
+                spellings.add(redashed.toLowerCase(Locale.ROOT));
+            }
         }
-        return List.of(lowercase, properlyDashed, properlyDashed.toLowerCase(Locale.ROOT));
+        return spellings;
     }
 
     /**
-     * Returns the dashes an option named {@code name} opens with. A one-letter name is already
-     * a whole short option behind one dash, so it is never offered a long spelling of itself.
+     * Returns the markers an option named {@code name} could be written as. Any name can stand
+     * behind one dash, since a short option is as long as its command spells it and TAB spells
+     * one {@code -nf}. Only a name of more than one letter can stand behind two, because no
+     * long option is a single letter, so {@code -n} is never offered {@code --n}.
      */
-    private static String dashesFor(String name) {
-        return name.length() == 1 ? OPTION_MARKER : LONG_OPTION_MARKER;
+    private static List<String> optionSpellingsOf(String name) {
+        String shortForm = OPTION_MARKER + name;
+        return name.length() == 1
+                ? List.of(shortForm)
+                : List.of(LONG_OPTION_MARKER + name, shortForm);
     }
 
     /** Returns how many dashes {@code marker} opens with, before the name it carries. */

@@ -300,6 +300,18 @@ public class FlagTokenizerTest {
     }
 
     @Test
+    public void tokenize_twoLetterShortAliasBehindTwoDashes_suggestsTheShortAlias() {
+        // a short option is as long as its command spells it, and --no-follow-up answers to -nf,
+        // so the name rather than its length says which dashes it belongs behind
+        assertThrows(UnknownFlagException.class, "There is no --nf option. Did you mean -nf?", () ->
+                FlagTokenizer.tokenize("--nf", FLAG_NO_FOLLOW_UP));
+        assertThrows(UnknownFlagException.class, "There is no ---nf option. Did you mean -nf?", () ->
+                FlagTokenizer.tokenize("---nf", FLAG_NO_FOLLOW_UP));
+        assertThrows(UnknownFlagException.class, "There is no --NF option. Did you mean -nf?", () ->
+                FlagTokenizer.tokenize("--NF", FLAG_NO_FOLLOW_UP));
+    }
+
+    @Test
     public void tokenize_unsupportedNameAtAnyDashCount_suggestsNothing() {
         // redashing a name the command does not have must not invent an option for it
         for (String input : List.of("--zzz 1", "-z 1", "---zzz 1", "-zzz 1")) {
