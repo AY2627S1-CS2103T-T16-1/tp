@@ -31,15 +31,17 @@ alt student book unchanged
 else student book changed
   logic -> storage : saveStudentBook(book)
   activate storage
-  ref over storage
-    Safe disk save
-    (activity below)
-  end ref
-  storage --> logic : saved / IOException
-  deactivate storage
+  note right of storage
+    Lock, validate and atomically replace file.
+    Details: StaleWindowSave activity diagram.
+  end note
   alt save succeeds
+    storage --> logic
+    deactivate storage
     [<-- logic : result
-  else IOException
+  else save throws IOException
+    note over logic, storage : IOException propagates to LogicManager
+    deactivate storage
     logic -> model : setStudentBook(snapshot)
     activate model
     model --> logic
@@ -48,7 +50,7 @@ else student book changed
     activate model
     model --> logic
     deactivate model
-    [<-- logic : CommandException
+    note over logic : Throw CommandException to caller
   end
 end
 deactivate logic
