@@ -22,8 +22,8 @@ public class CardName extends Label {
     private static final int MIN_VISIBLE_CHARACTERS = 2;
 
     private final Text measurer = new Text();
-    private String whole = "";
-    private boolean isDrawingLessThanTheWhole;
+    private String fullName = "";
+    private boolean isUpdatingDisplayedText;
 
     /**
      * Creates a name that holds on to the whole of whatever text it is given, so that what it
@@ -31,22 +31,22 @@ public class CardName extends Label {
      */
     public CardName() {
         textProperty().addListener((unused, old, text) -> {
-            if (!isDrawingLessThanTheWhole) {
-                whole = text == null ? "" : text;
+            if (!isUpdatingDisplayedText) {
+                fullName = text == null ? "" : text;
             }
         });
     }
 
     @Override
     protected double computePrefWidth(double height) {
-        return measureWidth(whole) + computeHorizontalInsets();
+        return measureWidth(fullName) + computeHorizontalInsets();
     }
 
     @Override
     protected double computeMinWidth(double height) {
         // Preserve a character from each end when tags need extra room. Font metrics
         // decide how much that takes; a fixed pixel floor can lose the final character.
-        return measureWidth(UiText.shortenMiddle(whole, MIN_VISIBLE_CHARACTERS)) + computeHorizontalInsets();
+        return measureWidth(UiText.shortenMiddle(fullName, MIN_VISIBLE_CHARACTERS)) + computeHorizontalInsets();
     }
 
     @Override
@@ -57,11 +57,11 @@ public class CardName extends Label {
 
     private void drawWhatFits() {
         double room = getWidth() - computeHorizontalInsets();
-        if (measureWidth(whole) <= room) {
-            draw(whole);
+        if (measureWidth(fullName) <= room) {
+            draw(fullName);
             return;
         }
-        draw(UiText.shortenMiddle(whole, countCharactersThatFit(room)));
+        draw(UiText.shortenMiddle(fullName, countCharactersThatFit(room)));
     }
 
     /**
@@ -71,10 +71,10 @@ public class CardName extends Label {
      */
     private int countCharactersThatFit(double room) {
         int fewest = 0;
-        int most = whole.length();
+        int most = fullName.length();
         while (fewest < most) {
             int count = (fewest + most + 1) / 2;
-            if (measureWidth(UiText.shortenMiddle(whole, count)) <= room) {
+            if (measureWidth(UiText.shortenMiddle(fullName, count)) <= room) {
                 fewest = count;
             } else {
                 most = count - 1;
@@ -87,9 +87,9 @@ public class CardName extends Label {
         if (text.equals(getText())) {
             return;
         }
-        isDrawingLessThanTheWhole = true;
+        isUpdatingDisplayedText = true;
         setText(text);
-        isDrawingLessThanTheWhole = false;
+        isUpdatingDisplayedText = false;
     }
 
     private double measureWidth(String text) {
