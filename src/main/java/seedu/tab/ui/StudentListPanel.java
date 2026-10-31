@@ -7,7 +7,6 @@ import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -74,30 +73,20 @@ public class StudentListPanel extends UiPart<Region> {
         flow.scrollTo(index);
     }
 
-    /** Returns whether the whole of {@code student}'s card sits inside the list. */
-    private boolean isFullyInView(Student student) {
-        Bounds list = studentListView.localToScene(studentListView.getLayoutBounds());
-        return studentListView.lookupAll(".list-cell").stream()
-                .filter(node -> node instanceof ListCell<?> cell && cell.getItem() == student)
-                .anyMatch(node -> {
-                    Bounds card = node.localToScene(node.getLayoutBounds());
-                    return card.getMinY() >= list.getMinY() && card.getMaxY() <= list.getMaxY();
-                });
-    }
-
     /**
-     * Scrolls a student's card into view once per layout pass, until the whole card is in view
-     * or the passes run out, and then takes itself off the scene.
+     * Scrolls a student's card into view once per layout pass, then takes itself off the
+     * scene. The first pass materializes the cards, which is what gives them their real
+     * heights; the second scrolls again now that those heights are known, since the first
+     * aimed at the estimates the list had before any card existed.
      *
-     * <p>Each pass aims at the heights the list knows so far, and those keep changing under it:
-     * the first materializes the cards, and a card whose contact details wrap grows once it has
-     * a width to wrap against, after the scroll that revealed it. Stopping on a count rather
-     * than on the card leaves such a card part way off the bottom for good, because nothing
-     * scrolls the list again. The count remains as a stop for a card taller than the list
-     * itself, which no amount of scrolling can bring wholly into view.
+     * <p>A third is needed because a card is not done growing after the second: one whose
+     * contact details wrap gains a line only once it has a width to wrap against, which it
+     * gets from the scroll that revealed it. Two passes left such a card 19 pixels below the
+     * list on a 740 by 600 window, with nothing to scroll to it again. A fourth is margin, as
+     * the passes cost nothing once the list has stopped moving under them.
      */
     private final class Reveal implements Runnable {
-        private static final int PASSES = 8;
+        private static final int PASSES = 4;
 
         private final Scene scene;
         private final Student student;
@@ -112,7 +101,7 @@ public class StudentListPanel extends UiPart<Region> {
         public void run() {
             scrollListTo(student);
             passesLeft--;
-            if (passesLeft > 0 && !isFullyInView(student)) {
+            if (passesLeft > 0) {
                 Platform.requestNextPulse();
                 return;
             }
