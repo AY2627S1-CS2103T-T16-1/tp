@@ -6,7 +6,7 @@
 
 # TAB Developer Guide
 
-TAB (Teaching Assistant's Book) is an offline desktop application for teaching assistants to manage student details, groups, and pending follow-ups through typed commands. This guide explains its architecture and the implementation decisions behind it. Command syntax and field constraints are documented in the [User Guide](UserGuide.md).
+TAB (Teaching Assistant's Address Book) is an offline desktop application for teaching assistants to manage student details, groups, and pending follow-ups through typed commands. This guide explains its architecture and the implementation decisions behind it. Command syntax and field constraints are documented in the [User Guide](UserGuide.md).
 
 <page-nav-print />
 
@@ -61,7 +61,7 @@ On exit, `MainWindow` passes the window bounds to Logic, and `MainApp.stop()` sa
 
 ### UI component
 
-The UI uses JavaFX controls and FXML layouts in `src/main/resources/view/`. `UiPart<T>` loads a layout and connects its controller. The partial class diagram below shows the main window's UI parts; helper controls and the common `UiPart` superclass are omitted.
+The UI uses JavaFX controls and FXML layouts in `src/main/resources/view/`. `UiPart<T>` loads a layout and connects its controller. The partial class diagram below shows the main window's UI parts after initialization, with one of each referenced part per window. Helper controls and the common `UiPart` superclass are omitted.
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Main window and its principal UI parts" />
 
@@ -79,7 +79,7 @@ The partial class diagram shows this structure using `delete` as the representat
 
 <puml src="diagrams/LogicClassDiagram.puml" alt="Logic API, command and parser hierarchies, and command results" />
 
-The sequence diagram traces a successful `delete 1` through Logic. Target resolution is summarized as a lookup in the displayed list, and the shared save procedure is shown as a reference to [Saving changes safely](#saving-changes-safely). Tokenization and value validation remain inside the command parser.
+The sequence diagram traces a successful `delete 1` through Logic. Target resolution is summarized as a lookup in the displayed list, and the shared save procedure is shown as a reference to the post-command portion of `SaveRollbackSequenceDiagram` in [Saving changes safely](#saving-changes-safely). Tokenization and value validation remain inside the command parser. The parser destruction marker denotes the end of its useful lifetime after `parse()` returns; Java garbage collection determines when its memory is reclaimed.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing and executing delete 1 through Logic" />
 
@@ -132,7 +132,7 @@ The command-specific parser determines which options exist and which may repeat:
 * `find` allows repeated field selectors because each adds a condition.
 * No-argument commands such as `list` reject extra text.
 
-Option spellings remain case-sensitive. A rejected spelling is offered the nearest one the command supports: its lowercase, the double-dash form of a word written after a single dash, or both. An em dash autocorrected from `--` leaves one dash before a word, so `—phone` is refused by name and offered `--phone`.
+Option spellings remain case-sensitive. A rejected spelling is offered the nearest one the command supports: its lowercase, its name behind each dash run an option is written with, or both. The name rather than the dashes says which option was meant, so `—phone`, which is what an autocorrected `--` leaves, and `---phone` are both offered `--phone`, while `--p` and `--nf` are offered `-p` and `-nf`. A short option is as long as its command spells it, so name length decides nothing; only a name of more than one letter is offered a long spelling, since no long option is a single letter, and `-n` is never offered `--n`.
 
 Structural errors are reported first: an unclosed quote or unknown option makes field boundaries uncertain. Once the structure is valid, `add` and `edit` collect independent field errors through `ParseProblems`, so several invalid values can be corrected at once. `ValueMessages` and `Messages` format field-specific reasons and shorten long values for readable feedback.
 
@@ -154,9 +154,7 @@ The activity diagram shows the selection policy in `CommandWords.suggestFor()`. 
 1. Trim leading and trailing whitespace.
 1. Compose text to Unicode NFC.
 
-Field constructors use this shared representation so command input and loaded data follow the same storage rules. The activity diagram shows this sequence; the joiner exceptions preserve meaningful script characters while direction marks and zero-width spaces are removed.
-
-<puml src="diagrams/NormalizeFieldValue.puml" alt="Field normalization preserving joiners and removing other format and control characters" />
+Field constructors use this shared representation so command input and loaded data follow the same storage rules. The joiner exceptions preserve meaningful script characters while direction marks and zero-width spaces are removed.
 
 | Value | Model rule and comparison behavior |
 | --- | --- |
@@ -170,7 +168,7 @@ ID collisions and possible duplicates have different consequences. `StudentIdVal
 
 `LikelyDuplicateWarning` appends advice when another record has a matching normalized name, digit sequence for a phone, or case-insensitive email. An edit checks only changed values and excludes the record being edited. These warnings do not block the operation because matching contact details do not prove identity. The detector misses some spelling variants and cannot tell that two different IDs belong to one person.
 
-The activity diagram isolates the duplicate checks in `AddCommand.execute()`: a shared present ID blocks addition, while matching contact details only add advice. Other advisories, filter handling, and saving are omitted; passing these checks continues through the rest of the add operation.
+The activity diagram shows the duplicate checks in `AddCommand.execute()` and the remaining addition steps: a shared present ID blocks addition, while matching contact details only add advice. Other advisories are omitted, and filter handling is summarized. The success path adds the student and returns feedback before this activity ends; Logic then handles saving.
 
 <puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Blocking ID collisions while allowing additions with possible-duplicate warnings" />
 
@@ -236,7 +234,7 @@ Keeping the pending request in Logic makes the confirmation protocol testable wi
 
 Logic coordinates in-memory changes and disk persistence. It copies the student book and remembers the active predicate before a command executes. Because student values are immutable, the copy can retain their references. After execution, equality with the snapshot determines whether saving is necessary.
 
-The sequence diagram shows the shared execution path. Clear confirmation enters the equivalent path after the affirmative reply. The referenced storage procedure is expanded in the activity diagram that follows.
+The sequence diagram (`SaveRollbackSequenceDiagram`) shows the shared execution path. Clear confirmation enters the equivalent path after the affirmative reply. The storage procedure summarized in the note is expanded in the activity diagram that follows. Exception propagation is described in notes rather than shown as a return value.
 
 <puml src="diagrams/SaveRollbackSequenceDiagram.puml" alt="Saving changed student data and restoring the model after an I/O failure" />
 
@@ -436,7 +434,7 @@ For these use cases, the **system** is TAB and the **actor** is a teaching assis
   * 5a1. TAB removes the student from the displayed results while retaining the updated record.
   * Use case ends.
 
-Setting/clearing follow-up uses the same edit flow. For deletion, step 3 requests removal and step 4 removes the target; field replacement and ID-conflict checks do not apply. UC03 covers the tag-specific alternatives.
+Setting/clearing follow-up uses the same edit flow. UC03 covers the tag-specific alternatives, and UC06 covers deletion.
 
 #### UC03: Add or remove one tag
 
@@ -514,6 +512,29 @@ Setting/clearing follow-up uses the same edit flow. For deletion, step 3 request
   * 5a1. TAB leaves the file unchanged and reports the remaining problem.
   * Use case resumes at step 3.
 
+#### UC06: Delete a student
+
+**MSS**
+
+1. The user requests to delete a student identified by a displayed index or NUS Student ID.
+1. TAB resolves the target student.
+1. TAB removes the student and saves the updated book.
+1. TAB confirms the deletion and refreshes the filtered view and summary.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The command is invalid or the target does not exist.
+  * 2a1. TAB explains the problem without changing records or the filter.
+  * Use case resumes at step 1.
+* 2b. The user supplies an ID for a student outside the displayed results.
+  * 2b1. TAB resolves the ID against the whole book.
+  * Use case resumes at step 3.
+* 3a. Saving fails.
+  * 3a1. TAB restores the records and filter and explains recovery.
+  * Use case resumes at step 1.
+
 ### Non-functional requirements
 
 These are product acceptance targets. Timing and capacity targets require measurement on the test machine; passing unit tests alone does not establish them.
@@ -530,17 +551,9 @@ These are product acceptance targets. Timing and capacity targets require measur
 
 #### Typing efficiency evaluation
 
-Use a disposable book containing 100 students named `Student 0001` through `Student 0100`, with IDs `S0001` through `S0100`, phones `81230001` through `81230100`, and tag `T1`. Prepare a Calc sheet with the same data in Name, ID, Phone, Email, and Tags columns (A–E). Enable column filters over `A1:E102`, including the header and the empty row for the added student. Keep email empty, store IDs and phones as text, and separate tags with semicolons in the Tags column. Record the Calc version, TAB version, operating system, hardware, and display settings.
+Compare TAB with mouse-driven LibreOffice Calc using identical copies of 100 student records. Time the same sequence: add a student, find another by ID, change their phone, add a tag, and delete the added student. In Calc, use the mouse for navigation, filters, and menus, and the keyboard only for cell values. In TAB, use the command box.
 
-| Task | TAB workflow | Calc baseline |
-| --- | --- | --- |
-| Add a student | `add Student 0101 --id S0101 -p 81230101 -t T1` | Click the next empty row and enter the same values. |
-| Find one student | `find -i S0050` | Use the ID column's filter dropdown to display only `S0050`. |
-| Change that student's phone | `edit --target-id S0050 -p 91234567` | Click the matching phone cell and replace its value. |
-| Add a group tag | `tag --id S0050 -a "Lab 3"` | Edit the matching Tags cell to contain `T1; Lab 3`. |
-| Delete the added student | `list`, then `delete --id S0101` | Clear the filter using its dropdown, select the `S0101` row, and delete it through the row menu. |
-
-Use the same participant for both workflows, after three untimed practice runs of each. In Calc, use the mouse for navigation, filters, and menus; the keyboard is available for entering cell values. In TAB, use its command box. Time five runs of each complete sequence, alternating the starting application between pairs and resetting the data before each run. Start with the application open and ready for input; stop after the deletion result is visible. Include correction time and verify the final records. Compare the two medians; this defines the acceptance test, not a measured performance claim.
+Use the same practiced participant, with three untimed practice runs and five timed runs per application. Alternate application order and reset the data before each run. Start with each application ready for input and stop when the deletion result is visible. Include corrections and verify identical final records. Record application versions, hardware, runtime, and display settings. TAB passes if its median completion time is lower. This is an acceptance target, not a measured performance claim.
 
 ### Glossary
 
@@ -683,11 +696,11 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
    * Expected: The prompt counts the whole book despite the empty displayed result and warns that clearing cannot be undone. No data is written.
 1. Enter `maybe`, then `exit`.
    * Expected: Both are rejected as replies; neither executes a command. The prompt remains pending and the data is unchanged.
-1. Reply ` NO `, then enter `clear` and submit an empty line.
+1. Reply <code class="preserve-whitespace"> NO </code>, then enter `clear` and submit an empty line.
    * Expected: Each cancels, retaining the records and filter.
-1. Enter `clear` and reply ` YeS `.
+1. Enter `clear` and reply <code class="preserve-whitespace"> YeS </code>.
    * Expected: All students are cleared and the empty book survives a restart. Another `clear` reports that the book is already empty without starting a confirmation.
-1. Add `add Pending Probe`, enter `clear`, close the window without replying, and restart.
+1. Enter `add Pending Probe`, enter `clear`, close the window without replying, and restart.
    * Expected: The prompt for a one-student book reads `Clear the only student?` rather than counting the student. Pending Probe remains and no confirmation is pending.
 
 ### Command entry, history, and long values
@@ -740,3 +753,11 @@ First rerun the shared test-record setup so the file contains three students wit
    * Expected: TAB reports that a file blocks the required data folder, leaves that file intact, and does not retain the added student. Close TAB and move the blocking file before retrying.
 1. Compare `data/tab.json` before and after `list`, `find -n Nobody`, a canceled `clear`, and an unchanged edit. Run `list` before selecting the student for that unchanged edit.
    * Expected: These operations do not rewrite student data. A successful mutation persists after restart; a rejected mutation leaves the saved book as it was.
+
+## Appendix: Planned Enhancements
+
+1. **Whole-tag matching in `find`**
+
+   **Limitation:** Tag searches use case-insensitive partial matching. For example, `find -t T1` also lists students tagged `T10`, `T11`, or `T12`, so a TA cannot use this search to list only tutorial group T1.
+
+   **Planned enhancement:** Add an exact-match option for tag terms in a future version. A tag term beginning with `=` will match an entire tag name, ignoring case. For example, `find -t =T1` will match students with a tag named `T1` or `t1`, but will not match students whose only tags are `T10`, `T11`, or `T12`. Tag terms without the `=` prefix will continue to use partial matching.
