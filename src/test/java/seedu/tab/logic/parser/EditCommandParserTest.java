@@ -513,11 +513,39 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_missingTarget_namesEveryTargetForm() {
-        // a user who gives only options, expecting -i/--id to choose the student, is shown
-        // that an index and an NUS Student ID are both valid targets
-        assertParseFailure(parser, "--id 1A2B3C -p 81112222",
-                "Missing required field(s): INDEX or NUS_STUDENT_ID");
+    public void parse_missingTargetWithIdField_pointsAtTargetIdOption() {
+        // a user carrying over the habit of delete and tag, where --id selects the student, is
+        // told that edit spells the selector --target-id and keeps --id for the field it sets
+        String expectedMessage = "Missing required field(s): INDEX or NUS_STUDENT_ID. "
+                + "--id (or -i) sets a new NUS Student ID; "
+                + "--target-id NUS_STUDENT_ID selects the student holding one.";
+        assertParseFailure(parser, "--id A01234567X -p 91234567", expectedMessage);
+        assertParseFailure(parser, "-i A01234567X -p 91234567", expectedMessage);
+
+        // an ID opening with a digit is explained the same way. Both of these are valid IDs,
+        // since the field takes 1 to 32 ASCII letters or digits in any order
+        assertParseFailure(parser, "--id 1234 -p 91234567", expectedMessage);
+        assertParseFailure(parser, "--id 1A2B3C -p 81112222", expectedMessage);
+    }
+
+    @Test
+    public void parse_missingTargetWithUnusableIdField_pointsAtTargetIdAndNamesTheValue() {
+        // a value no ID could hold still points at the option the user wanted, and keeps the
+        // field's own reason beside it, so neither problem hides the other
+        assertParseFailure(parser, "--id A1!B -p 91234567",
+                EditCommand.MESSAGE_ID_FIELD_IS_NOT_TARGET + "\n"
+                        + "NUS Student ID \"A1!B\" is not valid: "
+                        + "an NUS Student ID can only contain ASCII letters and digits");
+    }
+
+    @Test
+    public void parse_missingTargetWithoutIdField_namesEveryTargetForm() {
+        assertParseFailure(parser, PHONE_AMY,
+                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_TARGET));
+
+        // a blank ID field asks for the ID to be cleared, so it names no student to be mistaken
+        assertParseFailure(parser, "--id \"\"" + PHONE_AMY,
+                Messages.getErrorMessageForMissingFields(EditCommand.FIELD_TARGET));
     }
 
     @Test

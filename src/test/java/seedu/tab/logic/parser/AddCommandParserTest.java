@@ -345,6 +345,13 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_optionGluedToQuotedValue_rejectsRatherThanSavingInName() {
+        assertParseFailure(parser, " Amy Lim -t\"Lab 3\"", "There is no -tLab 3 option.");
+        assertParseFailure(parser, " Ben Ong --phone\"+65 9123 4567\"",
+                "There is no --phone+65 9123 4567 option.");
+    }
+
+    @Test
     public void parse_unknownFlag_isRefusedOnItsOwn() {
         assertParseFailure(parser, NAME_BOB + PHONE_BOB + " -z something",
                 String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-z"));

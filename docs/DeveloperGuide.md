@@ -136,6 +136,8 @@ Option spellings remain case-sensitive. A rejected spelling is offered the neare
 
 Structural errors are reported first: an unclosed quote or unknown option makes field boundaries uncertain. Once the structure is valid, `add` and `edit` collect independent field errors through `ParseProblems`, so several invalid values can be corrected at once. `ValueMessages` and `Messages` format field-specific reasons and shorten long values for readable feedback.
 
+Only a quote at the start of a token protects a leading hyphen from option recognition. An option glued to a quoted value without a space or `=` is rejected as an unknown option rather than silently becoming part of a positional name.
+
 Unknown command words are never executed as guesses. `CommandWords` first looks for command prefixes, then uses edit distance to find likely corrections. Suggestions help recover from a typo without risking an unintended destructive command. Add a new command to both dispatch and `COMMAND_WORDS`; `CommandWordsTest` checks that they agree.
 
 The activity diagram shows the selection policy in `CommandWords.suggestFor()`. Prefix matches take precedence; otherwise only the nearest candidates within the edit allowance survive. More than three suggestions are suppressed. The edit distance supports adjacent transpositions, so a swapped pair of letters counts as one edit.
@@ -158,7 +160,7 @@ Field constructors use this shared representation so command input and loaded da
 
 | Value | Model rule and comparison behavior |
 | --- | --- |
-| `Name` | Requires a Unicode letter or number; preserves punctuation and script. Search and possible-duplicate warnings use a separate comparison key that ignores case, Latin accents/modifiers, apostrophe styles, and dash/space differences. Every character Unicode calls a dash, and the minus sign, reads as a space, while a dash-shaped letter such as the katakana prolonged sound mark stays significant. The apostrophe variants a roster carries read as the straight apostrophe, the modifier letters of transliterated names among them, while the spacing grave and acute accents stay significant. Stored spelling is preserved. |
+| `Name` | Requires a Unicode letter or number; preserves punctuation and script. Search and possible-duplicate warnings use a separate comparison key that ignores case, Latin accents/modifiers, apostrophe styles, and dash/space differences. Every character Unicode calls a dash, and the minus sign, reads as a space, while a dash-shaped letter such as the katakana prolonged sound mark stays significant. The apostrophe variants a roster carries read as the straight apostrophe, the modifier letters of transliterated names among them, while the spacing grave and acute accents stay significant. The key is composed back to NFC, so a syllable a script writes from several letters stays one unit: `이` matches `이서연` alone and not `임지수`. Stored spelling is preserved. |
 | `Phone` | Requires at least three decimal digits and preserves formatting. `getDigits()` removes other characters and converts Unicode decimal digits to ASCII for numeric search. Possible-duplicate warnings use `isLikelySameNumber`: equal digits, or the whole of the shorter number as the end of the longer, from seven digits up. A country code written in front matches by that rule, and so does an unrelated number ending in the same digits, because `0065 8743 8807` and `+60 12 8743 8807` are the same shape. Telling those apart needs a per-country numbering plan, so the warning stays advisory. |
 | `Email` | Checks TAB's supported `local-part@domain` form. Commands and storage enforce a 254-character limit. A valid address with a dotless domain is accepted with a warning when added or changed. |
 | `NusStudentId` | Accepts 1–32 ASCII letters/digits and stores uppercase using `Locale.ROOT`. It is the sole identity key. |
@@ -694,6 +696,8 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
    * Expected: The mixed-case command works; the typo suggests `list` without executing it; the extra argument is rejected. Failed input remains editable and its error marking clears after editing.
 1. Enter `add Quote Probe --phone="9123 4567" --tag="Lab 5"`, then try `edit 1 -P 81234567` and `add Broken -t "Lab`.
    * Expected: Attached values are accepted; the capital option suggests `-p`; the unclosed quote is reported without changing records.
+1. Enter `add Amy Lim -t"Lab 3"`, then `add Ben Ong --phone"+65 9123 4567"`.
+   * Expected: Before submission, each glued option/value token has option coloring rather than quoted-value coloring. After submission, `There is no -tLab 3 option.` and `There is no --phone+65 9123 4567 option.` respectively. Neither command adds a student or changes saved data. Repeat with a space or `=` before the opening quote; both corrected forms record the field and leave the name unchanged.
 1. Paste `add “Paste Probe” –p “8123 4567” –t “Lab 6”`, then paste a command containing tab/newline separators before pressing Enter.
    * Expected: Curly quotes and a pasted option dash are recognized. Separators become spaces in one command, and the line's color follows its structure.
 1. Paste `add Dash Probe —phone 91234567`, where `—phone` carries the single em dash an editor writes for `--`, then `add Dash Probe —Phone 91234567`.
