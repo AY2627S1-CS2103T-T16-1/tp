@@ -61,7 +61,7 @@ On exit, `MainWindow` passes the window bounds to Logic, and `MainApp.stop()` sa
 
 ### UI component
 
-The UI uses JavaFX controls and FXML layouts in `src/main/resources/view/`. `UiPart<T>` loads a layout and connects its controller. The partial class diagram below shows the main window's UI parts; helper controls and the common `UiPart` superclass are omitted.
+The UI uses JavaFX controls and FXML layouts in `src/main/resources/view/`. `UiPart<T>` loads a layout and connects its controller. The partial class diagram below shows the main window's UI parts after initialization, with one of each referenced part per window. Helper controls and the common `UiPart` superclass are omitted.
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Main window and its principal UI parts" />
 
@@ -79,7 +79,7 @@ The partial class diagram shows this structure using `delete` as the representat
 
 <puml src="diagrams/LogicClassDiagram.puml" alt="Logic API, command and parser hierarchies, and command results" />
 
-The sequence diagram traces a successful `delete 1` through Logic. Target resolution is summarized as a lookup in the displayed list, and the shared save procedure is shown as a reference to [Saving changes safely](#saving-changes-safely). Tokenization and value validation remain inside the command parser.
+The sequence diagram traces a successful `delete 1` through Logic. Target resolution is summarized as a lookup in the displayed list, and the shared save procedure is shown as a reference to the post-command portion of `SaveRollbackSequenceDiagram` in [Saving changes safely](#saving-changes-safely). Tokenization and value validation remain inside the command parser. The parser destruction marker denotes the end of its useful lifetime after `parse()` returns; Java garbage collection determines when its memory is reclaimed.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing and executing delete 1 through Logic" />
 
@@ -154,9 +154,7 @@ The activity diagram shows the selection policy in `CommandWords.suggestFor()`. 
 1. Trim leading and trailing whitespace.
 1. Compose text to Unicode NFC.
 
-Field constructors use this shared representation so command input and loaded data follow the same storage rules. The activity diagram shows this sequence; the joiner exceptions preserve meaningful script characters while direction marks and zero-width spaces are removed.
-
-<puml src="diagrams/NormalizeFieldValue.puml" alt="Field normalization preserving joiners and removing other format and control characters" />
+Field constructors use this shared representation so command input and loaded data follow the same storage rules. The joiner exceptions preserve meaningful script characters while direction marks and zero-width spaces are removed.
 
 | Value | Model rule and comparison behavior |
 | --- | --- |
@@ -170,7 +168,7 @@ ID collisions and possible duplicates have different consequences. `StudentIdVal
 
 `LikelyDuplicateWarning` appends advice when another record has a matching normalized name, digit sequence for a phone, or case-insensitive email. An edit checks only changed values and excludes the record being edited. These warnings do not block the operation because matching contact details do not prove identity. The detector misses some spelling variants and cannot tell that two different IDs belong to one person.
 
-The activity diagram isolates the duplicate checks in `AddCommand.execute()`: a shared present ID blocks addition, while matching contact details only add advice. Other advisories, filter handling, and saving are omitted; passing these checks continues through the rest of the add operation.
+The activity diagram shows the duplicate checks in `AddCommand.execute()` and the remaining addition steps: a shared present ID blocks addition, while matching contact details only add advice. Other advisories are omitted, and filter handling is summarized. The success path adds the student and returns feedback before this activity ends; Logic then handles saving.
 
 <puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Blocking ID collisions while allowing additions with possible-duplicate warnings" />
 
@@ -236,7 +234,7 @@ Keeping the pending request in Logic makes the confirmation protocol testable wi
 
 Logic coordinates in-memory changes and disk persistence. It copies the student book and remembers the active predicate before a command executes. Because student values are immutable, the copy can retain their references. After execution, equality with the snapshot determines whether saving is necessary.
 
-The sequence diagram shows the shared execution path. Clear confirmation enters the equivalent path after the affirmative reply. The referenced storage procedure is expanded in the activity diagram that follows.
+The sequence diagram (`SaveRollbackSequenceDiagram`) shows the shared execution path. Clear confirmation enters the equivalent path after the affirmative reply. The storage procedure summarized in the note is expanded in the activity diagram that follows. Exception propagation is described in notes rather than shown as a return value.
 
 <puml src="diagrams/SaveRollbackSequenceDiagram.puml" alt="Saving changed student data and restoring the model after an I/O failure" />
 

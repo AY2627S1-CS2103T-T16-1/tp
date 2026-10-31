@@ -10,9 +10,9 @@ skinparam conditionStyle InsideDiamond
 start
 :Resolve data target and sibling lock path;
 :Try to acquire the save lock;
-if (\n  Lock acquired?  \n) then ([lock acquired])
+if () then ([lock acquired])
   :Reload and validate disk book;
-  if (\n  Disk book matches baseline?  \n) then ([disk book matches baseline])
+  if () then ([disk book matches baseline])
     :Carry forward current disk comment;
     :Serialize and atomically replace file;
     :Remember successfully saved book;
