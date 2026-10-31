@@ -180,11 +180,15 @@ The activity diagram shows the duplicate checks in `AddCommand.execute()` and th
 
 `StudentTarget` represents either a displayed index or a NUS Student ID. The parser builds it; the command resolves it against the model at execution time. Indices are one-based in user input and converted through `Index` for list access. An ID lookup searches the entire book, including students hidden by the active filter.
 
+<div class="student-target-forms">
+
 | Target form | `edit` | `delete` / `tag` |
 | --- | --- | --- |
-| Displayed position | `edit 1 -p 81234567` | `delete 1` / `tag 1 -a T1` |
-| Letter-leading ID | `edit A0123456X -p 81234567` | `delete A0123456X` / `tag A0123456X -a T1` |
-| Explicit ID, including a digit-leading ID | `edit --target-id 001234 -p 81234567` | `delete --id 001234` / `tag --id 001234 -a T1` |
+| Displayed position | `edit 1 -p 81234567` | `delete 1`<br>`tag 1 -a T1` |
+| Letter-leading ID | `edit A0123456X -p 81234567` | `delete A0123456X`<br>`tag A0123456X -a T1` |
+| Explicit ID, including a digit-leading ID | `edit --target-id 001234 -p 81234567` | `delete --id 001234`<br>`tag --id 001234 -a T1` |
+
+</div>
 
 `edit` needs a separate `--target-id` because its `--id` option changes the ID field. A bare digit-leading target is read as an index. Reusing `StudentTarget` keeps target scope and diagnostics consistent across the three commands.
 
