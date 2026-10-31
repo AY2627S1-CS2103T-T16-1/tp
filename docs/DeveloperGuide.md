@@ -79,9 +79,13 @@ The partial class diagram shows this structure using `delete` as the representat
 
 <puml src="diagrams/LogicClassDiagram.puml" alt="Logic API, command and parser hierarchies, and command results" />
 
-The sequence diagram traces a successful `delete 1` through Logic. Target resolution is summarized as a lookup in the displayed list, and the shared save procedure is shown as a reference to the post-command portion of `SaveRollbackSequenceDiagram` in [Saving changes safely](#saving-changes-safely). Tokenization and value validation remain inside the command parser. The parser destruction marker denotes the end of its useful lifetime after `parse()` returns; Java garbage collection determines when its memory is reclaimed.
+The next two sequence diagrams trace a successful `delete 1` through Logic, separating parsing from execution so each stage remains readable. In `DeleteSequenceDiagram`, `LogicManager` calls `StudentBookParser.parseCommand()`, which creates a command-specific parser and returns command `c`. Tokenization and value validation remain inside the command parser. The parser destruction marker denotes the end of its useful lifetime after `parse()` returns; Java garbage collection determines when its memory is reclaimed.
 
-<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing and executing delete 1 through Logic" />
+<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing delete 1 and returning DeleteCommand c to LogicManager" />
+
+`DeleteExecutionSequence` shows the enclosing `LogicManager.execute()` call. Its first reference expands to the parsing diagram above and produces the same command `c`. Logic then snapshots the book and filter before executing that command. Target resolution is summarized as a lookup in the displayed list. The second reference expands to the post-command portion of `SaveRollbackSequenceDiagram` in [Saving changes safely](#saving-changes-safely).
+
+<puml src="diagrams/DeleteExecutionSequence.puml" alt="Executing DeleteCommand c, deleting the displayed student, and saving changes" />
 
 Commands check their execution preconditions before changing the model. For example, a target outside the displayed list raises `CommandException` before deletion. Logic snapshots the book and filter before executing an ordinary command. It saves only if the resulting book differs from the snapshot.
 
@@ -122,7 +126,7 @@ TAB uses a positional name or target followed by options. For example, `add Ravi
 | Assign options | `FlagTokenizer`, `CliFlag`, `CliFlags`, `FlagArgumentMap` | Map aliases to the same option, accept separate or `=`-attached values, and distinguish value-taking options from presence-only selectors. |
 | Validate meaning | Command-specific parsers, `ParserUtil`, `ParseProblems` | Validate targets and fields, reject inappropriate repetition, and construct a command only after validation succeeds. |
 
-The sequence diagram follows successful argument parsing for `add`. `FlagTokenizer` calls `CommandTokenizer` before assigning options; the parser then validates values and constructs the command. The tokenizer lifelines denote classes with static helpers. Notes summarize field validation and student construction; command execution and saving are outside this diagram.
+The sequence diagram follows successful argument parsing for `add`. `FlagTokenizer` calls `CommandTokenizer` before assigning options; the parser then validates values and constructs the command. The tokenizer lifelines denote classes with static helpers. Notes summarize field validation, student construction, and creation of the returned `AddCommand` (`c`), keeping the diagram focused on parser and tokenizer interactions. Command execution and saving are outside this diagram.
 
 <puml src="diagrams/CommandArgumentParsing.puml" alt="Add argument parsing, tokenizer delegation, validation, and command construction" />
 
@@ -244,7 +248,7 @@ The sequence diagram (`SaveRollbackSequenceDiagram`) shows the shared execution 
 
 If saving throws `IOException`, Logic restores the book and predicate before reporting `CommandException`. A success result reaches the UI only after the required save succeeds. Read-only commands, unchanged edits, clear prompts, cancellations, and invalid replies do not write student data.
 
-`JsonStudentBookStorage` remembers the last book loaded or successfully saved for each normalized path. During saving it acquires a nonblocking file lock, reloads the disk book, and compares student records against that baseline. The following activity diagram focuses on this disk-side procedure.
+`JsonStudentBookStorage` remembers the last book loaded or successfully saved for each normalized path. During saving it acquires a nonblocking file lock, reloads the disk book, and compares student records against that baseline. The following activity diagram focuses on this disk-side procedure. After reloading, its inner decision compares the disk book with that remembered baseline; a mismatch releases the lock and reports stale data without replacing the file.
 
 <puml src="diagrams/StaleWindowSave.puml" alt="Locking, checking for stale student data, and replacing the saved file" />
 

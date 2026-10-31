@@ -6,7 +6,6 @@ skinparam defaultFontSize 16
 participant ":AddCommandParser" as parser LOGIC_COLOR
 participant "FlagTokenizer" as flags LOGIC_COLOR
 participant "CommandTokenizer" as tokens LOGIC_COLOR
-participant "c:AddCommand" as command LOGIC_COLOR
 
 [-> parser : parse(args)
 activate parser
@@ -14,23 +13,26 @@ parser -> flags : tokenize(args, ...)
 activate flags
 flags -> tokens : tokenize(args)
 activate tokens
-tokens --> flags : tokens with quoted boundaries
+tokens --> flags : tokens with\nquoted boundaries
 deactivate tokens
 note over flags : Assign options to values
-flags --> parser : arguments:FlagArgumentMap
+flags --> parser : arguments:\nFlagArgumentMap
 deactivate flags
-note over parser : Check required input and repeated options
 note over parser
-  Validate fields through ParserUtil;
-  collect errors through ParseProblems.
-  Stop on errors; otherwise construct Student.
+  Check required input
+  and repeated options.
 end note
-create command
-parser -> command : AddCommand(student)
-activate command
-command --> parser
-deactivate command
-[<-- parser : command
+note over parser
+  Validate fields through
+  ParserUtil; collect errors
+  through ParseProblems.
+  Stop on errors.
+end note
+note over parser
+  Construct Student and
+  c = new AddCommand(student).
+end note
+[<-- parser : command c
 deactivate parser
 @enduml
 
