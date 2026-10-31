@@ -119,7 +119,7 @@ TAB accepts the following subset of standard email formats:
 
 ##### NUS Student IDs
 
-IDs must be unique across the book, ignoring case.
+IDs must be unique across all students, ignoring case.
 
 ##### Duplicate warnings
 
@@ -132,11 +132,11 @@ After `add` or `edit`, TAB may warn about another student with a matching name, 
 | Target | Meaning | Example |
 | --- | --- | --- |
 | Displayed index | Position in the **currently displayed list**, starting at 1 | `edit 1 -p 91234567` |
-| NUS Student ID | ID beginning with a letter, matched across the whole book regardless of case | `edit A01234567X -p 91234567` |
+| NUS Student ID | ID beginning with a letter, matched across all students regardless of case | `edit A01234567X -p 91234567` |
 | Explicit ID option for `edit` | `--target-id` selects any ID, including one beginning with a digit | `edit --target-id 1234 -p 91234567` |
 | Explicit ID option for `tag` and `delete` | `--id` or `-i` selects any ID, including one beginning with a digit | `tag --id 1234 -a T2` or `delete --id 1234` |
 
-* For example: after `find -n Charlotte`, Charlotte is displayed as student `1`, so `delete 1` would delete Charlotte. Subsequently, running `list` will then show the whole book, where index `1` may refer to someone else.
+* For example: after `find -n Charlotte`, Charlotte is displayed as student `1`, so `delete 1` would delete Charlotte. Subsequently, running `list` will then show all students, where index `1` may refer to someone else.
 
 * Selecting a student by ID requires the complete ID. <br>
   For example `A0123` cannot target the student with ID `A01234567X`.
@@ -183,7 +183,7 @@ The footer shows your reading progress and navigation keys, including `q` or `Es
 
 ### Adding a student with `add`
 
-Adds a student to the student book.
+Adds a student.
 
 **Format** `add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
 
@@ -238,7 +238,7 @@ Examples
 
 ### Locating students with `find`
 
-Searches the whole book using the [student field options](#student-fields).
+Searches all students using the [student field options](#student-fields).
 
 **Format** `find [FIELD_OPTION TERM]... [-f | -nf]`
 
@@ -297,9 +297,20 @@ Closes TAB.
 
 ### Reading and navigating the window
 
+![TAB after a search, with the reply between the command box and the student list](images/windowParts.png)
+
+| Part | What it holds |
+| --- | --- |
+| Menu bar | `File` and `Help`. |
+| Command box | Where you type. Clears when a command succeeds. |
+| Reply | Output or error of last command. It is hidden until a command is run. |
+| Student summary | Counts for the students shown. |
+| Student list | One card per student shown, numbered by displayed index. |
+| Status bar | The data file's path. |
+
 ![Student summary beside cards showing a follow-up flag and hidden tags](images/cardSummary.png)
 
-In this example, the student summary counts three students and one follow-up flag. The first card shows the follow-up marker beside its name, while `2 more...` indicates hidden tags.
+In this example, the student summary counts three students and one follow-up flag. The first card shows the follow-up marker at the right of its top line, while `2 more...` indicates hidden tags.
 
 * The **student summary** on the left shows the displayed students' total, follow-up count and tag counts.
 * Tags differing only in case share a summary row.
