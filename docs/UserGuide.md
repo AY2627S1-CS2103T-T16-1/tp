@@ -297,9 +297,20 @@ Closes TAB.
 
 ### Reading and navigating the window
 
+![TAB after a search, with the reply between the command box and the student list](images/windowParts.png)
+
+| Part | What it holds |
+| --- | --- |
+| Menu bar | `File` and `Help`. |
+| Command box | Where you type. Clears when a command succeeds. |
+| Reply | Output or error of last command. It is hidden until a command is run. |
+| Student summary | Counts for the students shown. |
+| Student list | One card per student shown, numbered by displayed index. |
+| Status bar | The data file's path. |
+
 ![Student summary beside cards showing a follow-up flag and hidden tags](images/cardSummary.png)
 
-In this example, the student summary counts three students and one follow-up flag. The first card shows the follow-up marker beside its name, while `2 more...` indicates hidden tags.
+In this example, the student summary counts three students and one follow-up flag. The first card shows the follow-up marker at the right of its top line, while `2 more...` indicates hidden tags.
 
 * The **student summary** on the left shows the displayed students' total, follow-up count and tag counts.
 * Tags differing only in case share a summary row.
