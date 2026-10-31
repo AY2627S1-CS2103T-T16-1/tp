@@ -70,13 +70,13 @@ public class EditCommandParser implements Parser<EditCommand> {
     /** Reads exactly one target without confusing ID selection with an ID field edit. */
     private static StudentTarget parseTarget(FlagArgumentMap arguments) throws ParseException {
         if (arguments.getValue(FLAG_TARGET_ID).isPresent()) {
-            if (!arguments.getPreamble().isBlank()) {
+            if (!isBlankValue(arguments.getPreamble())) {
                 throw new ParseException(EditCommand.MESSAGE_MULTIPLE_TARGETS);
             }
             return StudentTarget.byNusStudentId(ParserUtil.parseNusStudentId(
                     arguments.getValue(FLAG_TARGET_ID).orElseThrow()));
         }
-        String preamble = arguments.getPreamble().trim();
+        String preamble = StringUtil.normalizeFieldValue(arguments.getPreamble());
         if (preamble.isEmpty() && isIdFieldSet(arguments)) {
             throw new ParseException(EditCommand.MESSAGE_ID_FIELD_IS_NOT_TARGET);
         }
@@ -87,11 +87,22 @@ public class EditCommandParser implements Parser<EditCommand> {
 
     /**
      * Returns true if the command asks for a new NUS Student ID, whatever the value's shape, so
-     * that a target mistyped as the ID field is explained however the ID opens. A blank value
-     * asks for the ID to be cleared, which names no student.
+     * that a target mistyped as the ID field is explained however the ID opens. A value that is
+     * blank asks for the ID to be cleared, which names no student.
      */
     private static boolean isIdFieldSet(FlagArgumentMap arguments) {
-        return arguments.getValue(FLAG_NUS_STUDENT_ID).filter(value -> !value.isBlank()).isPresent();
+        return arguments.getValue(FLAG_NUS_STUDENT_ID).filter(value -> !isBlankValue(value)).isPresent();
+    }
+
+    /**
+     * Returns whether {@code value} holds nothing a field could keep, which is the question
+     * {@link #parseClearableField} asks of a value before reading it as a request to clear the
+     * detail. Field normalization answers it rather than {@link String#isBlank()}, which counts
+     * only the spaces Java calls whitespace and so reads a no-break space as a value the user
+     * meant, leaving one part of a command treating it as blank while another does not.
+     */
+    private static boolean isBlankValue(String value) {
+        return StringUtil.normalizeFieldValue(value).isEmpty();
     }
 
     /**
