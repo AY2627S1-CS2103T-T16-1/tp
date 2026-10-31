@@ -141,6 +141,9 @@ After `add` or `edit`, TAB may warn about another student with a matching name, 
 * Selecting a student by ID requires the complete ID. <br>
   For example `A0123` cannot target the student with ID `A01234567X`.
 
+* A target that does not begin with a letter is read as a displayed index, even when it is also an ID, so an ID beginning with a digit needs the explicit option above. <br>
+  For example, `delete 1234` deletes the student displayed at index 1234 rather than the one whose ID is `1234`, and `delete 1234567X` is refused with `Index must be a positive integer. If "1234567X" is an NUS Student ID, use delete --id 1234567X.`
+
 * For `edit`, as `--id` is used to edit the student's ID, `--target-id` is used for explicitly selecting the student by NUS Student ID (including one beginning with a digit) instead.
 
 For example:
