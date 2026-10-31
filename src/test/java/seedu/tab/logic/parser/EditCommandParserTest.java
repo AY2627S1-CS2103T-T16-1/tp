@@ -57,6 +57,13 @@ import seedu.tab.testutil.EditStudentDescriptorBuilder;
 
 public class EditCommandParserTest {
 
+    /**
+     * Values a reader sees as blank. {@code String.isBlank} counts the first two and not the
+     * last two, so they are what tells one notion of a blank value from the other.
+     */
+    private static final List<String> BLANK_LOOKING_VALUES =
+            List.of(" ", "\u3000", "\u00A0", "\u2007");
+
     private EditCommandParser parser = new EditCommandParser();
 
     @Test
@@ -546,6 +553,40 @@ public class EditCommandParserTest {
         // a blank ID field asks for the ID to be cleared, so it names no student to be mistaken
         assertParseFailure(parser, "--id \"\"" + PHONE_AMY,
                 Messages.getErrorMessageForMissingFields(EditCommand.FIELD_TARGET));
+
+        // and a space is a space whichever one it is, so none of them reads as an ID the user
+        // meant to select with. Java calls the first two whitespace and the last two not.
+        for (String space : BLANK_LOOKING_VALUES) {
+            assertParseFailure(parser, "--id \"" + space + "\"" + PHONE_AMY,
+                    Messages.getErrorMessageForMissingFields(EditCommand.FIELD_TARGET));
+        }
+    }
+
+    @Test
+    public void parse_blankLookingTargetWithoutIdField_namesEveryTargetForm() {
+        // the selector holds nothing, so the reply is that no student was named. Reading the
+        // space as a value the user meant answers a question about indices that was never asked
+        for (String space : BLANK_LOOKING_VALUES) {
+            assertParseFailure(parser, " \"" + space + "\"" + PHONE_AMY,
+                    Messages.getErrorMessageForMissingFields(EditCommand.FIELD_TARGET));
+        }
+    }
+
+    @Test
+    public void parse_blankLookingTargetBesideTargetId_selectsByTargetId() {
+        // one target is named, and a selector holding only a space is not a second one
+        for (String space : BLANK_LOOKING_VALUES) {
+            assertParseSuccess(parser, " \"" + space + "\" --target-id " + VALID_NUS_STUDENT_ID_AMY + PHONE_AMY,
+                    new EditCommand(StudentTarget.byNusStudentId(
+                            new NusStudentId(VALID_NUS_STUDENT_ID_AMY)),
+                            new EditStudentDescriptorBuilder().withPhone(VALID_PHONE_AMY).build()));
+        }
+    }
+
+    @Test
+    public void parse_realTargetBesideTargetId_stillRefusesTwoTargets() {
+        assertParseFailure(parser, " 1 --target-id " + VALID_NUS_STUDENT_ID_AMY + PHONE_AMY,
+                EditCommand.MESSAGE_MULTIPLE_TARGETS);
     }
 
     @Test
