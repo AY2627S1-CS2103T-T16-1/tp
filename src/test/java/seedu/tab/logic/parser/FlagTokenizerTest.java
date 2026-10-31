@@ -271,6 +271,45 @@ public class FlagTokenizerTest {
     }
 
     @Test
+    public void tokenize_letterAfterTwoDashes_suggestsSupportedShortMarker() {
+        // two dashes carry a word, so a lone letter behind them names the short option instead
+        assertThrows(UnknownFlagException.class, "There is no --p option. Did you mean -p?", () ->
+                FlagTokenizer.tokenize("Bob --p 91234567", FLAG_PHONE));
+        assertThrows(UnknownFlagException.class, "There is no --e option. Did you mean -e?", () ->
+                FlagTokenizer.tokenize("Bob --e bob@example.com", FLAG_EMAIL));
+        assertThrows(UnknownFlagException.class, "There is no --t option. Did you mean -t?", () ->
+                FlagTokenizer.tokenize("Bob --t=\"Lab 3\"", FLAG_TAG));
+    }
+
+    @Test
+    public void tokenize_optionAfterTooManyDashes_suggestsTheMarkerItsNameBelongsBehind() {
+        // a held key leaves more dashes than either form uses, and the name still says which
+        assertThrows(UnknownFlagException.class, "There is no ---phone option. Did you mean --phone?", () ->
+                FlagTokenizer.tokenize("Bob ---phone 91234567", FLAG_PHONE));
+        assertThrows(UnknownFlagException.class, "There is no ---p option. Did you mean -p?", () ->
+                FlagTokenizer.tokenize("Bob ---p 91234567", FLAG_PHONE));
+        assertThrows(UnknownFlagException.class,
+                "There is no ------phone option. Did you mean --phone?", () ->
+                    FlagTokenizer.tokenize("Bob ------phone 91234567", FLAG_PHONE));
+    }
+
+    @Test
+    public void tokenize_capitalizedLetterAfterTwoDashes_foldsBothTheCaseAndTheDashes() {
+        assertThrows(UnknownFlagException.class, "There is no --P option. Did you mean -p?", () ->
+                FlagTokenizer.tokenize("Bob --P 91234567", FLAG_PHONE));
+    }
+
+    @Test
+    public void tokenize_unsupportedNameAtAnyDashCount_suggestsNothing() {
+        // redashing a name the command does not have must not invent an option for it
+        for (String input : List.of("--zzz 1", "-z 1", "---zzz 1", "-zzz 1")) {
+            String marker = input.split(" ")[0];
+            assertThrows(UnknownFlagException.class, "There is no " + marker + " option.", () ->
+                    FlagTokenizer.tokenize("Bob " + input, FLAG_PHONE));
+        }
+    }
+
+    @Test
     public void tokenize_oneLetterAfterOneDash_isNotReadAsALongOption() {
         // a short option is a dash before one letter, so -n must not be offered the long --n
         CliFlag longOnly = new CliFlag("--n", "N");

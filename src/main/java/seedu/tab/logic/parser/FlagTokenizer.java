@@ -199,26 +199,41 @@ public class FlagTokenizer {
     }
 
     /**
-     * Returns the spellings {@code marker} may stand for, nearest first. One dash before a word
-     * is what an autocorrected {@code --} leaves behind, so the long option of that word counts
-     * as a near spelling of it.
+     * Returns the spellings {@code marker} may stand for, nearest first: its own lowercase,
+     * then its name behind the dashes that name belongs behind, and that spelling's lowercase.
+     *
+     * <p>An option is one dash before a letter or two before a word, so the name itself decides
+     * the run, and a name typed behind the wrong one still says which option was meant. A word
+     * processor turns a typed {@code --} into one dash, and a key held down leaves three.
      */
     private static List<String> getNearSpellings(String marker) {
         String lowercase = marker.toLowerCase(Locale.ROOT);
-        if (!isWordAfterOneDash(marker)) {
+        String name = marker.substring(countLeadingDashes(marker));
+        if (name.isEmpty()) {
             return List.of(lowercase);
         }
-        String longForm = LONG_OPTION_MARKER + marker.substring(OPTION_MARKER.length());
-        return List.of(lowercase, longForm, longForm.toLowerCase(Locale.ROOT));
+        String properlyDashed = dashesFor(name) + name;
+        if (properlyDashed.equals(marker)) {
+            return List.of(lowercase);
+        }
+        return List.of(lowercase, properlyDashed, properlyDashed.toLowerCase(Locale.ROOT));
     }
 
     /**
-     * Returns true if {@code marker} is a single dash before more than one character. Only a
-     * token opening with a dash reaches here, so not opening with two is opening with one.
+     * Returns the dashes an option named {@code name} opens with. A one-letter name is already
+     * a whole short option behind one dash, so it is never offered a long spelling of itself.
      */
-    private static boolean isWordAfterOneDash(String marker) {
-        return !marker.startsWith(LONG_OPTION_MARKER)
-                && marker.length() > OPTION_MARKER.length() + 1;
+    private static String dashesFor(String name) {
+        return name.length() == 1 ? OPTION_MARKER : LONG_OPTION_MARKER;
+    }
+
+    /** Returns how many dashes {@code marker} opens with, before the name it carries. */
+    private static int countLeadingDashes(String marker) {
+        int dashes = 0;
+        while (marker.startsWith(OPTION_MARKER, dashes)) {
+            dashes += OPTION_MARKER.length();
+        }
+        return dashes;
     }
 
     /**
