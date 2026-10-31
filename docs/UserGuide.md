@@ -6,7 +6,7 @@
 
 # TAB User Guide
 
-TAB (Teaching Assistant's Book) is a **desktop application for teaching assistants to manage student records through typed commands**. You can keep contact details, group students with tags and track who needs follow-up in one graphical window.
+TAB (Teaching Assistant's Book) is a **desktop application for teaching assistants to manage student records through typed commands**. You can keep contact details, group students with tags and track who needs follow-up in one graphical window. Your **student book** (or **book**) is the complete collection of saved student records, including those hidden by a search.
 
 <!-- Adapted from the inherited AddressBook-Level3 User Guide by SE-EDU. -->
 <!-- https://github.com/NUS-CS2103-AY2627-S1/tp/blob/master/docs/UserGuide.md -->
@@ -16,10 +16,14 @@ TAB (Teaching Assistant's Book) is a **desktop application for teaching assistan
 
 1. Install Java `25`, using an x64 JDK without bundled JavaFX on Windows or Linux.
 
+   A JDK (Java Development Kit) provides the Java runtime needed to launch TAB. JDK+FX also includes JavaFX, the library used for TAB's graphical interface.
+
    On a Mac, use the JDK+FX version in the
    [course setup guide](https://se-education.org/guides/tutorials/javaInstallationMac.html).
-   If you choose a plain JDK on Apple Silicon, use an x64 JDK under Rosetta because TAB's bundled JavaFX targets Intel Macs.
+   If you choose a plain JDK on Apple Silicon, use an x64 JDK under Rosetta because TAB's bundled JavaFX targets Intel Macs. Rosetta is Apple's compatibility software for running Intel applications on Apple Silicon.
    The course's native JDK+FX setup does not need Rosetta.
+
+   Open a terminal and run `java -version`. Check that the reported Java version begins with `25` before continuing. If the command is unavailable or reports another version, complete the Java setup first.
 
 1. Download `tab.jar` from the [releases page](https://github.com/AY2627S1-CS2103T-T16-1/tp/releases)
    and place it in a writable folder, which will be TAB's home folder.
@@ -30,14 +34,13 @@ TAB (Teaching Assistant's Book) is a **desktop application for teaching assistan
 
    ![TAB showing student records and the student summary](images/Ui.png)
 
-1. Type a command in the command box and press `Enter`.
+1. Type a command in the [command box](#reading-and-navigating-the-window) and press `Enter`.
    Try `list` to show every student, then `help` to read the built-in command reference.
 
 1. Try `add John Doe -p 98765432 -e johnd@example.com --id A05678901K` to add a student.
    You can then use `find -n John` to locate the record.
 
 1. Refer to [Features](#features) for command details or the [Command summary](#command-summary) for a quick reference.
-
 
 ## General reference
 
@@ -86,7 +89,7 @@ Options also accept `OPTION=VALUE`, such as `--phone=91234567`. TAB suggests cor
 
 ### Student fields
 
-The field options below are used by `add`, `edit` and `find`.
+The field options below are used by `add`, `edit` and `find`, with command-specific differences noted in the table.
 
 | Field | Options | Accepted values |
 | --- | --- | --- |
@@ -95,7 +98,7 @@ The field options below are used by `add`, `edit` and `find`.
 | Email | `-e`, `--email` | Up to 254 characters |
 | NUS Student ID | `--id`, `-i` | 1 to 32 ASCII letters or digits, stored in uppercase |
 | Tag | `-t`, `--tag` | At least one letter or number in any script |
-| Follow-up | `--follow-up`, `-f`<br> `--no-follow-up`, `-nf` | Accepts no value |
+| Follow-up | `add`, `edit`, `find`: `--follow-up` or `-f`<br> `edit`, `find` only: `--no-follow-up` or `-nf` | Accepts no value; `add` starts unflagged unless `--follow-up` is supplied |
 
 #### Additional field rules
 
@@ -147,11 +150,12 @@ After `add` or `edit`, TAB may warn about another student with a matching name, 
 * For `edit`, as `--id` is used to edit the student's ID, `--target-id` is used for explicitly selecting the student by NUS Student ID (including one beginning with a digit) instead.
 
 For example:
+
 1. Run `add Numeric Example --id 1234` to add a student with ID `1234`.
-2. Run `edit --target-id 1234 -p 91234567` to update the student.
-3. Run `tag --id 1234 -a T2` to add a tag to the same student.
-4. Run `edit --target-id 1234 --id E7654321` to change their ID.
-5. Run `delete --id E7654321` to remove this example student.
+1. Run `edit --target-id 1234 -p 91234567` to update the student.
+1. Run `tag --id 1234 -a T2` to add a tag to the same student.
+1. Run `edit --target-id 1234 --id E7654321` to change their ID.
+1. Run `delete --id E7654321` to remove this example student.
 
 **TIP**: `delete`, `edit` and `tag` keep the currently active search and filter, so students may disappear when they no longer match. To avoid acting on the wrong student, you may want to check the displayed indices after each change, or use NUS Student ID as the target.
 
@@ -180,19 +184,17 @@ The footer shows your reading progress and navigation keys, including `q` or `Es
 | `c` | Copy the User Guide link |
 | `q`, `Esc` | Return to commands |
 
-
 ### Adding a student with `add`
 
 Adds a student to the student book.
 
-**Format** `add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
-
+**Format**: `add NAME [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up]`
 
 * Only the name is required.
 * Students start without a follow-up flag unless you supply `--follow-up`.
 * If a search would hide the new student, TAB shows all students so the addition is visible.
 
-Examples
+**Examples**:
 
 * `add Ravi s/o Kumaran --id E1234567 -t "Lab 3" --follow-up` adds a student needing follow-up.
 * `add Mei Tan -p "+65 9123 4567" -e mei__tan@hotmail.com` adds a student with contact details.
@@ -201,13 +203,13 @@ Examples
 
 Shows a list of all students and reports their count.
 
-**Format** `list`
+**Format**: `list`
 
 ### Editing a student with `edit`
 
 Edits an existing student selected by [displayed index or NUS Student ID](#choosing-a-student).
 
-**Format** `edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`
+**Format**: `edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up | --no-follow-up]`
 
 * Supply at least one change, using the [student field rules](#student-fields).
 * Omitted fields stay unchanged.
@@ -215,7 +217,7 @@ Edits an existing student selected by [displayed index or NUS Student ID](#choos
 * Supplied tags **replace all existing tags**. Using `-t ""` alone will also clear every tag. To change one tag while keeping the others, consider using the `tag` command instead.
 * Use `--follow-up` or `-f` to set the flag, or `--no-follow-up` or `-nf` to clear it.
 
-Examples
+**Examples**:
 
 * `edit 1 -p 91234567 -e johnd@example.com` changes two contact details.
 * `edit 2 -n "Betsy Crower" -t ""` changes a name and clears all tags.
@@ -225,12 +227,12 @@ Examples
 
 Adds or removes **one** tag for an existing student selected by [displayed index or NUS Student ID](#choosing-a-student).
 
-**Format** `tag TARGET -a TAG` or `tag TARGET -r TAG`
+**Format**: `tag TARGET -a TAG` or `tag TARGET -r TAG`
 
 * You may use `--add` in place of `-a`, or `--remove` in place of `-r`.
 * Other tags and details remain unchanged.
 
-Examples
+**Examples**:
 
 * `tag 1 -a "Lab 3"` adds one tag.
 * `tag 1 -r "lab 3"` removes that tag regardless of case.
@@ -240,7 +242,7 @@ Examples
 
 Searches the whole book using the [student field options](#student-fields).
 
-**Format** `find [FIELD_OPTION TERM]... [-f | -nf]`
+**Format**: `find [FIELD_OPTION TERM]... [--follow-up | --no-follow-up]`
 
 * Supply at least one field term or follow-up option.
 * Each term needs a field option, such as `-n` for names or `-e` for emails.
@@ -255,21 +257,21 @@ Searches the whole book using the [student field options](#student-fields).
   For example, `find -n "Mary Jane"` matches the names `Mary-Jane` and `Mary–Jane`, but `find -t "Mary Jane"` does not match the tag `Mary-Jane`.
 * Phone searches match digits across formatting. <br>
   For example, `91234567` matches `+65 9123 4567`.
-* Use `-f` for students with the follow-up flag, or `-nf` for students without it. `-f` and `-nf` cannot be used together.
+* Use `--follow-up` or `-f` for students with the follow-up flag, or `--no-follow-up` or `-nf` for students without it. The two selectors cannot be used together.
 
-Examples
+**Examples**:
 
 * `find -n Jason -n Tan` requires both name fragments, regardless of their order.
 * `find -t "Lab 3"` requires that phrase within one tag.
-* `find -n Alice -t "Lab 3" -f` requires the name, tag and follow-up status.
+* `find -n Alice -t "Lab 3" --follow-up` requires the name, tag and follow-up status.
 
 ### Deleting a student with `delete`
 
 Deletes one student immediately with no undo command. The student to delete is selected by [displayed index or NUS Student ID](#choosing-a-student).
 
-**Format** `delete TARGET`
+**Format**: `delete TARGET`
 
-Examples
+**Examples**:
 
 * `find -n Charlotte` followed by `delete 1` removes the first displayed match.
 * `delete --id A02345678G` removes Charlotte Oliveiro in the sample data, even when hidden by a search.
@@ -278,7 +280,7 @@ Examples
 
 Deletes every student record, including those not currently displayed.
 
-**Format** `clear`
+**Format**: `clear`
 
 `clear` asks for confirmation because deletion cannot be undone.
 
@@ -291,15 +293,27 @@ Deletes every student record, including those not currently displayed.
 
 Closes TAB.
 
-**Format** `exit`
+**Format**: `exit`
 
 * Current window size and position are remembered for the next launch.
 
 ### Reading and navigating the window
 
+The screenshot below shows the reply after entering `list`. The numbered labels identify the main parts of the window.
+
+![TAB after list, with numbered labels for the command box, command result, student summary, student list, and status bar](images/commandResult.png)
+
+| Label | Window part | Purpose |
+| --- | --- | --- |
+| 1 | Command box | Type a command and press `Enter`. |
+| 2 | Command result | Read the reply or error from your command. This area is hidden until there is feedback to show. |
+| 3 | Student summary | Read the displayed student count, follow-up count and tag counts. |
+| 4 | Student list | View the students matching the active search. |
+| 5 | Status bar | See the absolute path to your data file. The path depends on TAB's home folder. |
+
 ![Student summary beside cards showing a follow-up flag and hidden tags](images/cardSummary.png)
 
-In this example, the student summary counts three students and one follow-up flag. The first card shows the follow-up marker beside its name, while `2 more...` indicates hidden tags.
+In this example, the student summary counts three students and one follow-up flag. The first card shows the follow-up marker at the right end of its headline, while `2 more...` indicates hidden tags.
 
 * The **student summary** on the left shows the displayed students' total, follow-up count and tag counts.
 * Tags differing only in case share a summary row.
@@ -359,7 +373,7 @@ For `TARGET`, see [Choosing a student](#choosing-a-student).
 | Edit | `edit TARGET [-n NAME] [-p PHONE] [-e EMAIL] [--id NUS_STUDENT_ID] [-t TAG]... [--follow-up \| --no-follow-up]` |
 | Add a tag | `tag TARGET -a TAG` |
 | Remove a tag | `tag TARGET -r TAG` |
-| Find | `find [FIELD_OPTION TERM]... [-f \| -nf]`, such as `find -n Alex -t T1` |
+| Find | `find [FIELD_OPTION TERM]... [--follow-up \| --no-follow-up]`, such as `find -n Alex -t T1` |
 | Delete | `delete TARGET` |
 | Clear | `clear`, then confirm or cancel |
 | Help | `help`, then `q` or `Esc` to return |
