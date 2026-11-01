@@ -3,14 +3,13 @@
 skinparam ArrowFontStyle plain
 skinparam defaultFontSize 16
 skinparam maxMessageSize 260
-title Add field validation
+mainframe sd Add field validation
 
 participant ":AddCommandParser" as parser LOGIC_COLOR
 participant ":FlagArgumentMap" as arguments LOGIC_COLOR
 participant ":ParseProblems" as problems LOGIC_COLOR
 participant "ParserUtil" as util <<class>> LOGIC_COLOR
 
-activate parser
 note left of parser
   1. Reject repeated
   options, create the
@@ -66,5 +65,4 @@ parser -> problems : throwIfAny()
 activate problems
 problems --> parser : no errors
 deactivate problems
-deactivate parser
 @enduml
