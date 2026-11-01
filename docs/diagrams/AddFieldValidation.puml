@@ -1,0 +1,40 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+skinparam defaultFontSize 16
+skinparam maxMessageSize 260
+title Add field validation
+
+participant ":AddCommandParser" as parser LOGIC_COLOR
+participant ":FlagArgumentMap" as arguments LOGIC_COLOR
+participant ":ParseProblems" as problems LOGIC_COLOR
+participant "ParserUtil" as util <<class>> LOGIC_COLOR
+
+activate parser
+parser -> arguments : verifyNoDuplicateFlagsFor(...)
+create problems
+parser -> problems : ParseProblems()
+parser -> arguments : getPreamble()
+arguments --> parser : "Alice"
+parser -> problems : collect(name parsing step)
+activate problems
+problems -> util : parseName("Alice")
+activate util
+util --> problems : name
+deactivate util
+problems --> parser : name
+deactivate problems
+parser -> arguments : getValue(FLAG_PHONE)
+arguments --> parser : Optional.of("81234567")
+parser -> problems : collectIfPresent(phoneText,\nParserUtil::parsePhone)
+activate problems
+problems -> util : parsePhone("81234567")
+activate util
+util --> problems : phone
+deactivate util
+problems --> parser : Optional.of(phone)
+deactivate problems
+parser -> problems : throwIfAny()
+problems --> parser : no errors
+deactivate parser
+@enduml

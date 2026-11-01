@@ -1,0 +1,34 @@
+@startuml
+!include style.puml
+skinparam defaultFontSize 16
+skinparam ArrowFontStyle plain
+skinparam activityBackgroundColor LOGIC_COLOR_T1
+skinparam activityBorderColor #555555
+skinparam arrowColor #555555
+
+start
+:Read one optional field\nfrom EditStudentDescriptor;
+if (Field marked as edited?) then ([no])
+  :Use the student's saved value;
+else ([yes])
+  if (Descriptor contains a value?) then ([yes])
+    :Use the replacement value;
+  else ([no])
+    :Use Optional.empty() to clear the field;
+  endif
+endif
+:Combine all descriptor fields\ninto a replacement Student;
+if (Replacement equals the saved student?) then ([yes])
+  :Return an unchanged CommandResult;
+  stop
+else ([no])
+  :Check NUS Student ID uniqueness;
+  if (ID belongs to another student?) then ([yes])
+    :Throw CommandException\nwithout replacing the student;
+    stop
+  else ([no])
+    :Call Model.setStudent()\nand return a success CommandResult;
+  endif
+endif
+stop
+@enduml

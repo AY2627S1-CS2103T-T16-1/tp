@@ -2,36 +2,24 @@
 !include style.puml
 skinparam ArrowFontStyle plain
 skinparam defaultFontSize 16
+skinparam maxMessageSize 260
 
 participant ":AddCommandParser" as parser LOGIC_COLOR
-participant "FlagTokenizer" as flags LOGIC_COLOR
-participant "CommandTokenizer" as tokens LOGIC_COLOR
+participant ":Student" as student MODEL_COLOR
+participant "c:AddCommand" as command LOGIC_COLOR
 
-[-> parser : parse(args)
+[-> parser : parse(" Alice -p 81234567")
 activate parser
-parser -> flags : tokenize(args, ...)
-activate flags
-flags -> tokens : tokenize(args)
-activate tokens
-tokens --> flags : tokens with\nquoted boundaries
-deactivate tokens
-note over flags : Assign options to values
-flags --> parser : arguments:\nFlagArgumentMap
-deactivate flags
-note over parser
-  Check required input
-  and repeated options.
-end note
-note over parser
-  Validate fields through
-  ParserUtil; collect errors
-  through ParseProblems.
-  Stop on errors.
-end note
-note over parser
-  Construct Student and
-  c = new AddCommand(student).
-end note
+ref over parser
+  Add argument tokenization
+end ref
+ref over parser
+  Add field validation
+end ref
+create student
+parser -> student : Student(name, phone,\nemptyEmail, emptyId, emptyTags, false)
+create command
+parser -> command : AddCommand(student)
 [<-- parser : command c
 deactivate parser
 @enduml

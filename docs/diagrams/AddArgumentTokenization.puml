@@ -1,0 +1,27 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+skinparam defaultFontSize 16
+skinparam maxMessageSize 260
+title Add argument tokenization
+
+participant ":AddCommandParser" as parser LOGIC_COLOR
+participant "FlagTokenizer" as flags <<class>> LOGIC_COLOR
+participant "CommandTokenizer" as tokens <<class>> LOGIC_COLOR
+participant ":FlagArgumentMap" as arguments LOGIC_COLOR
+
+activate parser
+parser -> flags : tokenize(args, ...)
+activate flags
+flags -> tokens : tokenize(args)
+activate tokens
+tokens --> flags : tokens with\nquoted boundaries
+deactivate tokens
+create arguments
+flags -> arguments : FlagArgumentMap()
+flags -> arguments : setPreamble("Alice")
+flags -> arguments : put(FLAG_PHONE, "-p", "81234567")
+flags --> parser : arguments
+deactivate flags
+deactivate parser
+@enduml
