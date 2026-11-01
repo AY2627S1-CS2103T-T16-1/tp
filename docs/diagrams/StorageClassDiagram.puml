@@ -10,36 +10,28 @@ skinparam nodesep 80
 skinparam ranksep 45
 skinparam packageTitleAlignment center
 skinparam packageFontSize 16
+' Padding moves each group's title to the side the delegation arrow does not cross.
 
-package "Storage" as StorageComponent {
+package "Storage<U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0>" as StorageComponent {
 interface Storage <<interface>>
 class StorageManager
-package " " as UserPrefsGroup #F4F6F6 {
-' Borderless heading nodes keep the delegation arrows clear of the text.
-class "<b>UserPrefs Storage</b>" as PrefsHeading #transparent;line:transparent
+package "UserPrefs Storage<U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0>" as UserPrefsGroup #F4F6F6 {
 class JsonUserPrefsStorage
-PrefsHeading -[hidden]down-> JsonUserPrefsStorage
 }
-package " " as StudentBookGroup #F4F6F6 {
-class "<b>StudentBook Storage</b>" as BookHeading #transparent;line:transparent
+package "<U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0>StudentBook Storage" as StudentBookGroup #F4F6F6 {
 class JsonStudentBookStorage
 class JsonSerializableStudentBook
 class JsonAdaptedStudent
 class JsonAdaptedTag
-BookHeading -[hidden]down-> JsonStudentBookStorage
 }
 
 StorageManager .up.|> Storage
-StorageManager -[hidden]down-> PrefsHeading
-StorageManager -[hidden]down-> BookHeading
-StorageManager --> "1" JsonUserPrefsStorage
-StorageManager --> "1" JsonStudentBookStorage
-PrefsHeading -[hidden]right-> BookHeading
-JsonStudentBookStorage ..> JsonSerializableStudentBook : reads / writes
-JsonSerializableStudentBook --> "0..*" JsonAdaptedStudent
-JsonAdaptedStudent --> "0..*" JsonAdaptedTag
+StorageManager -down-> "1" JsonUserPrefsStorage
+StorageManager -down-> "1" JsonStudentBookStorage
+JsonStudentBookStorage ..> JsonSerializableStudentBook : <U+00A0><U+00A0>reads / writes
+JsonSerializableStudentBook --> "*" JsonAdaptedStudent
+JsonAdaptedStudent --> "*" JsonAdaptedTag
 }
 class " " as Outside #transparent;line:transparent
 Outside ..> Storage
 @enduml
-
