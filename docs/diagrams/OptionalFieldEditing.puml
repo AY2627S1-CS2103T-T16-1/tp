@@ -7,28 +7,20 @@ skinparam activityBorderColor #555555
 skinparam arrowColor #555555
 
 start
-:Read one optional field\nfrom EditStudentDescriptor;
-if (Field marked as edited?) then ([no])
-  :Use the student's saved value;
-else ([yes])
-  if (Descriptor contains a value?) then ([yes])
-    :Use the replacement value;
-  else ([no])
-    :Use Optional.empty() to clear the field;
-  endif
-endif
-:Combine all descriptor fields\ninto a replacement Student;
-if (Replacement equals the saved student?) then ([yes])
-  :Return an unchanged CommandResult;
+repeat
+  :<U+22D4> Decide the next field's value;
+repeat while () is ([more fields]) not ([else])
+:Build the edited student;
+if () then ([same as saved student])
+  :Report that nothing changed;
   stop
-else ([no])
-  :Check NUS Student ID uniqueness;
-  if (ID belongs to another student?) then ([yes])
-    :Throw CommandException\nwithout replacing the student;
+else ([changed])
+  if () then ([ID held by another student])
+    :Reject the edit;
     stop
-  else ([no])
-    :Call Model.setStudent()\nand return a success CommandResult;
+  else ([else])
+    :Replace the student\nand report success;
+    stop
   endif
 endif
-stop
 @enduml
