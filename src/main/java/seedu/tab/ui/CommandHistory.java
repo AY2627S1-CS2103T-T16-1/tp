@@ -10,14 +10,27 @@ import seedu.tab.commons.util.StringUtil;
  */
 final class CommandHistory {
 
+    /**
+     * How many commands one session keeps. Recording past this discards the oldest, so a
+     * session that runs all day does not hold every command it was ever given.
+     */
+    private static final int CAPACITY = 100;
+
     private final List<String> commands = new ArrayList<>();
     private int position;
     private String draft = "";
 
-    /** Records a submission, skipping blank input and consecutive identical commands. */
+    /**
+     * Records a submission, skipping blank input and consecutive identical commands, and
+     * discarding the oldest command once the session holds {@link #CAPACITY} of them. A
+     * submission that is skipped discards nothing, since it takes no room.
+     */
     void add(String command) {
         boolean isBlank = command.chars().allMatch(character -> StringUtil.isWhitespace((char) character));
         if (!isBlank && (commands.isEmpty() || !commands.getLast().equals(command))) {
+            if (commands.size() == CAPACITY) {
+                commands.removeFirst();
+            }
             commands.add(command);
         }
         resetNavigation();

@@ -2,6 +2,7 @@ package seedu.tab.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -76,6 +77,73 @@ public class CommandHistoryTest {
         history.resetNavigation();
         assertEquals("clear", history.recallPrevious("new draft"));
         assertEquals("new draft", history.recallNext("clear"));
+    }
+
+    @Test
+    public void add_entriesUpToCapacity_keepsEveryCommand() {
+        assertEquals(oldestToNewest(1, 99), recallAll(historyOf(99)));
+        assertEquals(oldestToNewest(1, 100), recallAll(historyOf(100)));
+    }
+
+    @Test
+    public void add_pastCapacity_dropsOneOldestCommandPerRecording() {
+        assertEquals(oldestToNewest(2, 101), recallAll(historyOf(101)));
+        assertEquals(oldestToNewest(51, 150), recallAll(historyOf(150)));
+    }
+
+    @Test
+    public void add_duplicateAtCapacity_dropsNothing() {
+        CommandHistory history = historyOf(100);
+        history.add("c100");
+        history.add("   ");
+        assertEquals(oldestToNewest(1, 100), recallAll(history));
+    }
+
+    @Test
+    public void navigate_afterEviction_stopsAtTheOldestKeptCommandAndRestoresTheDraft() {
+        CommandHistory history = historyOf(101);
+        String text = "draft";
+        for (int number = 101; number >= 2; number--) {
+            text = history.recallPrevious(text);
+            assertEquals("c" + number, text);
+        }
+        // The dropped `c1` is not reachable, so the oldest kept command is the boundary.
+        assertEquals("edited oldest", history.recallPrevious("edited oldest"));
+        assertEquals("c3", history.recallNext("edited oldest"));
+        for (int number = 4; number <= 101; number++) {
+            assertEquals("c" + number, history.recallNext("c" + (number - 1)));
+        }
+        assertEquals("draft", history.recallNext("c101"));
+    }
+
+    /** Returns a history given `c1` up to `c{count}` in order. */
+    private static CommandHistory historyOf(int count) {
+        CommandHistory history = new CommandHistory();
+        for (int number = 1; number <= count; number++) {
+            history.add("c" + number);
+        }
+        return history;
+    }
+
+    /** Returns `c{first}` up to `c{last}`, which is what the history should have kept. */
+    private static List<String> oldestToNewest(int first, int last) {
+        List<String> commands = new ArrayList<>();
+        for (int number = first; number <= last; number++) {
+            commands.add("c" + number);
+        }
+        return commands;
+    }
+
+    /** Returns every command Up reaches, oldest first, stopping where Up stops changing the text. */
+    private static List<String> recallAll(CommandHistory history) {
+        List<String> recalled = new ArrayList<>();
+        String text = "draft";
+        for (String previous = history.recallPrevious(text); !previous.equals(text);
+                previous = history.recallPrevious(text)) {
+            recalled.add(previous);
+            text = previous;
+        }
+        return recalled.reversed();
     }
 
     @Test
