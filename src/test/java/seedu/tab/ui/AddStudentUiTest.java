@@ -47,10 +47,12 @@ public class AddStudentUiTest {
     // the pulses a card has to spend in view before its geometry is taken as settled
     private static final int PULSES_IN_VIEW = 16;
 
-    // the text on a card that has to be readable, each selector looked up on its own because
-    // a lookup takes one selector rather than a list of them
+    // What a card says about its student, each selector looked up on its own because a lookup
+    // takes one selector rather than a list of them. Tag chips are left out: TagRow hides the
+    // chips a row has no space for and cuts the first one to fit, so a chip outside the row is
+    // what that class is meant to do rather than a card failing to show what it holds.
     private static final List<String> DETAIL_SELECTORS =
-            List.of(".card-name", ".card-detail", ".card-detail-strong");
+            List.of(".card-name", ".card-detail", ".card-detail-strong", ".card-pill");
 
     @TempDir
     public Path testFolder;
@@ -353,7 +355,10 @@ public class AddStudentUiTest {
                 });
     }
 
-    /** Returns true if every detail shown on {@code node} lies inside {@code card}. */
+    /**
+     * Returns true if every {@link #DETAIL_SELECTORS} detail shown on {@code node} lies
+     * inside {@code card}.
+     */
     private boolean holdsEveryDetail(Node node, Bounds card) {
         return DETAIL_SELECTORS.stream()
                 .flatMap(selector -> node.lookupAll(selector).stream())
