@@ -104,7 +104,7 @@ The `UI` component,
 * has a `HelpPage` component which is used when the `help` command is called.
 * has a `StatusBarFooter` component which displays the data file's absolute path.
 
-**Known issue (Linux):** JavaFX keeps two small character arrays for every keystroke until TAB exits, about 50 bytes per keystroke. Its native GTK code creates the arrays in `WindowContextBase::process_key` and never releases them. The leak is in JavaFX rather than TAB, and JavaFX 25.0.4 behaves the same. Heavy typing leaks under 1 MB a day, which is freed when TAB closes, so TAB needs no workaround. Do not attribute steady `char[]` growth in a Linux heap profile to TAB code.
+**Known issue (Linux):** JavaFX leaks about 50 bytes per keystroke on Linux. Its GTK code creates a character array for each key press and each key release in `WindowContextBase::process_key`, and never frees them. The leak is in JavaFX, not TAB, and JavaFX 25.0.4 has it too. A day of heavy typing leaks less than 1 MB, and closing TAB frees it. If a Linux heap profile shows `char[]` growing steadily, this is why.
 
 ### Logic component
 
