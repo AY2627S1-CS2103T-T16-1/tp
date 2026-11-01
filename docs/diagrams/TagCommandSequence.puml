@@ -29,6 +29,7 @@ student --> command : stored tags
 create updated
 command -> updated : Student(name, phone, email, id,\nupdatedTags, isFlagged)
 activate updated
+||15||
 updated --> command
 deactivate updated
 deactivate command
