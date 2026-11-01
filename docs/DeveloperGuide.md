@@ -272,7 +272,7 @@ How incremental tag changes work:
 1. `TagCommand` resolves its `StudentTarget` against the model.
 1. The command checks the student's tags for a case-insensitive match.
 1. For a valid change, it copies the tag set, adds or removes the requested tag, and constructs a replacement `Student`. Other details are preserved.
-1. The command calls `Model.setStudent()` and returns feedback. Since `Student` is immutable due to defensive programming, the model puts `updatedStudent` in the original student's place in the list rather than changing `student`. Logic saves the changed book after command execution.
+1. The command calls `Model.setStudent()` and returns feedback. Since `Student` is immutable due to defensive programming, the model puts `updated` in the original student's place in the list rather than changing `student`. Logic saves the changed book after command execution.
 
 Adding an existing tag or removing an absent tag throws a `CommandException` without changing the student.
 

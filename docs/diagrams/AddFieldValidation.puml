@@ -3,18 +3,17 @@
 skinparam ArrowFontStyle plain
 skinparam defaultFontSize 16
 skinparam maxMessageSize 260
-title Add field validation
+mainframe sd Add field validation
 
 participant ":AddCommandParser" as parser LOGIC_COLOR
 participant ":FlagArgumentMap" as arguments LOGIC_COLOR
 participant ":ParseProblems" as problems LOGIC_COLOR
 participant "ParserUtil" as util <<class>> LOGIC_COLOR
 
-activate parser
 note left of parser
   1. Reject repeated
-  options, create the
-  error collector
+  options, create
+  the collector
 end note
 parser -> arguments : verifyNoDuplicateFlagsFor(...)
 activate arguments
@@ -28,7 +27,8 @@ problems --> parser
 deactivate problems
 note left of parser
   2a. Read and
-  validate the name
+  validate
+  the name
 end note
 parser -> arguments : getPreamble()
 activate arguments
@@ -36,7 +36,7 @@ arguments --> parser : "Alice"
 deactivate arguments
 parser -> problems : collect(name parsing step)
 activate problems
-problems -> util : parseName("Alice")
+problems -> util : parseName(\n"Alice")
 activate util
 util --> problems : name
 deactivate util
@@ -44,7 +44,8 @@ problems --> parser : name
 deactivate problems
 note left of parser
   2b. Read and
-  validate the phone
+  validate
+  the phone
 end note
 parser -> arguments : getValue(FLAG_PHONE)
 activate arguments
@@ -52,7 +53,7 @@ arguments --> parser : Optional.of("81234567")
 deactivate arguments
 parser -> problems : collectIfPresent(phoneText,\nParserUtil::parsePhone)
 activate problems
-problems -> util : parsePhone("81234567")
+problems -> util : parsePhone(\n"81234567")
 activate util
 util --> problems : phone
 deactivate util
@@ -66,5 +67,4 @@ parser -> problems : throwIfAny()
 activate problems
 problems --> parser : no errors
 deactivate problems
-deactivate parser
 @enduml

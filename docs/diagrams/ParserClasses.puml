@@ -7,14 +7,13 @@ skinparam classStereotypeFontColor #222222
 skinparam classBorderColor #555555
 skinparam arrowColor #555555
 skinparam ArrowFontStyle plain
-skinparam genericDisplay old
 skinparam nodesep 40
 skinparam ranksep 40
 
 package "Logic" as LogicComponent {
     package "Parsers" {
         class StudentBookParser
-        interface "Parser<T>" as Parser <<interface>>
+        interface Parser<T> <<interface>>
         class AddCommandParser
         class FlagTokenizer
         class CommandTokenizer
