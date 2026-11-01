@@ -1,5 +1,7 @@
 @startuml
+!pragma teoz true
 !include style.puml
+skinparam ParticipantPadding 0
 skinparam ArrowFontStyle plain
 skinparam defaultFontSize 16
 
@@ -27,9 +29,8 @@ activate command
 command -> student : getTags()
 student --> command : stored tags
 create updated
-command -> updated : Student(name, phone, email, id,\nupdatedTags, isFlagged)
+command -> updated : Student(name, phone, email, id, updatedTags, isFlagged)
 activate updated
-||15||
 updated --> command
 deactivate updated
 deactivate command
