@@ -18,8 +18,10 @@ logic -> model : read book and filter
 activate model
 model --> logic : snapshot data
 deactivate model
-note over logic : Snapshot book and filter
-note over logic : Execute command, resolving displayed target
+note right of logic
+  Execute command,
+  resolving displayed target
+end note
 logic -> model : deleteStudent(student)
 activate model
 model --> logic

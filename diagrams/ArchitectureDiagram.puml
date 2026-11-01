@@ -2,18 +2,19 @@
 !include style.puml
 !pragma layout smetana
 skinparam defaultFontSize 16
-skinparam packageFontColor #222222
+skinparam componentStyle uml2
+skinparam componentFontColor #222222
 skinparam arrowColor #555555
 skinparam ArrowFontStyle plain
 skinparam nodesep 45
 skinparam ranksep 40
 
-package Main #EEEEEE
-package UI UI_COLOR_T1
-package Logic LOGIC_COLOR_T1
-package Storage STORAGE_COLOR_T1
-package Model MODEL_COLOR_T1
-package Commons #EEEEEE
+component Main #EEEEEE
+component UI UI_COLOR_T1
+component Logic LOGIC_COLOR_T1
+component Storage STORAGE_COLOR_T1
+component Model MODEL_COLOR_T1
+component Commons #EEEEEE
 
 Main ..> UI
 Main ..> Logic

@@ -41,6 +41,7 @@
         "logic-component": "Logic component",
         "model-component": "Model component",
         "storage-component": "Storage component",
+        "common-classes": "Common classes",
         "implementation": "Implementation",
         "parsing-commands-and-reporting-mistakes": "Parsing commands and reporting mistakes",
         "student-values-and-duplicate-detection": "Student values and duplicate detection",
