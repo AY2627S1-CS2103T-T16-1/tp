@@ -258,10 +258,8 @@ How optional-field editing works:
 * `OptionalFieldEdit<T>` records whether a field was edited and its requested value. Phone, email, and NUS Student ID use this representation.
 * An omitted option keeps the saved value. A supplied value replaces it; an explicit empty value, such as `-p ""`, clears it.
 * An option without a required value is rejected during parsing. It does not request a clear operation.
-* The command repeats the raked action for each optional field, and `createEditedStudent()` combines all descriptor fields into a replacement `Student`. The raked action expands to **Decide a field's value** below. Names cannot be cleared. `-t ""` clears all general tags, while nonempty `-t` options replace the tag set.
+* The command makes this choice for each optional field in turn, and `createEditedStudent()` combines all descriptor fields into a replacement `Student`. Names cannot be cleared. `-t ""` clears all general tags, while nonempty `-t` options replace the tag set.
 * An equal replacement returns an unchanged result. Otherwise, the command checks ID uniqueness before calling `Model.setStudent()`. Logic saves only when the book changes.
-
-<puml src="diagrams/OptionalFieldValue.puml" alt="Keeping, replacing, or clearing one optional field" />
 
 ### Tags and follow-up status
 
@@ -535,7 +533,7 @@ Setting/clearing follow-up uses the same edit flow. UC03 covers the tag-specific
 1. **Runtime:** Should work on any *mainstream OS* (Windows, Linux, macOS) with Java 25 and the matching JavaFX runtime as described in the UG.
 1. **Portability:** Should be distributed as one executable JAR of at most 100 MB. This JAR should be usable from a writable folder without an installer or administrator privileges.
 1. **Keyboard access:** Every student-management operation and in-app help should be available through the keyboard.
-1. **Typing efficiency:** A practiced typist should have a lower median completion time when using TAB.
+1. **Typing efficiency:** A user who types at least 40 words per minute should be able to add a student with a name, phone number and email in under 30 seconds, including correcting one typing mistake.
 1. **Capacity and responsiveness:** Should support up to 1,000 student records, with typical add, edit, delete, tag, list, and find commands updating the GUI within 100 ms. Startup should be ready for input within 2 seconds. This can be measured on a local writable disk by recording hardware, runtime, dataset, and repeated timings.
 1. **Display:** The interface should be readable and usable at 1920×1080 with 100% and 125% scaling, and at 1280×720 with scaling up to 150%.
 1. **Data locality:** Should work offline and store student data locally without transmitting it to a network service.
