@@ -8,8 +8,17 @@ skinparam arrowColor #555555
 
 start
 repeat
-  :<U+22D4> Decide the next field's value;
-repeat while () is ([more fields]) not ([else])
+  :Take the next optional field;
+  if () then ([field not edited])
+    :Keep the saved value;
+  else ([field edited])
+    if () then ([new value given])
+      :Use the new value;
+    else ([no value given])
+      :Clear the field;
+    endif
+  endif
+repeat while () is ([more optional fields]) not ([else])
 :Build the edited student;
 if () then ([same as saved student])
   :Report that nothing changed;
