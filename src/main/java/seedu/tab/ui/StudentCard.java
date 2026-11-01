@@ -1,5 +1,6 @@
 package seedu.tab.ui;
 
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
@@ -71,7 +72,7 @@ public class StudentCard extends UiPart<Region> {
         show(followUp, student.getFlag().map(flag -> flag.getTagName()).orElse(null));
         show(nusStudentId, student.getNusStudentId().map(NusStudentId::toString).orElse(null));
         for (Label contact : new Label[] {nusStudentId, phone, email}) {
-            contact.maxWidthProperty().bind(contacts.widthProperty());
+            capToRowWidth(contact, contacts);
         }
         clipToItsOwnBox(details);
         tags.setTags(student.getTags().stream()
@@ -88,6 +89,21 @@ public class StudentCard extends UiPart<Region> {
     static String widestIndex(int listSize) {
         int digits = String.valueOf(Math.max(1, listSize)).length();
         return "8".repeat(digits);
+    }
+
+    /**
+     * Holds {@code contact} to the width of the row it sits in, so a long detail is shortened
+     * rather than pushing the card sideways. The cap waits for the row to have a width.
+     *
+     * <p>A card is measured before it is ever laid out, and until then the row reports a width
+     * of zero. Capping at that width makes every detail measure as nothing wide, so the row
+     * reports that they all fit on one line and the card asks for the height of an unwrapped
+     * one. A list cell that keeps such a measurement shows a card too short for what is in it,
+     * and the clip above hides the line that does not fit.
+     */
+    private static void capToRowWidth(Label contact, FlowPane row) {
+        contact.maxWidthProperty().bind(Bindings.createDoubleBinding(() ->
+                row.getWidth() > 0 ? row.getWidth() : Double.MAX_VALUE, row.widthProperty()));
     }
 
     /**
