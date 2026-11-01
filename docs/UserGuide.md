@@ -357,6 +357,10 @@ Check that TAB's home folder is writable and has free disk space, then retry the
 
 TAB keeps a lock file, `data/.tab.json.lock`, so that two open windows do not save over each other. If an error mentions it, close every TAB window and make the file writable again, then restart. Do not delete it. If it has become a folder, remove the folder.
 
+## Known issues
+
+**On Windows Subsystem for Linux (WSL), the window can be made smaller than TAB's minimum size.** Under WSL, Windows does not stop the window from shrinking below its minimum, so parts of TAB may be cut off. Enlarge the window to show them again, or run TAB on Windows directly.
+
 ## Command summary
 
 For `TARGET`, see [Choosing a student](#choosing-a-student).
