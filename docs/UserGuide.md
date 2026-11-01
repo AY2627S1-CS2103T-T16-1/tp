@@ -44,7 +44,7 @@ TAB (Teaching Assistant's Address Book) is a **desktop application for teaching 
 
 TAB follows common CLI conventions for options and quoted values, using short options such as `-p` and long options such as `--phone`.
 
-* Words in `UPPER_CASE` are values you supply.<br>
+* Replace `UPPER_CASE` words with your own values.<br>
   For example, `add NAME` allows `add John Doe`.
 
 * Square brackets mark optional parts.<br>
@@ -73,15 +73,15 @@ TAB follows common CLI conventions for options and quoted values, using short op
 * Command words ignore case, but option names are case-sensitive.<br>
   For example, `LIST` works, but `-P` does not replace `-p`.
 
-* A dash your editor wrote for a typed hyphen opens an option, and each dash stands for one `-`.<br>
+* Typographic dashes (`–`, `—`) count as one `-` each.<br>
   For example, `add Amy Lim –p 91234567` records the phone number, but one em dash before `phone` reads as `-phone`, which is refused with `Did you mean --phone?`
 
-* A dash within a value stays part of it, and quoting keeps one at the start.<br>
+* A dash that is part of a value is kept. If the value starts with one, quote it.<br>
   For example, `add Jean–Luc Picard` keeps the dash in the name, and `add "–Mystery"` names a student `–Mystery`.
 
 * Give each option once unless the format shows `...`. Short and long spellings count as the same option.
 
-Options also accept `OPTION=VALUE`, such as `--phone=91234567`. TAB suggests corrections for mistyped commands, and for options given with the wrong case or the wrong number of dashes, but you must correct and resubmit them.
+Options also accept `OPTION=VALUE`, such as `--phone=91234567`. TAB suggests corrections when you mistype a command, or give an option with the wrong case or the wrong number of dashes. It never applies the suggestion itself, so you must correct the command and resubmit it.
 
 ### Student fields
 
@@ -113,7 +113,7 @@ TAB accepts the following subset of standard email formats:
 ##### Tags
 
 * Spaces, punctuation and symbols are allowed, such as `Lab 3 (Mon)` or `#urgent`.
-* Tags differing only in case or extra spaces are treated as the same tag.
+* Tags ignore case and extra spaces, so `lab  3` and `Lab 3` are the same tag.
 * The tag `Needs follow-up` is reserved for the follow-up flag, as are its spacing, hyphen and trailing-punctuation variants such as `Needs follow up`. A tag differing by other punctuation, such as `Needs_follow_up`, is saved with a warning instead and does not set the flag.
 
 ##### NUS Student IDs
@@ -122,7 +122,7 @@ IDs must be unique across all students, ignoring case.
 
 ##### Duplicate warnings
 
-After `add` or `edit`, TAB may warn about another student with a matching name, phone or email. The record is still saved. These warnings may miss duplicates; ignore a warning if you know the records describe different students.
+After `add` or `edit`, TAB may warn about another student with a matching name, phone or email, but the record is still saved. Ignore the warning if you know the records describe different students. TAB will not catch duplicates whose details differ, such as `Alex Yeoh` and `Alexander Yeoh`.
 
 ### Choosing a student
 
@@ -188,7 +188,7 @@ Adds a student.
 
 * Only the name is required.
 * Students start without a follow-up flag unless you supply `--follow-up`.
-* If a search would hide the new student, TAB shows all students so the addition is visible.
+* If the new student matches the current search, the filter applied by the search remains. Otherwise, TAB clears it to show all students and mentions it in the reply.
 
 **Examples**
 
@@ -244,9 +244,11 @@ Searches all students using the [student field options](#student-fields).
 * Each term needs a field option, such as `-n` for names or `-e` for emails.
 * The matching ignores case and accepts partial values. <br>
   For example, `john` matches `Johnathan`. <br>
-  For tags, `find -t T1` also lists students tagged `T10`, `T11`, or `T12`, so this search cannot list only students tagged `T1`.
-* **Every condition must match**, including repeated options for the same field (an `AND` search).
-* To search an entire phrase, use double quotes.
+  For tags, `find -t T1` also lists students tagged `T10`, `T11`, or `T12`, so this search cannot list only students tagged `T1`. Whole-tag matching is [coming soon](DeveloperGuide.md#appendix-planned-enhancements).
+* A student must match **every** term (an `AND` search), even when the same option is repeated. <br>
+  For example, `find -n Jason -t transfer` lists only students named Jason who are tagged `transfer`, and `find -n Jason -n Tan` lists only names containing both.
+* Put a term with spaces in double quotes. <br>
+  For example, `find -n "Jason Tan"` matches `Jason Tan` but not `Jason Lee Tan`, while `find -n Jason -n Tan` matches both.
 * Name searches ignore Latin accents, strokes and apostrophe styles (but tags and other fields do not). <br>
   For example, `dang` matches `Đặng` in a name search.
 * Name searches treat hyphens and the longer dashes as spaces, because the same name may be punctuated differently from one roster to the next. Other fields, such as tags, do not. <br>
@@ -291,8 +293,6 @@ Closes TAB.
 
 **Format** `exit`
 
-* Current window size and position are remembered for the next launch.
-
 ### Reading and navigating the window
 
 ![TAB after a search, with the reply between the command box and the student list](images/windowParts.png)
@@ -308,7 +308,7 @@ Closes TAB.
 
 ![Student summary beside cards showing a follow-up flag and hidden tags](images/cardSummary.png)
 
-In this example, the student summary counts three students and one follow-up flag. The first card shows the follow-up marker at the right of its top line, while `2 more...` indicates hidden tags.
+In this example, the student summary counts three students and one follow-up flag. The first card shows the follow-up marker at the right of its top line, while `2 more…` indicates hidden tags.
 
 * The **student summary** on the left shows the displayed students' total, follow-up count and tag counts.
 * Tags differing only in case share a summary row.
@@ -329,9 +329,9 @@ TAB automatically saves student changes in `data/tab.json` under its home folder
 
 If a save fails, the records from before the command are restored.
 
-Use one TAB window per data file when editing. If another window has saved changes, restart the older window to load them before retrying.
+Avoid editing the same data file in two TAB windows. Once one window saves, the other refuses to save so it cannot overwrite those changes. Restart that window to load the latest data, then redo the change.
 
-Advanced users can edit the JSON file after closing every TAB window and making a backup. Save as UTF-8 and preserve the existing structure and field names.
+Advanced users can edit the JSON file after closing every TAB window and making a backup. Change only the values and keep the field names exactly as they are. Save the file with UTF-8 encoding.
 
 The file contains a `students` array. Each student uses these fields:
 
@@ -341,7 +341,7 @@ The file contains a `students` array. Each student uses these fields:
 | `tags` | Array of strings, such as `["Lab 3", "T1"]` |
 | `flag` | Boolean `true` or `false`; use this for follow-up instead of a `Needs follow-up` tag |
 
-You may add an optional file description outside the `students` array, such as `"_comment": "Tutorial T16"`. TAB keeps it when saving.
+You may add one description using the JSON field `_comment` at the top level, outside `students` (for example, `"_comment": "Tutorial T16"`). TAB keeps this field when saving. Its value must be text, and no other extra field is allowed.
 
 If a file is invalid or unreadable, TAB reports the problem and leaves it unchanged without opening the main window. Repair the file before restarting.
 
@@ -355,7 +355,7 @@ Install TAB there, then copy `data/tab.json` into the new home folder's `data` f
 
 Check that TAB's home folder is writable and has free disk space, then retry the command.
 
-TAB uses a lock file, `data/.tab.json.lock`, to coordinate saves between windows. When an error names it, close all TAB windows and restore write access to that file before restarting. Leave the file in place.
+TAB keeps a lock file, `data/.tab.json.lock`, so that two open windows do not save over each other. If an error mentions it, close every TAB window and make the file writable again, then restart. Do not delete it. If it has become a folder, remove the folder.
 
 ## Command summary
 
