@@ -321,7 +321,7 @@ In this example, the student summary counts three students and one follow-up fla
 | `Tab`, `Shift`+`Tab` | Move forward or backward through the command box, student list, tag list in the student summary and visible reply |
 | Arrow keys, `Page Up`, `Page Down`, `Home`, `End` | Navigate the focused list or reply |
 
-Command history lasts until TAB closes.
+Command history keeps the 100 most recent commands and lasts until TAB closes.
 
 ### Saving and editing data
 
