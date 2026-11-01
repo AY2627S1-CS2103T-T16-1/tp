@@ -13,15 +13,22 @@ TAB (Teaching Assistant's Address Book) is an offline desktop application for te
 ## Acknowledgements
 
 * TAB builds on the layered architecture, command/parser structure, JavaFX UI, JSON storage, test utilities, and documentation of [AddressBook-Level3 (AB3)](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org). This guide adapts the organization and explanations of the [AB3 Developer Guide](https://se-education.org/addressbook-level3/DeveloperGuide.html) to TAB's student model and behavior.
-* [JavaFX](https://openjfx.io/) supplies the controls, FXML loader, observable collections, and graphics used by the desktop interface. [Jackson](https://github.com/FasterXML/jackson) handles JSON conversion through `JsonUtil`, and [JUnit 5](https://junit.org/junit5/) supports automated testing.
-* Email local-part validation in `Email` uses the dot-atom character and dot-placement rules from [RFC 5322, section 3.2.3](https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3). No implementation code was copied.
-* `StringUtil.computeEditDistance` implements the recurrence for [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance) to suggest mistyped command words. The algorithmic idea is reused in that method; the implementation was written for TAB.
-* The help pager's navigation keys and progress prompt are inspired by [OpenBSD more(1)](https://man.openbsd.org/more.1). The reuse is limited to interaction conventions; the JavaFX pager was written for TAB.
-* [MarkBind](https://markbind.org/) builds the documentation site, and [PlantUML](https://plantuml.com/) generates its UML diagrams from the sources in `docs/diagrams/`.
+* TAB continues to use the following from AB3.
+   * [JavaFX](https://openjfx.io/), for the controls, FXML loader, observable collections, and graphics used by the desktop interface.
+   * [Jackson](https://github.com/FasterXML/jackson), for JSON conversion through `JsonUtil`.
+   * [JUnit 5](https://junit.org/junit5/), for automated testing.
+   * [Gradle](https://gradle.org/), for build automation and dependency management.
+* TAB re-uses or adapts the following ideas, but did not copy any implementation code.
+   * Email local-part validation in `Email` uses the dot-atom character and dot-placement rules from [RFC 5322, section 3.2.3](https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3).
+   * `StringUtil.computeEditDistance` implements the recurrence for [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance) to suggest mistyped command words.
+   * The help pager's navigation keys and progress prompt are inspired by [OpenBSD more(1)](https://man.openbsd.org/more.1). The reuse is limited to interaction conventions.
+* TAB uses the following technologies for documentation.
+   * [MarkBind](https://markbind.org/) builds the documentation site.
+   * [PlantUML](https://plantuml.com/) generates its UML diagrams from the sources in `docs/diagrams/`.
 
 ## Setting up and getting started
 
-Use [Setting up and getting started](SettingUp.md) for IDE setup, and the [User Guide quick start](UserGuide.md#quick-start) for the supported Java/JavaFX runtimes. The source targets Java 25. `seedu.tab.Main` launches the JavaFX application, `MainApp`.
+Use [Setting up and getting started](SettingUp.md) for IDE setup, and the [User Guide quick start](UserGuide.md#quick-start) for the supported Java/JavaFX runtimes.
 
 From the repository root:
 
@@ -33,85 +40,149 @@ From the repository root:
 
 These commands launch TAB, run the tests and Checkstyle checks, and build `build/libs/tab.jar`, respectively. See [Testing](Testing.md) for test selection and [Documentation](Documentation.md) for the MarkBind preview workflow.
 
-When packaged, TAB resolves `data/tab.json` and `preferences.json` relative to the JAR's directory through `AppUtil.getApplicationDirectory()`. Development runs use the working directory. Run manual tests in a separate writable folder so they cannot touch real records.
+When packaged, TAB resolves `data/tab.json` and `preferences.json` relative to the JAR's directory. Development runs use the working directory. Run manual tests in a separate writable folder so they cannot touch real records.
 
 ## Design
 
 ### Architecture
 
-TAB retains AB3's four main components and the shared `Commons` utilities. The UML package diagram below shows their dependencies; an arrow points from the component that uses an API or type to the component that provides it. `Main` represents application startup and shutdown. `Commons` utilities are used across components and omitted from the arrows for focus.
-
 <puml src="diagrams/ArchitectureDiagram.puml" alt="Dependencies between TAB's architectural components" />
 
-| Component | Entry point | Responsibility |
-| --- | --- | --- |
-| UI | [`Ui`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/Ui.java), implemented by `UiManager` | Displays students, accepts input, and presents results and startup errors. |
-| Logic | [`Logic`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java), implemented by `LogicManager` | Parses and executes commands, manages clear confirmation, and coordinates saving. |
-| Model | [`Model`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/model/Model.java), implemented by `ModelManager` | Owns the student book, user preferences, and active filtered view. |
-| Storage | [`Storage`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/storage/Storage.java), implemented by `StorageManager` | Loads and saves student records and preferences through separate JSON storage classes. |
-| Commons | `seedu.tab.commons` | Supplies indexing, logging, value normalization, file access, and error formatting. |
+The architecture diagram shows TAB's components using UML component notation. An arrow points from a component that uses an API or type to the component that provides it. `Storage` is a software component that reads and writes JSON files, rather than a database. Dependencies on shared `Commons` utilities are omitted for clarity.
 
-The sequence diagram shows how these components cooperate for a successful `delete 1`. Lifelines represent components; messages summarize interactions rather than every internal call. Logic parses the command, snapshots the model, and executes the deletion, then saves the changed book before returning feedback. Parser details and failure paths are expanded in the Logic and saving sections.
+The following provides a quick overview of the main components and their interactions.
+
+**Main components of the architecture**
+
+**`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/MainApp.java)) is in charge of app launch and shutdown.
+
+* At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
+* At shut down, it shuts down the other components and invokes cleanup methods where necessary.
+
+The bulk of the app's work is done by the following four components:
+
+* [**`UI`**](#ui-component): The UI of the App.
+* [**`Logic`**](#logic-component): The command executor.
+* [**`Model`**](#model-component): Holds the data of the App in memory.
+* [**`Storage`**](#storage-component): Reads data from, and writes data to, the hard disk.
+
+[**`Commons`**](#common-classes) represents a collection of classes used by multiple other components.
+
+**How the architecture components interact with each other**
+
+The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
 
 <puml src="diagrams/ArchitectureSequenceDiagram.puml" alt="Successful deletion flowing through UI, Logic, Model, and Storage" />
 
-`MainApp.init()` reads preferences, constructs storage, loads the student book into `ModelManager`, and connects `LogicManager` and `UiManager`. A missing student file produces sample students. An unreadable student file produces a startup error that prevents the normal window from opening. This keeps existing records from being replaced by an empty or sample book.
+Each of the four main components (also shown in the diagram above),
 
-On exit, `MainWindow` passes the window bounds to Logic, and `MainApp.stop()` saves preferences. Student changes are saved during command execution, as described in [Saving changes safely](#saving-changes-safely).
+* defines its *API* in an `interface` with the same name as the Component.
+* provides its functionality through a concrete `{Component Name}Manager` class that implements the corresponding API interface.
+
+For example, the `Logic` component defines its API in `Logic.java` and implements it in `LogicManager.java`. Other components interact with a component through its interface rather than its concrete class, preventing them from coupling to that component's implementation, as illustrated in the following partial class diagram.
+
+<puml src="diagrams/ComponentInterfaces.puml" alt="UI and Logic implementations depend on component interfaces" />
+
+The diagram shows selected dependencies after initialization. `UiManager` holds a `Logic` reference; `LogicManager` holds `Model` and `Storage` references. `MainApp` constructs the concrete managers and connects them through these interfaces. Dependencies on model value types and UI helper classes are omitted.
+
+The sections below give more details of each component.
 
 ### UI component
 
-The UI uses JavaFX controls and FXML layouts in `src/main/resources/view/`. `UiPart<T>` loads a layout and connects its controller. The partial class diagram below shows the main window's UI parts after initialization, with one of each referenced part per window. Helper controls and the common `UiPart` superclass are omitted.
+The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/Ui.java).
 
-<puml src="diagrams/UiClassDiagram.puml" alt="Main window and its principal UI parts" />
+<puml src="diagrams/UiClassDiagram.puml" alt="Main window's UI parts and selected Logic and Model dependencies" />
 
-`MainWindow` connects the command box to `Logic.execute()`. A successful `CommandResult` carries feedback, help/exit requests, and optionally a student to reveal. `ParseException` and `CommandException` messages appear in `ResultDisplay`; the command box retains rejected input for correction.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-`StudentListPanel` and `SummaryPanel` receive the same observable filtered list through Logic. A model change therefore updates both the cards and the summary. UI classes depend on model types to display student data, but student mutations go through Logic.
+The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/MainWindow.java).
 
-`HelpPage` replaces the student view inside the window. Closing it restores the previous result and unfinished command. `StatusBarFooter` displays the data file's absolute path. The keyboard and layout decisions behind these parts are described in [Supporting keyboard work](#supporting-keyboard-work).
+The `UI` component,
+
+* executes user commands using the `Logic` component via `Logic.execute()`.
+* listens for changes to `Model` data so that the UI can be updated with the modified data.
+* keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
+* depends on classes in the `Model` component because it displays `Student` objects from the model.
+* has a `HelpPage` component which is used when the `help` command is called.
+* has a `StatusBarFooter` component which displays the data file's absolute path.
+
+Historical JavaFX reports describe memory leaks with hardware rendering on Linux; see this [OpenJFX maintainer discussion](https://www.mail-archive.com/openjfx-dev%40openjdk.java.net/msg11422.html). This does not establish that TAB's supported JavaFX runtimes are affected; a TAB-specific leak has not been verified here.
 
 ### Logic component
 
-`StudentBookParser` dispatches a command word to its command-specific parser. Each parser implementing `Parser<T>` validates arguments and constructs a `Command`; commands execute against the `Model` interface. `CommandResult` keeps presentation requests separate from JavaFX controls, so commands can be tested without a window.
+The **API** of this component is specified in [`Logic.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java).
 
-The partial class diagram shows this structure using `delete` as the representative command. Other command/parser pairs follow the same pattern. Model and Storage dependencies appear in the architecture view above.
+<puml src="diagrams/LogicClassDiagram.puml" alt="Logic API, command hierarchy, dispatcher, and command results" />
 
-<puml src="diagrams/LogicClassDiagram.puml" alt="Logic API, command and parser hierarchies, and command results" />
-
-The next two sequence diagrams trace a successful `delete 1` through Logic, separating parsing from execution so each stage remains readable. In `DeleteSequenceDiagram`, `LogicManager` calls `StudentBookParser.parseCommand()`, which creates a command-specific parser and returns command `c`. Tokenization and value validation remain inside the command parser. The parser destruction marker denotes the end of its useful lifetime after `parse()` returns; Java garbage collection determines when its memory is reclaimed.
-
-<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing delete 1 and returning DeleteCommand c to LogicManager" />
-
-`DeleteExecutionSequence` shows the enclosing `LogicManager.execute()` call. Its first reference expands to the parsing diagram above and produces the same command `c`. Logic then snapshots the book and filter before executing that command. Target resolution is summarized as a lookup in the displayed list. The second reference expands to the post-command portion of `SaveRollbackSequenceDiagram` in [Saving changes safely](#saving-changes-safely).
+The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
 
 <puml src="diagrams/DeleteExecutionSequence.puml" alt="Executing DeleteCommand c, deleting the displayed student, and saving changes" />
 
-Commands check their execution preconditions before changing the model. For example, a target outside the displayed list raises `CommandException` before deletion. Logic snapshots the book and filter before executing an ordinary command. It saves only if the resulting book differs from the snapshot.
+The first reference expands to the parsing diagram below. The second expands to the post-command portion of `SaveRollbackSequenceDiagram` in [Saving changes safely](#saving-changes-safely).
+
+To see how `delete` command is parsed, refer to the sequence diagram below.
+
+<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing delete 1 and returning DeleteCommand c to LogicManager" />
+
+<div markdown="span" class="alert alert-info">:information_source: **Note:** The destroy marker (X) marks the end of the parser's useful lifetime. Java garbage collection determines when its memory is reclaimed.
+</div>
+
+How the `Logic` component works:
+
+1. When `Logic` is called upon to execute a command, the command is passed to a `StudentBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command. No-argument commands are handled directly by `StudentBookParser`.
+1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
+1. The command can communicate with the `Model` when it is executed (e.g. to delete a student).<br>
+   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
+1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic` after any changed student data is saved successfully.
+
+The following partial diagram expands the parser helpers, using `AddCommandParser` as a representative example. `FlagTokenizer` delegates token splitting to `CommandTokenizer` and builds a `FlagArgumentMap`. The command parser reads that map, validates fields through `ParserUtil`, and collects independent validation errors through `ParseProblems` before constructing `AddCommand`.
+
+<puml src="diagrams/ParserClasses.puml" alt="Command dispatcher, representative add parser, tokenizers, and validation helpers" />
+
+How the parsing works:
+
+* For commands with a dedicated parser, the `StudentBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the helper classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `StudentBookParser` returns that object as a `Command` object.
+* All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
 
-`ModelManager` owns a `StudentBook`, `UserPrefs`, and a JavaFX `FilteredList<Student>` backed by the book's observable list. `StudentBook` delegates list operations and ID uniqueness checks to `UniqueStudentList`. Consumers receive read-only book/preferences interfaces and an observable filtered view.
+The **API** of this component is specified in [`Model.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/model/Model.java).
 
-The partial class diagram separates ownership of the book from references to immutable student values. Value objects may be shared by replacement records, so their relationships use associations rather than composition.
+<puml src="diagrams/ModelClassDiagram.puml" alt="Model API, read-only views, student book ownership, and immutable student values" />
 
-<puml src="diagrams/ModelClassDiagram.puml" alt="Student book ownership, filtered view, and immutable student values" />
+The diagram includes the Model API and the read-only book/preferences interfaces exposed to consumers. Student fields use associations rather than composition because immutable values can be shared between replacement records; they are not exclusively owned by one student object.
 
-Only a student's name is mandatory. Phone, email, NUS Student ID, and follow-up flag are represented with `Optional`; general tags form a set. Updating a record builds a replacement `Student` and swaps it in, so observable-list listeners refresh the UI.
+The `Model` component,
 
-`Student.isSameStudent()` compares two present NUS Student IDs. A missing ID cannot establish identity. `Student.equals()` compares every field, including tags and follow-up state; it is used to detect unchanged records and books. Keep these two meanings separate when adding commands or storage validation.
+* stores the student book data i.e., all `Student` objects (which are contained in a `UniqueStudentList` object).
+* maintains a `FilteredList<Student>` view of the student book for the current filter, such as search results. It exposes this unmodifiable view through the `ObservableList<Student>` API, so the UI can observe changes.
+* stores a `UserPrefs` object that represents the user's preferences (just the GUI settings). This is exposed to the outside through the `ReadOnlyUserPrefs` interface.
+* does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
 ### Storage component
 
-`StorageManager` delegates student data to `JsonStudentBookStorage` and preferences to `JsonUserPrefsStorage`. `JsonSerializableStudentBook`, `JsonAdaptedStudent`, and `JsonAdaptedTag` translate between JSON-friendly data and validated model values. Storage therefore depends on Model, while Model has no dependency on Storage, Logic, or UI.
+The **API** of this component is specified in [`Storage.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/storage/Storage.java).
 
-The class diagram shows the API implementation, its two delegates, and the student-data adapters. Model classes and file-access helpers are omitted to focus on Storage's structure.
+<puml src="diagrams/StorageClassDiagram.puml" alt="Storage API and separate JSON storage delegates for student data and preferences" />
 
-<puml src="diagrams/StorageClassDiagram.puml" alt="Storage API implementation, JSON delegates, and student-data adapters" />
+The `Storage` component,
 
-There are two layers of validation. Custom deserializers check JSON types, such as a string for `email` and a Boolean for `flag`. Adapter conversion then applies the model's field rules and checks repeated student IDs. The entire book must load successfully before it is exposed to the normal UI.
+* can save both student data and user preference data in JSON format, and read them back into corresponding objects.
+* is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonStudentBookStorage` and `JsonUserPrefsStorage` (one class per data file).
+* depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`).
 
 The [data contract](#loading-and-preserving-the-data-contract) and [save procedure](#saving-changes-safely) below explain how this separation supports hand-edited files without silently discarding malformed data.
+
+### Common classes
+
+The `seedu.tab.commons` package contains classes shared across components. These include the following:
+
+* `LogsCenter` for logging
+* `Index` for displayed-list positions
+* `StringUtil` for text normalization and comparison
+* `FileUtil` and `JsonUtil` for file access and JSON conversion
+* `AppUtil` for resolving the application directory
+* `DataLoadingErrorMessage` for formatting startup diagnostics.
 
 ## Implementation
 
@@ -308,26 +379,28 @@ Tooltips retain full values when a card shortens them.
 
 ## Documentation, logging, testing, and dev-ops
 
-* [Documentation](Documentation.md) describes the MarkBind workflow. Diagram sources belong in `docs/diagrams/` and are rendered by the `<puml>` elements beside their explanations.
+* [Documentation](Documentation.md) describes the MarkBind workflow.
 * [Logging](Logging.md) describes `LogsCenter` and the Java logging configuration.
-* [Testing](Testing.md) explains JUnit and JavaFX test execution. Reuse `StudentBuilder` and the other fixtures in `src/test/java/seedu/tab/testutil/` when adding tests.
-* [DevOps](DevOps.md) describes the build and CI setup. Run `./gradlew check` before submitting a change.
-
-Useful regression entry points include `CommandDispatchAndPersistenceTest` for command-to-file behavior, `ClearConfirmationTest` for the confirmation protocol, `LogicManagerTest` for save rollback, and `JsonStudentBookStorageConcurrencyTest` for stale saves and locks. Parser/model tests cover normalization and validation; UI tests exercise focus, layout, and list updates.
+* [Testing](Testing.md) explains JUnit and JavaFX test execution.
+* [DevOps](DevOps.md) describes the build and CI setup.
 
 ## Appendix: Requirements
 
 ### Product scope
 
-**Target users:** Teaching assistants who manage tutorial or lab students on a desktop, type comfortably, and prefer short keyboard interactions during teaching work.
+**Target user profile:** Teaching assistants in National University of Singapore's School of Computing.
+* Has a need to keep track of or manages tutorial or lab students
+* Prefers desktop apps over other types of applications
+* Can type comfortably and fast
+* Strongly prefers typing on keyboard to using the mouse
+* Familiar with using CLI apps and general CLI conventions
 
-**Value proposition:** Keep student contact details, class tags, and pending follow-ups together in a local student book that can be searched and updated through typed commands.
-
-TAB manages records and follow-up status locally. Messaging students, recording attendance, and recording grades are outside its scope. General tags can describe groups, but TAB does not model courses or classes as separate entities.
+**Value proposition:** Teaching assistants can use TAB through typed commands to manage student contact details much more quickly and seamlessly than mouse-driven GUI applications.
 
 ### User stories
 
-Priorities are `***` (must have), `**` (nice to have), and `*` (lower priority). **Implemented** describes the present product; **Future** records an unimplemented requirement and does not promise a command in this release.
+* Priorities: High (must have) - `***`, Medium (nice to have) - `**`, Low (unlikely to have) `*`
+*  **Implemented** - the feature is present in current product, **Future** - the feature is planned to be released in future
 
 | Priority | As a… | I want to… | So that I can… | Status |
 | --- | --- | --- | --- | --- |
@@ -378,7 +451,7 @@ Priorities are `***` (must have), `**` (nice to have), and `*` (lower priority).
 
 ### Use cases
 
-For these use cases, the **system** is TAB and the **actor** is a teaching assistant. The main success scenario (MSS) describes successful interaction; extensions refer to the step where an alternative begins. Editing, tagging, and deletion share student-target resolution, so UC02 describes that common interaction once.
+For these use cases, the **system** is TAB and the **actor** is a teaching assistant (user).
 
 #### UC01: Add a student
 
@@ -545,23 +618,15 @@ Setting/clearing follow-up uses the same edit flow. UC03 covers the tag-specific
 
 ### Non-functional requirements
 
-These are product acceptance targets. Timing and capacity targets require measurement on the test machine; passing unit tests alone does not establish them.
-
-1. **Runtime:** Run on Windows, Linux, and macOS with Java 25 and the matching JavaFX runtime described in the UG. Plain-JDK Apple Silicon setups using the bundled Intel JavaFX natives require an x64 JDK under Rosetta; the documented native JDK+FX setup is an alternative.
-1. **Portability:** Distribute one executable JAR of at most 100 MB, usable from a writable folder without an installer or administrator privileges.
-1. **Keyboard access:** Make every student-management operation and in-app help available through the keyboard.
-1. **Typing efficiency:** For a practiced typist, the median completion time for the task sequence below must be lower in TAB than in the defined mouse-driven LibreOffice Calc baseline. Both workflows must produce the same final student data without unresolved errors.
-1. **Capacity and responsiveness:** Support 1,000 student records, with typical add, edit, delete, tag, list, and find commands updating the GUI within 100 ms and startup ready for input within 2 seconds. Measure on a local writable disk and record hardware, runtime, dataset, and repeated timings.
-1. **Display:** Keep the interface readable at 1920×1080 with 100% and 125% scaling, and usable at 1280×720 with scaling up to 150%, using scrolling where necessary.
-1. **Data locality:** Perform student-management operations offline and store student data locally without transmitting it to a network service.
-1. **Single-user integrity:** Preserve existing saved records when loading fails or a command cannot save, and reject a stale cooperating TAB window's write rather than overwrite newer records. Concurrent edits are not merged.
-1. **Editable data:** Accept correctly edited UTF-8 JSON, retain supported optional fields and the file description, and report malformed data without silently dropping invalid values.
-
-#### Typing efficiency evaluation
-
-Compare TAB with mouse-driven LibreOffice Calc using identical copies of 100 student records. Time the same sequence: add a student, find another by ID, change their phone, add a tag, and delete the added student. In Calc, use the mouse for navigation, filters, and menus, and the keyboard only for cell values. In TAB, use the command box.
-
-Use the same practiced participant, with three untimed practice runs and five timed runs per application. Alternate application order and reset the data before each run. Start with each application ready for input and stop when the deletion result is visible. Include corrections and verify identical final records. Record application versions, hardware, runtime, and display settings. TAB passes if its median completion time is lower. This is an acceptance target, not a measured performance claim.
+1. **Runtime:** Should work on any *mainstream OS* (Windows, Linux, macOS) with Java 25 and the matching JavaFX runtime as described in the UG.
+1. **Portability:** Should be distributed as one executable JAR of at most 100 MB. This JAR should be usable from a writable folder without an installer or administrator privileges.
+1. **Keyboard access:** Every student-management operation and in-app help should be available through the keyboard.
+1. **Typing efficiency:** A practiced typist should have a lower median completion time when using TAB.
+1. **Capacity and responsiveness:** Should support up to 1,000 student records, with typical add, edit, delete, tag, list, and find commands updating the GUI within 100 ms. Startup should be ready for input within 2 seconds. This can be measured on a local writable disk by recording hardware, runtime, dataset, and repeated timings.
+1. **Display:** The interface should be readable and usable at 1920×1080 with 100% and 125% scaling, and at 1280×720 with scaling up to 150%.
+1. **Data locality:** Should work offline and store student data locally without transmitting it to a network service.
+1. **Single-user integrity:** Should preserve existing saved records when loading fails or a command cannot save. TAB should also reject a stale cooperating TAB window's write rather than overwrite newer records. Concurrent edits should not be merged.
+1. **Editable data:** Should accept correctly edited UTF-8 JSON, retain supported optional fields and the file description, and report malformed data without silently dropping invalid values.
 
 ### Glossary
 
@@ -596,7 +661,7 @@ The work spans implementation, automated tests, manual verification, and documen
 
 ## Appendix: Instructions for Manual Testing
 
-These paths provide representative inputs and observable results. Extend them with exploratory tests; the [UG](UserGuide.md) remains the reference for full command syntax. Run destructive and file-editing tests only on a disposable copy of TAB and its data. Run the command sections in order; restart the shared setup if you skip sections or explore changes that affect later prerequisites.
+Given below are instructions to test the app manually.
 
 ### Launch, help, and shutdown
 

@@ -10,11 +10,10 @@ skinparam genericDisplay old
 skinparam nodesep 45
 skinparam ranksep 45
 
+package "Logic" as LogicComponent {
 interface Logic <<interface>>
 class LogicManager
 class StudentBookParser
-interface "Parser<T>" as Parser <<interface>>
-class DeleteCommandParser
 abstract class Command
 class DeleteCommand
 class CommandResult
@@ -22,16 +21,14 @@ class CommandResult
 LogicManager .up.|> Logic
 LogicManager --> "1" StudentBookParser
 LogicManager ..> Command : executes
-StudentBookParser ..> DeleteCommandParser : creates
-DeleteCommandParser .up.|> Parser
-DeleteCommandParser ..> DeleteCommand : creates
+StudentBookParser ..> Command : returns
 DeleteCommand -up-|> Command
 Command ..> CommandResult : returns
 
-note bottom of DeleteCommandParser
-  Implements Parser<DeleteCommand>.
-  Other command parsers and commands
-  follow the same pattern and are omitted.
+note bottom of StudentBookParser
+  Parser helpers are expanded separately.
+  DeleteCommand represents the command hierarchy.
 end note
+}
 @enduml
 

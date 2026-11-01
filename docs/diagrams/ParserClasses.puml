@@ -1,0 +1,37 @@
+@startuml
+!include style.puml
+!pragma layout smetana
+skinparam classBackgroundColor LOGIC_COLOR_T1
+skinparam classFontColor #222222
+skinparam classStereotypeFontColor #222222
+skinparam classBorderColor #555555
+skinparam arrowColor #555555
+skinparam ArrowFontStyle plain
+skinparam genericDisplay old
+skinparam nodesep 40
+skinparam ranksep 40
+
+package "Logic" as LogicComponent {
+    package "Parsers" {
+        class StudentBookParser
+        interface "Parser<T>" as Parser <<interface>>
+        class AddCommandParser
+        class FlagTokenizer
+        class CommandTokenizer
+        class FlagArgumentMap
+        class ParserUtil
+        class ParseProblems
+
+        StudentBookParser ..> AddCommandParser : <<create>>
+        AddCommandParser .up.|> Parser
+        AddCommandParser ..> FlagTokenizer
+        FlagTokenizer ..> CommandTokenizer
+        FlagTokenizer ..> FlagArgumentMap : <<create>>
+        AddCommandParser ..> FlagArgumentMap : reads
+        AddCommandParser ..> ParserUtil : validates values
+        AddCommandParser ..> ParseProblems : collects errors
+    }
+    class AddCommand
+    AddCommandParser ..> AddCommand : <<create>>
+}
+@enduml
