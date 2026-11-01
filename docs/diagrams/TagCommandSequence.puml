@@ -3,27 +3,23 @@
 skinparam ArrowFontStyle plain
 skinparam defaultFontSize 16
 
-participant "c:TagCommand" as command LOGIC_COLOR
-participant "target:StudentTarget" as target LOGIC_COLOR
+participant "c:\nTagCommand" as command LOGIC_COLOR
+participant "target:\nStudentTarget" as target LOGIC_COLOR
 participant ":Model" as model MODEL_COLOR
-participant "student:Student" as student MODEL_COLOR
-participant "updatedStudent:Student" as updated MODEL_COLOR
+participant "student:\nStudent" as student MODEL_COLOR
+participant "updated:\nStudent" as updated MODEL_COLOR
 
 [-> command : execute(model)
 activate command
-command -> target : resolve(model, ID_TARGET_COMMAND)
+command -> target : resolve(model,\nID_TARGET_COMMAND)
 activate target
-target -> model : getFilteredStudentList()
-activate model
-model --> target : displayed students
-deactivate model
-target --> command : student at index 1
+target --> command : student
 deactivate target
 command -> student : getTags()
 activate student
 student --> command : stored tags
 deactivate student
-alt no tag matches T1, ignoring case
+alt no tag matches T1
 command -> command : withTagAdded(student)
 activate command
 command -> student : getTags()
@@ -37,12 +33,12 @@ activate updated
 updated --> command
 deactivate updated
 deactivate command
-command -> model : setStudent(student, updatedStudent)
+command -> model : setStudent(student, updated)
 activate model
 model --> command
 deactivate model
 [<-- command : result
-else T1 already present, ignoring case
+else T1 already present
 [<-- command : CommandException
 end
 deactivate command
