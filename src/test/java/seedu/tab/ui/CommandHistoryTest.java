@@ -107,7 +107,7 @@ public class CommandHistoryTest {
             text = history.recallPrevious(text);
             assertEquals("c" + number, text);
         }
-        // The dropped `c1` is not reachable, so the oldest kept command is the boundary.
+        // The dropped c1 is not reachable, so the oldest kept command is the boundary.
         assertEquals("edited oldest", history.recallPrevious("edited oldest"));
         assertEquals("c3", history.recallNext("edited oldest"));
         for (int number = 4; number <= 101; number++) {
@@ -116,7 +116,7 @@ public class CommandHistoryTest {
         assertEquals("draft", history.recallNext("c101"));
     }
 
-    /** Returns a history given `c1` up to `c{count}` in order. */
+    /** Returns a history given {@code count} commands, numbered {@code c1} upwards in order. */
     private static CommandHistory historyOf(int count) {
         CommandHistory history = new CommandHistory();
         for (int number = 1; number <= count; number++) {
@@ -125,7 +125,7 @@ public class CommandHistoryTest {
         return history;
     }
 
-    /** Returns `c{first}` up to `c{last}`, which is what the history should have kept. */
+    /** Returns the commands numbered {@code first} to {@code last}, oldest first. */
     private static List<String> oldestToNewest(int first, int last) {
         List<String> commands = new ArrayList<>();
         for (int number = first; number <= last; number++) {
@@ -134,7 +134,14 @@ public class CommandHistoryTest {
         return commands;
     }
 
-    /** Returns every command Up reaches, oldest first, stopping where Up stops changing the text. */
+    /**
+     * Returns every command Up reaches, oldest first, stopping where Up stops changing the text.
+     *
+     * <p>That boundary is the oldest kept command only because no two neighbouring entries are
+     * equal, which {@link CommandHistory#add} ensures by skipping a command repeated straight
+     * after itself. A history filled another way, or a starting text equal to its newest command,
+     * would stop the walk early instead.
+     */
     private static List<String> recallAll(CommandHistory history) {
         List<String> recalled = new ArrayList<>();
         String text = "draft";
