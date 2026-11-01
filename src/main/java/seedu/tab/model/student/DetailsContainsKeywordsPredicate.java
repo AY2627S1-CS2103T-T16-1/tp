@@ -20,11 +20,29 @@ import seedu.tab.commons.util.ToStringBuilder;
  * ignoring case and allowing partial matches.
  * A keyword made only of digits, grouping whitespace and phone punctuation
  * also matches the phone's digits with non-digit characters removed and equivalent
- * Unicode decimal digits compared by their numeric values.
+ * Unicode decimal digits compared by their numeric values. Punctuation counts whichever
+ * code point writes it, so a number carrying a typographic dash matches one carrying a
+ * hyphen.
  */
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
+    /**
+     * The punctuation a written phone number groups its digits with: the parenthesis, plus and
+     * dot a keyboard types, the full-width forms a CJK input method types in their place, and
+     * a dash in every form Unicode files under dash punctuation, together with the minus sign
+     * it files under mathematical symbols, as {@code StringUtil} and {@code FollowUpFlag}
+     * already count one. A number copied out of a document brings these forms rather than the
+     * ASCII ones, so a keyword holding them has to reach the digit comparison below instead of
+     * being turned away.
+     *
+     * <p>Only the pairs a number is written with count. A bracket of every kind would take in
+     * the corner brackets and braces that quote a number rather than group it, which says
+     * nothing about the number inside them.
+     */
+    private static final String PHONE_PUNCTUATION = "\\p{Pd}\\u2212()\\uFF08\\uFF09+\\uFF0B.\\uFF0E";
+
     /** Characters permitted in a phone keyword; digit presence is checked after normalization. */
-    private static final Pattern PHONE_KEYWORD = Pattern.compile("(?U)[\\p{Nd}\\s+().-]++");
+    private static final Pattern PHONE_KEYWORD =
+            Pattern.compile("(?U)[\\p{Nd}\\s" + PHONE_PUNCTUATION + "]++");
 
     /** The student field in which a search term must occur. */
     public enum Field {
@@ -90,8 +108,8 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     /**
      * Returns true if the digits {@code keyword} holds appear in {@code phone} in order.
      * The keyword must be one a user would type as a number: made only of digits, grouping
-     * whitespace and phone punctuation, and holding at least one digit, so a
-     * keyword such as {@code ---} or one drawn from a name or a tag stays with the literal
+     * whitespace and {@link #PHONE_PUNCTUATION}, and holding at least one digit, so a
+     * keyword such as {@code ---} or one carrying a letter stays with the literal
      * comparison above.
      */
     private static boolean matchesPhoneByDigits(Phone phone, String keyword) {
