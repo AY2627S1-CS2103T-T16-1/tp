@@ -10,15 +10,17 @@ participant "c:DeleteCommand" as command LOGIC_COLOR
 [-> dispatcher : parseCommand(\n"delete 1")
 activate dispatcher
 create parser
-dispatcher -> parser : DeleteCommandParser()
+dispatcher -> parser
 activate parser
+||20||
 parser --> dispatcher
 deactivate parser
 dispatcher -> parser : parse(" 1")
 activate parser
 create command
-parser -> command : DeleteCommand(target)
+parser -> command
 activate command
+||20||
 command --> parser
 deactivate command
 parser --> dispatcher : command

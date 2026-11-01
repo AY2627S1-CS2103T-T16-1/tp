@@ -3,6 +3,7 @@
 skinparam ArrowFontStyle plain
 skinparam defaultFontSize 16
 skinparam maxMessageSize 260
+skinparam sequenceReferenceBackgroundColor #FFFFFF
 
 participant ":AddCommandParser" as parser LOGIC_COLOR
 participant ":Student" as student MODEL_COLOR
@@ -17,9 +18,17 @@ ref over parser
   Add field validation
 end ref
 create student
-parser -> student : Student(name, phone,\nemptyEmail, emptyId, emptyTags, false)
+parser -> student
+activate student
+||20||
+student --> parser
+deactivate student
 create command
-parser -> command : AddCommand(student)
+parser -> command
+activate command
+||20||
+command --> parser
+deactivate command
 [<-- parser : command c
 deactivate parser
 @enduml

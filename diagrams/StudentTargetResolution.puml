@@ -6,25 +6,21 @@ skinparam activityBackgroundColor LOGIC_COLOR_T1
 skinparam activityBorderColor #555555
 skinparam arrowColor #555555
 
+
 start
-:Resolve the parsed StudentTarget;
-if (Target type?) then ([index])
-  :Read the displayed student list;
-  if (Index within the list?) then ([yes])
-    :Select the student at that position;
-  else ([no])
-    :Throw CommandException\nwith index feedback and any ID hint;
-    stop
-  endif
+if () then ([index])
+  :Look up the position
+  in the displayed list;
 else ([NUS Student ID])
-  :Search the entire student book\nfor the normalized ID;
-  if (Matching student found?) then ([yes])
-    :Select the matching student;
-  else ([no])
-    :Throw CommandException\nidentifying the missing ID;
-    stop
-  endif
+  :Look up the ID in
+  the whole student book;
 endif
-:Return the selected Student;
-stop
+if () then ([student found])
+  :Select that student;
+  stop
+else ([else])
+  :Reject the command
+  without changing records;
+  stop
+endif
 @enduml
