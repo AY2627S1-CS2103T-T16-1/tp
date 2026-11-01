@@ -104,7 +104,7 @@ The `UI` component,
 * has a `HelpPage` component which is used when the `help` command is called.
 * has a `StatusBarFooter` component which displays the data file's absolute path.
 
-Historical JavaFX reports describe memory leaks with hardware rendering on Linux; see this [OpenJFX maintainer discussion](https://www.mail-archive.com/openjfx-dev%40openjdk.java.net/msg11422.html). This does not establish that TAB's supported JavaFX runtimes are affected; a TAB-specific leak has not been verified here.
+**Known issue (Linux):** JavaFX keeps two small character arrays for every keystroke until TAB exits, about 50 bytes per keystroke. Its native GTK code creates the arrays in `WindowContextBase::process_key` and never releases them. TAB's own code does not hold them, and JavaFX 25.0.4 behaves the same. Heavy typing leaks under 1 MB a day, which is freed when TAB closes, so TAB needs no workaround. Do not attribute steady `char[]` growth in a Linux heap profile to TAB code.
 
 ### Logic component
 
