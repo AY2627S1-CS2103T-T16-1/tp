@@ -15,16 +15,15 @@ both -f and -nf given])
   command;
   stop
 else ([else])
+  ' The side guards hold the same letters, some transparent, and the middle
+  ' action is padded on both sides, so the middle branch sits under the diamond.
   switch ()
-  case (<U+00A0><U+00A0>[-f given]<U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0>)
-    :Mark the
-    follow-up;
+  case (<U+00A0><U+00A0>[-f given]<color:transparent>neither</color>)
+    :Mark the follow-up;
   case (<U+00A0><U+00A0>[-nf given])
-    :Clear the
-    follow-up;
-  case (<U+00A0><U+00A0>[neither given])
-    :Keep the
-    follow-up;
+    :<U+00A0><U+00A0><U+00A0><U+00A0>Clear the follow-up<U+00A0><U+00A0><U+00A0><U+00A0>;
+  case (<U+00A0><U+00A0>[neither given]<color:transparent>-f</color>)
+    :Keep the follow-up;
   endswitch
   stop
 endif
