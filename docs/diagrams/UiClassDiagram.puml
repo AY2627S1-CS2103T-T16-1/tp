@@ -23,11 +23,11 @@ package UI {
 
     UiManager .up.|> Ui
     UiManager --> "1" MainWindow
-    MainWindow --> "1" CommandBox
-    MainWindow --> "1" ResultDisplay
+    MainWindow -up-> "1" CommandBox
+    MainWindow -up-> "1" ResultDisplay
     MainWindow --> "1" StudentListPanel
     MainWindow ..> SummaryPanel : <<create>>
-    MainWindow --> "1" HelpPage
+    MainWindow -up-> "1<U+00A0><U+00A0><U+00A0><U+00A0>" HelpPage
     MainWindow ..> StatusBarFooter : <<create>>
     StudentListPanel ..> StudentCard : <<create>>
 
