@@ -83,8 +83,6 @@ For example, the `Logic` component defines its API in `Logic.java` and implement
 
 <puml src="diagrams/ComponentInterfaces.puml" alt="UI and Logic implementations depend on component interfaces" />
 
-The diagram shows selected dependencies after initialization. `UiManager` holds a `Logic` reference; `LogicManager` holds `Model` and `Storage` references. `MainApp` constructs the concrete managers and connects them through these interfaces. Dependencies on model value types and UI helper classes are omitted.
-
 The sections below give more details of each component.
 
 ### UI component
@@ -110,7 +108,7 @@ Historical JavaFX reports describe memory leaks with hardware rendering on Linux
 
 ### Logic component
 
-The **API** of this component is specified in [`Logic.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java).
+The **API** of this component is specified in [`Logic.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java). The `delete` command is used to illustrate the design, and can be replaced with other commands.
 
 <puml src="diagrams/LogicClassDiagram.puml" alt="Logic API, command hierarchy, dispatcher, and command results" />
 
@@ -124,7 +122,7 @@ To see how `delete` command is parsed, refer to the sequence diagram below.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing delete 1 and returning DeleteCommand c to LogicManager" />
 
-<div markdown="span" class="alert alert-info">:information_source: **Note:** The destroy marker (X) marks the end of the parser's useful lifetime. Java garbage collection determines when its memory is reclaimed.
+<div markdown="span" class="alert alert-info"><strong>Note</strong>: The destroy marker (X) marks the end of the parser's useful lifetime. Java garbage collection determines when its memory is reclaimed.
 </div>
 
 How the `Logic` component works:
@@ -219,34 +217,6 @@ The activity diagram shows the selection policy in `CommandWords.suggestFor()`. 
 
 <puml src="diagrams/CommandWordSuggestion.puml" alt="Selecting command-prefix or nearest-edit suggestions and limiting their number" />
 
-### Student values and duplicate detection
-
-`StringUtil.normalizeFieldValue()` normalizes field text in this order:
-
-1. Remove invisible format characters, keeping the zero-width joiner (ZWJ) and non-joiner (ZWNJ) needed by some scripts.
-1. Remove non-whitespace control characters.
-1. Collapse Unicode whitespace to ASCII spaces.
-1. Trim leading and trailing whitespace.
-1. Compose text to Unicode NFC.
-
-Field constructors use this shared representation so command input and loaded data follow the same storage rules. The joiner exceptions preserve meaningful script characters while direction marks and zero-width spaces are removed.
-
-| Value | Model rule and comparison behavior |
-| --- | --- |
-| `Name` | Requires a Unicode letter or number; preserves punctuation and script. Search and possible-duplicate warnings use a separate comparison key that ignores case, Latin accents/modifiers, apostrophe styles, and dash/space differences. Every character Unicode calls a dash, and the minus sign, reads as a space, while a dash-shaped letter such as the katakana prolonged sound mark stays significant. The apostrophe variants a roster carries read as the straight apostrophe, the modifier letters of transliterated names among them, while the spacing grave and acute accents stay significant. The key is composed back to NFC, so a syllable a script writes from several letters stays one unit: `이` matches `이서연` alone and not `임지수`. Stored spelling is preserved. |
-| `Phone` | Requires at least three decimal digits and preserves formatting. `getDigits()` removes other characters and converts Unicode decimal digits to ASCII for numeric search. Possible-duplicate warnings use `isLikelySameNumber`: equal digits, or the whole of the shorter number as the end of the longer, from seven digits up. A country code written in front matches by that rule, and so does an unrelated number ending in the same digits, because `0065 8743 8807` and `+60 12 8743 8807` are the same shape. Telling those apart needs a per-country numbering plan, so the warning stays advisory. |
-| `Email` | Checks TAB's supported `local-part@domain` form. Commands and storage enforce a 254-character limit. A valid address with a dotless domain is accepted with a warning when added or changed. |
-| `NusStudentId` | Accepts 1–32 ASCII letters/digits and stores uppercase using `Locale.ROOT`. It is the sole identity key. |
-| `Tag` | Requires a Unicode letter or number. Commands, storage loading, and summary grouping merge case-insensitive matches, keeping an appropriate display spelling. `Tag.equals()` itself remains case-sensitive. |
-
-ID collisions and possible duplicates have different consequences. `StudentIdValidation` blocks `add` or `edit` when the requested ID belongs to another record, and `UniqueStudentList` enforces the same invariant at the model boundary. Without a shared present ID, students may coexist even when all their other details match.
-
-`LikelyDuplicateWarning` appends advice when another record has a matching normalized name, digit sequence for a phone, or case-insensitive email. An edit checks only changed values and excludes the record being edited. These warnings do not block the operation because matching contact details do not prove identity. The detector misses some spelling variants and cannot tell that two different IDs belong to one person.
-
-The activity diagram shows the duplicate checks in `AddCommand.execute()` and the remaining addition steps: a shared present ID blocks addition, while matching contact details only add advice. Other advisories are omitted, and filter handling is summarized. The success path adds the student and returns feedback before this activity ends; Logic then handles saving.
-
-<puml src="diagrams/AddDuplicateCheckActivityDiagram.puml" alt="Blocking ID collisions while allowing additions with possible-duplicate warnings" />
-
 ### Selecting and editing students
 
 `StudentTarget` represents either a displayed index or a NUS Student ID. The parser builds it; the command resolves it against the model at execution time. Indices are one-based in user input and converted through `Index` for list access. An ID lookup searches the entire book, including students hidden by the active filter.
@@ -273,18 +243,6 @@ The activity diagram shows the duplicate checks in `AddCommand.execute()` and th
 
 Email and NUS Student ID use the same three states. This avoids confusing an absent option with a request to erase data. An option without its required value is a parsing error. Names cannot be cleared; `-t ""` clears all general tags, while nonempty `-t` options replace the entire tag set. An edit that produces an equal student returns an unchanged message and causes no data-file write.
 
-### Filtering students and updating the view
-
-`FindCommandParser` groups terms by field and passes them, together with an optional follow-up selector, to `DetailsContainsKeywordsPredicate`. Every supplied condition must match. A field term is a case-insensitive substring; repeated selectors require all their terms. For tags, each term may match any one tag, but a quoted phrase must occur within one tag.
-
-For example, `find -n Jason -t Lab -t Tutorial -f` requires a name containing Jason, tags satisfying both group terms, and a pending follow-up. A missing optional detail cannot match a term for that field. Name matching uses the comparison key described above; phone searches additionally compare digits when the query contains only digits and common phone punctuation/spacing.
-
-`FindCommand` replaces the model's predicate; it searches the whole book rather than narrowing the previous result. `ListCommand` restores the show-all predicate. Neither changes student records or writes the data file. Edits and tag changes keep the active predicate, so a changed student can disappear if it no longer matches.
-
-Adding has one additional usability rule. If the new student fails the current predicate, `AddCommand` clears the search and explains why. Its `CommandResult` identifies the new student, and `MainWindow` asks `StudentListPanel` to scroll that record into view after a successful save. If the student already matches, the filter remains active.
-
-`SummaryPanel` observes the displayed list and delegates counting to `StudentSummary`. It counts follow-ups separately from tags and counts each student once per case-insensitive tag group. Groups appear by descending count, then alphabetically for ties. A group's most-used spelling is displayed, with a deterministic tie-break, so results remain stable across list changes and restarts.
-
 ### Tags and follow-up status
 
 `TagCommand` copies the selected student's tag set, adds or removes one case-insensitive match, and constructs a replacement student with all other details preserved. Adding an existing tag or removing an absent one reports that no change was made. This provides incremental grouping without rebuilding the entire tag set through `edit`.
@@ -296,86 +254,6 @@ The sequence diagram traces execution of `tag 1 -a T1` when the displayed studen
 Follow-up is a separate status. `Student` holds an optional `FollowUpFlag`, a specialized `Tag` used for its display label, outside the general tag set. The `-f` option on `add` starts a flagged record; on `edit`, `-f` sets the status and `-nf` clears it. The shared selector parser rejects repeated or conflicting status options. `find -f` and `find -nf` use the same status as a filter.
 
 The exact label `Needs follow-up` is reserved. Commands reject it as a new general tag, and storage asks users to represent it with `"flag": true`. The comparison folds Unicode dash punctuation and the minus sign to a hyphen, treats spaces as separators, and ignores trailing punctuation, comparing both the separated and collapsed forms, so separator and dash variants such as `Needs follow up` and `Needs followup` are rejected too. Labels differing only by other punctuation, such as `Needs_follow_up`, remain valid tags; `FollowUpTagWarning` notes that they do not set follow-up status. Keeping status separate prevents a student from displaying and counting the same marker twice.
-
-### Confirming a clear
-
-`LogicManager` owns an optional pending `ClearCommand`. Executing `clear` only returns a prompt counting the full book, including hidden students. A nonempty book leaves confirmation pending; an empty book reports that there is nothing to clear.
-
-The state diagram shows how subsequent submissions are handled. Replies are trimmed with the command whitespace rules and compared case-insensitively after invisible characters are removed. While confirmation is pending, input is interpreted as a reply rather than dispatched as another command.
-
-<puml src="diagrams/ClearConfirmation.puml" alt="Clear confirmation states and accepted replies" />
-
-On confirmation, Logic drops the pending request, snapshots the book and filter, and calls `executeConfirmed()`. Saving then follows the same procedure as another mutation. A failed save restores the records and filter, but the user must issue `clear` again to request another confirmation. The pending request is session state and is never persisted.
-
-Keeping the pending request in Logic makes the confirmation protocol testable without JavaFX. `CommandBox` queries `Logic.isAwaitingConfirmation()`, so an empty submission cancels a pending request and confirmation replies stay out of command history.
-
-### Saving changes safely
-
-Logic coordinates in-memory changes and disk persistence. It copies the student book and remembers the active predicate before a command executes. Because student values are immutable, the copy can retain their references. After execution, equality with the snapshot determines whether saving is necessary.
-
-The sequence diagram (`SaveRollbackSequenceDiagram`) shows the shared execution path. Clear confirmation enters the equivalent path after the affirmative reply. The storage procedure summarized in the note is expanded in the activity diagram that follows. Exception propagation is described in notes rather than shown as a return value.
-
-<puml src="diagrams/SaveRollbackSequenceDiagram.puml" alt="Saving changed student data and restoring the model after an I/O failure" />
-
-If saving throws `IOException`, Logic restores the book and predicate before reporting `CommandException`. A success result reaches the UI only after the required save succeeds. Read-only commands, unchanged edits, clear prompts, cancellations, and invalid replies do not write student data.
-
-`JsonStudentBookStorage` remembers the last book loaded or successfully saved for each normalized path. During saving it acquires a nonblocking file lock, reloads the disk book, and compares student records against that baseline. The following activity diagram focuses on this disk-side procedure. After reloading, its inner decision compares the disk book with that remembered baseline; a mismatch releases the lock and reports stale data without replacing the file.
-
-<puml src="diagrams/StaleWindowSave.puml" alt="Locking, checking for stale student data, and replacing the saved file" />
-
-The lock lives beside the data file, normally as `data/.tab.json.lock`. A busy lock, changed records, or a file that cannot be validated causes the save to fail with recovery guidance. The lock file remains after release; its existence does not mean a window holds the lock.
-
-The comparison uses validated book content. Formatting-only edits and changes to the top-level `_comment` do not count as changed student records. The latest disk comment is carried into the replacement file. This check stops cooperating TAB windows from overwriting each other's records. External text editors do not take part in the locking protocol, so close TAB before hand-editing.
-
-After validation, `JsonUtil` serializes the book and delegates replacement to `FileUtil.writeToFile()`, which:
-
-1. Creates a temporary file beside the target.
-1. Copies existing POSIX permissions where supported.
-1. Writes UTF-8 content and flushes the temporary file to disk.
-1. Uses an atomic move to replace the target.
-
-On an I/O failure, it attempts to remove the temporary file and propagates the error. If atomic replacement is unsupported, saving fails rather than falling back to truncating the existing file.
-
-These safeguards support local single-user work; they do not merge concurrent edits.
-
-### Loading and preserving the data contract
-
-The top-level JSON object contains `students` and an optional `_comment` string. Each student has a required `name`, optional `phone`, `email`, `nusStudentId`, `tags`, and `flag`. The [User Guide's file-editing section](UserGuide.md#saving-and-editing-data) specifies the complete format and recovery instructions.
-
-| Saved value | Loading behavior |
-| --- | --- |
-| Absent or `null` phone/email/ID | Load an absent detail. Blank normalized phone/email also mean absent; an explicit blank ID is invalid. |
-| Absent or `null` tags | Load an empty tag set. A supplied array must contain valid strings; normalized case variants merge, retaining the first spelling. |
-| Absent, `null`, or `false` flag | Load an unflagged student. Only a Boolean is accepted when a non-null value is supplied. |
-| Legacy `address` key | Accept and ignore it for compatibility with earlier TAB files. |
-| Unknown key, wrong type, invalid field, or duplicate present ID | Refuse the whole book and identify the problem instead of dropping the value. |
-
-Saving omits absent optional details and a false flag, preserving a compact, editable file. Files predating these optional fields continue to load. The former `Needs follow-up` general tag requires migration to the separate `flag` field; TAB reports this explicitly rather than silently reinterpreting it.
-
-`FileUtil` reads strict UTF-8 and accepts a leading byte order mark. `JsonUtil` rejects repeated object keys and trailing JSON values as well as malformed syntax. `JsonParseErrorFormatter` turns failures into `DataLoadingErrorMessage`, which separates the explanation from an optional line-numbered source excerpt. Adapter errors add the affected student record and name when available.
-
-`MainApp` passes a student-data loading error to `UiManager`, which shows a repair dialog instead of the main window. The unreadable file remains untouched. A genuinely missing file is treated as first use and supplies sample students; these are written only after a command changes the book.
-
-Preferences have a different recovery policy because they contain window settings rather than student records. Missing or unreadable preferences fall back to defaults and are rewritten when possible. A failed preference save logs the file and reason but does not block the session or shutdown.
-
-### Supporting keyboard work
-
-`CommandBox` owns a real JavaFX text field for editing and a `HighlightedTextOverlay` for colored text, caret, and selection. `CommandHighlighter` shares quote/option recognition helpers with the parser and marks syntactic roles rather than validating field contents. This preserves normal text editing while making command structure visible. `CommandTextField` converts pasted whitespace separators to spaces so copied multi-line text remains one inspectable command.
-
-`CommandHistory` stores nonblank submissions for the session, including rejected commands, and skips consecutive identical submissions. It keeps the 100 most recent, discarding the oldest when a further command is recorded, so a session left open all day holds a bounded history; a skipped submission takes no room and discards nothing. Up/Down navigation preserves the unsent draft and restores it after the newest entry. Successful submissions clear the field; failed ones remain editable. Clear-confirmation replies are excluded from history because they depend on a pending request.
-
-`MainWindow` defines a cyclic Tab order through commands, student list, tag summary, and visible result. `HelpPage` has keyboard paging and returns focus to the draft. `ResultDisplay` shows the latest reply and collapses when empty. These choices keep regular student-management tasks available without a pointing device.
-
-Card layout adapts to the available width through these helpers:
-
-* `CardHeadline` shares room between the name and tags.
-* `CardName` shortens names through `UiText` without splitting user-perceived characters.
-* `TagRow` keeps fitting chips on one row and summarizes hidden tags in an overflow chip.
-* `ContactRow` wraps optional contact details; absent labels are unmanaged so they leave no empty gaps.
-
-Tooltips retain full values when a card shortens them.
-
-`WindowBounds` restores saved geometry onto an available screen and clamps oversized windows to its usable area. `UiFonts` selects fonts suitable for the platform, and `UiText` supplies safe display shortening. Keep layout-only helpers in UI; normalization that affects stored or searched values belongs in Commons or Model.
 
 ## Documentation, logging, testing, and dev-ops
 

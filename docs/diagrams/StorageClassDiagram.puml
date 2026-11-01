@@ -6,27 +6,40 @@ skinparam classStereotypeFontColor #222222
 skinparam classBorderColor #555555
 skinparam arrowColor #555555
 skinparam ArrowFontStyle plain
-skinparam nodesep 45
-skinparam ranksep 40
+skinparam nodesep 80
+skinparam ranksep 45
+skinparam packageTitleAlignment center
+skinparam packageFontSize 16
 
-!pragma layout smetana
 package "Storage" as StorageComponent {
 interface Storage <<interface>>
 class StorageManager
-package "User preferences" {
+package " " as UserPrefsGroup #F4F6F6 {
+' Borderless heading nodes keep the delegation arrows clear of the text.
+class "<b>UserPrefs Storage</b>" as PrefsHeading #transparent;line:transparent
 class JsonUserPrefsStorage
+PrefsHeading -[hidden]down-> JsonUserPrefsStorage
 }
-package "Student data" {
+package " " as StudentBookGroup #F4F6F6 {
+class "<b>StudentBook Storage</b>" as BookHeading #transparent;line:transparent
 class JsonStudentBookStorage
+class JsonSerializableStudentBook
+class JsonAdaptedStudent
+class JsonAdaptedTag
+BookHeading -[hidden]down-> JsonStudentBookStorage
 }
 
 StorageManager .up.|> Storage
+StorageManager -[hidden]down-> PrefsHeading
+StorageManager -[hidden]down-> BookHeading
 StorageManager --> "1" JsonUserPrefsStorage
 StorageManager --> "1" JsonStudentBookStorage
-note bottom of StorageManager
-  JSON adapters, file-access helpers,
-  and model types are omitted.
-end note
+PrefsHeading -[hidden]right-> BookHeading
+JsonStudentBookStorage ..> JsonSerializableStudentBook : reads / writes
+JsonSerializableStudentBook --> "0..*" JsonAdaptedStudent
+JsonAdaptedStudent --> "0..*" JsonAdaptedTag
 }
+class " " as Outside #transparent;line:transparent
+Outside ..> Storage
 @enduml
 
