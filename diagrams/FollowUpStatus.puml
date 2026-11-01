@@ -1,0 +1,31 @@
+@startuml
+!include style.puml
+skinparam defaultFontSize 16
+skinparam ArrowFontStyle plain
+skinparam activityBackgroundColor LOGIC_COLOR_T1
+skinparam activityBorderColor #555555
+skinparam arrowColor #555555
+
+start
+:Read follow-up selectors from FlagArgumentMap;
+if (A selector appears more than once?) then ([yes])
+  :Throw ParseException for repeated options;
+  stop
+else ([no])
+endif
+if (Both -f and -nf supplied?) then ([yes])
+  :Throw ParseException for conflicting options;
+  stop
+else ([no])
+endif
+if (-f supplied?) then ([yes])
+  :Return Optional.of(true);
+else ([no])
+  if (-nf supplied?) then ([yes])
+    :Return Optional.of(false);
+  else ([no])
+    :Return Optional.empty();
+  endif
+endif
+stop
+@enduml

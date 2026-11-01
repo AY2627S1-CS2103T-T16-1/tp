@@ -1,18 +1,21 @@
 @startuml
 !include style.puml
-!pragma layout smetana
 skinparam defaultFontSize 16
-skinparam componentStyle uml2
+skinparam componentStyle rectangle
 skinparam componentFontColor #222222
 skinparam arrowColor #555555
 skinparam ArrowFontStyle plain
 skinparam nodesep 45
 skinparam ranksep 40
 
+actor User
+rectangle TAB {
 component Main #EEEEEE
-component UI UI_COLOR_T1
-component Logic LOGIC_COLOR_T1
-component Storage STORAGE_COLOR_T1
+together {
+    component UI UI_COLOR_T1
+    component Logic LOGIC_COLOR_T1
+    component Storage STORAGE_COLOR_T1
+}
 component Model MODEL_COLOR_T1
 component Commons #EEEEEE
 
@@ -20,15 +23,16 @@ Main ..> UI
 Main ..> Logic
 Main ..> Storage
 Main ..> Model
-UI ..> Logic
+UI .right.> Logic
 UI ..> Model
-Logic ..> Model
-Logic ..> Storage
+Logic .down.> Model
+Logic .right.> Storage
 Storage ..> Model
 
 Main -[hidden]right-> Commons
-note right of Commons
-  Shared utilities used
-  across the components
-end note
+}
+
+artifact "JSON files" as Files
+User ..> Main : <color:transparent>__</color>launches
+Storage .right.> Files
 @enduml

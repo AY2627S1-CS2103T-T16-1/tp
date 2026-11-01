@@ -1,5 +1,6 @@
 @startuml
 !include style.puml
+!pragma layout smetana
 skinparam classBackgroundColor LOGIC_COLOR_T1
 skinparam classFontColor #222222
 skinparam classStereotypeFontColor #222222
@@ -23,12 +24,23 @@ LogicManager --> "1" StudentBookParser
 LogicManager ..> Command : executes
 StudentBookParser ..> Command : returns
 DeleteCommand -up-|> Command
-Command ..> CommandResult : returns
+Command .down.> CommandResult : returns
+DeleteCommand -[hidden]right-> CommandResult
 
 note bottom of StudentBookParser
-  Parser helpers are expanded separately.
-  DeleteCommand represents the command hierarchy.
+  Parser helpers are
+  expanded separately.
 end note
 }
+
+class " " as Outside #transparent;line:transparent
+Outside ..> Logic
+package "Model" as ModelComponent MODEL_COLOR_T1 {
+}
+package "Storage" as StorageComponent STORAGE_COLOR_T1 {
+}
+LogicManager --> ModelComponent
+LogicManager -right-> StorageComponent
+Command ..right.> ModelComponent : executes against
 @enduml
 

@@ -58,4 +58,6 @@ NusStudentId -[hidden]right-> FollowUpFlag
 FollowUpFlag -[hidden]right-> Tag
 
 }
+class " " as Outside #transparent;line:transparent
+Outside ..> Model
 @enduml
