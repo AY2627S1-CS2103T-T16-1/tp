@@ -1,6 +1,5 @@
 @startuml
 !include style.puml
-!pragma layout smetana
 skinparam classBackgroundColor UI_COLOR_T1
 skinparam classFontColor #222222
 skinparam classStereotypeFontColor #222222
@@ -14,17 +13,13 @@ package UI {
     interface Ui <<interface>>
     class UiManager
     class MainWindow
-    together {
-        class CommandBox
-        class ResultDisplay
-        class StudentListPanel
-    }
+    class CommandBox
+    class ResultDisplay
+    class StudentListPanel
     class StudentCard
-    together {
-        class HelpPage
-        class SummaryPanel
-        class StatusBarFooter
-    }
+    class HelpPage
+    class SummaryPanel
+    class StatusBarFooter
 
     UiManager .up.|> Ui
     UiManager --> "1" MainWindow
@@ -36,13 +31,6 @@ package UI {
     MainWindow ..> StatusBarFooter : <<create>>
     StudentListPanel ..> StudentCard : <<create>>
 
-    CommandBox -[hidden]right-> ResultDisplay
-    ResultDisplay -[hidden]right-> StudentListPanel
-    HelpPage -[hidden]right-> SummaryPanel
-    SummaryPanel -[hidden]right-> StatusBarFooter
-    CommandBox -[hidden]down-> HelpPage
-    ResultDisplay -[hidden]down-> SummaryPanel
-    StudentListPanel -[hidden]down-> StatusBarFooter
 }
 
 package "Logic" as LogicComponent LOGIC_COLOR_T1 {
