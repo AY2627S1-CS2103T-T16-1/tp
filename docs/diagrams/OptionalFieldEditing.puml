@@ -1,0 +1,26 @@
+@startuml
+!include style.puml
+skinparam defaultFontSize 16
+skinparam ArrowFontStyle plain
+skinparam activityBackgroundColor LOGIC_COLOR_T1
+skinparam activityBorderColor #555555
+skinparam arrowColor #555555
+
+start
+repeat
+  :<U+22D4> Decide the next field's value;
+repeat while () is ([more fields]) not ([else])
+:Build the edited student;
+if () then ([same as saved student])
+  :Report that nothing changed;
+  stop
+else ([changed])
+  if () then ([ID held by another student])
+    :Reject the edit;
+    stop
+  else ([else])
+    :Replace the student\nand report success;
+    stop
+  endif
+endif
+@enduml

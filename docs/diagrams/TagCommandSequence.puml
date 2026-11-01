@@ -6,6 +6,8 @@ skinparam defaultFontSize 16
 participant "c:TagCommand" as command LOGIC_COLOR
 participant "target:StudentTarget" as target LOGIC_COLOR
 participant ":Model" as model MODEL_COLOR
+participant "student:Student" as student MODEL_COLOR
+participant "updatedStudent:Student" as updated MODEL_COLOR
 
 [-> command : execute(model)
 activate command
@@ -15,19 +17,34 @@ target -> model : getFilteredStudentList()
 activate model
 model --> target : displayed students
 deactivate model
-note over target : Select index 1
-target --> command : student
+target --> command : student at index 1
 deactivate target
-note over command
-  Check that tag T1 is absent, ignoring case.
-  Copy tags and construct replacement student.
-  Feedback starts "Added tag [T1]:".
-end note
+command -> student : getTags()
+activate student
+student --> command : stored tags
+deactivate student
+alt no tag matches T1, ignoring case
+command -> command : withTagAdded(student)
+activate command
+command -> student : getTags()
+activate student
+student --> command : stored tags
+deactivate student
+create updated
+command -> updated
+activate updated
+||20||
+updated --> command
+deactivate updated
+deactivate command
 command -> model : setStudent(student, updatedStudent)
 activate model
 model --> command
 deactivate model
 [<-- command : result
+else T1 already present, ignoring case
+[<-- command : CommandException
+end
 deactivate command
 @enduml
 

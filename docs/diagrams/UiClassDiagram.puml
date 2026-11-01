@@ -11,15 +11,23 @@ skinparam nodesep 25
 skinparam ranksep 35
 
 package UI {
+    interface Ui <<interface>>
+    class UiManager
     class MainWindow
-    class CommandBox
-    class ResultDisplay
-    class StudentListPanel
+    together {
+        class CommandBox
+        class ResultDisplay
+        class StudentListPanel
+    }
     class StudentCard
-    class SummaryPanel
-    class HelpPage
-    class StatusBarFooter
+    together {
+        class HelpPage
+        class SummaryPanel
+        class StatusBarFooter
+    }
 
+    UiManager .up.|> Ui
+    UiManager --> "1" MainWindow
     MainWindow --> "1" CommandBox
     MainWindow --> "1" ResultDisplay
     MainWindow --> "1" StudentListPanel
@@ -32,27 +40,20 @@ package UI {
     ResultDisplay -[hidden]right-> StudentListPanel
     HelpPage -[hidden]right-> SummaryPanel
     SummaryPanel -[hidden]right-> StatusBarFooter
+    CommandBox -[hidden]down-> HelpPage
+    ResultDisplay -[hidden]down-> SummaryPanel
+    StudentListPanel -[hidden]down-> StatusBarFooter
 }
 
-package "Logic" as LogicComponent {
-    interface "Logic" as LogicApi <<interface>> LOGIC_COLOR_T1
+package "Logic" as LogicComponent LOGIC_COLOR_T1 {
 }
 
-package Model {
-    class Student MODEL_COLOR_T1
-    class StudentSummary MODEL_COLOR_T1
+package Model MODEL_COLOR_T1 {
 }
 
-MainWindow --> "1" LogicApi
-StudentCard --> "1" Student
-StudentListPanel ..> Student
-SummaryPanel ..> Student
-SummaryPanel ..> StudentSummary : computes counts
-
-note top of MainWindow
-  Partial diagram: UiManager, UiPart,
-  JavaFX controls, and other helpers omitted.
-  Panels receive the observable filtered
-  student list through Logic.
-end note
+class " " as Outside #transparent;line:transparent
+Outside ..> Ui
+UiManager --> LogicComponent
+MainWindow --> LogicComponent
+StudentCard ..> Model : displays model values
 @enduml
