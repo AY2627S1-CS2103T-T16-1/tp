@@ -13,15 +13,22 @@ TAB (Teaching Assistant's Address Book) is an offline desktop application for te
 ## Acknowledgements
 
 * TAB builds on the layered architecture, command/parser structure, JavaFX UI, JSON storage, test utilities, and documentation of [AddressBook-Level3 (AB3)](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org). This guide adapts the organization and explanations of the [AB3 Developer Guide](https://se-education.org/addressbook-level3/DeveloperGuide.html) to TAB's student model and behavior.
-* [JavaFX](https://openjfx.io/) supplies the controls, FXML loader, observable collections, and graphics used by the desktop interface. [Jackson](https://github.com/FasterXML/jackson) handles JSON conversion through `JsonUtil`, and [JUnit 5](https://junit.org/junit5/) supports automated testing.
-* Email local-part validation in `Email` uses the dot-atom character and dot-placement rules from [RFC 5322, section 3.2.3](https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3). No implementation code was copied.
-* `StringUtil.computeEditDistance` implements the recurrence for [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance) to suggest mistyped command words. The algorithmic idea is reused in that method; the implementation was written for TAB.
-* The help pager's navigation keys and progress prompt are inspired by [OpenBSD more(1)](https://man.openbsd.org/more.1). The reuse is limited to interaction conventions; the JavaFX pager was written for TAB.
-* [MarkBind](https://markbind.org/) builds the documentation site, and [PlantUML](https://plantuml.com/) generates its UML diagrams from the sources in `docs/diagrams/`.
+* TAB continues to use the following from AB3.
+   * [JavaFX](https://openjfx.io/), for the controls, FXML loader, observable collections, and graphics used by the desktop interface.
+   * [Jackson](https://github.com/FasterXML/jackson), for JSON conversion through `JsonUtil`.
+   * [JUnit 5](https://junit.org/junit5/), for automated testing.
+   * [Gradle](https://gradle.org/), for build automation and dependency management.
+* TAB re-uses or adapts the following ideas, but did not copy any implementation code.
+   * Email local-part validation in `Email` uses the dot-atom character and dot-placement rules from [RFC 5322, section 3.2.3](https://www.rfc-editor.org/rfc/rfc5322.html#section-3.2.3).
+   * `StringUtil.computeEditDistance` implements the recurrence for [optimal string alignment distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance) to suggest mistyped command words.
+   * The help pager's navigation keys and progress prompt are inspired by [OpenBSD more(1)](https://man.openbsd.org/more.1). The reuse is limited to interaction conventions.
+* TAB uses the following technologies for documentation.
+   * [MarkBind](https://markbind.org/) builds the documentation site.
+   * [PlantUML](https://plantuml.com/) generates its UML diagrams from the sources in `docs/diagrams/`.
 
 ## Setting up and getting started
 
-Use [Setting up and getting started](SettingUp.md) for IDE setup, and the [User Guide quick start](UserGuide.md#quick-start) for the supported Java/JavaFX runtimes. The source targets Java 25. `seedu.tab.Main` launches the JavaFX application, `MainApp`.
+Use [Setting up and getting started](SettingUp.md) for IDE setup, and the [User Guide quick start](UserGuide.md#quick-start) for the supported Java/JavaFX runtimes.
 
 From the repository root:
 
@@ -33,31 +40,52 @@ From the repository root:
 
 These commands launch TAB, run the tests and Checkstyle checks, and build `build/libs/tab.jar`, respectively. See [Testing](Testing.md) for test selection and [Documentation](Documentation.md) for the MarkBind preview workflow.
 
-When packaged, TAB resolves `data/tab.json` and `preferences.json` relative to the JAR's directory through `AppUtil.getApplicationDirectory()`. Development runs use the working directory. Run manual tests in a separate writable folder so they cannot touch real records.
+When packaged, TAB resolves `data/tab.json` and `preferences.json` relative to the JAR's directory. Development runs use the working directory. Run manual tests in a separate writable folder so they cannot touch real records.
 
 ## Design
 
 ### Architecture
 
-TAB retains AB3's four main components and the shared `Commons` utilities. The UML package diagram below shows their dependencies; an arrow points from the component that uses an API or type to the component that provides it. `Main` represents application startup and shutdown. `Commons` utilities are used across components and omitted from the arrows for focus.
-
 <puml src="diagrams/ArchitectureDiagram.puml" alt="Dependencies between TAB's architectural components" />
 
-| Component | Entry point | Responsibility |
-| --- | --- | --- |
-| UI | [`Ui`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/Ui.java), implemented by `UiManager` | Displays students, accepts input, and presents results and startup errors. |
-| Logic | [`Logic`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java), implemented by `LogicManager` | Parses and executes commands, manages clear confirmation, and coordinates saving. |
-| Model | [`Model`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/model/Model.java), implemented by `ModelManager` | Owns the student book, user preferences, and active filtered view. |
-| Storage | [`Storage`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/storage/Storage.java), implemented by `StorageManager` | Loads and saves student records and preferences through separate JSON storage classes. |
-| Commons | `seedu.tab.commons` | Supplies indexing, logging, value normalization, file access, and error formatting. |
+The architecture diagram shows TAB's components using UML component notation. An arrow points from a component that uses an API or type to the component that provides it. `Storage` is a software component that reads and writes JSON files, rather than a database. Dependencies on shared `Commons` utilities are omitted for clarity.
 
-The sequence diagram shows how these components cooperate for a successful `delete 1`. Lifelines represent components; messages summarize interactions rather than every internal call. Logic parses the command, snapshots the model, and executes the deletion, then saves the changed book before returning feedback. Parser details and failure paths are expanded in the Logic and saving sections.
+The following provides a quick overview of the main components and their interactions.
+
+**Main components of the architecture**
+
+**`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/MainApp.java)) is in charge of app launch and shutdown.
+
+* At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
+* At shut down, it shuts down the other components and invokes cleanup methods where necessary.
+
+The bulk of the app's work is done by the following four components:
+
+* [**`UI`**](#ui-component): The UI of the App.
+* [**`Logic`**](#logic-component): The command executor.
+* [**`Model`**](#model-component): Holds the data of the App in memory.
+* [**`Storage`**](#storage-component): Reads data from, and writes data to, the hard disk.
+
+[**`Commons`**](#common-classes) represents a collection of classes used by multiple other components.
+
+**How the architecture components interact with each other**
+
+The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
 
 <puml src="diagrams/ArchitectureSequenceDiagram.puml" alt="Successful deletion flowing through UI, Logic, Model, and Storage" />
 
-`MainApp.init()` reads preferences, constructs storage, loads the student book into `ModelManager`, and connects `LogicManager` and `UiManager`. A missing student file produces sample students. An unreadable student file produces a startup error that prevents the normal window from opening. This keeps existing records from being replaced by an empty or sample book.
+Each of the four main components (also shown in the diagram above),
 
-On exit, `MainWindow` passes the window bounds to Logic, and `MainApp.stop()` saves preferences. Student changes are saved during command execution, as described in [Saving changes safely](#saving-changes-safely).
+* defines its *API* in an `interface` with the same name as the Component.
+* provides its functionality through a concrete `{Component Name}Manager` class that implements the corresponding API interface.
+
+For example, the `Logic` component defines its API in `Logic.java` and implements it in `LogicManager.java`. Other components interact with a component through its interface rather than its concrete class, preventing them from coupling to that component's implementation, as illustrated in the following partial class diagram.
+
+<puml src="diagrams/ComponentInterfaces.puml" alt="UI and Logic implementations depend on component interfaces" />
+
+The diagram shows selected dependencies after initialization. `UiManager` holds a `Logic` reference; `LogicManager` holds `Model` and `Storage` references. `MainApp` constructs the concrete managers and connects them through these interfaces. Dependencies on model value types and UI helper classes are omitted.
+
+The sections below give more details of each component.
 
 ### UI component
 
@@ -112,6 +140,10 @@ The class diagram shows the API implementation, its two delegates, and the stude
 There are two layers of validation. Custom deserializers check JSON types, such as a string for `email` and a Boolean for `flag`. Adapter conversion then applies the model's field rules and checks repeated student IDs. The entire book must load successfully before it is exposed to the normal UI.
 
 The [data contract](#loading-and-preserving-the-data-contract) and [save procedure](#saving-changes-safely) below explain how this separation supports hand-edited files without silently discarding malformed data.
+
+### Common classes
+
+The `seedu.tab.commons` package contains classes shared across components. These include `LogsCenter` for logging, `Index` for displayed-list positions, `StringUtil` for text normalization and comparison, and file/JSON helpers. `AppUtil` resolves the application directory, while `DataLoadingErrorMessage` formats startup diagnostics.
 
 ## Implementation
 
@@ -308,26 +340,28 @@ Tooltips retain full values when a card shortens them.
 
 ## Documentation, logging, testing, and dev-ops
 
-* [Documentation](Documentation.md) describes the MarkBind workflow. Diagram sources belong in `docs/diagrams/` and are rendered by the `<puml>` elements beside their explanations.
+* [Documentation](Documentation.md) describes the MarkBind workflow.
 * [Logging](Logging.md) describes `LogsCenter` and the Java logging configuration.
-* [Testing](Testing.md) explains JUnit and JavaFX test execution. Reuse `StudentBuilder` and the other fixtures in `src/test/java/seedu/tab/testutil/` when adding tests.
-* [DevOps](DevOps.md) describes the build and CI setup. Run `./gradlew check` before submitting a change.
-
-Useful regression entry points include `CommandDispatchAndPersistenceTest` for command-to-file behavior, `ClearConfirmationTest` for the confirmation protocol, `LogicManagerTest` for save rollback, and `JsonStudentBookStorageConcurrencyTest` for stale saves and locks. Parser/model tests cover normalization and validation; UI tests exercise focus, layout, and list updates.
+* [Testing](Testing.md) explains JUnit and JavaFX test execution.
+* [DevOps](DevOps.md) describes the build and CI setup.
 
 ## Appendix: Requirements
 
 ### Product scope
 
-**Target users:** Teaching assistants who manage tutorial or lab students on a desktop, type comfortably, and prefer short keyboard interactions during teaching work.
+**Target user profile:** Teaching assistants in National University of Singapore's School of Computing.
+* Has a need to keep track of or manages tutorial or lab students
+* Prefers desktop apps over other types of applications
+* Can type comfortably and fast
+* Strongly prefers typing on keyboard to using the mouse
+* Familiar with using CLI apps and general CLI conventions
 
-**Value proposition:** Keep student contact details, class tags, and pending follow-ups together in a local student book that can be searched and updated through typed commands.
-
-TAB manages records and follow-up status locally. Messaging students, recording attendance, and recording grades are outside its scope. General tags can describe groups, but TAB does not model courses or classes as separate entities.
+**Value proposition:** Teaching assistants can use TAB through typed commands to manage student contact details much more quickly and seamlessly than mouse-driven GUI applications.
 
 ### User stories
 
-Priorities are `***` (must have), `**` (nice to have), and `*` (lower priority). **Implemented** describes the present product; **Future** records an unimplemented requirement and does not promise a command in this release.
+* Priorities: High (must have) - `***`, Medium (nice to have) - `**`, Low (unlikely to have) `*`
+*  **Implemented** - the feature is present in current product, **Future** - the feature is planned to be released in future
 
 | Priority | As a… | I want to… | So that I can… | Status |
 | --- | --- | --- | --- | --- |
@@ -378,7 +412,7 @@ Priorities are `***` (must have), `**` (nice to have), and `*` (lower priority).
 
 ### Use cases
 
-For these use cases, the **system** is TAB and the **actor** is a teaching assistant. The main success scenario (MSS) describes successful interaction; extensions refer to the step where an alternative begins. Editing, tagging, and deletion share student-target resolution, so UC02 describes that common interaction once.
+For these use cases, the **system** is TAB and the **actor** is a teaching assistant (user).
 
 #### UC01: Add a student
 
@@ -545,23 +579,15 @@ Setting/clearing follow-up uses the same edit flow. UC03 covers the tag-specific
 
 ### Non-functional requirements
 
-These are product acceptance targets. Timing and capacity targets require measurement on the test machine; passing unit tests alone does not establish them.
-
-1. **Runtime:** Run on Windows, Linux, and macOS with Java 25 and the matching JavaFX runtime described in the UG. Plain-JDK Apple Silicon setups using the bundled Intel JavaFX natives require an x64 JDK under Rosetta; the documented native JDK+FX setup is an alternative.
-1. **Portability:** Distribute one executable JAR of at most 100 MB, usable from a writable folder without an installer or administrator privileges.
-1. **Keyboard access:** Make every student-management operation and in-app help available through the keyboard.
-1. **Typing efficiency:** For a practiced typist, the median completion time for the task sequence below must be lower in TAB than in the defined mouse-driven LibreOffice Calc baseline. Both workflows must produce the same final student data without unresolved errors.
-1. **Capacity and responsiveness:** Support 1,000 student records, with typical add, edit, delete, tag, list, and find commands updating the GUI within 100 ms and startup ready for input within 2 seconds. Measure on a local writable disk and record hardware, runtime, dataset, and repeated timings.
-1. **Display:** Keep the interface readable at 1920×1080 with 100% and 125% scaling, and usable at 1280×720 with scaling up to 150%, using scrolling where necessary.
-1. **Data locality:** Perform student-management operations offline and store student data locally without transmitting it to a network service.
-1. **Single-user integrity:** Preserve existing saved records when loading fails or a command cannot save, and reject a stale cooperating TAB window's write rather than overwrite newer records. Concurrent edits are not merged.
-1. **Editable data:** Accept correctly edited UTF-8 JSON, retain supported optional fields and the file description, and report malformed data without silently dropping invalid values.
-
-#### Typing efficiency evaluation
-
-Compare TAB with mouse-driven LibreOffice Calc using identical copies of 100 student records. Time the same sequence: add a student, find another by ID, change their phone, add a tag, and delete the added student. In Calc, use the mouse for navigation, filters, and menus, and the keyboard only for cell values. In TAB, use the command box.
-
-Use the same practiced participant, with three untimed practice runs and five timed runs per application. Alternate application order and reset the data before each run. Start with each application ready for input and stop when the deletion result is visible. Include corrections and verify identical final records. Record application versions, hardware, runtime, and display settings. TAB passes if its median completion time is lower. This is an acceptance target, not a measured performance claim.
+1. **Runtime:** Should work on any *mainstream OS* (Windows, Linux, macOS) with Java 25 and the matching JavaFX runtime as described in the UG.
+1. **Portability:** Should be distributed as one executable JAR of at most 100 MB. This JAR should be usable from a writable folder without an installer or administrator privileges.
+1. **Keyboard access:** Every student-management operation and in-app help should be available through the keyboard.
+1. **Typing efficiency:** A practiced typist should have a lower median completion time when using TAB.
+1. **Capacity and responsiveness:** Should support up to 1,000 student records, with typical add, edit, delete, tag, list, and find commands updating the GUI within 100 ms. Startup should be ready for input within 2 seconds. This can be measured on a local writable disk by recording hardware, runtime, dataset, and repeated timings.
+1. **Display:** The interface should be readable and usable at 1920×1080 with 100% and 125% scaling, and at 1280×720 with scaling up to 150%.
+1. **Data locality:** Should work offline and store student data locally without transmitting it to a network service.
+1. **Single-user integrity:** Should preserve existing saved records when loading fails or a command cannot save. TAB should also reject a stale cooperating TAB window's write rather than overwrite newer records. Concurrent edits should not be merged.
+1. **Editable data:** Should accept correctly edited UTF-8 JSON, retain supported optional fields and the file description, and report malformed data without silently dropping invalid values.
 
 ### Glossary
 
@@ -596,7 +622,7 @@ The work spans implementation, automated tests, manual verification, and documen
 
 ## Appendix: Instructions for Manual Testing
 
-These paths provide representative inputs and observable results. Extend them with exploratory tests; the [UG](UserGuide.md) remains the reference for full command syntax. Run destructive and file-editing tests only on a disposable copy of TAB and its data. Run the command sections in order; restart the shared setup if you skip sections or explore changes that affect later prerequisites.
+Given below are instructions to test the app manually.
 
 ### Launch, help, and shutdown
 
