@@ -20,12 +20,16 @@ deactivate model
 target --> command : student at index 1
 deactivate target
 command -> student : getTags()
+activate student
 student --> command : stored tags
-opt no tag matches T1, ignoring case
+deactivate student
+alt no tag matches T1, ignoring case
 command -> command : withTagAdded(student)
 activate command
 command -> student : getTags()
+activate student
 student --> command : stored tags
+deactivate student
 create updated
 command -> updated
 activate updated
@@ -38,6 +42,8 @@ activate model
 model --> command
 deactivate model
 [<-- command : result
+else T1 already present, ignoring case
+[<-- command : CommandException
 end
 deactivate command
 @enduml
