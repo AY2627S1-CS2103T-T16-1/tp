@@ -249,7 +249,7 @@ How target resolution works:
 * An explicit ID option also accepts digit-leading IDs. `edit` uses `--target-id`, while `delete` and `tag` use `--id`. The separate edit option leaves `--id` available for changing the student's ID.
 * An unresolved target produces a `CommandException` without changing records. If an out-of-range numeric index matches a stored ID, the feedback suggests the explicit ID option.
 
-`EditStudentDescriptor` stores the requested changes separately from the selected student. The following activity diagram illustrates how `EditCommand` applies one optional field before constructing a replacement record.
+`EditStudentDescriptor` stores the requested changes separately from the selected student. The following activity diagram illustrates how `EditCommand` applies each optional field in turn before constructing a replacement record.
 
 <puml src="diagrams/OptionalFieldEditing.puml" alt="Keeping, clearing, or replacing an optional field and applying the completed edit descriptor" />
 
