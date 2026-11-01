@@ -137,10 +137,9 @@ public class CommandHistoryTest {
     /**
      * Returns every command Up reaches, oldest first, stopping where Up stops changing the text.
      *
-     * <p>That boundary is the oldest kept command only because no two neighbouring entries are
+     * <p>That boundary is the oldest kept command only because no two neighboring entries are
      * equal, which {@link CommandHistory#add} ensures by skipping a command repeated straight
-     * after itself. A history filled another way, or a starting text equal to its newest command,
-     * would stop the walk early instead.
+     * after itself. A history filled another way would stop the walk early instead.
      */
     private static List<String> recallAll(CommandHistory history) {
         List<String> recalled = new ArrayList<>();
