@@ -6,21 +6,21 @@ skinparam activityBackgroundColor LOGIC_COLOR_T1
 skinparam activityBorderColor #555555
 skinparam arrowColor #555555
 
+
 start
-:Fold the typed word with Locale.ROOT;
-:Find command words starting with it;
-if () then ([prefix matches exist])
-  :Use prefix matches as suggestions;
-else ([no prefix matches])
-  :Find candidates within two edits for the
-  same initial character, or one otherwise;
-  :Keep candidates at the smallest distance
-  (none if there are no candidates);
+:Ignore letter case;
+:Find commands starting
+with the typed word;
+if () then ([some found])
+else ([none found])
+  :Find the commands closest in spelling;
 endif
-if () then ([more than three suggestions])
-  :Return no suggestions;
-else ([at most three suggestions])
-  :Return suggestions in command-list order;
+if () then ([more than three])
+  :Suggest nothing;
+  stop
+else ([three or fewer])
+  :Suggest them in
+  command-list order;
+  stop
 endif
-stop
 @enduml

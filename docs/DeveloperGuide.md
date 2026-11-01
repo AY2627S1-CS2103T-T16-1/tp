@@ -231,7 +231,7 @@ The following activity diagram illustrates how `CommandWords.suggestFor()` sugge
 How command suggestions work:
 
 * Prefix matches take precedence over edit-distance matches.
-* If no prefix matches, the method selects the nearest command words within the edit allowance shown in the diagram. Swapping adjacent characters counts as one edit.
+* If no prefix matches, the method selects the nearest command words within two edits when the first letter matches, or one edit otherwise. Swapping adjacent characters counts as one edit.
 * Suggestions are returned in command-list order. More than three matches produce no suggestions.
 * Suggestions are displayed for the user to choose; they are never executed automatically.
 * New commands must be added to both `StudentBookParser` and `COMMAND_WORDS`. `CommandWordsTest` checks that these remain consistent.
