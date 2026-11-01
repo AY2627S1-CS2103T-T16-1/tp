@@ -238,7 +238,7 @@ public class DetailsContainsKeywordsPredicateTest {
         Student student = new StudentBuilder().withPhone("91234567").build();
         for (String keyword : List.of("9123\u20114567", "9123\u20104567", "9123\u20124567",
                 "9123\u20134567", "9123\u20144567", "9123\u22124567", "9123\uFF0D4567",
-                "\uFF089123\uFF094567", "[9123]4567", "\uFF19\uFF11\uFF12\uFF13\uFF0D\uFF14\uFF15\uFF16\uFF17",
+                "\uFF089123\uFF094567", "\uFF19\uFF11\uFF12\uFF13\uFF0D\uFF14\uFF15\uFF16\uFF17",
                 "9123\uFF0E4567")) {
             assertTrue(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
                     keyword + " should match 91234567 by its digits");
@@ -255,7 +255,9 @@ public class DetailsContainsKeywordsPredicateTest {
         // have to be there, and punctuation carrying none still falls to the literal comparison
         Student student = new StudentBuilder().withPhone("91234567").build();
         for (String keyword : List.of("9123\u20114568", "\uFF19\uFF19\uFF19", "\u2013\u2014\u2212",
-                "\uFF08\uFF09", "ext\u20112", "9123\u20114567x")) {
+                "\uFF08\uFF09", "ext\u20112", "9123\u20114567x",
+                // a bracket that quotes a number rather than grouping it is not phone punctuation
+                "\u300C91234567\u300D", "[91234567]", "{91234567}")) {
             assertFalse(new DetailsContainsKeywordsPredicate(Map.of(Field.PHONE, List.of(keyword))).test(student),
                     keyword + " should not match 91234567");
         }

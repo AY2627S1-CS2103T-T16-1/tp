@@ -26,14 +26,19 @@ import seedu.tab.commons.util.ToStringBuilder;
  */
 public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
     /**
-     * The punctuation a written phone number groups its digits with. A dash counts in every
-     * form Unicode files under dash punctuation, together with the minus sign it files under
-     * mathematical symbols, as {@code StringUtil} and {@code FollowUpFlag} already count one;
-     * a bracket counts whichever pair it belongs to; and a plus or a dot counts at either
-     * width. A number copied out of a document brings these forms rather than the ASCII ones,
-     * so a keyword holding them has to reach the digit comparison instead of being turned away.
+     * The punctuation a written phone number groups its digits with: the parenthesis, plus and
+     * dot a keyboard types, the full-width forms a CJK input method types in their place, and
+     * a dash in every form Unicode files under dash punctuation, together with the minus sign
+     * it files under mathematical symbols, as {@code StringUtil} and {@code FollowUpFlag}
+     * already count one. A number copied out of a document brings these forms rather than the
+     * ASCII ones, so a keyword holding them has to reach the digit comparison below instead of
+     * being turned away.
+     *
+     * <p>Only the pairs a number is written with count. A bracket of every kind would take in
+     * the corner brackets and braces that quote a number rather than group it, which says
+     * nothing about the number inside them.
      */
-    private static final String PHONE_PUNCTUATION = "\\p{Pd}\\u2212\\p{Ps}\\p{Pe}+\\uFF0B.\\uFF0E";
+    private static final String PHONE_PUNCTUATION = "\\p{Pd}\\u2212()\\uFF08\\uFF09+\\uFF0B.\\uFF0E";
 
     /** Characters permitted in a phone keyword; digit presence is checked after normalization. */
     private static final Pattern PHONE_KEYWORD =
