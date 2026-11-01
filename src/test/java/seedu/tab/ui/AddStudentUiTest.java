@@ -17,6 +17,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
@@ -45,6 +46,11 @@ public class AddStudentUiTest {
 
     // the pulses a card has to spend in view before its geometry is taken as settled
     private static final int PULSES_IN_VIEW = 16;
+
+    // the text on a card that has to be readable, each selector looked up on its own because
+    // a lookup takes one selector rather than a list of them
+    private static final List<String> DETAIL_SELECTORS =
+            List.of(".card-name", ".card-detail", ".card-detail-strong");
 
     @TempDir
     public Path testFolder;
@@ -105,6 +111,26 @@ public class AddStudentUiTest {
         assertWrappingCardStaysInView(10, MINIMUM_WINDOW_HEIGHT);
     }
 
+    @Test
+    public void add_cardWhoseDetailsWrapAfterADelete_keepsTheWholeCardInView() throws Exception {
+        FxToolkit.onFxThread(() -> {
+            createWindow(STUDENTS, WINDOW_HEIGHT);
+            enter("delete " + STUDENTS);
+            list.scrollTo(0);
+            return null;
+        });
+        try {
+            // The shortened list has to finish laying out before the addition, or the cell the
+            // deletion freed is not the one the new card lands in.
+            Student first = model.getFilteredStudentList().getFirst();
+            pulsesInView = 0;
+            FxToolkit.awaitAssertion(() -> assertStaysInView(first));
+            assertAddedWrappingCardStaysInView();
+        } finally {
+            closeWindow();
+        }
+    }
+
     /**
      * Adds a student whose contact details wrap and requires the whole card to settle in view.
      *
@@ -115,18 +141,33 @@ public class AddStudentUiTest {
      * is not enough to ask for; it has to stay.
      */
     private void assertWrappingCardStaysInView(int students, double height) throws Exception {
-        Student added = FxToolkit.onFxThread(() -> {
+        FxToolkit.onFxThread(() -> {
             createWindow(students, height);
+            return null;
+        });
+        try {
+            assertAddedWrappingCardStaysInView();
+        } finally {
+            closeWindow();
+        }
+    }
+
+    /**
+     * Adds the student whose contact details wrap and requires the whole card to settle in view.
+     *
+     * <p>The card is in view throughout the failure this guards against, so the assertion reads
+     * the detail labels rather than the card alone: a cell carried over from a deleted student
+     * keeps the height it was last measured at, and a card measured before its row had a width
+     * was measured as an unwrapped one, which leaves its last line hidden inside itself.
+     */
+    private void assertAddedWrappingCardStaysInView() throws Exception {
+        Student added = FxToolkit.onFxThread(() -> {
             enter("add Zed Probe -p 91234567 -t T1"
                     + " -e muhammad.haziq.bin.abdul.rahman.shah.the.second@alumni.example.edu.sg");
             return model.getStudentBook().getStudentList().getLast();
         });
-        try {
-            pulsesInView = 0;
-            FxToolkit.awaitAssertion(() -> assertStaysInView(added));
-        } finally {
-            closeWindow();
-        }
+        pulsesInView = 0;
+        FxToolkit.awaitAssertion(() -> assertStaysInView(added));
     }
 
     @Test
@@ -293,13 +334,33 @@ public class AddStudentUiTest {
                 + describeList(student));
     }
 
+    /**
+     * Returns true if the student's card is in view with every detail on it readable.
+     *
+     * <p>The card's box is not enough on its own. A cell measured at the height of an unwrapped
+     * card sits wholly inside the list while the wrapped line it holds falls past its own
+     * bottom edge, where the card's clip hides it. Each detail is therefore checked against
+     * the card as well as against the list.
+     */
     private boolean isInView(Student student) {
         Bounds viewport = list.localToScene(list.getLayoutBounds());
         return list.lookupAll(".list-cell").stream()
                 .filter(node -> node instanceof ListCell<?> cell && student == cell.getItem())
                 .anyMatch(node -> {
                     Bounds card = node.localToScene(node.getLayoutBounds());
-                    return card.getMinY() >= viewport.getMinY() && card.getMaxY() <= viewport.getMaxY();
+                    return card.getMinY() >= viewport.getMinY() && card.getMaxY() <= viewport.getMaxY()
+                            && holdsEveryDetail(node, card);
+                });
+    }
+
+    /** Returns true if every detail shown on {@code node} lies inside {@code card}. */
+    private boolean holdsEveryDetail(Node node, Bounds card) {
+        return DETAIL_SELECTORS.stream()
+                .flatMap(selector -> node.lookupAll(selector).stream())
+                .filter(Node::isManaged)
+                .allMatch(detail -> {
+                    Bounds shown = detail.localToScene(detail.getLayoutBounds());
+                    return shown.getMinY() >= card.getMinY() && shown.getMaxY() <= card.getMaxY();
                 });
     }
 
