@@ -32,7 +32,6 @@ activate updated
 ||20||
 updated --> command
 deactivate updated
-||20||
 deactivate command
 command -> model : setStudent(student, updatedStudent)
 activate model
