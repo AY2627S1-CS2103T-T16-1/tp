@@ -258,8 +258,10 @@ How optional-field editing works:
 * `OptionalFieldEdit<T>` records whether a field was edited and its requested value. Phone, email, and NUS Student ID use this representation.
 * An omitted option keeps the saved value. A supplied value replaces it; an explicit empty value, such as `-p ""`, clears it.
 * An option without a required value is rejected during parsing. It does not request a clear operation.
-* The diagram summarizes one optional field; `createEditedStudent()` combines all descriptor fields into a replacement `Student`. Names cannot be cleared. `-t ""` clears all general tags, while nonempty `-t` options replace the tag set.
+* The command repeats the raked action for each optional field, and `createEditedStudent()` combines all descriptor fields into a replacement `Student`. The raked action expands to **Decide a field's value** below. Names cannot be cleared. `-t ""` clears all general tags, while nonempty `-t` options replace the tag set.
 * An equal replacement returns an unchanged result. Otherwise, the command checks ID uniqueness before calling `Model.setStudent()`. Logic saves only when the book changes.
+
+<puml src="diagrams/OptionalFieldValue.puml" alt="Keeping, replacing, or clearing one optional field" />
 
 ### Tags and follow-up status
 
