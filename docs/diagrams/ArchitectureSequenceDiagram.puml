@@ -18,7 +18,6 @@ logic -> model : read book and filter
 activate model
 model --> logic : snapshot data
 deactivate model
-note over logic : Snapshot book and filter
 note right of logic
   Execute command,
   resolving displayed target
