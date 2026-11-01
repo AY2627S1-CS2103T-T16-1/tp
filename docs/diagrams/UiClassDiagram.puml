@@ -3,31 +3,56 @@
 !pragma layout smetana
 skinparam classBackgroundColor UI_COLOR_T1
 skinparam classFontColor #222222
+skinparam classStereotypeFontColor #222222
 skinparam classBorderColor #555555
 skinparam arrowColor #555555
 skinparam ArrowFontStyle plain
 skinparam nodesep 25
 skinparam ranksep 35
 
-class MainWindow
-class CommandBox
-class ResultDisplay
-class StudentListPanel
-class StudentCard
-class SummaryPanel
-class HelpPage
-class StatusBarFooter
+package UI {
+    class MainWindow
+    class CommandBox
+    class ResultDisplay
+    class StudentListPanel
+    class StudentCard
+    class SummaryPanel
+    class HelpPage
+    class StatusBarFooter
 
-MainWindow --> "1" CommandBox
-MainWindow --> "1" ResultDisplay
-MainWindow --> "1" StudentListPanel
-MainWindow ..> SummaryPanel : creates
-MainWindow --> "1      " HelpPage
-MainWindow ..> StatusBarFooter : creates
-StudentListPanel ..> StudentCard : creates for visible cells
+    MainWindow --> "1" CommandBox
+    MainWindow --> "1" ResultDisplay
+    MainWindow --> "1" StudentListPanel
+    MainWindow ..> SummaryPanel : <<create>>
+    MainWindow --> "1" HelpPage
+    MainWindow ..> StatusBarFooter : <<create>>
+    StudentListPanel ..> StudentCard : <<create>>
 
-CommandBox -[hidden]right-> ResultDisplay
-ResultDisplay -[hidden]right-> StudentListPanel
-SummaryPanel -[hidden]right-> HelpPage
-HelpPage -[hidden]right-> StatusBarFooter
+    CommandBox -[hidden]right-> ResultDisplay
+    ResultDisplay -[hidden]right-> StudentListPanel
+    HelpPage -[hidden]right-> SummaryPanel
+    SummaryPanel -[hidden]right-> StatusBarFooter
+}
+
+package "Logic" as LogicComponent {
+    interface "Logic" as LogicApi <<interface>> LOGIC_COLOR_T1
+}
+
+package Model {
+    class Student MODEL_COLOR_T1
+    class StudentSummary MODEL_COLOR_T1
+}
+
+MainWindow --> "1" LogicApi
+StudentCard --> "1" Student
+StudentListPanel ..> Student
+SummaryPanel ..> Student
+SummaryPanel ..> StudentSummary : computes counts
+
+note top of MainWindow
+  Partial diagram: UiManager, UiPart,
+  JavaFX controls, and other helpers omitted.
+  Panels receive the observable filtered
+  student list through Logic.
+end note
 @enduml

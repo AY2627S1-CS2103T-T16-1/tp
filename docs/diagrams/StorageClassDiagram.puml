@@ -9,25 +9,24 @@ skinparam ArrowFontStyle plain
 skinparam nodesep 45
 skinparam ranksep 40
 
+!pragma layout smetana
+package "Storage" as StorageComponent {
 interface Storage <<interface>>
 class StorageManager
+package "User preferences" {
 class JsonUserPrefsStorage
+}
+package "Student data" {
 class JsonStudentBookStorage
-class JsonSerializableStudentBook
-class JsonAdaptedStudent
-class JsonAdaptedTag
+}
 
 StorageManager .up.|> Storage
 StorageManager --> "1" JsonUserPrefsStorage
 StorageManager --> "1" JsonStudentBookStorage
-JsonStudentBookStorage ..> JsonSerializableStudentBook : reads / writes
-JsonSerializableStudentBook --> "0..*" JsonAdaptedStudent
-JsonAdaptedStudent --> "0..*" JsonAdaptedTag
-
-note left of JsonAdaptedStudent
-  Adapters convert JSON data
-  to validated model values.
-  Model classes are omitted.
+note bottom of StorageManager
+  JSON adapters, file-access helpers,
+  and model types are omitted.
 end note
+}
 @enduml
 

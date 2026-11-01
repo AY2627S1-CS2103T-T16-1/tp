@@ -89,61 +89,100 @@ The sections below give more details of each component.
 
 ### UI component
 
-The UI uses JavaFX controls and FXML layouts in `src/main/resources/view/`. `UiPart<T>` loads a layout and connects its controller. The partial class diagram below shows the main window's UI parts after initialization, with one of each referenced part per window. Helper controls and the common `UiPart` superclass are omitted.
+The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/Ui.java).
 
-<puml src="diagrams/UiClassDiagram.puml" alt="Main window and its principal UI parts" />
+<puml src="diagrams/UiClassDiagram.puml" alt="Main window's UI parts and selected Logic and Model dependencies" />
 
-`MainWindow` connects the command box to `Logic.execute()`. A successful `CommandResult` carries feedback, help/exit requests, and optionally a student to reveal. `ParseException` and `CommandException` messages appear in `ResultDisplay`; the command box retains rejected input for correction.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-`StudentListPanel` and `SummaryPanel` receive the same observable filtered list through Logic. A model change therefore updates both the cards and the summary. UI classes depend on model types to display student data, but student mutations go through Logic.
+The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/ui/MainWindow.java).
 
-`HelpPage` replaces the student view inside the window. Closing it restores the previous result and unfinished command. `StatusBarFooter` displays the data file's absolute path. The keyboard and layout decisions behind these parts are described in [Supporting keyboard work](#supporting-keyboard-work).
+The `UI` component,
+
+* executes user commands using the `Logic` component via `Logic.execute()`.
+* listens for changes to `Model` data so that the UI can be updated with the modified data.
+* keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
+* depends on classes in the `Model` component because it displays `Student` objects from the model.
+* has a `HelpPage` component which is used when the `help` command is called.
+* has a `StatusBarFooter` component which displays the data file's absolute path.
+
+Historical JavaFX reports describe memory leaks with hardware rendering on Linux; see this [OpenJFX maintainer discussion](https://www.mail-archive.com/openjfx-dev%40openjdk.java.net/msg11422.html). This does not establish that TAB's supported JavaFX runtimes are affected; a TAB-specific leak has not been verified here.
 
 ### Logic component
 
-`StudentBookParser` dispatches a command word to its command-specific parser. Each parser implementing `Parser<T>` validates arguments and constructs a `Command`; commands execute against the `Model` interface. `CommandResult` keeps presentation requests separate from JavaFX controls, so commands can be tested without a window.
+The **API** of this component is specified in [`Logic.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java).
 
-The partial class diagram shows this structure using `delete` as the representative command. Other command/parser pairs follow the same pattern. Model and Storage dependencies appear in the architecture view above.
+<puml src="diagrams/LogicClassDiagram.puml" alt="Logic API, command hierarchy, dispatcher, and command results" />
 
-<puml src="diagrams/LogicClassDiagram.puml" alt="Logic API, command and parser hierarchies, and command results" />
-
-The next two sequence diagrams trace a successful `delete 1` through Logic, separating parsing from execution so each stage remains readable. In `DeleteSequenceDiagram`, `LogicManager` calls `StudentBookParser.parseCommand()`, which creates a command-specific parser and returns command `c`. Tokenization and value validation remain inside the command parser. The parser destruction marker denotes the end of its useful lifetime after `parse()` returns; Java garbage collection determines when its memory is reclaimed.
-
-<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing delete 1 and returning DeleteCommand c to LogicManager" />
-
-`DeleteExecutionSequence` shows the enclosing `LogicManager.execute()` call. Its first reference expands to the parsing diagram above and produces the same command `c`. Logic then snapshots the book and filter before executing that command. Target resolution is summarized as a lookup in the displayed list. The second reference expands to the post-command portion of `SaveRollbackSequenceDiagram` in [Saving changes safely](#saving-changes-safely).
+The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
 
 <puml src="diagrams/DeleteExecutionSequence.puml" alt="Executing DeleteCommand c, deleting the displayed student, and saving changes" />
 
-Commands check their execution preconditions before changing the model. For example, a target outside the displayed list raises `CommandException` before deletion. Logic snapshots the book and filter before executing an ordinary command. It saves only if the resulting book differs from the snapshot.
+The first reference expands to the parsing diagram below. The second expands to the post-command portion of `SaveRollbackSequenceDiagram` in [Saving changes safely](#saving-changes-safely).
+
+To see how `delete` command is parsed, refer to the sequence diagram below.
+
+<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing delete 1 and returning DeleteCommand c to LogicManager" />
+
+<div markdown="span" class="alert alert-info">:information_source: **Note:** The destroy marker (X) marks the end of the parser's useful lifetime. Java garbage collection determines when its memory is reclaimed.
+</div>
+
+How the `Logic` component works:
+
+1. When `Logic` is called upon to execute a command, the command is passed to a `StudentBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command. No-argument commands are handled directly by `StudentBookParser`.
+1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
+1. The command can communicate with the `Model` when it is executed (e.g. to delete a student).<br>
+   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
+1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic` after any changed student data is saved successfully.
+
+The following partial diagram expands the parser helpers, using `AddCommandParser` as a representative example. `FlagTokenizer` delegates token splitting to `CommandTokenizer` and builds a `FlagArgumentMap`. The command parser reads that map, validates fields through `ParserUtil`, and collects independent validation errors through `ParseProblems` before constructing `AddCommand`.
+
+<puml src="diagrams/ParserClasses.puml" alt="Command dispatcher, representative add parser, tokenizers, and validation helpers" />
+
+How the parsing works:
+
+* For commands with a dedicated parser, the `StudentBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the helper classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `StudentBookParser` returns that object as a `Command` object.
+* All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
 
-`ModelManager` owns a `StudentBook`, `UserPrefs`, and a JavaFX `FilteredList<Student>` backed by the book's observable list. `StudentBook` delegates list operations and ID uniqueness checks to `UniqueStudentList`. Consumers receive read-only book/preferences interfaces and an observable filtered view.
+The **API** of this component is specified in [`Model.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/model/Model.java).
 
-The partial class diagram separates ownership of the book from references to immutable student values. Value objects may be shared by replacement records, so their relationships use associations rather than composition.
+<puml src="diagrams/ModelClassDiagram.puml" alt="Model API, read-only views, student book ownership, and immutable student values" />
 
-<puml src="diagrams/ModelClassDiagram.puml" alt="Student book ownership, filtered view, and immutable student values" />
+The diagram includes the Model API and the read-only book/preferences interfaces exposed to consumers. Student fields use associations rather than composition because immutable values can be shared between replacement records; they are not exclusively owned by one student object.
 
-Only a student's name is mandatory. Phone, email, NUS Student ID, and follow-up flag are represented with `Optional`; general tags form a set. Updating a record builds a replacement `Student` and swaps it in, so observable-list listeners refresh the UI.
+The `Model` component,
 
-`Student.isSameStudent()` compares two present NUS Student IDs. A missing ID cannot establish identity. `Student.equals()` compares every field, including tags and follow-up state; it is used to detect unchanged records and books. Keep these two meanings separate when adding commands or storage validation.
+* stores the student book data i.e., all `Student` objects (which are contained in a `UniqueStudentList` object).
+* maintains a `FilteredList<Student>` view of the student book for the current filter, such as search results. It exposes this unmodifiable view through the `ObservableList<Student>` API, so the UI can observe changes.
+* stores a `UserPrefs` object that represents the user's preferences (just the GUI settings). This is exposed to the outside through the `ReadOnlyUserPrefs` interface.
+* does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
 ### Storage component
 
-`StorageManager` delegates student data to `JsonStudentBookStorage` and preferences to `JsonUserPrefsStorage`. `JsonSerializableStudentBook`, `JsonAdaptedStudent`, and `JsonAdaptedTag` translate between JSON-friendly data and validated model values. Storage therefore depends on Model, while Model has no dependency on Storage, Logic, or UI.
+The **API** of this component is specified in [`Storage.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/storage/Storage.java).
 
-The class diagram shows the API implementation, its two delegates, and the student-data adapters. Model classes and file-access helpers are omitted to focus on Storage's structure.
+<puml src="diagrams/StorageClassDiagram.puml" alt="Storage API and separate JSON storage delegates for student data and preferences" />
 
-<puml src="diagrams/StorageClassDiagram.puml" alt="Storage API implementation, JSON delegates, and student-data adapters" />
+The `Storage` component,
 
-There are two layers of validation. Custom deserializers check JSON types, such as a string for `email` and a Boolean for `flag`. Adapter conversion then applies the model's field rules and checks repeated student IDs. The entire book must load successfully before it is exposed to the normal UI.
+* can save both student data and user preference data in JSON format, and read them back into corresponding objects.
+* is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonStudentBookStorage` and `JsonUserPrefsStorage` (one class per data file).
+* depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`).
 
 The [data contract](#loading-and-preserving-the-data-contract) and [save procedure](#saving-changes-safely) below explain how this separation supports hand-edited files without silently discarding malformed data.
 
 ### Common classes
 
-The `seedu.tab.commons` package contains classes shared across components. These include `LogsCenter` for logging, `Index` for displayed-list positions, `StringUtil` for text normalization and comparison, and file/JSON helpers. `AppUtil` resolves the application directory, while `DataLoadingErrorMessage` formats startup diagnostics.
+The `seedu.tab.commons` package contains classes shared across components. These include the following:
+
+* `LogsCenter` for logging
+* `Index` for displayed-list positions
+* `StringUtil` for text normalization and comparison
+* `FileUtil` and `JsonUtil` for file access and JSON conversion
+* `AppUtil` for resolving the application directory
+* `DataLoadingErrorMessage` for formatting startup diagnostics.
 
 ## Implementation
 

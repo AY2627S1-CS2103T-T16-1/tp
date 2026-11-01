@@ -2,6 +2,7 @@
 !include style.puml
 skinparam classBackgroundColor MODEL_COLOR_T1
 skinparam classFontColor #222222
+skinparam classStereotypeFontColor #222222
 skinparam classBorderColor #555555
 skinparam arrowColor #555555
 skinparam ArrowFontStyle plain
@@ -10,6 +11,10 @@ skinparam linetype ortho
 skinparam nodesep 65
 skinparam ranksep 45
 
+package "Model" as ModelComponent {
+interface Model <<interface>>
+interface ReadOnlyStudentBook <<interface>>
+interface ReadOnlyUserPrefs <<interface>>
 class ModelManager
 class StudentBook
 class UserPrefs
@@ -22,6 +27,10 @@ class Email
 class NusStudentId
 class Tag
 class FollowUpFlag
+
+ModelManager .up.|> Model
+StudentBook .up.|> ReadOnlyStudentBook
+UserPrefs .up.|> ReadOnlyUserPrefs
 
 ' Keep multiplicities beside arrowheads without masking the association lines.
 ModelManager *--> "1   " StudentBook
@@ -47,4 +56,6 @@ Phone -[hidden]right-> Email
 Email -[hidden]right-> NusStudentId
 NusStudentId -[hidden]right-> FollowUpFlag
 FollowUpFlag -[hidden]right-> Tag
+
+}
 @enduml
