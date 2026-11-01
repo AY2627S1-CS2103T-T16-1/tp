@@ -6,26 +6,26 @@ skinparam activityBackgroundColor LOGIC_COLOR_T1
 skinparam activityBorderColor #555555
 skinparam arrowColor #555555
 
+
 start
-:Read follow-up selectors from FlagArgumentMap;
-if (A selector appears more than once?) then ([yes])
-  :Throw ParseException for repeated options;
+:Read the follow-up options;
+if () then ([an option repeated, or
+both -f and -nf given])
+  :Reject the
+  command;
   stop
-else ([no])
-endif
-if (Both -f and -nf supplied?) then ([yes])
-  :Throw ParseException for conflicting options;
+else ([else])
+  switch ()
+  case (<U+00A0><U+00A0>[-f given]<U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0>)
+    :Mark the
+    follow-up;
+  case (<U+00A0><U+00A0>[-nf given])
+    :Clear the
+    follow-up;
+  case (<U+00A0><U+00A0>[neither given])
+    :Keep the
+    follow-up;
+  endswitch
   stop
-else ([no])
 endif
-if (-f supplied?) then ([yes])
-  :Return Optional.of(true);
-else ([no])
-  if (-nf supplied?) then ([yes])
-    :Return Optional.of(false);
-  else ([no])
-    :Return Optional.empty();
-  endif
-endif
-stop
 @enduml
