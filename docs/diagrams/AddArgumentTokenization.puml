@@ -18,9 +18,19 @@ activate tokens
 tokens --> flags : tokens with\nquoted boundaries
 deactivate tokens
 create arguments
-flags -> arguments : FlagArgumentMap()
+flags -> arguments
+activate arguments
+||20||
+arguments --> flags
+deactivate arguments
 flags -> arguments : setPreamble("Alice")
+activate arguments
+arguments --> flags
+deactivate arguments
 flags -> arguments : put(FLAG_PHONE, "-p", "81234567")
+activate arguments
+arguments --> flags
+deactivate arguments
 flags --> parser : arguments
 deactivate flags
 deactivate parser
