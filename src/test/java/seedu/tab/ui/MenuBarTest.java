@@ -11,6 +11,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.sun.javafx.stage.WindowHelper;
+
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -113,6 +115,10 @@ public class MenuBarTest {
             if (!isPopupOf(window, stage) || window.getScene() == null) {
                 continue;
             }
+            // a node counts as focused only inside a window that is, and a machine running
+            // the tests without a desktop never activates the popup, so it is activated here
+            // rather than waited for
+            WindowHelper.setFocused(window, true);
             Node item = window.getScene().getRoot().lookup(".menu-item");
             if (item != null) {
                 item.requestFocus();
