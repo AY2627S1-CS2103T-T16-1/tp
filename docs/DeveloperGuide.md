@@ -627,8 +627,6 @@ Expected: Three students appear in this order. Only José needs follow-up. The s
    * Expected: The first finds José, Jason, and the added Jose record; the second finds only Alice. ID search is partial and ignores letter case.
 1. Enter `find -e example.com -n Alice`.
    * Expected: No students match because Alice has no email. The displayed total and follow-up count are zero, with no tag rows.
-1. Enter `find -t "Needs follow-up"`, then `find -t follow`.
-   * Expected: Neither lists José, although he is flagged, because the flag is not a tag. Each reply adds a note that the label is not a tag and suggests `find --follow-up`.
 1. Try `find Alice`, `find -t Lab 3`, `find -f -nf`, and `find -n ""`.
    * Expected: Each explains the invalid query and preserves the previous results and saved records.
 1. Enter `add "Mary–Jane Tan"` with an en dash, then `find -n "Mary Jane"`, then `add "Mary Jane Tan"`.
