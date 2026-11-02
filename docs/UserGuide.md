@@ -362,6 +362,8 @@ TAB keeps a lock file, `data/.tab.json.lock`, so that two open windows do not sa
 
 ## Known issues
 
+**With around 1,000 students, a command can take a few seconds while the list is scrolled near its end.** Scroll back to the top of the list before running the command to avoid the delay.
+
 **On Windows Subsystem for Linux (WSL), the window can be made smaller than TAB's minimum size.** Under WSL, Windows does not stop the window from shrinking below its minimum, so parts of TAB may be cut off. Enlarge the window to show them again, or run TAB on Windows directly.
 
 ## Command summary
