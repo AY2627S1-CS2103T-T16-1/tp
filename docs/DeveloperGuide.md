@@ -370,8 +370,8 @@ For these use cases, the **system** is TAB and the **actor** is a teaching assis
 **MSS**
 
 1. The user requests to add a student, supplying a name and any known details.
-2. TAB adds and saves the student.
-3. TAB confirms the addition and shows the new student.
+1. TAB adds and saves the student.
+1. TAB confirms the addition and shows the new student.
 
     Use case ends.
 
@@ -400,7 +400,7 @@ Extensions 3a and 3b may occur together.
 **MSS**
 
 1. The user requests students matching selected details or follow-up status.
-2. TAB displays the students matching all supplied conditions and their summary.
+1. TAB displays the students matching all supplied conditions and their summary.
 
     Use case ends.
 
@@ -426,8 +426,8 @@ student outside the current search results. Finding students (UC02) is optional 
 **MSS**
 
 1. The user identifies a student and supplies changes to their details.
-2. TAB updates and saves the student's details, preserving unspecified details.
-3. TAB confirms the change and refreshes the current search results and summary.
+1. TAB updates and saves the student's details, preserving unspecified details.
+1. TAB confirms the change and refreshes the current search results and summary.
 
     Use case ends.
 
@@ -459,8 +459,8 @@ As in UC03, the user can identify a student by a displayed index or a NUS Studen
 **MSS**
 
 1. The user identifies a student and requests one tag addition or removal.
-2. TAB updates that tag, preserves the other details, and saves the record.
-3. TAB confirms the action and refreshes the current search results and summary.
+1. TAB updates that tag, preserves the other details, and saves the record.
+1. TAB confirms the action and refreshes the current search results and summary.
 
     Use case ends.
 
@@ -484,9 +484,9 @@ If the user tries to remove the follow-up flag as a tag, TAB explains how to cle
 **MSS**
 
 1. The user requests to clear all students.
-2. TAB asks for confirmation, stating the total number of students and the irreversible effect.
-3. The user confirms.
-4. TAB clears and saves the book, then confirms completion.
+1. TAB asks for confirmation, stating the total number of students and the irreversible effect.
+1. The user confirms.
+1. TAB clears and saves the book, then confirms completion.
 
     Use case ends.
 
@@ -519,10 +519,10 @@ If the user tries to remove the follow-up flag as a tag, TAB explains how to cle
 **MSS**
 
 1. The user starts TAB.
-2. TAB identifies the file and explains the loading problem and recovery options without changing the file.
-3. The user closes TAB and repairs the file or replaces it with a valid backup.
-4. The user restarts TAB.
-5. TAB loads the corrected records and opens the student view.
+1. TAB identifies the file and explains the loading problem and recovery options without changing the file.
+1. The user closes TAB and repairs the file or replaces it with a valid backup.
+1. The user restarts TAB.
+1. TAB loads the corrected records and opens the student view.
 
     Use case ends.
 
@@ -547,8 +547,8 @@ As in UC03, the user can identify a student by a displayed index or a NUS Studen
 **MSS**
 
 1. The user identifies a student and requests deletion.
-2. TAB removes the student and saves the updated book.
-3. TAB confirms the deletion and refreshes the current search results and summary.
+1. TAB removes the student and saves the updated book.
+1. TAB confirms the deletion and refreshes the current search results and summary.
 
     Use case ends.
 
