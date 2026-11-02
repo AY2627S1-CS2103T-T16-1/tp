@@ -11,8 +11,7 @@ participant ":Model" as model MODEL_COLOR
 [-> logic : execute(\n"delete 1")
 activate logic
 ref over logic, command
-  DeleteSequenceDiagram
-  (parse and return command c)
+  Parse delete command
 end ref
 logic -> command : execute(model)
 activate command
