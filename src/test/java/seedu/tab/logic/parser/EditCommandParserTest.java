@@ -618,6 +618,10 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "Alex Yeoh" + FLAG_NAME_AMY,
                 String.format(ParserUtil.MESSAGE_VALUE_AFTER_TARGET, ParserUtil.FIELD_NUS_STUDENT_ID, "Yeoh"));
 
+        // a lone dash after the options is quoted back as typed, not as the hyphen it resembles
+        assertParseFailure(parser, "1 -n David \u2013 Li",
+                Messages.getErrorMessageForValueAfterFlags("\u2013", true));
+
         // an unquoted negative number is invalid as both an index and an option
         assertParseFailure(parser, "-5" + FLAG_NAME_AMY,
                 ParserUtil.MESSAGE_INVALID_INDEX + "\n" + String.format(Messages.MESSAGE_UNKNOWN_FLAG, "-5"));

@@ -49,6 +49,9 @@ public class CommandTokenizerTest {
         assertEquals(List.of("Jean\u2013Luc"), valuesOf("Jean\u2013Luc"));
         assertEquals(List.of("9123\u20134567"), valuesOf("9123\u20134567"));
         assertEquals(List.of(new Token("\u2013Mystery", true, true)), tokenize("\"\u2013Mystery\""));
+        // A lone dash names no option, so it keeps the form it was typed in.
+        assertEquals(List.of("Ann", "\u2013", "Lee"), valuesOf("Ann \u2013 Lee"));
+        assertEquals(List.of("Ann", "-", "Lee"), valuesOf("Ann - Lee"));
     }
 
     @Test
