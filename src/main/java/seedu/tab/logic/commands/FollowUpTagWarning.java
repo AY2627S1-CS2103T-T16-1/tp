@@ -15,12 +15,13 @@ import seedu.tab.model.tag.Tag;
 final class FollowUpTagWarning {
     static final String MESSAGE_NOTE = "NOTE: \"%1$s\" looks like the follow-up marker. "
             + "To flag the student, use %2$s.";
-    static final String MESSAGE_FIND_NOTE = "NOTE: \"%1$s\" looks like the follow-up marker, which is "
-            + "not a tag. To find flagged students, use " + FindCommand.COMMAND_WORD + " "
-            + FLAG_FOLLOW_UP.getLabel() + ".";
+    static final String MESSAGE_FIND_NOTE = "NOTE: The \"" + FollowUpFlag.FOLLOW_UP_NAME
+            + "\" label marks the follow-up flag, which is not a tag. To find flagged students, use "
+            + FindCommand.COMMAND_WORD + " " + FLAG_FOLLOW_UP.getLabel() + ".";
 
     private static final Pattern PUNCTUATION_AND_WHITESPACE = Pattern.compile("[\\p{P}\\p{Z}\\s]");
     private static final String COLLAPSED_MARKER = collapse(FollowUpFlag.FOLLOW_UP_NAME);
+    private static final String COLLAPSED_MARKER_LOWER_CASE = COLLAPSED_MARKER.toLowerCase(Locale.ROOT);
     private static final String MARKER_KEYWORD = "follow";
 
     private FollowUpTagWarning() {
@@ -52,23 +53,21 @@ final class FollowUpTagWarning {
     }
 
     /**
-     * Returns {@code foundMessage} with a note for every tag search term that reads like part of
-     * the marker and names its word "follow", so that a search for the label, which matches no
-     * tag, is not mistaken for proof that nobody is flagged. A term such as "up" is left alone,
-     * since it is far more likely to name a tag than the marker.
+     * Returns {@code foundMessage} with a note pointing to the follow-up option when a search that
+     * found nobody has a tag term reading like part of the marker and naming its word "follow", so
+     * that a search for the label is not mistaken for proof that nobody is flagged. A search that
+     * found someone matched a real tag with every term, so it gets no note. A term such as "up" is
+     * left alone, since it is far more likely to name a tag than the marker.
      */
-    static String appendFindNoteTo(String foundMessage, List<String> tagTerms) {
-        List<String> notes = tagTerms.stream()
-                .filter(FollowUpTagWarning::isPartOfMarker)
-                .map(term -> String.format(MESSAGE_FIND_NOTE, Messages.shorten(term)))
-                .toList();
-        return notes.isEmpty() ? foundMessage : foundMessage + "\n\n" + String.join("\n", notes);
+    static String appendFindNoteTo(String foundMessage, boolean hasFoundAny, List<String> tagTerms) {
+        boolean seeksMarker = tagTerms.stream().anyMatch(FollowUpTagWarning::isPartOfMarker);
+        return hasFoundAny || !seeksMarker ? foundMessage : foundMessage + "\n\n" + MESSAGE_FIND_NOTE;
     }
 
     private static boolean isPartOfMarker(String term) {
         String collapsedTerm = collapse(term).toLowerCase(Locale.ROOT);
         return collapsedTerm.contains(MARKER_KEYWORD)
-                && COLLAPSED_MARKER.toLowerCase(Locale.ROOT).contains(collapsedTerm);
+                && COLLAPSED_MARKER_LOWER_CASE.contains(collapsedTerm);
     }
 
     /**

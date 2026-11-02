@@ -208,9 +208,22 @@ public class FindCommandTest {
         Command command = new StudentBookParser().parseCommand("find -t \"Needs follow-up\"");
 
         assertSearchSuccess((FindCommand) command, localModel, "Found 0 students.\n\n"
-                + "NOTE: \"Needs follow-up\" looks like the follow-up marker, which is not a tag. "
+                + "NOTE: The \"Needs follow-up\" label marks the follow-up flag, which is not a tag. "
                 + "To find flagged students, use find --follow-up.");
         assertEquals(List.of(), localModel.getFilteredStudentList());
+    }
+
+    @Test
+    public void execute_realTagLikeLabel_listsStudentsWithoutAdvice() throws Exception {
+        Student taggedStudent = new StudentBuilder().withName("Alex Yeoh").withTags("follow-up").build();
+        StudentBook studentBook = new StudentBook();
+        studentBook.addStudent(taggedStudent);
+        Model localModel = new ModelManager(studentBook, new UserPrefs());
+
+        Command command = new StudentBookParser().parseCommand("find -t follow-up");
+
+        assertSearchSuccess((FindCommand) command, localModel, "Found 1 student.");
+        assertEquals(List.of(taggedStudent), localModel.getFilteredStudentList());
     }
 
     @Test
