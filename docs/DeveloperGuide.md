@@ -115,6 +115,8 @@ The `UI` component,
 
 **Known issue (Linux):** JavaFX leaks about 50 bytes per keystroke on Linux. Its GTK code creates a character array for each key press and each key release in `WindowContextBase::process_key`, and never frees them. The leak is in JavaFX, not TAB, and JavaFX 25.0.4 has it too. A day of heavy typing leaks less than 1 MB, and closing TAB frees it. If a Linux heap profile shows `char[]` growing steadily, this is why.
 
+**Known issue (long lists):** With around 1,000 students, a command run while the student list is scrolled near its end takes several times longer than one run from the top: about 0.4 s instead of 0.13 s on a fast Linux machine, and about 3 s on a Windows machine that meets NFR 2's minimum hardware, which misses NFR 2's 1-second target. From JavaFX 17, `VirtualFlow` lays out many more cells to estimate the list's height ([openjfx-dev discussion](https://mail.openjdk.org/archives/list/openjfx-dev@openjdk.org/message/2V4EDFSAV7S3NCS5DABSH5QBDWQE6FCJ/)), and `StudentListPanel` builds a new `StudentCard` from FXML for each cell it updates. Reusing one card per cell would likely remove most of that cost. Scrolling back to the top before running a command avoids the delay.
+
 ### Logic component
 
 The **API** of this component is specified in [`Logic.java`](https://github.com/AY2627S1-CS2103T-T16-1/tp/blob/master/src/main/java/seedu/tab/logic/Logic.java). The `delete` command is used to illustrate the design, and can be replaced with other commands.
