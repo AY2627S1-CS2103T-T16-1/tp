@@ -6,7 +6,9 @@ import static seedu.tab.ui.FxToolkit.onFxThread;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javafx.scene.Node;
@@ -19,6 +21,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.PopupWindow;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
@@ -36,24 +39,34 @@ public class MenuBarTest {
     /** The contrast WCAG AA asks of text this size, as a ratio of relative luminances. */
     private static final double READABLE_CONTRAST = 4.5;
 
-    /** The colour behind a node that sits on nothing of its own, as the window's root is painted. */
+    /**
+     * The colour behind a node that sits on nothing of its own, which is what the window's
+     * root is painted. It mirrors {@code -tab-bg} in {@code DarkTheme.css}; the stylesheet
+     * paints the root with the name rather than the value, so the two are kept in step by
+     * hand.
+     */
     private static final Color WINDOW_BACKGROUND = Color.web("#15181c");
+
+    /** The colour an item is picked out with, mirroring {@code -tab-accent} the same way. */
+    private static final Color ACCENT = Color.web("#68c4ee");
+
+    private final MenuBar bar = new MenuBar();
+    private final Menu file = new Menu("File");
+    private Stage stage;
 
     @BeforeAll
     public static void startToolkit() throws Exception {
         FxToolkit.start();
     }
 
-    @Test
-    public void openMenu_everyLabel_readsAgainstWhatIsBehindIt() throws Exception {
-        MenuBar bar = new MenuBar();
-        Menu file = new Menu("File");
+    @BeforeEach
+    public void showMenuBar() throws Exception {
         file.getItems().add(new MenuItem("Exit"));
         Menu help = new Menu("Help");
         help.getItems().add(new MenuItem("Help F1"));
         bar.getMenus().addAll(file, help);
 
-        Stage stage = onFxThread(() -> {
+        stage = onFxThread(() -> {
             Stage window = new Stage();
             Scene scene = new Scene(new VBox(bar), 400, 200);
             for (String stylesheet : STYLESHEETS) {
@@ -62,38 +75,72 @@ public class MenuBarTest {
             }
             window.setScene(scene);
             window.show();
+            file.show();
             return window;
         });
-        try {
-            onFxThread(() -> {
-                file.show();
-                return null;
-            });
-            // the item is drawn in a popup of its own, which the toolkit lays out and styles a
-            // pulse or more after the menu is asked to open
-            FxToolkit.awaitAssertion(() -> assertEveryLabelReads(stage, "File", "Help", "Exit"));
-        } finally {
-            onFxThread(() -> {
-                file.hide();
-                stage.hide();
-                return null;
-            });
+    }
+
+    @AfterEach
+    public void hideMenuBar() throws Exception {
+        onFxThread(() -> {
+            file.hide();
+            stage.hide();
+            return null;
+        });
+    }
+
+    @Test
+    public void openMenu_nothingPickedOut_everyLabelReads() throws Exception {
+        // the item is drawn in a popup of its own, which the toolkit lays out and styles a
+        // pulse or more after the menu is asked to open
+        FxToolkit.awaitAssertion(() -> assertEveryLabelReads("File", "Help", "Exit"));
+    }
+
+    @Test
+    public void openMenu_itemPickedOut_everyLabelReads() throws Exception {
+        // an item moved onto with the arrow keys is drawn on the accent colour instead, which
+        // a rule of its own darkens the text for
+        FxToolkit.awaitAssertion(() -> {
+            pickOutFirstItem();
+            assertPickedOut("Exit");
+            assertEveryLabelReads("File", "Help", "Exit");
+        });
+    }
+
+    /** Puts the keyboard on the first item of the open menu, as arrowing onto it does. */
+    private void pickOutFirstItem() {
+        for (Window window : Window.getWindows()) {
+            if (!isPopupOf(window, stage) || window.getScene() == null) {
+                continue;
+            }
+            Node item = window.getScene().getRoot().lookup(".menu-item");
+            if (item != null) {
+                item.requestFocus();
+            }
         }
     }
 
+    /** Asserts that the item named is the one the open menu draws as picked out. */
+    private void assertPickedOut(String item) {
+        List<String> onTheAccent = labelsShown().stream()
+                .filter(label -> colourBehind(label).equals(ACCENT))
+                .map(Label::getText)
+                .toList();
+
+        // without this the check below would pass on a menu whose item was never moved onto,
+        // which is the state the other test already covers
+        assertTrue(onTheAccent.contains(item),
+                "expected <" + item + "> to be picked out, but the accent is behind " + onTheAccent);
+    }
+
     /**
-     * Asserts that every label shown on {@code stage} or in a popup of its own stands out from
+     * Asserts that every label shown in the window or in a popup of its own stands out from
      * the colour behind it, and that the labels named are among them.
      */
-    private static void assertEveryLabelReads(Stage stage, String... expected) {
-        List<Label> labels = new ArrayList<>();
-        for (Window window : Window.getWindows()) {
-            if (window == stage || window.getScene() != null && isOwnedBy(window, stage)) {
-                collectLabels(window.getScene().getRoot(), labels);
-            }
-        }
+    private void assertEveryLabelReads(String... expected) {
+        List<Label> labels = labelsShown();
         List<String> shown = labels.stream().map(Label::getText).toList();
-        // a label the lookup misses would otherwise pass the loop below without being read
+        // a label the walk misses would otherwise pass the loop below without being read
         assertTrue(shown.containsAll(List.of(expected)),
                 "expected " + List.of(expected) + " to be shown, but the menu shows " + shown);
 
@@ -106,9 +153,21 @@ public class MenuBarTest {
         }
     }
 
-    /** Returns true if {@code window} is a popup the {@code owner} put on the screen. */
-    private static boolean isOwnedBy(Window window, Stage owner) {
-        return window instanceof javafx.stage.PopupWindow popup && popup.getOwnerWindow() == owner;
+    /** Every label the window and its popups draw, each of which a reader has to make out. */
+    private List<Label> labelsShown() {
+        List<Label> labels = new ArrayList<>();
+        for (Window window : Window.getWindows()) {
+            boolean isWindowOrItsPopup = window == stage || isPopupOf(window, stage);
+            if (isWindowOrItsPopup && window.getScene() != null) {
+                collectLabels(window.getScene().getRoot(), labels);
+            }
+        }
+        return labels;
+    }
+
+    /** Returns true if {@code window} is a popup that {@code owner} put on the screen. */
+    private static boolean isPopupOf(Window window, Stage owner) {
+        return window instanceof PopupWindow popup && popup.getOwnerWindow() == owner;
     }
 
     private static void collectLabels(Node node, List<Label> labels) {
