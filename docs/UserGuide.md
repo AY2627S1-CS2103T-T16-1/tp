@@ -115,7 +115,7 @@ TAB accepts the following subset of standard email formats:
 ##### Tags
 
 * Spaces, punctuation and symbols are allowed, such as `Lab 3 (Mon)` or `#urgent`.
-* Tags ignore case and extra spaces, so `lab  3` and `Lab 3` are the same tag.
+* Tags ignore case and extra spaces, so <code class="preserve-whitespace">lab  3</code> and `Lab 3` are the same tag.
 * The tag `Needs follow-up` is reserved for the follow-up flag, as are its spacing, hyphen and trailing-punctuation variants such as `Needs follow up`. A tag differing by other punctuation, such as `Needs_follow_up`, is saved with a warning instead and does not set the flag.
 
 ##### NUS Student IDs
