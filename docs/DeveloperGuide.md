@@ -424,7 +424,7 @@ Extensions 4a and 4b may occur together.
 
 **MSS**
 
-1. The user identifies a student using the displayed index or NUS Student ID, and supplies changes to their details.
+1. The user chooses a student and supplies changes to their details.
 1. TAB validates the target student and the supplied student details.
 1. TAB updates and saves the student's details, preserving unspecified details.
 1. TAB confirms the change and refreshes the current search results and summary.
@@ -465,7 +465,7 @@ this same flow. UC04 covers changing one tag while retaining the others; UC06 co
 
 **MSS**
 
-1. The user identifies a student using the displayed index or NUS Student ID, and requests one tag addition or removal.
+1. The user chooses a student and requests one tag addition or removal for the chosen student.
 1. TAB validates the target student and the requested tag action.
 1. TAB updates that tag, preserves the other details, and saves the record.
 1. TAB confirms the action and refreshes the current search results and summary.
@@ -543,7 +543,7 @@ Extensions 4a and 4b may occur together.
 
 **MSS**
 
-1. The user identifies a student using the displayed index or NUS Student ID and requests deletion.
+1. The user chooses a student and requests deletion of the chosen student.
 1. TAB validates the target student.
 1. TAB removes the student and saves the updated book.
 1. TAB confirms the deletion and refreshes the current search results and summary.
