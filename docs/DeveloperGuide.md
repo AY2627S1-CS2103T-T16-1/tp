@@ -483,9 +483,9 @@ this same flow. UC04 covers changing one tag while retaining the others; UC06 co
 * 2b. The tag is invalid.
   * 2b1. TAB explains the problem without changing records or the current search criteria.
   * Use case resumes from step 1.
-* 2c. The user requests to add the reserved follow-up label as a tag.
-  * 2c1. TAB refuses the tag without changing records or the current search criteria.
-  * 2c2. TAB explains how to flag the student for follow-up (see UC03).
+* 2c. The user requests to add a tag whose name is reserved for indicating follow-up status.
+  * 2c1. TAB rejects the request without changing records or the current search criteria.
+  * 2c2. TAB explains how to set the student's follow-up status.
   * Use case resumes from step 1.
 * 2d. The student already has the tag to add, ignoring case and extra spaces.
   * 2d1. TAB reports that no change was made.
@@ -494,7 +494,7 @@ this same flow. UC04 covers changing one tag while retaining the others; UC06 co
   * 2e1. TAB reports that no change was made.
   * Use case ends.
 * 2f. The user requests removal of the student's follow-up flag as a tag.
-  * 2f1. TAB reports that no change was made and explains how to clear the flag (see UC03).
+  * 2f1. TAB reports that no change was made and explains how to clear the student's follow-up status.
   * Use case ends.
 * 3a. Saving fails.
   * 3a1. TAB restores the records and current search criteria and reports the reason.
@@ -502,7 +502,7 @@ this same flow. UC04 covers changing one tag while retaining the others; UC06 co
 * 4a. The changed student no longer matches the current search criteria.
   * 4a1. TAB excludes the student from the results while retaining the updated record.
   * Use case ends.
-* 4b. The added tag warrants a warning about its similarity to the follow-up label.
+* 4b. The added tag has a permitted name that could be confused with follow-up status.
   * 4b1. TAB includes the warning in the successful result for the user to review.
   * Use case ends.
 
