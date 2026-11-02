@@ -487,10 +487,10 @@ this same flow. UC04 covers changing one tag while retaining the others; UC06 co
   * 2c1. TAB rejects the request without changing records or the current search criteria.
   * 2c2. TAB explains how to set the student's follow-up status.
   * Use case resumes from step 1.
-* 2d. The student already has the tag to add, ignoring case and extra spaces.
+* 2d. The student already has the tag that the user wants to add (ignoring case and extra spaces).
   * 2d1. TAB reports that no change was made.
   * Use case ends.
-* 2e. The student lacks the tag to remove, ignoring case and extra spaces, and the tag is not their follow-up flag.
+* 2e. The student lacks the tag that the user wants to remove (ignoring case and extra spaces) and the tag is not their follow-up flag.
   * 2e1. TAB reports that no change was made.
   * Use case ends.
 * 2f. The user requests removal of the student's follow-up flag as a tag.
