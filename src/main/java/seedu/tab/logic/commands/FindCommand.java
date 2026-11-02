@@ -51,9 +51,8 @@ public class FindCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredStudentList(predicate);
-        logger.fine("Find matched " + model.getFilteredStudentList().size() + " of "
-                + model.getStudentBook().getStudentList().size());
         int foundCount = model.getFilteredStudentList().size();
+        logger.fine("Find matched " + foundCount + " of " + model.getStudentBook().getStudentList().size());
         return new CommandResult(FollowUpTagWarning.appendFindNoteTo(
                 Messages.getStudentsFoundOverview(foundCount), foundCount > 0, predicate.getKeywords(Field.TAG)));
     }
