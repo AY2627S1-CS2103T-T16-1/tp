@@ -32,6 +32,7 @@ import javafx.stage.Window;
  *
  * <p>The bar is built here rather than taken from {@code MainWindow}, because what decides
  * the colours is the stylesheet the window is dressed with rather than the menus it holds.
+ * It carries the menus the window does, so that every dropdown a user can open is read.
  */
 public class MenuBarTest {
 
@@ -53,7 +54,6 @@ public class MenuBarTest {
     private static final Color ACCENT = Color.web("#68c4ee");
 
     private final MenuBar bar = new MenuBar();
-    private final Menu file = new Menu("File");
     private Stage stage;
 
     @BeforeAll
@@ -63,10 +63,7 @@ public class MenuBarTest {
 
     @BeforeEach
     public void showMenuBar() throws Exception {
-        file.getItems().add(new MenuItem("Exit"));
-        Menu help = new Menu("Help");
-        help.getItems().add(new MenuItem("Help F1"));
-        bar.getMenus().addAll(file, help);
+        bar.getMenus().addAll(menu("File", "Exit"), menu("Help", "Help"));
 
         stage = onFxThread(() -> {
             Stage window = new Stage();
@@ -77,7 +74,6 @@ public class MenuBarTest {
             }
             window.setScene(scene);
             window.show();
-            file.show();
             return window;
         });
     }
@@ -85,28 +81,57 @@ public class MenuBarTest {
     @AfterEach
     public void hideMenuBar() throws Exception {
         onFxThread(() -> {
-            file.hide();
             stage.hide();
             return null;
         });
     }
 
+    private static Menu menu(String name, String item) {
+        Menu menu = new Menu(name);
+        menu.getItems().add(new MenuItem(item));
+        return menu;
+    }
+
     @Test
     public void openMenu_nothingPickedOut_everyLabelReads() throws Exception {
-        // the item is drawn in a popup of its own, which the toolkit lays out and styles a
-        // pulse or more after the menu is asked to open
-        FxToolkit.awaitAssertion(() -> assertEveryLabelReads("File", "Help", "Exit"));
+        for (Menu menu : bar.getMenus()) {
+            readWholeMenu(menu, false);
+        }
     }
 
     @Test
     public void openMenu_itemPickedOut_everyLabelReads() throws Exception {
-        // an item moved onto with the arrow keys is drawn on the accent colour instead, which
-        // a rule of its own darkens the text for
-        FxToolkit.awaitAssertion(() -> {
-            pickOutFirstItem();
-            assertPickedOut("Exit");
-            assertEveryLabelReads("File", "Help", "Exit");
+        for (Menu menu : bar.getMenus()) {
+            readWholeMenu(menu, true);
+        }
+    }
+
+    /**
+     * Opens {@code menu} and asserts that everything it then shows can be read, with the
+     * keyboard on its first item or with nothing picked out at all.
+     */
+    private void readWholeMenu(Menu menu, boolean isPickedOut) throws Exception {
+        String item = menu.getItems().get(0).getText();
+        onFxThread(() -> {
+            menu.show();
+            return null;
         });
+        try {
+            // the item is drawn in a popup of its own, which the toolkit lays out and styles
+            // a pulse or more after the menu is asked to open
+            FxToolkit.awaitAssertion(() -> {
+                if (isPickedOut) {
+                    pickOutFirstItem();
+                    assertPickedOut(item);
+                }
+                assertEveryLabelReads(item);
+            });
+        } finally {
+            onFxThread(() -> {
+                menu.hide();
+                return null;
+            });
+        }
     }
 
     /** Puts the keyboard on the first item of the open menu, as arrowing onto it does. */
@@ -128,10 +153,9 @@ public class MenuBarTest {
 
     /** Asserts that the item named is the one the open menu draws as picked out. */
     private void assertPickedOut(String item) {
-        List<String> onTheAccent = labelsShown().stream()
+        List<String> onTheAccent = textsOf(labelsInPopups().stream()
                 .filter(label -> colourBehind(label).equals(ACCENT))
-                .map(Label::getText)
-                .toList();
+                .toList());
 
         // without this the check below would pass on a menu whose item was never moved onto,
         // which is the state the other test already covers
@@ -140,17 +164,22 @@ public class MenuBarTest {
     }
 
     /**
-     * Asserts that every label shown in the window or in a popup of its own stands out from
-     * the colour behind it, and that the labels named are among them.
+     * Asserts that every label the window and the open menu show stands out from the colour
+     * behind it, and that the dropdown shows the item named.
      */
-    private void assertEveryLabelReads(String... expected) {
-        List<Label> labels = labelsShown();
-        List<String> shown = labels.stream().map(Label::getText).toList();
-        // a label the walk misses would otherwise pass the loop below without being read
-        assertTrue(shown.containsAll(List.of(expected)),
-                "expected " + List.of(expected) + " to be shown, but the menu shows " + shown);
+    private void assertEveryLabelReads(String item) {
+        List<Label> inPopups = labelsInPopups();
+        List<Label> inWindow = labelsIn(stage.getScene().getRoot());
+        // the bar names the two menus whatever is open, so a dropdown the walk misses would
+        // otherwise leave the loop below reading the bar alone
+        assertTrue(textsOf(inPopups).contains(item),
+                "expected the open menu to show <" + item + ">, but it shows " + textsOf(inPopups));
+        assertTrue(textsOf(inWindow).containsAll(List.of("File", "Help")),
+                "expected the bar to name both menus, but it shows " + textsOf(inWindow));
 
-        for (Label label : labels) {
+        List<Label> everything = new ArrayList<>(inWindow);
+        everything.addAll(inPopups);
+        for (Label label : everything) {
             Color fill = label.getTextFill() instanceof Color colour ? colour : Color.TRANSPARENT;
             Color behind = colourBehind(label);
             assertTrue(contrast(fill, behind) >= READABLE_CONTRAST,
@@ -159,21 +188,31 @@ public class MenuBarTest {
         }
     }
 
-    /** Every label the window and its popups draw, each of which a reader has to make out. */
-    private List<Label> labelsShown() {
+    /** Every label drawn in a popup the window put on the screen, which is the open menu. */
+    private List<Label> labelsInPopups() {
         List<Label> labels = new ArrayList<>();
         for (Window window : Window.getWindows()) {
-            boolean isWindowOrItsPopup = window == stage || isPopupOf(window, stage);
-            if (isWindowOrItsPopup && window.getScene() != null) {
-                collectLabels(window.getScene().getRoot(), labels);
+            if (isPopupOf(window, stage) && window.getScene() != null) {
+                labels.addAll(labelsIn(window.getScene().getRoot()));
             }
         }
         return labels;
     }
 
+    private static List<String> textsOf(List<Label> labels) {
+        return labels.stream().map(Label::getText).toList();
+    }
+
     /** Returns true if {@code window} is a popup that {@code owner} put on the screen. */
     private static boolean isPopupOf(Window window, Stage owner) {
         return window instanceof PopupWindow popup && popup.getOwnerWindow() == owner;
+    }
+
+    /** Every label below {@code node}, each of which a reader has to make out. */
+    private static List<Label> labelsIn(Node node) {
+        List<Label> labels = new ArrayList<>();
+        collectLabels(node, labels);
+        return labels;
     }
 
     private static void collectLabels(Node node, List<Label> labels) {
