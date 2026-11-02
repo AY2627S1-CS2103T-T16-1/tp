@@ -365,9 +365,6 @@ How follow-up status works:
 
 For these use cases, the **system** is TAB and the **actor** is a teaching assistant (user).
 
-**Common extension for UC01–UC06:** If the command format is invalid, TAB explains the error without
-changing records or the current search criteria. The use case resumes from step 1.
-
 #### UC01: Add a student
 
 **MSS**
@@ -381,6 +378,9 @@ changing records or the current search criteria. The use case resumes from step 
 
 **Extensions**
 
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
 * 2a. A supplied field is invalid.
   * 2a1. TAB explains the error without changing records or the current search criteria.
   * Use case resumes from step 1.
@@ -410,8 +410,11 @@ Extensions 4a and 4b may occur together.
 
 **Extensions**
 
-* 1a. The search conditions are invalid, such as requesting both follow-up statuses.
-  * 1a1. TAB explains the error and keeps the previous results.
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 1b. The search conditions are invalid, such as requesting both follow-up statuses.
+  * 1b1. TAB explains the error and keeps the previous results.
   * Use case resumes from step 1.
 * 2a. No students match.
   * 2a1. TAB displays an empty result and reports that no students were found.
@@ -430,11 +433,20 @@ Extensions 4a and 4b may occur together.
 
 **Extensions**
 
-* 2a. The target student does not exist, a supplied field is invalid, or the new ID conflicts with another student's ID.
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2a. The target student does not exist.
   * 2a1. TAB explains the problem without changing records or the current search criteria.
   * Use case resumes from step 1.
-* 2b. The requested details equal the saved details.
-  * 2b1. TAB reports that no change is needed without changing records or the current search criteria.
+* 2b. A supplied field is invalid.
+  * 2b1. TAB explains the problem without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2c. The new ID conflicts with another student's ID.
+  * 2c1. TAB identifies the conflict without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2d. The requested details equal the saved details.
+  * 2d1. TAB reports that no change is needed without changing records or the current search criteria.
   * Use case ends.
 * 3a. Saving fails.
   * 3a1. TAB restores the records and previous search results and explains recovery.
@@ -462,18 +474,35 @@ this same flow. UC04 covers changing one tag while retaining the others; UC06 co
 
 **Extensions**
 
-* 2a. The target does not exist, or the tag is invalid.
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2a. The target student does not exist.
   * 2a1. TAB explains the problem without changing records or the current search criteria.
   * Use case resumes from step 1.
-* 2b. The student already has a tag to add, or lacks a tag to remove, ignoring case and extra spaces.
-  * 2b1. TAB reports that no change was made.
-  * 2b2. If the user tried to remove the student's follow-up flag as a tag, TAB explains how to clear it through UC03.
+* 2b. The tag is invalid.
+  * 2b1. TAB explains the problem without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2c. The student already has the tag to add, ignoring case and extra spaces.
+  * 2c1. TAB reports that no change was made.
+  * Use case ends.
+* 2d. The student lacks the tag to remove, ignoring case and extra spaces, and the tag is not their follow-up flag.
+  * 2d1. TAB reports that no change was made.
+  * Use case ends.
+* 2e. The user requests removal of the student's follow-up flag as a tag.
+  * 2e1. TAB reports that no change was made and explains how to clear the flag through UC03.
   * Use case ends.
 * 3a. Saving fails.
   * 3a1. TAB restores the records and previous search results and reports the reason.
   * Use case resumes from step 1.
+* 4a. The changed student no longer matches the current search criteria.
+  * 4a1. TAB excludes the student from the results while retaining the updated record.
+  * Use case ends.
+* 4b. The added tag warrants a warning about its similarity to the follow-up label.
+  * 4b1. TAB includes the warning in the successful result for the user to review.
+  * Use case ends.
 
-Changes that affect search membership and warnings about added tags follow the alternatives in UC03.
+Extensions 4a and 4b may occur together.
 
 #### UC05: Clear the student book
 
@@ -488,14 +517,23 @@ Changes that affect search membership and warnings about added tags follow the a
 
 **Extensions**
 
-* 1a. The book is empty.
-  * 1a1. TAB reports that there is nothing to clear without asking for confirmation.
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 1b. The book is empty.
+  * 1b1. TAB reports that there is nothing to clear without asking for confirmation.
   * Use case ends.
-* 3a. The user declines or submits an empty or whitespace-only reply.
+* 3a. The user declines.
   * 3a1. TAB cancels without changing records or the current search criteria.
   * Use case ends.
-* 3b. The reply is invalid, including another command.
-  * 3b1. TAB explains the accepted replies.
+* 3b. The user submits an empty reply.
+  * 3b1. TAB cancels without changing records or the current search criteria.
+  * Use case ends.
+* 3c. The user submits a whitespace-only reply.
+  * 3c1. TAB cancels without changing records or the current search criteria.
+  * Use case ends.
+* 3d. The reply is invalid, including another command.
+  * 3d1. TAB explains the accepted replies.
   * Use case resumes from step 2.
 * 4a. Saving fails.
   * 4a1. TAB restores the records and previous search results and reports the failure.
@@ -514,6 +552,9 @@ Changes that affect search membership and warnings about added tags follow the a
 
 **Extensions**
 
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
 * 2a. The target does not exist.
   * 2a1. TAB explains the problem without changing records or the current search criteria.
   * Use case resumes from step 1.
