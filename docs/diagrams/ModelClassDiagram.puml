@@ -7,7 +7,7 @@ skinparam classBorderColor #555555
 skinparam arrowColor #555555
 skinparam ArrowFontStyle plain
 skinparam linetype ortho
-skinparam nodesep 65
+skinparam nodesep 85
 skinparam ranksep 60
 
 package "Model" as ModelComponent {
