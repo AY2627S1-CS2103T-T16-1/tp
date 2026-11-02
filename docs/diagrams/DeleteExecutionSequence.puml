@@ -6,6 +6,7 @@ skinparam sequenceReferenceBackgroundColor white
 
 participant ":LogicManager" as logic LOGIC_COLOR
 participant "c:DeleteCommand" as command LOGIC_COLOR
+participant "target:StudentTarget" as target LOGIC_COLOR
 participant ":Model" as model MODEL_COLOR
 
 [-> logic : execute(\n"delete 1")
@@ -15,11 +16,15 @@ ref over logic, command
 end ref
 logic -> command : execute(model)
 activate command
-command -> model : read displayed list
+command -> target : resolve(model,\nID_TARGET_COMMAND)
+activate target
+target -> model : getFilteredStudentList()
 activate model
-model --> command : displayed students
+model --> target : displayed students
 deactivate model
-note over command : Resolve index 1
+note over target : Pick index 1
+target --> command : student
+deactivate target
 command -> model : deleteStudent(student)
 activate model
 model --> command
