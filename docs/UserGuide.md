@@ -59,7 +59,7 @@ TAB follows common CLI conventions for options and quoted values, using short op
 * Options can appear in any order after a leading name or target.<br>
   For example, both `add John Doe -e john@example.com -p 91234567` and `add John Doe -p 91234567 -e john@example.com` work.
 
-* Put an option's value in double quotes if it contains spaces or begins with a hyphen. Spaces in the name at the start of `add` need no quotes, as every word before the first option is part of it.<br>
+* Put an option's value in double quotes if it contains spaces or begins with a hyphen. In `add`, a name with spaces doesn't need quotes.<br>
   For example, `tag 1 -a "Lab 3"` adds one tag containing a space, while `add John Doe` names a student `John Doe`.
 
 * Curly (`“”`) and full-width (`＂`) double quotes work like straight double quotes.
