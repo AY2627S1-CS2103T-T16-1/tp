@@ -582,7 +582,10 @@ These instructions provide a starting path through TAB's features. Testers shoul
 
 ### Preparing test records
 
-Reset the disposable book before each **top-level scenario** below, such as “Duplicate warnings and ID conflicts”. Run that scenario’s indented steps in order without resetting between them. Submit the setup commands below **one line at a time**. Skip `yes` if `clear` reports that the book is already empty. For file-related scenarios, first close all TAB windows and restore any files changed by the previous test.
+Reset the disposable book before each **top-level scenario** below, such as "Duplicate warnings and ID conflicts" (under "Adding students"). Run that scenario’s indented steps in order without resetting between them. Submit the setup commands below **one line at a time**.
+
+* Skip `yes` if `clear` reports that the book is already empty.
+* For file-related scenarios, first close all TAB windows and restore any files changed by the previous test.
 
 ```text
 clear
@@ -592,7 +595,7 @@ add Alice Tan --id 001234 -t "Lab 3"
 add Jason Lim -p 81234567 -e jason@example.com --id A61403 -t Tutorial
 ```
 
-Expected: For a nonempty book, `clear` asks for confirmation without deleting records; `yes` empties the book. Each `add` saves and displays the named student. After all three additions, three students appear in the order above, only José is flagged, and the summary counts two students in each tag group. Alice has no phone or email displayed.
+Expected: For a nonempty book, `clear` asks for confirmation without deleting records; `yes` empties the book. Each `add` saves and displays the named student. After all three additions, three students appear in the order above, only José is flagged with `Needs follow-up`, and the summary counts two students in each tag group. Alice has no phone or email displayed.
 
 ### Adding students
 
@@ -600,12 +603,12 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
    1. Test case: `find -n Nobody`.<br>
       Expected: No students appear, and the summary counts are zero.
    1. Test case: `add Mei 林`.<br>
-      Expected: Mei is added without contact details or an ID. All four students appear, with feedback explaining that the search was cleared.
+      Expected: Mei 林 is added without contact details or an ID. All four students appear, with feedback explaining that the search was cleared.
 1. Duplicate warnings and ID conflicts
    1. Test case: `add Jose O'Brien -p "+65 (9123) 4567" -e JOSE@example.com --id A61404`.<br>
       Expected: A fourth student is saved, with possible-duplicate warnings for the name, phone and email.
    1. Test case: `add Different Name --id a61401`.<br>
-      Expected: An ID-conflict error; no fifth student is added.
+      Expected: An ID-conflict error appears. No fifth student is added.
 1. Field validation
    1. Test case: `add Invalid Probe -p 12 -e missing-at`.<br>
       Expected: Both invalid fields are reported, and the three records remain unchanged.
@@ -624,29 +627,37 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
    1. Test case: `list`.<br>
       Expected: All three students and their tag counts return.
 1. Invalid searches
-   1. Prerequisites: Enter `find -n Jason`; only Jason should be displayed.
-   1. Test cases: `find Alice`, `find -f -nf`, and `find -n ""`.<br>
-      Expected: Each reports an invalid-query error and keeps Jason as the only displayed student.
+   1. Test case: `find -n Jason`.<br>
+      Expected: Only Jason appears, at displayed index 1.
+   1. Test case: `find Alice`.<br>
+      Expected: An error explains that every search term needs a field option. Jason remains the only displayed student.
+   1. Test case: `find -f -nf`.<br>
+      Expected: An error reports conflicting follow-up options. Jason remains the only displayed student.
+   1. Test case: `find -n ""`.<br>
+      Expected: An error reports an empty search term. Jason remains the only displayed student.
 
 ### Editing students, tags and follow-up
 
 1. Displayed indices and hidden ID targets
-   1. Prerequisites: Enter `find -n Jason`; only Jason should be displayed.
+   1. Test case: `find -n Jason`.<br>
+      Expected: Only Jason appears, at displayed index 1.
    1. Test case: `edit 1 -p 83334444`.<br>
-      Expected: Jason's displayed phone changes to `83334444`; he remains the only displayed student.
+      Expected: Jason's displayed phone changes to `83334444`. He remains the only displayed student.
    1. Test case: `edit --target-id 001234 -e alice@example.com`.<br>
-      Expected: Feedback confirms Alice's updated email, while Jason remains the only displayed student.
+      Expected: Feedback confirms Alice's updated email. Jason still remains the only displayed student.
    1. Test case: `list`.<br>
       Expected: All three students appear, including Jason with phone `83334444` and Alice with email `alice@example.com`.
    1. Test case: `edit A61403 -p "" -e "" --id "" -t ""`.<br>
       Expected: Jason retains his name but loses his optional details and tags.
    1. Test case: Restart TAB.<br>
-      Expected: All three students load, and Jason still has no optional details or tags.
+      Expected: All three students load. Jason still has no optional details or tags.
 1. Rejected and unchanged edits
-   1. Test cases: `edit 1 -n ""` and `edit 1 --id 001234`.<br>
-      Expected: Each reports why the edit is invalid and leaves all records unchanged.
+   1. Test case: `edit 1 -n ""`.<br>
+      Expected: An invalid-name error appears. All records remain unchanged.
+   1. Test case: `edit 1 --id 001234`.<br>
+      Expected: An ID-conflict error appears because Alice already has ID `001234`. All records remain unchanged.
    1. Test case: `edit 1 -n "José O'Brien"`.<br>
-      Expected: An unchanged-record message; student data is not rewritten.
+      Expected: An unchanged-record message is shown. Student data is not rewritten.
 1. Replacing tags versus changing one tag
    1. Test case: `edit A61401 -t T1 -t T2`.<br>
       Expected: José's `Lab 3` and `Tutorial` tags are replaced by `T1` and `T2`.
@@ -654,17 +665,19 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
       Expected: José gains `Project Group` while retaining `T1` and `T2`.
    1. Test case: `tag A61401 -r t1`.<br>
       Expected: José loses `T1`, leaving `T2` and `Project Group`. His contact details and follow-up flag remain unchanged throughout.
-   1. Test cases: `tag A61401 -a t2` and `tag A61401 -r Missing`.<br>
-      Expected: Each reports why the tag change cannot be applied; no tags change.
+   1. Test case: `tag A61401 -a t2`.<br>
+      Expected: An error reports that José already has tag `T2`. No tags change.
+   1. Test case: `tag A61401 -r Missing`.<br>
+      Expected: An error reports that José does not have tag `Missing`. No tags change.
 1. Follow-up is separate from general tags
    1. Test case: `edit A61401 -nf`.<br>
-      Expected: José's follow-up marker disappears; all three students remain visible.
+      Expected: José's follow-up marker disappears. All three students remain visible.
    1. Test case: `edit --target-id 001234 -f`.<br>
-      Expected: Alice gains the follow-up marker and retains her `Lab 3` tag; all three students remain visible.
+      Expected: Alice gains the follow-up marker and retains her `Lab 3` tag. All three students remain visible.
    1. Test case: `find -f`.<br>
       Expected: Only Alice appears, with one student and one follow-up in the summary.
    1. Test case: `tag --id 001234 -a "Needs follow-up"`.<br>
-      Expected: A reserved-marker error with guidance to use `edit`; neither tags nor follow-up change.
+      Expected: A reserved-marker error with guidance to use `edit`. Neither tags nor follow-up change.
 
 ### Deleting students and clearing the book
 
@@ -677,22 +690,27 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
       Expected: Feedback identifies Alice as deleted despite being hidden; the displayed list stays empty.
    1. Test case: `list`.<br>
       Expected: Only José appears, with one student in the summary.
-   1. Test cases: `delete 0`, `delete 999`, and `delete --id Missing614`.<br>
-      Expected: Each reports a target error; José remains unchanged.
+   1. Test case: `delete 0`.<br>
+      Expected: An error explains that an index must be a positive integer. José remains unchanged.
+   1. Test case: `delete 999`.<br>
+      Expected: An error reports that index 999 is outside the displayed list. José remains unchanged.
+   1. Test case: `delete --id Missing614`.<br>
+      Expected: An error reports that no student has NUS Student ID `MISSING614`. José remains unchanged.
    1. Test case: Restart TAB.<br>
       Expected: Only José remains in the book.
 1. Canceling and confirming a clear
-   1. Prerequisites: Enter `find -n Nobody`; no students should be displayed.
+   1. Test case: `find -n Nobody`.<br>
+      Expected: No students appear, and the summary counts are zero.
    1. Test case: `clear`.<br>
-      Expected: A confirmation prompt counts all three students despite the empty view; no records are removed.
+      Expected: A confirmation prompt counts all three students despite the empty view. No records are removed yet.
    1. Test case: `maybe`.<br>
-      Expected: An invalid-reply message appears; confirmation remains pending and records stay unchanged.
+      Expected: An invalid-reply message appears. Confirmation remains pending and records stay unchanged.
    1. Test case: `no`.<br>
-      Expected: Clearing is canceled; all three records and the empty search result remain unchanged.
+      Expected: Clearing is canceled. All three records and the empty search result remain unchanged.
    1. Test case: `clear`.<br>
-      Expected: A confirmation prompt counts all three students; no records are removed yet.
+      Expected: A confirmation prompt counts all three students. No records are removed yet.
    1. Test case: `yes`.<br>
-      Expected: Feedback confirms the book has been cleared; no students remain.
+      Expected: Feedback confirms the book has been cleared. No students remain.
    1. Test case: `list`.<br>
       Expected: Zero students are reported and displayed.
    1. Test case: Restart TAB.<br>
@@ -722,14 +740,14 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
    1. Test case: Press Esc.<br>
       Expected: Help closes and the unfinished command returns.
    1. Test case: Use Tab and Shift+Tab to move between panes.<br>
-      Expected: The command box, student list, summary tag list and visible reply can be reached; focused reading panes can be scrolled using the keyboard.
+      Expected: The command box, student list, summary tag list and visible reply can be reached. Focused reading panes can be scrolled using the keyboard.
 1. Parsing feedback and history
    1. Test case: `LiSt`.<br>
-      Expected: All three students appear; the mixed-case command is accepted.
+      Expected: The mixed-case command is accepted and all three students appear.
    1. Test case: `lsit`.<br>
-      Expected: An unknown-command error suggests `list`; records remain unchanged and failed input remains editable.
+      Expected: An unknown-command error suggests `list`. Records remain unchanged and failed input remains editable.
    1. Test case: `add Broken -t "Lab`.<br>
-      Expected: An unclosed-quote error appears; records remain unchanged and failed input remains editable.
+      Expected: An unclosed-quote error appears. Records remain unchanged and failed input remains editable.
    1. Test case: Type an unsent draft and press Up to recall earlier submissions.<br>
       Expected: Earlier commands appear in the input without executing.
    1. Test case: Press Down to return to the newest history position.<br>
@@ -761,13 +779,13 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
    1. Test case: Restore the backup, change José's `"flag": true` to `"flag": "true"`, and launch TAB.<br>
       Expected: Startup reports an invalid flag type. The main window does not open, and the edited file is left unchanged. Restore the backup to resume testing.
 1. Save failure and rollback
-   1. Prerequisites: Close TAB. In the test folder, move the file `data/.tab.json.lock` aside if present, and create a folder at that exact path.
+   1. Prerequisites: Close all TAB windows. Open the test folder's `data` directory, move the `.tab.json.lock` file aside if present, and create a folder named `.tab.json.lock` in that directory.
    1. Test case: Relaunch TAB.<br>
       Expected: The three test students load.
    1. Test case: `find -n Nobody`.<br>
       Expected: No students appear, and the summary counts are zero.
    1. Test case: `add Blocked Probe`.<br>
-      Expected: A lock-path error appears; the addition is rolled back, the empty search result returns, and the saved book is unchanged. Close TAB, remove the folder and restore the lock file before continuing.
+      Expected: A lock-path error appears. No student is added, the empty search result returns, and the saved book is unchanged. Close TAB, remove the folder and restore the lock file if one was moved aside.
 1. Two windows using the same file
    1. Prerequisites: Open two TAB instances, A and B, from the same test JAR.
    1. Test case: In A, enter `add Window A --id A61490`.<br>
@@ -795,10 +813,17 @@ The work spans implementation, automated tests, manual verification, and documen
 
 ## Appendix: Planned Enhancements
 
-1. **Undo and redo (Coming soon)**
+### Undo/Redo Commands (Coming soon)
 
-   **Limitation:** A TA cannot reverse an accidental change to student records within TAB. For example, deleting the wrong student or confirming `clear` removes records without a way to recover them through a command.
+**Limitation:** A TA cannot reverse an accidental change to student records within TAB. For example, deleting the wrong student or confirming `clear` removes records without a way to recover them through a command.
 
-   **Planned enhancement:** Add `undo` to reverse the most recent successful change and `redo` to restore the most recently undone change. This will cover `add`, `edit`, `tag`, `delete`, and confirmed `clear` commands, including changes to follow-up status. For example, after `delete 1`, `undo` will restore the deleted student and `redo` will delete that same student again.
+**Planned enhancement:** Add `undo` to reverse the most recent successful change and `redo` to restore the most recently undone change. This will cover `add`, `edit`, `tag`, `delete`, and confirmed `clear` commands, including changes to follow-up status. <br>
+For example, after `delete 1`, `undo` will restore the deleted student and `redo` will delete that same student again.
 
-   History will last for the open session and allow consecutive undo or redo operations. A new successful change after an undo will discard the remaining redo history. Searches, help, canceled clears, unchanged edits, and failed commands will not create history entries. Undo and redo will save the restored records; if saving fails, the records and history position will remain unchanged. When no change is available to undo or redo, TAB will explain this without modifying records.
+Details:
+
+* History will last for the open session and allow consecutive undo or redo operations.
+* A new successful change after an undo will discard the remaining redo history.
+* Searches, help, canceled clears, unchanged edits, and failed commands will not create history entries.
+* Undo and redo will save the restored records. If saving fails, the records and history position will remain unchanged.
+* When no change is available to undo or redo, TAB will explain this without modifying records.
