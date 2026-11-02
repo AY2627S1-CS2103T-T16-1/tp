@@ -26,6 +26,15 @@ TAB (Teaching Assistant's Address Book) is an offline desktop application for te
    * [MarkBind](https://markbind.org/) builds the documentation site.
    * [PlantUML](https://plantuml.com/) generates its UML diagrams from the sources in `docs/diagrams/`.
 
+### AI usage declaration
+
+OpenAI Codex, Claude, Google Antigravity, GLM 5.3, and Nemotron were
+used throughout development to assist with implementation, testing,
+debugging, documentation, and preliminary code reviews. These tools
+were used to propose and implement code changes, generate and refine
+tests, investigate bugs, review pull requests, and draft and revise
+documentation.
+
 ## Setting up and getting started
 
 Use [Setting up and getting started](SettingUp.md) for IDE setup, and the [User Guide quick start](UserGuide.md#quick-start) for the supported Java/JavaFX runtimes.
