@@ -579,10 +579,10 @@ Extensions 4a and 4b may occur together.
 1. The user starts TAB.
 1. TAB identifies the data file and explains the loading problem and recovery options, including the line,
    column, and a source excerpt for a syntax error, or the student record and field at fault,
-   without changing the file or opening the main window.
+   without changing the file or showing any student records.
 1. The user closes TAB and repairs the file or replaces it with a valid backup.
 1. The user restarts TAB.
-1. TAB loads the corrected records and opens the main window.
+1. TAB loads the corrected records and shows them.
 
     Use case ends.
 
@@ -593,7 +593,7 @@ Extensions 4a and 4b may occur together.
   * 2a2. The user closes TAB and replaces the file with a valid backup instead of repairing it.
   * Use case resumes from step 4.
 * 4a. TAB still cannot load the file.
-  * 4a1. TAB leaves the file unchanged and reports the remaining problem without opening the main window.
+  * 4a1. TAB leaves the file unchanged and reports the remaining problem without showing any student records.
   * Use case resumes from step 3.
 
 ### Non-functional requirements
