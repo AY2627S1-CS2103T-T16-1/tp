@@ -6,10 +6,9 @@ skinparam classStereotypeFontColor #222222
 skinparam classBorderColor #555555
 skinparam arrowColor #555555
 skinparam ArrowFontStyle plain
-skinparam genericDisplay old
 skinparam linetype ortho
 skinparam nodesep 65
-skinparam ranksep 45
+skinparam ranksep 60
 
 package "Model" as ModelComponent {
 interface Model <<interface>>
@@ -19,7 +18,7 @@ class ModelManager
 class StudentBook
 class UserPrefs
 class UniqueStudentList
-class "FilteredList<Student>" as FilteredStudents
+class FilteredList<Student>
 class Student
 class Name
 class Phone
@@ -35,13 +34,13 @@ UserPrefs .up.|> ReadOnlyUserPrefs
 ' Keep multiplicities beside arrowheads without masking the association lines.
 ModelManager *--> "1   " StudentBook
 ModelManager *-right-> "1   " UserPrefs
-ModelManager *--> "1   " FilteredStudents
+ModelManager *--> "1   " FilteredList
 StudentBook *--> "1   " UniqueStudentList
-note right of FilteredStudents
-  Views the observable student list
-  exposed by StudentBook.
-end note
-UniqueStudentList --> "~*   " Student : records
+' norank stops this association from pulling Student sideways, and the padding
+' and blank lines move its label clear of the line, for MarkBind's PlantUML.
+FilteredList -[norank]-> "~*   " Student : shows &#9660;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;\n&#160;\n&#160;
+UniqueStudentList --> "~*   " Student : records &#9660;
+FilteredList -[hidden]right- UniqueStudentList
 Student --> "1   " Name
 Student --> "0..1   " Phone
 Student --> "0..1   " Email
