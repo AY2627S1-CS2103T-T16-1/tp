@@ -2,6 +2,7 @@
 !include style.puml
 skinparam ArrowFontStyle plain
 skinparam defaultFontSize 16
+mainframe sd Parse delete command
 
 participant ":StudentBookParser" as dispatcher LOGIC_COLOR
 participant ":DeleteCommandParser" as parser LOGIC_COLOR
