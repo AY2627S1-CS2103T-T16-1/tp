@@ -66,6 +66,15 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_standaloneDashInName_keepsItsForm() {
+        for (String dash : java.util.List.of("\u2013", "\u2014", "\u2212")) {
+            Student expected = new StudentBuilder().withName("Ann " + dash + " Lee").withPhone("91234567")
+                    .withoutEmail().withoutNusStudentId().withTags().build();
+            assertParseSuccess(parser, " Ann " + dash + " Lee -p 91234567", new AddCommand(expected));
+        }
+    }
+
+    @Test
     public void parse_caseVariantTags_keepsFirstSpelling() {
         Student expected = new StudentBuilder().withName("Casey Low").withPhone("91234567")
                 .withoutEmail().withTags("Lab 3", "Σ", "T1").build();
