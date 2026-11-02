@@ -29,6 +29,7 @@ class FollowUpFlag
 
 ModelManager .up.|> Model
 StudentBook .up.|> ReadOnlyStudentBook
+ReadOnlyStudentBook -[hidden]down- StudentBook
 UserPrefs .up.|> ReadOnlyUserPrefs
 
 ' Keep multiplicities beside arrowheads without masking the association lines.
