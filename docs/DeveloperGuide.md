@@ -615,16 +615,8 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
 ### Finding students and checking the summary
 
 1. Searching across fields
-   1. Test case: `find -n jose`.<br>
-      Expected: Only José appears, with one student and one follow-up in the summary.
-   1. Test case: `find -p 9123-4567`.<br>
-      Expected: Only José appears, with one student and one follow-up in the summary.
-   1. Test case: `find -e jose@`.<br>
-      Expected: Only José appears, with one student and one follow-up in the summary.
-   1. Test case: `find --id a61401`.<br>
-      Expected: Only José appears, with one student and one follow-up in the summary.
-   1. Test case: `find -t "Lab 3" -t Tutorial -f`.<br>
-      Expected: Only José appears, with one student and one follow-up in the summary.
+   1. Test cases: `find -n jose`, `find -p 9123-4567`, `find -e jose@`, `find --id a61401`, and `find -t "Lab 3" -t Tutorial -f`.<br>
+      Expected: Each displays only José, with one student and one follow-up in the summary.
    1. Test case: `find -nf -t "Lab 3"`.<br>
       Expected: Only Alice appears, demonstrating that the new search starts from the full book. The summary shows one student and zero follow-ups.
    1. Test case: `find -n Alice -e example.com`.<br>
@@ -633,12 +625,8 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
       Expected: All three students and their tag counts return.
 1. Invalid searches
    1. Prerequisites: Enter `find -n Jason`; only Jason should be displayed.
-   1. Test case: `find Alice`.<br>
-      Expected: An error explains that a search term needs a field option; Jason remains the only displayed student.
-   1. Test case: `find -f -nf`.<br>
-      Expected: An error reports conflicting follow-up options; Jason remains the only displayed student.
-   1. Test case: `find -n ""`.<br>
-      Expected: An error reports an empty name search term; Jason remains the only displayed student.
+   1. Test cases: `find Alice`, `find -f -nf`, and `find -n ""`.<br>
+      Expected: Each reports an invalid-query error and keeps Jason as the only displayed student.
 
 ### Editing students, tags and follow-up
 
@@ -655,10 +643,8 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
    1. Test case: Restart TAB.<br>
       Expected: All three students load, and Jason still has no optional details or tags.
 1. Rejected and unchanged edits
-   1. Test case: `edit 1 -n ""`.<br>
-      Expected: An invalid-name error appears; all records remain unchanged.
-   1. Test case: `edit 1 --id 001234`.<br>
-      Expected: An ID-conflict error appears; all records remain unchanged.
+   1. Test cases: `edit 1 -n ""` and `edit 1 --id 001234`.<br>
+      Expected: Each reports why the edit is invalid and leaves all records unchanged.
    1. Test case: `edit 1 -n "José O'Brien"`.<br>
       Expected: An unchanged-record message; student data is not rewritten.
 1. Replacing tags versus changing one tag
@@ -668,10 +654,8 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
       Expected: José gains `Project Group` while retaining `T1` and `T2`.
    1. Test case: `tag A61401 -r t1`.<br>
       Expected: José loses `T1`, leaving `T2` and `Project Group`. His contact details and follow-up flag remain unchanged throughout.
-   1. Test case: `tag A61401 -a t2`.<br>
-      Expected: An existing-tag error appears; no tags change.
-   1. Test case: `tag A61401 -r Missing`.<br>
-      Expected: A missing-tag error appears; no tags change.
+   1. Test cases: `tag A61401 -a t2` and `tag A61401 -r Missing`.<br>
+      Expected: Each reports why the tag change cannot be applied; no tags change.
 1. Follow-up is separate from general tags
    1. Test case: `edit A61401 -nf`.<br>
       Expected: José's follow-up marker disappears; all three students remain visible.
@@ -693,12 +677,8 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
       Expected: Feedback identifies Alice as deleted despite being hidden; the displayed list stays empty.
    1. Test case: `list`.<br>
       Expected: Only José appears, with one student in the summary.
-   1. Test case: `delete 0`.<br>
-      Expected: An invalid-index error appears; José remains unchanged.
-   1. Test case: `delete 999`.<br>
-      Expected: An out-of-range index error appears; José remains unchanged.
-   1. Test case: `delete --id Missing614`.<br>
-      Expected: A missing-ID error appears; José remains unchanged.
+   1. Test cases: `delete 0`, `delete 999`, and `delete --id Missing614`.<br>
+      Expected: Each reports a target error; José remains unchanged.
    1. Test case: Restart TAB.<br>
       Expected: Only José remains in the book.
 1. Canceling and confirming a clear
