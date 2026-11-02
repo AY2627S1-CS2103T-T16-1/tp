@@ -711,8 +711,10 @@ The work spans implementation, automated tests, manual verification, and documen
 
 ## Appendix: Planned Enhancements
 
-1. **Whole-tag matching in `find`**
+1. **Undo and redo (Coming soon)**
 
-   **Limitation:** Tag searches use case-insensitive partial matching. For example, `find -t T1` also lists students tagged `T10`, `T11`, or `T12`, so a TA cannot use this search to list only tutorial group T1.
+   **Limitation:** A TA cannot reverse an accidental change to student records within TAB. For example, deleting the wrong student or confirming `clear` removes records without a way to recover them through a command.
 
-   **Planned enhancement:** Add an exact-match option for tag terms in a future version. A tag term beginning with `=` will match an entire tag name, ignoring case. For example, `find -t =T1` will match students with a tag named `T1` or `t1`, but will not match students whose only tags are `T10`, `T11`, or `T12`. Tag terms without the `=` prefix will continue to use partial matching.
+   **Planned enhancement:** Add `undo` to reverse the most recent successful change and `redo` to restore the most recently undone change. This will cover `add`, `edit`, `tag`, `delete`, and confirmed `clear` commands, including changes to follow-up status. For example, after `delete 1`, `undo` will restore the deleted student and `redo` will delete that same student again.
+
+   History will last for the open session and allow consecutive undo or redo operations. A new successful change after an undo will discard the remaining redo history. Searches, help, canceled clears, unchanged edits, and failed commands will not create history entries. Undo and redo will save the restored records; if saving fails, the records and history position will remain unchanged. When no change is available to undo or redo, TAB will explain this without modifying records.

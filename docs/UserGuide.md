@@ -246,7 +246,7 @@ Searches all students using the [student field options](#student-fields).
 * Each term needs a field option, such as `-n` for names or `-e` for emails.
 * The matching ignores case and accepts partial values. <br>
   For example, `john` matches `Johnathan`. <br>
-  For tags, `find -t T1` also lists students tagged `T10`, `T11`, or `T12`, so this search cannot list only students tagged `T1`. Whole-tag matching is [coming soon](DeveloperGuide.md#appendix-planned-enhancements).
+  For tags, `find -t T1` also lists students tagged `T10`, `T11`, or `T12`, so this search cannot list only students tagged `T1`.
 * A student must match **every** term (an `AND` search), even when the same option is repeated. <br>
   For example, `find -n Jason -t transfer` lists only students named Jason who are tagged `transfer`, and `find -n Jason -n Tan` lists only names containing both.
 * Put a term with spaces in double quotes. <br>
