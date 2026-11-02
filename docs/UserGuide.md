@@ -76,8 +76,8 @@ TAB follows common CLI conventions for options and quoted values, using short op
 * Typographic dashes (`–`, `—`) count as one `-` each.<br>
   For example, `add Amy Lim –p 91234567` records the phone number, but one em dash before `phone` reads as `-phone`, which is refused with `Did you mean --phone?`
 
-* A dash that is part of a value is kept, as is a dash standing alone. If a value starts with a dash, quote it.<br>
-  For example, `add Jean–Luc Picard` and `add Ann – Lee` keep the dash in the name, and `add "–Mystery"` names a student `–Mystery`.
+* Dashes inside a value are kept as typed, including a single dash between words. To start a value with a dash, put it in quotes.<br>
+  For example, `add Jean–Luc Picard` and `add Ann – Lee` keep their dashes, and `add "–Mystery"` names a student `–Mystery`.
 
 * Give each option once unless the format shows `...`. Short and long spellings count as the same option.
 
