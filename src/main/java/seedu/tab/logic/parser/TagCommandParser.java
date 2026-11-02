@@ -93,12 +93,19 @@ public class TagCommandParser implements Parser<TagCommand> {
                         ParserUtil.parseRequiredIndex(value, TagCommand.FIELD_INDEX), value));
     }
 
-    /** Adds command-specific guidance when the arguments cannot be read as options. */
+    /**
+     * Adds command-specific guidance when the arguments cannot be read as options: the option to
+     * select a student by ID for a user who typed {@code edit}'s, and how to add or remove a tag
+     * otherwise.
+     */
     private static FlagArgumentMap tokenize(String args) throws ParseException {
         try {
             return FlagTokenizer.tokenizeWithIndex(args, FLAG_ADD_TAG, FLAG_REMOVE_TAG, FLAG_NUS_STUDENT_ID);
         } catch (ParseException e) {
-            throw new ParseException(e.getMessage() + "\n" + TagCommand.MESSAGE_ACTION_GUIDANCE, e);
+            String guidance = ParserUtil.isTargetIdOption(e)
+                    ? ParserUtil.MESSAGE_TARGET_ID_IS_EDIT_ONLY
+                    : TagCommand.MESSAGE_ACTION_GUIDANCE;
+            throw new ParseException(e.getMessage() + "\n" + guidance, e);
         }
     }
 }

@@ -160,6 +160,19 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_editTargetIdOption_pointsToIdOption() {
+        String expected = "There is no --target-id option.\n"
+                + "--id (or -i) selects the student holding an NUS Student ID here; "
+                + "--target-id does so only in edit.";
+        assertParseFailure(parser, "--target-id 1234", expected);
+        assertParseFailure(parser, "--target-id=1234", expected);
+        assertParseFailure(parser, "--TARGET-ID 1234", expected.replaceFirst("--target-id", "--TARGET-ID"));
+        // the option the hint names selects the same student
+        assertParseSuccess(parser, "--id 1234", deleteById("1234"));
+        assertParseSuccess(parser, "-i 1234", deleteById("1234"));
+    }
+
+    @Test
     public void parse_nusStudentId_returnsDeleteCommand() {
         // an NUS Student ID is any string of letters and digits, so any target opening with
         // a letter that holds one is read as an ID rather than as a mistyped index
