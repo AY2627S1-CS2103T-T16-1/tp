@@ -129,7 +129,7 @@ To see how `delete` command is parsed, refer to the sequence diagram below.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Parsing delete 1 and returning DeleteCommand c to LogicManager" />
 
-<div markdown="span" class="alert alert-info"><strong>Note</strong>: The destroy marker (X) marks the end of the parser's useful lifetime. Java garbage collection determines when its memory is reclaimed.
+<div markdown="span" class="alert alert-info"><strong>Note</strong>: The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
 </div>
 
 How the `Logic` component works:
