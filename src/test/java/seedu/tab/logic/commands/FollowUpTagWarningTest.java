@@ -51,4 +51,29 @@ public class FollowUpTagWarningTest {
                 FollowUpTagWarning.appendTo("Saved.", List.of(new Tag("Needs_follow_up")),
                         "edit 1 --follow-up"));
     }
+
+    @Test
+    public void appendFindNoteTo_termsReadingAsMarker_appendsSearchAdviceKeepingTerm() {
+        for (String term : List.of("Needs follow-up", "needs follow up", "NEEDS FOLLOWUP", "Needs follow-up.",
+                "Needs\u00a0follow\u2013up", "follow", "Follow-Up", "follow up", "needs follow")) {
+            assertEquals("Found 0 students.\n\nNOTE: \"" + term + "\" looks like the follow-up marker, "
+                    + "which is not a tag. To find flagged students, use find --follow-up.",
+                    FollowUpTagWarning.appendFindNoteTo("Found 0 students.", List.of(term)));
+        }
+    }
+
+    @Test
+    public void appendFindNoteTo_ordinaryOrLongerTerms_returnsFoundMessage() {
+        assertEquals("Found 2 students.", FollowUpTagWarning.appendFindNoteTo("Found 2 students.", List.of()));
+        // "up" and "needs" are likelier to name a tag; a longer label is a tag of its own.
+        assertEquals("Found 2 students.", FollowUpTagWarning.appendFindNoteTo("Found 2 students.",
+                List.of("lab", "up", "needs", "fol", "followers", "Needs follow-up soon")));
+    }
+
+    @Test
+    public void appendFindNoteTo_markerAmongOtherTerms_notesOnlyMarkerTerm() {
+        assertEquals("Found 0 students.\n\nNOTE: \"follow-up\" looks like the follow-up marker, "
+                + "which is not a tag. To find flagged students, use find --follow-up.",
+                FollowUpTagWarning.appendFindNoteTo("Found 0 students.", List.of("lab", "follow-up")));
+    }
 }
