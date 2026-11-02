@@ -114,9 +114,7 @@ The **API** of this component is specified in [`Logic.java`](https://github.com/
 
 The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
 
-<puml src="diagrams/DeleteExecutionSequence.puml" alt="Executing DeleteCommand c, deleting the displayed student, and saving changes" />
-
-The first reference expands to the parsing diagram below. The second represents Logic's save and rollback step.
+<puml src="diagrams/DeleteExecutionSequence.puml" alt="Executing DeleteCommand c and deleting the displayed student" />
 
 To see how `delete` command is parsed, refer to the sequence diagram below.
 
