@@ -41,7 +41,15 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
             throw new ParseException(DeleteCommand.MESSAGE_USAGE);
         }
 
-        FlagArgumentMap arguments = FlagTokenizer.tokenizeWithIndexTokens(tokens, FLAG_NUS_STUDENT_ID);
+        FlagArgumentMap arguments;
+        try {
+            arguments = FlagTokenizer.tokenizeWithIndexTokens(tokens, FLAG_NUS_STUDENT_ID);
+        } catch (ParseException e) {
+            if (ParserUtil.isTargetIdOption(e)) {
+                throw new ParseException(e.getMessage() + "\n" + ParserUtil.MESSAGE_TARGET_ID_IS_EDIT_ONLY, e);
+            }
+            throw e;
+        }
         arguments.verifyNoDuplicateFlagsFor(FLAG_NUS_STUDENT_ID);
         verifyNoExtraTargets(tokens.getFirst(), arguments.getPreamble());
 

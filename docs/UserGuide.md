@@ -76,8 +76,10 @@ TAB follows common CLI conventions for options and quoted values, using short op
 * Typographic dashes (`–`, `—`) count as one `-` each.<br>
   For example, `add Amy Lim –p 91234567` records the phone number, but one em dash before `phone` reads as `-phone`, which is refused with `Did you mean --phone?`
 
-* A dash that is part of a value is kept. If the value starts with one, quote it.<br>
-  For example, `add Jean–Luc Picard` keeps the dash in the name, and `add "–Mystery"` names a student `–Mystery`.
+* A word that starts with a dash, like `-p` or `–p`, is read as an option. A dash stays in your value when it is:
+  * inside a word, as in `add Jean–Luc Picard`
+  * on its own, as in `add Ann – Lee`
+  * inside quotes, as in `add "–Mystery"`. Without the quotes, `–Mystery` would be read as an option and refused.
 
 * Give each option once unless the format shows `...`. Short and long spellings count as the same option.
 
@@ -113,7 +115,7 @@ TAB accepts the following subset of standard email formats:
 ##### Tags
 
 * Spaces, punctuation and symbols are allowed, such as `Lab 3 (Mon)` or `#urgent`.
-* Tags ignore case and extra spaces, so `lab  3` and `Lab 3` are the same tag.
+* Tags ignore case and extra spaces, so <code class="preserve-whitespace">lab  3</code> and `Lab 3` are the same tag.
 * The tag `Needs follow-up` is reserved for the follow-up flag, as are its spacing, hyphen and trailing-punctuation variants such as `Needs follow up`. A tag differing by other punctuation, such as `Needs_follow_up`, is saved with a warning instead and does not set the flag.
 
 ##### NUS Student IDs
@@ -255,7 +257,8 @@ Searches all students using the [student field options](#student-fields).
   For example, `find -n "Mary Jane"` matches the names `Mary-Jane` and `Mary–Jane`, but `find -t "Mary Jane"` does not match the tag `Mary-Jane`.
 * Phone searches match digits across formatting. <br>
   For example, `91234567` matches `+65 9123 4567`.
-* Use `--follow-up` for students with the follow-up flag, or `--no-follow-up` for students without it. The two cannot be used together.
+* Use `--follow-up` for students with the follow-up flag, or `--no-follow-up` for students without it. The two cannot be used together. <br>
+  `Needs follow-up` on a card shows the follow-up flag, not a tag. For example, `find --follow-up` lists flagged students, but `find -t "Needs follow-up"` lists nobody, and TAB reminds you to use `--follow-up` instead.
 
 **Examples**
 
