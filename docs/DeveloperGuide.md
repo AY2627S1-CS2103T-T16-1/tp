@@ -571,8 +571,14 @@ These instructions provide a starting path through TAB's features. Testers shoul
    1. Test case: Run `java -jar tab.jar` from that folder.<br>
       Expected: The window opens with six sample students, a total of six in the summary, and the data path in the status bar.
 1. Saving window preferences
-   1. Test case: Resize and move the window, enter `exit`, then relaunch.<br>
-      Expected: The window closes and reopens at the saved size and position when they fit the available screen. Repeat using the window's close button.
+   1. Test case: Resize and move the window, and enter `exit`.<br>
+      Expected: The window closes.
+   1. Test case: Relaunch TAB.<br>
+      Expected: The window opens at the saved size and position when they fit the available screen.
+   1. Test case: Close TAB using the window's close button.<br>
+      Expected: The window closes.
+   1. Test case: Relaunch TAB.<br>
+      Expected: The saved window size and position are retained when they fit the available screen.
 
 ### Preparing test records
 
@@ -609,16 +615,30 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
 ### Finding students and checking the summary
 
 1. Searching across fields
-   1. Test case: Run `find -n jose`, `find -p 9123-4567`, `find -e jose@`, and `find --id a61401` in turn.<br>
-      Expected: Each displays only José, with one student and one follow-up in the summary.
-   1. Test case: `find -t "Lab 3" -t Tutorial -f`, then `find -nf -t "Lab 3"`.<br>
-      Expected: Only José appears first, then only Alice. Each search starts from the full book.
-   1. Test case: `find -n Alice -e example.com`, then `list`.<br>
-      Expected: The search shows no matches and zero summary counts; `list` restores all three students and their tag counts.
+   1. Test case: `find -n jose`.<br>
+      Expected: Only José appears, with one student and one follow-up in the summary.
+   1. Test case: `find -p 9123-4567`.<br>
+      Expected: Only José appears, with one student and one follow-up in the summary.
+   1. Test case: `find -e jose@`.<br>
+      Expected: Only José appears, with one student and one follow-up in the summary.
+   1. Test case: `find --id a61401`.<br>
+      Expected: Only José appears, with one student and one follow-up in the summary.
+   1. Test case: `find -t "Lab 3" -t Tutorial -f`.<br>
+      Expected: Only José appears, with one student and one follow-up in the summary.
+   1. Test case: `find -nf -t "Lab 3"`.<br>
+      Expected: Only Alice appears, demonstrating that the new search starts from the full book. The summary shows one student and zero follow-ups.
+   1. Test case: `find -n Alice -e example.com`.<br>
+      Expected: No students appear, and the summary counts are zero.
+   1. Test case: `list`.<br>
+      Expected: All three students and their tag counts return.
 1. Invalid searches
    1. Prerequisites: Enter `find -n Jason`; only Jason should be displayed.
-   1. Test cases: `find Alice`, `find -f -nf`, and `find -n ""`.<br>
-      Expected: Each reports an error and keeps Jason as the only displayed student.
+   1. Test case: `find Alice`.<br>
+      Expected: An error explains that a search term needs a field option; Jason remains the only displayed student.
+   1. Test case: `find -f -nf`.<br>
+      Expected: An error reports conflicting follow-up options; Jason remains the only displayed student.
+   1. Test case: `find -n ""`.<br>
+      Expected: An error reports an empty name search term; Jason remains the only displayed student.
 
 ### Editing students, tags and follow-up
 
@@ -631,10 +651,14 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
    1. Test case: `list`.<br>
       Expected: All three students appear, including Jason with phone `83334444` and Alice with email `alice@example.com`.
    1. Test case: `edit A61403 -p "" -e "" --id "" -t ""`.<br>
-      Expected: Jason retains his name but loses his optional details and tags. Restart and enter `list` to verify the changes persist.
+      Expected: Jason retains his name but loses his optional details and tags.
+   1. Test case: Restart TAB.<br>
+      Expected: All three students load, and Jason still has no optional details or tags.
 1. Rejected and unchanged edits
-   1. Test cases: `edit 1 -n ""` and `edit 1 --id 001234`.<br>
-      Expected: Invalid-name and ID-conflict errors respectively, with all records unchanged.
+   1. Test case: `edit 1 -n ""`.<br>
+      Expected: An invalid-name error appears; all records remain unchanged.
+   1. Test case: `edit 1 --id 001234`.<br>
+      Expected: An ID-conflict error appears; all records remain unchanged.
    1. Test case: `edit 1 -n "José O'Brien"`.<br>
       Expected: An unchanged-record message; student data is not rewritten.
 1. Replacing tags versus changing one tag
@@ -644,8 +668,10 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
       Expected: José gains `Project Group` while retaining `T1` and `T2`.
    1. Test case: `tag A61401 -r t1`.<br>
       Expected: José loses `T1`, leaving `T2` and `Project Group`. His contact details and follow-up flag remain unchanged throughout.
-   1. Test cases: `tag A61401 -a t2` and `tag A61401 -r Missing`.<br>
-      Expected: Existing-tag and missing-tag errors respectively; no tags change.
+   1. Test case: `tag A61401 -a t2`.<br>
+      Expected: An existing-tag error appears; no tags change.
+   1. Test case: `tag A61401 -r Missing`.<br>
+      Expected: A missing-tag error appears; no tags change.
 1. Follow-up is separate from general tags
    1. Test case: `edit A61401 -nf`.<br>
       Expected: José's follow-up marker disappears; all three students remain visible.
@@ -667,57 +693,111 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
       Expected: Feedback identifies Alice as deleted despite being hidden; the displayed list stays empty.
    1. Test case: `list`.<br>
       Expected: Only José appears, with one student in the summary.
-   1. Test cases: `delete 0`, `delete 999`, and `delete --id Missing614`.<br>
-      Expected: Each reports a target error; José remains in the book after restart.
+   1. Test case: `delete 0`.<br>
+      Expected: An invalid-index error appears; José remains unchanged.
+   1. Test case: `delete 999`.<br>
+      Expected: An out-of-range index error appears; José remains unchanged.
+   1. Test case: `delete --id Missing614`.<br>
+      Expected: A missing-ID error appears; José remains unchanged.
+   1. Test case: Restart TAB.<br>
+      Expected: Only José remains in the book.
 1. Canceling and confirming a clear
    1. Prerequisites: Enter `find -n Nobody`; no students should be displayed.
-   1. Test case: `clear`, then `maybe`, then `no` (separate submissions).<br>
-      Expected: The prompt counts all three students despite the empty view. `maybe` keeps confirmation pending; `no` cancels without changing records or the filter.
+   1. Test case: `clear`.<br>
+      Expected: A confirmation prompt counts all three students despite the empty view; no records are removed.
+   1. Test case: `maybe`.<br>
+      Expected: An invalid-reply message appears; confirmation remains pending and records stay unchanged.
+   1. Test case: `no`.<br>
+      Expected: Clearing is canceled; all three records and the empty search result remain unchanged.
    1. Test case: `clear`.<br>
       Expected: A confirmation prompt counts all three students; no records are removed yet.
    1. Test case: `yes`.<br>
       Expected: Feedback confirms the book has been cleared; no students remain.
-   1. Test case: `list`, then restart TAB.<br>
-      Expected: `list` reports zero students. After restart, the book is still empty.
+   1. Test case: `list`.<br>
+      Expected: Zero students are reported and displayed.
+   1. Test case: Restart TAB.<br>
+      Expected: The book is still empty.
    1. Test case: `clear`.<br>
       Expected: An already-empty message appears without a confirmation prompt.
 
 ### Help, command entry and window navigation
 
 1. Help and keyboard navigation
-   1. Test case: Enter `help`; try Space, `b`, `g`, `G` and `c`, then `q`.<br>
-      Expected: `help` opens the reference. Space moves forward a screen, `b` moves back, `g` reaches the beginning, and `G` reaches the end; reading progress updates. `c` copies the UG link to the clipboard. `q` restores command entry without changing students.
-   1. Test case: Type an unfinished command, open help with F1, then close it with Esc.<br>
-      Expected: F1 opens help; Esc closes it and restores the unfinished command. Tab and Shift+Tab reach the command box, student list, summary tag list and visible reply; focused reading panes can be scrolled using the keyboard.
+   1. Test case: `help`.<br>
+      Expected: The built-in command reference opens.
+   1. Test case: Press Space.<br>
+      Expected: Help moves forward one screen and reading progress updates.
+   1. Test case: Press `b`.<br>
+      Expected: Help moves back one screen and reading progress updates.
+   1. Test case: Press `G`.<br>
+      Expected: Help reaches the end.
+   1. Test case: Press `g`.<br>
+      Expected: Help returns to the beginning.
+   1. Test case: Press `c`.<br>
+      Expected: The UG link is copied to the clipboard.
+   1. Test case: Press `q`.<br>
+      Expected: Command entry returns without changing students.
+   1. Test case: Type an unfinished command and press F1.<br>
+      Expected: Help opens.
+   1. Test case: Press Esc.<br>
+      Expected: Help closes and the unfinished command returns.
+   1. Test case: Use Tab and Shift+Tab to move between panes.<br>
+      Expected: The command box, student list, summary tag list and visible reply can be reached; focused reading panes can be scrolled using the keyboard.
 1. Parsing feedback and history
-   1. Test cases: `LiSt`, then `lsit`, then `add Broken -t "Lab`.<br>
-      Expected: The first lists all students; the others report a suggested command and an unclosed quote respectively, without changing records. Failed input remains editable.
-   1. Test case: Type an unsent draft, press Up to recall earlier submissions, then Down to return to the newest position.<br>
-      Expected: Recall does not execute commands, and the draft returns. Restarting clears history.
+   1. Test case: `LiSt`.<br>
+      Expected: All three students appear; the mixed-case command is accepted.
+   1. Test case: `lsit`.<br>
+      Expected: An unknown-command error suggests `list`; records remain unchanged and failed input remains editable.
+   1. Test case: `add Broken -t "Lab`.<br>
+      Expected: An unclosed-quote error appears; records remain unchanged and failed input remains editable.
+   1. Test case: Type an unsent draft and press Up to recall earlier submissions.<br>
+      Expected: Earlier commands appear in the input without executing.
+   1. Test case: Press Down to return to the newest history position.<br>
+      Expected: The unsent draft returns.
+   1. Test case: Restart TAB and press Up in the command box.<br>
+      Expected: No commands from the previous session are recalled.
 1. Long details
-   1. Test case: `add José José José José José José José José José José José José -t "A very long tutorial group name used to check wrapping" -p "+65 9123 4567 extension 1234567890"`, then narrow the window.<br>
-      Expected: `add` saves and displays the new student with the supplied details. After narrowing the window, contents remain within their panes. Hovering shortened names and tags reveals full values, and contact details wrap.
+   1. Test case: `add José José José José José José José José José José José José -t "A very long tutorial group name used to check wrapping" -p "+65 9123 4567 extension 1234567890"`.<br>
+      Expected: The new student is saved and displayed with the supplied details.
+   1. Test case: Narrow the window and hover over shortened names and tags.<br>
+      Expected: Contents remain within their panes, shortened names and tags reveal full values, and contact details wrap.
 
 ### Saving and loading data
 
 1. Hand-edited data and missing files
    1. Prerequisites: Close TAB and back up `data/tab.json` from the test JAR's folder.
-   1. Test case: Add `"_comment": "Manual testing copy",` immediately after the top-level opening `{`, change Alice's name to `Alice 手动`, and save as UTF-8. Relaunch, enter `tag --id 001234 -a Probe`, and close TAB.<br>
-      Expected: Relaunching shows `Alice 手动`. The `tag` command adds `Probe` to Alice while retaining `Lab 3`. After closing TAB, the saved file contains the changed name, both tags and the comment.
+   1. Test case: Add `"_comment": "Manual testing copy",` immediately after the top-level opening `{`, change Alice's name to `Alice 手动`, save as UTF-8, and relaunch TAB.<br>
+      Expected: Alice appears as `Alice 手动`.
+   1. Test case: `tag --id 001234 -a Probe`.<br>
+      Expected: Alice gains `Probe` while retaining `Lab 3`.
+   1. Test case: Close TAB and inspect `data/tab.json`.<br>
+      Expected: The saved file contains the changed name, both tags and the comment.
    1. Test case: Move `data/tab.json` elsewhere and relaunch.<br>
       Expected: Six sample students appear. Close TAB and restore the backup before continuing.
 1. Invalid data
    1. Prerequisites: Close TAB and back up the valid file. Restore this backup between cases.
-   1. Test cases: Remove a comma; separately, change José's `"flag": true` to `"flag": "true"`.<br>
-      Expected: Startup reports a JSON syntax error or an invalid flag type respectively. The main window does not open, and the edited file is left unchanged. Restore the backup to resume testing.
+   1. Test case: Remove a comma and launch TAB.<br>
+      Expected: Startup reports a JSON syntax error. The main window does not open, and the edited file is left unchanged.
+   1. Test case: Restore the backup, change José's `"flag": true` to `"flag": "true"`, and launch TAB.<br>
+      Expected: Startup reports an invalid flag type. The main window does not open, and the edited file is left unchanged. Restore the backup to resume testing.
 1. Save failure and rollback
    1. Prerequisites: Close TAB. In the test folder, move the file `data/.tab.json.lock` aside if present, and create a folder at that exact path.
-   1. Test case: Relaunch, enter `find -n Nobody`, then `add Blocked Probe`.<br>
-      Expected: Relaunching loads the three test students. `find -n Nobody` shows no students. `add Blocked Probe` reports a lock-path error, rolls back the addition and restores the empty search result; the saved book is unchanged. Close TAB, remove the folder and restore the lock file before continuing.
+   1. Test case: Relaunch TAB.<br>
+      Expected: The three test students load.
+   1. Test case: `find -n Nobody`.<br>
+      Expected: No students appear, and the summary counts are zero.
+   1. Test case: `add Blocked Probe`.<br>
+      Expected: A lock-path error appears; the addition is rolled back, the empty search result returns, and the saved book is unchanged. Close TAB, remove the folder and restore the lock file before continuing.
 1. Two windows using the same file
    1. Prerequisites: Open two TAB instances, A and B, from the same test JAR.
-   1. Test case: In A enter `add Window A --id A61490`. In B enter `add Window B --id A61491`.<br>
-      Expected: A saves Window A as its fourth student. B reports changed disk data and rolls back Window B, retaining its three earlier students. Restart B: Window A now appears as the fourth student. Retry `add Window B --id A61491` in B: Window B is saved as the fifth student.
+   1. Test case: In A, enter `add Window A --id A61490`.<br>
+      Expected: A saves and displays Window A as its fourth student.
+   1. Test case: In B, enter `add Window B --id A61491`.<br>
+      Expected: B reports changed disk data and rolls back Window B, retaining its three earlier students.
+   1. Test case: Restart B.<br>
+      Expected: Window A appears as the fourth student.
+   1. Test case: In B, enter `add Window B --id A61491`.<br>
+      Expected: Window B is saved and displayed as the fifth student.
 
 ## Appendix: Effort
 
