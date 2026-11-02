@@ -576,7 +576,7 @@ These instructions provide a starting path through TAB's features. Testers shoul
 
 ### Preparing test records
 
-Before **each numbered scenario** in the remaining sections, reset the disposable book with the commands below, submitted **one line at a time**. Skip `yes` if `clear` reports that the book is already empty. For file-related scenarios, first close all TAB windows and restore any files changed by the previous test.
+Reset the disposable book before each **top-level scenario** below, such as “Duplicate warnings and ID conflicts”. Run that scenario’s indented steps in order without resetting between them. Submit the setup commands below **one line at a time**. Skip `yes` if `clear` reports that the book is already empty. For file-related scenarios, first close all TAB windows and restore any files changed by the previous test.
 
 ```text
 clear
