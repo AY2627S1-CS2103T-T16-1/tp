@@ -426,6 +426,7 @@ student outside the current search results. Finding students (UC02) is optional 
 **MSS**
 
 1. The user identifies a student and supplies changes to their details.
+1. TAB identifies the student using the supplied index or NUS Student ID.
 1. TAB updates and saves the student's details, preserving unspecified details.
 1. TAB confirms the change and refreshes the current search results and summary.
 
@@ -433,23 +434,26 @@ student outside the current search results. Finding students (UC02) is optional 
 
 **Extensions**
 
-* 1a. The request is invalid, the target does not exist, or the new ID conflicts with another student's ID.
+* 1a. The request or a supplied field is invalid.
   * 1a1. TAB explains the problem without changing records or the current search.
   * Use case resumes at step 1.
-* 1b. The requested details equal the saved details.
-  * 1b1. TAB reports that no change is needed without changing records or the current search.
-  * Use case ends.
-* 2a. Saving fails.
-  * 2a1. TAB restores the records and previous search results and explains recovery.
+* 2a. The target does not exist, or the new ID conflicts with another student's ID.
+  * 2a1. TAB explains the problem without changing records or the current search.
   * Use case resumes at step 1.
-* 3a. The changed student no longer matches the current search.
-  * 3a1. TAB excludes the student from the results while retaining the updated record.
+* 2b. The requested details equal the saved details.
+  * 2b1. TAB reports that no change is needed without changing records or the current search.
   * Use case ends.
-* 3b. The changed details warrant a warning, such as a possible duplicate name, phone, or email.
-  * 3b1. TAB includes the warning in the successful result for the user to review.
+* 3a. Saving fails.
+  * 3a1. TAB restores the records and previous search results and explains recovery.
+  * Use case resumes at step 1.
+* 4a. The changed student no longer matches the current search.
+  * 4a1. TAB excludes the student from the results while retaining the updated record.
+  * Use case ends.
+* 4b. The changed details warrant a warning, such as a possible duplicate name, phone, or email.
+  * 4b1. TAB includes the warning in the successful result for the user to review.
   * Use case ends.
 
-Extensions 3a and 3b may occur together. Setting or clearing follow-up and replacing or clearing tags use
+Extensions 4a and 4b may occur together. Setting or clearing follow-up and replacing or clearing tags use
 this same flow. UC04 covers changing one tag while retaining the others; UC07 covers deletion.
 
 #### UC04: Add or remove one tag
@@ -459,6 +463,7 @@ As in UC03, the user can identify a student by a displayed index or a NUS Studen
 **MSS**
 
 1. The user identifies a student and requests one tag addition or removal.
+1. TAB identifies the student using the supplied index or NUS Student ID.
 1. TAB updates that tag, preserves the other details, and saves the record.
 1. TAB confirms the action and refreshes the current search results and summary.
 
@@ -466,14 +471,17 @@ As in UC03, the user can identify a student by a displayed index or a NUS Studen
 
 **Extensions**
 
-* 1a. The request or tag is invalid, or the target does not exist.
+* 1a. The request or tag is invalid.
   * 1a1. TAB explains the problem without changing records or the current search.
   * Use case resumes at step 1.
-* 1b. The student already has a tag to add, or lacks a tag to remove, ignoring case and extra spaces.
-  * 1b1. TAB reports that no change was made.
+* 2a. The target does not exist.
+  * 2a1. TAB explains the problem without changing records or the current search.
+  * Use case resumes at step 1.
+* 2b. The student already has a tag to add, or lacks a tag to remove, ignoring case and extra spaces.
+  * 2b1. TAB reports that no change was made.
   * Use case ends.
-* 2a. Saving fails.
-  * 2a1. TAB restores the records and previous search results and reports the reason.
+* 3a. Saving fails.
+  * 3a1. TAB restores the records and previous search results and reports the reason.
   * Use case resumes at step 1.
 
 Changes that affect search membership and warnings about added tags follow the alternatives in UC03.
@@ -547,6 +555,7 @@ As in UC03, the user can identify a student by a displayed index or a NUS Studen
 **MSS**
 
 1. The user identifies a student and requests deletion.
+1. TAB identifies the student using the supplied index or NUS Student ID.
 1. TAB removes the student and saves the updated book.
 1. TAB confirms the deletion and refreshes the current search results and summary.
 
@@ -554,11 +563,14 @@ As in UC03, the user can identify a student by a displayed index or a NUS Studen
 
 **Extensions**
 
-* 1a. The request is invalid or the target does not exist.
+* 1a. The request is invalid.
   * 1a1. TAB explains the problem without changing records or the current search.
   * Use case resumes at step 1.
-* 2a. Saving fails.
-  * 2a1. TAB restores the records and previous search results and explains recovery.
+* 2a. The target does not exist.
+  * 2a1. TAB explains the problem without changing records or the current search.
+  * Use case resumes at step 1.
+* 3a. Saving fails.
+  * 3a1. TAB restores the records and previous search results and explains recovery.
   * Use case resumes at step 1.
 
 ### Non-functional requirements
