@@ -3,10 +3,13 @@ package seedu.tab.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.tab.logic.parser.CliFlags.FLAG_FOLLOW_UP;
 import static seedu.tab.logic.parser.CliFlags.FLAG_NO_FOLLOW_UP;
+import static seedu.tab.logic.parser.CliFlags.FLAG_NUS_STUDENT_ID;
+import static seedu.tab.logic.parser.CliFlags.FLAG_TARGET_ID;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -17,6 +20,7 @@ import seedu.tab.commons.util.StringUtil;
 import seedu.tab.logic.Messages;
 import seedu.tab.logic.commands.StudentTarget;
 import seedu.tab.logic.parser.exceptions.ParseException;
+import seedu.tab.logic.parser.exceptions.UnknownFlagException;
 import seedu.tab.model.student.Email;
 import seedu.tab.model.student.Name;
 import seedu.tab.model.student.NusStudentId;
@@ -39,6 +43,14 @@ public class ParserUtil {
     public static final String MESSAGE_FOLLOW_UP_IS_NOT_A_TAG =
             getFollowUpIsNotATagMessage(FLAG_FOLLOW_UP.getLabel());
 
+    /**
+     * How a command that selects a student with the ID field explains the option {@code edit}
+     * selects one with, to a user carrying that habit over from {@code edit}.
+     */
+    public static final String MESSAGE_TARGET_ID_IS_EDIT_ONLY =
+            FLAG_NUS_STUDENT_ID.getMarkerWithAliases() + " selects the student holding an NUS Student ID here; "
+                    + FLAG_TARGET_ID + " does so only in edit.";
+
     /** How a target read as an NUS Student ID is named, as the usage messages name it. */
     public static final String FIELD_NUS_STUDENT_ID = "NUS_STUDENT_ID";
 
@@ -56,6 +68,15 @@ public class ParserUtil {
     public static String getFollowUpIsNotATagMessage(String flagCommand) {
         requireNonNull(flagCommand);
         return FollowUpFlag.MESSAGE_RESERVED + " Use " + flagCommand + " to mark the student.";
+    }
+
+    /**
+     * Returns true if {@code e} refuses the option {@code edit} selects a student with, so that a
+     * command whose ID field selects the student can add {@link #MESSAGE_TARGET_ID_IS_EDIT_ONLY}.
+     */
+    static boolean isTargetIdOption(ParseException e) {
+        return e instanceof UnknownFlagException unknown
+                && FLAG_TARGET_ID.getMarkers().contains(unknown.getMarker().toLowerCase(Locale.ROOT));
     }
 
     /**

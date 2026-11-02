@@ -188,6 +188,22 @@ public class TagCommandParserTest {
     }
 
     @Test
+    public void parse_editTargetIdOption_pointsToIdOption() {
+        String expected = "There is no --target-id option.\n"
+                + "--id (or -i) selects the student holding an NUS Student ID here; "
+                + "--target-id does so only in edit.";
+        assertParseFailure(parser, "--target-id 1234 -a T2", expected);
+        assertParseFailure(parser, "--target-id=1234 -r T2", expected);
+        assertParseFailure(parser, "--Target-Id 1234 -a T2", expected.replaceFirst("--target-id", "--Target-Id"));
+        // the option the hint names selects the same student
+        StudentTarget target = StudentTarget.byNusStudentId(new NusStudentId("1234"));
+        assertParseSuccess(parser, "--id 1234 -a T2", new TagCommand(target, new Tag("T2"), Action.ADD));
+        // another unknown option keeps the guidance on adding and removing tags
+        assertParseFailure(parser, "1 --tag T2", String.format(Messages.MESSAGE_UNKNOWN_FLAG, "--tag")
+                + "\n" + TagCommand.MESSAGE_ACTION_GUIDANCE);
+    }
+
+    @Test
     public void parse_tagActionOptionsInOtherCommands_rejected() {
         for (String marker : List.of("-a", "--add", "-r", "--remove")) {
             String expected = String.format(Messages.MESSAGE_UNKNOWN_FLAG, marker);
