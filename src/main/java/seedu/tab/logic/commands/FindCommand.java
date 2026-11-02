@@ -16,6 +16,7 @@ import seedu.tab.commons.util.ToStringBuilder;
 import seedu.tab.logic.Messages;
 import seedu.tab.model.Model;
 import seedu.tab.model.student.DetailsContainsKeywordsPredicate;
+import seedu.tab.model.student.DetailsContainsKeywordsPredicate.Field;
 
 /**
  * Finds and lists all students in the student book whose details match every supplied search condition.
@@ -50,10 +51,10 @@ public class FindCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredStudentList(predicate);
-        logger.fine("Find matched " + model.getFilteredStudentList().size() + " of "
-                + model.getStudentBook().getStudentList().size());
-        return new CommandResult(
-                Messages.getStudentsFoundOverview(model.getFilteredStudentList().size()));
+        int foundCount = model.getFilteredStudentList().size();
+        logger.fine("Find matched " + foundCount + " of " + model.getStudentBook().getStudentList().size());
+        return new CommandResult(FollowUpTagWarning.appendFindNoteTo(
+                Messages.getStudentsFoundOverview(foundCount), foundCount > 0, predicate.getKeywords(Field.TAG)));
     }
 
     @Override

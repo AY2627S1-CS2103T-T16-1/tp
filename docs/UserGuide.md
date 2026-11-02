@@ -257,7 +257,8 @@ Searches all students using the [student field options](#student-fields).
   For example, `find -n "Mary Jane"` matches the names `Mary-Jane` and `Mary–Jane`, but `find -t "Mary Jane"` does not match the tag `Mary-Jane`.
 * Phone searches match digits across formatting. <br>
   For example, `91234567` matches `+65 9123 4567`.
-* Use `--follow-up` for students with the follow-up flag, or `--no-follow-up` for students without it. The two cannot be used together.
+* Use `--follow-up` for students with the follow-up flag, or `--no-follow-up` for students without it. The two cannot be used together. <br>
+  `Needs follow-up` on a card shows the follow-up flag, not a tag. For example, `find --follow-up` lists flagged students, but `find -t "Needs follow-up"` lists nobody, and TAB reminds you to use `--follow-up` instead.
 
 **Examples**
 
