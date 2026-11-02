@@ -813,6 +813,17 @@ The work spans implementation, automated tests, manual verification, and documen
 
 ## Appendix: Planned Enhancements
 
+### Whole-Tag Matching in `find` (Coming soon)
+
+**Limitation:** Tag searches use case-insensitive partial matching. For example, `find -t T1` also lists students tagged `T10`, `T11`, or `T12`, so a TA cannot use this search to list only tutorial group T1.
+
+**Planned enhancement:** Add an exact-match option for tag terms. A tag term beginning with `=` will match an entire tag name, ignoring case. <br>
+For example, `find -t =T1` will match students with a tag named `T1` or `t1`, but will not match students whose only tags are `T10`, `T11`, or `T12`.
+
+Details:
+
+* Tag terms without the `=` prefix will continue to use partial matching.
+
 ### Undo/Redo Commands (Coming soon)
 
 **Limitation:** A TA cannot reverse an accidental change to student records within TAB. For example, deleting the wrong student or confirming `clear` removes records without a way to recover them through a command.
