@@ -82,6 +82,11 @@ public class DetailsContainsKeywordsPredicate implements Predicate<Student> {
         keywordsByField.forEach((field, keywords) -> this.keywordsByField.put(field, List.copyOf(keywords)));
     }
 
+    /** Returns the terms that must occur in {@code field}, empty if the search has none. */
+    public List<String> getKeywords(Field field) {
+        return keywordsByField.getOrDefault(field, List.of());
+    }
+
     @Override
     public boolean test(Student student) {
         return hasAnyCondition() && matchesFollowUp(student) && matchesAllTerms(student);

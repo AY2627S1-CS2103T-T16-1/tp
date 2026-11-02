@@ -199,6 +199,40 @@ public class FindCommandTest {
     }
 
     @Test
+    public void execute_followUpLabelAsTag_listsSameStudentsWithAdvice() throws Exception {
+        Student flaggedStudent = new StudentBuilder().withName("Alex Yeoh").withFlag(true).build();
+        StudentBook studentBook = new StudentBook();
+        studentBook.addStudent(flaggedStudent);
+        Model localModel = new ModelManager(studentBook, new UserPrefs());
+
+        Command command = new StudentBookParser().parseCommand("find -t \"Needs follow-up\"");
+
+        assertSearchSuccess((FindCommand) command, localModel, "Found 0 students.\n\n"
+                + "NOTE: The \"Needs follow-up\" label marks the follow-up flag, which is not a tag. "
+                + "To find flagged students, use find --follow-up.");
+        assertEquals(List.of(), localModel.getFilteredStudentList());
+    }
+
+    @Test
+    public void execute_realTagLikeLabel_listsStudentsWithoutAdvice() throws Exception {
+        Student taggedStudent = new StudentBuilder().withName("Alex Yeoh").withTags("follow-up").build();
+        StudentBook studentBook = new StudentBook();
+        studentBook.addStudent(taggedStudent);
+        Model localModel = new ModelManager(studentBook, new UserPrefs());
+
+        Command command = new StudentBookParser().parseCommand("find -t follow-up");
+
+        assertSearchSuccess((FindCommand) command, localModel, "Found 1 student.");
+        assertEquals(List.of(taggedStudent), localModel.getFilteredStudentList());
+    }
+
+    @Test
+    public void execute_ordinaryTag_noAdvice() throws Exception {
+        Command command = new StudentBookParser().parseCommand("find -t friends");
+        assertSearchSuccess((FindCommand) command, model, "Found 3 students.");
+    }
+
+    @Test
     public void toStringMethod() {
         DetailsContainsKeywordsPredicate predicate =
                 new DetailsContainsKeywordsPredicate(Map.of(Field.NAME, List.of("keyword")));
