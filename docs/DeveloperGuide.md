@@ -545,16 +545,16 @@ Setting/clearing follow-up uses the same edit flow. UC03 covers the tag-specific
 | Term | Meaning in this guide |
 | --- | --- |
 | Student book | The complete collection of student records, including those hidden by a search. |
-| Displayed / filtered list | The observable view selected by the current predicate; user-facing indices refer to this view. |
+| Displayed / filtered list | The students currently shown after applying the active search, or all students when no search is active. |
 | Index | A one-based position in the displayed list, rather than a permanent student identifier. |
 | NUS Student ID | The optional institutional identifier used as TAB's sole identity key when present. |
 | Tag | A user-defined grouping label, such as a tutorial or lab group. |
-| Follow-up | A pending action or response owed to a student, represented separately from general tags. |
+| Follow-up | A pending action or response owed to a student, represented separately from general tags with the fixed `Needs follow-up` marker. |
 | Preamble | Positional text before the first option, such as an add name or an edit target. |
 | Option / selector | A hyphen-prefixed command token identifying a value or a presence-only condition. |
-| NFC | Unicode Normalization Form C, used for the stored representation of field values. |
+| Text normalization | Converting text to a consistent form for storage or comparison, such as trimming surrounding whitespace, collapsing repeated whitespace, and standardizing equivalent Unicode representations. |
 | Snapshot | A copy of the student book retained before a command so a failed save can restore it. |
-| Save baseline | The last loaded or successfully saved book remembered by a storage instance for stale-write checks. |
+| Disk baseline | The last loaded or successfully saved book remembered by a storage instance for stale-write checks. |
 | Stale window | A TAB session whose remembered book differs from the student records now saved on disk. |
 
 ## Appendix: Instructions for Manual Testing
