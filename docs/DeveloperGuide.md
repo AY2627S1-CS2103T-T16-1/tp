@@ -370,6 +370,7 @@ For these use cases, the **system** is TAB and the **actor** is a teaching assis
 **MSS**
 
 1. The user requests to add a student, supplying a name and any known details.
+1. TAB validates the supplied student details.
 1. TAB adds and saves the student.
 1. TAB confirms the addition and shows the new student.
 
@@ -377,23 +378,23 @@ For these use cases, the **system** is TAB and the **actor** is a teaching assis
 
 **Extensions**
 
-* 1a. The request or a supplied field is invalid.
-  * 1a1. TAB explains the error without changing records or the current search.
+* 2a. The request or a supplied field is invalid.
+  * 2a1. TAB explains the error without changing records or the current search.
   * Use case resumes at step 1.
-* 1b. Another student holds the supplied NUS Student ID.
-  * 1b1. TAB identifies the conflict without changing records or the current search.
+* 2b. Another student holds the supplied NUS Student ID.
+  * 2b1. TAB identifies the conflict without changing records or the current search.
   * Use case resumes at step 1.
-* 2a. Saving fails.
-  * 2a1. TAB restores the records and previous search results and reports the reason.
+* 3a. Saving fails.
+  * 3a1. TAB restores the records and previous search results and reports the reason.
   * Use case resumes at step 1.
-* 3a. The new student does not match the current search.
-  * 3a1. TAB shows all students and explains that the search has been cleared.
+* 4a. The new student does not match the current search.
+  * 4a1. TAB shows all students and explains that the search has been cleared.
   * Use case ends.
-* 3b. The supplied details warrant a warning, such as a possible duplicate name, phone, or email.
-  * 3b1. TAB includes the warning in the successful result for the user to review.
+* 4b. The supplied details warrant a warning, such as a possible duplicate name, phone, or email.
+  * 4b1. TAB includes the warning in the successful result for the user to review.
   * Use case ends.
 
-Extensions 3a and 3b may occur together.
+Extensions 4a and 4b may occur together.
 
 #### UC02: Find students
 
@@ -427,6 +428,7 @@ student outside the current search results. Finding students (UC02) is optional 
 
 1. The user identifies a student and supplies changes to their details.
 1. TAB identifies the student using the supplied index or NUS Student ID.
+1. TAB validates the supplied student details.
 1. TAB updates and saves the student's details, preserving unspecified details.
 1. TAB confirms the change and refreshes the current search results and summary.
 
@@ -434,26 +436,29 @@ student outside the current search results. Finding students (UC02) is optional 
 
 **Extensions**
 
-* 1a. The request or a supplied field is invalid.
+* 1a. The request is malformed.
   * 1a1. TAB explains the problem without changing records or the current search.
   * Use case resumes at step 1.
-* 2a. The target does not exist, or the new ID conflicts with another student's ID.
+* 2a. The target does not exist.
   * 2a1. TAB explains the problem without changing records or the current search.
   * Use case resumes at step 1.
-* 2b. The requested details equal the saved details.
-  * 2b1. TAB reports that no change is needed without changing records or the current search.
-  * Use case ends.
-* 3a. Saving fails.
-  * 3a1. TAB restores the records and previous search results and explains recovery.
+* 3a. A supplied field is invalid, or the new ID conflicts with another student's ID.
+  * 3a1. TAB explains the problem without changing records or the current search.
   * Use case resumes at step 1.
-* 4a. The changed student no longer matches the current search.
-  * 4a1. TAB excludes the student from the results while retaining the updated record.
+* 3b. The requested details equal the saved details.
+  * 3b1. TAB reports that no change is needed without changing records or the current search.
   * Use case ends.
-* 4b. The changed details warrant a warning, such as a possible duplicate name, phone, or email.
-  * 4b1. TAB includes the warning in the successful result for the user to review.
+* 4a. Saving fails.
+  * 4a1. TAB restores the records and previous search results and explains recovery.
+  * Use case resumes at step 1.
+* 5a. The changed student no longer matches the current search.
+  * 5a1. TAB excludes the student from the results while retaining the updated record.
+  * Use case ends.
+* 5b. The changed details warrant a warning, such as a possible duplicate name, phone, or email.
+  * 5b1. TAB includes the warning in the successful result for the user to review.
   * Use case ends.
 
-Extensions 4a and 4b may occur together. Setting or clearing follow-up and replacing or clearing tags use
+Extensions 5a and 5b may occur together. Setting or clearing follow-up and replacing or clearing tags use
 this same flow. UC04 covers changing one tag while retaining the others; UC07 covers deletion.
 
 #### UC04: Add or remove one tag
