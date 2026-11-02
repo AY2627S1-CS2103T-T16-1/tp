@@ -160,7 +160,7 @@ The diagram includes the Model API and the read-only book/preferences interfaces
 The `Model` component,
 
 * stores the student book data i.e., all `Student` objects (which are contained in a `UniqueStudentList` object).
-* maintains a `FilteredList<Student>` view of the student book for the current filter, such as search results. It exposes this unmodifiable view through the `ObservableList<Student>` API, so the UI can observe changes.
+* maintains a `FilteredList<Student>` view of the student book for the current search criteria, such as search results. It exposes this unmodifiable view through the `ObservableList<Student>` API, so the UI can observe changes.
 * stores a `UserPrefs` object that represents the user's preferences (just the GUI settings). This is exposed to the outside through the `ReadOnlyUserPrefs` interface.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
@@ -229,7 +229,7 @@ The error-handling rules are:
 * A standalone value beginning with a hyphen must be quoted to avoid option recognition. A quoted value must be separated from its option by a space or `=`.
 * Where possible, invalid option spellings include a supported spelling suggestion, such as `--p` to `-p`. These suggestions do not execute a corrected command.
 * Feedback identifies invalid fields and shortens long values. No-argument commands, such as `list`, reject extra text.
-* Command words ignore case; option spellings remain case-sensitive. Repeated tags are allowed for `add` and `edit`, while repeated field selectors are allowed for `find`.
+* Command words ignore case; option spellings remain case-sensitive. Repeated tags are allowed for `add` and `edit`, while repeated field options are allowed for `find`.
 
 The following activity diagram illustrates how `CommandWords.suggestFor()` suggests corrections for an unknown command word.
 
@@ -252,7 +252,7 @@ The `edit`, `delete`, and `tag` commands use `StudentTarget` to identify a stude
 How target resolution works:
 
 * An index, such as `1`, selects a student from the displayed list. `Index` converts the one-based input into a zero-based list position.
-* A letter-leading target, such as `A0123456X`, is parsed as a NUS Student ID. The lookup includes students hidden by the current filter.
+* A letter-leading target, such as `A0123456X`, is parsed as a NUS Student ID. The lookup includes students hidden by the current search criteria.
 * An explicit ID option also accepts digit-leading IDs. `edit` uses `--target-id`, while `delete` and `tag` use `--id`. The separate edit option leaves `--id` available for changing the student's ID.
 * An unresolved target produces a `CommandException` without changing records. If an out-of-range numeric index matches a stored ID, the feedback suggests the explicit ID option.
 
@@ -268,7 +268,7 @@ How optional-field editing works:
 * The command makes this choice for each optional field in turn, and `createEditedStudent()` combines all descriptor fields into a replacement `Student`. Names cannot be cleared. `-t ""` clears all general tags, while nonempty `-t` options replace the tag set.
 * An equal replacement returns an unchanged result. Otherwise, the command checks ID uniqueness before calling `Model.setStudent()`. Logic saves only when the book changes.
 
-### Tags and follow-up status
+### Tags and the follow-up flag
 
 `TagCommand` adds or removes one general tag without replacing the remaining tags. The following sequence diagram illustrates `tag 1 -a T1` when the selected student does not already have that tag.
 
@@ -287,14 +287,14 @@ Follow-up is stored separately from general tags. The following activity diagram
 
 <puml src="diagrams/FollowUpStatus.puml" alt="Rejecting repeated or conflicting follow-up selectors and returning the requested edit status" />
 
-How follow-up status works:
+How the follow-up flag works:
 
 * `Student` holds an optional `FollowUpFlag`, a subclass of `Tag` used for its display label, outside the general tag set.
-* `add -f` creates a flagged student. On `edit`, `-f` sets the status, `-nf` clears it, and omitting both preserves it. Repeated or conflicting selectors are rejected by `ParserUtil.parseFollowUpSelector()`.
+* `add -f` creates a flagged student. On `edit`, `-f` sets the flag, `-nf` clears it, and omitting both preserves it. Repeated or conflicting selectors are rejected by `ParserUtil.parseFollowUpSelector()`.
 * `find -f` and `find -nf` filter by this status without changing it.
 * The label `Needs follow-up` is reserved to prevent duplicate display and counting. Commands reject it as a new general tag; JSON stores the status in the separate `flag` field.
 * `FollowUpFlag.isFollowUpName()` ignores case, equivalent dash/space separators, and trailing punctuation. Variants such as `Needs follow up` and `Needs followup` are also reserved.
-* Other spellings, such as `Needs_follow_up`, remain general tags. `FollowUpTagWarning` explains that these do not set follow-up status.
+* Other spellings, such as `Needs_follow_up`, remain general tags. `FollowUpTagWarning` explains that these do not set the follow-up flag.
 
 ## Documentation, logging, testing, and dev-ops
 
@@ -410,7 +410,7 @@ Extensions 4a and 4b may occur together.
 
 **MSS**
 
-1. The user requests students matching selected details or follow-up status.
+1. The user requests students matching selected details or the follow-up flag.
 1. TAB displays the students matching all supplied conditions and their summary.
 
     Use case ends.
@@ -420,7 +420,7 @@ Extensions 4a and 4b may occur together.
 * 1a. The command format is invalid.
   * 1a1. TAB explains the error without changing records or the current search criteria.
   * Use case resumes from step 1.
-* 1b. The search conditions are invalid, such as requesting both follow-up statuses.
+* 1b. The search conditions are invalid, such as requesting students both with and without the follow-up flag.
   * 1b1. TAB explains the error without changing records or the current search criteria.
   * Use case resumes from step 1.
 * 2a. No students match.
@@ -490,9 +490,9 @@ this same flow. UC04 covers changing one tag while retaining the others; UC06 co
 * 2b. The tag is invalid.
   * 2b1. TAB explains the problem without changing records or the current search criteria.
   * Use case resumes from step 1.
-* 2c. The user requests to add a tag whose name is reserved for indicating follow-up status.
+* 2c. The user requests to add a tag whose name is reserved for the follow-up flag.
   * 2c1. TAB rejects the request without changing records or the current search criteria.
-  * 2c2. TAB explains how to set the student's follow-up status.
+  * 2c2. TAB explains how to set the student's follow-up flag.
   * Use case resumes from step 1.
 * 2d. The student already has the tag that the user wants to add (ignoring case and extra spaces).
   * 2d1. TAB reports that no change was made.
@@ -501,7 +501,7 @@ this same flow. UC04 covers changing one tag while retaining the others; UC06 co
   * 2e1. TAB reports that no change was made.
   * Use case ends.
 * 2f. The user requests removal of the student's follow-up flag as a tag.
-  * 2f1. TAB reports that no change was made and explains how to clear the student's follow-up status.
+  * 2f1. TAB reports that no change was made and explains how to clear the student's follow-up flag.
   * Use case ends.
 * 3a. Saving fails.
   * 3a1. TAB restores the records and current search criteria and reports the reason.
@@ -509,7 +509,7 @@ this same flow. UC04 covers changing one tag while retaining the others; UC06 co
 * 4a. The changed student no longer matches the current search criteria.
   * 4a1. TAB excludes the student from the results while retaining the updated record.
   * Use case ends.
-* 4b. The added tag has a permitted name that could be confused with follow-up status.
+* 4b. The added tag has a permitted name that could be confused with the follow-up flag.
   * 4b1. TAB includes the warning in the successful result for the user to review.
   * Use case ends.
 
@@ -579,10 +579,10 @@ Extensions 4a and 4b may occur together.
 1. The user starts TAB.
 1. TAB identifies the data file and explains the loading problem and recovery options, including the line,
    column, and a source excerpt for a syntax error, or the student record and field at fault,
-   without changing the file or opening the student view.
+   without changing the file or opening the main window.
 1. The user closes TAB and repairs the file or replaces it with a valid backup.
 1. The user restarts TAB.
-1. TAB loads the corrected records and opens the student view.
+1. TAB loads the corrected records and opens the main window.
 
     Use case ends.
 
@@ -593,7 +593,7 @@ Extensions 4a and 4b may occur together.
   * 2a2. The user closes TAB and replaces the file with a valid backup instead of repairing it.
   * Use case resumes from step 4.
 * 4a. TAB still cannot load the file.
-  * 4a1. TAB leaves the file unchanged and reports the remaining problem without opening the student view.
+  * 4a1. TAB leaves the file unchanged and reports the remaining problem without opening the main window.
   * Use case resumes from step 3.
 
 ### Non-functional requirements
@@ -613,11 +613,11 @@ Extensions 4a and 4b may occur together.
 | Term | Meaning in this guide |
 | --- | --- |
 | Student book | The complete collection of student records, including those hidden by a search. |
-| Displayed / filtered list | The students currently shown after applying the active search, or all students when no search is active. |
+| Displayed / filtered list | The students currently shown after applying the current search criteria, or all students when no search criteria apply. |
 | Index | A one-based position in the displayed list, rather than a permanent student identifier. |
 | NUS Student ID | The optional institutional identifier used as TAB's sole identity key when present. |
 | Tag | A user-defined grouping label, such as a tutorial or lab group. |
-| Follow-up | A pending action or response owed to a student, represented separately from general tags with the fixed `Needs follow-up` marker. |
+| Follow-up flag | Marks a student with a pending action or response owed to them. It is stored separately from general tags and shown as the fixed `Needs follow-up` label. |
 | Preamble | Positional text before the first option, such as an add name or an edit target. |
 | Option / selector | A hyphen-prefixed command token identifying a value or a presence-only condition. |
 | Text normalization | Converting text to a consistent form for storage or comparison, such as trimming surrounding whitespace, collapsing repeated whitespace, and standardizing equivalent Unicode representations. |
@@ -739,13 +739,13 @@ Expected: For a nonempty book, `clear` asks for confirmation without deleting re
       Expected: An error reports that José does not have tag `Missing`. No tags change.
 1. Follow-up is separate from general tags
    1. Test case: `edit A61401 -nf`.<br>
-      Expected: José's follow-up marker disappears. All three students remain visible.
+      Expected: José's follow-up flag disappears. All three students remain visible.
    1. Test case: `edit --target-id 001234 -f`.<br>
-      Expected: Alice gains the follow-up marker and retains her `Lab 3` tag. All three students remain visible.
+      Expected: Alice gains the follow-up flag and retains her `Lab 3` tag. All three students remain visible.
    1. Test case: `find -f`.<br>
       Expected: Only Alice appears, with one student and one follow-up in the summary.
    1. Test case: `tag --id 001234 -a "Needs follow-up"`.<br>
-      Expected: A reserved-marker error with guidance to use `edit`. Neither tags nor follow-up change.
+      Expected: An error explains that the name is reserved for the follow-up flag and suggests `edit`. Neither tags nor follow-up change.
 
 ### Deleting students and clearing the book
 
@@ -871,7 +871,7 @@ TAB builds on AB3's layered JavaFX application, command/parser pattern, observab
 
 | Area | Work beyond AB3 and its main challenge |
 | --- | --- |
-| Student records and identity | Optional contact details and NUS Student IDs, ID-based targeting, follow-up status, and incremental tags require parsers, model invariants, persistence, and displays to agree. Hard ID conflicts must stay distinct from advisory contact matches. |
+| Student records and identity | Optional contact details and NUS Student IDs, ID-based targeting, the follow-up flag, and incremental tags require parsers, model invariants, persistence, and displays to agree. Hard ID conflicts must stay distinct from advisory contact matches. |
 | Input and search | Positional names, quoted values, option aliases, Unicode normalization, combined field filters, and typo suggestions broaden accepted input. The challenge is preserving legitimate names and values while giving precise diagnostics for plausible mistakes. |
 | Persistence and recovery | Save snapshots, rollback, disk baselines, file locks, and atomic replacement protect records when writes fail or another TAB window saves first. Validation must also preserve AB3's support for correctly hand-edited data files. |
 | Keyboard workflow and presentation | Command history, in-window help, student reveal, and a summary of the filtered list connect command results to observable JavaFX views. UI state must remain coherent after searches, record replacement, and failed saves. |
@@ -896,7 +896,7 @@ Details:
 
 **Limitation:** A TA cannot reverse an accidental change to student records within TAB. For example, deleting the wrong student or confirming `clear` removes records without a way to recover them through a command.
 
-**Planned enhancement:** Add `undo` to reverse the most recent successful change and `redo` to restore the most recently undone change. This will cover `add`, `edit`, `tag`, `delete`, and confirmed `clear` commands, including changes to follow-up status. <br>
+**Planned enhancement:** Add `undo` to reverse the most recent successful change and `redo` to restore the most recently undone change. This will cover `add`, `edit`, `tag`, `delete`, and confirmed `clear` commands, including changes to the follow-up flag. <br>
 For example, after `delete 1`, `undo` will restore the deleted student and `redo` will delete that same student again.
 
 Details:
