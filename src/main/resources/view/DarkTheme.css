@@ -257,9 +257,15 @@
     -fx-background-color: -tab-accent;
 }
 
-.menu-bar .menu-button:hover .label,
-.menu-bar .menu-button:focused .label,
-.menu-bar .menu-button:showing .label,
+/*
+ * The dark fill belongs to the menu bar's own label, which sits on the accent
+ * background above. A popup takes its style from the node that owns it, so a
+ * descendant selector here would reach the items of the open menu as well, and
+ * draw them in the window colour on the dropdown's own background.
+ */
+.menu-bar .menu-button:hover > .label,
+.menu-bar .menu-button:focused > .label,
+.menu-bar .menu-button:showing > .label,
 .context-menu .menu-item:focused .label {
     -fx-text-fill: -tab-bg;
 }
