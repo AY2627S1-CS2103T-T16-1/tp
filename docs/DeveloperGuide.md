@@ -388,7 +388,7 @@ For these use cases, the **system** is TAB and the **actor** is a teaching assis
   * 2b1. TAB identifies the conflict without changing records or the current search criteria.
   * Use case resumes from step 1.
 * 3a. Saving fails.
-  * 3a1. TAB restores the records and previous search results and reports the reason.
+  * 3a1. TAB restores the records and current search criteria and reports the reason.
   * Use case resumes from step 1.
 * 4a. The new student does not match the current search criteria.
   * 4a1. TAB shows all students and explains that the search has been cleared.
@@ -414,7 +414,7 @@ Extensions 4a and 4b may occur together.
   * 1a1. TAB explains the error without changing records or the current search criteria.
   * Use case resumes from step 1.
 * 1b. The search conditions are invalid, such as requesting both follow-up statuses.
-  * 1b1. TAB explains the error and keeps the previous results.
+  * 1b1. TAB explains the error without changing records or the current search criteria.
   * Use case resumes from step 1.
 * 2a. No students match.
   * 2a1. TAB displays an empty result and reports that no students were found.
@@ -449,7 +449,7 @@ Extensions 4a and 4b may occur together.
   * 2d1. TAB reports that no change is needed without changing records or the current search criteria.
   * Use case ends.
 * 3a. Saving fails.
-  * 3a1. TAB restores the records and previous search results and explains recovery.
+  * 3a1. TAB restores the records and current search criteria and reports the reason.
   * Use case resumes from step 1.
 * 4a. The changed student no longer matches the current search criteria.
   * 4a1. TAB excludes the student from the results while retaining the updated record.
@@ -483,17 +483,21 @@ this same flow. UC04 covers changing one tag while retaining the others; UC06 co
 * 2b. The tag is invalid.
   * 2b1. TAB explains the problem without changing records or the current search criteria.
   * Use case resumes from step 1.
-* 2c. The student already has the tag to add, ignoring case and extra spaces.
-  * 2c1. TAB reports that no change was made.
-  * Use case ends.
-* 2d. The student lacks the tag to remove, ignoring case and extra spaces, and the tag is not their follow-up flag.
+* 2c. The user requests to add the reserved follow-up label as a tag.
+  * 2c1. TAB refuses the tag without changing records or the current search criteria.
+  * 2c2. TAB explains how to flag the student for follow-up (see UC03).
+  * Use case resumes from step 1.
+* 2d. The student already has the tag to add, ignoring case and extra spaces.
   * 2d1. TAB reports that no change was made.
   * Use case ends.
-* 2e. The user requests removal of the student's follow-up flag as a tag.
-  * 2e1. TAB reports that no change was made and explains how to clear the flag through UC03.
+* 2e. The student lacks the tag to remove, ignoring case and extra spaces, and the tag is not their follow-up flag.
+  * 2e1. TAB reports that no change was made.
+  * Use case ends.
+* 2f. The user requests removal of the student's follow-up flag as a tag.
+  * 2f1. TAB reports that no change was made and explains how to clear the flag (see UC03).
   * Use case ends.
 * 3a. Saving fails.
-  * 3a1. TAB restores the records and previous search results and reports the reason.
+  * 3a1. TAB restores the records and current search criteria and reports the reason.
   * Use case resumes from step 1.
 * 4a. The changed student no longer matches the current search criteria.
   * 4a1. TAB excludes the student from the results while retaining the updated record.
@@ -526,17 +530,14 @@ Extensions 4a and 4b may occur together.
 * 3a. The user declines.
   * 3a1. TAB cancels without changing records or the current search criteria.
   * Use case ends.
-* 3b. The user submits an empty reply.
+* 3b. The user submits an empty or whitespace-only reply.
   * 3b1. TAB cancels without changing records or the current search criteria.
   * Use case ends.
-* 3c. The user submits a whitespace-only reply.
-  * 3c1. TAB cancels without changing records or the current search criteria.
-  * Use case ends.
-* 3d. The reply is invalid, including another command.
-  * 3d1. TAB explains the accepted replies.
+* 3c. The reply is invalid, including another command.
+  * 3c1. TAB explains the accepted replies.
   * Use case resumes from step 2.
 * 4a. Saving fails.
-  * 4a1. TAB restores the records and previous search results and reports the failure.
+  * 4a1. TAB restores the records and current search criteria and reports the reason.
   * Use case ends.
 
 #### UC06: Delete a student
@@ -559,7 +560,7 @@ Extensions 4a and 4b may occur together.
   * 2a1. TAB explains the problem without changing records or the current search criteria.
   * Use case resumes from step 1.
 * 3a. Saving fails.
-  * 3a1. TAB restores the records and previous search results and explains recovery.
+  * 3a1. TAB restores the records and current search criteria and reports the reason.
   * Use case resumes from step 1.
 
 #### UC07: Recover from unreadable student data
@@ -569,7 +570,8 @@ Extensions 4a and 4b may occur together.
 **MSS**
 
 1. The user starts TAB.
-1. TAB identifies the data file and explains the loading problem and recovery options,
+1. TAB identifies the data file and explains the loading problem and recovery options, including the line,
+   column, and a source excerpt for a syntax error, or the student record and field at fault,
    without changing the file or opening the student view.
 1. The user closes TAB and repairs the file or replaces it with a valid backup.
 1. The user restarts TAB.
@@ -579,17 +581,13 @@ Extensions 4a and 4b may occur together.
 
 **Extensions**
 
-* 2a. TAB can identify the line and column of a syntax error in the data file.
-  * 2a1. TAB includes the line, column, and a short source excerpt.
-  * Use case resumes from step 3.
-* 2b. TAB can identify the student record or field causing the loading problem.
-  * 2b1. TAB includes that context in the explanation.
-  * Use case resumes from step 3.
-* 4a. The file still cannot be loaded.
+* 2a. TAB cannot locate the problem in the data file.
+  * 2a1. TAB explains the problem without a location.
+  * 2a2. The user closes TAB and replaces the file with a valid backup instead of repairing it.
+  * Use case resumes from step 4.
+* 4a. TAB still cannot load the file.
   * 4a1. TAB leaves the file unchanged and reports the remaining problem without opening the student view.
   * Use case resumes from step 3.
-
-Extensions 2a and 2b may occur together.
 
 ### Non-functional requirements
 
