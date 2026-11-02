@@ -598,7 +598,7 @@ Extensions 4a and 4b may occur together.
 
 ### Non-functional requirements
 
-1. **Runtime:** Should work on any *mainstream OS* (Windows, Linux, macOS) with Java 25 and the matching JavaFX runtime as described in the UG.
+1. **Runtime:** Should work on any *mainstream OS* (Windows, Linux, macOS) with Java 25, set up as described in the [UG quick start](UserGuide.md#quick-start).
 1. **Portability:** Should be distributed as one executable JAR of at most 100 MB. This JAR should be usable from a writable folder without an installer or administrator privileges.
 1. **Keyboard access:** Every student-management operation and in-app help should be available through the keyboard.
 1. **Typing efficiency:** A user who types at least 40 words per minute should be able to add a student with a name, phone number and email in under 30 seconds, including correcting one typing mistake.
