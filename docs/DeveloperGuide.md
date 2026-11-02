@@ -12,7 +12,7 @@ TAB (Teaching Assistant's Address Book) is an offline desktop application for te
 
 ## Acknowledgements
 
-* TAB builds on the layered architecture, command/parser structure, JavaFX UI, JSON storage, test utilities, and documentation of [AddressBook-Level3 (AB3)](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org). This guide adapts the organization and explanations of the [AB3 Developer Guide](https://se-education.org/addressbook-level3/DeveloperGuide.html) to TAB's student model and behavior.
+* TAB builds on the layered architecture, command/parser structure, JavaFX UI, JSON storage, test utilities, and documentation of [AddressBook-Level3 (AB3)](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org). This guide adapts the organization, explanations, and manual-testing scenario structure of the [AB3 Developer Guide](https://se-education.org/addressbook-level3/DeveloperGuide.html) to TAB's student model and behavior.
 * TAB continues to use the following from AB3.
    * [JavaFX](https://openjfx.io/), for the controls, FXML loader, observable collections, and graphics used by the desktop interface.
    * [Jackson](https://github.com/FasterXML/jackson), for JSON conversion through `JsonUtil`.
@@ -557,6 +557,144 @@ Setting/clearing follow-up uses the same edit flow. UC03 covers the tag-specific
 | Save baseline | The last loaded or successfully saved book remembered by a storage instance for stale-write checks. |
 | Stale window | A TAB session whose remembered book differs from the student records now saved on disk. |
 
+## Appendix: Instructions for Manual Testing
+
+These instructions provide a starting path through TAB's features. Testers should explore further variations using the [User Guide](UserGuide.md) for syntax and field rules.
+
+<!-- The scenario/prerequisite/test case/expected result structure is adapted from -->
+<!-- https://se-education.org/addressbook-level3/DeveloperGuide.html#appendix-instructions-for-manual-testing -->
+
+### Launch and shutdown
+
+1. Initial launch
+   1. Prerequisites: Follow the [Java setup](UserGuide.md#quick-start), and place `tab.jar` in an empty writable folder reserved for testing.
+   1. Test case: Run `java -jar tab.jar` from that folder.<br>
+      Expected: The window opens with six sample students, a total of six in the summary, and the data path in the status bar.
+1. Saving window preferences
+   1. Test case: Resize and move the window, enter `exit`, then relaunch.<br>
+      Expected: The window closes and reopens at the saved size and position when they fit the available screen. Repeat using the window's close button.
+
+### Preparing test records
+
+Before **each numbered scenario** in the remaining sections, reset the disposable book with the commands below, submitted **one line at a time**. Skip `yes` if `clear` reports that the book is already empty. For file-related scenarios, first close all TAB windows and restore any files changed by the previous test.
+
+```text
+clear
+yes
+add José O'Brien -p "+65 9123 4567" -e jose@example.com --id A61401 -t "Lab 3" -t Tutorial -f
+add Alice Tan --id 001234 -t "Lab 3"
+add Jason Lim -p 81234567 -e jason@example.com --id A61403 -t Tutorial
+```
+
+Expected: Three students appear in this order, only José is flagged, and the summary counts two students in each tag group. Alice has no phone or email displayed.
+
+### Adding students
+
+1. Optional fields and revealing an added student
+   1. Test case: `find -n Nobody`, then `add Mei 林`.<br>
+      Expected: Mei is added without contact details or an ID. All four students appear, with feedback explaining that the search was cleared.
+1. Duplicate warnings and ID conflicts
+   1. Test case: `add Jose O'Brien -p "+65 (9123) 4567" -e JOSE@example.com --id A61404`.<br>
+      Expected: A fourth student is saved, with possible-duplicate warnings for the name, phone and email.
+   1. Test case: `add Different Name --id a61401`.<br>
+      Expected: An ID-conflict error; no fifth student is added.
+1. Field validation
+   1. Test case: `add Invalid Probe -p 12 -e missing-at`.<br>
+      Expected: Both invalid fields are reported, and the three records remain unchanged.
+   1. Test case: `add Domain Probe -e probe@nus`.<br>
+      Expected: The student is saved with a warning about the dotless domain.
+
+### Finding students and checking the summary
+
+1. Searching across fields
+   1. Test case: Run `find -n jose`, `find -p 9123-4567`, `find -e jose@`, and `find --id a61401` in turn.<br>
+      Expected: Each displays only José, with one student and one follow-up in the summary.
+   1. Test case: `find -t "Lab 3" -t Tutorial -f`, then `find -nf -t "Lab 3"`.<br>
+      Expected: Only José appears first, then only Alice. Each search starts from the full book.
+   1. Test case: `find -n Alice -e example.com`, then `list`.<br>
+      Expected: The search shows no matches and zero summary counts; `list` restores all three students and their tag counts.
+1. Invalid searches
+   1. Prerequisites: Enter `find -n Jason`.
+   1. Test cases: `find Alice`, `find -f -nf`, and `find -n ""`.<br>
+      Expected: Each reports an error and keeps Jason as the only displayed student.
+
+### Editing students, tags and follow-up
+
+1. Displayed indices and hidden ID targets
+   1. Prerequisites: Enter `find -n Jason`.
+   1. Test case: `edit 1 -p 83334444`, then `edit --target-id 001234 -e alice@example.com`.<br>
+      Expected: Jason's phone and Alice's email change; Jason remains the only displayed student. Enter `list` to inspect both records.
+   1. Test case: `edit A61403 -p "" -e "" --id "" -t ""`.<br>
+      Expected: Jason retains his name but loses his optional details and tags. Restart and enter `list` to verify the changes persist.
+1. Rejected and unchanged edits
+   1. Test cases: `edit 1 -n ""` and `edit 1 --id 001234`.<br>
+      Expected: Invalid-name and ID-conflict errors respectively, with all records unchanged.
+   1. Test case: `edit 1 -n "José O'Brien"`.<br>
+      Expected: An unchanged-record message; student data is not rewritten.
+1. Replacing tags versus changing one tag
+   1. Test case: `edit A61401 -t T1 -t T2`, then `tag A61401 -a "Project Group"`, then `tag A61401 -r t1`.<br>
+      Expected: José ends with `T2` and `Project Group`; his contact details and follow-up flag remain unchanged.
+   1. Test cases: `tag A61401 -a t2` and `tag A61401 -r Missing`.<br>
+      Expected: Existing-tag and missing-tag errors respectively; no tags change.
+1. Follow-up is separate from general tags
+   1. Test case: `edit A61401 -nf`, then `edit --target-id 001234 -f`, then `find -f`.<br>
+      Expected: Only Alice appears with a follow-up marker; her `Lab 3` tag remains.
+   1. Test case: `tag --id 001234 -a "Needs follow-up"`.<br>
+      Expected: A reserved-marker error with guidance to use `edit`; neither tags nor follow-up change.
+
+### Deleting students and clearing the book
+
+1. Deleting by displayed index and by ID
+   1. Test case: `find -n Jason`, then `delete 1`.<br>
+      Expected: Jason is deleted and the displayed list becomes empty.
+   1. Test case: `delete --id 001234`, then `list`.<br>
+      Expected: Alice is deleted despite being hidden; only José remains.
+   1. Test cases: `delete 0`, `delete 999`, and `delete --id Missing614`.<br>
+      Expected: Each reports a target error; José remains in the book after restart.
+1. Canceling and confirming a clear
+   1. Prerequisites: Enter `find -n Nobody`.
+   1. Test case: `clear`, then `maybe`, then `no` (separate submissions).<br>
+      Expected: The prompt counts all three students despite the empty view. `maybe` keeps confirmation pending; `no` cancels without changing records or the filter.
+   1. Test case: `clear`, then `yes`, then `list`.<br>
+      Expected: All records are removed, and the empty book persists after restart. Another `clear` reports an already-empty book without prompting.
+
+### Help, command entry and window navigation
+
+1. Help and keyboard navigation
+   1. Test case: Enter `help`; try Space, `b`, `g`, `G` and `c`, then `q`.<br>
+      Expected: Help scrolls, shows reading progress and copies the UG link to the clipboard. Closing it restores command entry without changing students.
+   1. Test case: Type an unfinished command, open help with F1, then close it with Esc.<br>
+      Expected: The unfinished command returns. Tab and Shift+Tab reach the command box, student list, summary tag list and visible reply; focused reading panes can be scrolled using the keyboard.
+1. Parsing feedback and history
+   1. Test cases: `LiSt`, then `lsit`, then `add Broken -t "Lab`.<br>
+      Expected: The first lists all students; the others report a suggested command and an unclosed quote respectively, without changing records. Failed input remains editable.
+   1. Test case: Type an unsent draft, press Up to recall earlier submissions, then Down to return to the newest position.<br>
+      Expected: Recall does not execute commands, and the draft returns. Restarting clears history.
+1. Long details
+   1. Test case: `add José José José José José José José José José José José José -t "A very long tutorial group name used to check wrapping" -p "+65 9123 4567 extension 1234567890"`, then narrow the window.<br>
+      Expected: Contents remain within their panes. Hovering shortened names and tags reveals full values, and contact details wrap.
+
+### Saving and loading data
+
+1. Hand-edited data and missing files
+   1. Prerequisites: Close TAB and back up `data/tab.json` from the test JAR's folder.
+   1. Test case: Add `"_comment": "Manual testing copy",` immediately after the top-level opening `{`, change Alice's name to `Alice 手动`, and save as UTF-8. Relaunch, enter `tag --id 001234 -a Probe`, and close TAB.<br>
+      Expected: The changed name loads, and the next save retains both the comment and the new tag.
+   1. Test case: Move `data/tab.json` elsewhere and relaunch.<br>
+      Expected: Six sample students appear. Close TAB and restore the backup before continuing.
+1. Invalid data
+   1. Prerequisites: Close TAB and back up the valid file. Restore this backup between cases.
+   1. Test cases: Remove a comma; separately, change José's `"flag": true` to `"flag": "true"`.<br>
+      Expected: Startup reports a JSON syntax error or an invalid flag type respectively. The main window does not open, and the edited file is left unchanged. Restore the backup to resume testing.
+1. Save failure and rollback
+   1. Prerequisites: Close TAB. In the test folder, move the file `data/.tab.json.lock` aside if present, and create a folder at that exact path.
+   1. Test case: Relaunch, enter `find -n Nobody`, then `add Blocked Probe`.<br>
+      Expected: Saving reports a lock-path error. The added student is rolled back, the empty search result returns, and the saved book is unchanged. `list`, `find` and `help` still work. Close TAB, remove the folder and restore the lock file before continuing.
+1. Two windows using the same file
+   1. Prerequisites: Open two TAB instances, A and B, from the same test JAR.
+   1. Test case: In A enter `add Window A --id A61490`. In B enter `add Window B --id A61491`.<br>
+      Expected: A saves; B reports changed disk data and rolls back its addition. Restart B to see Window A and retry its addition successfully.
+
 ## Appendix: Effort
 
 TAB builds on AB3's layered JavaFX application, command/parser pattern, observable model, JSON storage, and test utilities. The architectural skeleton is reused; the main implementation work adapts that skeleton to a teaching assistant's student-management workflow. TAB still has one primary record type, so its added difficulty lies in behavior across layers rather than a larger entity model.
@@ -570,174 +708,6 @@ TAB builds on AB3's layered JavaFX application, command/parser pattern, observab
 | Verification and documentation | Parser, command, model, storage, and UI-helper tests cover these behaviors; the manual-testing appendix covers interactions and platform checks. The UG and this guide document the same input rules, recovery paths, and implementation boundaries. |
 
 The work spans implementation, automated tests, manual verification, and documentation rather than a package rename alone. The implementation sections explain the resulting mechanisms and their limits: possible-duplicate detection is advisory, concurrent changes are rejected rather than merged, and timing targets still require measurement. Individual contribution evidence belongs in the team members' project portfolio pages and the repository history.
-
-## Appendix: Instructions for Manual Testing
-
-Given below are instructions to test the app manually.
-
-### Launch, help, and shutdown
-
-1. Put `tab.jar` in an empty writable folder and run `java -jar tab.jar` with the documented Java setup.
-   * Expected: Six sample students appear, none flagged, the command box has focus, and the summary shows six students. The status bar names `data/tab.json` in the JAR's folder.
-1. Enter `help`, use Space/PgDn and `b`/PgUp to page, then `g`/`G` to reach the ends and `q` to return. Repeat with F1 and Esc. In help, `c` copies the UG URL.
-   * Expected: Help stays inside the window, its progress changes with scrolling, and closing help returns to commands without changing students or the previous result.
-1. Type an unfinished command, open help with F1, and close it. Use Tab and Shift+Tab through commands, students, summary, and the result when visible.
-   * Expected: The draft is restored with the caret at its end, and each reading pane can be reached and scrolled from the keyboard.
-1. Resize and move the window, enter `exit`, then relaunch. Also try the title-bar close action.
-   * Expected: The window closes and its geometry is retained when it fits the available screen. Student data remains unchanged.
-1. Move the window to a second monitor, exit, disconnect that monitor, and relaunch. Repeat at the display sizes/scalings in the NFRs.
-   * Expected: TAB opens within an available screen. Cards, help, and summary remain usable through resizing and scrolling.
-
-### Shared test records
-
-Use this setup once before the following command paths. Each line is one command; respond to `clear` on the next submission. If the book is already empty, skip `yes`.
-
-```text
-clear
-yes
-add José O'Brien -p "+65 9123 4567" -e jose@example.com --id A61401 -t "Lab 3" -t Tutorial -f
-add Alice Tan --id 001234 -t "Lab 3"
-add Jason Lim -p 81234567 -e jason@example.com --id A61403 -t Tutorial
-```
-
-Expected: Three students appear in this order. Only José needs follow-up. The summary shows `Lab 3` and `Tutorial` with two students each and a total of three. Alice's card has no phone/email placeholders.
-
-### Adding students and reviewing duplicates
-
-1. Enter `find -n Nobody`, then `add Mei 林 -t "Lab 4"`.
-   * Expected: The search clears, feedback explains why, and the new student is revealed. Missing phone, email, and ID are accepted.
-1. Enter `add Different Name --id a61401`.
-   * Expected: An ID-conflict error; no new student, filter change, or saved-data change.
-1. Enter `add Jose O'Brien -p "+65 (9123) 4567" -e JOSE@example.com --id A61404`.
-   * Expected: The record is saved with warnings for matching name, phone, and email. Its different ID permits it to coexist with José.
-1. Enter `add Incomplete Probe -p 12 -e missing-at`, then `add Dotless Probe -e probe@nus`.
-   * Expected: The first reports both invalid fields and adds nothing. The second succeeds with a dotless-domain warning.
-1. Enter `add Siti s/o Kumaran -t 组别`, then `add Test -t t1 -t T1`.
-   * Expected: The slash and Unicode text are accepted. The second record has one `t1` tag, retaining its first spelling.
-
-### Searching and checking the summary
-
-1. Enter `find -n jose`, then `find -p 9123-4567`.
-   * Expected: Each finds José and the added Jose record; name accent comparison and phone digit comparison both work. Each result reports two students.
-1. Enter `find -t "Lab 3" -t Tutorial -f`.
-   * Expected: Only José appears, with a total of one and one pending follow-up. Both tags appear with count one.
-1. Enter `find -nf -t "Lab 3"`, then `find -n "Jason Lim"`.
-   * Expected: The first finds Alice; the second finds Jason, demonstrating that a new search starts from the whole book.
-1. Enter `find --id a6140`, then `find -i 0012`.
-   * Expected: The first finds José, Jason, and the added Jose record; the second finds only Alice. ID search is partial and ignores letter case.
-1. Enter `find -e example.com -n Alice`.
-   * Expected: No students match because Alice has no email. The displayed total and follow-up count are zero, with no tag rows.
-1. Try `find Alice`, `find -t Lab 3`, `find -f -nf`, and `find -n ""`.
-   * Expected: Each explains the invalid query and preserves the previous results and saved records.
-1. Enter `add "Mary–Jane Tan"` with an en dash, then `find -n "Mary Jane"`, then `add "Mary Jane Tan"`.
-   * Expected: The first record keeps its en dash in the card and the data file, the search finds it, and the second `add` reports a possible duplicate.
-1. Enter `add DʼSouza --id TEST01` with a modifier letter apostrophe, then `find -n "D'Souza"` with the keyboard apostrophe, then `add "D'Souza" --id TEST02`.
-   * Expected: The first record keeps its modifier letter in the card and the data file, the search finds it, and the second `add` reports a possible duplicate. Repeating the search with a grave accent in place of the apostrophe finds nobody.
-1. Enter `list`.
-   * Expected: Every added student returns. Tag groups are ordered by count, alphabetically on ties, and the follow-up count is separate from tag groups.
-
-### Editing, clearing details, and resolving targets
-
-1. Enter `find -n Jason`, then `edit --target-id 001234 -p 82345678 -e alice@example.com`.
-   * Expected: Alice changes even though hidden; Jason remains the displayed result. `--target-id` treats the leading zeros as part of the ID.
-1. Enter `edit 1 -p 83334444`, then `list`.
-   * Expected: Jason's phone changes because index 1 refers to the filtered result at execution time; other students keep their details.
-1. Enter `edit A61403 -p "" -e "" --id "" -t ""`, then `find -n Jason`.
-   * Expected: Jason retains his name but loses phone, email, ID, and general tags. Restart TAB, run `find --id A61403` (no matches), then `find -n Jason` to confirm persistence and resume the path.
-1. Enter `edit 1 -n "Jason Lim"`.
-   * Expected: An unchanged message. The data file is not rewritten.
-1. Try `edit 1 -n ""`, `edit 1 -p`, and `edit 1 --id A61401`.
-   * Expected: Respectively, invalid name, missing phone value, and ID-conflict errors. The selected record and current filter stay unchanged.
-1. Enter `edit --target-id 001234 --id 1ABC`, then `edit --target-id 1ABC -nf`.
-   * Expected: Alice's ID changes to `1ABC`; the second command reaches that same record. `edit 1 -nf` would instead select the displayed position.
-
-### Incremental tags and follow-up
-
-1. Enter `list`, then `tag A61401 -a "Project Group"` and `tag A61401 -r "LAB 3"`.
-   * Expected: José gains the new tag and loses `Lab 3` ignoring case, retaining Tutorial and his other details. Summary counts update.
-1. Try `tag A61401 -a tutorial`, `tag A61401 -r Missing`, and `tag A61401 -a X -r Y`.
-   * Expected: Existing-tag, absent-tag, and conflicting-action errors; records and file stay unchanged.
-1. Enter `edit A61401 -nf`, then `find -f`.
-   * Expected: José is no longer flagged and no student matches. General tags remain intact.
-1. Enter `edit --target-id 1ABC -f`, then `find -f`.
-   * Expected: Alice appears with the follow-up label. Restarting preserves her status.
-1. Try `tag --id 1ABC -a "Needs follow-up"`, then `tag --id 1ABC -r "Needs follow-up"`.
-   * Expected: Addition is rejected as a reserved marker and suggests the edit command that sets the flag on Alice. Removal explains that follow-up is separate and suggests the edit command that clears it.
-1. Enter `tag --id 1ABC -a "Needs follow-up soon"`.
-   * Expected: A normal tag is added and the existing flag remains set. Then try `tag --id 1ABC -a "Needs_follow_up"`: it is stored as a general tag with an advisory note that this spelling does not set follow-up status, and the note names the edit command that does. Alice's existing follow-up remains set.
-
-### Deleting with displayed and ID targets
-
-1. Enter `find -n Mei`, then `delete 1`.
-   * Expected: Only Mei is deleted; the filtered result becomes empty and the saved file excludes her.
-1. Enter `delete --id A61404` while that result is empty.
-   * Expected: The additional Jose record is deleted from the full book without clearing the active filter.
-1. Try `delete 0`, `delete 999`, `delete --id Missing614`, and `delete 1 extra`.
-   * Expected: Each gives a target/format error and preserves records, filter, and saved data. Enter `list` and restart to confirm only the intended students were deleted.
-
-### Clear confirmation
-
-1. Enter `find -n Nobody`, then `clear`.
-   * Expected: The prompt counts the whole book despite the empty displayed result and warns that clearing cannot be undone. No data is written.
-1. Enter `maybe`, then `exit`.
-   * Expected: Both are rejected as replies; neither executes a command. The prompt remains pending and the data is unchanged.
-1. Reply <code class="preserve-whitespace"> NO </code>, then enter `clear` and submit an empty line.
-   * Expected: Each cancels, retaining the records and filter.
-1. Enter `clear` and reply <code class="preserve-whitespace"> YeS </code>.
-   * Expected: All students are cleared and the empty book survives a restart. Another `clear` reports that the book is already empty without starting a confirmation.
-1. Enter `add Pending Probe`, enter `clear`, close the window without replying, and restart.
-   * Expected: The prompt for a one-student book reads `Clear the only student?` rather than counting the student. Pending Probe remains and no confirmation is pending.
-
-### Command entry, history, and long values
-
-1. Enter `LiSt`, then `lsit`, then `list extra`.
-   * Expected: The mixed-case command works; the typo suggests `list` without executing it; the extra argument is rejected. Failed input remains editable and its error marking clears after editing.
-1. Enter `add Quote Probe --phone="9123 4567" --tag="Lab 5"`, then try `edit 1 -P 81234567` and `add Broken -t "Lab`.
-   * Expected: Attached values are accepted; the capital option suggests `-p`; the unclosed quote is reported without changing records.
-1. Enter `add Amy Lim -t"Lab 3"`, then `add Ben Ong --phone"+65 9123 4567"`.
-   * Expected: Before submission, each glued option/value token has option coloring rather than quoted-value coloring. After submission, `There is no -tLab 3 option.` and `There is no --phone+65 9123 4567 option.` respectively. Neither command adds a student or changes saved data. Repeat with a space or `=` before the opening quote; both corrected forms record the field and leave the name unchanged.
-1. Paste `add “Paste Probe” –p “8123 4567” –t “Lab 6”`, then paste a command containing tab/newline separators before pressing Enter.
-   * Expected: Curly quotes and a pasted option dash are recognized. Separators become spaces in one command, and the line's color follows its structure.
-1. Paste `add Dash Probe —phone 91234567`, where `—phone` carries the single em dash an editor writes for `--`, then `add Dash Probe —Phone 91234567`.
-   * Expected: Both are refused as `-phone` and `-Phone`, each suggesting `--phone`, and no student is added.
-1. Enter `list` twice, then `clear` and reply `no`. Type an unsent draft, press Up repeatedly through accepted and rejected submissions, then Down to the newest position.
-   * Expected: Recall changes the input without executing it; the draft returns after the newest command. The two consecutive `list` submissions occupy one history entry, and the `no` reply is absent. Restarting clears history.
-1. Add a student with a long accented name and a long tag, then narrow the window. For a reproducible value, use `add José José José José José José José José José José José José José José José José -t "A very long tutorial group name used to check wrapping" -p "+65 9123 4567 extension 1234567890"`.
-   * Expected: Card contents stay inside their bounds. Shortened values have full-value tooltips, contact details wrap, and summary tag names remain readable beside their counts.
-
-### Loading hand-edited data
-
-First rerun the shared test-record setup so the file contains three students with IDs and one flag. Close all TAB windows before each edit, back up this valid file, and restore that backup between malformed cases. Change one thing at a time so the reported cause is unambiguous.
-
-1. Add `"_comment": "Manual testing copy"` to the top-level object. Remove Jason's phone/email/ID keys and José's `flag`; set José's `tags` to `[" t1 ", "T1", "Lab 3"]`. Restart, enter `tag 1 -a Probe`, and close TAB.
-   * Expected: Missing details load as absent, the missing flag means unflagged, tags merge to `t1` and `Lab 3`, and the next save retains the description and omits absent details.
-1. Try each malformed edit separately: `"phone": "12"`; `"email": ["a@b.com"]`; `"flag": "true"`; `"tags": [null]`; `"nusStudentId": ""`; or rename `nusStudentId` to `nusStudentID`.
-   * Expected: Startup identifies the record and offending field/type or value. The main window does not open and the file is unchanged.
-1. Try each misshapen structure separately: replace the whole file with just its list of students, `[ { "name": "Bob" } ]`; give `students` an object instead of an array; or put `"Bob"` in place of one student record.
-   * Expected: Startup says the file must be a JSON object holding a `students` array, then names the `students` field, then the offending entry, each with a line/column and excerpt. The main window does not open and the file is unchanged.
-1. Give two students the same NUS Student ID with different letter case. Separately, put `Needs follow-up` into a general tag array.
-   * Expected: The first identifies the duplicate ID and records. The second asks for the separate `flag` representation. Neither file is partially loaded or rewritten.
-1. Remove a comma from valid JSON. Then try a repeated `name` key, a second JSON object after the book, and an empty file, restoring the backup each time.
-   * Expected: Syntax errors identify a line/column and show a short numbered excerpt when a location is available. The empty file reports that it contains no data. Files remain unchanged.
-1. Save a file containing `José` in Windows-1252, launch TAB, then resave it correctly as UTF-8 and relaunch. Also try UTF-8 with a leading BOM.
-   * Expected: Invalid UTF-8 is rejected with encoding guidance; both supported UTF-8 forms preserve the accent.
-1. Move the valid file elsewhere and start TAB, then close TAB and restore it. Separately, make the file/folder unreadable through the OS permissions UI and start TAB.
-   * Expected: A genuinely missing file shows sample students. An unreadable file gives a loading error instead of sample data. Restore permissions after the test.
-1. With TAB closed, replace `preferences.json` with `null`, then restart.
-   * Expected: Default window settings are used and preferences are rewritten when writable. Student data is unaffected.
-
-### Save failures and stale windows
-
-1. With a saved student book, open two TAB windows from the same disposable JAR folder. In A enter `add Window A --id A61490`. In B enter `find -n Nobody`, then `add Window B --id A61491`.
-   * Expected: A saves. B reports that disk data changed, restores its own earlier records and empty filter, and leaves A's file unchanged. Restart B to see Window A; adding Window B then succeeds.
-1. Close every window. In the OS file manager, create a folder at `data/.tab.json.lock` after moving any existing lock file aside. Launch TAB, enter `find -n Nobody`, then `add Blocked Probe`.
-   * Expected: Saving reports the lock-path problem; the added student is rolled back and the empty filter returns. Saved records are unchanged. `list`, `find`, and `help` still work. Close TAB and restore the lock path before continuing.
-1. Repeat with the data folder made non-writable through the OS permissions UI. On macOS/Linux, `chmod 555 data` can be used for this disposable folder; restore with `chmod 755 data` afterward.
-   * Expected: A mutation reports insufficient write access and restores both records and filter. Read-only commands still work. Check the original file against the backup.
-1. In a separate empty test folder, put an ordinary file named `data` beside the JAR and attempt an add after launch.
-   * Expected: TAB reports that a file blocks the required data folder, leaves that file intact, and does not retain the added student. Close TAB and move the blocking file before retrying.
-1. Compare `data/tab.json` before and after `list`, `find -n Nobody`, a canceled `clear`, and an unchanged edit. Run `list` before selecting the student for that unchanged edit.
-   * Expected: These operations do not rewrite student data. A successful mutation persists after restart; a rejected mutation leaves the saved book as it was.
 
 ## Appendix: Planned Enhancements
 
