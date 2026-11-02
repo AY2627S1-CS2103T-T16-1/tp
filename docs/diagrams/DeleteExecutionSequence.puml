@@ -7,14 +7,12 @@ skinparam sequenceReferenceBackgroundColor white
 participant ":LogicManager" as logic LOGIC_COLOR
 participant "c:DeleteCommand" as command LOGIC_COLOR
 participant ":Model" as model MODEL_COLOR
-participant ":Storage" as storage STORAGE_COLOR
 
 [-> logic : execute(\n"delete 1")
 activate logic
 ref over logic, command
   Parse delete command
 end ref
-note over logic : Snapshot book\nand filter
 logic -> command : execute(model)
 activate command
 command -> model : read displayed list
@@ -29,10 +27,6 @@ deactivate model
 command --> logic : result
 deactivate command
 
-ref over logic, storage
-  SaveRollbackSequenceDiagram
-  (post-command save and rollback)
-end ref
 [<-- logic : result
 deactivate logic
 @enduml
