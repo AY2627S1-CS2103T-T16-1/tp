@@ -877,7 +877,7 @@ TAB builds on AB3's layered JavaFX application, command/parser pattern, observab
 | Keyboard workflow and presentation | Command history, in-window help, student reveal, and a summary of the filtered list connect command results to observable JavaFX views. UI state must remain coherent after searches, record replacement, and failed saves. |
 | Verification and documentation | Parser, command, model, storage, and UI-helper tests cover these behaviors; the manual-testing appendix covers interactions and platform checks. The UG and this guide document the same input rules, recovery paths, and implementation boundaries. |
 
-The work spans implementation, automated tests, manual verification, and documentation rather than a package rename alone. The implementation sections explain the resulting mechanisms and their limits: possible-duplicate detection is advisory, concurrent changes are rejected rather than merged, and timing targets still require measurement. Individual contribution evidence belongs in the team members' project portfolio pages and the repository history.
+The work spans implementation, automated tests, manual verification, and documentation rather than a package rename alone. These mechanisms have known limits: possible-duplicate detection is advisory, concurrent changes are rejected rather than merged, and timing targets still require measurement. Individual contribution evidence belongs in the team members' project portfolio pages and the repository history.
 
 ## Appendix: Planned Enhancements
 
