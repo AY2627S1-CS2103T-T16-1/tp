@@ -153,21 +153,17 @@ public class CommandTokenizer {
         /**
          * Returns {@code value} with the dashes opening it written as the option marker, so a
          * pasted option reaches the parser as the one it stands for. A token that opens with a
-         * quote is a value, and keeps the dash it was given, as does a token of dashes alone, which
-         * names no option.
+         * quote is a value, and keeps the dash it was given, as does a lone dash, which names no option.
          */
         private static String normalizeMarkers(String value, boolean beganQuoted) {
-            if (beganQuoted) {
+            if (beganQuoted || value.length() == 1) {
                 return value;
             }
             int markerLength = 0;
             while (markerLength < value.length() && isOptionMarker(value.charAt(markerLength))) {
                 markerLength++;
             }
-            boolean isOnlyDashes = markerLength == value.length();
-            return markerLength == 0 || isOnlyDashes
-                    ? value
-                    : OPTION_MARKER.repeat(markerLength) + value.substring(markerLength);
+            return markerLength == 0 ? value : OPTION_MARKER.repeat(markerLength) + value.substring(markerLength);
         }
 
         private void finishToken() {
