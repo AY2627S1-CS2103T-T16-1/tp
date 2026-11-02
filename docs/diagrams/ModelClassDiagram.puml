@@ -36,7 +36,9 @@ ModelManager *--> "1   " StudentBook
 ModelManager *-right-> "1   " UserPrefs
 ModelManager *--> "1   " FilteredList
 StudentBook *--> "1   " UniqueStudentList
-FilteredList --> "~*   " Student : shows &#9660;
+' norank stops this association from pulling Student sideways, and the padding
+' and blank lines move its label clear of the line, for MarkBind's PlantUML.
+FilteredList -[norank]-> "~*   " Student : shows &#9660;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;\n&#160;\n&#160;
 UniqueStudentList --> "~*   " Student : records &#9660;
 FilteredList -[hidden]right- UniqueStudentList
 Student --> "1   " Name
