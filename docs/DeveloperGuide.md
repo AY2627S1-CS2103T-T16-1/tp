@@ -377,89 +377,145 @@ For these use cases, the **system** is TAB and the **actor** is a teaching assis
 **MSS**
 
 1. The user requests to add a student, supplying a name and any known details.
-1. TAB validates the details and checks the NUS Student ID, if supplied.
+1. TAB validates the supplied student details.
 1. TAB adds and saves the student.
-1. TAB confirms the addition and reveals the new student.
+1. TAB confirms the addition and shows the new student.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. The command or a field is invalid.
-  * 2a1. TAB explains the error without changing records.
-  * Use case resumes at step 1.
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2a. A supplied field is invalid.
+  * 2a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
 * 2b. Another student holds the supplied NUS Student ID.
-  * 2b1. TAB identifies the conflict without adding a student.
-  * Use case resumes at step 1.
+  * 2b1. TAB identifies the conflict without changing records or the current search criteria.
+  * Use case resumes from step 1.
 * 3a. Saving fails.
-  * 3a1. TAB restores the records and filter and reports the reason.
-  * Use case resumes at step 1.
-* 4a. Name, phone, or email matches suggest a possible duplicate.
-  * 4a1. TAB includes a warning in the successful result for the user to review.
+  * 3a1. TAB restores the records and current search criteria and reports the reason.
+  * Use case resumes from step 1.
+* 4a. The new student does not match the current search criteria.
+  * 4a1. TAB shows all students and explains that the search has been cleared.
+  * Use case ends.
+* 4b. The supplied details warrant a warning, such as a possible duplicate name, phone, or email.
+  * 4b1. TAB includes the warning in the successful result for the user to review.
   * Use case ends.
 
-#### UC02: Find a student and update their details
+Extensions 4a and 4b may occur together.
+
+#### UC02: Filter students by conditions
 
 **MSS**
 
 1. The user requests students matching selected details or follow-up status.
-1. TAB displays the matching students and summary.
-1. The user selects a displayed student and supplies changes.
-1. TAB validates the request, replaces the student's record, and saves it.
-1. TAB confirms the change and updates the filtered view and summary.
+1. TAB displays the students matching all supplied conditions and their summary.
 
     Use case ends.
 
 **Extensions**
 
-* 1a. The search is invalid.
-  * 1a1. TAB explains the error and keeps the previous results.
-  * Use case resumes at step 1.
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 1b. The search conditions are invalid, such as requesting both follow-up statuses.
+  * 1b1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
 * 2a. No students match.
-  * 2a1. The user requests a different search or all students.
-  * Use case resumes at step 2.
-* 3a. The user supplies an ID target, including one outside the displayed results.
-  * 3a1. TAB resolves the ID against the whole book.
-  * Use case resumes at step 4.
-* 4a. The target does not exist, a value is invalid, or the new ID conflicts.
-  * 4a1. TAB explains the problem without changing records or the filter.
-  * Use case resumes at step 3.
-* 4b. The requested details equal the saved details.
-  * 4b1. TAB reports that no change is needed without writing student data.
-  * Use case ends.
-* 4c. Saving fails.
-  * 4c1. TAB restores the records and filter and explains recovery.
-  * Use case resumes at step 3.
-* 5a. The changed student no longer matches the filter.
-  * 5a1. TAB removes the student from the displayed results while retaining the updated record.
+  * 2a1. TAB displays an empty result and reports that no students were found.
   * Use case ends.
 
-Setting/clearing follow-up uses the same edit flow. UC03 covers the tag-specific alternatives, and UC06 covers deletion.
-
-#### UC03: Add or remove one tag
+#### UC03: Edit a student's details
 
 **MSS**
 
-1. The user identifies a student and requests one tag addition or removal.
-1. TAB resolves the target and validates the requested tag action.
-1. TAB updates that tag, preserves the other details, and saves the record.
-1. TAB confirms the action and refreshes the filtered view and summary.
+1. The user chooses a student and supplies changes to their details.
+1. TAB validates the target student and the supplied student details.
+1. TAB updates and saves the student's details, preserving unspecified details.
+1. TAB confirms the change and refreshes the current search results and summary.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. The target or tag action is invalid.
-  * 2a1. TAB explains the problem without changing records.
-  * Use case resumes at step 1.
-* 2b. The student already has a tag to add, or lacks a tag to remove.
-  * 2b1. TAB reports that no change was made.
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2a. The target student does not exist.
+  * 2a1. TAB explains the problem without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2b. A supplied field is invalid.
+  * 2b1. TAB explains the problem without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2c. The new ID conflicts with another student's ID.
+  * 2c1. TAB identifies the conflict without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2d. The requested details equal the saved details.
+  * 2d1. TAB reports that no change is needed without changing records or the current search criteria.
   * Use case ends.
 * 3a. Saving fails.
-  * 3a1. TAB restores the records and filter and reports the reason.
-  * Use case resumes at step 1.
+  * 3a1. TAB restores the records and current search criteria and reports the reason.
+  * Use case resumes from step 1.
+* 4a. The changed student no longer matches the current search criteria.
+  * 4a1. TAB excludes the student from the results while retaining the updated record.
+  * Use case ends.
+* 4b. The changed details warrant a warning, such as a possible duplicate name, phone, or email.
+  * 4b1. TAB includes the warning in the successful result for the user to review.
+  * Use case ends.
 
-#### UC04: Clear the student book
+Extensions 4a and 4b may occur together. Setting or clearing follow-up and replacing or clearing tags use
+this same flow. UC04 covers changing one tag while retaining the others; UC06 covers deletion.
+
+#### UC04: Add or remove one tag
+
+**MSS**
+
+1. The user chooses a student and requests one tag addition or removal for the chosen student.
+1. TAB validates the target student and the requested tag action.
+1. TAB updates that tag, preserves the other details, and saves the record.
+1. TAB confirms the action and refreshes the current search results and summary.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2a. The target student does not exist.
+  * 2a1. TAB explains the problem without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2b. The tag is invalid.
+  * 2b1. TAB explains the problem without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2c. The user requests to add a tag whose name is reserved for indicating follow-up status.
+  * 2c1. TAB rejects the request without changing records or the current search criteria.
+  * 2c2. TAB explains how to set the student's follow-up status.
+  * Use case resumes from step 1.
+* 2d. The student already has the tag that the user wants to add (ignoring case and extra spaces).
+  * 2d1. TAB reports that no change was made.
+  * Use case ends.
+* 2e. The student lacks the tag that the user wants to remove (ignoring case and extra spaces) and the tag is not their follow-up flag.
+  * 2e1. TAB reports that no change was made.
+  * Use case ends.
+* 2f. The user requests removal of the student's follow-up flag as a tag.
+  * 2f1. TAB reports that no change was made and explains how to clear the student's follow-up status.
+  * Use case ends.
+* 3a. Saving fails.
+  * 3a1. TAB restores the records and current search criteria and reports the reason.
+  * Use case resumes from step 1.
+* 4a. The changed student no longer matches the current search criteria.
+  * 4a1. TAB excludes the student from the results while retaining the updated record.
+  * Use case ends.
+* 4b. The added tag has a permitted name that could be confused with follow-up status.
+  * 4b1. TAB includes the warning in the successful result for the user to review.
+  * Use case ends.
+
+Extensions 4a and 4b may occur together.
+
+#### UC05: Clear the student book
 
 **MSS**
 
@@ -472,29 +528,59 @@ Setting/clearing follow-up uses the same edit flow. UC03 covers the tag-specific
 
 **Extensions**
 
-* 2a. The book is empty.
-  * 2a1. TAB reports that there is nothing to clear.
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 1b. The book is empty.
+  * 1b1. TAB reports that there is nothing to clear without asking for confirmation.
   * Use case ends.
-* 3a. The user declines or submits an empty reply.
-  * 3a1. TAB cancels without changing records or the filter.
+* 3a. The user declines.
+  * 3a1. TAB cancels without changing records or the current search criteria.
   * Use case ends.
-* 3b. The reply is unrecognized, including another command.
-  * 3b1. TAB explains the accepted replies and repeats the prompt.
-  * Use case resumes at step 3.
-* 3c. The user closes TAB before replying.
-  * 3c1. TAB leaves student data unchanged and discards the pending request.
+* 3b. The user submits an empty or whitespace-only reply.
+  * 3b1. TAB cancels without changing records or the current search criteria.
   * Use case ends.
+* 3c. The reply is invalid, including another command.
+  * 3c1. TAB explains the accepted replies.
+  * Use case resumes from step 2.
 * 4a. Saving fails.
-  * 4a1. TAB restores the records and filter and reports the failure; no confirmation remains pending.
+  * 4a1. TAB restores the records and current search criteria and reports the reason.
   * Use case ends.
 
-#### UC05: Recover from unreadable student data
+#### UC06: Delete a student
 
 **MSS**
 
-1. The user starts TAB with an unreadable student data file.
-1. TAB identifies the file and explains the loading problem instead of opening the student view.
-1. The user closes TAB and repairs or replaces the file from a backup.
+1. The user chooses a student and requests deletion of the chosen student.
+1. TAB validates the target student.
+1. TAB removes the student and saves the updated book.
+1. TAB confirms the deletion and refreshes the current search results and summary.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The command format is invalid.
+  * 1a1. TAB explains the error without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 2a. The target does not exist.
+  * 2a1. TAB explains the problem without changing records or the current search criteria.
+  * Use case resumes from step 1.
+* 3a. Saving fails.
+  * 3a1. TAB restores the records and current search criteria and reports the reason.
+  * Use case resumes from step 1.
+
+#### UC07: Recover from unreadable student data
+
+**Precondition:** The saved student data file is unreadable or contains invalid data.
+
+**MSS**
+
+1. The user starts TAB.
+1. TAB identifies the data file and explains the loading problem and recovery options, including the line,
+   column, and a source excerpt for a syntax error, or the student record and field at fault,
+   without changing the file or opening the student view.
+1. The user closes TAB and repairs the file or replaces it with a valid backup.
 1. The user restarts TAB.
 1. TAB loads the corrected records and opens the student view.
 
@@ -502,38 +588,13 @@ Setting/clearing follow-up uses the same edit flow. UC03 covers the tag-specific
 
 **Extensions**
 
-* 2a. A syntax location is available.
-  * 2a1. TAB includes the line, column, and a short source excerpt.
-  * Use case resumes at step 3.
-* 2b. A record or field can be identified.
-  * 2b1. TAB includes that context in the explanation.
-  * Use case resumes at step 3.
-* 5a. The repair still leaves invalid data.
-  * 5a1. TAB leaves the file unchanged and reports the remaining problem.
-  * Use case resumes at step 3.
-
-#### UC06: Delete a student
-
-**MSS**
-
-1. The user requests to delete a student identified by a displayed index or NUS Student ID.
-1. TAB resolves the target student.
-1. TAB removes the student and saves the updated book.
-1. TAB confirms the deletion and refreshes the filtered view and summary.
-
-    Use case ends.
-
-**Extensions**
-
-* 2a. The command is invalid or the target does not exist.
-  * 2a1. TAB explains the problem without changing records or the filter.
-  * Use case resumes at step 1.
-* 2b. The user supplies an ID for a student outside the displayed results.
-  * 2b1. TAB resolves the ID against the whole book.
-  * Use case resumes at step 3.
-* 3a. Saving fails.
-  * 3a1. TAB restores the records and filter and explains recovery.
-  * Use case resumes at step 1.
+* 2a. TAB cannot locate the problem in the data file.
+  * 2a1. TAB explains the problem without a location.
+  * 2a2. The user closes TAB and replaces the file with a valid backup instead of repairing it.
+  * Use case resumes from step 4.
+* 4a. TAB still cannot load the file.
+  * 4a1. TAB leaves the file unchanged and reports the remaining problem without opening the student view.
+  * Use case resumes from step 3.
 
 ### Non-functional requirements
 
