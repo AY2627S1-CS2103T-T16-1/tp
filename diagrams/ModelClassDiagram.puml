@@ -11,9 +11,9 @@ skinparam nodesep 85
 skinparam ranksep 60
 
 package "Model" as ModelComponent {
-interface Model <<interface>>
-interface ReadOnlyStudentBook <<interface>>
-interface ReadOnlyUserPrefs <<interface>>
+class Model <<interface>>
+class ReadOnlyStudentBook <<interface>>
+class ReadOnlyUserPrefs <<interface>>
 class ModelManager
 class StudentBook
 class UserPrefs

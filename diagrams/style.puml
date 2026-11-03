@@ -45,6 +45,7 @@ skinparam Class {
     BorderThickness 1
     BorderColor #FFFFFF
     StereotypeFontColor #FFFFFF
+    StereotypeFontStyle plain
     FontName Arial
 }
 
@@ -64,6 +65,7 @@ skinparam Sequence {
 
 skinparam Participant {
     FontColor #FFFFFFF
+    StereotypeFontStyle plain
     Padding 20
 }
 

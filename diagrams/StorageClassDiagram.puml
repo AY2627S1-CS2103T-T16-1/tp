@@ -13,7 +13,7 @@ skinparam packageFontSize 16
 ' Padding moves each group's title to the side the delegation arrow does not cross.
 
 package "Storage<U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0>" as StorageComponent {
-interface Storage <<interface>>
+class Storage <<interface>>
 class StorageManager
 package "UserPrefs Storage<U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0>" as UserPrefsGroup #F4F6F6 {
 class JsonUserPrefsStorage
