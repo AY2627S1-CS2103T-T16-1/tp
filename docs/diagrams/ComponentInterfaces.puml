@@ -8,13 +8,13 @@ skinparam ArrowFontStyle plain
 skinparam nodesep 45
 skinparam ranksep 45
 
-interface Ui <<interface>> UI_COLOR_T1
+class Ui <<interface>> UI_COLOR_T1
 class UiManager UI_COLOR_T1
-interface Logic <<interface>> LOGIC_COLOR_T1
+class Logic <<interface>> LOGIC_COLOR_T1
 class LogicManager LOGIC_COLOR_T1
-interface Model <<interface>> MODEL_COLOR_T1
+class Model <<interface>> MODEL_COLOR_T1
 class ModelManager MODEL_COLOR_T1
-interface Storage <<interface>> STORAGE_COLOR_T1
+class Storage <<interface>> STORAGE_COLOR_T1
 class StorageManager STORAGE_COLOR_T1
 
 UiManager .up.|> Ui
