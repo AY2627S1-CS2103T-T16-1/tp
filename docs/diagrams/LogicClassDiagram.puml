@@ -12,10 +12,10 @@ skinparam nodesep 45
 skinparam ranksep 45
 
 package "Logic" as LogicComponent {
-interface Logic <<interface>>
+class Logic <<interface>>
 class LogicManager
 class StudentBookParser
-abstract class Command
+class "{abstract}\nCommand" as Command
 class DeleteCommand
 class CommandResult
 

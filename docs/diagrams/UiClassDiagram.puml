@@ -10,7 +10,7 @@ skinparam nodesep 25
 skinparam ranksep 35
 
 package UI {
-    interface Ui <<interface>>
+    class Ui <<interface>>
     class UiManager
     class MainWindow
     class CommandBox
